@@ -51,6 +51,9 @@ export default function RootLayout() {
         <Stack.Screen name="employee-calendar" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="work-leaves" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="create-leave" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="team-leaves" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="employees-list" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="birthdays" options={{ animation: 'slide_from_right' }} />
       </Stack>
     </QueryClientProvider>
     </SafeAreaProvider>

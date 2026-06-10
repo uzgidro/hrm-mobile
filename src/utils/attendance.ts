@@ -4,41 +4,55 @@ import { AttendanceEvent } from '../types';
 
 interface AttendancePage { items: AttendanceEvent[]; total: number }
 
+async function paginatedFetch(params: Record<string, unknown>): Promise<AttendancePage> {
+  const firstRes = await apiClient.get(TURNSTILE_ATTENDANCE_EVENTS, { params });
+  const raw = firstRes.data as any;
+
+  // Handle plain array response (API sometimes returns array without pagination wrapper)
+  if (Array.isArray(raw)) return { items: raw as AttendanceEvent[], total: raw.length };
+  if (!raw?.items) return { items: [], total: 0 };
+  if (raw.total <= 100) return { items: raw.items, total: raw.total };
+
+  // Parallel pagination for remaining pages (cap at 20 pages = 2000 events)
+  const totalPages = Math.min(Math.ceil(raw.total / 100), 20);
+  const rest = await Promise.all(
+    Array.from({ length: totalPages - 1 }, (_, i) =>
+      apiClient
+        .get(TURNSTILE_ATTENDANCE_EVENTS, { params: { ...params, page: i + 2 } })
+        .then((r) => {
+          const d = r.data as any;
+          return ((Array.isArray(d) ? d : d?.items) ?? []) as AttendanceEvent[];
+        })
+        .catch(() => [] as AttendanceEvent[]),
+    ),
+  );
+  const items = [...raw.items, ...rest.flat()];
+  return { items, total: raw.total };
+}
+
 /**
- * Fetches all attendance events for a given date in parallel.
- * Page 1 is fetched first to get the total, remaining pages run in parallel.
+ * Fetches attendance events for a given date.
+ * Strategy: try with organization_branch_id first (fast, scoped).
+ * If 0 results, fallback to no filter — empIdSet in team.tsx/attendance-detail.tsx
+ * cross-references to only count the correct branch employees.
+ * This handles cases where turnstile events have no organization_branch_id set.
  */
 export async function fetchAllAttendanceEvents(
   date: string,
   orgBranchId?: number,
 ): Promise<AttendancePage> {
-  const base: Record<string, unknown> = {
-    date_from: date,
-    date_to: date,
-    size: 100,
-    page: 1,
-    ...(orgBranchId ? { organization_branch_id: orgBranchId } : {}),
-  };
+  const base: Record<string, unknown> = { date_from: date, date_to: date, size: 100, page: 1 };
 
-  const firstRes = await apiClient.get<AttendancePage>(TURNSTILE_ATTENDANCE_EVENTS, { params: base });
-  const first = firstRes.data;
+  if (orgBranchId) {
+    const result = await paginatedFetch({ ...base, organization_branch_id: orgBranchId });
+    if (result.items.length > 0) return result;
+    // 0 events with branch filter → events may lack organization_branch_id (BFD/MCHJ case)
+  }
 
-  if (!first?.items) return { items: [], total: 0 };
-  if (first.total <= 100) return first;
-
-  const totalPages = Math.ceil(first.total / 100);
-  const rest = await Promise.all(
-    Array.from({ length: totalPages - 1 }, (_, i) =>
-      apiClient
-        .get<AttendancePage>(TURNSTILE_ATTENDANCE_EVENTS, { params: { ...base, page: i + 2 } })
-        .then((r) => r.data?.items ?? []),
-    ),
-  );
-  const items = [...first.items, ...rest.flat()];
-  return { items, total: items.length };
+  // Fallback: all events for the date — empIdSet cross-reference handles branch scoping
+  return paginatedFetch(base);
 }
 
-/** Shared query key so both team.tsx and attendance-detail.tsx share the same cache. */
 export function attendanceQueryKey(date: string, orgBranchId?: number) {
   return ['team-attendance', date, orgBranchId] as const;
 }

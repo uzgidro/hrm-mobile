@@ -71,25 +71,28 @@ export default function WorkLeavesScreen() {
       </View>
 
       {/* Filter tabs */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.filterRow}
-      >
-        {FILTERS.map((f) => (
-          <TouchableOpacity
-            key={f.key}
-            style={[styles.filterTab, filter === f.key && styles.filterTabActive]}
-            onPress={() => setFilter(f.key)}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.filterTabText, filter === f.key && styles.filterTabTextActive]}>
-              {f.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+      <View style={styles.filterWrapper}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filterRow}
+        >
+          {FILTERS.map((f) => (
+            <TouchableOpacity
+              key={f.key}
+              style={[styles.filterTab, filter === f.key && styles.filterTabActive]}
+              onPress={() => setFilter(f.key)}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.filterTabText, filter === f.key && styles.filterTabTextActive]}>
+                {f.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
 
+      <View style={{ flex: 1 }}>
       {isLoading ? (
         <View style={styles.center}>
           <ActivityIndicator color={COLORS.primaryLight} size="large" />
@@ -161,6 +164,8 @@ export default function WorkLeavesScreen() {
         </ScrollView>
       )}
 
+      </View>
+
       {/* FAB */}
       <TouchableOpacity
         style={styles.fab}
@@ -188,7 +193,14 @@ const styles = StyleSheet.create({
   addBtn: { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
   addBtnText: { fontSize: 24, color: COLORS.primaryLight, fontWeight: '400' },
 
-  filterRow: { paddingHorizontal: 16, paddingVertical: 10, gap: 8 },
+  filterWrapper: {
+    flexShrink: 0,
+    borderBottomWidth: 1, borderBottomColor: COLORS.cardBorder,
+  },
+  filterRow: {
+    paddingHorizontal: 16, paddingVertical: 10, gap: 8,
+    flexDirection: 'row', alignItems: 'center',
+  },
   filterTab: {
     paddingHorizontal: 16, paddingVertical: 7,
     borderRadius: 20, backgroundColor: COLORS.card,

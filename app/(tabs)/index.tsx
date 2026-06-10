@@ -10,8 +10,9 @@ import { router } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../src/store/authStore';
 import { apiClient } from '../../src/api/client';
-import { WORK_LEAVES, EMPLOYEES_LIST, EMPLOYEES_BIRTHDAYS, TURNSTILE_ATTENDANCE_EVENTS } from '../../src/api/urls';
+import { WORK_LEAVES, EMPLOYEES_BIRTHDAYS, TURNSTILE_ATTENDANCE_EVENTS } from '../../src/api/urls';
 import { fetchAllAttendanceEvents, attendanceQueryKey } from '../../src/utils/attendance';
+import { fetchAllEmployees, employeesQueryKey } from '../../src/utils/employees';
 import { COLORS } from '../../src/constants';
 import { WorkLeave, AttendanceEvent } from '../../src/types';
 
@@ -95,11 +96,8 @@ export default function HomeScreen() {
       employee?.department?.organization_branch_id;
     const today = dayjs().format('YYYY-MM-DD');
     queryClient.prefetchQuery({
-      queryKey: ['team-employees', orgBranchId],
-      queryFn: () =>
-        apiClient.get(EMPLOYEES_LIST, {
-          params: { size: 50, page: 1, ...(orgBranchId ? { organization_branch_id: orgBranchId } : {}) },
-        }).then((r) => r.data),
+      queryKey: employeesQueryKey(orgBranchId),
+      queryFn: () => fetchAllEmployees(orgBranchId),
       staleTime: 5 * 60 * 1000,
     });
     queryClient.prefetchQuery({
@@ -221,7 +219,11 @@ export default function HomeScreen() {
                 key={m.key}
                 style={styles.moduleBtn}
                 activeOpacity={0.75}
-                onPress={() => m.key === 'team' ? router.push('/team') : undefined}
+                onPress={() => {
+                  if (m.key === 'team') router.push('/team');
+                  else if (m.key === 'requests') router.push('/team-leaves');
+                  else if (m.key === 'attendance') router.push('/attendance-detail');
+                }}
               >
                 <Text style={styles.moduleEmoji}>{m.emoji}</Text>
                 <Text style={styles.moduleLabel}>{m.label}</Text>

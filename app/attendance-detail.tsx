@@ -11,10 +11,11 @@ import 'dayjs/locale/uz';
 import Svg, { Circle, G } from 'react-native-svg';
 import { useAuthStore } from '../src/store/authStore';
 import { apiClient } from '../src/api/client';
-import { EMPLOYEES_LIST, WORK_LEAVES } from '../src/api/urls';
+import { WORK_LEAVES } from '../src/api/urls';
 import { COLORS } from '../src/constants';
 import { Employee, AttendanceEvent, WorkLeave } from '../src/types';
 import { fetchAllAttendanceEvents, attendanceQueryKey } from '../src/utils/attendance';
+import { fetchAllEmployees, employeesQueryKey } from '../src/utils/employees';
 
 dayjs.locale('uz');
 
@@ -22,9 +23,8 @@ const MONTHS_UZ = ['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust'
 const DAYS_UZ = ['Yak', 'Du', 'Se', 'Chor', 'Pay', 'Ju', 'Sha'];
 
 interface EmployeePage { items: Employee[]; total: number }
-interface AttendancePage { items: AttendanceEvent[]; total: number }
 
-type StatusGroup = 'absent' | 'late' | 'onLeave' | 'present';
+type StatusGroup = 'present' | 'late' | 'onLeave' | 'absent';
 
 interface GroupedEmployee {
   employee: Employee;
@@ -39,6 +39,15 @@ interface Section {
   color: string;
   items: GroupedEmployee[];
 }
+
+const SECTION_META: Record<StatusGroup, { label: string; color: string; emptyLabel: string }> = {
+  present: { label: 'Keldi',             color: COLORS.present,     emptyLabel: 'Kelgan xodim yo\'q' },
+  late:    { label: 'Kechikkan',         color: COLORS.warning,     emptyLabel: 'Kechikkan xodim yo\'q' },
+  onLeave: { label: "So'rov yuborilgan", color: COLORS.primaryLight, emptyLabel: 'Ruxsat so\'rovchi yo\'q' },
+  absent:  { label: 'Kelmagan',          color: '#E5536A',           emptyLabel: '' },
+};
+
+const SECTION_ORDER: StatusGroup[] = ['present', 'late', 'onLeave', 'absent'];
 
 function EmployeeAvatar({ emp, size = 44 }: { emp: Employee; size?: number }) {
   const r = size / 2;
@@ -66,9 +75,9 @@ function DonutChart({ total, present, late, onLeave }: { total: number; present:
 
   const segments = [
     { value: present, color: COLORS.present },
-    { value: late, color: COLORS.warning },
+    { value: late,    color: COLORS.warning },
     { value: onLeave, color: COLORS.primaryLight },
-    { value: absent, color: '#E5536A' },
+    { value: absent,  color: '#E5536A' },
   ].filter((s) => s.value > 0 && total > 0);
 
   let offset = 0;
@@ -101,6 +110,15 @@ function DonutChart({ total, present, late, onLeave }: { total: number; present:
         </View>
       </View>
       <View style={styles.legend}>
+        {present > 0 && (
+          <View style={styles.legendItem}>
+            <View style={[styles.legendDot, { backgroundColor: COLORS.present }]} />
+            <View>
+              <Text style={styles.legendCount}>{present}</Text>
+              <Text style={styles.legendLabel}>keldi</Text>
+            </View>
+          </View>
+        )}
         {late > 0 && (
           <View style={styles.legendItem}>
             <View style={[styles.legendDot, { backgroundColor: COLORS.warning }]} />
@@ -122,16 +140,7 @@ function DonutChart({ total, present, late, onLeave }: { total: number; present:
             <View style={[styles.legendDot, { backgroundColor: COLORS.primaryLight }]} />
             <View>
               <Text style={styles.legendCount}>{onLeave}</Text>
-              <Text style={styles.legendLabel}>so'rov yuborilgan</Text>
-            </View>
-          </View>
-        )}
-        {present > 0 && (
-          <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: COLORS.present }]} />
-            <View>
-              <Text style={styles.legendCount}>{present}</Text>
-              <Text style={styles.legendLabel}>keldi</Text>
+              <Text style={styles.legendLabel}>so'rov</Text>
             </View>
           </View>
         )}
@@ -145,6 +154,7 @@ function StatusSection({ section }: { section: Section }) {
   const PREVIEW = 5;
   const shown = expanded ? section.items : section.items.slice(0, PREVIEW);
   const hasMore = section.items.length > PREVIEW;
+  const meta = SECTION_META[section.key];
 
   return (
     <View style={styles.statusCard}>
@@ -152,43 +162,47 @@ function StatusSection({ section }: { section: Section }) {
         <View style={styles.statusTitleRow}>
           <View style={[styles.statusDot, { backgroundColor: section.color }]} />
           <Text style={styles.statusTitle}>
-            {section.label} ({section.items.length})
+            {meta.label} ({section.items.length})
           </Text>
         </View>
         {hasMore && (
           <TouchableOpacity onPress={() => setExpanded((v) => !v)}>
             <Text style={styles.linkText}>
-              {expanded ? 'Yig\'ish' : 'Barchasini ko\'rsatish'}
+              {expanded ? "Yig'ish" : 'Barchasini ko\'rsatish'}
             </Text>
           </TouchableOpacity>
         )}
       </View>
 
-      {shown.map((row, idx) => (
-        <TouchableOpacity
-          key={row.employee.id}
-          style={[styles.empRow, idx < shown.length - 1 && styles.empRowBorder]}
-          onPress={() => router.push({ pathname: '/profile-detail', params: { id: row.employee.id } })}
-          activeOpacity={0.7}
-        >
-          <EmployeeAvatar emp={row.employee} size={48} />
-          <View style={styles.empInfo}>
-            <Text style={styles.empName} numberOfLines={1}>{row.employee.legal_name}</Text>
-            <Text style={styles.empPosition} numberOfLines={1}>
-              {row.employee.job_position?.name ?? row.employee.department?.name ?? '—'}
-            </Text>
-          </View>
-          {row.entryTime && (
-            <View style={styles.timeTag}>
-              <Text style={styles.timeTagArrow}>→|</Text>
-              <Text style={styles.timeTagText}>{dayjs(row.entryTime).format('HH:mm')}</Text>
+      {section.items.length === 0 ? (
+        <Text style={styles.emptySection}>{meta.emptyLabel}</Text>
+      ) : (
+        shown.map((row, idx) => (
+          <TouchableOpacity
+            key={row.employee.id}
+            style={[styles.empRow, idx < shown.length - 1 && styles.empRowBorder]}
+            onPress={() => router.push({ pathname: '/profile-detail', params: { id: row.employee.id } })}
+            activeOpacity={0.7}
+          >
+            <EmployeeAvatar emp={row.employee} size={48} />
+            <View style={styles.empInfo}>
+              <Text style={styles.empName} numberOfLines={1}>{row.employee.legal_name}</Text>
+              <Text style={styles.empPosition} numberOfLines={1}>
+                {row.employee.job_position?.name ?? row.employee.department?.name ?? '—'}
+              </Text>
             </View>
-          )}
-          {row.leaveName && (
-            <Text style={styles.leaveTag} numberOfLines={1}>{row.leaveName}</Text>
-          )}
-        </TouchableOpacity>
-      ))}
+            {row.entryTime && (
+              <View style={styles.timeTag}>
+                <Text style={styles.timeTagArrow}>→|</Text>
+                <Text style={styles.timeTagText}>{dayjs(row.entryTime).format('HH:mm')}</Text>
+              </View>
+            )}
+            {row.leaveName && (
+              <Text style={styles.leaveTag} numberOfLines={1}>{row.leaveName}</Text>
+            )}
+          </TouchableOpacity>
+        ))
+      )}
     </View>
   );
 }
@@ -198,31 +212,29 @@ export default function AttendanceDetailScreen() {
   const orgBranchId =
     user?.employee?.organization_branches?.[0]?.id ??
     user?.employee?.department?.organization_branch_id;
-  const today = dayjs().format('YYYY-MM-DD');
-  const now = dayjs();
-  const dateLabel = `${now.date()} ${MONTHS_UZ[now.month()]} ${now.year()} (${DAYS_UZ[now.day()]})`;
+
+  const [selectedDate, setSelectedDate] = useState(dayjs().format('YYYY-MM-DD'));
+  const selDay = dayjs(selectedDate);
+  const isToday = selectedDate === dayjs().format('YYYY-MM-DD');
+  const dateLabel = `${selDay.date()} ${MONTHS_UZ[selDay.month()]} ${selDay.year()} (${DAYS_UZ[selDay.day()]})`;
+
+  const prevDay = () => setSelectedDate(selDay.subtract(1, 'day').format('YYYY-MM-DD'));
+  const nextDay = () => setSelectedDate(selDay.add(1, 'day').format('YYYY-MM-DD'));
 
   const results = useQueries({
     queries: [
       {
-        queryKey: ['team-employees', orgBranchId],
-        queryFn: () =>
-          apiClient.get<EmployeePage>(EMPLOYEES_LIST, {
-            params: {
-              size: 100,
-              page: 1,
-              ...(orgBranchId ? { organization_branch_id: orgBranchId } : {}),
-            },
-          }).then((r) => r.data),
+        queryKey: employeesQueryKey(orgBranchId),
+        queryFn: () => fetchAllEmployees(orgBranchId),
         staleTime: 5 * 60 * 1000,
       },
       {
-        queryKey: attendanceQueryKey(today, orgBranchId),
-        queryFn: () => fetchAllAttendanceEvents(today, orgBranchId),
+        queryKey: attendanceQueryKey(selectedDate, orgBranchId),
+        queryFn: () => fetchAllAttendanceEvents(selectedDate, orgBranchId),
         staleTime: 3 * 60 * 1000,
       },
       {
-        queryKey: ['team-leaves', today],
+        queryKey: ['team-leaves', selectedDate],
         queryFn: () =>
           apiClient.get(WORK_LEAVES, { params: { size: 100 } }).then((r) => {
             const d = r.data as any;
@@ -241,37 +253,34 @@ export default function AttendanceDetailScreen() {
     const events: AttendanceEvent[] = attQ.data?.items ?? [];
     const workLeaves: WorkLeave[] = leavesQ.data ?? [];
 
-    // Build maps — API already filtered by orgBranchId
     const empIdSet = new Set(employees.map((e) => e.id));
     const firstEntry = new Map<number, string>();
     const lastExit = new Map<number, string>();
 
     for (const ev of events) {
       const eid = ev.employee_id;
-      if (!eid) continue;
-      // Use earliest time as entry, latest as exit (robust when direction_type is null)
+      if (!eid || !empIdSet.has(eid)) continue;
       const exEntry = firstEntry.get(eid);
       if (!exEntry || ev.happen_time < exEntry) firstEntry.set(eid, ev.happen_time);
       const exExit = lastExit.get(eid);
       if (!exExit || ev.happen_time > exExit) lastExit.set(eid, ev.happen_time);
     }
 
-    const todayStart = dayjs(today).startOf('day');
-    const todayEnd = dayjs(today).endOf('day');
+    const dayStart = dayjs(selectedDate).startOf('day');
+    const dayEnd = dayjs(selectedDate).endOf('day');
     const leaveMap = new Map<number, string>();
     for (const l of workLeaves) {
       if (!l.employee?.id) continue;
       const s = dayjs(l.start_date);
       const e = dayjs(l.end_date);
-      if (s.isBefore(todayEnd) && e.isAfter(todayStart)) {
+      if (s.isBefore(dayEnd) && e.isAfter(dayStart)) {
         leaveMap.set(l.employee.id, l.type ?? 'Ruxsat');
       }
     }
 
-    const absent: GroupedEmployee[] = [];
-    const late: GroupedEmployee[] = [];
-    const onLeave: GroupedEmployee[] = [];
-    const present: GroupedEmployee[] = [];
+    const buckets: Record<StatusGroup, GroupedEmployee[]> = {
+      present: [], late: [], onLeave: [], absent: [],
+    };
 
     for (const emp of employees) {
       const entry = firstEntry.get(emp.id);
@@ -279,45 +288,41 @@ export default function AttendanceDetailScreen() {
       const leaveName = leaveMap.get(emp.id);
 
       if (leaveName && !entry) {
-        onLeave.push({ employee: emp, leaveName });
+        buckets.onLeave.push({ employee: emp, leaveName });
         continue;
       }
       if (!entry) {
-        absent.push({ employee: emp });
+        buckets.absent.push({ employee: emp });
         continue;
       }
-      // Has entry — check late
       if (emp.working_hours_start) {
-        const expected = dayjs(`${today}T${emp.working_hours_start}`);
+        const expected = dayjs(`${selectedDate}T${emp.working_hours_start}`);
         const actual = dayjs(entry);
         if (actual.diff(expected, 'minute') > 5) {
-          late.push({ employee: emp, entryTime: entry, exitTime: exit });
+          buckets.late.push({ employee: emp, entryTime: entry, exitTime: exit });
           continue;
         }
       }
-      present.push({ employee: emp, entryTime: entry, exitTime: exit });
+      buckets.present.push({ employee: emp, entryTime: entry, exitTime: exit });
     }
 
-    const result: Section[] = [];
-    if (absent.length > 0)
-      result.push({ key: 'absent', label: 'Kelmagan', color: '#E5536A', items: absent });
-    if (late.length > 0)
-      result.push({ key: 'late', label: 'Kechikkan', color: COLORS.warning, items: late });
-    if (onLeave.length > 0)
-      result.push({ key: 'onLeave', label: "So'rov yuborilgan", color: COLORS.primaryLight, items: onLeave });
-    if (present.length > 0)
-      result.push({ key: 'present', label: 'Keldi', color: COLORS.present, items: present });
-    return result;
-  }, [empQ.data, attQ.data, leavesQ.data, today]);
+    // Always include all 4 sections in order: keldi, kechikkan, ruxsat, kelmagan
+    return SECTION_ORDER.map((key) => ({
+      key,
+      label: SECTION_META[key].label,
+      color: SECTION_META[key].color,
+      items: buckets[key],
+    }));
+  }, [empQ.data, attQ.data, leavesQ.data, selectedDate]);
 
   const totalEmp = empQ.data?.total ?? 0;
   const presentCount = sections.find((s) => s.key === 'present')?.items.length ?? 0;
-  const lateCount = sections.find((s) => s.key === 'late')?.items.length ?? 0;
+  const lateCount    = sections.find((s) => s.key === 'late')?.items.length ?? 0;
   const onLeaveCount = sections.find((s) => s.key === 'onLeave')?.items.length ?? 0;
 
   return (
     <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
-      {/* Header */}
+      {/* Header with date navigation */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Text style={styles.backArrow}>{'<'}</Text>
@@ -326,9 +331,14 @@ export default function AttendanceDetailScreen() {
           <Text style={styles.headerTitle}>Davomat</Text>
           <Text style={styles.headerDate}>{dateLabel}</Text>
         </View>
-        <TouchableOpacity style={styles.calBtn}>
-          <Text style={styles.calIcon}>📅</Text>
-        </TouchableOpacity>
+        <View style={styles.navBtns}>
+          <TouchableOpacity onPress={prevDay} style={styles.navBtn}>
+            <Text style={styles.navArrow}>‹</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={nextDay} style={[styles.navBtn, isToday && styles.navBtnDisabled]} disabled={isToday}>
+            <Text style={[styles.navArrow, isToday && styles.navArrowDisabled]}>›</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {isLoading ? (
@@ -337,7 +347,7 @@ export default function AttendanceDetailScreen() {
         </View>
       ) : (
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          {/* Donut chart card */}
+          {/* Donut chart */}
           <View style={styles.chartCard}>
             <DonutChart
               total={totalEmp}
@@ -347,9 +357,12 @@ export default function AttendanceDetailScreen() {
             />
           </View>
 
-          {/* Status sections */}
+          {/* 4 sections always rendered */}
           {sections.map((sec) => (
-            <StatusSection key={sec.key} section={sec} />
+            // Skip "absent" section if 0 and others have data (avoids redundant "kelmagan (0)" when all came)
+            (sec.key !== 'absent' || sec.items.length > 0) && (
+              <StatusSection key={sec.key} section={sec} />
+            )
           ))}
 
           <View style={{ height: 32 }} />
@@ -373,12 +386,18 @@ const styles = StyleSheet.create({
   headerCenter: { flex: 1, paddingLeft: 4 },
   headerTitle: { fontSize: 20, fontWeight: '700', color: COLORS.text },
   headerDate: { fontSize: 13, color: COLORS.textSecondary, marginTop: 1 },
-  calBtn: { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
-  calIcon: { fontSize: 20 },
+  navBtns: { flexDirection: 'row', gap: 2 },
+  navBtn: {
+    width: 34, height: 34, borderRadius: 8,
+    backgroundColor: COLORS.card, borderWidth: 1, borderColor: COLORS.cardBorder,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  navBtnDisabled: { opacity: 0.35 },
+  navArrow: { fontSize: 20, color: COLORS.text, fontWeight: '600', lineHeight: 24 },
+  navArrowDisabled: { color: COLORS.textMuted },
 
   content: { paddingHorizontal: 16, paddingTop: 16 },
 
-  // Chart
   chartCard: {
     backgroundColor: COLORS.card, borderRadius: 16,
     borderWidth: 1, borderColor: COLORS.cardBorder,
@@ -388,13 +407,12 @@ const styles = StyleSheet.create({
   chartWrapper: { position: 'relative', width: 180, height: 180, alignItems: 'center', justifyContent: 'center' },
   chartCenter: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
   chartTotal: { fontSize: 30, fontWeight: '800', color: COLORS.text },
-  legend: { flex: 1, paddingLeft: 20, gap: 14 },
+  legend: { flex: 1, paddingLeft: 20, gap: 12 },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   legendDot: { width: 13, height: 13, borderRadius: 7 },
   legendCount: { fontSize: 20, fontWeight: '700', color: COLORS.text },
   legendLabel: { fontSize: 12, color: COLORS.textSecondary, marginTop: 1 },
 
-  // Status section card
   statusCard: {
     backgroundColor: COLORS.card, borderRadius: 16,
     borderWidth: 1, borderColor: COLORS.cardBorder,
@@ -409,6 +427,10 @@ const styles = StyleSheet.create({
   statusDot: { width: 12, height: 12, borderRadius: 6 },
   statusTitle: { fontSize: 15, fontWeight: '700', color: COLORS.text },
   linkText: { fontSize: 13, color: COLORS.primaryLight, fontWeight: '600' },
+  emptySection: {
+    color: COLORS.textMuted, fontSize: 13,
+    paddingHorizontal: 16, paddingVertical: 12,
+  },
 
   empRow: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
@@ -422,7 +444,6 @@ const styles = StyleSheet.create({
   timeTag: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   timeTagArrow: { fontSize: 11, color: COLORS.textMuted },
   timeTagText: { fontSize: 13, fontWeight: '700', color: COLORS.text },
-
   leaveTag: {
     fontSize: 11, color: COLORS.primaryLight, fontWeight: '600',
     maxWidth: 90, textAlign: 'right',

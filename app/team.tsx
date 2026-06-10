@@ -10,10 +10,11 @@ import dayjs from 'dayjs';
 import Svg, { Circle, G } from 'react-native-svg';
 import { useAuthStore } from '../src/store/authStore';
 import { apiClient } from '../src/api/client';
-import { EMPLOYEES_LIST, EMPLOYEES_BIRTHDAYS, WORK_LEAVES } from '../src/api/urls';
+import { EMPLOYEES_BIRTHDAYS, WORK_LEAVES } from '../src/api/urls';
 import { COLORS } from '../src/constants';
 import { Employee, AttendanceEvent, WorkLeave, EmployeeBirthday } from '../src/types';
 import { fetchAllAttendanceEvents, attendanceQueryKey } from '../src/utils/attendance';
+import { fetchAllEmployees, employeesQueryKey } from '../src/utils/employees';
 
 interface EmployeePage { items: Employee[]; total: number }
 interface AttendancePage { items: AttendanceEvent[]; total: number }
@@ -119,15 +120,8 @@ export default function TeamScreen() {
   const results = useQueries({
     queries: [
       {
-        queryKey: ['team-employees', orgBranchId],
-        queryFn: () =>
-          apiClient.get<EmployeePage>(EMPLOYEES_LIST, {
-            params: {
-              size: 50,
-              page: 1,
-              ...(orgBranchId ? { organization_branch_id: orgBranchId } : {}),
-            },
-          }).then((r) => r.data),
+        queryKey: employeesQueryKey(orgBranchId),
+        queryFn: () => fetchAllEmployees(orgBranchId),
         staleTime: 5 * 60 * 1000,
       },
       {
@@ -168,21 +162,20 @@ export default function TeamScreen() {
   const birthdays: EmployeeBirthday[] = bDayQ.data ?? [];
 
   const attendanceStats = useMemo(() => {
-    // API already filters by orgBranchId — no need for empIdSet cross-reference
+    // Cross-reference with branch employees — attendance events have no branch filter
+    const empIdSet = new Set(employees.map((e) => e.id));
     const attendedIds = new Set<number>();
     const lateIds = new Set<number>();
     const firstEntry = new Map<number, string>();
 
     for (const ev of events) {
       const eid = ev.employee_id;
-      if (!eid) continue;
-      // Any turnstile event = employee came in; track earliest as entry time
+      if (!eid || !empIdSet.has(eid)) continue;
       const existing = firstEntry.get(eid);
       if (!existing || ev.happen_time < existing) firstEntry.set(eid, ev.happen_time);
       attendedIds.add(eid);
     }
 
-    // Late check uses employees list (needs working_hours_start)
     for (const emp of employees) {
       const entry = firstEntry.get(emp.id);
       if (entry && emp.working_hours_start) {
@@ -196,7 +189,7 @@ export default function TeamScreen() {
     const onLeaveIds = new Set<number>(
       workLeaves
         .filter((l) => {
-          if (!l.employee?.id) return false;
+          if (!l.employee?.id || !empIdSet.has(l.employee.id)) return false;
           return dayjs(l.start_date).isBefore(todayEnd) && dayjs(l.end_date).isAfter(todayStart);
         })
         .map((l) => l.employee!.id)
@@ -210,7 +203,9 @@ export default function TeamScreen() {
     };
   }, [events, employees, workLeaves, today, empTotal]);
 
-  const recentLeaves = workLeaves.slice(0, 3);
+  const recentLeaves = [...workLeaves]
+    .sort((a, b) => (b.created_at ?? String(b.id)).localeCompare(a.created_at ?? String(a.id)))
+    .slice(0, 3);
   const topEmployees = employees.slice(0, 3);
   const upcomingBirthdays = birthdays.slice(0, 3);
 
@@ -291,7 +286,7 @@ export default function TeamScreen() {
         </SectionCard>
 
         {/* So'rovlar card */}
-        <SectionCard icon="📋" title="So'rovlar" rightLabel="Barchasi" loading={leavesQ.isLoading}>
+        <SectionCard icon="📋" title="So'rovlar" rightLabel="Barchasi" onRightPress={() => router.push('/team-leaves')} loading={leavesQ.isLoading}>
           {recentLeaves.length === 0 ? (
             <Text style={styles.emptyText}>So'rovlar yo'q</Text>
           ) : (
@@ -323,7 +318,7 @@ export default function TeamScreen() {
         </SectionCard>
 
         {/* Xodimlar card */}
-        <SectionCard icon="👥" title="Xodimlar" rightLabel="Barchasi" loading={empQ.isLoading}>
+        <SectionCard icon="👥" title="Xodimlar" rightLabel="Barchasi" onRightPress={() => router.push('/employees-list')} loading={empQ.isLoading}>
           {topEmployees.length === 0 ? (
             <Text style={styles.emptyText}>Xodimlar yo'q</Text>
           ) : (
@@ -349,7 +344,7 @@ export default function TeamScreen() {
 
         {/* Tug'ilgan kunlar card */}
         {(bDayQ.isLoading || upcomingBirthdays.length > 0) && (
-          <SectionCard icon="🎂" title="Tug'ilgan kunlar" rightLabel="Barchasi" loading={bDayQ.isLoading}>
+          <SectionCard icon="🎂" title="Tug'ilgan kunlar" rightLabel="Barchasi" onRightPress={() => router.push('/birthdays')} loading={bDayQ.isLoading}>
             {upcomingBirthdays.map((emp, idx) => (
               <View
                 key={emp.id}
