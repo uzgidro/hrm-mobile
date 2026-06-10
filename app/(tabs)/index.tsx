@@ -9,7 +9,8 @@ import { router } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../src/store/authStore';
 import { apiClient } from '../../src/api/client';
-import { WORK_LEAVES, TURNSTILE_ATTENDANCE_EVENTS, EMPLOYEES_LIST, EMPLOYEES_BIRTHDAYS } from '../../src/api/urls';
+import { WORK_LEAVES, EMPLOYEES_LIST, EMPLOYEES_BIRTHDAYS, TURNSTILE_ATTENDANCE_EVENTS } from '../../src/api/urls';
+import { fetchAllAttendanceEvents, attendanceQueryKey } from '../../src/utils/attendance';
 import { COLORS } from '../../src/constants';
 import { WorkLeave, AttendanceEvent } from '../../src/types';
 
@@ -86,44 +87,35 @@ export default function HomeScreen() {
 
   useEffect(() => { loadOtherData(); }, [loadOtherData]);
 
-  // Jamoa sahifasi uchun background prefetch — foydalanuvchi "Jamoa" bosmasdan oldin yuklanadi
+  // Jamoa sahifasi uchun background prefetch
   useEffect(() => {
-    const orgBranchId = employee?.organization_branches?.[0]?.id;
-    if (!orgBranchId) return;
+    const orgBranchId =
+      employee?.organization_branches?.[0]?.id ??
+      employee?.department?.organization_branch_id;
     const today = dayjs().format('YYYY-MM-DD');
     queryClient.prefetchQuery({
       queryKey: ['team-employees', orgBranchId],
       queryFn: () =>
         apiClient.get(EMPLOYEES_LIST, {
-          params: { organization_branch_id: orgBranchId, size: 50, page: 1 },
+          params: { size: 50, page: 1, ...(orgBranchId ? { organization_branch_id: orgBranchId } : {}) },
         }).then((r) => r.data),
       staleTime: 5 * 60 * 1000,
     });
     queryClient.prefetchQuery({
-      queryKey: ['team-attendance', today, orgBranchId],
-      queryFn: async () => {
-        const baseParams = { date_from: today, date_to: today, size: 100, page: 1, organization_branch_id: orgBranchId };
-        const first = await apiClient.get(TURNSTILE_ATTENDANCE_EVENTS, { params: baseParams }).then((r) => r.data);
-        if (first.total <= 100) return first;
-        const totalPages = Math.ceil(first.total / 100);
-        const rest = await Promise.all(
-          Array.from({ length: totalPages - 1 }, (_, i) =>
-            apiClient.get(TURNSTILE_ATTENDANCE_EVENTS, { params: { ...baseParams, page: i + 2 } }).then((r) => r.data.items)
-          )
-        );
-        const all = [...first.items, ...rest.flat()];
-        return { items: all, total: all.length };
-      },
+      queryKey: attendanceQueryKey(today, orgBranchId),
+      queryFn: () => fetchAllAttendanceEvents(today, orgBranchId),
       staleTime: 3 * 60 * 1000,
     });
     queryClient.prefetchQuery({
       queryKey: ['team-birthdays', orgBranchId],
       queryFn: () =>
-        apiClient.get(EMPLOYEES_BIRTHDAYS, { params: { organization_branch_id: orgBranchId } }).then((r) => r.data),
+        apiClient.get(EMPLOYEES_BIRTHDAYS, {
+          params: orgBranchId ? { organization_branch_id: orgBranchId } : {},
+        }).then((r) => r.data),
       staleTime: 60 * 60 * 1000,
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [employee?.organization_branches?.[0]?.id]);
+  }, [employee?.id]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);

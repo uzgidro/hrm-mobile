@@ -10,9 +10,10 @@ import 'dayjs/locale/uz';
 import Svg, { Circle, G } from 'react-native-svg';
 import { useAuthStore } from '../src/store/authStore';
 import { apiClient } from '../src/api/client';
-import { EMPLOYEES_LIST, TURNSTILE_ATTENDANCE_EVENTS, WORK_LEAVES } from '../src/api/urls';
+import { EMPLOYEES_LIST, WORK_LEAVES } from '../src/api/urls';
 import { COLORS } from '../src/constants';
 import { Employee, AttendanceEvent, WorkLeave } from '../src/types';
+import { fetchAllAttendanceEvents, attendanceQueryKey } from '../src/utils/attendance';
 
 dayjs.locale('uz');
 
@@ -193,7 +194,9 @@ function StatusSection({ section }: { section: Section }) {
 
 export default function AttendanceDetailScreen() {
   const { user } = useAuthStore();
-  const orgBranchId = user?.employee?.organization_branches?.[0]?.id;
+  const orgBranchId =
+    user?.employee?.organization_branches?.[0]?.id ??
+    user?.employee?.department?.organization_branch_id;
   const today = dayjs().format('YYYY-MM-DD');
   const now = dayjs();
   const dateLabel = `${now.date()} ${MONTHS_UZ[now.month()]} ${now.year()} (${DAYS_UZ[now.day()]})`;
@@ -204,28 +207,18 @@ export default function AttendanceDetailScreen() {
         queryKey: ['team-employees', orgBranchId],
         queryFn: () =>
           apiClient.get<EmployeePage>(EMPLOYEES_LIST, {
-            params: { organization_branch_id: orgBranchId, size: 100, page: 1 },
+            params: {
+              size: 100,
+              page: 1,
+              ...(orgBranchId ? { organization_branch_id: orgBranchId } : {}),
+            },
           }).then((r) => r.data),
-        enabled: !!orgBranchId,
+        staleTime: 5 * 60 * 1000,
       },
       {
-        queryKey: ['team-attendance', today],
-        queryFn: async () => {
-          const all: AttendanceEvent[] = [];
-          let page = 1;
-          while (true) {
-            const res = await apiClient.get<AttendancePage>(TURNSTILE_ATTENDANCE_EVENTS, {
-              params: { date_from: today, date_to: today, size: 100, page },
-            });
-            const d = res.data;
-            all.push(...d.items);
-            if (all.length >= d.total || d.items.length < 100) break;
-            if (page >= 20) break;
-            page++;
-          }
-          return { items: all, total: all.length } as AttendancePage;
-        },
-        enabled: !!orgBranchId,
+        queryKey: attendanceQueryKey(today, orgBranchId),
+        queryFn: () => fetchAllAttendanceEvents(today, orgBranchId),
+        staleTime: 3 * 60 * 1000,
       },
       {
         queryKey: ['team-leaves', today],
@@ -234,7 +227,7 @@ export default function AttendanceDetailScreen() {
             const d = r.data as any;
             return (Array.isArray(d) ? d : (d.items ?? [])) as WorkLeave[];
           }),
-        enabled: !!orgBranchId,
+        staleTime: 2 * 60 * 1000,
       },
     ],
   });
@@ -247,16 +240,14 @@ export default function AttendanceDetailScreen() {
     const events: AttendanceEvent[] = attQ.data?.items ?? [];
     const workLeaves: WorkLeave[] = leavesQ.data ?? [];
 
-    // Set of employee IDs in this org branch (for frontend filtering)
+    // Build maps — API already filtered by orgBranchId
     const empIdSet = new Set(employees.map((e) => e.id));
-
-    // Build maps
     const firstEntry = new Map<number, string>();
     const lastExit = new Map<number, string>();
 
     for (const ev of events) {
       const eid = ev.employee?.id ?? ev.employee_id;
-      if (!eid || !empIdSet.has(eid)) continue;
+      if (!eid) continue;
       if (ev.direction_type === 'entrance') {
         const ex = firstEntry.get(eid);
         if (!ex || ev.happen_time < ex) firstEntry.set(eid, ev.happen_time);

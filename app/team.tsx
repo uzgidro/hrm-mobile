@@ -9,40 +9,14 @@ import dayjs from 'dayjs';
 import Svg, { Circle, G } from 'react-native-svg';
 import { useAuthStore } from '../src/store/authStore';
 import { apiClient } from '../src/api/client';
-import {
-  EMPLOYEES_LIST, EMPLOYEES_BIRTHDAYS,
-  TURNSTILE_ATTENDANCE_EVENTS, WORK_LEAVES,
-} from '../src/api/urls';
+import { EMPLOYEES_LIST, EMPLOYEES_BIRTHDAYS, WORK_LEAVES } from '../src/api/urls';
 import { COLORS } from '../src/constants';
 import { Employee, AttendanceEvent, WorkLeave, EmployeeBirthday } from '../src/types';
+import { fetchAllAttendanceEvents, attendanceQueryKey } from '../src/utils/attendance';
 
 interface EmployeePage { items: Employee[]; total: number }
 interface AttendancePage { items: AttendanceEvent[]; total: number }
 interface WorkLeavePage { items: WorkLeave[]; total: number }
-
-async function fetchAllAttendanceEvents(today: string, orgBranchId?: number): Promise<AttendancePage> {
-  const baseParams = {
-    date_from: today,
-    date_to: today,
-    size: 100,
-    page: 1,
-    ...(orgBranchId ? { organization_branch_id: orgBranchId } : {}),
-  };
-  const firstRes = await apiClient.get<AttendancePage>(TURNSTILE_ATTENDANCE_EVENTS, { params: baseParams });
-  const first = firstRes.data;
-  if (first.total <= 100) return first;
-
-  const totalPages = Math.ceil(first.total / 100);
-  const rest = await Promise.all(
-    Array.from({ length: totalPages - 1 }, (_, i) =>
-      apiClient.get<AttendancePage>(TURNSTILE_ATTENDANCE_EVENTS, {
-        params: { ...baseParams, page: i + 2 },
-      }).then((r) => r.data.items)
-    )
-  );
-  const all = [...first.items, ...rest.flat()];
-  return { items: all, total: all.length };
-}
 
 function EmployeeAvatar({ emp, size = 44 }: { emp: Employee | EmployeeBirthday; size?: number }) {
   const r = size / 2;
@@ -136,7 +110,9 @@ function DonutChart({ total, present, late, onLeave }: { total: number; present:
 
 export default function TeamScreen() {
   const { user } = useAuthStore();
-  const orgBranchId = user?.employee?.organization_branches?.[0]?.id;
+  const orgBranchId =
+    user?.employee?.organization_branches?.[0]?.id ??
+    user?.employee?.department?.organization_branch_id;
   const today = dayjs().format('YYYY-MM-DD');
 
   const results = useQueries({
@@ -154,7 +130,7 @@ export default function TeamScreen() {
         staleTime: 5 * 60 * 1000,
       },
       {
-        queryKey: ['team-attendance', today, orgBranchId],
+        queryKey: attendanceQueryKey(today, orgBranchId),
         queryFn: () => fetchAllAttendanceEvents(today, orgBranchId),
         staleTime: 3 * 60 * 1000,
       },
@@ -191,14 +167,14 @@ export default function TeamScreen() {
   const birthdays: EmployeeBirthday[] = bDayQ.data ?? [];
 
   const attendanceStats = useMemo(() => {
-    const empIdSet = new Set(employees.map((e) => e.id));
+    // API already filters by orgBranchId — no need for empIdSet cross-reference
     const attendedIds = new Set<number>();
     const lateIds = new Set<number>();
     const firstEntry = new Map<number, string>();
 
     for (const ev of events) {
       const eid = ev.employee?.id ?? ev.employee_id;
-      if (!eid || !empIdSet.has(eid)) continue;
+      if (!eid) continue;
       if (ev.direction_type === 'entrance') {
         const existing = firstEntry.get(eid);
         if (!existing || ev.happen_time < existing) firstEntry.set(eid, ev.happen_time);
@@ -206,6 +182,7 @@ export default function TeamScreen() {
       }
     }
 
+    // Late check uses employees list (needs working_hours_start)
     for (const emp of employees) {
       const entry = firstEntry.get(emp.id);
       if (entry && emp.working_hours_start) {
