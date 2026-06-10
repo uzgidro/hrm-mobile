@@ -20,10 +20,15 @@ interface EmployeePage { items: Employee[]; total: number }
 interface AttendancePage { items: AttendanceEvent[]; total: number }
 interface WorkLeavePage { items: WorkLeave[]; total: number }
 
-async function fetchAllAttendanceEvents(today: string): Promise<AttendancePage> {
-  const firstRes = await apiClient.get<AttendancePage>(TURNSTILE_ATTENDANCE_EVENTS, {
-    params: { date_from: today, date_to: today, size: 100, page: 1 },
-  });
+async function fetchAllAttendanceEvents(today: string, orgBranchId?: number): Promise<AttendancePage> {
+  const baseParams = {
+    date_from: today,
+    date_to: today,
+    size: 100,
+    page: 1,
+    ...(orgBranchId ? { organization_branch_id: orgBranchId } : {}),
+  };
+  const firstRes = await apiClient.get<AttendancePage>(TURNSTILE_ATTENDANCE_EVENTS, { params: baseParams });
   const first = firstRes.data;
   if (first.total <= 100) return first;
 
@@ -31,7 +36,7 @@ async function fetchAllAttendanceEvents(today: string): Promise<AttendancePage> 
   const rest = await Promise.all(
     Array.from({ length: totalPages - 1 }, (_, i) =>
       apiClient.get<AttendancePage>(TURNSTILE_ATTENDANCE_EVENTS, {
-        params: { date_from: today, date_to: today, size: 100, page: i + 2 },
+        params: { ...baseParams, page: i + 2 },
       }).then((r) => r.data.items)
     )
   );
@@ -146,10 +151,10 @@ export default function TeamScreen() {
         staleTime: 5 * 60 * 1000,
       },
       {
-        queryKey: ['team-attendance', today],
-        queryFn: () => fetchAllAttendanceEvents(today),
+        queryKey: ['team-attendance', today, orgBranchId],
+        queryFn: () => fetchAllAttendanceEvents(today, orgBranchId),
         enabled: !!orgBranchId,
-        staleTime: 60 * 1000,
+        staleTime: 3 * 60 * 1000,
       },
       {
         queryKey: ['team-leaves', today],
@@ -215,7 +220,7 @@ export default function TeamScreen() {
       workLeaves
         .filter((l) => {
           if (!l.employee?.id) return false;
-          return dayjs(l.start_time).isBefore(todayEnd) && dayjs(l.end_time).isAfter(todayStart);
+          return dayjs(l.start_date).isBefore(todayEnd) && dayjs(l.end_date).isAfter(todayStart);
         })
         .map((l) => l.employee!.id)
     );
@@ -320,11 +325,11 @@ export default function TeamScreen() {
                   <EmployeeAvatar emp={(leave.employee as Employee) || { id: 0, legal_name: '?' }} size={48} />
                   <View style={styles.leaveInfo}>
                     <Text style={styles.leaveCat} numberOfLines={1}>
-                      {leave.category?.name ?? "So'rov"}
+                      {leave.type ?? "So'rov"}
                     </Text>
                     <Text style={styles.leaveDate}>
-                      {dayjs(leave.start_time).format('D MMM YYYY, HH:mm')} –{' '}
-                      {dayjs(leave.end_time).format('HH:mm')}
+                      {dayjs(leave.start_date).format('D MMM YYYY, HH:mm')} –{' '}
+                      {dayjs(leave.end_date).format('HH:mm')}
                     </Text>
                     <Text style={styles.leaveEmployee} numberOfLines={1}>
                       {leave.employee?.legal_name ?? '—'}

@@ -13,7 +13,6 @@ export const TURNSTILE_ATTENDANCE_EVENTS = 'turnstile-attendance-events';
 // Work leaves (ruxsat so'rovlar)
 export const WORK_LEAVES = 'work-leaves';
 export const WORK_LEAVE_DETAIL = (id: number) => `work-leaves/${id}`;
-export const WORK_LEAVE_CATEGORIES = 'work-leave-categories';
 
 // News
 export const NEWS_POSTS = 'news-posts';

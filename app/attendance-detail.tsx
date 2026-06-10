@@ -271,10 +271,10 @@ export default function AttendanceDetailScreen() {
     const leaveMap = new Map<number, string>();
     for (const l of workLeaves) {
       if (!l.employee?.id) continue;
-      const s = dayjs(l.start_time);
-      const e = dayjs(l.end_time);
+      const s = dayjs(l.start_date);
+      const e = dayjs(l.end_date);
       if (s.isBefore(todayEnd) && e.isAfter(todayStart)) {
-        leaveMap.set(l.employee.id, l.category?.name ?? 'Ruxsat');
+        leaveMap.set(l.employee.id, l.type ?? 'Ruxsat');
       }
     }
 

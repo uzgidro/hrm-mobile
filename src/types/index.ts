@@ -42,19 +42,15 @@ export interface AttendanceEvent {
 
 export interface WorkLeave {
   id: number;
-  category?: { id: number; name: string };
-  start_time: string;
-  end_time: string;
+  type: string;
+  start_date: string;
+  end_date: string;
   status: 'pending' | 'approved' | 'rejected';
+  employee_id?: number;
   employee?: Employee;
-  comment?: string;
-  created_at: string;
-}
-
-export interface WorkLeaveCategory {
-  id: number;
-  name: string;
-  icon?: string;
+  description?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface NewsPost {

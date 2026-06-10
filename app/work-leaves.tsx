@@ -109,13 +109,13 @@ export default function WorkLeavesScreen() {
             filtered.map((leave) => {
               const st = STATUS_META[leave.status] ?? STATUS_META.pending;
               const sameDay =
-                dayjs(leave.start_time).format('DD.MM.YYYY') ===
-                dayjs(leave.end_time).format('DD.MM.YYYY');
+                dayjs(leave.start_date).format('DD.MM.YYYY') ===
+                dayjs(leave.end_date).format('DD.MM.YYYY');
               return (
                 <View key={leave.id} style={styles.card}>
                   <View style={styles.cardTop}>
                     <Text style={styles.categoryName} numberOfLines={1}>
-                      {leave.category?.name ?? "So'rov"}
+                      {leave.type ?? "So'rov"}
                     </Text>
                     <View style={[styles.badge, { backgroundColor: st.color + '22' }]}>
                       <Text style={[styles.badgeText, { color: st.color }]}>{st.label}</Text>
@@ -126,25 +126,27 @@ export default function WorkLeavesScreen() {
                     <Text style={styles.dateIcon}>📅</Text>
                     {sameDay ? (
                       <Text style={styles.dateText}>
-                        {dayjs(leave.start_time).format('DD.MM.YYYY')}{' '}
-                        {dayjs(leave.start_time).format('HH:mm')} – {dayjs(leave.end_time).format('HH:mm')}
+                        {dayjs(leave.start_date).format('DD.MM.YYYY')}{' '}
+                        {dayjs(leave.start_date).format('HH:mm')} – {dayjs(leave.end_date).format('HH:mm')}
                       </Text>
                     ) : (
                       <Text style={styles.dateText}>
-                        {dayjs(leave.start_time).format('DD.MM.YYYY HH:mm')}
+                        {dayjs(leave.start_date).format('DD.MM.YYYY HH:mm')}
                         {' – '}
-                        {dayjs(leave.end_time).format('DD.MM.YYYY HH:mm')}
+                        {dayjs(leave.end_date).format('DD.MM.YYYY HH:mm')}
                       </Text>
                     )}
                   </View>
 
-                  {leave.comment ? (
-                    <Text style={styles.comment} numberOfLines={2}>{leave.comment}</Text>
+                  {leave.description ? (
+                    <Text style={styles.comment} numberOfLines={2}>{leave.description}</Text>
                   ) : null}
 
-                  <Text style={styles.createdAt}>
-                    Yuborilgan: {dayjs(leave.created_at).format('DD.MM.YYYY HH:mm')}
-                  </Text>
+                  {leave.created_at ? (
+                    <Text style={styles.createdAt}>
+                      Yuborilgan: {dayjs(leave.created_at).format('DD.MM.YYYY HH:mm')}
+                    </Text>
+                  ) : null}
                 </View>
               );
             })

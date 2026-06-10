@@ -1,17 +1,17 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  RefreshControl, Modal, SafeAreaView, ActivityIndicator, Alert,
+  RefreshControl, SafeAreaView,
 } from 'react-native';
 import dayjs from 'dayjs';
 import 'dayjs/locale/uz';
 import { router } from 'expo-router';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../src/store/authStore';
 import { apiClient } from '../../src/api/client';
-import { WORK_LEAVES, WORK_LEAVE_CATEGORIES, TURNSTILE_ATTENDANCE_EVENTS } from '../../src/api/urls';
+import { WORK_LEAVES, TURNSTILE_ATTENDANCE_EVENTS, EMPLOYEES_LIST, EMPLOYEES_BIRTHDAYS } from '../../src/api/urls';
 import { COLORS } from '../../src/constants';
-import { WorkLeave, WorkLeaveCategory, AttendanceEvent } from '../../src/types';
+import { WorkLeave, AttendanceEvent } from '../../src/types';
 
 dayjs.locale('uz');
 
@@ -34,14 +34,10 @@ const MODULE_ITEMS = [
 export default function HomeScreen() {
   const { user } = useAuthStore();
   const employee = user?.employee;
+  const queryClient = useQueryClient();
 
   const [refreshing, setRefreshing] = useState(false);
   const [workLeaves, setWorkLeaves] = useState<WorkLeave[]>([]);
-  const [categories, setCategories] = useState<WorkLeaveCategory[]>([]);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showTypeSheet, setShowTypeSheet] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<WorkLeaveCategory | null>(null);
-  const [creating, setCreating] = useState(false);
 
   const now = dayjs();
   const dateStr = `${DAYS_UZ[now.day()]} - ${now.date()} ${MONTHS_UZ[now.month()]} ${now.year()}`;
@@ -78,19 +74,56 @@ export default function HomeScreen() {
   const loadOtherData = useCallback(async () => {
     if (!employee?.id) return;
     try {
-      const [leavesRes, catsRes] = await Promise.all([
-        apiClient.get(WORK_LEAVES, { params: { employee_id: employee.id, size: 5 } }),
-        apiClient.get(WORK_LEAVE_CATEGORIES),
-      ]);
+      const leavesRes = await apiClient.get(WORK_LEAVES, {
+        params: { employee_id: employee.id, size: 5 },
+      });
       const leaves = Array.isArray(leavesRes.data)
         ? leavesRes.data
         : (leavesRes.data?.items || []);
       setWorkLeaves(leaves.slice(0, 5));
-      setCategories(catsRes.data || []);
     } catch {}
   }, [employee?.id]);
 
   useEffect(() => { loadOtherData(); }, [loadOtherData]);
+
+  // Jamoa sahifasi uchun background prefetch — foydalanuvchi "Jamoa" bosmasdan oldin yuklanadi
+  useEffect(() => {
+    const orgBranchId = employee?.organization_branches?.[0]?.id;
+    if (!orgBranchId) return;
+    const today = dayjs().format('YYYY-MM-DD');
+    queryClient.prefetchQuery({
+      queryKey: ['team-employees', orgBranchId],
+      queryFn: () =>
+        apiClient.get(EMPLOYEES_LIST, {
+          params: { organization_branch_id: orgBranchId, size: 50, page: 1 },
+        }).then((r) => r.data),
+      staleTime: 5 * 60 * 1000,
+    });
+    queryClient.prefetchQuery({
+      queryKey: ['team-attendance', today, orgBranchId],
+      queryFn: async () => {
+        const baseParams = { date_from: today, date_to: today, size: 100, page: 1, organization_branch_id: orgBranchId };
+        const first = await apiClient.get(TURNSTILE_ATTENDANCE_EVENTS, { params: baseParams }).then((r) => r.data);
+        if (first.total <= 100) return first;
+        const totalPages = Math.ceil(first.total / 100);
+        const rest = await Promise.all(
+          Array.from({ length: totalPages - 1 }, (_, i) =>
+            apiClient.get(TURNSTILE_ATTENDANCE_EVENTS, { params: { ...baseParams, page: i + 2 } }).then((r) => r.data.items)
+          )
+        );
+        const all = [...first.items, ...rest.flat()];
+        return { items: all, total: all.length };
+      },
+      staleTime: 3 * 60 * 1000,
+    });
+    queryClient.prefetchQuery({
+      queryKey: ['team-birthdays', orgBranchId],
+      queryFn: () =>
+        apiClient.get(EMPLOYEES_BIRTHDAYS, { params: { organization_branch_id: orgBranchId } }).then((r) => r.data),
+      staleTime: 60 * 60 * 1000,
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [employee?.organization_branches?.[0]?.id]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -108,29 +141,6 @@ export default function HomeScreen() {
   const entry = entryEvents[0];
   const exit = exitEvents[exitEvents.length - 1];
 
-  const handleCreateRequest = async () => {
-    if (!selectedCategory) {
-      Alert.alert('Xato', "So'rov turini tanlang");
-      return;
-    }
-    setCreating(true);
-    try {
-      await apiClient.post(WORK_LEAVES, {
-        category_id: selectedCategory.id,
-        employee_id: employee?.id,
-        start_time: now.toISOString(),
-        end_time: now.endOf('day').toISOString(),
-      });
-      setShowCreateModal(false);
-      setSelectedCategory(null);
-      await Promise.all([refetchEvents(), loadOtherData()]);
-      Alert.alert('Muvaffaqiyat', "So'rov yuborildi");
-    } catch {
-      Alert.alert('Xato', "So'rov yuborishda xatolik");
-    } finally {
-      setCreating(false);
-    }
-  };
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -251,11 +261,11 @@ export default function HomeScreen() {
                 <View key={leave.id} style={styles.leaveRow}>
                   <View style={styles.leaveInfo}>
                     <Text style={styles.leaveName}>
-                      {leave.category?.name || "Ruxsat so'rovi"}
+                      {leave.type || "Ruxsat so'rovi"}
                     </Text>
                     <Text style={styles.leaveDate}>
-                      {dayjs(leave.start_time).format('D MMM. YYYY, HH:mm')}-
-                      {dayjs(leave.end_time).format('HH:mm')}
+                      {dayjs(leave.start_date).format('D MMM. YYYY, HH:mm')}-
+                      {dayjs(leave.end_date).format('HH:mm')}
                     </Text>
                     <Text style={styles.leaveEmployee}>
                       {leave.employee?.legal_name || employee?.legal_name || ''}
@@ -277,68 +287,6 @@ export default function HomeScreen() {
         </View>
       </ScrollView>
 
-      {/* So'rov turi bottom sheet */}
-      <Modal visible={showTypeSheet} transparent animationType="slide">
-        <TouchableOpacity
-          style={styles.overlay}
-          activeOpacity={1}
-          onPress={() => setShowTypeSheet(false)}
-        />
-        <View style={styles.bottomSheet}>
-          <Text style={styles.sheetTitle}>So'rov turini tanlang</Text>
-          {categories.length === 0 ? (
-            <Text style={styles.emptyText}>Yuklanmoqda...</Text>
-          ) : (
-            categories.map((cat) => (
-              <TouchableOpacity
-                key={cat.id}
-                style={styles.sheetItem}
-                onPress={() => {
-                  setSelectedCategory(cat);
-                  setShowTypeSheet(false);
-                  setShowCreateModal(true);
-                }}
-              >
-                <Text style={styles.sheetItemEmoji}>🏃</Text>
-                <Text style={styles.sheetItemText}>{cat.name}</Text>
-              </TouchableOpacity>
-            ))
-          )}
-          <TouchableOpacity style={styles.sheetCloseBtn} onPress={() => setShowTypeSheet(false)}>
-            <Text style={styles.sheetCloseBtnText}>Yopish</Text>
-          </TouchableOpacity>
-        </View>
-      </Modal>
-
-      {/* So'rov yaratish confirm modal */}
-      <Modal visible={showCreateModal} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={styles.confirmModal}>
-            <Text style={styles.confirmTitle}>So'rov yuborish</Text>
-            <Text style={styles.confirmText}>
-              {selectedCategory?.name} bo'yicha so'rov yuborilsinmi?
-            </Text>
-            <View style={styles.confirmBtns}>
-              <TouchableOpacity
-                style={styles.cancelBtn}
-                onPress={() => { setShowCreateModal(false); setSelectedCategory(null); }}
-              >
-                <Text style={styles.cancelBtnText}>Bekor</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.confirmBtn}
-                onPress={handleCreateRequest}
-                disabled={creating}
-              >
-                {creating
-                  ? <ActivityIndicator color="#fff" size="small" />
-                  : <Text style={styles.confirmBtnText}>Yuborish</Text>
-                }
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
     </SafeAreaView>
   );
 }
@@ -398,25 +346,4 @@ const styles = StyleSheet.create({
   createBtn: { backgroundColor: COLORS.primary, borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginTop: 14 },
   createBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
 
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' },
-  bottomSheet: {
-    backgroundColor: COLORS.card, borderTopLeftRadius: 24, borderTopRightRadius: 24,
-    padding: 24, paddingBottom: 40, gap: 4,
-  },
-  sheetTitle: { fontSize: 17, fontWeight: '700', color: COLORS.text, marginBottom: 12 },
-  sheetItem: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: COLORS.cardBorder },
-  sheetItemEmoji: { fontSize: 22 },
-  sheetItemText: { fontSize: 15, color: COLORS.text, fontWeight: '500' },
-  sheetCloseBtn: { backgroundColor: COLORS.primary, borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginTop: 16 },
-  sheetCloseBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
-
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 24 },
-  confirmModal: { backgroundColor: COLORS.card, borderRadius: 20, padding: 24, width: '100%', gap: 12 },
-  confirmTitle: { fontSize: 17, fontWeight: '700', color: COLORS.text },
-  confirmText: { fontSize: 14, color: COLORS.textSecondary, lineHeight: 20 },
-  confirmBtns: { flexDirection: 'row', gap: 12, marginTop: 8 },
-  cancelBtn: { flex: 1, backgroundColor: COLORS.cardBorder, borderRadius: 12, paddingVertical: 13, alignItems: 'center' },
-  cancelBtnText: { color: COLORS.textSecondary, fontSize: 15, fontWeight: '600' },
-  confirmBtn: { flex: 1, backgroundColor: COLORS.primary, borderRadius: 12, paddingVertical: 13, alignItems: 'center' },
-  confirmBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
 });
