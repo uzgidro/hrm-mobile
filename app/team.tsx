@@ -145,15 +145,17 @@ export default function TeamScreen() {
         queryKey: ['team-employees', orgBranchId],
         queryFn: () =>
           apiClient.get<EmployeePage>(EMPLOYEES_LIST, {
-            params: { organization_branch_id: orgBranchId, size: 50, page: 1 },
+            params: {
+              size: 50,
+              page: 1,
+              ...(orgBranchId ? { organization_branch_id: orgBranchId } : {}),
+            },
           }).then((r) => r.data),
-        enabled: !!orgBranchId,
         staleTime: 5 * 60 * 1000,
       },
       {
         queryKey: ['team-attendance', today, orgBranchId],
         queryFn: () => fetchAllAttendanceEvents(today, orgBranchId),
-        enabled: !!orgBranchId,
         staleTime: 3 * 60 * 1000,
       },
       {
@@ -165,16 +167,14 @@ export default function TeamScreen() {
             const d = r.data as any;
             return Array.isArray(d) ? d : (d.items ?? []) as WorkLeave[];
           }),
-        enabled: !!orgBranchId,
         staleTime: 2 * 60 * 1000,
       },
       {
         queryKey: ['team-birthdays', orgBranchId],
         queryFn: () =>
           apiClient.get<EmployeeBirthday[]>(EMPLOYEES_BIRTHDAYS, {
-            params: { organization_branch_id: orgBranchId },
+            params: orgBranchId ? { organization_branch_id: orgBranchId } : {},
           }).then((r) => r.data),
-        enabled: !!orgBranchId,
         staleTime: 60 * 60 * 1000,
       },
     ],
@@ -261,7 +261,7 @@ export default function TeamScreen() {
         }
       >
         {/* Davomat card */}
-        <SectionCard icon="📊" title="Davomat" loading={empQ.isPending || attQ.isPending}>
+        <SectionCard icon="📊" title="Davomat" loading={empQ.isLoading || attQ.isLoading}>
           <View style={styles.chartRow}>
             <DonutChart
               total={attendanceStats.total}
@@ -314,7 +314,7 @@ export default function TeamScreen() {
         </SectionCard>
 
         {/* So'rovlar card */}
-        <SectionCard icon="📋" title="So'rovlar" rightLabel="Barchasi" loading={leavesQ.isPending}>
+        <SectionCard icon="📋" title="So'rovlar" rightLabel="Barchasi" loading={leavesQ.isLoading}>
           {recentLeaves.length === 0 ? (
             <Text style={styles.emptyText}>So'rovlar yo'q</Text>
           ) : (
@@ -346,7 +346,7 @@ export default function TeamScreen() {
         </SectionCard>
 
         {/* Xodimlar card */}
-        <SectionCard icon="👥" title="Xodimlar" rightLabel="Barchasi" loading={empQ.isPending}>
+        <SectionCard icon="👥" title="Xodimlar" rightLabel="Barchasi" loading={empQ.isLoading}>
           {topEmployees.length === 0 ? (
             <Text style={styles.emptyText}>Xodimlar yo'q</Text>
           ) : (
@@ -371,8 +371,8 @@ export default function TeamScreen() {
         </SectionCard>
 
         {/* Tug'ilgan kunlar card */}
-        {(bDayQ.isPending || upcomingBirthdays.length > 0) && (
-          <SectionCard icon="🎂" title="Tug'ilgan kunlar" rightLabel="Barchasi" loading={bDayQ.isPending}>
+        {(bDayQ.isLoading || upcomingBirthdays.length > 0) && (
+          <SectionCard icon="🎂" title="Tug'ilgan kunlar" rightLabel="Barchasi" loading={bDayQ.isLoading}>
             {upcomingBirthdays.map((emp, idx) => (
               <View
                 key={emp.id}
