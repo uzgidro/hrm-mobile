@@ -22,6 +22,7 @@ export interface Employee {
   is_multi_org_user?: boolean;
   multi_org_employee_role?: string;
   organization_branches?: OrganizationBranch[];
+  supervisor?: Employee;
 }
 
 export interface OrganizationBranch {
@@ -92,7 +93,6 @@ export interface Education {
 }
 
 export interface EmployeeFull extends Employee {
-  birth_date?: string;
   gender?: number;
   nationality?: string;
   maritial_status?: string;
@@ -105,7 +105,6 @@ export interface EmployeeFull extends Employee {
   taxpayer_identification_number?: string;
   individual_accumulative_pension_account_number?: string;
   job_acceptance_date?: string;
-  supervisor?: Employee;
   work_experiences?: WorkExperience[];
   educations?: Education[];
 }

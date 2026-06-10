@@ -2,14 +2,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useCallback } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
-  TouchableOpacity, TextInput, ActivityIndicator, Alert, Modal, FlatList, Image,
+  TouchableOpacity, TextInput, ActivityIndicator, Alert, Modal,
 } from 'react-native';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import dayjs, { Dayjs } from 'dayjs';
 import { useAuthStore } from '../src/store/authStore';
 import { apiClient } from '../src/api/client';
-import { WORK_LEAVES, EMPLOYEES_LIST } from '../src/api/urls';
+import { WORK_LEAVES, EMPLOYEE_DETAIL } from '../src/api/urls';
 import { COLORS } from '../src/constants';
 import { Employee } from '../src/types';
 
@@ -211,112 +211,12 @@ function TypeSheet({
   );
 }
 
-// ─── SignerPickerModal ───────────────────────────────────────────────────────
-
-interface SignerPickerProps {
-  visible: boolean;
-  title: string;
-  queryParams: Record<string, unknown>;
-  selected: Employee | null;
-  onSelect: (emp: Employee) => void;
-  onClose: () => void;
-}
-
-function SignerPickerModal({ visible, title, queryParams, selected, onSelect, onClose }: SignerPickerProps) {
-  const [search, setSearch] = useState('');
-
-  const { data: employees = [], isLoading } = useQuery<Employee[]>({
-    queryKey: ['signer-employees', queryParams],
-    queryFn: () =>
-      apiClient.get(EMPLOYEES_LIST, {
-        params: { ...queryParams, size: 100, page: 1 },
-      }).then((r) => {
-        const d = r.data;
-        return Array.isArray(d) ? d : (d?.items ?? []);
-      }),
-    enabled: visible,
-    staleTime: 10 * 60 * 1000,
-  });
-
-  const filtered = search.trim()
-    ? employees.filter((e) => e.legal_name?.toLowerCase().includes(search.trim().toLowerCase()))
-    : employees;
-
-  return (
-    <Modal visible={visible} transparent animationType="slide">
-      <TouchableOpacity style={sp.overlay} activeOpacity={1} onPress={onClose} />
-      <View style={sp.sheet}>
-        <View style={sp.handle} />
-        <Text style={sp.title}>{title}</Text>
-
-        <View style={sp.searchRow}>
-          <TextInput
-            style={sp.searchInput}
-            placeholder="Ism bo'yicha qidirish..."
-            placeholderTextColor={COLORS.textMuted}
-            value={search}
-            onChangeText={setSearch}
-            autoCapitalize="none"
-          />
-        </View>
-
-        {isLoading ? (
-          <View style={sp.center}>
-            <ActivityIndicator color={COLORS.primaryLight} />
-          </View>
-        ) : filtered.length === 0 ? (
-          <View style={sp.center}>
-            <Text style={sp.emptyText}>Xodimlar topilmadi</Text>
-          </View>
-        ) : (
-          <FlatList
-            data={filtered}
-            keyExtractor={(e) => String(e.id)}
-            style={sp.list}
-            keyboardShouldPersistTaps="handled"
-            renderItem={({ item: emp }) => {
-              const isSel = selected?.id === emp.id;
-              return (
-                <TouchableOpacity
-                  style={[sp.empRow, isSel && sp.empRowActive]}
-                  onPress={() => { onSelect(emp); onClose(); }}
-                  activeOpacity={0.7}
-                >
-                  {emp.photo_path ? (
-                    <Image source={{ uri: emp.photo_path }} style={sp.avatar} />
-                  ) : (
-                    <View style={sp.avatarFallback}>
-                      <Text style={sp.avatarText}>{(emp.legal_name || 'X').charAt(0)}</Text>
-                    </View>
-                  )}
-                  <View style={sp.empInfo}>
-                    <Text style={[sp.empName, isSel && sp.empNameActive]} numberOfLines={1}>
-                      {emp.legal_name}
-                    </Text>
-                    <Text style={sp.empSub} numberOfLines={1}>
-                      {emp.job_position?.name ?? emp.department?.name ?? '—'}
-                    </Text>
-                  </View>
-                  {isSel && <Text style={sp.check}>✓</Text>}
-                </TouchableOpacity>
-              );
-            }}
-          />
-        )}
-      </View>
-    </Modal>
-  );
-}
-
 // ─── Main Screen ─────────────────────────────────────────────────────────────
 
 export default function CreateLeaveScreen() {
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
-
-  const orgBranchId =
-    user?.employee?.organization_branches?.[0]?.id ??
-    user?.employee?.department?.organization_branch_id;
+  const employeeId = user?.employee?.id;
 
   const now = dayjs();
   const [leaveType, setLeaveType] = useState(LEAVE_TYPES[0]);
@@ -327,19 +227,17 @@ export default function CreateLeaveScreen() {
   const [showTypeSheet, setShowTypeSheet] = useState(false);
   const [activePicker, setActivePicker] = useState<'start' | 'end' | null>(null);
 
-  // Signers
-  const [deputySigner, setDeputySigner] = useState<Employee | null>(null);
-  const [hrSigner, setHrSigner] = useState<Employee | null>(null);
-  const [activeSigner, setActiveSigner] = useState<'deputy' | 'hr' | null>(null);
+  // Xodimning to'liq ma'lumotlarini olish (supervisor uchun)
+  const { data: employeeFull, isLoading: supervisorLoading } = useQuery<Employee>({
+    queryKey: ['employee-full', employeeId],
+    queryFn: () => apiClient.get<Employee>(EMPLOYEE_DETAIL(employeeId!)).then((r) => r.data),
+    enabled: !!employeeId,
+    staleTime: 10 * 60 * 1000,
+  });
 
-  const deputyParams: Record<string, unknown> = {
-    is_head_department: true,
-    ...(orgBranchId ? { organization_branch_id: orgBranchId } : {}),
-  };
-  const hrParams: Record<string, unknown> = {
-    include_multi_org: true,
-    multi_org_employee_role: ['hr'],
-  };
+  // Auth/me dan ham supervisor bo'lishi mumkin (fallback)
+  const supervisor: Employee | undefined =
+    employeeFull?.supervisor ?? user?.employee?.supervisor;
 
   const handleSubmit = useCallback(async () => {
     if (endDate.isBefore(startDate) || endDate.isSame(startDate)) {
@@ -348,14 +246,16 @@ export default function CreateLeaveScreen() {
     }
     setSubmitting(true);
     try {
-      const signerIds = [deputySigner?.id, hrSigner?.id].filter(Boolean) as number[];
-      await apiClient.post(WORK_LEAVES, {
+      const payload: Record<string, unknown> = {
         type: leaveType,
         start_date: startDate.toISOString(),
         end_date: endDate.toISOString(),
         description: description.trim() || undefined,
-        ...(signerIds.length > 0 ? { assigned_signer_ids: signerIds } : {}),
-      });
+      };
+      if (supervisor?.id) {
+        payload.assigned_signer_ids = [supervisor.id];
+      }
+      await apiClient.post(WORK_LEAVES, payload);
       queryClient.invalidateQueries({ queryKey: ['work-leaves'] });
       Alert.alert("Muvaffaqiyat", "So'rov yuborildi", [
         { text: 'OK', onPress: () => router.back() },
@@ -365,7 +265,7 @@ export default function CreateLeaveScreen() {
     } finally {
       setSubmitting(false);
     }
-  }, [leaveType, startDate, endDate, description, deputySigner, hrSigner, queryClient]);
+  }, [leaveType, startDate, endDate, description, supervisor, queryClient]);
 
   const diffMin = endDate.diff(startDate, 'minute');
   const durationText = (() => {
@@ -425,59 +325,35 @@ export default function CreateLeaveScreen() {
           <Text style={s.errorText}>Tugash vaqti boshlanishdan keyin bo'lishi kerak</Text>
         )}
 
-        {/* Deputy signer */}
-        <Text style={s.label}>Zam (Mas'ul o'rinbosar)</Text>
-        <TouchableOpacity
-          style={s.selector}
-          onPress={() => setActiveSigner('deputy')}
-          activeOpacity={0.7}
-        >
-          {deputySigner ? (
-            <View style={s.signerSelected}>
-              <Text style={s.signerName} numberOfLines={1}>{deputySigner.legal_name}</Text>
-              <Text style={s.signerSub} numberOfLines={1}>
-                {deputySigner.job_position?.name ?? deputySigner.department?.name ?? ''}
-              </Text>
-            </View>
+        {/* Supervisor — read-only */}
+        <Text style={s.label}>Rahbar (Tasdiqlovchi)</Text>
+        <View style={s.supervisorCard}>
+          {supervisorLoading ? (
+            <ActivityIndicator size="small" color={COLORS.primaryLight} />
+          ) : supervisor ? (
+            <>
+              <View style={s.supervisorAvatar}>
+                <Text style={s.supervisorAvatarText}>
+                  {(supervisor.legal_name || 'X').charAt(0)}
+                </Text>
+              </View>
+              <View style={s.supervisorInfo}>
+                <Text style={s.supervisorName}>{supervisor.legal_name}</Text>
+                <Text style={s.supervisorSub} numberOfLines={1}>
+                  {supervisor.job_position?.name ?? supervisor.department?.name ?? '—'}
+                </Text>
+              </View>
+              <Text style={s.lockIcon}>🔒</Text>
+            </>
           ) : (
-            <Text style={[s.selectorText, { color: COLORS.textMuted }]}>Tanlang...</Text>
+            <Text style={s.noSupervisorText}>Rahbar biriktirilmagan</Text>
           )}
-          <View style={s.selectorRight}>
-            {deputySigner && (
-              <TouchableOpacity onPress={() => setDeputySigner(null)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                <Text style={s.clearBtn}>✕</Text>
-              </TouchableOpacity>
-            )}
-            <Text style={s.selectorArrow}>›</Text>
-          </View>
-        </TouchableOpacity>
-
-        {/* HR signer */}
-        <Text style={s.label}>Inson resurslarini boshqarish</Text>
-        <TouchableOpacity
-          style={s.selector}
-          onPress={() => setActiveSigner('hr')}
-          activeOpacity={0.7}
-        >
-          {hrSigner ? (
-            <View style={s.signerSelected}>
-              <Text style={s.signerName} numberOfLines={1}>{hrSigner.legal_name}</Text>
-              <Text style={s.signerSub} numberOfLines={1}>
-                {hrSigner.job_position?.name ?? hrSigner.department?.name ?? ''}
-              </Text>
-            </View>
-          ) : (
-            <Text style={[s.selectorText, { color: COLORS.textMuted }]}>Tanlang...</Text>
-          )}
-          <View style={s.selectorRight}>
-            {hrSigner && (
-              <TouchableOpacity onPress={() => setHrSigner(null)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                <Text style={s.clearBtn}>✕</Text>
-              </TouchableOpacity>
-            )}
-            <Text style={s.selectorArrow}>›</Text>
-          </View>
-        </TouchableOpacity>
+        </View>
+        {!supervisorLoading && !supervisor && (
+          <Text style={s.supervisorHint}>
+            So'rov HR bo'limiga to'g'ridan-to'g'ri yuboriladi
+          </Text>
+        )}
 
         {/* Description */}
         <Text style={s.label}>Izoh (ixtiyoriy)</Text>
@@ -528,22 +404,6 @@ export default function CreateLeaveScreen() {
         onConfirm={setEndDate}
         onClose={() => setActivePicker(null)}
       />
-      <SignerPickerModal
-        visible={activeSigner === 'deputy'}
-        title="Zam (Mas'ul o'rinbosar)"
-        queryParams={deputyParams}
-        selected={deputySigner}
-        onSelect={setDeputySigner}
-        onClose={() => setActiveSigner(null)}
-      />
-      <SignerPickerModal
-        visible={activeSigner === 'hr'}
-        title="Inson resurslarini boshqarish"
-        queryParams={hrParams}
-        selected={hrSigner}
-        onSelect={setHrSigner}
-        onClose={() => setActiveSigner(null)}
-      />
     </SafeAreaView>
   );
 }
@@ -574,6 +434,26 @@ const s = StyleSheet.create({
   durationIcon: { fontSize: 13 },
   durationText: { fontSize: 13, color: COLORS.primaryLight, fontWeight: '600' },
   errorText: { fontSize: 12, color: '#E5536A', marginTop: 6, paddingHorizontal: 2 },
+  supervisorCard: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: COLORS.card, borderRadius: 12,
+    borderWidth: 1, borderColor: COLORS.cardBorder,
+    paddingHorizontal: 14, paddingVertical: 14,
+    minHeight: 56,
+  },
+  supervisorAvatar: {
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: COLORS.primary + '33',
+    alignItems: 'center', justifyContent: 'center',
+    flexShrink: 0,
+  },
+  supervisorAvatarText: { fontSize: 17, fontWeight: '700', color: COLORS.primaryLight },
+  supervisorInfo: { flex: 1 },
+  supervisorName: { fontSize: 14, fontWeight: '600', color: COLORS.text },
+  supervisorSub: { fontSize: 12, color: COLORS.textMuted, marginTop: 2 },
+  lockIcon: { fontSize: 16 },
+  noSupervisorText: { flex: 1, fontSize: 14, color: COLORS.textMuted, fontStyle: 'italic' },
+  supervisorHint: { fontSize: 12, color: COLORS.textMuted, marginTop: 6, paddingHorizontal: 2, fontStyle: 'italic' },
   textarea: {
     backgroundColor: COLORS.card, borderRadius: 12,
     borderWidth: 1, borderColor: COLORS.cardBorder,
@@ -586,11 +466,6 @@ const s = StyleSheet.create({
   },
   submitBtnDisabled: { opacity: 0.5 },
   submitBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  signerSelected: { flex: 1 },
-  signerName: { fontSize: 14, color: COLORS.text, fontWeight: '600' },
-  signerSub: { fontSize: 12, color: COLORS.textMuted, marginTop: 2 },
-  selectorRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  clearBtn: { fontSize: 14, color: COLORS.textMuted, paddingHorizontal: 4 },
 });
 
 const dp = StyleSheet.create({
@@ -653,44 +528,4 @@ const ts = StyleSheet.create({
   customInput: { flex: 1, backgroundColor: COLORS.bg, borderRadius: 10, borderWidth: 1, borderColor: COLORS.cardBorder, paddingHorizontal: 12, paddingVertical: 10, color: COLORS.text, fontSize: 14 },
   customBtn: { backgroundColor: COLORS.primary, borderRadius: 10, paddingHorizontal: 16, paddingVertical: 11 },
   customBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
-});
-
-const sp = StyleSheet.create({
-  overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)' },
-  sheet: {
-    position: 'absolute', left: 0, right: 0, bottom: 0,
-    backgroundColor: COLORS.card,
-    borderTopLeftRadius: 24, borderTopRightRadius: 24,
-    paddingHorizontal: 16, paddingBottom: 32,
-    maxHeight: '80%',
-  },
-  handle: { width: 40, height: 4, backgroundColor: COLORS.cardBorder, borderRadius: 2, alignSelf: 'center', marginTop: 12, marginBottom: 12 },
-  title: { fontSize: 17, fontWeight: '700', color: COLORS.text, marginBottom: 12 },
-  searchRow: { marginBottom: 12 },
-  searchInput: {
-    backgroundColor: COLORS.bg, borderRadius: 10,
-    borderWidth: 1, borderColor: COLORS.cardBorder,
-    paddingHorizontal: 12, paddingVertical: 10,
-    color: COLORS.text, fontSize: 14,
-  },
-  center: { alignItems: 'center', paddingVertical: 32 },
-  emptyText: { color: COLORS.textMuted, fontSize: 14 },
-  list: { maxHeight: 400 },
-  empRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: COLORS.cardBorder,
-  },
-  empRowActive: { },
-  avatar: { width: 44, height: 44, borderRadius: 22 },
-  avatarFallback: {
-    width: 44, height: 44, borderRadius: 22,
-    backgroundColor: COLORS.primary + '33',
-    alignItems: 'center', justifyContent: 'center',
-  },
-  avatarText: { fontSize: 17, fontWeight: '700', color: COLORS.primaryLight },
-  empInfo: { flex: 1 },
-  empName: { fontSize: 14, fontWeight: '600', color: COLORS.text },
-  empNameActive: { color: COLORS.primaryLight },
-  empSub: { fontSize: 12, color: COLORS.textMuted, marginTop: 2 },
-  check: { fontSize: 16, color: COLORS.primaryLight, fontWeight: '700' },
 });
