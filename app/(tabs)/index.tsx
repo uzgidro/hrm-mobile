@@ -237,7 +237,7 @@ export default function HomeScreen() {
               <Text style={styles.cardIcon}>📋</Text>
               <Text style={styles.cardTitle}>So'rovlar</Text>
             </View>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => router.push('/work-leaves')}>
               <Text style={styles.linkText}>Barchasi</Text>
             </TouchableOpacity>
           </View>
@@ -269,7 +269,7 @@ export default function HomeScreen() {
 
           <TouchableOpacity
             style={styles.createBtn}
-            onPress={() => setShowTypeSheet(true)}
+            onPress={() => router.push('/create-leave')}
             activeOpacity={0.85}
           >
             <Text style={styles.createBtnText}>So'rov yaratish</Text>

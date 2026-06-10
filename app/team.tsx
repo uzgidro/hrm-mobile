@@ -335,7 +335,7 @@ export default function TeamScreen() {
               );
             })
           )}
-          <TouchableOpacity style={styles.primaryBtn}>
+          <TouchableOpacity style={styles.primaryBtn} onPress={() => router.push('/create-leave')}>
             <Text style={styles.primaryBtnText}>So'rov yaratish</Text>
           </TouchableOpacity>
         </SectionCard>
