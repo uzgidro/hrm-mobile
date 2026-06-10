@@ -1,7 +1,8 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useCallback } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
-  StyleSheet, SafeAreaView, RefreshControl,
+  StyleSheet, RefreshControl,
 } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import dayjs from 'dayjs';
@@ -153,7 +154,7 @@ export default function EmployeeCalendarScreen() {
   const displayName = employee?.legal_name ?? params.name ?? '—';
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>

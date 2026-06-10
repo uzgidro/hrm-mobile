@@ -32,12 +32,12 @@ export interface OrganizationBranch {
 export interface AttendanceEvent {
   id: number;
   happen_time: string;
-  direction_type: 'entrance' | 'exit';
-  check_in_out_type?: number;
-  employee_id?: number;
-  employee?: Employee;
+  direction_type?: string | null;
+  check_in_out_type?: number | null;
+  employee_id?: number | null;
   turnstile?: { acs_dev_name?: string; name?: string };
   is_granted?: boolean;
+  user_type?: string | null;
 }
 
 export interface WorkLeave {

@@ -1,7 +1,8 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  RefreshControl, SafeAreaView,
+  RefreshControl,
 } from 'react-native';
 import dayjs from 'dayjs';
 import 'dayjs/locale/uz';
@@ -123,19 +124,16 @@ export default function HomeScreen() {
     setRefreshing(false);
   }, [refetchEvents, loadOtherData]);
 
-  // Birinchi kirish va oxirgi chiqish
-  const entryEvents = todayEvents
-    .filter((e) => e.direction_type === 'entrance')
-    .sort((a, b) => dayjs(a.happen_time).diff(dayjs(b.happen_time)));
-  const exitEvents = todayEvents
-    .filter((e) => e.direction_type === 'exit')
-    .sort((a, b) => dayjs(a.happen_time).diff(dayjs(b.happen_time)));
-  const entry = entryEvents[0];
-  const exit = exitEvents[exitEvents.length - 1];
+  // Birinchi kirish va oxirgi chiqish — vaqt bo'yicha (direction_type null bo'lishi mumkin)
+  const sortedToday = [...todayEvents].sort((a, b) =>
+    dayjs(a.happen_time).diff(dayjs(b.happen_time))
+  );
+  const entry = sortedToday[0];
+  const exit = sortedToday.length > 1 ? sortedToday[sortedToday.length - 1] : undefined;
 
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={["top"]}>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}
@@ -201,7 +199,7 @@ export default function HomeScreen() {
               <View key={ev.id} style={styles.eventRow}>
                 <Text style={styles.eventTime}>{dayjs(ev.happen_time).format('HH:mm')}</Text>
                 <Text style={styles.eventDir}>
-                  {ev.direction_type === 'entrance' ? '➡️ Kirish' : '⬅️ Chiqish'}
+                  {ev.direction_type === 'exit' ? '⬅️ Chiqish' : '➡️ Kirish'}
                 </Text>
                 <Text style={styles.eventTurnstile}>{ev.turnstile?.acs_dev_name || ''}</Text>
               </View>

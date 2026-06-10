@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useState, useMemo } from 'react';
 import {
-  View, Text, ScrollView, StyleSheet, SafeAreaView,
+  View, Text, ScrollView, StyleSheet,
   TouchableOpacity, ActivityIndicator, RefreshControl,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
@@ -45,10 +46,15 @@ export default function WorkLeavesScreen() {
     staleTime: 2 * 60 * 1000,
   });
 
-  const filtered = filter === 'all' ? leaves : leaves.filter((l) => l.status === filter);
+  const filtered = useMemo(() => {
+    const f = filter === 'all' ? leaves : leaves.filter((l) => l.status === filter);
+    return [...f].sort((a, b) =>
+      (b.created_at ?? String(b.id)).localeCompare(a.created_at ?? String(a.id))
+    );
+  }, [leaves, filter]);
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>

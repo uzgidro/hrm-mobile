@@ -1,6 +1,7 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEffect, useState } from 'react';
 import {
-  View, Text, ScrollView, StyleSheet, SafeAreaView,
+  View, Text, ScrollView, StyleSheet,
   TouchableOpacity, Image, ActivityIndicator,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -69,7 +70,7 @@ export default function ProfileDetailScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
         <View style={styles.loadingWrapper}>
           <ActivityIndicator color={COLORS.primaryLight} size="large" />
         </View>
@@ -79,7 +80,7 @@ export default function ProfileDetailScreen() {
 
   if (!employee) {
     return (
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
         <View style={styles.loadingWrapper}>
           <Text style={styles.errorText}>Ma'lumot topilmadi</Text>
         </View>
@@ -93,7 +94,7 @@ export default function ProfileDetailScreen() {
     .join(', ');
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>

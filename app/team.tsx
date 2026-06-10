@@ -1,6 +1,7 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useMemo } from 'react';
 import {
-  View, Text, ScrollView, StyleSheet, SafeAreaView,
+  View, Text, ScrollView, StyleSheet,
   TouchableOpacity, Image, ActivityIndicator, RefreshControl,
 } from 'react-native';
 import { useQueries } from '@tanstack/react-query';
@@ -173,13 +174,12 @@ export default function TeamScreen() {
     const firstEntry = new Map<number, string>();
 
     for (const ev of events) {
-      const eid = ev.employee?.id ?? ev.employee_id;
+      const eid = ev.employee_id;
       if (!eid) continue;
-      if (ev.direction_type === 'entrance') {
-        const existing = firstEntry.get(eid);
-        if (!existing || ev.happen_time < existing) firstEntry.set(eid, ev.happen_time);
-        attendedIds.add(eid);
-      }
+      // Any turnstile event = employee came in; track earliest as entry time
+      const existing = firstEntry.get(eid);
+      if (!existing || ev.happen_time < existing) firstEntry.set(eid, ev.happen_time);
+      attendedIds.add(eid);
     }
 
     // Late check uses employees list (needs working_hours_start)
@@ -221,7 +221,7 @@ export default function TeamScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Text style={styles.backArrow}>{'<'}</Text>

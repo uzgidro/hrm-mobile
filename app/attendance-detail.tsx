@@ -1,6 +1,7 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useMemo } from 'react';
 import {
-  View, Text, ScrollView, StyleSheet, SafeAreaView,
+  View, Text, ScrollView, StyleSheet,
   TouchableOpacity, Image, ActivityIndicator,
 } from 'react-native';
 import { useQueries } from '@tanstack/react-query';
@@ -246,15 +247,13 @@ export default function AttendanceDetailScreen() {
     const lastExit = new Map<number, string>();
 
     for (const ev of events) {
-      const eid = ev.employee?.id ?? ev.employee_id;
+      const eid = ev.employee_id;
       if (!eid) continue;
-      if (ev.direction_type === 'entrance') {
-        const ex = firstEntry.get(eid);
-        if (!ex || ev.happen_time < ex) firstEntry.set(eid, ev.happen_time);
-      } else {
-        const ex = lastExit.get(eid);
-        if (!ex || ev.happen_time > ex) lastExit.set(eid, ev.happen_time);
-      }
+      // Use earliest time as entry, latest as exit (robust when direction_type is null)
+      const exEntry = firstEntry.get(eid);
+      if (!exEntry || ev.happen_time < exEntry) firstEntry.set(eid, ev.happen_time);
+      const exExit = lastExit.get(eid);
+      if (!exExit || ev.happen_time > exExit) lastExit.set(eid, ev.happen_time);
     }
 
     const todayStart = dayjs(today).startOf('day');
@@ -317,7 +316,7 @@ export default function AttendanceDetailScreen() {
   const onLeaveCount = sections.find((s) => s.key === 'onLeave')?.items.length ?? 0;
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>

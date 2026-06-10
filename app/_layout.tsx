@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Stack, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useAuthStore } from '../src/store/authStore';
 import { apiClient } from '../src/api/client';
 import { storage } from '../src/api/storage';
@@ -37,6 +38,7 @@ function AuthLoader() {
 
 export default function RootLayout() {
   return (
+    <SafeAreaProvider>
     <QueryClientProvider client={queryClient}>
       <StatusBar style="light" />
       <AuthLoader />
@@ -51,5 +53,6 @@ export default function RootLayout() {
         <Stack.Screen name="create-leave" options={{ animation: 'slide_from_right' }} />
       </Stack>
     </QueryClientProvider>
+    </SafeAreaProvider>
   );
 }
