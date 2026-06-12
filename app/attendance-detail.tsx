@@ -22,8 +22,6 @@ dayjs.locale('uz');
 const MONTHS_UZ = ['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentyabr','Oktyabr','Noyabr','Dekabr'];
 const DAYS_UZ = ['Yak', 'Du', 'Se', 'Chor', 'Pay', 'Ju', 'Sha'];
 
-interface EmployeePage { items: Employee[]; total: number }
-
 type StatusGroup = 'present' | 'late' | 'onLeave' | 'absent';
 
 interface GroupedEmployee {
@@ -63,7 +61,13 @@ function EmployeeAvatar({ emp, size = 44 }: { emp: Employee; size?: number }) {
   );
 }
 
-function DonutChart({ total, present, late, onLeave }: { total: number; present: number; late: number; onLeave: number }) {
+interface DonutChartProps {
+  total: number; present: number; late: number; onLeave: number;
+  activeFilter: StatusGroup | null;
+  onFilter: (key: StatusGroup | null) => void;
+}
+
+function DonutChart({ total, present, late, onLeave, activeFilter, onFilter }: DonutChartProps) {
   const absent = Math.max(0, total - present - late - onLeave);
   const size = 180;
   const cx = size / 2;
@@ -73,12 +77,13 @@ function DonutChart({ total, present, late, onLeave }: { total: number; present:
   const circ = 2 * Math.PI * R;
   const rotate = `rotate(-90, ${cx}, ${cy})`;
 
-  const segments = [
-    { value: present, color: COLORS.present },
-    { value: late,    color: COLORS.warning },
-    { value: onLeave, color: COLORS.primaryLight },
-    { value: absent,  color: '#E5536A' },
-  ].filter((s) => s.value > 0 && total > 0);
+  const allSegs: { value: number; color: string; key: StatusGroup }[] = [
+    { value: present, color: COLORS.present,      key: 'present' },
+    { value: late,    color: COLORS.warning,       key: 'late'    },
+    { value: onLeave, color: COLORS.primaryLight,  key: 'onLeave' },
+    { value: absent,  color: '#E5536A',            key: 'absent'  },
+  ];
+  const segments = allSegs.filter((s) => s.value > 0 && total > 0);
 
   let offset = 0;
   const arcs = segments.map((seg) => {
@@ -87,6 +92,17 @@ function DonutChart({ total, present, late, onLeave }: { total: number; present:
     offset += dash;
     return arc;
   });
+
+  const legendItems = [
+    { key: 'present' as StatusGroup, count: present, color: COLORS.present, label: 'keldi' },
+    { key: 'late'    as StatusGroup, count: late,    color: COLORS.warning,  label: 'kechikkan' },
+    { key: 'absent'  as StatusGroup, count: absent,  color: '#E5536A',       label: 'kelmagan' },
+    { key: 'onLeave' as StatusGroup, count: onLeave, color: COLORS.primaryLight, label: "so'rov" },
+  ].filter((it) => it.count > 0 || it.key === 'absent');
+
+  const handleFilter = (key: StatusGroup) => {
+    onFilter(activeFilter === key ? null : key);
+  };
 
   return (
     <View style={styles.chartOuter}>
@@ -97,53 +113,40 @@ function DonutChart({ total, present, late, onLeave }: { total: number; present:
             {arcs.map((arc, i) => (
               <Circle
                 key={i} cx={cx} cy={cy} r={R}
-                fill="none" stroke={arc.color} strokeWidth={stroke}
+                fill="none" stroke={arc.color}
+                strokeWidth={activeFilter === null || activeFilter === arc.key ? stroke : stroke * 0.6}
                 strokeDasharray={`${arc.dash} ${circ - arc.dash}`}
                 strokeDashoffset={-arc.offset}
                 transform={rotate}
+                opacity={activeFilter === null || activeFilter === arc.key ? 1 : 0.3}
+                onPress={() => handleFilter(arc.key)}
               />
             ))}
           </G>
         </Svg>
         <View style={styles.chartCenter}>
-          <Text style={styles.chartTotal}>{total}</Text>
+          <Text style={styles.chartTotal}>{activeFilter ? (allSegs.find(s => s.key === activeFilter)?.value ?? total) : total}</Text>
+          {activeFilter && <Text style={styles.chartFilterLabel}>↑ tap to clear</Text>}
         </View>
       </View>
       <View style={styles.legend}>
-        {present > 0 && (
-          <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: COLORS.present }]} />
-            <View>
-              <Text style={styles.legendCount}>{present}</Text>
-              <Text style={styles.legendLabel}>keldi</Text>
-            </View>
-          </View>
-        )}
-        {late > 0 && (
-          <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: COLORS.warning }]} />
-            <View>
-              <Text style={styles.legendCount}>{late}</Text>
-              <Text style={styles.legendLabel}>kechikkan</Text>
-            </View>
-          </View>
-        )}
-        <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: '#E5536A' }]} />
-          <View>
-            <Text style={styles.legendCount}>{absent}</Text>
-            <Text style={styles.legendLabel}>kelmagan</Text>
-          </View>
-        </View>
-        {onLeave > 0 && (
-          <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: COLORS.primaryLight }]} />
-            <View>
-              <Text style={styles.legendCount}>{onLeave}</Text>
-              <Text style={styles.legendLabel}>so'rov</Text>
-            </View>
-          </View>
-        )}
+        {legendItems.map((it) => {
+          const isActive = activeFilter === it.key;
+          return (
+            <TouchableOpacity
+              key={it.key}
+              style={[styles.legendItem, isActive && { backgroundColor: it.color + '18', borderRadius: 8, paddingHorizontal: 4 }]}
+              onPress={() => handleFilter(it.key)}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.legendDot, { backgroundColor: it.color, opacity: !activeFilter || isActive ? 1 : 0.35 }]} />
+              <View style={{ opacity: !activeFilter || isActive ? 1 : 0.4 }}>
+                <Text style={styles.legendCount}>{it.count}</Text>
+                <Text style={styles.legendLabel}>{it.label}</Text>
+              </View>
+            </TouchableOpacity>
+          );
+        })}
       </View>
     </View>
   );
@@ -214,6 +217,7 @@ export default function AttendanceDetailScreen() {
     user?.employee?.department?.organization_branch_id;
 
   const [selectedDate, setSelectedDate] = useState(dayjs().format('YYYY-MM-DD'));
+  const [sectionFilter, setSectionFilter] = useState<StatusGroup | null>(null);
   const selDay = dayjs(selectedDate);
   const isToday = selectedDate === dayjs().format('YYYY-MM-DD');
   const dateLabel = `${selDay.date()} ${MONTHS_UZ[selDay.month()]} ${selDay.year()} (${DAYS_UZ[selDay.day()]})`;
@@ -354,16 +358,19 @@ export default function AttendanceDetailScreen() {
               present={presentCount}
               late={lateCount}
               onLeave={onLeaveCount}
+              activeFilter={sectionFilter}
+              onFilter={setSectionFilter}
             />
           </View>
 
-          {/* 4 sections always rendered */}
-          {sections.map((sec) => (
-            // Skip "absent" section if 0 and others have data (avoids redundant "kelmagan (0)" when all came)
-            (sec.key !== 'absent' || sec.items.length > 0) && (
-              <StatusSection key={sec.key} section={sec} />
+          {/* 4 sections — filtered by active chart selection */}
+          {sections
+            .filter((sec) =>
+              sectionFilter ? sec.key === sectionFilter : sec.key !== 'absent' || sec.items.length > 0
             )
-          ))}
+            .map((sec) => (
+              <StatusSection key={sec.key} section={sec} />
+            ))}
 
           <View style={{ height: 32 }} />
         </ScrollView>
@@ -407,6 +414,7 @@ const styles = StyleSheet.create({
   chartWrapper: { position: 'relative', width: 180, height: 180, alignItems: 'center', justifyContent: 'center' },
   chartCenter: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
   chartTotal: { fontSize: 30, fontWeight: '800', color: COLORS.text },
+  chartFilterLabel: { fontSize: 9, color: COLORS.textMuted, marginTop: 2 },
   legend: { flex: 1, paddingLeft: 20, gap: 12 },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   legendDot: { width: 13, height: 13, borderRadius: 7 },

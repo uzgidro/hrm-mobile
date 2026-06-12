@@ -132,7 +132,11 @@ export default function TeamLeavesScreen() {
                   dayjs(leave.start_date).format('DD.MM.YYYY') ===
                   dayjs(leave.end_date).format('DD.MM.YYYY');
                 return (
-                  <View key={leave.id} style={styles.card}>
+                  <TouchableOpacity
+                    key={leave.id} style={styles.card}
+                    onPress={() => router.push({ pathname: '/leave-detail', params: { id: leave.id } })}
+                    activeOpacity={0.75}
+                  >
                     {leave.employee && (
                       <View style={styles.empRow}>
                         {leave.employee.photo_path ? (
@@ -180,7 +184,7 @@ export default function TeamLeavesScreen() {
                         Yuborilgan: {dayjs(leave.created_at).format('DD.MM.YYYY HH:mm')}
                       </Text>
                     ) : null}
-                  </View>
+                  </TouchableOpacity>
                 );
               })
             )}

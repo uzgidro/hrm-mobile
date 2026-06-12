@@ -46,12 +46,15 @@ export interface WorkLeave {
   type: string;
   start_date: string;
   end_date: string;
-  status: 'pending' | 'approved' | 'rejected';
+  status: string;
   employee_id?: number;
   employee?: Employee;
   description?: string;
   created_at?: string;
   updated_at?: string;
+  assigned_signers?: Employee[];
+  signers?: Employee[];
+  rejection_reason?: string | null;
 }
 
 export interface NewsPost {

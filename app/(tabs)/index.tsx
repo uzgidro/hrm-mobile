@@ -28,10 +28,10 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
 };
 
 const MODULE_ITEMS = [
-  { key: 'attendance', emoji: '🏃', label: 'Qatnashish' },
+  { key: 'attendance', emoji: '🕐', label: 'Davomat' },
   { key: 'requests', emoji: '📋', label: "So'rovlar" },
   { key: 'team', emoji: '👥', label: 'Jamoa' },
-  { key: 'pay', emoji: '💳', label: "To'lov" },
+  { key: 'salary', emoji: '💳', label: 'Oylik' },
 ];
 
 export default function HomeScreen() {
@@ -223,6 +223,7 @@ export default function HomeScreen() {
                   if (m.key === 'team') router.push('/team');
                   else if (m.key === 'requests') router.push('/team-leaves');
                   else if (m.key === 'attendance') router.push('/attendance-detail');
+                  else if (m.key === 'salary') router.push('/salary');
                 }}
               >
                 <Text style={styles.moduleEmoji}>{m.emoji}</Text>

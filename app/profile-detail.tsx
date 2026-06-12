@@ -6,7 +6,7 @@ import {
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import dayjs from 'dayjs';
-import { useAuthStore } from '../src/store/authStore';
+import { useAuthStore, isMasterAdmin, isHR } from '../src/store/authStore';
 import { apiClient } from '../src/api/client';
 import { EMPLOYEE_DETAIL } from '../src/api/urls';
 import { COLORS } from '../src/constants';
@@ -53,6 +53,9 @@ export default function ProfileDetailScreen() {
   const { user } = useAuthStore();
   const params = useLocalSearchParams<{ id?: string }>();
   const employeeId = params.id ? Number(params.id) : user?.employee?.id;
+
+  // Oddiy xodimlar faqat kontakt + davomat ko'radi
+  const canViewSensitive = isMasterAdmin(user) || isHR(user) || user?.type === 'admin';
 
   const [employee, setEmployee] = useState<EmployeeFull | null>(null);
   const [loading, setLoading] = useState(true);
@@ -140,8 +143,8 @@ export default function ProfileDetailScreen() {
           <Text style={styles.attendanceBtnText}>Davomat</Text>
         </TouchableOpacity>
 
-        {/* Shaxsiy ma'lumotlar */}
-        <Section title="Shaxsiy ma'lumotlar" emoji="👤">
+        {/* Shaxsiy ma'lumotlar — faqat HR/admin uchun */}
+        {canViewSensitive && <Section title="Shaxsiy ma'lumotlar" emoji="👤">
           <InfoRow
             label="Tug'ilgan sana"
             value={employee.birth_date ? dayjs(employee.birth_date).format('DD.MM.YYYY') : null}
@@ -157,7 +160,7 @@ export default function ProfileDetailScreen() {
           />
           <Divider />
           <InfoRow label="Manzil" value={employee.address} />
-        </Section>
+        </Section>}
 
         {/* Kontakt */}
         <Section title="Kontakt ma'lumotlari" emoji="📞">
@@ -168,8 +171,8 @@ export default function ProfileDetailScreen() {
           <InfoRow label="Email" value={employee.email} />
         </Section>
 
-        {/* Ish ma'lumotlari */}
-        <Section title="Ish ma'lumotlari" emoji="💼">
+        {/* Ish ma'lumotlari — faqat HR/admin uchun */}
+        {canViewSensitive && <Section title="Ish ma'lumotlari" emoji="💼">
           <InfoRow label="Bo'lim" value={employee.department?.name} />
           <Divider />
           <InfoRow label="Lavozim" value={employee.job_position?.name} />
@@ -200,10 +203,10 @@ export default function ProfileDetailScreen() {
           <InfoRow label="Ish kunlari" value={workDays || null} />
           <Divider />
           <InfoRow label="Rahbar" value={employee.supervisor?.legal_name} />
-        </Section>
+        </Section>}
 
-        {/* Hujjatlar */}
-        {(employee.personal_identification_number ||
+        {/* Hujjatlar — faqat HR/admin uchun */}
+        {canViewSensitive && (employee.personal_identification_number ||
           employee.taxpayer_identification_number ||
           employee.pasport_series) && (
           <Section title="Hujjatlar" emoji="🪪">
@@ -231,8 +234,8 @@ export default function ProfileDetailScreen() {
           </Section>
         )}
 
-        {/* Mehnat tajribasi */}
-        {(employee.work_experiences?.length ?? 0) > 0 && (
+        {/* Mehnat tajribasi — faqat HR/admin uchun */}
+        {canViewSensitive && (employee.work_experiences?.length ?? 0) > 0 && (
           <Section title="Mehnat tajribasi" emoji="🏢">
             {employee.work_experiences!.map((exp: WorkExperience, i: number) => (
               <View key={exp.id} style={styles.historyItem}>
@@ -248,8 +251,8 @@ export default function ProfileDetailScreen() {
           </Section>
         )}
 
-        {/* Ta'lim */}
-        {(employee.educations?.length ?? 0) > 0 && (
+        {/* Ta'lim — faqat HR/admin uchun */}
+        {canViewSensitive && (employee.educations?.length ?? 0) > 0 && (
           <Section title="Ta'lim" emoji="🎓">
             {employee.educations!.map((edu: Education, i: number) => (
               <View key={edu.id} style={styles.historyItem}>

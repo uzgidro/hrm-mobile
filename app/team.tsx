@@ -161,9 +161,11 @@ export default function TeamScreen() {
   const workLeaves: WorkLeave[] = (leavesQ.data as WorkLeave[]) ?? [];
   const birthdays: EmployeeBirthday[] = bDayQ.data ?? [];
 
+  // empIdSet faqat shu filialga tegishli xodimlar
+  const empIdSet = useMemo(() => new Set(employees.map((e) => e.id)), [employees]);
+
   const attendanceStats = useMemo(() => {
     // Cross-reference with branch employees — attendance events have no branch filter
-    const empIdSet = new Set(employees.map((e) => e.id));
     const attendedIds = new Set<number>();
     const lateIds = new Set<number>();
     const firstEntry = new Map<number, string>();
@@ -204,6 +206,7 @@ export default function TeamScreen() {
   }, [events, employees, workLeaves, today, empTotal]);
 
   const recentLeaves = [...workLeaves]
+    .filter((l) => !l.employee?.id || empIdSet.has(l.employee.id))
     .sort((a, b) => (b.created_at ?? String(b.id)).localeCompare(a.created_at ?? String(a.id)))
     .slice(0, 3);
   const topEmployees = employees.slice(0, 3);
@@ -293,7 +296,11 @@ export default function TeamScreen() {
             recentLeaves.map((leave) => {
               const st = STATUS_MAP[leave.status] ?? STATUS_MAP.pending;
               return (
-                <View key={leave.id} style={styles.leaveRow}>
+                <TouchableOpacity
+                  key={leave.id} style={styles.leaveRow}
+                  onPress={() => router.push({ pathname: '/leave-detail', params: { id: leave.id } })}
+                  activeOpacity={0.7}
+                >
                   <EmployeeAvatar emp={(leave.employee as Employee) || { id: 0, legal_name: '?' }} size={48} />
                   <View style={styles.leaveInfo}>
                     <Text style={styles.leaveCat} numberOfLines={1}>
@@ -308,7 +315,7 @@ export default function TeamScreen() {
                     </Text>
                   </View>
                   <Text style={[styles.leaveStatus, { color: st.color }]}>{st.label}</Text>
-                </View>
+                </TouchableOpacity>
               );
             })
           )}

@@ -121,7 +121,11 @@ export default function WorkLeavesScreen() {
                 dayjs(leave.start_date).format('DD.MM.YYYY') ===
                 dayjs(leave.end_date).format('DD.MM.YYYY');
               return (
-                <View key={leave.id} style={styles.card}>
+                <TouchableOpacity
+                  key={leave.id} style={styles.card}
+                  onPress={() => router.push({ pathname: '/leave-detail', params: { id: leave.id } })}
+                  activeOpacity={0.75}
+                >
                   <View style={styles.cardTop}>
                     <Text style={styles.categoryName} numberOfLines={1}>
                       {leave.type ?? "So'rov"}
@@ -156,7 +160,7 @@ export default function WorkLeavesScreen() {
                       Yuborilgan: {dayjs(leave.created_at).format('DD.MM.YYYY HH:mm')}
                     </Text>
                   ) : null}
-                </View>
+                </TouchableOpacity>
               );
             })
           )}
