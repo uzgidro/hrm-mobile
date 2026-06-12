@@ -2,8 +2,10 @@ import * as Notifications from 'expo-notifications';
 import * as BackgroundFetch from 'expo-background-fetch';
 import * as TaskManager from 'expo-task-manager';
 import * as Device from 'expo-device';
+import Constants from 'expo-constants';
+import { Platform } from 'react-native';
 import { apiClient } from '../api/client';
-import { WORK_LEAVES } from '../api/urls';
+import { WORK_LEAVES, PUSH_TOKENS } from '../api/urls';
 import { storage } from '../api/storage';
 
 const TASK_NAME = 'bg-leave-poll';
@@ -23,7 +25,9 @@ async function pollNewLeaves() {
   const token = await storage.getItem('access_token');
   if (!token) return;
 
-  const res = await apiClient.get(WORK_LEAVES, { params: { size: 30 } });
+  const res = await apiClient.get(WORK_LEAVES, {
+    params: { assigned_signer: true, size: 50 },
+  });
   const data = res.data;
   const leaves: any[] = Array.isArray(data) ? data : (data?.items ?? []);
   const pending = leaves.filter(
@@ -39,10 +43,9 @@ async function pollNewLeaves() {
       newLeaves.length === 1
         ? `${newLeaves[0].employee?.legal_name ?? 'Xodim'} ruxsat so'rovi yubordi`
         : `${newLeaves.length} ta yangi ruxsat so'rovi keldi`;
-
     await Notifications.scheduleNotificationAsync({
       content: {
-        title: "Yangi ruxsat so'rovi",
+        title: "Yangi ruxsat so'rovi 📋",
         body,
         data: { type: 'new_leave' },
       },
@@ -71,11 +74,38 @@ export async function requestNotificationPermissions(): Promise<boolean> {
   return status === 'granted';
 }
 
+export async function getExpoPushToken(): Promise<string | null> {
+  try {
+    if (!Device.isDevice) return null;
+    const projectId =
+      Constants.expoConfig?.extra?.eas?.projectId ??
+      (Constants as any).manifest?.id ??
+      undefined;
+    const tokenData = await Notifications.getExpoPushTokenAsync(
+      projectId ? { projectId } : undefined
+    );
+    return tokenData.data;
+  } catch {
+    return null;
+  }
+}
+
+export async function registerTokenWithBackend(token: string): Promise<void> {
+  try {
+    await apiClient.post(PUSH_TOKENS, {
+      token,
+      platform: Platform.OS,
+    });
+  } catch {}
+}
+
 export async function registerBackgroundLeaveCheck() {
   try {
     const status = await BackgroundFetch.getStatusAsync();
-    if (status === BackgroundFetch.BackgroundFetchStatus.Restricted ||
-        status === BackgroundFetch.BackgroundFetchStatus.Denied) return;
+    if (
+      status === BackgroundFetch.BackgroundFetchStatus.Restricted ||
+      status === BackgroundFetch.BackgroundFetchStatus.Denied
+    ) return;
 
     const isRegistered = await TaskManager.isTaskRegisteredAsync(TASK_NAME);
     if (!isRegistered) {

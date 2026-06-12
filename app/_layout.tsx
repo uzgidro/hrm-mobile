@@ -12,10 +12,23 @@ import { User } from '../src/types';
 import {
   requestNotificationPermissions,
   registerBackgroundLeaveCheck,
-  checkLeavesNow,
+  getExpoPushToken,
+  registerTokenWithBackend,
 } from '../src/services/notifications';
 
 const queryClient = new QueryClient();
+
+async function setupPushNotifications() {
+  try {
+    const granted = await requestNotificationPermissions();
+    if (!granted) return;
+    await registerBackgroundLeaveCheck();
+    const token = await getExpoPushToken();
+    if (token) {
+      await registerTokenWithBackend(token);
+    }
+  } catch {}
+}
 
 function AuthLoader() {
   const { setUser, setLoading, logout } = useAuthStore();
@@ -31,6 +44,7 @@ function AuthLoader() {
       try {
         const res = await apiClient.get<User>(USER_INFO);
         setUser(res.data);
+        setupPushNotifications();
         router.replace('/(tabs)');
       } catch (err: any) {
         const status = err?.response?.status;
@@ -42,6 +56,7 @@ function AuthLoader() {
           const cached = await storage.getItem(USER_CACHE_KEY);
           if (cached) {
             setUser(JSON.parse(cached));
+            setupPushNotifications();
             router.replace('/(tabs)');
           } else {
             setLoading(false);
@@ -55,27 +70,12 @@ function AuthLoader() {
   return null;
 }
 
-function NotificationsBootstrap() {
-  useEffect(() => {
-    (async () => {
-      const granted = await requestNotificationPermissions();
-      if (granted) {
-        await registerBackgroundLeaveCheck();
-        await checkLeavesNow();
-      }
-    })();
-  }, []);
-
-  return null;
-}
-
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
     <QueryClientProvider client={queryClient}>
       <StatusBar style="light" />
       <AuthLoader />
-      <NotificationsBootstrap />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#0D0F1A' } }}>
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(tabs)" />

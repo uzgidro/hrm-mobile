@@ -163,15 +163,13 @@ export default function WorkLeavesScreen() {
     useQuery<WorkLeave[]>({
       queryKey: ['assigned-leaves', employeeId],
       queryFn: () =>
-        apiClient.get(WORK_LEAVES, { params: { size: 200 } }).then((r) => {
+        apiClient.get(WORK_LEAVES, { params: { assigned_signer: true, size: 200 } }).then((r) => {
           const d = r.data;
-          const items: WorkLeave[] = Array.isArray(d) ? d : (d?.items ?? []);
-          return items.filter((l) =>
-            l.assigned_signers?.some((s) => s.id === employeeId)
-          );
+          return Array.isArray(d) ? d : (d?.items ?? []);
         }),
       enabled: !!employeeId && isSupervisor,
-      staleTime: 60 * 1000,
+      staleTime: 30 * 1000,
+      refetchInterval: 60 * 1000,
     });
 
   const isLoading = isSupervisor ? allLoading : myLoading;

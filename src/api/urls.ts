@@ -34,3 +34,6 @@ export const EMPLOYEES_BIRTHDAYS = 'employees/birthdays';
 // Departments & positions
 export const DEPARTMENTS_LIST = 'departments';
 export const JOB_POSITIONS_LIST = 'job-positions';
+
+// Push notifications
+export const PUSH_TOKENS = 'push-tokens';
