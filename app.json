@@ -17,7 +17,9 @@
         "backgroundColor": "#0D0F1A"
       },
       "package": "uz.uzgidro.hrm",
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "enableProguardInReleaseBuilds": true,
+      "enableShrinkResourcesInReleaseBuilds": true
     },
     "web": {
       "bundler": "metro",
@@ -28,7 +30,15 @@
       "expo-secure-store",
       "expo-status-bar",
       "expo-font",
-      "expo-splash-screen"
+      "expo-splash-screen",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#1B2A7B",
+          "sounds": []
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

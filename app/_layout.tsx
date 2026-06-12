@@ -1,13 +1,19 @@
+import '../src/services/notifications';
 import { useEffect } from 'react';
 import { Stack, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { useAuthStore } from '../src/store/authStore';
+import { useAuthStore, USER_CACHE_KEY } from '../src/store/authStore';
 import { apiClient } from '../src/api/client';
 import { storage } from '../src/api/storage';
 import { USER_INFO } from '../src/api/urls';
 import { User } from '../src/types';
+import {
+  requestNotificationPermissions,
+  registerBackgroundLeaveCheck,
+  checkLeavesNow,
+} from '../src/services/notifications';
 
 const queryClient = new QueryClient();
 
@@ -26,9 +32,36 @@ function AuthLoader() {
         const res = await apiClient.get<User>(USER_INFO);
         setUser(res.data);
         router.replace('/(tabs)');
-      } catch {
-        await logout();
-        router.replace('/(auth)/login');
+      } catch (err: any) {
+        const status = err?.response?.status;
+        if (status === 401 || status === 403) {
+          await logout();
+          router.replace('/(auth)/login');
+        } else {
+          // Network/server error — restore from cache so user stays logged in
+          const cached = await storage.getItem(USER_CACHE_KEY);
+          if (cached) {
+            setUser(JSON.parse(cached));
+            router.replace('/(tabs)');
+          } else {
+            setLoading(false);
+            router.replace('/(auth)/login');
+          }
+        }
+      }
+    })();
+  }, []);
+
+  return null;
+}
+
+function NotificationsBootstrap() {
+  useEffect(() => {
+    (async () => {
+      const granted = await requestNotificationPermissions();
+      if (granted) {
+        await registerBackgroundLeaveCheck();
+        await checkLeavesNow();
       }
     })();
   }, []);
@@ -42,6 +75,7 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <StatusBar style="light" />
       <AuthLoader />
+      <NotificationsBootstrap />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#0D0F1A' } }}>
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(tabs)" />
