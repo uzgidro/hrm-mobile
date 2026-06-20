@@ -23,6 +23,7 @@ export interface Employee {
   multi_org_employee_role?: string;
   organization_branches?: OrganizationBranch[];
   supervisor?: Employee;
+  supervisor_id?: number;
 }
 
 export interface OrganizationBranch {
@@ -55,6 +56,63 @@ export interface WorkLeave {
   assigned_signers?: Employee[];
   signers?: Employee[];
   rejection_reason?: string | null;
+}
+
+export interface OrderActSigner {
+  id?: number;
+  order_act_id?: number;
+  employee_id?: number;
+  signer_type?: string; // 'approver' | 'leadership'
+  can_edit_document?: boolean;
+  employee?: Employee;
+}
+
+export interface OrderActFamiliarizer {
+  id?: number;
+  order_act_id?: number;
+  employee_id?: number;
+  acknowledged?: boolean;
+  acknowledged_at?: string;
+  employee?: Employee;
+}
+
+export interface OrderActComment {
+  id?: number;
+  order_act_id?: number;
+  employee_id?: number;
+  employee?: Employee;
+  action?: string;
+  text?: string;
+  created_at?: string;
+}
+
+export interface OrderAct {
+  id: number;
+  category_id?: number;
+  category_rel?: { id: number; name: string };
+  act_number?: number | null;
+  act_date?: string | null;
+  summary?: string;
+  description?: string;
+  plans?: string;
+  arrival_report?: string;
+  planned_arrival_date?: string | null;
+  planned_departure_date?: string | null;
+  status?: string;
+  employee_id?: number;
+  employee?: Employee;
+  submitter_id?: number;
+  submitter?: Employee;
+  created_by_id?: number;
+  created_by?: Employee;
+  created_at?: string;
+  organization_branch_id?: number;
+  familiarizers?: OrderActFamiliarizer[];
+  assigned_signers?: OrderActSigner[];
+  signers?: OrderActSigner[];
+  rejected_by?: Employee;
+  rejection_reason?: string | null;
+  comments?: OrderActComment[];
 }
 
 export interface NewsPost {

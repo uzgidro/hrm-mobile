@@ -7,12 +7,15 @@ import dayjs from 'dayjs';
 import { useAuthStore } from '../../src/store/authStore';
 import { apiClient } from '../../src/api/client';
 import { NEWS_POSTS } from '../../src/api/urls';
-import { COLORS } from '../../src/constants';
+import { useTheme, useThemedStyles } from '../../src/theme/ThemeProvider';
+import type { ThemeColors } from '../../src/theme/palettes';
 import { NewsPost } from '../../src/types';
 
 export default function NewsScreen() {
   const { user } = useAuthStore();
   const branchId = user?.employee?.department?.organization_branch_id;
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
 
   const [news, setNews] = useState<NewsPost[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,13 +42,13 @@ export default function NewsScreen() {
   }, [loadNews]);
 
   return (
-    <SafeAreaView style={styles.safe} edges={["top"]}>
+    <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.primaryLight} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primaryLight} />}
       >
-        <Text style={styles.pageTitle}>Yangiliklar lentasi</Text>
+        <Text style={styles.pageTitle}>Yangiliklar</Text>
 
         {loading ? (
           <View style={styles.emptyWrapper}>
@@ -59,45 +62,28 @@ export default function NewsScreen() {
           </View>
         ) : (
           news.map((item) => (
-            <TouchableOpacity key={item.id} style={styles.card} activeOpacity={0.8}>
+            <View key={item.id} style={styles.card}>
               <View style={styles.cardHeader}>
-                <View style={styles.avatarWrapper}>
-                  {item.author?.photo_path ? (
-                    <Image source={{ uri: item.author.photo_path }} style={styles.avatar} />
-                  ) : (
-                    <View style={[styles.avatar, styles.avatarFallback]}>
-                      <Text style={styles.avatarInitial}>
-                        {(item.author?.legal_name || 'A').charAt(0).toUpperCase()}
-                      </Text>
-                    </View>
-                  )}
-                </View>
+                {item.author?.photo_path ? (
+                  <Image source={{ uri: item.author.photo_path }} style={styles.avatar} />
+                ) : (
+                  <View style={[styles.avatar, styles.avatarFallback]}>
+                    <Text style={styles.avatarInitial}>{(item.author?.legal_name || 'A').charAt(0).toUpperCase()}</Text>
+                  </View>
+                )}
                 <View style={styles.authorInfo}>
                   <Text style={styles.authorName}>{item.author?.legal_name || 'Admin'}</Text>
-                  <Text style={styles.newsDate}>
-                    {dayjs(item.created_at).format('DD.MM.YYYY HH:mm:ss')}
-                  </Text>
+                  <Text style={styles.newsDate}>{dayjs(item.created_at).format('DD.MM.YYYY HH:mm')}</Text>
                 </View>
               </View>
 
               <Text style={styles.newsTitle}>{item.title}</Text>
+              {item.description ? <Text style={styles.newsDesc} numberOfLines={4}>{item.description}</Text> : null}
 
-              {item.description ? (
-                <Text style={styles.newsDesc} numberOfLines={3}>{item.description}</Text>
-              ) : null}
-
-              {item.organization_branch ? (
-                <View style={styles.tagWrapper}>
-                  <Text style={styles.tag}>
-                    {item.organization_branch.name || 'Barcha xodimlarga'}
-                  </Text>
-                </View>
-              ) : (
-                <View style={styles.tagWrapper}>
-                  <Text style={styles.tag}>Barcha xodimlarga</Text>
-                </View>
-              )}
-            </TouchableOpacity>
+              <View style={styles.tagWrapper}>
+                <Text style={styles.tag}>{item.organization_branch?.name || 'Barcha xodimlarga'}</Text>
+              </View>
+            </View>
           ))
         )}
       </ScrollView>
@@ -105,35 +91,29 @@ export default function NewsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: COLORS.bg },
-  content: { paddingHorizontal: 16, paddingBottom: 32 },
-  pageTitle: { fontSize: 24, fontWeight: '700', color: COLORS.text, paddingTop: 16, marginBottom: 16 },
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    safe: { flex: 1, backgroundColor: c.bg },
+    content: { paddingHorizontal: 16, paddingBottom: 32 },
+    pageTitle: { fontSize: 26, fontWeight: '800', color: c.text, paddingTop: 16, marginBottom: 16 },
 
-  card: {
-    backgroundColor: COLORS.card, borderRadius: 16, padding: 16,
-    marginBottom: 12, borderWidth: 1, borderColor: COLORS.cardBorder,
-  },
-  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
-  avatarWrapper: {},
-  avatar: { width: 44, height: 44, borderRadius: 22 },
-  avatarFallback: {
-    backgroundColor: COLORS.primary + '33',
-    alignItems: 'center', justifyContent: 'center',
-  },
-  avatarInitial: { fontSize: 18, fontWeight: '700', color: COLORS.primaryLight },
-  authorInfo: { flex: 1 },
-  authorName: { fontSize: 14, fontWeight: '700', color: COLORS.text },
-  newsDate: { fontSize: 12, color: COLORS.textMuted, marginTop: 2 },
+    card: { backgroundColor: c.card, borderRadius: 18, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: c.cardBorder },
+    cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
+    avatar: { width: 44, height: 44, borderRadius: 22 },
+    avatarFallback: { backgroundColor: c.primarySoft, alignItems: 'center', justifyContent: 'center' },
+    avatarInitial: { fontSize: 18, fontWeight: '700', color: c.primaryLight },
+    authorInfo: { flex: 1 },
+    authorName: { fontSize: 14, fontWeight: '700', color: c.text },
+    newsDate: { fontSize: 12, color: c.textMuted, marginTop: 2 },
 
-  newsTitle: { fontSize: 15, fontWeight: '600', color: COLORS.text, lineHeight: 22, marginBottom: 8 },
-  newsDesc: { fontSize: 13, color: COLORS.textSecondary, lineHeight: 20, marginBottom: 10 },
+    newsTitle: { fontSize: 16, fontWeight: '700', color: c.text, lineHeight: 23, marginBottom: 8 },
+    newsDesc: { fontSize: 13, color: c.textSecondary, lineHeight: 20, marginBottom: 10 },
 
-  tagWrapper: { marginTop: 4 },
-  tag: { fontSize: 12, color: COLORS.primaryLight, fontWeight: '600' },
+    tagWrapper: { marginTop: 4, alignSelf: 'flex-start', backgroundColor: c.primarySoft, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
+    tag: { fontSize: 12, color: c.primaryLight, fontWeight: '600' },
 
-  emptyWrapper: { alignItems: 'center', paddingTop: 80, gap: 12 },
-  emptyEmoji: { fontSize: 48 },
-  emptyTitle: { fontSize: 18, fontWeight: '700', color: COLORS.text },
-  emptyText: { fontSize: 14, color: COLORS.textSecondary },
-});
+    emptyWrapper: { alignItems: 'center', paddingTop: 80, gap: 12 },
+    emptyEmoji: { fontSize: 48 },
+    emptyTitle: { fontSize: 18, fontWeight: '700', color: c.text },
+    emptyText: { fontSize: 14, color: c.textSecondary },
+  });

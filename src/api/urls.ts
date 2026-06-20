@@ -37,3 +37,16 @@ export const JOB_POSITIONS_LIST = 'job-positions';
 
 // Push notifications
 export const PUSH_TOKENS = 'push-tokens';
+
+// Employee self update
+export const EMPLOYEE_SELF_UPDATE = 'employees/me/self-update';
+
+// Order acts (Buyruqlar / decrees)
+export const ORDER_ACTS = 'order-acts';
+export const ORDER_ACT_DETAIL = (id: number) => `order-acts/${id}`;
+export const ORDER_ACT_DECREE_APPROVE = (id: number) => `order-acts/${id}/decree/approve`;
+export const ORDER_ACT_DECREE_REJECT = (id: number) => `order-acts/${id}/decree/reject`;
+export const ORDER_ACT_DECREE_RESUBMIT = (id: number) => `order-acts/${id}/decree/resubmit`;
+export const ORDER_ACT_DECREE_FORWARD = (id: number) => `order-acts/${id}/decree/forward-to-leadership`;
+export const ORDER_ACT_DECREE_REGISTER = (id: number) => `order-acts/${id}/decree/register`;
+export const ORDER_ACT_DECREE_ACKNOWLEDGE = (id: number) => `order-acts/${id}/decree/acknowledge`;

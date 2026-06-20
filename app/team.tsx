@@ -9,60 +9,34 @@ import { router } from 'expo-router';
 import dayjs from 'dayjs';
 import Svg, { Circle, G } from 'react-native-svg';
 import { useAuthStore } from '../src/store/authStore';
+import { usePrefsStore } from '../src/store/prefsStore';
 import { apiClient } from '../src/api/client';
 import { EMPLOYEES_BIRTHDAYS, WORK_LEAVES } from '../src/api/urls';
-import { COLORS } from '../src/constants';
+import { useTheme, useThemedStyles } from '../src/theme/ThemeProvider';
+import type { ThemeColors } from '../src/theme/palettes';
 import { Employee, AttendanceEvent, WorkLeave, EmployeeBirthday } from '../src/types';
 import { fetchAllAttendanceEvents, attendanceQueryKey } from '../src/utils/attendance';
 import { fetchAllEmployees, employeesQueryKey } from '../src/utils/employees';
 
-interface EmployeePage { items: Employee[]; total: number }
-interface AttendancePage { items: AttendanceEvent[]; total: number }
 interface WorkLeavePage { items: WorkLeave[]; total: number }
 
-function EmployeeAvatar({ emp, size = 44 }: { emp: Employee | EmployeeBirthday; size?: number }) {
+function EmployeeAvatar({ emp, size = 44, c }: { emp: Employee | EmployeeBirthday; size?: number; c: ThemeColors }) {
   const r = size / 2;
   if (emp.photo_path) {
     return <Image source={{ uri: emp.photo_path }} style={{ width: size, height: size, borderRadius: r }} />;
   }
   return (
-    <View style={{ width: size, height: size, borderRadius: r, backgroundColor: COLORS.primary + '33', alignItems: 'center', justifyContent: 'center' }}>
-      <Text style={{ fontSize: size * 0.38, fontWeight: '700', color: COLORS.primaryLight }}>
+    <View style={{ width: size, height: size, borderRadius: r, backgroundColor: c.primarySoft, alignItems: 'center', justifyContent: 'center' }}>
+      <Text style={{ fontSize: size * 0.38, fontWeight: '700', color: c.primaryLight }}>
         {(emp.legal_name || 'X').charAt(0).toUpperCase()}
       </Text>
     </View>
   );
 }
 
-function SectionCard({
-  icon, title, rightLabel, onRightPress, loading, children,
-}: {
-  icon: string; title: string; rightLabel?: string; onRightPress?: () => void;
-  loading?: boolean; children: React.ReactNode;
+function DonutChart({ total, present, late, onLeave, c, styles }: {
+  total: number; present: number; late: number; onLeave: number; c: ThemeColors; styles: any;
 }) {
-  return (
-    <View style={styles.card}>
-      <View style={styles.cardHeader}>
-        <View style={styles.cardTitleRow}>
-          <Text style={styles.cardIcon}>{icon}</Text>
-          <Text style={styles.cardTitle}>{title}</Text>
-        </View>
-        {rightLabel && (
-          <TouchableOpacity onPress={onRightPress}>
-            <Text style={styles.linkText}>{rightLabel}</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-      {loading ? (
-        <View style={styles.sectionLoading}>
-          <ActivityIndicator color={COLORS.primaryLight} size="small" />
-        </View>
-      ) : children}
-    </View>
-  );
-}
-
-function DonutChart({ total, present, late, onLeave }: { total: number; present: number; late: number; onLeave: number }) {
   const absent = Math.max(0, total - present - late - onLeave);
   const size = 160;
   const cx = size / 2;
@@ -73,10 +47,10 @@ function DonutChart({ total, present, late, onLeave }: { total: number; present:
   const rotate = `rotate(-90, ${cx}, ${cy})`;
 
   const segments = [
-    { value: present, color: COLORS.present },
-    { value: late, color: COLORS.warning },
-    { value: onLeave, color: COLORS.primaryLight },
-    { value: absent, color: '#E5536A' },
+    { value: present, color: c.present },
+    { value: late, color: c.warning },
+    { value: onLeave, color: c.primaryLight },
+    { value: absent, color: c.error },
   ].filter((s) => s.value > 0 && total > 0);
 
   let offset = 0;
@@ -91,7 +65,7 @@ function DonutChart({ total, present, late, onLeave }: { total: number; present:
     <View style={styles.chartWrapper}>
       <Svg width={size} height={size}>
         <G>
-          <Circle cx={cx} cy={cy} r={R} fill="none" stroke={COLORS.cardBorder} strokeWidth={stroke} />
+          <Circle cx={cx} cy={cy} r={R} fill="none" stroke={c.cardBorder} strokeWidth={stroke} />
           {arcs.map((arc, i) => (
             <Circle
               key={i} cx={cx} cy={cy} r={R}
@@ -112,6 +86,10 @@ function DonutChart({ total, present, late, onLeave }: { total: number; present:
 
 export default function TeamScreen() {
   const { user } = useAuthStore();
+  const { onlySubordinates } = usePrefsStore();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const myId = user?.employee?.id;
   const orgBranchId =
     user?.employee?.organization_branches?.[0]?.id ??
     user?.employee?.department?.organization_branch_id;
@@ -119,22 +97,12 @@ export default function TeamScreen() {
 
   const results = useQueries({
     queries: [
-      {
-        queryKey: employeesQueryKey(orgBranchId),
-        queryFn: () => fetchAllEmployees(orgBranchId),
-        staleTime: 5 * 60 * 1000,
-      },
-      {
-        queryKey: attendanceQueryKey(today, orgBranchId),
-        queryFn: () => fetchAllAttendanceEvents(today, orgBranchId),
-        staleTime: 3 * 60 * 1000,
-      },
+      { queryKey: employeesQueryKey(orgBranchId), queryFn: () => fetchAllEmployees(orgBranchId), staleTime: 5 * 60 * 1000 },
+      { queryKey: attendanceQueryKey(today, orgBranchId), queryFn: () => fetchAllAttendanceEvents(today, orgBranchId), staleTime: 3 * 60 * 1000 },
       {
         queryKey: ['team-leaves', today],
         queryFn: () =>
-          apiClient.get<WorkLeavePage | WorkLeave[]>(WORK_LEAVES, {
-            params: { size: 20 },
-          }).then((r) => {
+          apiClient.get<WorkLeavePage | WorkLeave[]>(WORK_LEAVES, { params: { size: 20 } }).then((r) => {
             const d = r.data as any;
             return Array.isArray(d) ? d : (d.items ?? []) as WorkLeave[];
           }),
@@ -155,17 +123,20 @@ export default function TeamScreen() {
   const isRefreshing = results.some((r) => r.isFetching);
   const refetchAll = () => results.forEach((r) => r.refetch());
 
-  const employees: Employee[] = empQ.data?.items ?? [];
-  const empTotal: number = empQ.data?.total ?? 0;
+  const allEmployees: Employee[] = empQ.data?.items ?? [];
+  // "Faqat bo'ysunuvchilar" — show only employees whose supervisor is the current user
+  const employees: Employee[] = useMemo(
+    () => (onlySubordinates && myId ? allEmployees.filter((e) => e.supervisor_id === myId) : allEmployees),
+    [allEmployees, onlySubordinates, myId]
+  );
+  const empTotal: number = onlySubordinates ? employees.length : (empQ.data?.total ?? 0);
   const events: AttendanceEvent[] = attQ.data?.items ?? [];
   const workLeaves: WorkLeave[] = (leavesQ.data as WorkLeave[]) ?? [];
   const birthdays: EmployeeBirthday[] = bDayQ.data ?? [];
 
-  // empIdSet faqat shu filialga tegishli xodimlar
   const empIdSet = useMemo(() => new Set(employees.map((e) => e.id)), [employees]);
 
   const attendanceStats = useMemo(() => {
-    // Cross-reference with branch employees — attendance events have no branch filter
     const attendedIds = new Set<number>();
     const lateIds = new Set<number>();
     const firstEntry = new Map<number, string>();
@@ -203,7 +174,7 @@ export default function TeamScreen() {
       onLeave: onLeaveIds.size,
       total: empTotal,
     };
-  }, [events, employees, workLeaves, today, empTotal]);
+  }, [events, employees, workLeaves, today, empTotal, empIdSet]);
 
   const recentLeaves = [...workLeaves]
     .filter((l) => !l.employee?.id || empIdSet.has(l.employee.id))
@@ -213,13 +184,38 @@ export default function TeamScreen() {
   const upcomingBirthdays = birthdays.slice(0, 3);
 
   const STATUS_MAP: Record<string, { label: string; color: string }> = {
-    pending: { label: 'Kutilmoqda', color: COLORS.warning },
-    approved: { label: 'Tasdiqlangan', color: COLORS.present },
-    rejected: { label: 'Rad etildi', color: COLORS.error },
+    pending: { label: 'Kutilmoqda', color: colors.warning },
+    yuborildi: { label: 'Kutilmoqda', color: colors.warning },
+    approved: { label: 'Tasdiqlangan', color: colors.present },
+    tasdiqlangan: { label: 'Tasdiqlangan', color: colors.present },
+    signed: { label: 'Tasdiqlangan', color: colors.present },
+    rejected: { label: 'Rad etildi', color: colors.error },
+    rad_etilgan: { label: 'Rad etildi', color: colors.error },
   };
 
+  const SectionCard = ({ icon, title, rightLabel, onRightPress, loading, children }: {
+    icon: string; title: string; rightLabel?: string; onRightPress?: () => void; loading?: boolean; children: React.ReactNode;
+  }) => (
+    <View style={styles.card}>
+      <View style={styles.cardHeader}>
+        <View style={styles.cardTitleRow}>
+          <Text style={styles.cardIcon}>{icon}</Text>
+          <Text style={styles.cardTitle}>{title}</Text>
+        </View>
+        {rightLabel && (
+          <TouchableOpacity onPress={onRightPress}>
+            <Text style={styles.linkText}>{rightLabel}</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+      {loading ? (
+        <View style={styles.sectionLoading}><ActivityIndicator color={colors.primaryLight} size="small" /></View>
+      ) : children}
+    </View>
+  );
+
   return (
-    <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
+    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Text style={styles.backArrow}>{'<'}</Text>
@@ -231,31 +227,28 @@ export default function TeamScreen() {
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={refetchAll} tintColor={COLORS.primaryLight} />
-        }
+        refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={refetchAll} tintColor={colors.primaryLight} />}
       >
-        {/* Davomat card */}
+        {onlySubordinates && (
+          <View style={styles.filterNotice}>
+            <Text style={styles.filterNoticeText}>👥 Faqat bo'ysunuvchilar ko'rsatilmoqda</Text>
+          </View>
+        )}
+
         <SectionCard icon="📊" title="Davomat" loading={empQ.isLoading || attQ.isLoading}>
           <View style={styles.chartRow}>
-            <DonutChart
-              total={attendanceStats.total}
-              present={attendanceStats.present}
-              late={attendanceStats.late}
-              onLeave={attendanceStats.onLeave}
-            />
+            <DonutChart c={colors} styles={styles}
+              total={attendanceStats.total} present={attendanceStats.present}
+              late={attendanceStats.late} onLeave={attendanceStats.onLeave} />
             <View style={styles.legend}>
               {attendanceStats.late > 0 && (
                 <View style={styles.legendItem}>
-                  <View style={[styles.legendDot, { backgroundColor: COLORS.warning }]} />
-                  <View>
-                    <Text style={styles.legendCount}>{attendanceStats.late}</Text>
-                    <Text style={styles.legendLabel}>kechikkan</Text>
-                  </View>
+                  <View style={[styles.legendDot, { backgroundColor: colors.warning }]} />
+                  <View><Text style={styles.legendCount}>{attendanceStats.late}</Text><Text style={styles.legendLabel}>kechikkan</Text></View>
                 </View>
               )}
               <View style={styles.legendItem}>
-                <View style={[styles.legendDot, { backgroundColor: '#E5536A' }]} />
+                <View style={[styles.legendDot, { backgroundColor: colors.error }]} />
                 <View>
                   <Text style={styles.legendCount}>
                     {Math.max(0, attendanceStats.total - attendanceStats.present - attendanceStats.late - attendanceStats.onLeave)}
@@ -265,20 +258,14 @@ export default function TeamScreen() {
               </View>
               {attendanceStats.onLeave > 0 && (
                 <View style={styles.legendItem}>
-                  <View style={[styles.legendDot, { backgroundColor: COLORS.primaryLight }]} />
-                  <View>
-                    <Text style={styles.legendCount}>{attendanceStats.onLeave}</Text>
-                    <Text style={styles.legendLabel}>so'rov yuborilgan</Text>
-                  </View>
+                  <View style={[styles.legendDot, { backgroundColor: colors.primaryLight }]} />
+                  <View><Text style={styles.legendCount}>{attendanceStats.onLeave}</Text><Text style={styles.legendLabel}>so'rovda</Text></View>
                 </View>
               )}
               {attendanceStats.present > 0 && (
                 <View style={styles.legendItem}>
-                  <View style={[styles.legendDot, { backgroundColor: COLORS.present }]} />
-                  <View>
-                    <Text style={styles.legendCount}>{attendanceStats.present}</Text>
-                    <Text style={styles.legendLabel}>keldi</Text>
-                  </View>
+                  <View style={[styles.legendDot, { backgroundColor: colors.present }]} />
+                  <View><Text style={styles.legendCount}>{attendanceStats.present}</Text><Text style={styles.legendLabel}>keldi</Text></View>
                 </View>
               )}
             </View>
@@ -288,7 +275,6 @@ export default function TeamScreen() {
           </TouchableOpacity>
         </SectionCard>
 
-        {/* So'rovlar card */}
         <SectionCard icon="📋" title="So'rovlar" rightLabel="Barchasi" onRightPress={() => router.push('/team-leaves')} loading={leavesQ.isLoading}>
           {recentLeaves.length === 0 ? (
             <Text style={styles.emptyText}>So'rovlar yo'q</Text>
@@ -296,23 +282,15 @@ export default function TeamScreen() {
             recentLeaves.map((leave) => {
               const st = STATUS_MAP[leave.status] ?? STATUS_MAP.pending;
               return (
-                <TouchableOpacity
-                  key={leave.id} style={styles.leaveRow}
-                  onPress={() => router.push({ pathname: '/leave-detail', params: { id: leave.id } })}
-                  activeOpacity={0.7}
-                >
-                  <EmployeeAvatar emp={(leave.employee as Employee) || { id: 0, legal_name: '?' }} size={48} />
+                <TouchableOpacity key={leave.id} style={styles.leaveRow}
+                  onPress={() => router.push({ pathname: '/leave-detail', params: { id: leave.id } })} activeOpacity={0.7}>
+                  <EmployeeAvatar c={colors} emp={(leave.employee as Employee) || { id: 0, legal_name: '?' }} size={48} />
                   <View style={styles.leaveInfo}>
-                    <Text style={styles.leaveCat} numberOfLines={1}>
-                      {leave.type ?? "So'rov"}
-                    </Text>
+                    <Text style={styles.leaveCat} numberOfLines={1}>{leave.type ?? "So'rov"}</Text>
                     <Text style={styles.leaveDate}>
-                      {dayjs(leave.start_date).format('D MMM YYYY, HH:mm')} –{' '}
-                      {dayjs(leave.end_date).format('HH:mm')}
+                      {dayjs(leave.start_date).format('D MMM YYYY, HH:mm')} – {dayjs(leave.end_date).format('HH:mm')}
                     </Text>
-                    <Text style={styles.leaveEmployee} numberOfLines={1}>
-                      {leave.employee?.legal_name ?? '—'}
-                    </Text>
+                    <Text style={styles.leaveEmployee} numberOfLines={1}>{leave.employee?.legal_name ?? '—'}</Text>
                   </View>
                   <Text style={[styles.leaveStatus, { color: st.color }]}>{st.label}</Text>
                 </TouchableOpacity>
@@ -324,24 +302,18 @@ export default function TeamScreen() {
           </TouchableOpacity>
         </SectionCard>
 
-        {/* Xodimlar card */}
         <SectionCard icon="👥" title="Xodimlar" rightLabel="Barchasi" onRightPress={() => router.push('/employees-list')} loading={empQ.isLoading}>
           {topEmployees.length === 0 ? (
             <Text style={styles.emptyText}>Xodimlar yo'q</Text>
           ) : (
             topEmployees.map((emp, idx) => (
-              <TouchableOpacity
-                key={emp.id}
+              <TouchableOpacity key={emp.id}
                 style={[styles.empRow, idx < topEmployees.length - 1 && styles.empRowBorder]}
-                onPress={() => router.push({ pathname: '/profile-detail', params: { id: emp.id } })}
-                activeOpacity={0.7}
-              >
-                <EmployeeAvatar emp={emp} size={48} />
+                onPress={() => router.push({ pathname: '/profile-detail', params: { id: emp.id } })} activeOpacity={0.7}>
+                <EmployeeAvatar c={colors} emp={emp} size={48} />
                 <View style={styles.empInfo}>
                   <Text style={styles.empName} numberOfLines={1}>{emp.legal_name}</Text>
-                  <Text style={styles.empPosition} numberOfLines={1}>
-                    {emp.job_position?.name ?? emp.department?.name ?? '—'}
-                  </Text>
+                  <Text style={styles.empPosition} numberOfLines={1}>{emp.job_position?.name ?? emp.department?.name ?? '—'}</Text>
                 </View>
                 <Text style={styles.arrowIcon}>›</Text>
               </TouchableOpacity>
@@ -349,28 +321,18 @@ export default function TeamScreen() {
           )}
         </SectionCard>
 
-        {/* Tug'ilgan kunlar card */}
         {(bDayQ.isLoading || upcomingBirthdays.length > 0) && (
           <SectionCard icon="🎂" title="Tug'ilgan kunlar" rightLabel="Barchasi" onRightPress={() => router.push('/birthdays')} loading={bDayQ.isLoading}>
             {upcomingBirthdays.map((emp, idx) => (
-              <View
-                key={emp.id}
-                style={[styles.empRow, idx < upcomingBirthdays.length - 1 && styles.empRowBorder]}
-              >
-                <EmployeeAvatar emp={emp} size={48} />
+              <View key={emp.id} style={[styles.empRow, idx < upcomingBirthdays.length - 1 && styles.empRowBorder]}>
+                <EmployeeAvatar c={colors} emp={emp} size={48} />
                 <View style={styles.empInfo}>
                   <Text style={styles.empName} numberOfLines={1}>{emp.legal_name}</Text>
-                  <Text style={styles.empPosition} numberOfLines={1}>
-                    {emp.job_position?.name ?? '—'}
-                  </Text>
+                  <Text style={styles.empPosition} numberOfLines={1}>{emp.job_position?.name ?? '—'}</Text>
                 </View>
                 <View style={styles.bdayRight}>
-                  <Text style={styles.bdayDate}>
-                    {emp.birth_date ? dayjs(emp.birth_date).format('D MMM') : '—'}
-                  </Text>
-                  {emp.days_left === 0 && (
-                    <Text style={styles.bdayToday}>Bugun! 🎉</Text>
-                  )}
+                  <Text style={styles.bdayDate}>{emp.birth_date ? dayjs(emp.birth_date).format('D MMM') : '—'}</Text>
+                  {emp.days_left === 0 && <Text style={styles.bdayToday}>Bugun! 🎉</Text>}
                 </View>
               </View>
             ))}
@@ -383,76 +345,66 @@ export default function TeamScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: COLORS.bg },
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    safe: { flex: 1, backgroundColor: c.bg },
+    header: {
+      flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14,
+      borderBottomWidth: 1, borderBottomColor: c.cardBorder,
+    },
+    backBtn: { width: 36, height: 36, justifyContent: 'center', marginRight: 4 },
+    backArrow: { fontSize: 22, color: c.text, fontWeight: '300' },
+    headerTitle: { flex: 1, fontSize: 20, fontWeight: '700', color: c.text },
 
-  header: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 16, paddingVertical: 14,
-    borderBottomWidth: 1, borderBottomColor: COLORS.cardBorder,
-  },
-  backBtn: { width: 36, height: 36, justifyContent: 'center', marginRight: 4 },
-  backArrow: { fontSize: 22, color: COLORS.text, fontWeight: '300' },
-  headerTitle: { flex: 1, fontSize: 20, fontWeight: '700', color: COLORS.text },
+    content: { paddingHorizontal: 16, paddingTop: 16 },
 
-  content: { paddingHorizontal: 16, paddingTop: 16 },
+    filterNotice: { backgroundColor: c.primarySoft, borderRadius: 12, paddingVertical: 10, paddingHorizontal: 14, marginBottom: 12 },
+    filterNoticeText: { fontSize: 13, color: c.primaryLight, fontWeight: '600' },
 
-  card: {
-    backgroundColor: COLORS.card, borderRadius: 16,
-    borderWidth: 1, borderColor: COLORS.cardBorder,
-    marginBottom: 14, overflow: 'hidden',
-  },
-  cardHeader: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 16, paddingVertical: 14,
-    borderBottomWidth: 1, borderBottomColor: COLORS.cardBorder,
-  },
-  cardTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  cardIcon: { fontSize: 16 },
-  cardTitle: { fontSize: 15, fontWeight: '700', color: COLORS.text },
-  linkText: { fontSize: 13, color: COLORS.primaryLight, fontWeight: '600' },
-  sectionLoading: { paddingVertical: 32, alignItems: 'center' },
+    card: { backgroundColor: c.card, borderRadius: 18, borderWidth: 1, borderColor: c.cardBorder, marginBottom: 14, overflow: 'hidden' },
+    cardHeader: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+      paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: c.cardBorder,
+    },
+    cardTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    cardIcon: { fontSize: 16 },
+    cardTitle: { fontSize: 15, fontWeight: '700', color: c.text },
+    linkText: { fontSize: 13, color: c.primaryLight, fontWeight: '600' },
+    sectionLoading: { paddingVertical: 32, alignItems: 'center' },
 
-  chartRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
-  chartWrapper: { position: 'relative', width: 160, height: 160, alignItems: 'center', justifyContent: 'center' },
-  chartCenter: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
-  chartTotal: { fontSize: 28, fontWeight: '800', color: COLORS.text },
-  legend: { flex: 1, paddingLeft: 20, gap: 12 },
-  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  legendDot: { width: 12, height: 12, borderRadius: 6 },
-  legendCount: { fontSize: 18, fontWeight: '700', color: COLORS.text },
-  legendLabel: { fontSize: 11, color: COLORS.textSecondary, marginTop: 1 },
+    chartRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
+    chartWrapper: { position: 'relative', width: 160, height: 160, alignItems: 'center', justifyContent: 'center' },
+    chartCenter: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
+    chartTotal: { fontSize: 28, fontWeight: '800', color: c.text },
+    legend: { flex: 1, paddingLeft: 20, gap: 12 },
+    legendItem: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    legendDot: { width: 12, height: 12, borderRadius: 6 },
+    legendCount: { fontSize: 18, fontWeight: '700', color: c.text },
+    legendLabel: { fontSize: 11, color: c.textSecondary, marginTop: 1 },
 
-  primaryBtn: {
-    margin: 16, marginTop: 8, backgroundColor: COLORS.primary,
-    borderRadius: 12, paddingVertical: 14, alignItems: 'center',
-  },
-  primaryBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+    primaryBtn: { margin: 16, marginTop: 8, backgroundColor: c.primary, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
+    primaryBtnText: { color: c.onPrimary, fontSize: 15, fontWeight: '700' },
 
-  leaveRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    paddingHorizontal: 16, paddingVertical: 12,
-    borderBottomWidth: 1, borderBottomColor: COLORS.cardBorder,
-  },
-  leaveInfo: { flex: 1 },
-  leaveCat: { fontSize: 14, fontWeight: '700', color: COLORS.text, marginBottom: 2 },
-  leaveDate: { fontSize: 12, color: COLORS.textSecondary, marginBottom: 2 },
-  leaveEmployee: { fontSize: 12, color: COLORS.textMuted },
-  leaveStatus: { fontSize: 12, fontWeight: '700' },
+    leaveRow: {
+      flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 12,
+      borderBottomWidth: 1, borderBottomColor: c.cardBorder,
+    },
+    leaveInfo: { flex: 1 },
+    leaveCat: { fontSize: 14, fontWeight: '700', color: c.text, marginBottom: 2 },
+    leaveDate: { fontSize: 12, color: c.textSecondary, marginBottom: 2 },
+    leaveEmployee: { fontSize: 12, color: c.textMuted },
+    leaveStatus: { fontSize: 12, fontWeight: '700' },
 
-  empRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    paddingHorizontal: 16, paddingVertical: 12,
-  },
-  empRowBorder: { borderBottomWidth: 1, borderBottomColor: COLORS.cardBorder },
-  empInfo: { flex: 1 },
-  empName: { fontSize: 14, fontWeight: '700', color: COLORS.text },
-  empPosition: { fontSize: 12, color: COLORS.textMuted, marginTop: 2 },
-  arrowIcon: { fontSize: 22, color: COLORS.textMuted },
+    empRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 12 },
+    empRowBorder: { borderBottomWidth: 1, borderBottomColor: c.cardBorder },
+    empInfo: { flex: 1 },
+    empName: { fontSize: 14, fontWeight: '700', color: c.text },
+    empPosition: { fontSize: 12, color: c.textMuted, marginTop: 2 },
+    arrowIcon: { fontSize: 22, color: c.textMuted },
 
-  bdayRight: { alignItems: 'flex-end' },
-  bdayDate: { fontSize: 13, fontWeight: '600', color: COLORS.textSecondary },
-  bdayToday: { fontSize: 11, color: COLORS.warning, marginTop: 2 },
+    bdayRight: { alignItems: 'flex-end' },
+    bdayDate: { fontSize: 13, fontWeight: '600', color: c.textSecondary },
+    bdayToday: { fontSize: 11, color: c.warning, marginTop: 2 },
 
-  emptyText: { color: COLORS.textMuted, fontSize: 14, paddingHorizontal: 16, paddingVertical: 12 },
-});
+    emptyText: { color: c.textMuted, fontSize: 14, paddingHorizontal: 16, paddingVertical: 12 },
+  });
