@@ -41,6 +41,9 @@ export const PUSH_TOKENS = 'push-tokens';
 // Employee self update
 export const EMPLOYEE_SELF_UPDATE = 'employees/me/self-update';
 
+// Order act categories
+export const ORDER_ACT_CATEGORIES = 'order-act-categories';
+
 // Order acts (Buyruqlar / decrees)
 export const ORDER_ACTS = 'order-acts';
 export const ORDER_ACT_DETAIL = (id: number) => `order-acts/${id}`;

@@ -58,6 +58,12 @@ export interface WorkLeave {
   rejection_reason?: string | null;
 }
 
+export interface OrderActCategory {
+  id: number;
+  name: string;
+  description?: string | null;
+}
+
 export interface OrderActSigner {
   id?: number;
   order_act_id?: number;

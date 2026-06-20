@@ -66,6 +66,13 @@ export default function OrdersScreen() {
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
         <Text style={styles.title}>Buyruqlar</Text>
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => router.push('/create-order' as any)}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.fabText}>+</Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.tabsRow}>
@@ -164,8 +171,13 @@ const makeStyles = (c: ThemeColors) =>
     safe: { flex: 1, backgroundColor: c.bg },
     center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 80 },
 
-    header: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
-    title: { fontSize: 26, fontWeight: '800', color: c.text },
+    header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
+    title: { flex: 1, fontSize: 26, fontWeight: '800', color: c.text },
+    fab: {
+      width: 40, height: 40, borderRadius: 20,
+      backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center',
+    },
+    fabText: { fontSize: 26, color: c.onPrimary, lineHeight: 30, fontWeight: '400' },
 
     tabsRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingBottom: 12 },
     tab: {

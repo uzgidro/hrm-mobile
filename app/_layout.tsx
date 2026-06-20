@@ -109,6 +109,7 @@ function ThemedNavigation() {
         <Stack.Screen name="salary" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="leave-detail" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="order-detail" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="create-order" options={{ animation: 'slide_from_bottom' }} />
       </Stack>
     </>
   );
