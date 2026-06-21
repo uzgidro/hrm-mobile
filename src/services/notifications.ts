@@ -50,5 +50,6 @@ export function routeForNotification(data: any): string | null {
   if (type === 'new_leave') return '/work-leaves';
   if (type === 'leave_signed' || type === 'leave_rejected') return '/work-leaves';
   if (type === 'new_order' || type === 'order_update') return '/(tabs)/orders';
+  if (type === 'new_letter' || type === 'letter_signed' || type === 'letter_rejected' || type === 'letter_update') return '/(tabs)/letters';
   return null;
 }

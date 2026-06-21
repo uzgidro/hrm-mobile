@@ -52,12 +52,16 @@ export default function TabsLayout() {
         options={{ tabBarIcon: ({ focused }) => <TabIcon focused={focused} emoji="📄" label="Buyruqlar" colors={colors} /> }}
       />
       <Tabs.Screen
+        name="letters"
+        options={{ tabBarIcon: ({ focused }) => <TabIcon focused={focused} emoji="✉️" label="Xatlar" colors={colors} /> }}
+      />
+      <Tabs.Screen
         name="news"
         options={{ tabBarIcon: ({ focused }) => <TabIcon focused={focused} emoji="📰" label="Yangiliklar" colors={colors} /> }}
       />
       <Tabs.Screen
         name="profile"
-        options={{ tabBarIcon: ({ focused }) => <TabIcon focused={focused} emoji="👤" label="Profil" colors={colors} /> }}
+        options={{ href: null }}
       />
     </Tabs>
   );

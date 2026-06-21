@@ -1,7 +1,7 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, Image,
 } from 'react-native';
 import dayjs from 'dayjs';
 import 'dayjs/locale/uz';
@@ -9,7 +9,7 @@ import { router } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../src/store/authStore';
 import { apiClient } from '../../src/api/client';
-import { WORK_LEAVES, EMPLOYEES_BIRTHDAYS, TURNSTILE_ATTENDANCE_EVENTS } from '../../src/api/urls';
+import { WORK_LEAVES, EMPLOYEES_BIRTHDAYS, TURNSTILE_ATTENDANCE_EVENTS, NOTIFICATIONS_LIST } from '../../src/api/urls';
 import { fetchAllAttendanceEvents, attendanceQueryKey } from '../../src/utils/attendance';
 import { fetchAllEmployees, employeesQueryKey } from '../../src/utils/employees';
 import { useTheme, useThemedStyles } from '../../src/theme/ThemeProvider';
@@ -91,6 +91,23 @@ export default function HomeScreen() {
     refetchInterval: 60 * 1000,
   });
 
+  const { data: notifications = [] } = useQuery<any[]>({
+    queryKey: ['notifications', employee?.id],
+    queryFn: () =>
+      apiClient.get(NOTIFICATIONS_LIST).then((r) => {
+        const d = r.data;
+        return Array.isArray(d) ? d : (d?.items ?? []);
+      }),
+    enabled: !!employee?.id,
+    staleTime: 30 * 1000,
+    refetchInterval: 60 * 1000,
+  });
+
+  const unreadCount = useMemo(
+    () => notifications.filter((n) => !n.is_read).length,
+    [notifications]
+  );
+
   const pendingCount = useMemo(() => {
     if (!isSupervisor) return 0;
     return assignedLeaves.filter(
@@ -140,31 +157,25 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.headerRow}>
-          <TouchableOpacity style={styles.avatar} activeOpacity={0.8} onPress={() => router.push('/(tabs)/profile')}>
-            <Text style={styles.avatarText}>{initials}</Text>
+          <TouchableOpacity style={styles.avatarWrap} activeOpacity={0.8} onPress={() => router.push('/(tabs)/profile')}>
+            {employee?.photo_path ? (
+              <Image source={{ uri: employee.photo_path }} style={styles.avatarImg} />
+            ) : (
+              <View style={styles.avatar}><Text style={styles.avatarText}>{initials}</Text></View>
+            )}
           </TouchableOpacity>
-          <View style={{ flex: 1 }}>
+          <TouchableOpacity style={{ flex: 1 }} activeOpacity={0.8} onPress={() => router.push('/(tabs)/profile')}>
             <Text style={styles.userName} numberOfLines={1}>{employee?.legal_name || 'Foydalanuvchi'}</Text>
             <Text style={styles.userRole} numberOfLines={1}>{employee?.job_position?.name || dateStr}</Text>
-          </View>
-          <TouchableOpacity style={styles.bellBtn} onPress={() => router.push('/work-leaves')}>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.bellBtn} onPress={() => router.push('/notifications' as any)}>
             <Text style={styles.bellEmoji}>🔔</Text>
-            {pendingCount > 0 && (
+            {unreadCount > 0 && (
               <View style={styles.bellBadge}>
-                <Text style={styles.bellBadgeText}>{pendingCount > 9 ? '9+' : pendingCount}</Text>
+                <Text style={styles.bellBadgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
               </View>
             )}
           </TouchableOpacity>
-        </View>
-
-        {/* Hero banner */}
-        <View style={styles.hero}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.heroTitle}>Ish faoliyatim</Text>
-            <Text style={styles.heroSub}>Bugungi vazifa va davomat</Text>
-            <Text style={styles.heroDate}>{dateStr}</Text>
-          </View>
-          <Text style={styles.heroEmoji}>📊</Text>
         </View>
 
         {/* Jadval */}
@@ -294,21 +305,14 @@ const makeStyles = (c: ThemeColors) =>
     content: { paddingHorizontal: 16, paddingBottom: 32 },
 
     headerRow: { flexDirection: 'row', alignItems: 'center', paddingTop: 16, marginBottom: 16, gap: 12 },
+    avatarWrap: { width: 48, height: 48 },
     avatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' },
+    avatarImg: { width: 48, height: 48, borderRadius: 24, backgroundColor: c.skeleton },
     avatarText: { color: c.onPrimary, fontSize: 17, fontWeight: '800' },
     userName: { fontSize: 18, fontWeight: '800', color: c.text },
     userRole: { fontSize: 13, color: c.primary, fontWeight: '600', marginTop: 2 },
     bellBtn: { width: 46, height: 46, borderRadius: 23, backgroundColor: c.primarySoft, alignItems: 'center', justifyContent: 'center' },
     bellEmoji: { fontSize: 20 },
-
-    hero: {
-      flexDirection: 'row', alignItems: 'center',
-      backgroundColor: c.hero, borderRadius: 22, padding: 20, marginBottom: 16,
-    },
-    heroTitle: { fontSize: 21, fontWeight: '800', color: c.heroText },
-    heroSub: { fontSize: 13, color: c.heroText, opacity: 0.85, marginTop: 4 },
-    heroDate: { fontSize: 12, color: c.heroText, opacity: 0.7, marginTop: 10 },
-    heroEmoji: { fontSize: 44 },
     bellBadge: { position: 'absolute', top: 6, right: 6, backgroundColor: c.warning, borderRadius: 9, minWidth: 17, height: 17, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3 },
     bellBadgeText: { fontSize: 10, fontWeight: '800', color: '#fff' },
 

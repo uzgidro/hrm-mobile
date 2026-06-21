@@ -122,6 +122,40 @@ export interface OrderAct {
   document?: { id: number; document_objectname?: string } | null;
 }
 
+export interface LetterSigner {
+  id?: number;
+  employee_id?: number;
+  signer_type?: 'main' | 'ordinary' | 'management' | string;
+  employee?: Employee;
+}
+
+export interface Letter {
+  id: number;
+  letter_type?: string;
+  letter_number?: string | null;
+  letter_date?: string | null;
+  description?: string;
+  status?: string;
+  reject_by_id?: number | null;
+  rejection_reason?: string | null;
+  rejected_by?: Employee | null;
+  is_stamped?: boolean;
+  generated_document_path?: string | null;
+  attachment_path?: string | null;
+  departure_date?: string | null;
+  arrival_date?: string | null;
+  submitter_id?: number | null;
+  submitter?: Employee | null;
+  employee_id?: number | null;
+  employee?: Employee | null;
+  created_by_id?: number | null;
+  created_by?: Employee | null;
+  created_at?: string;
+  organization_branch_id?: number;
+  assigned_signers?: LetterSigner[];
+  signers?: LetterSigner[];
+}
+
 export interface NewsPost {
   id: number;
   title: string;
