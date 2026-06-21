@@ -47,10 +47,15 @@ export const ORDER_ACT_DOCUMENTS = (id: number) => `order-acts/${id}/documents`;
 
 // Letters (Xatlar)
 export const LETTERS_LIST = 'letters';
+export const LETTER_CREATE = 'letters';
 export const LETTER_DETAIL = (id: number) => `letters/${id}`;
 export const LETTER_SIGN = (id: number) => `letters/${id}/sign`;
 export const LETTER_REJECT = (id: number) => `letters/${id}/reject`;
 export const LETTER_EDITOR_CONFIG = (id: number) => `letters/${id}/editor-config`;
+export const LETTER_UPLOAD_ATTACHMENT = (id: number) => `letters/${id}/upload-attachment`;
+
+// Organization branches
+export const ORGANIZATION_BRANCHES = 'organization-branches';
 
 // Order acts (Buyruqlar / decrees)
 export const ORDER_ACTS = 'order-acts';
