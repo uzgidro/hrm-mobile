@@ -121,6 +121,13 @@ export default function OrderDetailScreen() {
 
   const hasActions = canApprove || canResubmit || canForward || canRegister || canAcknowledge;
 
+  // The document is editable while it is still moving through approval and the
+  // viewer is the creator or an assigned approver at the active stage. Once it
+  // is confirmed/applied it opens read-only. Backend permissions are the final
+  // authority — this just picks the requested mode.
+  const docLocked = order.status === 'confirmed' || order.status === 'applied' || order.status === 'rejected';
+  const canEditDoc = !docLocked && (isCreator || canApprove);
+
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <Header styles={styles} />
@@ -136,6 +143,20 @@ export default function OrderDetailScreen() {
           </Text>
           {!!order.act_date && (
             <Text style={styles.subMeta}>Sana: {dayjs(order.act_date).format('DD.MM.YYYY')}</Text>
+          )}
+          {!!order.document && (
+            <TouchableOpacity
+              style={styles.docBtn}
+              activeOpacity={0.85}
+              onPress={() =>
+                router.push({
+                  pathname: '/order-document',
+                  params: { id: orderId, mode: canEditDoc ? 'edit' : 'view' },
+                } as any)
+              }
+            >
+              <Text style={styles.docBtnText}>📄  Hujjatni ochish</Text>
+            </TouchableOpacity>
           )}
         </View>
 
@@ -367,6 +388,8 @@ const makeStyles = (c: ThemeColors) =>
     badgeText: { fontSize: 12, fontWeight: '700' },
     bigTitle: { fontSize: 18, fontWeight: '800', color: c.text },
     subMeta: { fontSize: 13, color: c.textMuted },
+    docBtn: { marginTop: 6, backgroundColor: c.primarySoft, borderRadius: 12, paddingVertical: 13, alignItems: 'center' },
+    docBtnText: { color: c.primary, fontSize: 14, fontWeight: '700' },
 
     section: { backgroundColor: c.card, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: c.cardBorder },
     sectionTitle: { fontSize: 12, fontWeight: '800', color: c.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 },

@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "dark",
+    "userInterfaceStyle": "automatic",
     "scheme": "hrm",
     "ios": {
       "supportsTablet": false,
@@ -35,7 +35,7 @@
         "expo-notifications",
         {
           "icon": "./assets/icon.png",
-          "color": "#1B2A7B",
+          "color": "#7B68EE",
           "sounds": []
         }
       ]

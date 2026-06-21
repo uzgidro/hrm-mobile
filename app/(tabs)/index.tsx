@@ -45,7 +45,12 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
 
   const now = dayjs();
-  const dateStr = `${DAYS_UZ[now.day()]}, ${now.date()} ${MONTHS_UZ[now.month()]} ${now.year()}`;
+  const dateStr = `${DAYS_UZ[now.day()]}, ${now.date()} ${MONTHS_UZ[now.month()]}`;
+  const initials = (employee?.legal_name || 'F U')
+    .split(' ')
+    .slice(0, 2)
+    .map((w) => w.charAt(0).toUpperCase())
+    .join('');
   const monthStart = now.startOf('month').format('YYYY-MM-DD');
   const monthEnd = now.endOf('month').format('YYYY-MM-DD');
   const todayStr = now.format('YYYY-MM-DD');
@@ -135,10 +140,12 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.headerRow}>
+          <TouchableOpacity style={styles.avatar} activeOpacity={0.8} onPress={() => router.push('/(tabs)/profile')}>
+            <Text style={styles.avatarText}>{initials}</Text>
+          </TouchableOpacity>
           <View style={{ flex: 1 }}>
-            <Text style={styles.hello}>Assalomu alaykum 👋</Text>
             <Text style={styles.userName} numberOfLines={1}>{employee?.legal_name || 'Foydalanuvchi'}</Text>
-            <Text style={styles.dateText}>{dateStr}</Text>
+            <Text style={styles.userRole} numberOfLines={1}>{employee?.job_position?.name || dateStr}</Text>
           </View>
           <TouchableOpacity style={styles.bellBtn} onPress={() => router.push('/work-leaves')}>
             <Text style={styles.bellEmoji}>🔔</Text>
@@ -148,6 +155,16 @@ export default function HomeScreen() {
               </View>
             )}
           </TouchableOpacity>
+        </View>
+
+        {/* Hero banner */}
+        <View style={styles.hero}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.heroTitle}>Ish faoliyatim</Text>
+            <Text style={styles.heroSub}>Bugungi vazifa va davomat</Text>
+            <Text style={styles.heroDate}>{dateStr}</Text>
+          </View>
+          <Text style={styles.heroEmoji}>📊</Text>
         </View>
 
         {/* Jadval */}
@@ -276,12 +293,22 @@ const makeStyles = (c: ThemeColors) =>
     scroll: { flex: 1 },
     content: { paddingHorizontal: 16, paddingBottom: 32 },
 
-    headerRow: { flexDirection: 'row', alignItems: 'flex-start', paddingTop: 16, marginBottom: 18, gap: 12 },
-    hello: { fontSize: 13, color: c.textSecondary },
-    userName: { fontSize: 22, fontWeight: '800', color: c.text, marginTop: 2 },
-    dateText: { fontSize: 12, color: c.textMuted, marginTop: 3 },
-    bellBtn: { width: 46, height: 46, borderRadius: 23, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, alignItems: 'center', justifyContent: 'center' },
+    headerRow: { flexDirection: 'row', alignItems: 'center', paddingTop: 16, marginBottom: 16, gap: 12 },
+    avatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' },
+    avatarText: { color: c.onPrimary, fontSize: 17, fontWeight: '800' },
+    userName: { fontSize: 18, fontWeight: '800', color: c.text },
+    userRole: { fontSize: 13, color: c.primary, fontWeight: '600', marginTop: 2 },
+    bellBtn: { width: 46, height: 46, borderRadius: 23, backgroundColor: c.primarySoft, alignItems: 'center', justifyContent: 'center' },
     bellEmoji: { fontSize: 20 },
+
+    hero: {
+      flexDirection: 'row', alignItems: 'center',
+      backgroundColor: c.hero, borderRadius: 22, padding: 20, marginBottom: 16,
+    },
+    heroTitle: { fontSize: 21, fontWeight: '800', color: c.heroText },
+    heroSub: { fontSize: 13, color: c.heroText, opacity: 0.85, marginTop: 4 },
+    heroDate: { fontSize: 12, color: c.heroText, opacity: 0.7, marginTop: 10 },
+    heroEmoji: { fontSize: 44 },
     bellBadge: { position: 'absolute', top: 6, right: 6, backgroundColor: c.warning, borderRadius: 9, minWidth: 17, height: 17, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3 },
     bellBadgeText: { fontSize: 10, fontWeight: '800', color: '#fff' },
 

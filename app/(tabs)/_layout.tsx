@@ -9,11 +9,12 @@ function TabIcon({
 }: { focused: boolean; emoji: string; label: string; colors: ThemeColors }) {
   return (
     <View style={styles.tabIconWrapper}>
-      <Text style={[styles.tabEmoji, { opacity: focused ? 1 : 0.45 }]}>{emoji}</Text>
+      {focused && <View style={[styles.tabDot, { backgroundColor: colors.primaryLight }]} />}
+      <Text style={[styles.tabEmoji, { opacity: focused ? 1 : 0.4 }]}>{emoji}</Text>
       <Text
         style={[
           styles.tabLabel,
-          { color: focused ? colors.primaryLight : colors.textMuted, fontWeight: focused ? '700' : '500' },
+          { color: focused ? colors.tabBarActive : colors.tabBarInactive, fontWeight: focused ? '700' : '500' },
         ]}
       >
         {label}
@@ -64,6 +65,7 @@ export default function TabsLayout() {
 
 const styles = StyleSheet.create({
   tabIconWrapper: { alignItems: 'center', gap: 3, paddingTop: 2, width: 70 },
+  tabDot: { position: 'absolute', top: -6, width: 5, height: 5, borderRadius: 2.5 },
   tabEmoji: { fontSize: 22 },
   tabLabel: { fontSize: 10 },
 });

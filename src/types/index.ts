@@ -119,6 +119,7 @@ export interface OrderAct {
   rejected_by?: Employee;
   rejection_reason?: string | null;
   comments?: OrderActComment[];
+  document?: { id: number; document_objectname?: string } | null;
 }
 
 export interface NewsPost {

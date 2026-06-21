@@ -53,3 +53,7 @@ export const ORDER_ACT_DECREE_RESUBMIT = (id: number) => `order-acts/${id}/decre
 export const ORDER_ACT_DECREE_FORWARD = (id: number) => `order-acts/${id}/decree/forward-to-leadership`;
 export const ORDER_ACT_DECREE_REGISTER = (id: number) => `order-acts/${id}/decree/register`;
 export const ORDER_ACT_DECREE_ACKNOWLEDGE = (id: number) => `order-acts/${id}/decree/acknowledge`;
+export const ORDER_ACT_EDITOR_CONFIG = (id: number) => `order-acts/${id}/editor-config`;
+
+// OnlyOffice document server (public host that serves the editor api.js)
+export const ONLYOFFICE_SERVER_URL = 'https://doc-editor.uzgidro.uz';

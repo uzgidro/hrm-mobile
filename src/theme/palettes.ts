@@ -13,6 +13,8 @@ export type ThemeColors = {
   primary: string;
   primaryLight: string;
   primarySoft: string; // translucent brand tint for chips/badges
+  hero: string;        // hero / summary banner background
+  heroText: string;    // text on the hero banner
   // text
   text: string;
   textSecondary: string;
@@ -26,9 +28,11 @@ export type ThemeColors = {
   warning: string;
   warningSoft: string;
   info: string;
-  // navigation
+  // navigation (the bottom bar is dark in both themes — reference look)
   tabBar: string;
   tabBarBorder: string;
+  tabBarActive: string;
+  tabBarInactive: string;
   // calendar / attendance
   present: string;
   absent: string;
@@ -39,74 +43,86 @@ export type ThemeColors = {
   shadow: string;
 };
 
-export const darkColors: ThemeColors = {
-  bg: '#0D0F1A',
-  card: '#161829',
-  cardElevated: '#1B1E33',
-  cardBorder: '#222640',
-  overlay: 'rgba(0,0,0,0.6)',
-
-  primary: '#3B6FF5',
-  primaryLight: '#5B8DEF',
-  primarySoft: 'rgba(59,111,245,0.16)',
-
-  text: '#F4F6FB',
-  textSecondary: '#9AA0BC',
-  textMuted: '#5A5F7A',
-  onPrimary: '#FFFFFF',
-
-  success: '#34D399',
-  successSoft: 'rgba(52,211,153,0.16)',
-  error: '#F87171',
-  errorSoft: 'rgba(248,113,113,0.16)',
-  warning: '#FBBF24',
-  warningSoft: 'rgba(251,191,36,0.16)',
-  info: '#60A5FA',
-
-  tabBar: '#12141F',
-  tabBarBorder: '#222640',
-
-  present: '#34D399',
-  absent: '#F87171',
-  weekend: '#2A3358',
-  today: '#3B6FF5',
-
-  skeleton: '#1E2235',
-  shadow: '#000000',
-};
+// ── Brand violet (shared accent across both themes) ──────────────────────────
+const VIOLET = '#7B68EE';
+const VIOLET_BRIGHT = '#8A7CF8';
 
 export const lightColors: ThemeColors = {
-  bg: '#F4F6FB',
+  bg: '#F4F5FA',
   card: '#FFFFFF',
   cardElevated: '#FFFFFF',
-  cardBorder: '#E6E9F2',
-  overlay: 'rgba(15,23,42,0.45)',
+  cardBorder: '#ECEEF5',
+  overlay: 'rgba(20,18,40,0.45)',
 
-  primary: '#2D6BE4',
-  primaryLight: '#2D6BE4',
-  primarySoft: 'rgba(45,107,228,0.10)',
+  primary: VIOLET,
+  primaryLight: '#6A57E0',
+  primarySoft: 'rgba(123,104,238,0.12)',
+  hero: VIOLET,
+  heroText: '#FFFFFF',
 
-  text: '#111525',
-  textSecondary: '#5B6178',
-  textMuted: '#9499AD',
+  text: '#1A1B2E',
+  textSecondary: '#6B6F86',
+  textMuted: '#9AA0B5',
   onPrimary: '#FFFFFF',
 
-  success: '#16A34A',
-  successSoft: 'rgba(22,163,74,0.12)',
-  error: '#DC2626',
-  errorSoft: 'rgba(220,38,38,0.10)',
-  warning: '#D97706',
-  warningSoft: 'rgba(217,119,6,0.12)',
-  info: '#2563EB',
+  success: '#16C098',
+  successSoft: 'rgba(22,192,152,0.12)',
+  error: '#FF5C5C',
+  errorSoft: 'rgba(255,92,92,0.12)',
+  warning: '#FF9F43',
+  warningSoft: 'rgba(255,159,67,0.14)',
+  info: VIOLET,
 
-  tabBar: '#FFFFFF',
-  tabBarBorder: '#E6E9F2',
+  tabBar: '#16161F',
+  tabBarBorder: '#16161F',
+  tabBarActive: '#FFFFFF',
+  tabBarInactive: '#6E7080',
 
-  present: '#16A34A',
-  absent: '#DC2626',
-  weekend: '#DCE4F7',
-  today: '#2D6BE4',
+  present: '#16C098',
+  absent: '#FF5C5C',
+  weekend: '#E7E9F2',
+  today: VIOLET,
 
-  skeleton: '#E6E9F2',
-  shadow: '#1F2A44',
+  skeleton: '#ECEEF5',
+  shadow: '#9098B5',
+};
+
+export const darkColors: ThemeColors = {
+  bg: '#0E0E16',
+  card: '#181826',
+  cardElevated: '#1F1F30',
+  cardBorder: '#262636',
+  overlay: 'rgba(0,0,0,0.6)',
+
+  primary: VIOLET,
+  primaryLight: VIOLET_BRIGHT,
+  primarySoft: 'rgba(123,104,238,0.20)',
+  hero: VIOLET,
+  heroText: '#FFFFFF',
+
+  text: '#F2F3F9',
+  textSecondary: '#9DA1B8',
+  textMuted: '#62667E',
+  onPrimary: '#FFFFFF',
+
+  success: '#1FD6A6',
+  successSoft: 'rgba(31,214,166,0.16)',
+  error: '#FF6B6B',
+  errorSoft: 'rgba(255,107,107,0.16)',
+  warning: '#FFA94D',
+  warningSoft: 'rgba(255,169,77,0.16)',
+  info: VIOLET_BRIGHT,
+
+  tabBar: '#000000',
+  tabBarBorder: '#1C1C2A',
+  tabBarActive: '#FFFFFF',
+  tabBarInactive: '#5C6076',
+
+  present: '#1FD6A6',
+  absent: '#FF6B6B',
+  weekend: '#22222F',
+  today: VIOLET,
+
+  skeleton: '#1F1F30',
+  shadow: '#000000',
 };
