@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 import type { ThemeColors } from '../theme/palettes';
+import { Icon } from './Icon';
 
 export interface PickerOption {
   value: number;
@@ -50,7 +51,7 @@ export function PickerModal({
           <View style={styles.header}>
             <Text style={styles.title} numberOfLines={1}>{title}</Text>
             <TouchableOpacity onPress={onClose} hitSlop={10}>
-              <Text style={styles.close}>✕</Text>
+              <Icon name="close" size={20} color={colors.textMuted} />
             </TouchableOpacity>
           </View>
 
@@ -93,7 +94,7 @@ export function PickerModal({
                       <Text style={[styles.label, sel && styles.labelActive]} numberOfLines={1}>{item.label}</Text>
                       {!!item.subLabel && <Text style={styles.subLabel} numberOfLines={1}>{item.subLabel}</Text>}
                     </View>
-                    {sel && <Text style={styles.check}>✓</Text>}
+                    {sel && <Icon name="check" size={18} color={colors.primary} />}
                   </TouchableOpacity>
                 );
               }}

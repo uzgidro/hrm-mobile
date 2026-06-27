@@ -10,6 +10,7 @@ import { useAuthStore } from '../../src/store/authStore';
 import { AUTH_LOGIN, USER_INFO } from '../../src/api/urls';
 import { useTheme, useThemedStyles } from '../../src/theme/ThemeProvider';
 import type { ThemeColors } from '../../src/theme/palettes';
+import { Icon } from '../../src/components/Icon';
 import { User } from '../../src/types';
 
 export default function LoginScreen() {
@@ -92,7 +93,7 @@ export default function LoginScreen() {
                 autoCapitalize="none"
               />
               <TouchableOpacity style={styles.eyeBtn} onPress={() => setShowPass(!showPass)}>
-                <Text style={styles.eyeText}>{showPass ? '🙈' : '👁️'}</Text>
+                <Icon name={showPass ? 'eyeOff' : 'eye'} size={20} color={colors.textMuted} />
               </TouchableOpacity>
             </View>
           </View>

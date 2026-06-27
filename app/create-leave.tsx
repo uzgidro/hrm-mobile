@@ -13,6 +13,7 @@ import { WORK_LEAVES, EMPLOYEE_DETAIL } from '../src/api/urls';
 import { useTheme, useThemedStyles } from '../src/theme/ThemeProvider';
 import type { ThemeColors } from '../src/theme/palettes';
 import { Employee } from '../src/types';
+import { Icon } from '../src/components/Icon';
 
 const MONTHS_UZ = ['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentyabr','Oktyabr','Noyabr','Dekabr'];
 const DAYS_SHORT = ['du','se','chor','pay','ju','sha','ya'];
@@ -22,6 +23,7 @@ function DateTimePicker({ value, visible, title, minDate, onConfirm, onClose }: 
   value: Dayjs; visible: boolean; title: string; minDate?: Dayjs; onConfirm: (v: Dayjs) => void; onClose: () => void;
 }) {
   const dp = useThemedStyles(makeDp);
+  const { colors } = useTheme();
   const [tab, setTab] = useState<'date' | 'time'>('date');
   const [month, setMonth] = useState(value.startOf('month'));
   const [selected, setSelected] = useState(value);
@@ -50,20 +52,22 @@ function DateTimePicker({ value, visible, title, minDate, onConfirm, onClose }: 
           </View>
 
           <View style={dp.tabs}>
-            <TouchableOpacity style={[dp.tab, tab === 'date' && dp.tabActive]} onPress={() => setTab('date')}>
-              <Text style={[dp.tabText, tab === 'date' && dp.tabTextActive]}>📅 {selected.format('DD.MM.YYYY')}</Text>
+            <TouchableOpacity style={[dp.tab, tab === 'date' && dp.tabActive, dp.tabRow]} onPress={() => setTab('date')}>
+              <Icon name="calendar" size={16} color={tab === 'date' ? '#fff' : colors.textMuted} />
+              <Text style={[dp.tabText, tab === 'date' && dp.tabTextActive]}>{selected.format('DD.MM.YYYY')}</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[dp.tab, tab === 'time' && dp.tabActive]} onPress={() => setTab('time')}>
-              <Text style={[dp.tabText, tab === 'time' && dp.tabTextActive]}>🕐 {selected.format('HH:mm')}</Text>
+            <TouchableOpacity style={[dp.tab, tab === 'time' && dp.tabActive, dp.tabRow]} onPress={() => setTab('time')}>
+              <Icon name="clock" size={16} color={tab === 'time' ? '#fff' : colors.textMuted} />
+              <Text style={[dp.tabText, tab === 'time' && dp.tabTextActive]}>{selected.format('HH:mm')}</Text>
             </TouchableOpacity>
           </View>
 
           {tab === 'date' ? (
             <View style={dp.calWrap}>
               <View style={dp.monthNav}>
-                <TouchableOpacity onPress={() => setMonth(month.subtract(1, 'month'))} style={dp.navBtn}><Text style={dp.navText}>{'<'}</Text></TouchableOpacity>
+                <TouchableOpacity onPress={() => setMonth(month.subtract(1, 'month'))} style={dp.navBtn}><Icon name="chevronLeft" size={20} color={colors.text} /></TouchableOpacity>
                 <Text style={dp.monthLabel}>{MONTHS_UZ[month.month()]} {month.year()}</Text>
-                <TouchableOpacity onPress={() => setMonth(month.add(1, 'month'))} style={dp.navBtn}><Text style={dp.navText}>{'>'}</Text></TouchableOpacity>
+                <TouchableOpacity onPress={() => setMonth(month.add(1, 'month'))} style={dp.navBtn}><Icon name="chevronRight" size={20} color={colors.text} /></TouchableOpacity>
               </View>
               <View style={dp.weekRow}>{DAYS_SHORT.map((d) => <Text key={d} style={dp.weekDay}>{d}</Text>)}</View>
               <View style={dp.grid}>
@@ -85,15 +89,15 @@ function DateTimePicker({ value, visible, title, minDate, onConfirm, onClose }: 
             <View style={dp.timePicker}>
               <View style={dp.timeRow}>
                 <View style={dp.timeCol}>
-                  <TouchableOpacity style={dp.timeBtn} onPress={() => changeHour(1)}><Text style={dp.timeBtnText}>▲</Text></TouchableOpacity>
+                  <TouchableOpacity style={dp.timeBtn} onPress={() => changeHour(1)}><Icon name="arrowUp" size={20} color={colors.primaryLight} /></TouchableOpacity>
                   <Text style={dp.timeVal}>{String(selected.hour()).padStart(2, '0')}</Text>
-                  <TouchableOpacity style={dp.timeBtn} onPress={() => changeHour(-1)}><Text style={dp.timeBtnText}>▼</Text></TouchableOpacity>
+                  <TouchableOpacity style={dp.timeBtn} onPress={() => changeHour(-1)}><Icon name="arrowDown" size={20} color={colors.primaryLight} /></TouchableOpacity>
                 </View>
                 <Text style={dp.timeSep}>:</Text>
                 <View style={dp.timeCol}>
-                  <TouchableOpacity style={dp.timeBtn} onPress={() => changeMinute(5)}><Text style={dp.timeBtnText}>▲</Text></TouchableOpacity>
+                  <TouchableOpacity style={dp.timeBtn} onPress={() => changeMinute(5)}><Icon name="arrowUp" size={20} color={colors.primaryLight} /></TouchableOpacity>
                   <Text style={dp.timeVal}>{String(selected.minute()).padStart(2, '0')}</Text>
-                  <TouchableOpacity style={dp.timeBtn} onPress={() => changeMinute(-5)}><Text style={dp.timeBtnText}>▼</Text></TouchableOpacity>
+                  <TouchableOpacity style={dp.timeBtn} onPress={() => changeMinute(-5)}><Icon name="arrowDown" size={20} color={colors.primaryLight} /></TouchableOpacity>
                 </View>
               </View>
               <View style={dp.quickMins}>
@@ -126,7 +130,7 @@ function TypeSheet({ visible, selected, onSelect, onClose }: {
         {LEAVE_TYPES.map((t) => (
           <TouchableOpacity key={t} style={ts.item} onPress={() => { onSelect(t); onClose(); }} activeOpacity={0.7}>
             <Text style={[ts.itemText, selected === t && ts.itemTextActive]}>{t}</Text>
-            {selected === t && <Text style={ts.check}>✓</Text>}
+            {selected === t && <Icon name="check" size={16} color={colors.primaryLight} />}
           </TouchableOpacity>
         ))}
         <View style={ts.customRow}>
@@ -199,7 +203,7 @@ export default function CreateLeaveScreen() {
   return (
     <SafeAreaView style={s.safe}>
       <View style={s.header}>
-        <TouchableOpacity onPress={() => router.back()} style={s.backBtn}><Text style={s.backArrow}>{'<'}</Text></TouchableOpacity>
+        <TouchableOpacity onPress={() => router.back()} style={s.backBtn}><Icon name="chevronLeft" size={24} color={colors.text} /></TouchableOpacity>
         <Text style={s.headerTitle}>So'rov yuborish</Text>
         <View style={{ width: 36 }} />
       </View>
@@ -208,23 +212,33 @@ export default function CreateLeaveScreen() {
         <Text style={s.label}>So'rov turi *</Text>
         <TouchableOpacity style={s.selector} onPress={() => setShowTypeSheet(true)} activeOpacity={0.7}>
           <Text style={s.selectorText}>{leaveType}</Text>
-          <Text style={s.selectorArrow}>›</Text>
+          <Icon name="chevronRight" size={20} color={colors.textMuted} />
         </TouchableOpacity>
 
         <Text style={s.label}>Boshlanish *</Text>
         <TouchableOpacity style={s.selector} onPress={() => setActivePicker('start')} activeOpacity={0.7}>
-          <Text style={s.selectorText}>📅 {startDate.format('DD.MM.YYYY')}{'   '}🕐 {startDate.format('HH:mm')}</Text>
-          <Text style={s.selectorArrow}>›</Text>
+          <View style={s.dateTimeRow}>
+            <Icon name="calendar" size={16} color={colors.textMuted} />
+            <Text style={s.dateTimeText}>{startDate.format('DD.MM.YYYY')}</Text>
+            <Icon name="clock" size={16} color={colors.textMuted} />
+            <Text style={s.dateTimeText}>{startDate.format('HH:mm')}</Text>
+          </View>
+          <Icon name="chevronRight" size={20} color={colors.textMuted} />
         </TouchableOpacity>
 
         <Text style={s.label}>Tugash *</Text>
         <TouchableOpacity style={s.selector} onPress={() => setActivePicker('end')} activeOpacity={0.7}>
-          <Text style={s.selectorText}>📅 {endDate.format('DD.MM.YYYY')}{'   '}🕐 {endDate.format('HH:mm')}</Text>
-          <Text style={s.selectorArrow}>›</Text>
+          <View style={s.dateTimeRow}>
+            <Icon name="calendar" size={16} color={colors.textMuted} />
+            <Text style={s.dateTimeText}>{endDate.format('DD.MM.YYYY')}</Text>
+            <Icon name="clock" size={16} color={colors.textMuted} />
+            <Text style={s.dateTimeText}>{endDate.format('HH:mm')}</Text>
+          </View>
+          <Icon name="chevronRight" size={20} color={colors.textMuted} />
         </TouchableOpacity>
 
         {durationText && (
-          <View style={s.durationRow}><Text style={s.durationIcon}>⏱</Text><Text style={s.durationText}>{durationText}</Text></View>
+          <View style={s.durationRow}><Icon name="clock" size={16} color={colors.primaryLight} /><Text style={s.durationText}>{durationText}</Text></View>
         )}
         {diffMin <= 0 && endDate.isValid() && <Text style={s.errorText}>Tugash vaqti boshlanishdan keyin bo'lishi kerak</Text>}
 
@@ -239,7 +253,7 @@ export default function CreateLeaveScreen() {
                 <Text style={s.supervisorName}>{supervisor.legal_name}</Text>
                 <Text style={s.supervisorSub} numberOfLines={1}>{supervisor.job_position?.name ?? supervisor.department?.name ?? '—'}</Text>
               </View>
-              <Text style={s.lockIcon}>🔒</Text>
+              <Icon name="lock" size={14} color={colors.textMuted} />
             </>
           ) : (
             <Text style={s.noSupervisorText}>Rahbar biriktirilmagan</Text>
@@ -277,6 +291,8 @@ const makeS = (c: ThemeColors) =>
     selector: { flexDirection: 'row', alignItems: 'center', backgroundColor: c.card, borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 14, paddingVertical: 14 },
     selectorText: { flex: 1, fontSize: 14, color: c.text, fontWeight: '500' },
     selectorArrow: { fontSize: 20, color: c.textMuted },
+    dateTimeRow: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6 },
+    dateTimeText: { fontSize: 14, color: c.text, fontWeight: '500' },
     durationRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8, paddingHorizontal: 2 },
     durationIcon: { fontSize: 13 },
     durationText: { fontSize: 13, color: c.primaryLight, fontWeight: '600' },
@@ -306,6 +322,7 @@ const makeDp = (c: ThemeColors) =>
     confirmText: { fontSize: 15, color: c.primaryLight, fontWeight: '700' },
     tabs: { flexDirection: 'row', paddingHorizontal: 16, paddingVertical: 10, gap: 8 },
     tab: { flex: 1, paddingVertical: 9, borderRadius: 10, backgroundColor: c.bg, alignItems: 'center', borderWidth: 1, borderColor: c.cardBorder },
+    tabRow: { flexDirection: 'row', justifyContent: 'center', gap: 6 },
     tabActive: { backgroundColor: c.primary, borderColor: c.primary },
     tabText: { fontSize: 13, color: c.textMuted, fontWeight: '600' },
     tabTextActive: { color: '#fff' },

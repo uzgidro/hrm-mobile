@@ -166,13 +166,19 @@ export interface NewsPost {
   organization_branch?: OrganizationBranch;
 }
 
+// Matches the backend NotificationRead schema exactly.
 export interface Notification {
   id: number;
-  title: string;
-  body?: string;
+  notification_type: string;
+  description?: string | null;
+  order_act_id?: number | null;
+  news_post_id?: number | null;
+  workspace_id?: number | null;
+  card_id?: number | null;
   is_read: boolean;
+  read_at?: string | null;
   created_at: string;
-  type?: string;
+  updated_at?: string;
 }
 
 export interface WorkExperience {

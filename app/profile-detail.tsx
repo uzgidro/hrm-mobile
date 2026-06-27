@@ -9,9 +9,10 @@ import dayjs from 'dayjs';
 import { useAuthStore, isMasterAdmin, isHR } from '../src/store/authStore';
 import { apiClient } from '../src/api/client';
 import { EMPLOYEE_DETAIL } from '../src/api/urls';
-import { useThemedStyles } from '../src/theme/ThemeProvider';
+import { useTheme, useThemedStyles } from '../src/theme/ThemeProvider';
 import type { ThemeColors } from '../src/theme/palettes';
 import { EmployeeFull, WorkExperience, Education } from '../src/types';
+import { Icon, type IconName } from '../src/components/Icon';
 
 const GENDER_MAP: Record<number, string> = { 1: 'Erkak', 2: 'Ayol' };
 const MARITAL_MAP: Record<string, string> = {
@@ -29,6 +30,7 @@ export default function ProfileDetailScreen() {
   const params = useLocalSearchParams<{ id?: string }>();
   const employeeId = params.id ? Number(params.id) : user?.employee?.id;
   const styles = useThemedStyles(makeStyles);
+  const { colors } = useTheme();
 
   const isOwnProfile = employeeId === user?.employee?.id;
   // Own profile → see everything. Other employees → only HR/admin see sensitive data.
@@ -105,12 +107,12 @@ export default function ProfileDetailScreen() {
           }
           activeOpacity={0.85}
         >
-          <Text style={styles.attendanceBtnIcon}>📅</Text>
+          <Icon name="calendar" size={18} color={colors.onPrimary} />
           <Text style={styles.attendanceBtnText}>Davomat</Text>
         </TouchableOpacity>
 
         {canViewSensitive && (
-          <Section styles={styles} title="Shaxsiy ma'lumotlar" emoji="👤">
+          <Section styles={styles} title="Shaxsiy ma'lumotlar" icon="user">
             <InfoRow styles={styles} label="Tug'ilgan sana" value={employee.birth_date ? dayjs(employee.birth_date).format('DD.MM.YYYY') : null} />
             <Divider styles={styles} />
             <InfoRow styles={styles} label="Jinsi" value={employee.gender != null ? GENDER_MAP[employee.gender] : null} />
@@ -123,7 +125,7 @@ export default function ProfileDetailScreen() {
           </Section>
         )}
 
-        <Section styles={styles} title="Kontakt ma'lumotlari" emoji="📞">
+        <Section styles={styles} title="Kontakt ma'lumotlari" icon="phone">
           <InfoRow styles={styles} label="Telefon" value={employee.phone_number} />
           <Divider styles={styles} />
           <InfoRow styles={styles} label="Ichki telefon" value={employee.internal_phone_number} />
@@ -132,7 +134,7 @@ export default function ProfileDetailScreen() {
         </Section>
 
         {canViewSensitive && (
-          <Section styles={styles} title="Ish ma'lumotlari" emoji="💼">
+          <Section styles={styles} title="Ish ma'lumotlari" icon="briefcase">
             <InfoRow styles={styles} label="Bo'lim" value={employee.department?.name} />
             <Divider styles={styles} />
             <InfoRow styles={styles} label="Lavozim" value={employee.job_position?.name} />
@@ -150,7 +152,7 @@ export default function ProfileDetailScreen() {
         )}
 
         {canViewSensitive && (employee.personal_identification_number || employee.taxpayer_identification_number || employee.pasport_series) && (
-          <Section styles={styles} title="Hujjatlar" emoji="🪪">
+          <Section styles={styles} title="Hujjatlar" icon="idcard">
             <InfoRow styles={styles} label="PINFL" value={employee.personal_identification_number} />
             <Divider styles={styles} />
             <InfoRow styles={styles} label="INN" value={employee.taxpayer_identification_number} />
@@ -166,7 +168,7 @@ export default function ProfileDetailScreen() {
         )}
 
         {canViewSensitive && (employee.work_experiences?.length ?? 0) > 0 && (
-          <Section styles={styles} title="Mehnat tajribasi" emoji="🏢">
+          <Section styles={styles} title="Mehnat tajribasi" icon="building">
             {employee.work_experiences!.map((exp: WorkExperience, i: number) => (
               <View key={exp.id} style={styles.historyItem}>
                 {i > 0 && <Divider styles={styles} />}
@@ -181,7 +183,7 @@ export default function ProfileDetailScreen() {
         )}
 
         {canViewSensitive && (employee.educations?.length ?? 0) > 0 && (
-          <Section styles={styles} title="Ta'lim" emoji="🎓">
+          <Section styles={styles} title="Ta'lim" icon="graduation">
             {employee.educations!.map((edu: Education, i: number) => (
               <View key={edu.id} style={styles.historyItem}>
                 {i > 0 && <Divider styles={styles} />}
@@ -202,15 +204,16 @@ export default function ProfileDetailScreen() {
 }
 
 function Header({ styles, title, onEdit }: { styles: any; title: string; onEdit?: () => void }) {
+  const { colors } = useTheme();
   return (
     <View style={styles.header}>
       <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-        <Text style={styles.backArrow}>{'<'}</Text>
+        <Icon name="chevronLeft" size={24} color={colors.text} />
       </TouchableOpacity>
       <Text style={styles.headerTitle}>{title}</Text>
       {onEdit ? (
         <TouchableOpacity onPress={onEdit} style={styles.editBtn}>
-          <Text style={styles.editBtnText}>✏️</Text>
+          <Icon name="edit" size={18} color={colors.text} />
         </TouchableOpacity>
       ) : (
         <View style={{ width: 40 }} />
@@ -219,11 +222,12 @@ function Header({ styles, title, onEdit }: { styles: any; title: string; onEdit?
   );
 }
 
-function Section({ styles, title, emoji, children }: { styles: any; title: string; emoji: string; children: React.ReactNode }) {
+function Section({ styles, title, icon, children }: { styles: any; title: string; icon: IconName; children: React.ReactNode }) {
+  const { colors } = useTheme();
   return (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionEmoji}>{emoji}</Text>
+        <Icon name={icon} size={18} color={colors.textSecondary} />
         <Text style={styles.sectionTitle}>{title}</Text>
       </View>
       <View style={styles.sectionBody}>{children}</View>

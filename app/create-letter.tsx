@@ -17,6 +17,7 @@ import { DatePickerModal } from '../src/components/DatePicker';
 import { useTheme, useThemedStyles } from '../src/theme/ThemeProvider';
 import type { ThemeColors } from '../src/theme/palettes';
 import type { Employee } from '../src/types';
+import { Icon } from '../src/components/Icon';
 
 type LetterType = 'explanatory' | 'application' | 'business_trip';
 const TYPE_OPTIONS: PickerOption[] = [
@@ -184,7 +185,7 @@ export default function CreateLetterScreen() {
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
-          <Text style={styles.backIcon}>←</Text>
+          <Icon name="chevronLeft" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.title}>Yangi xat</Text>
         <TouchableOpacity style={[styles.createBtn, saving && styles.createBtnDisabled]} onPress={handleCreate} disabled={saving} activeOpacity={0.8}>
@@ -318,7 +319,7 @@ function Selector({ styles, text, placeholder, loading, onPress }: { styles: any
       {loading ? <ActivityIndicator size="small" color={colors.textMuted} /> : (
         <Text style={text ? styles.selectorText : styles.selectorPlaceholder} numberOfLines={1}>{text ?? placeholder}</Text>
       )}
-      <Text style={styles.selectorArrow}>›</Text>
+      <Icon name="chevronRight" size={20} color={colors.textMuted} />
     </TouchableOpacity>
   );
 }

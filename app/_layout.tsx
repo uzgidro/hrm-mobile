@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { Stack, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as Notifications from 'expo-notifications';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useAuthStore, USER_CACHE_KEY } from '../src/store/authStore';
 import { usePrefsStore } from '../src/store/prefsStore';
@@ -72,17 +72,23 @@ function AuthLoader() {
 
 function ThemedNavigation() {
   const { colors, isDark } = useTheme();
+  const queryClient = useQueryClient();
 
-  // Navigate when the user taps a push notification.
+  // Refresh the in-app list / unread badge when a push lands in the foreground.
   useEffect(() => {
-    const sub = Notifications.addNotificationResponseReceivedListener((response) => {
-      const route = routeForNotification(response.notification.request.content.data);
+    const received = Notifications.addNotificationReceivedListener(() => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    });
+    // Navigate when the user taps a push notification.
+    const response = Notifications.addNotificationResponseReceivedListener((r) => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      const route = routeForNotification(r.notification.request.content.data);
       if (route) {
         setTimeout(() => router.push(route as any), 400);
       }
     });
-    return () => sub.remove();
-  }, []);
+    return () => { received.remove(); response.remove(); };
+  }, [queryClient]);
 
   return (
     <>
@@ -115,6 +121,7 @@ function ThemedNavigation() {
         <Stack.Screen name="letter-detail" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="letter-document" options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="notifications" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="news" options={{ animation: 'slide_from_right' }} />
       </Stack>
     </>
   );

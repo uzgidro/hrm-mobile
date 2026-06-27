@@ -13,6 +13,7 @@ import { TURNSTILE_ATTENDANCE_EVENTS, EMPLOYEE_DETAIL } from '../src/api/urls';
 import { useTheme, useThemedStyles } from '../src/theme/ThemeProvider';
 import type { ThemeColors } from '../src/theme/palettes';
 import { AttendanceEvent, EmployeeFull } from '../src/types';
+import { Icon } from '../src/components/Icon';
 
 const MONTHS_UZ = ['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentyabr','Oktyabr','Noyabr','Dekabr'];
 const DAYS_SHORT = ['du', 'se', 'chor', 'pay', 'ju', 'sha', 'ya'];
@@ -122,7 +123,7 @@ export default function EmployeeCalendarScreen() {
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backArrow}>{'<'}</Text>
+          <Icon name="chevronLeft" size={24} color={colors.text} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle} numberOfLines={1}>{displayName}</Text>
@@ -138,9 +139,9 @@ export default function EmployeeCalendarScreen() {
       >
         <View style={styles.card}>
           <View style={styles.monthNav}>
-            <TouchableOpacity style={styles.navBtn} onPress={() => setCurrentMonth(currentMonth.subtract(1, 'month'))}><Text style={styles.navBtnText}>{'<'}</Text></TouchableOpacity>
+            <TouchableOpacity style={styles.navBtn} onPress={() => setCurrentMonth(currentMonth.subtract(1, 'month'))}><Icon name="chevronLeft" size={20} color={colors.text} /></TouchableOpacity>
             <Text style={styles.monthTitle}>{MONTHS_UZ[currentMonth.month()]} {currentMonth.year()}</Text>
-            <TouchableOpacity style={styles.navBtn} onPress={() => setCurrentMonth(currentMonth.add(1, 'month'))}><Text style={styles.navBtnText}>{'>'}</Text></TouchableOpacity>
+            <TouchableOpacity style={styles.navBtn} onPress={() => setCurrentMonth(currentMonth.add(1, 'month'))}><Icon name="chevronRight" size={20} color={colors.text} /></TouchableOpacity>
           </View>
 
           <View style={styles.weekRow}>{DAYS_SHORT.map((d) => <Text key={d} style={styles.weekDayLabel}>{d}</Text>)}</View>
@@ -178,7 +179,7 @@ export default function EmployeeCalendarScreen() {
 
         {employee?.working_hours_start && (
           <View style={styles.card}>
-            <View style={styles.cardTitleRow}><Text style={styles.cardIcon}>📊</Text><Text style={styles.cardTitle}>Ish jadvali</Text></View>
+            <View style={styles.cardTitleRow}><Icon name="chart" size={16} color={colors.textSecondary} /><Text style={styles.cardTitle}>Ish jadvali</Text></View>
             <View style={styles.scheduleRow}>
               <View style={styles.scheduleItem}>
                 <Text style={styles.scheduleValue}>{employee.working_hours_start} - {employee.working_hours_end}</Text>
@@ -195,21 +196,22 @@ export default function EmployeeCalendarScreen() {
         )}
 
         <View style={styles.card}>
-          <View style={styles.cardTitleRow}><Text style={styles.cardIcon}>🎯</Text><Text style={styles.cardTitle}>Qaydnoma</Text></View>
+          <View style={styles.cardTitleRow}><Icon name="target" size={16} color={colors.textSecondary} /><Text style={styles.cardTitle}>Qaydnoma</Text></View>
           {selectedEvents.length === 0 ? (
             <Text style={styles.emptyText}>Ro'yxat bo'sh</Text>
           ) : (
             selectedEvents.map((ev) => (
               <View key={ev.id} style={styles.eventRow}>
                 <Text style={styles.eventTime}>{dayjs(ev.happen_time).format('HH:mm')}</Text>
-                <Text style={styles.eventDir}>{ev.direction_type === 'entrance' ? '➡️ Kirish' : '⬅️ Chiqish'}</Text>
+                <Icon name={ev.direction_type === 'entrance' ? 'chevronRight' : 'chevronLeft'} size={16} color={colors.textSecondary} />
+                <Text style={styles.eventDir}>{ev.direction_type === 'entrance' ? 'Kirish' : 'Chiqish'}</Text>
               </View>
             ))
           )}
         </View>
 
         <View style={styles.card}>
-          <View style={styles.cardTitleRow}><Text style={styles.cardIcon}>💼</Text><Text style={styles.cardTitle}>Oylik statistika {MONTHS_UZ[currentMonth.month()]} {currentMonth.year()}</Text></View>
+          <View style={styles.cardTitleRow}><Icon name="briefcase" size={16} color={colors.textSecondary} /><Text style={styles.cardTitle}>Oylik statistika {MONTHS_UZ[currentMonth.month()]} {currentMonth.year()}</Text></View>
           <View style={styles.statsRow}>
             <View style={styles.donutWrapper}>
               <DonutChart attended={attendedDays} total={workDays} c={colors} />

@@ -17,6 +17,7 @@ import {
 import { useTheme, useThemedStyles } from '../src/theme/ThemeProvider';
 import type { ThemeColors } from '../src/theme/palettes';
 import { OrderAct } from '../src/types';
+import { Icon } from '../src/components/Icon';
 import { statusMeta, statusColor, currentStageType } from '../src/utils/orderStatus';
 
 export default function OrderDetailScreen() {
@@ -96,7 +97,7 @@ export default function OrderDetailScreen() {
   if (isLoading || !order) {
     return (
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-        <Header styles={styles} />
+        <Header styles={styles} colors={colors} />
         <View style={styles.center}><ActivityIndicator color={colors.primaryLight} size="large" /></View>
       </SafeAreaView>
     );
@@ -130,7 +131,7 @@ export default function OrderDetailScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-      <Header styles={styles} />
+      <Header styles={styles} colors={colors} />
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* Status + title */}
@@ -155,7 +156,8 @@ export default function OrderDetailScreen() {
                 } as any)
               }
             >
-              <Text style={styles.docBtnText}>📄  Hujjatni ochish</Text>
+              <Icon name="doc" size={16} color={colors.primary} />
+              <Text style={styles.docBtnText}>Hujjatni ochish</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -201,9 +203,12 @@ export default function OrderDetailScreen() {
                       {s.signer_type === 'leadership' ? 'Rahbariyat' : 'Kelishuvchi'}
                     </Text>
                   </View>
-                  <Text style={[styles.signerStatus, { color: signed ? colors.success : colors.textMuted }]}>
-                    {signed ? '✓ Imzolandi' : 'Kutilmoqda'}
-                  </Text>
+                  <View style={styles.signerStatusRow}>
+                    {signed && <Icon name="check" size={14} color={colors.success} />}
+                    <Text style={[styles.signerStatus, { color: signed ? colors.success : colors.textMuted }]}>
+                      {signed ? 'Imzolandi' : 'Kutilmoqda'}
+                    </Text>
+                  </View>
                 </View>
               );
             })}
@@ -217,9 +222,12 @@ export default function OrderDetailScreen() {
               <View key={f.id ?? i} style={styles.signerRow}>
                 <View style={[styles.signerDot, { backgroundColor: f.acknowledged ? colors.success : colors.cardBorder }]} />
                 <Text style={[styles.signerName, { flex: 1 }]}>{f.employee?.legal_name || 'Xodim'}</Text>
-                <Text style={[styles.signerStatus, { color: f.acknowledged ? colors.success : colors.textMuted }]}>
-                  {f.acknowledged ? '✓ Tanishdi' : 'Kutilmoqda'}
-                </Text>
+                <View style={styles.signerStatusRow}>
+                  {f.acknowledged && <Icon name="check" size={14} color={colors.success} />}
+                  <Text style={[styles.signerStatus, { color: f.acknowledged ? colors.success : colors.textMuted }]}>
+                    {f.acknowledged ? 'Tanishdi' : 'Kutilmoqda'}
+                  </Text>
+                </View>
               </View>
             ))}
           </Section>
@@ -338,11 +346,11 @@ export default function OrderDetailScreen() {
   );
 }
 
-function Header({ styles }: { styles: any }) {
+function Header({ styles, colors }: { styles: any; colors: ThemeColors }) {
   return (
     <View style={styles.header}>
       <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-        <Text style={styles.backArrow}>{'<'}</Text>
+        <Icon name="chevronLeft" size={24} color={colors.text} />
       </TouchableOpacity>
       <Text style={styles.headerTitle}>Buyruq</Text>
       <View style={{ width: 40 }} />
@@ -388,7 +396,7 @@ const makeStyles = (c: ThemeColors) =>
     badgeText: { fontSize: 12, fontWeight: '700' },
     bigTitle: { fontSize: 18, fontWeight: '800', color: c.text },
     subMeta: { fontSize: 13, color: c.textMuted },
-    docBtn: { marginTop: 6, backgroundColor: c.primarySoft, borderRadius: 12, paddingVertical: 13, alignItems: 'center' },
+    docBtn: { marginTop: 6, backgroundColor: c.primarySoft, borderRadius: 12, paddingVertical: 13, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
     docBtnText: { color: c.primary, fontSize: 14, fontWeight: '700' },
 
     section: { backgroundColor: c.card, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: c.cardBorder },
@@ -404,6 +412,7 @@ const makeStyles = (c: ThemeColors) =>
     signerName: { fontSize: 14, color: c.text, fontWeight: '600' },
     signerType: { fontSize: 11, color: c.textMuted, marginTop: 1 },
     signerStatus: { fontSize: 12, fontWeight: '600' },
+    signerStatusRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
 
     commentRow: { paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: c.cardBorder, gap: 3 },
     commentAuthor: { fontSize: 13, fontWeight: '700', color: c.text },

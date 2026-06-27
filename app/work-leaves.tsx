@@ -12,6 +12,7 @@ import { apiClient } from '../src/api/client';
 import { WORK_LEAVES } from '../src/api/urls';
 import { useTheme, useThemedStyles } from '../src/theme/ThemeProvider';
 import type { ThemeColors } from '../src/theme/palettes';
+import { Icon } from '../src/components/Icon';
 import { WorkLeave } from '../src/types';
 
 type StatusFilter = 'all' | 'pending' | 'approved' | 'rejected';
@@ -75,7 +76,7 @@ function LeaveCard({ leave, showEmployee, actionNeeded, styles, colors }: {
         </View>
       </View>
       <View style={styles.dateRow}>
-        <Text style={styles.dateIcon}>📅</Text>
+        <Icon name="calendar" size={14} color={colors.textMuted} />
         {sameDay ? (
           <Text style={styles.dateText}>
             {dayjs(leave.start_date).format('DD.MM.YYYY')} {dayjs(leave.start_date).format('HH:mm')} – {dayjs(leave.end_date).format('HH:mm')}
@@ -174,7 +175,7 @@ export default function WorkLeavesScreen() {
         </View>
         {!isSupervisor ? (
           <TouchableOpacity style={styles.addBtn} onPress={() => router.push('/create-leave')} activeOpacity={0.7}>
-            <Text style={styles.addBtnText}>＋</Text>
+            <Icon name="plus" size={22} color={colors.primary} strokeWidth={2.4} />
           </TouchableOpacity>
         ) : <View style={{ width: 36 }} />}
       </View>
@@ -211,7 +212,7 @@ export default function WorkLeavesScreen() {
             {isSupervisor ? (
               filteredIncoming.length === 0 ? (
                 <View style={styles.emptyWrapper}>
-                  <Text style={styles.emptyIcon}>📋</Text>
+                  <View style={styles.emptyIconWrap}><Icon name="checklist" size={30} color={colors.textMuted} /></View>
                   <Text style={styles.emptyText}>{incomingFilter === 'action' ? "Kutilayotgan so'rovlar yo'q" : "So'rovlar yo'q"}</Text>
                 </View>
               ) : (
@@ -224,7 +225,7 @@ export default function WorkLeavesScreen() {
             ) : (
               filteredMyLeaves.length === 0 ? (
                 <View style={styles.emptyWrapper}>
-                  <Text style={styles.emptyIcon}>📋</Text>
+                  <View style={styles.emptyIconWrap}><Icon name="checklist" size={30} color={colors.textMuted} /></View>
                   <Text style={styles.emptyText}>So'rovlar yo'q</Text>
                 </View>
               ) : (
@@ -238,7 +239,7 @@ export default function WorkLeavesScreen() {
 
       {!isSupervisor && (
         <TouchableOpacity style={styles.fab} onPress={() => router.push('/create-leave')} activeOpacity={0.85}>
-          <Text style={styles.fabText}>＋</Text>
+          <Icon name="plus" size={24} color={colors.onPrimary} strokeWidth={2.4} />
         </TouchableOpacity>
       )}
     </SafeAreaView>
@@ -273,7 +274,7 @@ const makeStyles = (c: ThemeColors) =>
     content: { paddingHorizontal: 16, paddingTop: 8 },
 
     emptyWrapper: { alignItems: 'center', paddingTop: 80, gap: 12 },
-    emptyIcon: { fontSize: 48 },
+    emptyIconWrap: { width: 64, height: 64, borderRadius: 32, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, alignItems: 'center', justifyContent: 'center' },
     emptyText: { color: c.textMuted, fontSize: 15 },
 
     card: { backgroundColor: c.card, borderRadius: 16, borderWidth: 1, borderColor: c.cardBorder, padding: 14, marginBottom: 10, gap: 6 },

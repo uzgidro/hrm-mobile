@@ -12,6 +12,7 @@ import { useTheme, useThemedStyles } from '../src/theme/ThemeProvider';
 import type { ThemeColors } from '../src/theme/palettes';
 import { Employee } from '../src/types';
 import { fetchAllEmployees, employeesQueryKey } from '../src/utils/employees';
+import { Icon } from '../src/components/Icon';
 
 interface EmployeePage { items: Employee[]; total: number }
 
@@ -53,7 +54,7 @@ export default function EmployeesListScreen() {
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backArrow}>{'<'}</Text>
+          <Icon name="chevronLeft" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>
           {onlySubordinates ? "Bo'ysunuvchilar" : 'Xodimlar'} {totalLabel ? `(${totalLabel})` : ''}
@@ -63,7 +64,7 @@ export default function EmployeesListScreen() {
 
       <View style={styles.searchWrapper}>
         <View style={styles.searchBox}>
-          <Text style={styles.searchIcon}>🔍</Text>
+          <Icon name="search" size={18} color={colors.textMuted} />
           <TextInput
             style={styles.searchInput}
             placeholder="Ism, lavozim, bo'lim..."
@@ -74,7 +75,7 @@ export default function EmployeesListScreen() {
           />
           {search.length > 0 && (
             <TouchableOpacity onPress={() => setSearch('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <Text style={styles.clearIcon}>✕</Text>
+              <Icon name="close" size={18} color={colors.textMuted} />
             </TouchableOpacity>
           )}
         </View>
@@ -108,12 +109,12 @@ export default function EmployeesListScreen() {
                 <Text style={styles.empName} numberOfLines={1}>{emp.legal_name}</Text>
                 <Text style={styles.empSub} numberOfLines={1}>{emp.job_position?.name ?? emp.department?.name ?? '—'}</Text>
               </View>
-              <Text style={styles.arrowIcon}>›</Text>
+              <Icon name="chevronRight" size={20} color={colors.textMuted} />
             </TouchableOpacity>
           )}
           ListEmptyComponent={
             <View style={styles.emptyWrapper}>
-              <Text style={styles.emptyIcon}>👥</Text>
+              <View style={styles.emptyIconWrap}><Icon name="users" size={30} color={colors.textMuted} /></View>
               <Text style={styles.emptyText}>{search ? 'Topilmadi' : "Xodimlar yo'q"}</Text>
             </View>
           }
@@ -162,5 +163,6 @@ const makeStyles = (c: ThemeColors) =>
 
     emptyWrapper: { alignItems: 'center', paddingTop: 80, gap: 12 },
     emptyIcon: { fontSize: 48 },
+    emptyIconWrap: { width: 64, height: 64, borderRadius: 32, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, alignItems: 'center', justifyContent: 'center' },
     emptyText: { color: c.textMuted, fontSize: 15 },
   });

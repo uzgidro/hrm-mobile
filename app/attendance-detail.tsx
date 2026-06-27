@@ -18,6 +18,7 @@ import type { ThemeColors } from '../src/theme/palettes';
 import { Employee, AttendanceEvent, WorkLeave } from '../src/types';
 import { fetchAllAttendanceEvents, attendanceQueryKey } from '../src/utils/attendance';
 import { fetchAllEmployees, employeesQueryKey } from '../src/utils/employees';
+import { Icon } from '../src/components/Icon';
 
 dayjs.locale('uz');
 
@@ -167,7 +168,7 @@ function StatusSection({ section, styles, c }: { section: Section; styles: any; 
             </View>
             {row.entryTime && (
               <View style={styles.timeTag}>
-                <Text style={styles.timeTagArrow}>→|</Text>
+                <Icon name="clock" size={14} color={c.textMuted} />
                 <Text style={styles.timeTagText}>{dayjs(row.entryTime).format('HH:mm')}</Text>
               </View>
             )}
@@ -273,16 +274,16 @@ export default function AttendanceDetailScreen() {
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backArrow}>{'<'}</Text>
+          <Icon name="chevronLeft" size={24} color={colors.text} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle}>Davomat</Text>
           <Text style={styles.headerDate}>{dateLabel}</Text>
         </View>
         <View style={styles.navBtns}>
-          <TouchableOpacity onPress={prevDay} style={styles.navBtn}><Text style={styles.navArrow}>‹</Text></TouchableOpacity>
+          <TouchableOpacity onPress={prevDay} style={styles.navBtn}><Icon name="chevronLeft" size={20} color={colors.text} /></TouchableOpacity>
           <TouchableOpacity onPress={nextDay} style={[styles.navBtn, isToday && styles.navBtnDisabled]} disabled={isToday}>
-            <Text style={[styles.navArrow, isToday && styles.navArrowDisabled]}>›</Text>
+            <Icon name="chevronRight" size={20} color={isToday ? colors.textMuted : colors.text} />
           </TouchableOpacity>
         </View>
       </View>
@@ -292,7 +293,10 @@ export default function AttendanceDetailScreen() {
       ) : (
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           {onlySubordinates && (
-            <View style={styles.filterNotice}><Text style={styles.filterNoticeText}>👥 Faqat bo'ysunuvchilar</Text></View>
+            <View style={styles.filterNotice}>
+              <Icon name="users" size={16} color={colors.primaryLight} />
+              <Text style={styles.filterNoticeText}>Faqat bo'ysunuvchilar</Text>
+            </View>
           )}
           <View style={styles.chartCard}>
             <DonutChart total={totalEmp} present={presentCount} late={lateCount} onLeave={onLeaveCount}
@@ -328,7 +332,7 @@ const makeStyles = (c: ThemeColors) =>
     navArrowDisabled: { color: c.textMuted },
 
     content: { paddingHorizontal: 16, paddingTop: 16 },
-    filterNotice: { backgroundColor: c.primarySoft, borderRadius: 12, paddingVertical: 10, paddingHorizontal: 14, marginBottom: 12 },
+    filterNotice: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: c.primarySoft, borderRadius: 12, paddingVertical: 10, paddingHorizontal: 14, marginBottom: 12 },
     filterNoticeText: { fontSize: 13, color: c.primaryLight, fontWeight: '600' },
 
     chartCard: { backgroundColor: c.card, borderRadius: 16, borderWidth: 1, borderColor: c.cardBorder, marginBottom: 14, paddingVertical: 16 },

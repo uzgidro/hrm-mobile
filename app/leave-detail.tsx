@@ -13,6 +13,7 @@ import { WORK_LEAVE_DETAIL, WORK_LEAVE_SIGN, WORK_LEAVE_REJECT } from '../src/ap
 import { useTheme, useThemedStyles } from '../src/theme/ThemeProvider';
 import type { ThemeColors } from '../src/theme/palettes';
 import { WorkLeave, Employee } from '../src/types';
+import { Icon } from '../src/components/Icon';
 
 function isPending(status: string) { return status === 'pending' || status === 'yuborildi'; }
 function isApproved(status: string) { return status === 'approved' || status === 'tasdiqlangan' || status === 'signed'; }
@@ -125,7 +126,7 @@ export default function LeaveDetailScreen() {
   const HeaderBar = () => (
     <View style={s.header}>
       <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
-        <Text style={s.backArrow}>{'<'}</Text>
+        <Icon name="chevronLeft" size={24} color={colors.text} />
       </TouchableOpacity>
       <Text style={s.headerTitle}>So'rov tafsiloti</Text>
       <View style={{ width: 36 }} />
@@ -210,8 +211,9 @@ export default function LeaveDetailScreen() {
                     <Text style={s.signerName}>{signer.legal_name}</Text>
                     <Text style={s.signerSub} numberOfLines={1}>{signer.job_position?.name ?? signer.department?.name ?? '—'}</Text>
                   </View>
-                  <View style={[s.signerStatus, { backgroundColor: (hasSigned ? colors.success : colors.warning) === colors.success ? colors.successSoft : colors.warningSoft }]}>
-                    <Text style={[s.signerStatusText, { color: hasSigned ? colors.success : colors.warning }]}>{hasSigned ? '✓ Tasdiqladi' : '⏳ Kutilmoqda'}</Text>
+                  <View style={[s.signerStatus, { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: (hasSigned ? colors.success : colors.warning) === colors.success ? colors.successSoft : colors.warningSoft }]}>
+                    <Icon name={hasSigned ? 'check' : 'clock'} size={13} color={hasSigned ? colors.success : colors.warning} />
+                    <Text style={[s.signerStatusText, { color: hasSigned ? colors.success : colors.warning }]}>{hasSigned ? 'Tasdiqladi' : 'Kutilmoqda'}</Text>
                   </View>
                 </View>
               );

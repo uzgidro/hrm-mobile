@@ -8,11 +8,12 @@ import { usePrefsStore } from '../../src/store/prefsStore';
 import { useTheme, useThemedStyles } from '../../src/theme/ThemeProvider';
 import type { ThemeColors } from '../../src/theme/palettes';
 import type { ThemeMode } from '../../src/theme/ThemeProvider';
+import { Icon, IconName } from '../../src/components/Icon';
 
-const THEME_OPTIONS: { key: ThemeMode; label: string; icon: string }[] = [
-  { key: 'system', label: 'Tizim', icon: '⚙️' },
-  { key: 'light', label: "Yorug'", icon: '☀️' },
-  { key: 'dark', label: 'Qora', icon: '🌙' },
+const THEME_OPTIONS: { key: ThemeMode; label: string; icon: IconName }[] = [
+  { key: 'system', label: 'Tizim', icon: 'system' },
+  { key: 'light', label: "Yorug'", icon: 'sun' },
+  { key: 'dark', label: 'Tungi', icon: 'moon' },
 ];
 
 export default function ProfileScreen() {
@@ -70,7 +71,7 @@ export default function ProfileScreen() {
               onPress={() => router.push('/profile-detail')}
               activeOpacity={0.8}
             >
-              <Text style={styles.actionBtnEmoji}>🪪</Text>
+              <Icon name="idcard" size={17} color={colors.textSecondary} />
               <Text style={styles.actionBtnText}>Ma'lumotnoma</Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -78,7 +79,7 @@ export default function ProfileScreen() {
               onPress={() => router.push('/profile-edit')}
               activeOpacity={0.85}
             >
-              <Text style={styles.actionBtnEmoji}>✏️</Text>
+              <Icon name="edit" size={17} color={colors.onPrimary} />
               <Text style={styles.actionBtnPrimaryText}>O'zgartirish</Text>
             </TouchableOpacity>
           </View>
@@ -88,7 +89,7 @@ export default function ProfileScreen() {
         <View style={styles.card}>
           <View style={styles.orgRow}>
             <View style={styles.orgIcon}>
-              <Text style={styles.orgIconEmoji}>🏢</Text>
+              <Icon name="building" size={22} color={colors.primary} />
             </View>
             <View style={styles.orgInfo}>
               <Text style={styles.orgName} numberOfLines={1}>
@@ -114,7 +115,7 @@ export default function ProfileScreen() {
                   onPress={() => setMode(opt.key)}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.segmentIcon}>{opt.icon}</Text>
+                  <Icon name={opt.icon} size={19} color={active ? colors.primary : colors.textSecondary} />
                   <Text style={[styles.segmentText, active && styles.segmentTextActive]}>
                     {opt.label}
                   </Text>
@@ -129,7 +130,7 @@ export default function ProfileScreen() {
         <View style={styles.card}>
           <View style={[styles.menuItem, styles.menuItemBorder]}>
             <View style={styles.menuItemLeft}>
-              <Text style={styles.menuEmoji}>👥</Text>
+              <View style={styles.menuIcon}><Icon name="users" size={18} color={colors.textSecondary} /></View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.menuLabel}>Faqat bo'ysunuvchilar</Text>
                 <Text style={styles.menuHint}>Jamoa va ro'yxatlarda faqat sizga biriktirilganlar</Text>
@@ -145,7 +146,7 @@ export default function ProfileScreen() {
 
           <View style={styles.menuItem}>
             <View style={styles.menuItemLeft}>
-              <Text style={styles.menuEmoji}>🌐</Text>
+              <View style={styles.menuIcon}><Icon name="globe" size={18} color={colors.textSecondary} /></View>
               <Text style={styles.menuLabel}>Til</Text>
             </View>
             <Text style={styles.menuValue}>O'zbekcha</Text>
@@ -154,6 +155,7 @@ export default function ProfileScreen() {
 
         {/* Logout */}
         <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.85}>
+          <Icon name="logout" size={18} color={colors.error} />
           <Text style={styles.logoutText}>Chiqish</Text>
         </TouchableOpacity>
 
@@ -176,14 +178,14 @@ const makeStyles = (c: ThemeColors) =>
     },
 
     card: {
-      backgroundColor: c.card, borderRadius: 18, padding: 16,
+      backgroundColor: c.card, borderRadius: 16, padding: 16,
       marginBottom: 12, borderWidth: 1, borderColor: c.cardBorder,
     },
 
     userRow: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 16 },
     avatar: { width: 60, height: 60, borderRadius: 30 },
     avatarFallback: { backgroundColor: c.primarySoft, alignItems: 'center', justifyContent: 'center' },
-    avatarInitial: { fontSize: 24, fontWeight: '700', color: c.primaryLight },
+    avatarInitial: { fontSize: 24, fontWeight: '700', color: c.primary },
     userName: { fontSize: 18, fontWeight: '800', color: c.text },
     userRole: { fontSize: 13, color: c.textSecondary, marginTop: 2 },
 
@@ -193,7 +195,6 @@ const makeStyles = (c: ThemeColors) =>
       gap: 8, paddingVertical: 12, borderRadius: 12,
       backgroundColor: c.bg, borderWidth: 1, borderColor: c.cardBorder,
     },
-    actionBtnEmoji: { fontSize: 15 },
     actionBtnText: { fontSize: 13, fontWeight: '700', color: c.textSecondary },
     actionBtnPrimary: { backgroundColor: c.primary, borderColor: c.primary },
     actionBtnPrimaryText: { fontSize: 13, fontWeight: '700', color: c.onPrimary },
@@ -203,32 +204,30 @@ const makeStyles = (c: ThemeColors) =>
       width: 46, height: 46, borderRadius: 13,
       backgroundColor: c.primarySoft, alignItems: 'center', justifyContent: 'center',
     },
-    orgIconEmoji: { fontSize: 22 },
     orgInfo: { flex: 1 },
     orgName: { fontSize: 15, fontWeight: '700', color: c.text },
     orgBranch: { fontSize: 12, color: c.textMuted, marginTop: 2 },
 
     segmentRow: { flexDirection: 'row', gap: 8 },
     segment: {
-      flex: 1, alignItems: 'center', gap: 5, paddingVertical: 12, borderRadius: 12,
+      flex: 1, alignItems: 'center', gap: 6, paddingVertical: 12, borderRadius: 12,
       backgroundColor: c.bg, borderWidth: 1, borderColor: c.cardBorder,
     },
     segmentActive: { backgroundColor: c.primarySoft, borderColor: c.primary },
-    segmentIcon: { fontSize: 18 },
     segmentText: { fontSize: 12, fontWeight: '600', color: c.textSecondary },
-    segmentTextActive: { color: c.primaryLight, fontWeight: '800' },
+    segmentTextActive: { color: c.primary, fontWeight: '800' },
 
     menuItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14 },
     menuItemBorder: { borderBottomWidth: 1, borderBottomColor: c.cardBorder },
     menuItemLeft: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
-    menuEmoji: { fontSize: 18, width: 26, textAlign: 'center' },
+    menuIcon: { width: 26, alignItems: 'center' },
     menuLabel: { fontSize: 15, color: c.text, fontWeight: '600' },
     menuHint: { fontSize: 11, color: c.textMuted, marginTop: 2 },
     menuValue: { fontSize: 14, color: c.textSecondary, fontWeight: '500' },
 
     logoutBtn: {
-      backgroundColor: c.errorSoft, borderRadius: 14, paddingVertical: 15,
-      alignItems: 'center', marginTop: 8, borderWidth: 1, borderColor: c.error,
+      flexDirection: 'row', gap: 8, backgroundColor: c.errorSoft, borderRadius: 14, paddingVertical: 15,
+      alignItems: 'center', justifyContent: 'center', marginTop: 8, borderWidth: 1, borderColor: c.error,
     },
     logoutText: { color: c.error, fontSize: 16, fontWeight: '700' },
 

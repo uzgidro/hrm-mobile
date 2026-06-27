@@ -17,6 +17,7 @@ import { statusColor } from '../src/utils/orderStatus';
 import {
   letterStatusMeta, letterTypeLabel, canSignLetter, getSigningTimeline,
 } from '../src/utils/letterStatus';
+import { Icon } from '../src/components/Icon';
 
 export default function LetterDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -67,7 +68,7 @@ export default function LetterDetailScreen() {
   if (isLoading || !letter) {
     return (
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-        <Header styles={styles} />
+        <Header styles={styles} colors={colors} />
         <View style={styles.center}><ActivityIndicator color={colors.primaryLight} size="large" /></View>
       </SafeAreaView>
     );
@@ -81,7 +82,7 @@ export default function LetterDetailScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-      <Header styles={styles} />
+      <Header styles={styles} colors={colors} />
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.card}>
@@ -98,7 +99,8 @@ export default function LetterDetailScreen() {
               activeOpacity={0.85}
               onPress={() => router.push({ pathname: '/letter-document', params: { id: letterId } } as any)}
             >
-              <Text style={styles.docBtnText}>📄  Hujjatni ochish</Text>
+              <Icon name="doc" size={16} color={colors.primary} />
+              <Text style={styles.docBtnText}>Hujjatni ochish</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -156,11 +158,11 @@ export default function LetterDetailScreen() {
   );
 }
 
-function Header({ styles }: { styles: any }) {
+function Header({ styles, colors }: { styles: any; colors: ThemeColors }) {
   return (
     <View style={styles.header}>
       <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={10}>
-        <Text style={styles.backArrow}>{'<'}</Text>
+        <Icon name="chevronLeft" size={24} color={colors.text} />
       </TouchableOpacity>
       <Text style={styles.headerTitle}>Xat</Text>
       <View style={{ width: 40 }} />
@@ -188,7 +190,7 @@ const makeStyles = (c: ThemeColors) =>
     badgeText: { fontSize: 12, fontWeight: '700' },
     bigTitle: { fontSize: 18, fontWeight: '800', color: c.text },
     subMeta: { fontSize: 13, color: c.textMuted },
-    docBtn: { marginTop: 6, backgroundColor: c.primarySoft, borderRadius: 12, paddingVertical: 13, alignItems: 'center' },
+    docBtn: { marginTop: 6, backgroundColor: c.primarySoft, borderRadius: 12, paddingVertical: 13, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
     docBtnText: { color: c.primary, fontSize: 14, fontWeight: '700' },
     section: { backgroundColor: c.card, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: c.cardBorder },
     sectionTitle: { fontSize: 12, fontWeight: '800', color: c.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 },

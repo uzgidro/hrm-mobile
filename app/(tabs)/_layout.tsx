@@ -3,19 +3,27 @@ import { View, Text, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import type { ThemeColors } from '../../src/theme/palettes';
+import { Icon, IconName } from '../../src/components/Icon';
 
 function TabIcon({
-  focused, emoji, label, colors,
-}: { focused: boolean; emoji: string; label: string; colors: ThemeColors }) {
+  focused, name, label, colors,
+}: { focused: boolean; name: IconName; label: string; colors: ThemeColors }) {
   return (
-    <View style={styles.tabIconWrapper}>
-      {focused && <View style={[styles.tabDot, { backgroundColor: colors.primaryLight }]} />}
-      <Text style={[styles.tabEmoji, { opacity: focused ? 1 : 0.4 }]}>{emoji}</Text>
+    <View style={styles.wrap}>
+      <View style={[styles.pill, focused && { backgroundColor: colors.tabBarActiveBg }]}>
+        <Icon
+          name={name}
+          size={22}
+          color={focused ? colors.tabBarActive : colors.tabBarInactive}
+          strokeWidth={focused ? 2.2 : 1.9}
+        />
+      </View>
       <Text
         style={[
-          styles.tabLabel,
+          styles.label,
           { color: focused ? colors.tabBarActive : colors.tabBarInactive, fontWeight: focused ? '700' : '500' },
         ]}
+        numberOfLines={1}
       >
         {label}
       </Text>
@@ -36,40 +44,40 @@ export default function TabsLayout() {
           backgroundColor: colors.tabBar,
           borderTopColor: colors.tabBarBorder,
           borderTopWidth: 1,
-          height: 58 + insets.bottom,
+          height: 60 + insets.bottom,
           paddingBottom: insets.bottom,
           paddingTop: 8,
+          elevation: 0,
         },
         tabBarShowLabel: false,
       }}
     >
       <Tabs.Screen
         name="index"
-        options={{ tabBarIcon: ({ focused }) => <TabIcon focused={focused} emoji="🏠" label="Asosiy" colors={colors} /> }}
+        options={{ tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="home" label="Asosiy" colors={colors} /> }}
       />
       <Tabs.Screen
         name="orders"
-        options={{ tabBarIcon: ({ focused }) => <TabIcon focused={focused} emoji="📄" label="Buyruqlar" colors={colors} /> }}
+        options={{ tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="orders" label="Buyruqlar" colors={colors} /> }}
       />
       <Tabs.Screen
         name="letters"
-        options={{ tabBarIcon: ({ focused }) => <TabIcon focused={focused} emoji="✉️" label="Xatlar" colors={colors} /> }}
+        options={{ tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="mail" label="Xatlar" colors={colors} /> }}
       />
       <Tabs.Screen
-        name="news"
-        options={{ tabBarIcon: ({ focused }) => <TabIcon focused={focused} emoji="📰" label="Yangiliklar" colors={colors} /> }}
+        name="modules"
+        options={{ tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="grid" label="Modullar" colors={colors} /> }}
       />
       <Tabs.Screen
         name="profile"
-        options={{ href: null }}
+        options={{ tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="user" label="Profil" colors={colors} /> }}
       />
     </Tabs>
   );
 }
 
 const styles = StyleSheet.create({
-  tabIconWrapper: { alignItems: 'center', gap: 3, paddingTop: 2, width: 70 },
-  tabDot: { position: 'absolute', top: -6, width: 5, height: 5, borderRadius: 2.5 },
-  tabEmoji: { fontSize: 22 },
-  tabLabel: { fontSize: 10 },
+  wrap: { alignItems: 'center', gap: 3, width: 64 },
+  pill: { width: 46, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
+  label: { fontSize: 10.5 },
 });

@@ -15,6 +15,7 @@ import { PickerModal, type PickerOption } from '../src/components/PickerModal';
 import { useTheme, useThemedStyles } from '../src/theme/ThemeProvider';
 import type { ThemeColors } from '../src/theme/palettes';
 import type { Employee, OrderActCategory } from '../src/types';
+import { Icon } from '../src/components/Icon';
 
 type Approver = { employee_id: number; can_edit_document: boolean };
 type PickerKind = 'category' | 'leadership' | 'submitter' | 'familiarizers' | null;
@@ -151,7 +152,7 @@ export default function CreateOrderScreen() {
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
-          <Text style={styles.backIcon}>←</Text>
+          <Icon name="chevronLeft" size={24} color={colors.text} />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
           <Text style={styles.title}>Yangi buyruq</Text>
@@ -237,7 +238,8 @@ export default function CreateOrderScreen() {
             onPress={() => setApprovers((p) => [...p, { employee_id: 0, can_edit_document: false }])}
             activeOpacity={0.8}
           >
-            <Text style={styles.addApproverText}>+ Qo'shish</Text>
+            <Icon name="plus" size={14} color={colors.primary} />
+            <Text style={styles.addApproverText}>Qo'shish</Text>
           </TouchableOpacity>
         </View>
 
@@ -260,7 +262,7 @@ export default function CreateOrderScreen() {
                   onPress={() => setApprovers((p) => p.filter((_, i) => i !== idx))}
                   hitSlop={6}
                 >
-                  <Text style={styles.removeApproverText}>✕</Text>
+                  <Icon name="close" size={18} color={colors.error} />
                 </TouchableOpacity>
               </View>
               <View style={styles.editRow}>
@@ -347,9 +349,9 @@ function Selector({
         </Text>
       )}
       {onClear ? (
-        <TouchableOpacity onPress={onClear} hitSlop={10}><Text style={styles.selectorArrow}>✕</Text></TouchableOpacity>
+        <TouchableOpacity onPress={onClear} hitSlop={10}><Icon name="close" size={16} color={colors.textMuted} /></TouchableOpacity>
       ) : (
-        <Text style={styles.selectorArrow}>›</Text>
+        <Icon name="chevronRight" size={20} color={colors.textMuted} />
       )}
     </TouchableOpacity>
   );
@@ -381,7 +383,7 @@ const makeStyles = (c: ThemeColors) =>
     textArea: { backgroundColor: c.card, borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: c.text, minHeight: 80 },
 
     approversHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 22, marginBottom: 8 },
-    addApproverBtn: { backgroundColor: c.primarySoft, paddingHorizontal: 14, paddingVertical: 7, borderRadius: 14 },
+    addApproverBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: c.primarySoft, paddingHorizontal: 14, paddingVertical: 7, borderRadius: 14 },
     addApproverText: { color: c.primary, fontSize: 12, fontWeight: '700' },
     emptyApprovers: { color: c.textMuted, fontSize: 13 },
 

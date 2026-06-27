@@ -13,6 +13,7 @@ import { EMPLOYEES_BIRTHDAYS } from '../src/api/urls';
 import { useTheme, useThemedStyles } from '../src/theme/ThemeProvider';
 import type { ThemeColors } from '../src/theme/palettes';
 import { EmployeeBirthday } from '../src/types';
+import { Icon } from '../src/components/Icon';
 
 const MONTHS_UZ = ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 'Iyul', 'Avgust', 'Sentyabr', 'Oktyabr', 'Noyabr', 'Dekabr'];
 
@@ -47,7 +48,7 @@ export default function BirthdaysScreen() {
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backArrow}>{'<'}</Text>
+          <Icon name="chevronLeft" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Tug'ilgan kunlar{birthdays.length ? ` (${birthdays.length})` : ''}</Text>
         <View style={{ width: 36 }} />
@@ -55,11 +56,11 @@ export default function BirthdaysScreen() {
 
       <View style={styles.searchWrapper}>
         <View style={styles.searchBox}>
-          <Text style={styles.searchIcon}>🔍</Text>
+          <Icon name="search" size={18} color={colors.textMuted} />
           <TextInput style={styles.searchInput} placeholder="Qidirish..." placeholderTextColor={colors.textMuted} value={search} onChangeText={setSearch} returnKeyType="search" />
           {search.length > 0 && (
             <TouchableOpacity onPress={() => setSearch('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <Text style={styles.clearIcon}>✕</Text>
+              <Icon name="close" size={18} color={colors.textMuted} />
             </TouchableOpacity>
           )}
         </View>
@@ -90,24 +91,32 @@ export default function BirthdaysScreen() {
                 <View style={styles.empInfo}>
                   <View style={styles.nameRow}>
                     <Text style={styles.empName} numberOfLines={1}>{emp.legal_name}</Text>
-                    {isToday && <Text style={styles.todayBadge}>🎉 Bugun!</Text>}
+                    {isToday && (
+                      <View style={styles.todayBadgeRow}>
+                        <Icon name="gift" size={13} color={colors.warning} />
+                        <Text style={styles.todayBadge}>Bugun!</Text>
+                      </View>
+                    )}
                     {isSoon && !isToday && <Text style={styles.soonBadge}>{emp.days_left} kun</Text>}
                   </View>
                   <Text style={styles.empSub} numberOfLines={1}>{emp.job_position?.name ?? '—'}</Text>
                   {birthDay && (
-                    <Text style={[styles.birthDate, isToday && styles.birthDateToday]}>
-                      🎂 {birthDay.date()} {MONTHS_UZ[birthDay.month()]}
-                      <Text style={styles.yearLabel}>{' · '}{today.year() - birthDay.year()} yosh</Text>
-                    </Text>
+                    <View style={styles.birthDateRow}>
+                      <Icon name="cake" size={14} color={isToday ? colors.warning : colors.textSecondary} />
+                      <Text style={[styles.birthDate, isToday && styles.birthDateToday]}>
+                        {birthDay.date()} {MONTHS_UZ[birthDay.month()]}
+                        <Text style={styles.yearLabel}>{' · '}{today.year() - birthDay.year()} yosh</Text>
+                      </Text>
+                    </View>
                   )}
                 </View>
-                <Text style={styles.arrowIcon}>›</Text>
+                <Icon name="chevronRight" size={20} color={colors.textMuted} />
               </TouchableOpacity>
             );
           }}
           ListEmptyComponent={
             <View style={styles.emptyWrapper}>
-              <Text style={styles.emptyIcon}>🎂</Text>
+              <View style={styles.emptyIconWrap}><Icon name="cake" size={30} color={colors.textMuted} /></View>
               <Text style={styles.emptyText}>{search ? 'Topilmadi' : "Tug'ilgan kun yo'q"}</Text>
             </View>
           }
@@ -144,14 +153,17 @@ const makeStyles = (c: ThemeColors) =>
     nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
     empName: { fontSize: 14, fontWeight: '700', color: c.text, flexShrink: 1 },
     empSub: { fontSize: 12, color: c.textMuted },
+    birthDateRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
     birthDate: { fontSize: 12, color: c.textSecondary },
     birthDateToday: { color: c.warning },
     yearLabel: { color: c.textMuted },
+    todayBadgeRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
     todayBadge: { fontSize: 11, color: c.warning, fontWeight: '700' },
     soonBadge: { fontSize: 11, color: c.primaryLight, fontWeight: '700', backgroundColor: c.primarySoft, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8 },
     arrowIcon: { fontSize: 22, color: c.textMuted },
 
     emptyWrapper: { alignItems: 'center', paddingTop: 80, gap: 12 },
     emptyIcon: { fontSize: 48 },
+    emptyIconWrap: { width: 64, height: 64, borderRadius: 32, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, alignItems: 'center', justifyContent: 'center' },
     emptyText: { color: c.textMuted, fontSize: 15 },
   });

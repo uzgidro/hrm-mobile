@@ -12,6 +12,7 @@ import { apiClient } from '../../src/api/client';
 import { ORDER_ACTS } from '../../src/api/urls';
 import { useTheme, useThemedStyles } from '../../src/theme/ThemeProvider';
 import type { ThemeColors } from '../../src/theme/palettes';
+import { Icon } from '../../src/components/Icon';
 import { OrderAct } from '../../src/types';
 import { statusMeta, statusColor, needsMyAction } from '../../src/utils/orderStatus';
 
@@ -71,7 +72,7 @@ export default function OrdersScreen() {
           onPress={() => router.push('/create-order' as any)}
           activeOpacity={0.8}
         >
-          <Text style={styles.fabText}>+</Text>
+          <Icon name="plus" size={22} color={colors.onPrimary} strokeWidth={2.4} />
         </TouchableOpacity>
       </View>
 
@@ -110,7 +111,7 @@ export default function OrdersScreen() {
         >
           {filtered.length === 0 ? (
             <View style={styles.empty}>
-              <Text style={styles.emptyIcon}>📄</Text>
+              <View style={styles.emptyIconWrap}><Icon name="doc" size={30} color={colors.textMuted} /></View>
               <Text style={styles.emptyText}>
                 {tab === 'action' ? "Sizdan amal kutilayotgan buyruqlar yo'q" : "Buyruqlar yo'q"}
               </Text>
@@ -174,10 +175,9 @@ const makeStyles = (c: ThemeColors) =>
     header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
     title: { flex: 1, fontSize: 26, fontWeight: '800', color: c.text },
     fab: {
-      width: 40, height: 40, borderRadius: 20,
+      width: 42, height: 42, borderRadius: 14,
       backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center',
     },
-    fabText: { fontSize: 26, color: c.onPrimary, lineHeight: 30, fontWeight: '400' },
 
     tabsRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingBottom: 12 },
     tab: {
@@ -194,7 +194,7 @@ const makeStyles = (c: ThemeColors) =>
     content: { paddingHorizontal: 16, paddingTop: 4 },
 
     empty: { alignItems: 'center', paddingTop: 80, gap: 12 },
-    emptyIcon: { fontSize: 48 },
+    emptyIconWrap: { width: 64, height: 64, borderRadius: 32, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, alignItems: 'center', justifyContent: 'center' },
     emptyText: { color: c.textMuted, fontSize: 15, textAlign: 'center', paddingHorizontal: 30 },
 
     card: {

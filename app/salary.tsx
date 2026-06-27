@@ -1,23 +1,25 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
-import { useThemedStyles } from '../src/theme/ThemeProvider';
+import { useTheme, useThemedStyles } from '../src/theme/ThemeProvider';
 import type { ThemeColors } from '../src/theme/palettes';
+import { Icon } from '../src/components/Icon';
 
 export default function SalaryScreen() {
+  const { colors } = useTheme();
   const s = useThemedStyles(makeStyles);
   return (
     <SafeAreaView style={s.safe} edges={['top', 'bottom']}>
       <View style={s.header}>
         <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
-          <Text style={s.backArrow}>{'<'}</Text>
+          <Icon name="chevronLeft" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={s.headerTitle}>Oylik</Text>
         <View style={{ width: 36 }} />
       </View>
 
       <View style={s.body}>
-        <Text style={s.icon}>🚀</Text>
+        <View style={s.emptyIconWrap}><Icon name="chart" size={30} color={colors.textMuted} /></View>
         <Text style={s.title}>Tez orada</Text>
         <Text style={s.subtitle}>
           Oylik ma'lumotlari moduli ishlab chiqilmoqda.{'\n'}Yaqin orada qo'shiladi.
@@ -39,6 +41,7 @@ const makeStyles = (c: ThemeColors) =>
     headerTitle: { flex: 1, fontSize: 20, fontWeight: '700', color: c.text, paddingLeft: 4 },
     body: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, paddingHorizontal: 32 },
     icon: { fontSize: 64 },
+    emptyIconWrap: { width: 64, height: 64, borderRadius: 32, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, alignItems: 'center', justifyContent: 'center' },
     title: { fontSize: 26, fontWeight: '800', color: c.text },
     subtitle: { fontSize: 15, color: c.textSecondary, textAlign: 'center', lineHeight: 22 },
   });

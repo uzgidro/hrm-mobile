@@ -8,9 +8,10 @@ import { router } from 'expo-router';
 import { useAuthStore } from '../src/store/authStore';
 import { apiClient } from '../src/api/client';
 import { EMPLOYEE_DETAIL, EMPLOYEE_SELF_UPDATE, USER_INFO } from '../src/api/urls';
-import { useThemedStyles } from '../src/theme/ThemeProvider';
+import { useTheme, useThemedStyles } from '../src/theme/ThemeProvider';
 import type { ThemeColors } from '../src/theme/palettes';
 import { EmployeeFull, User } from '../src/types';
+import { Icon } from '../src/components/Icon';
 
 const MARITAL_OPTIONS = [
   { key: 'single', label: 'Turmush qurmagan' },
@@ -45,6 +46,7 @@ export default function ProfileEditScreen() {
   const { user, setUser } = useAuthStore();
   const employeeId = user?.employee?.id;
   const styles = useThemedStyles(makeStyles);
+  const { colors } = useTheme();
 
   const [form, setForm] = useState<Form>(EMPTY);
   const [loading, setLoading] = useState(true);
@@ -125,7 +127,7 @@ export default function ProfileEditScreen() {
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backArrow}>{'<'}</Text>
+          <Icon name="chevronLeft" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Ma'lumotlarni o'zgartirish</Text>
         <View style={{ width: 40 }} />
@@ -136,9 +138,12 @@ export default function ProfileEditScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-          <Text style={styles.noteText}>
-            🔒 Ish ma'lumotlari (bo'lim, lavozim, ish vaqti) faqat kadrlar bo'limi tomonidan o'zgartiriladi.
-          </Text>
+          <View style={styles.noteRow}>
+            <Icon name="lock" size={14} color={colors.textMuted} />
+            <Text style={styles.noteText}>
+              Ish ma'lumotlari (bo'lim, lavozim, ish vaqti) faqat kadrlar bo'limi tomonidan o'zgartiriladi.
+            </Text>
+          </View>
 
           <Card styles={styles} title="Shaxsiy">
             <Field styles={styles} label="F.I.O." value={form.legal_name} onChange={set('legal_name')} />
@@ -249,7 +254,8 @@ const makeStyles = (c: ThemeColors) =>
     headerTitle: { fontSize: 16, fontWeight: '700', color: c.text },
 
     content: { paddingHorizontal: 16, paddingTop: 16 },
-    noteText: { fontSize: 12, color: c.textMuted, marginBottom: 14, lineHeight: 17 },
+    noteRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginBottom: 14 },
+    noteText: { flex: 1, fontSize: 12, color: c.textMuted, lineHeight: 17 },
 
     card: {
       backgroundColor: c.card, borderRadius: 18, padding: 16, marginBottom: 12,

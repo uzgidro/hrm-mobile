@@ -17,6 +17,7 @@ import type { ThemeColors } from '../src/theme/palettes';
 import { Employee, AttendanceEvent, WorkLeave, EmployeeBirthday } from '../src/types';
 import { fetchAllAttendanceEvents, attendanceQueryKey } from '../src/utils/attendance';
 import { fetchAllEmployees, employeesQueryKey } from '../src/utils/employees';
+import { Icon, IconName } from '../src/components/Icon';
 
 interface WorkLeavePage { items: WorkLeave[]; total: number }
 
@@ -194,12 +195,12 @@ export default function TeamScreen() {
   };
 
   const SectionCard = ({ icon, title, rightLabel, onRightPress, loading, children }: {
-    icon: string; title: string; rightLabel?: string; onRightPress?: () => void; loading?: boolean; children: React.ReactNode;
+    icon: IconName; title: string; rightLabel?: string; onRightPress?: () => void; loading?: boolean; children: React.ReactNode;
   }) => (
     <View style={styles.card}>
       <View style={styles.cardHeader}>
         <View style={styles.cardTitleRow}>
-          <Text style={styles.cardIcon}>{icon}</Text>
+          <Icon name={icon} size={18} color={colors.textSecondary} />
           <Text style={styles.cardTitle}>{title}</Text>
         </View>
         {rightLabel && (
@@ -218,7 +219,7 @@ export default function TeamScreen() {
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backArrow}>{'<'}</Text>
+          <Icon name="chevronLeft" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Xodimlar</Text>
         <View style={{ width: 36 }} />
@@ -231,11 +232,12 @@ export default function TeamScreen() {
       >
         {onlySubordinates && (
           <View style={styles.filterNotice}>
-            <Text style={styles.filterNoticeText}>👥 Faqat bo'ysunuvchilar ko'rsatilmoqda</Text>
+            <Icon name="users" size={16} color={colors.primaryLight} />
+            <Text style={styles.filterNoticeText}>Faqat bo'ysunuvchilar ko'rsatilmoqda</Text>
           </View>
         )}
 
-        <SectionCard icon="📊" title="Davomat" loading={empQ.isLoading || attQ.isLoading}>
+        <SectionCard icon="chart" title="Davomat" loading={empQ.isLoading || attQ.isLoading}>
           <View style={styles.chartRow}>
             <DonutChart c={colors} styles={styles}
               total={attendanceStats.total} present={attendanceStats.present}
@@ -275,7 +277,7 @@ export default function TeamScreen() {
           </TouchableOpacity>
         </SectionCard>
 
-        <SectionCard icon="📋" title="So'rovlar" rightLabel="Barchasi" onRightPress={() => router.push('/team-leaves')} loading={leavesQ.isLoading}>
+        <SectionCard icon="checklist" title="So'rovlar" rightLabel="Barchasi" onRightPress={() => router.push('/team-leaves')} loading={leavesQ.isLoading}>
           {recentLeaves.length === 0 ? (
             <Text style={styles.emptyText}>So'rovlar yo'q</Text>
           ) : (
@@ -302,7 +304,7 @@ export default function TeamScreen() {
           </TouchableOpacity>
         </SectionCard>
 
-        <SectionCard icon="👥" title="Xodimlar" rightLabel="Barchasi" onRightPress={() => router.push('/employees-list')} loading={empQ.isLoading}>
+        <SectionCard icon="users" title="Xodimlar" rightLabel="Barchasi" onRightPress={() => router.push('/employees-list')} loading={empQ.isLoading}>
           {topEmployees.length === 0 ? (
             <Text style={styles.emptyText}>Xodimlar yo'q</Text>
           ) : (
@@ -315,14 +317,14 @@ export default function TeamScreen() {
                   <Text style={styles.empName} numberOfLines={1}>{emp.legal_name}</Text>
                   <Text style={styles.empPosition} numberOfLines={1}>{emp.job_position?.name ?? emp.department?.name ?? '—'}</Text>
                 </View>
-                <Text style={styles.arrowIcon}>›</Text>
+                <Icon name="chevronRight" size={20} color={colors.textMuted} />
               </TouchableOpacity>
             ))
           )}
         </SectionCard>
 
         {(bDayQ.isLoading || upcomingBirthdays.length > 0) && (
-          <SectionCard icon="🎂" title="Tug'ilgan kunlar" rightLabel="Barchasi" onRightPress={() => router.push('/birthdays')} loading={bDayQ.isLoading}>
+          <SectionCard icon="cake" title="Tug'ilgan kunlar" rightLabel="Barchasi" onRightPress={() => router.push('/birthdays')} loading={bDayQ.isLoading}>
             {upcomingBirthdays.map((emp, idx) => (
               <View key={emp.id} style={[styles.empRow, idx < upcomingBirthdays.length - 1 && styles.empRowBorder]}>
                 <EmployeeAvatar c={colors} emp={emp} size={48} />
@@ -332,7 +334,12 @@ export default function TeamScreen() {
                 </View>
                 <View style={styles.bdayRight}>
                   <Text style={styles.bdayDate}>{emp.birth_date ? dayjs(emp.birth_date).format('D MMM') : '—'}</Text>
-                  {emp.days_left === 0 && <Text style={styles.bdayToday}>Bugun! 🎉</Text>}
+                  {emp.days_left === 0 && (
+                    <View style={styles.bdayTodayRow}>
+                      <Text style={styles.bdayToday}>Bugun!</Text>
+                      <Icon name="gift" size={14} color={colors.warning} />
+                    </View>
+                  )}
                 </View>
               </View>
             ))}
@@ -358,7 +365,7 @@ const makeStyles = (c: ThemeColors) =>
 
     content: { paddingHorizontal: 16, paddingTop: 16 },
 
-    filterNotice: { backgroundColor: c.primarySoft, borderRadius: 12, paddingVertical: 10, paddingHorizontal: 14, marginBottom: 12 },
+    filterNotice: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: c.primarySoft, borderRadius: 12, paddingVertical: 10, paddingHorizontal: 14, marginBottom: 12 },
     filterNoticeText: { fontSize: 13, color: c.primaryLight, fontWeight: '600' },
 
     card: { backgroundColor: c.card, borderRadius: 18, borderWidth: 1, borderColor: c.cardBorder, marginBottom: 14, overflow: 'hidden' },
@@ -404,7 +411,8 @@ const makeStyles = (c: ThemeColors) =>
 
     bdayRight: { alignItems: 'flex-end' },
     bdayDate: { fontSize: 13, fontWeight: '600', color: c.textSecondary },
-    bdayToday: { fontSize: 11, color: c.warning, marginTop: 2 },
+    bdayTodayRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
+    bdayToday: { fontSize: 11, color: c.warning },
 
     emptyText: { color: c.textMuted, fontSize: 14, paddingHorizontal: 16, paddingVertical: 12 },
   });

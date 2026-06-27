@@ -10,6 +10,7 @@ import { apiClient } from '../src/api/client';
 import { LETTER_EDITOR_CONFIG, ONLYOFFICE_SERVER_URL } from '../src/api/urls';
 import { useTheme, useThemedStyles } from '../src/theme/ThemeProvider';
 import type { ThemeColors } from '../src/theme/palettes';
+import { Icon } from '../src/components/Icon';
 
 export default function LetterDocumentScreen() {
   const { id, mode = 'view' } = useLocalSearchParams<{ id: string; mode?: string }>();
@@ -50,7 +51,7 @@ export default function LetterDocumentScreen() {
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={10}>
-          <Text style={styles.backArrow}>{'<'}</Text>
+          <Icon name="chevronLeft" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Hujjat</Text>
         <View style={{ width: 40 }} />
@@ -63,7 +64,7 @@ export default function LetterDocumentScreen() {
         </View>
       ) : isError || !config ? (
         <View style={styles.center}>
-          <Text style={styles.errIcon}>📄</Text>
+          <View style={styles.emptyIconWrap}><Icon name="doc" size={30} color={colors.textMuted} /></View>
           <Text style={styles.hint}>Hujjatni yuklab bo'lmadi</Text>
           <TouchableOpacity style={styles.retryBtn} onPress={() => refetch()} activeOpacity={0.85}>
             <Text style={styles.retryText}>Qayta urinish</Text>
@@ -94,6 +95,7 @@ const makeStyles = (c: ThemeColors) =>
     center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, backgroundColor: c.bg },
     hint: { fontSize: 14, color: c.textMuted },
     errIcon: { fontSize: 44 },
+    emptyIconWrap: { width: 64, height: 64, borderRadius: 32, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, alignItems: 'center', justifyContent: 'center' },
     retryBtn: { backgroundColor: c.primary, paddingHorizontal: 22, paddingVertical: 11, borderRadius: 12, marginTop: 4 },
     retryText: { color: c.onPrimary, fontSize: 14, fontWeight: '700' },
     webview: { flex: 1, backgroundColor: '#fff' },

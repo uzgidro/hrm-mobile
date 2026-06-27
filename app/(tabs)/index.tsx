@@ -14,6 +14,7 @@ import { fetchAllAttendanceEvents, attendanceQueryKey } from '../../src/utils/at
 import { fetchAllEmployees, employeesQueryKey } from '../../src/utils/employees';
 import { useTheme, useThemedStyles } from '../../src/theme/ThemeProvider';
 import type { ThemeColors } from '../../src/theme/palettes';
+import { Icon } from '../../src/components/Icon';
 import { WorkLeave, AttendanceEvent } from '../../src/types';
 
 dayjs.locale('uz');
@@ -26,13 +27,6 @@ function statusInfo(status: string, c: ThemeColors) {
   if (status === 'rejected' || status === 'rad_etilgan') return { label: 'Rad etildi', color: c.error };
   return { label: 'Kutilmoqda', color: c.warning };
 }
-
-const MODULE_ITEMS = [
-  { key: 'attendance', emoji: '🕐', label: 'Davomat' },
-  { key: 'requests', emoji: '📋', label: "So'rovlar" },
-  { key: 'team', emoji: '👥', label: 'Jamoa' },
-  { key: 'salary', emoji: '💳', label: 'Oylik' },
-];
 
 export default function HomeScreen() {
   const { user } = useAuthStore();
@@ -153,7 +147,7 @@ export default function HomeScreen() {
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primaryLight} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.headerRow}>
@@ -165,11 +159,11 @@ export default function HomeScreen() {
             )}
           </TouchableOpacity>
           <TouchableOpacity style={{ flex: 1 }} activeOpacity={0.8} onPress={() => router.push('/(tabs)/profile')}>
+            <Text style={styles.greeting}>{dateStr}</Text>
             <Text style={styles.userName} numberOfLines={1}>{employee?.legal_name || 'Foydalanuvchi'}</Text>
-            <Text style={styles.userRole} numberOfLines={1}>{employee?.job_position?.name || dateStr}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.bellBtn} onPress={() => router.push('/notifications' as any)}>
-            <Text style={styles.bellEmoji}>🔔</Text>
+          <TouchableOpacity style={styles.bellBtn} onPress={() => router.push('/notifications' as any)} activeOpacity={0.8}>
+            <Icon name="bell" size={21} color={colors.text} />
             {unreadCount > 0 && (
               <View style={styles.bellBadge}>
                 <Text style={styles.bellBadgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
@@ -178,11 +172,11 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Jadval */}
+        {/* Bugungi jadval */}
         <View style={styles.card}>
           <View style={styles.cardHeaderRow}>
             <View style={styles.cardTitleRow}>
-              <View style={styles.dot} />
+              <Icon name="clock" size={17} color={colors.primary} />
               <Text style={styles.cardTitle}>Bugungi jadval</Text>
             </View>
             {employee?.working_hours_start && (
@@ -191,55 +185,34 @@ export default function HomeScreen() {
           </View>
           <View style={styles.attendanceRow}>
             <View style={styles.attendanceItem}>
-              <Text style={styles.attendanceArrow}>🔽</Text>
+              <View style={[styles.attIcon, { backgroundColor: colors.successSoft }]}>
+                <Icon name="arrowDown" size={16} color={colors.success} />
+              </View>
               <Text style={styles.attendanceTime}>{entry ? dayjs(entry.happen_time).format('HH:mm') : '--:--'}</Text>
               <Text style={styles.attendanceLbl}>Kelish</Text>
             </View>
             <View style={styles.attendanceDivider} />
             <View style={styles.attendanceItem}>
-              <Text style={styles.attendanceArrowUp}>🔼</Text>
+              <View style={[styles.attIcon, { backgroundColor: colors.errorSoft }]}>
+                <Icon name="arrowUp" size={16} color={colors.error} />
+              </View>
               <Text style={styles.attendanceTime}>{exit ? dayjs(exit.happen_time).format('HH:mm') : '--:--'}</Text>
               <Text style={styles.attendanceLbl}>Ketish</Text>
             </View>
           </View>
         </View>
 
-        {/* Modullar */}
-        <View style={styles.modulesGrid}>
-          {MODULE_ITEMS.map((m) => (
-            <TouchableOpacity
-              key={m.key}
-              style={styles.moduleBtn}
-              activeOpacity={0.75}
-              onPress={() => {
-                if (m.key === 'team') router.push('/team');
-                else if (m.key === 'requests') router.push('/work-leaves');
-                else if (m.key === 'attendance') router.push('/attendance-detail');
-                else if (m.key === 'salary') router.push('/salary');
-              }}
-            >
-              <Text style={styles.moduleEmoji}>{m.emoji}</Text>
-              <Text style={styles.moduleLabel}>{m.label}</Text>
-              {m.key === 'requests' && isSupervisor && pendingCount > 0 && (
-                <View style={styles.moduleBadge}>
-                  <Text style={styles.moduleBadgeText}>{pendingCount > 9 ? '9+' : String(pendingCount)}</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-          ))}
-        </View>
-
         {/* So'rovlar */}
         <View style={styles.card}>
           <View style={styles.cardHeaderRow}>
             <View style={styles.cardTitleRow}>
-              <Text style={styles.cardIcon}>📋</Text>
+              <Icon name="checklist" size={17} color={colors.primary} />
               <Text style={styles.cardTitle}>{isSupervisor ? "Kiruvchi so'rovlar" : "So'rovlar"}</Text>
               {isSupervisor && pendingCount > 0 && (
                 <View style={styles.inlineBadge}><Text style={styles.inlineBadgeText}>{pendingCount}</Text></View>
               )}
             </View>
-            <TouchableOpacity onPress={() => router.push('/work-leaves')}>
+            <TouchableOpacity onPress={() => router.push('/work-leaves')} hitSlop={8}>
               <Text style={styles.linkText}>Barchasi</Text>
             </TouchableOpacity>
           </View>
@@ -289,6 +262,7 @@ export default function HomeScreen() {
 
           {!isSupervisor && (
             <TouchableOpacity style={styles.createBtn} onPress={() => router.push('/create-leave')} activeOpacity={0.85}>
+              <Icon name="plus" size={18} color={colors.onPrimary} />
               <Text style={styles.createBtnText}>So'rov yaratish</Text>
             </TouchableOpacity>
           )}
@@ -304,43 +278,32 @@ const makeStyles = (c: ThemeColors) =>
     scroll: { flex: 1 },
     content: { paddingHorizontal: 16, paddingBottom: 32 },
 
-    headerRow: { flexDirection: 'row', alignItems: 'center', paddingTop: 16, marginBottom: 16, gap: 12 },
+    headerRow: { flexDirection: 'row', alignItems: 'center', paddingTop: 16, marginBottom: 18, gap: 12 },
     avatarWrap: { width: 48, height: 48 },
     avatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' },
     avatarImg: { width: 48, height: 48, borderRadius: 24, backgroundColor: c.skeleton },
     avatarText: { color: c.onPrimary, fontSize: 17, fontWeight: '800' },
-    userName: { fontSize: 18, fontWeight: '800', color: c.text },
-    userRole: { fontSize: 13, color: c.primary, fontWeight: '600', marginTop: 2 },
-    bellBtn: { width: 46, height: 46, borderRadius: 23, backgroundColor: c.primarySoft, alignItems: 'center', justifyContent: 'center' },
-    bellEmoji: { fontSize: 20 },
-    bellBadge: { position: 'absolute', top: 6, right: 6, backgroundColor: c.warning, borderRadius: 9, minWidth: 17, height: 17, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3 },
-    bellBadgeText: { fontSize: 10, fontWeight: '800', color: '#fff' },
+    greeting: { fontSize: 12, color: c.textMuted, fontWeight: '500' },
+    userName: { fontSize: 18, fontWeight: '800', color: c.text, marginTop: 2 },
+    bellBtn: { width: 44, height: 44, borderRadius: 14, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, alignItems: 'center', justifyContent: 'center' },
+    bellBadge: { position: 'absolute', top: 7, right: 7, backgroundColor: c.warning, borderRadius: 9, minWidth: 16, height: 16, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3, borderWidth: 1.5, borderColor: c.card },
+    bellBadgeText: { fontSize: 9, fontWeight: '800', color: '#fff' },
 
-    card: { backgroundColor: c.card, borderRadius: 18, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: c.cardBorder },
+    card: { backgroundColor: c.card, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: c.cardBorder },
     cardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
     cardTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    dot: { width: 10, height: 10, borderRadius: 5, backgroundColor: c.primary },
-    cardIcon: { fontSize: 16 },
     cardTitle: { fontSize: 15, fontWeight: '700', color: c.text },
     scheduleTime: { fontSize: 13, color: c.textSecondary },
-    linkText: { fontSize: 13, color: c.primaryLight, fontWeight: '600' },
+    linkText: { fontSize: 13, color: c.primary, fontWeight: '700' },
     inlineBadge: { backgroundColor: c.warning, borderRadius: 8, paddingHorizontal: 6, paddingVertical: 1, minWidth: 18, alignItems: 'center' },
     inlineBadgeText: { fontSize: 11, fontWeight: '700', color: '#fff' },
 
     attendanceRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 4 },
-    attendanceItem: { flex: 1, alignItems: 'center', gap: 4 },
-    attendanceArrow: { fontSize: 18 },
-    attendanceArrowUp: { fontSize: 18 },
+    attendanceItem: { flex: 1, alignItems: 'center', gap: 6 },
+    attIcon: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
     attendanceTime: { fontSize: 24, fontWeight: '800', color: c.text, letterSpacing: 1 },
     attendanceLbl: { fontSize: 11, color: c.textMuted },
-    attendanceDivider: { width: 1, height: 48, backgroundColor: c.cardBorder, marginHorizontal: 16 },
-
-    modulesGrid: { flexDirection: 'row', gap: 10, marginBottom: 12 },
-    moduleBtn: { flex: 1, backgroundColor: c.card, borderRadius: 16, paddingVertical: 16, alignItems: 'center', gap: 8, borderWidth: 1, borderColor: c.cardBorder, position: 'relative' },
-    moduleEmoji: { fontSize: 24 },
-    moduleLabel: { fontSize: 11, color: c.textSecondary, fontWeight: '600', textAlign: 'center' },
-    moduleBadge: { position: 'absolute', top: 6, right: 8, backgroundColor: c.warning, borderRadius: 9, minWidth: 18, height: 18, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
-    moduleBadgeText: { fontSize: 10, fontWeight: '800', color: '#fff' },
+    attendanceDivider: { width: 1, height: 56, backgroundColor: c.cardBorder, marginHorizontal: 16 },
 
     emptyText: { color: c.textMuted, textAlign: 'center', paddingVertical: 20, fontSize: 14 },
 
@@ -351,6 +314,6 @@ const makeStyles = (c: ThemeColors) =>
     leaveStatus: { fontSize: 12, fontWeight: '700', marginLeft: 8, marginTop: 2 },
     actionHint: { fontSize: 10, color: c.warning, fontWeight: '600' },
 
-    createBtn: { backgroundColor: c.primary, borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginTop: 14 },
+    createBtn: { flexDirection: 'row', gap: 8, backgroundColor: c.primary, borderRadius: 12, paddingVertical: 14, alignItems: 'center', justifyContent: 'center', marginTop: 14 },
     createBtnText: { color: c.onPrimary, fontSize: 15, fontWeight: '700' },
   });

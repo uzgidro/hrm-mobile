@@ -28,11 +28,12 @@ export type ThemeColors = {
   warning: string;
   warningSoft: string;
   info: string;
-  // navigation (the bottom bar is dark in both themes — reference look)
+  // navigation (themed bar: light in light mode, dark in dark mode)
   tabBar: string;
   tabBarBorder: string;
   tabBarActive: string;
   tabBarInactive: string;
+  tabBarActiveBg: string; // soft pill behind the active tab
   // calendar / attendance
   present: string;
   absent: string;
@@ -48,10 +49,10 @@ const VIOLET = '#7B68EE';
 const VIOLET_BRIGHT = '#8A7CF8';
 
 export const lightColors: ThemeColors = {
-  bg: '#F4F5FA',
+  bg: '#F6F7FB',
   card: '#FFFFFF',
   cardElevated: '#FFFFFF',
-  cardBorder: '#ECEEF5',
+  cardBorder: '#EDEFF4',
   overlay: 'rgba(20,18,40,0.45)',
 
   primary: VIOLET,
@@ -73,10 +74,11 @@ export const lightColors: ThemeColors = {
   warningSoft: 'rgba(255,159,67,0.14)',
   info: VIOLET,
 
-  tabBar: '#16161F',
-  tabBarBorder: '#16161F',
-  tabBarActive: '#FFFFFF',
-  tabBarInactive: '#6E7080',
+  tabBar: '#FFFFFF',
+  tabBarBorder: '#EDEFF4',
+  tabBarActive: VIOLET,
+  tabBarInactive: '#9AA0B5',
+  tabBarActiveBg: 'rgba(123,104,238,0.12)',
 
   present: '#16C098',
   absent: '#FF5C5C',
@@ -113,10 +115,11 @@ export const darkColors: ThemeColors = {
   warningSoft: 'rgba(255,169,77,0.16)',
   info: VIOLET_BRIGHT,
 
-  tabBar: '#000000',
-  tabBarBorder: '#1C1C2A',
-  tabBarActive: '#FFFFFF',
-  tabBarInactive: '#5C6076',
+  tabBar: '#12121C',
+  tabBarBorder: '#23232F',
+  tabBarActive: VIOLET_BRIGHT,
+  tabBarInactive: '#62667E',
+  tabBarActiveBg: 'rgba(138,124,248,0.18)',
 
   present: '#1FD6A6',
   absent: '#FF6B6B',
