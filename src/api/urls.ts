@@ -45,7 +45,11 @@ export const VISITOR_DETAIL = (id: number) => `visitors/${id}`;
 // Projects (Loyihalar) — workspaces, columns, cards
 export const WORKSPACES_LIST = 'workspaces';
 export const WORKSPACE_DETAIL = (id: number) => `workspaces/${id}`;
+export const WORKSPACE_MEMBER = (workspaceId: number, memberId: number) => `workspaces/${workspaceId}/members/${memberId}`;
+export const COLUMNS_LIST = 'columns';
 export const CARDS_LIST = 'cards';
+export const CARD_COMPLETE = (id: number) => `cards/${id}/complete`;
+export const CARD_UNCOMPLETE = (id: number) => `cards/${id}/uncomplete`;
 
 // Employee self update
 export const EMPLOYEE_SELF_UPDATE = 'employees/me/self-update';

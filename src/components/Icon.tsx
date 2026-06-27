@@ -53,7 +53,8 @@ export type IconName =
   | 'eye'
   | 'eyeOff'
   | 'guest'
-  | 'board';
+  | 'board'
+  | 'trash';
 
 type Props = {
   name: IconName;
@@ -401,6 +402,16 @@ function render(name: IconName, p: any) {
           <Rect x="3.5" y="4.5" width="4.3" height="15" rx="1.2" {...p} />
           <Rect x="9.8" y="4.5" width="4.3" height="9.5" rx="1.2" {...p} />
           <Rect x="16.1" y="4.5" width="4.3" height="12" rx="1.2" {...p} />
+        </>
+      );
+    case 'trash':
+      return (
+        <>
+          <Line x1="4" y1="6.5" x2="20" y2="6.5" {...p} />
+          <Path d="M9 6.5V4.5h6v2" {...p} />
+          <Path d="M6 6.5 7 20a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13.5" {...p} />
+          <Line x1="10" y1="10" x2="10" y2="17" {...p} />
+          <Line x1="14" y1="10" x2="14" y2="17" {...p} />
         </>
       );
     default:

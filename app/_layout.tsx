@@ -123,8 +123,10 @@ function ThemedNavigation() {
         <Stack.Screen name="notifications" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="news" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="mehmon-detail" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="mehmon-form" options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="loyihalar" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="loyiha-detail" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="loyiha-form" options={{ animation: 'slide_from_bottom' }} />
       </Stack>
     </>
   );

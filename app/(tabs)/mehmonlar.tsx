@@ -52,6 +52,10 @@ export default function MehmonlarScreen() {
       <View style={styles.header}>
         <Text style={styles.title}>Mehmonlar</Text>
         {visitors.length > 0 && <Text style={styles.count}>{visitors.length}</Text>}
+        <View style={{ flex: 1 }} />
+        <TouchableOpacity style={styles.addBtn} onPress={() => router.push('/mehmon-form' as any)} activeOpacity={0.85}>
+          <Icon name="plus" size={22} color={colors.onPrimary} strokeWidth={2.4} />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.searchWrap}>
@@ -140,6 +144,7 @@ const makeStyles = (c: ThemeColors) =>
     header: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
     title: { fontSize: 26, fontWeight: '800', color: c.text },
     count: { fontSize: 14, fontWeight: '700', color: c.textMuted, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2 },
+    addBtn: { width: 42, height: 42, borderRadius: 14, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' },
 
     searchWrap: {
       flexDirection: 'row', alignItems: 'center', gap: 8,

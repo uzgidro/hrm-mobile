@@ -1,15 +1,15 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-  View, Text, ScrollView, StyleSheet, Image, ActivityIndicator,
+  View, Text, ScrollView, StyleSheet, Image, ActivityIndicator, Alert,
 } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
-import { useQuery } from '@tanstack/react-query';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { apiClient } from '../src/api/client';
 import { VISITOR_DETAIL } from '../src/api/urls';
 import { useTheme, useThemedStyles } from '../src/theme/ThemeProvider';
 import type { ThemeColors } from '../src/theme/palettes';
-import { ScreenHeader } from '../src/components/ScreenHeader';
+import { ScreenHeader, HeaderAction } from '../src/components/ScreenHeader';
 import { Icon, IconName } from '../src/components/Icon';
 import type { Visitor } from '../src/types';
 
@@ -33,6 +33,7 @@ export default function MehmonDetailScreen() {
   const visitorId = Number(id);
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const qc = useQueryClient();
 
   const { data: v, isLoading } = useQuery<Visitor>({
     queryKey: ['visitor', visitorId],
@@ -42,9 +43,35 @@ export default function MehmonDetailScreen() {
 
   const active = v?.is_active !== false;
 
+  const onDelete = () => {
+    Alert.alert('O\'chirish', "Mehmonni o'chirishni xohlaysizmi?", [
+      { text: 'Bekor', style: 'cancel' },
+      {
+        text: "Ha, o'chirish", style: 'destructive',
+        onPress: async () => {
+          try {
+            await apiClient.delete(VISITOR_DETAIL(visitorId));
+            qc.invalidateQueries({ queryKey: ['visitors'] });
+            router.back();
+          } catch (e: any) {
+            Alert.alert('Xatolik', e?.response?.data?.detail || "O'chirishda xatolik");
+          }
+        },
+      },
+    ]);
+  };
+
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScreenHeader title="Mehmon" />
+      <ScreenHeader
+        title="Mehmon"
+        right={
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <HeaderAction icon="edit" onPress={() => router.push({ pathname: '/mehmon-form', params: { id: visitorId } } as any)} />
+            <HeaderAction icon="trash" onPress={onDelete} color={colors.error} />
+          </View>
+        }
+      />
       {isLoading || !v ? (
         <View style={styles.center}><ActivityIndicator color={colors.primary} size="large" /></View>
       ) : (

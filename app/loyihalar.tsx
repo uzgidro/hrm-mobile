@@ -8,7 +8,7 @@ import { apiClient } from '../src/api/client';
 import { WORKSPACES_LIST } from '../src/api/urls';
 import { useTheme, useThemedStyles } from '../src/theme/ThemeProvider';
 import type { ThemeColors } from '../src/theme/palettes';
-import { ScreenHeader } from '../src/components/ScreenHeader';
+import { ScreenHeader, HeaderAction } from '../src/components/ScreenHeader';
 import { Icon } from '../src/components/Icon';
 import type { Workspace } from '../src/types';
 
@@ -37,7 +37,7 @@ export default function LoyihalarScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScreenHeader title="Loyihalar" />
+      <ScreenHeader title="Loyihalar" right={<HeaderAction icon="plus" onPress={() => router.push('/loyiha-form' as any)} />} />
       {isLoading ? (
         <View style={styles.center}><ActivityIndicator color={colors.primary} size="large" /></View>
       ) : (
