@@ -4,6 +4,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import type { ThemeColors } from '../../src/theme/palettes';
 import { Icon, IconName } from '../../src/components/Icon';
+import { useAuthStore } from '../../src/store/authStore';
+import { canAccessPage } from '../../src/utils/roles';
 
 function TabIcon({
   focused, name, label, colors,
@@ -34,6 +36,7 @@ function TabIcon({
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
+  const { user } = useAuthStore();
 
   return (
     <Tabs
@@ -58,20 +61,28 @@ export default function TabsLayout() {
       />
       <Tabs.Screen
         name="orders"
-        options={{ tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="orders" label="Buyruqlar" colors={colors} /> }}
+        options={{
+          href: canAccessPage(user, 'orders') ? undefined : null,
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="orders" label="Buyruqlar" colors={colors} />,
+        }}
       />
       <Tabs.Screen
         name="letters"
-        options={{ tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="mail" label="Xatlar" colors={colors} /> }}
+        options={{
+          href: canAccessPage(user, 'letters') ? undefined : null,
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="mail" label="Xatlar" colors={colors} />,
+        }}
       />
       <Tabs.Screen
         name="modules"
         options={{ tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="grid" label="Modullar" colors={colors} /> }}
       />
       <Tabs.Screen
-        name="profile"
-        options={{ tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="user" label="Profil" colors={colors} /> }}
+        name="mehmonlar"
+        options={{ tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="guest" label="Mehmonlar" colors={colors} /> }}
       />
+      {/* Profil — bottom bardan olib tashlandi; tepadagi avatar va Modullar orqali ochiladi */}
+      <Tabs.Screen name="profile" options={{ href: null }} />
     </Tabs>
   );
 }

@@ -2,6 +2,7 @@ export interface User {
   id: number;
   type: 'employee' | 'master-admin' | 'admin';
   employee?: Employee;
+  is_secretariat?: boolean;
 }
 
 export interface Employee {
@@ -20,7 +21,7 @@ export interface Employee {
   job_position?: { id: number; name: string };
   department?: { id: number; name: string; organization_branch_id?: number };
   is_multi_org_user?: boolean;
-  multi_org_employee_role?: string;
+  multi_org_employee_role?: string | string[];
   organization_branches?: OrganizationBranch[];
   supervisor?: Employee;
   supervisor_id?: number;
@@ -233,4 +234,67 @@ export interface AttendanceDay {
   exit_time?: string;
   is_late?: boolean;
   minutes_late?: number;
+}
+
+// ── Visitors (Mehmonlar) ─────────────────────────────────────────────────────
+export interface Visitor {
+  id: number;
+  legal_name?: string;
+  personal_identification_number?: string;
+  organization_name?: string;
+  job_position?: string;
+  phone_number?: string;
+  telegram_username?: string;
+  organization_branch_id?: number;
+  host_employee_id?: number;
+  host_employee_name?: string;
+  host_employee_internal_phone?: string;
+  card_no?: string;
+  photo_path?: string;
+  qr_path?: string;
+  valid_from?: string;
+  valid_until?: string;
+  is_active?: boolean;
+  last_visit_time?: string;
+  visit_count?: number;
+  organization_branch?: OrganizationBranch;
+}
+
+// ── Projects / Loyihalar (workspaces, columns, cards) ────────────────────────
+export interface WorkspaceMember {
+  id?: number;
+  workspace_id?: number;
+  member_id?: number;
+  member?: Employee;
+}
+
+export interface Workspace {
+  id: number;
+  name?: string;
+  description?: string;
+  created_by_id?: number;
+  members?: WorkspaceMember[];
+  columns?: WorkspaceColumn[];
+  columns_count?: number;
+  cards_count?: number;
+  members_count?: number;
+}
+
+export interface WorkspaceColumn {
+  id: number;
+  name?: string;
+  workspace_id?: number;
+  is_archived?: boolean;
+  color?: string;
+}
+
+export interface WorkspaceCard {
+  id: number;
+  title?: string;
+  description?: string;
+  start_date?: string;
+  end_date?: string;
+  column_id?: number;
+  is_completed?: boolean;
+  members?: { id?: number; member?: Employee }[];
 }

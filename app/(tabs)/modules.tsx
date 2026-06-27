@@ -11,9 +11,10 @@ import { WORK_LEAVES, NOTIFICATIONS_LIST } from '../../src/api/urls';
 import { useTheme, useThemedStyles } from '../../src/theme/ThemeProvider';
 import type { ThemeColors } from '../../src/theme/palettes';
 import { Icon, IconName } from '../../src/components/Icon';
+import { canAccessPage, type PageKey } from '../../src/utils/roles';
 import type { WorkLeave } from '../../src/types';
 
-type Item = { key: string; icon: IconName; label: string; route: string; badge?: number };
+type Item = { key: string; icon: IconName; label: string; route: string; access: PageKey; badge?: number };
 type Section = { title: string; items: Item[] };
 
 export default function ModulesScreen() {
@@ -57,32 +58,40 @@ export default function ModulesScreen() {
 
   const unreadCount = useMemo(() => notifications.filter((n) => !n.is_read).length, [notifications]);
 
-  const sections: Section[] = useMemo(() => [
-    {
-      title: 'Faoliyat',
-      items: [
-        { key: 'attendance', icon: 'clock', label: 'Davomat', route: '/attendance-detail' },
-        { key: 'requests', icon: 'checklist', label: "So'rovlar", route: '/work-leaves', badge: pendingCount },
-        { key: 'salary', icon: 'wallet', label: 'Oylik', route: '/salary' },
-      ],
-    },
-    {
-      title: 'Jamoa',
-      items: [
-        { key: 'team', icon: 'users', label: 'Jamoa', route: '/team' },
-        { key: 'employees', icon: 'idcard', label: 'Xodimlar', route: '/employees-list' },
-        { key: 'birthdays', icon: 'gift', label: "Tug'ilgan kun", route: '/birthdays' },
-      ],
-    },
-    {
-      title: 'Boshqa',
-      items: [
-        { key: 'news', icon: 'news', label: 'Yangiliklar', route: '/news' },
-        { key: 'notifications', icon: 'bell', label: 'Bildirishnoma', route: '/notifications', badge: unreadCount },
-        { key: 'profile', icon: 'user', label: 'Profil', route: '/(tabs)/profile' },
-      ],
-    },
-  ], [pendingCount, unreadCount]);
+  const sections: Section[] = useMemo(() => {
+    const raw: Section[] = [
+      {
+        title: 'Faoliyat',
+        items: [
+          { key: 'attendance', icon: 'clock', label: 'Davomat', route: '/attendance-detail', access: 'attendance' },
+          { key: 'requests', icon: 'checklist', label: "So'rovlar", route: '/work-leaves', access: 'requests', badge: pendingCount },
+          { key: 'projects', icon: 'board', label: 'Loyihalar', route: '/loyihalar', access: 'projects' },
+          { key: 'salary', icon: 'wallet', label: 'Oylik', route: '/salary', access: 'salary' },
+        ],
+      },
+      {
+        title: 'Jamoa',
+        items: [
+          { key: 'team', icon: 'users', label: 'Jamoa', route: '/team', access: 'team' },
+          { key: 'employees', icon: 'idcard', label: 'Xodimlar', route: '/employees-list', access: 'employees' },
+          { key: 'guests', icon: 'guest', label: 'Mehmonlar', route: '/(tabs)/mehmonlar', access: 'guests' },
+          { key: 'birthdays', icon: 'gift', label: "Tug'ilgan kun", route: '/birthdays', access: 'birthdays' },
+        ],
+      },
+      {
+        title: 'Boshqa',
+        items: [
+          { key: 'news', icon: 'news', label: 'Yangiliklar', route: '/news', access: 'news' },
+          { key: 'notifications', icon: 'bell', label: 'Bildirishnoma', route: '/notifications', access: 'notifications', badge: unreadCount },
+          { key: 'profile', icon: 'user', label: 'Profil', route: '/(tabs)/profile', access: 'profile' },
+        ],
+      },
+    ];
+    // Role-based visibility — mirrors the web nav per user type.
+    return raw
+      .map((s) => ({ ...s, items: s.items.filter((it) => canAccessPage(user, it.access)) }))
+      .filter((s) => s.items.length > 0);
+  }, [pendingCount, unreadCount, user]);
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>

@@ -38,6 +38,15 @@ export const JOB_POSITIONS_LIST = 'job-positions';
 // Push notifications
 export const PUSH_TOKENS = 'push-tokens';
 
+// Visitors (Mehmonlar)
+export const VISITORS_LIST = 'visitors';
+export const VISITOR_DETAIL = (id: number) => `visitors/${id}`;
+
+// Projects (Loyihalar) — workspaces, columns, cards
+export const WORKSPACES_LIST = 'workspaces';
+export const WORKSPACE_DETAIL = (id: number) => `workspaces/${id}`;
+export const CARDS_LIST = 'cards';
+
 // Employee self update
 export const EMPLOYEE_SELF_UPDATE = 'employees/me/self-update';
 

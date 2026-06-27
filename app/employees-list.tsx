@@ -13,6 +13,8 @@ import type { ThemeColors } from '../src/theme/palettes';
 import { Employee } from '../src/types';
 import { fetchAllEmployees, employeesQueryKey } from '../src/utils/employees';
 import { Icon } from '../src/components/Icon';
+import { AccessDenied } from '../src/components/AccessDenied';
+import { canAccessPage } from '../src/utils/roles';
 
 interface EmployeePage { items: Employee[]; total: number }
 
@@ -49,6 +51,10 @@ export default function EmployeesListScreen() {
   }, [employees, search]);
 
   const totalLabel = onlySubordinates ? employees.length : (data?.total ?? 0);
+
+  if (!canAccessPage(user, 'employees')) {
+    return <AccessDenied title="Xodimlar" />;
+  }
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>

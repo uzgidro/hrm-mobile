@@ -122,6 +122,9 @@ function ThemedNavigation() {
         <Stack.Screen name="letter-document" options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="notifications" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="news" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="mehmon-detail" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="loyihalar" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="loyiha-detail" options={{ animation: 'slide_from_right' }} />
       </Stack>
     </>
   );

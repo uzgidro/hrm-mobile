@@ -15,6 +15,7 @@ import { EMPLOYEES_BIRTHDAYS, WORK_LEAVES } from '../src/api/urls';
 import { useTheme, useThemedStyles } from '../src/theme/ThemeProvider';
 import type { ThemeColors } from '../src/theme/palettes';
 import { Employee, AttendanceEvent, WorkLeave, EmployeeBirthday } from '../src/types';
+import { canAccessPage } from '../src/utils/roles';
 import { fetchAllAttendanceEvents, attendanceQueryKey } from '../src/utils/attendance';
 import { fetchAllEmployees, employeesQueryKey } from '../src/utils/employees';
 import { Icon, IconName } from '../src/components/Icon';
@@ -304,7 +305,7 @@ export default function TeamScreen() {
           </TouchableOpacity>
         </SectionCard>
 
-        <SectionCard icon="users" title="Xodimlar" rightLabel="Barchasi" onRightPress={() => router.push('/employees-list')} loading={empQ.isLoading}>
+        <SectionCard icon="users" title="Xodimlar" rightLabel={canAccessPage(user, 'employees') ? 'Barchasi' : undefined} onRightPress={() => router.push('/employees-list')} loading={empQ.isLoading}>
           {topEmployees.length === 0 ? (
             <Text style={styles.emptyText}>Xodimlar yo'q</Text>
           ) : (

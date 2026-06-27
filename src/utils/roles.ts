@@ -1,5 +1,12 @@
 import type { User, Employee } from '../types';
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Role resolution — mirrors the web's shared/utils/roleHelpers.js 1:1 so the
+// mobile app shows exactly the same pages per user type as the web dashboard.
+// All special roles are type === 'employee' with is_multi_org_user === true and
+// a multi_org_employee_role ('hr' | 'kpp' | 'ministr' | 'deputy' | 'chancellery' | ...).
+// ─────────────────────────────────────────────────────────────────────────────
+
 // multi_org_employee_role may arrive as a string or an array depending on endpoint.
 export function getMultiOrgRoles(employee?: Employee): string[] {
   if (!employee?.is_multi_org_user) return [];
@@ -8,17 +15,104 @@ export function getMultiOrgRoles(employee?: Employee): string[] {
   return raw ? [raw] : [];
 }
 
+export function getMultiOrgRole(user?: User | null): string | null {
+  return getMultiOrgRoles(user?.employee)[0] || null;
+}
+
 export function hasMultiOrgRole(user: User | null | undefined, role: string): boolean {
   return getMultiOrgRoles(user?.employee).includes(role);
+}
+
+/** master-admin type OR employee with 'ministr' role */
+export function isMasterAdmin(user?: User | null): boolean {
+  return user?.type === 'master-admin' || getMultiOrgRole(user) === 'ministr';
+}
+
+/** regular employee (not multi-org) */
+export function isEmployee(user?: User | null): boolean {
+  return user?.type === 'employee' && !user?.employee?.is_multi_org_user;
 }
 
 export function isHR(user?: User | null): boolean {
   return hasMultiOrgRole(user, 'hr');
 }
 
-export function isChancellery(user?: User | null): boolean {
+/** only when the employee's *single* multi-org role is HR */
+export function isSingleRoleHR(user?: User | null): boolean {
   const roles = getMultiOrgRoles(user?.employee);
-  return roles.includes('chancellery') || roles.includes('kanselariya');
+  return roles.length === 1 && roles[0] === 'hr';
+}
+
+export function isDeputy(user?: User | null): boolean {
+  return hasMultiOrgRole(user, 'deputy');
+}
+
+/** decree leadership signers: ministr OR deputy */
+export function isLeadership(user?: User | null): boolean {
+  return hasMultiOrgRole(user, 'ministr') || hasMultiOrgRole(user, 'deputy');
+}
+
+export function isKPP(user?: User | null): boolean {
+  return getMultiOrgRole(user) === 'kpp';
+}
+
+export function isChancellery(user?: User | null): boolean {
+  const role = getMultiOrgRole(user);
+  return role === 'chancellery' || role === 'kanselariya';
+}
+
+export function isMinister(user?: User | null): boolean {
+  return getMultiOrgRole(user) === 'ministr';
+}
+
+export function isSecretariat(user?: User | null): boolean {
+  return !!user?.is_secretariat;
+}
+
+export function canAccessChairmanTasks(user?: User | null): boolean {
+  return isSecretariat(user) || isMinister(user);
+}
+
+// ── Page visibility — derived from the web navConfig role tables ──────────────
+export type PageKey =
+  | 'home' | 'orders' | 'letters' | 'guests' | 'projects'
+  | 'employees' | 'attendance' | 'requests'
+  | 'salary' | 'team' | 'birthdays' | 'news' | 'notifications' | 'profile';
+
+/** Whether the given user may see a page. Mirrors which web NAV the role gets. */
+export function canAccessPage(user: User | null | undefined, key: PageKey): boolean {
+  const kpp = isKPP(user);
+  const chancellery = isChancellery(user);
+  switch (key) {
+    // KPP nav has no documents.
+    case 'orders':
+    case 'letters':
+      return !kpp;
+    // Guests appear in every role's nav.
+    case 'guests':
+      return true;
+    // Projects: everyone except single-role HR and KPP.
+    case 'projects':
+      return !isSingleRoleHR(user) && !kpp;
+    // Employees directory: only HR / deputy / master-admin (+ministr).
+    case 'employees':
+      return isMasterAdmin(user) || isHR(user) || isDeputy(user);
+    // Attendance & leave requests: not for KPP or chancellery.
+    case 'attendance':
+    case 'requests':
+      return !kpp && !chancellery;
+    // Personal / convenience pages — always available.
+    case 'home':
+    case 'salary':
+    case 'team':
+    case 'birthdays':
+    case 'news':
+    case 'notifications':
+    case 'profile':
+      return true;
+    default:
+      return true;
+  }
 }
 
 // Subtitle for employee pickers: job position (+ head-of-department prefix).

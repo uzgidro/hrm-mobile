@@ -51,7 +51,9 @@ export type IconName =
   | 'graduation'
   | 'target'
   | 'eye'
-  | 'eyeOff';
+  | 'eyeOff'
+  | 'guest'
+  | 'board';
 
 type Props = {
   name: IconName;
@@ -379,6 +381,26 @@ function render(name: IconName, p: any) {
           <Path d="M9.5 5.7A8.6 8.6 0 0 1 12 5.5c6 0 9.5 6.5 9.5 6.5a16 16 0 0 1-3 3.6" {...p} />
           <Path d="M6.4 7.6A16 16 0 0 0 2.5 12S6 18.5 12 18.5a8.7 8.7 0 0 0 3.3-.65" {...p} />
           <Path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" {...p} />
+        </>
+      );
+    case 'guest':
+      // visitor: a person + a small pass/badge to the side
+      return (
+        <>
+          <Circle cx="9.5" cy="8" r="3.4" {...p} />
+          <Path d="M3.5 20c0-3.4 2.7-5.6 6-5.6 1.2 0 2.3.3 3.2.8" {...p} />
+          <Rect x="14" y="13" width="7" height="8" rx="1.5" {...p} />
+          <Line x1="16" y1="16" x2="19" y2="16" {...p} />
+          <Line x1="16" y1="18.5" x2="19" y2="18.5" {...p} />
+        </>
+      );
+    case 'board':
+      // kanban / project board: three columns of differing height
+      return (
+        <>
+          <Rect x="3.5" y="4.5" width="4.3" height="15" rx="1.2" {...p} />
+          <Rect x="9.8" y="4.5" width="4.3" height="9.5" rx="1.2" {...p} />
+          <Rect x="16.1" y="4.5" width="4.3" height="12" rx="1.2" {...p} />
         </>
       );
     default:
