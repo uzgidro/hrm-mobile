@@ -1,10 +1,11 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEffect, useState } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Alert,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Image,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
+import * as ImagePicker from 'expo-image-picker';
 import dayjs from 'dayjs';
 import { useAuthStore } from '../src/store/authStore';
 import { apiClient } from '../src/api/client';
@@ -34,6 +35,10 @@ export default function MehmonFormScreen() {
   const [validFrom, setValidFrom] = useState<string>(dayjs().toISOString());
   const [validUntil, setValidUntil] = useState<string>(dayjs().add(1, 'day').toISOString());
   const [picker, setPicker] = useState<null | 'from' | 'until'>(null);
+  const [photoBase64, setPhotoBase64] = useState('');   // new picked photo (data URI) to upload
+  const [photoPreview, setPhotoPreview] = useState('');  // uri shown in the avatar
+  const [existingPhoto, setExistingPhoto] = useState(''); // current server photo (edit)
+  const [photoChecking, setPhotoChecking] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [hydrating, setHydrating] = useState(isEdit);
@@ -50,11 +55,34 @@ export default function MehmonFormScreen() {
         setPhone(data.phone_number ?? '');
         if (data.valid_from) setValidFrom(data.valid_from);
         if (data.valid_until) setValidUntil(data.valid_until);
+        if (data.photo_path) { setPhotoPreview(data.photo_path); setExistingPhoto(data.photo_path); }
       } catch {} finally {
         setHydrating(false);
       }
     })();
   }, [isEdit, visitorId]);
+
+  const pickPhoto = async () => {
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) { Alert.alert('Ruxsat kerak', 'Rasm tanlash uchun galereyaga ruxsat bering.'); return; }
+    const res = await ImagePicker.launchImageLibraryAsync({ allowsEditing: true, aspect: [1, 1], quality: 0.6, base64: true });
+    if (res.canceled || !res.assets?.[0]?.base64) return;
+    const asset = res.assets[0];
+    setPhotoPreview(asset.uri);
+    setPhotoBase64(`data:image/png;base64,${asset.base64}`);
+    // Terminal face-check (best-effort) — mirrors the web guest form.
+    setPhotoChecking(true);
+    try {
+      const { data } = await apiClient.post('employees/me/validate-photo', { photo_base64: asset.base64 });
+      if (data && data.accepted === false) {
+        Alert.alert('Rasm qabul qilinmadi', data.message || 'Terminal yuzni tanimadi. Boshqa rasm tanlang.');
+        setPhotoBase64('');
+        setPhotoPreview(existingPhoto);
+      }
+    } catch {} finally {
+      setPhotoChecking(false);
+    }
+  };
 
   const save = async () => {
     if (!legalName.trim()) { setError('Ism-sharif kiritilishi shart'); return; }
@@ -76,12 +104,21 @@ export default function MehmonFormScreen() {
       valid_until: validUntil,
     };
     if (!isEdit && orgBranchId) payload.organization_branch_id = orgBranchId;
+    if (photoBase64) payload.photo_base64 = photoBase64; // only send when a new photo is picked
     try {
-      if (isEdit) await apiClient.patch(VISITOR_DETAIL(visitorId), payload);
-      else await apiClient.post(VISITORS_LIST, payload);
-      qc.invalidateQueries({ queryKey: ['visitors'] });
-      if (isEdit) qc.invalidateQueries({ queryKey: ['visitor', visitorId] });
-      router.back();
+      if (isEdit) {
+        await apiClient.patch(VISITOR_DETAIL(visitorId), payload);
+        qc.invalidateQueries({ queryKey: ['visitors'] });
+        qc.invalidateQueries({ queryKey: ['visitor', visitorId] });
+        router.back();
+      } else {
+        const res = await apiClient.post(VISITORS_LIST, payload);
+        qc.invalidateQueries({ queryKey: ['visitors'] });
+        // Open the new guest's detail so the auto-generated QR is shown immediately.
+        const newId = res.data?.id;
+        if (newId) router.replace({ pathname: '/mehmon-detail', params: { id: newId } } as any);
+        else router.back();
+      }
     } catch (e: any) {
       Alert.alert('Xatolik', e?.response?.data?.detail || "Saqlashda xatolik yuz berdi");
     } finally {
@@ -96,6 +133,27 @@ export default function MehmonFormScreen() {
         <View style={styles.center}><ActivityIndicator color={colors.primary} size="large" /></View>
       ) : (
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          {/* Rasm */}
+          <View style={styles.photoRow}>
+            <TouchableOpacity style={styles.photoCircle} onPress={pickPhoto} activeOpacity={0.8}>
+              {photoPreview ? (
+                <Image source={{ uri: photoPreview }} style={styles.photoImg} />
+              ) : (
+                <Icon name="user" size={34} color={colors.textMuted} />
+              )}
+              {photoChecking && (
+                <View style={styles.photoLoading}><ActivityIndicator color={colors.onPrimary} /></View>
+              )}
+            </TouchableOpacity>
+            <View style={{ flex: 1 }}>
+              <TouchableOpacity style={styles.photoBtn} onPress={pickPhoto} activeOpacity={0.8}>
+                <Icon name="edit" size={15} color={colors.text} />
+                <Text style={styles.photoBtnText}>{photoPreview ? 'Rasmni almashtirish' : 'Rasm yuklash'}</Text>
+              </TouchableOpacity>
+              <Text style={styles.photoHint}>Rasm bo'lsa, terminal yuzni tanib kiritadi. Bo'lmasa — QR orqali.</Text>
+            </View>
+          </View>
+
           <FormInput label="F.I.SH" value={legalName} onChangeText={(t) => { setLegalName(t); setError(''); }} placeholder="Azimov Jasur Shamsiyevich" required error={error} />
           <FormInput label="Tashkilot nomi" value={orgName} onChangeText={setOrgName} placeholder="O'zbekiston Milliy Banki" />
           <FormInput label="Lavozim" value={jobPosition} onChangeText={setJobPosition} placeholder="Bosh mutaxassis" />
@@ -164,6 +222,14 @@ const makeStyles = (c: ThemeColors) =>
     safe: { flex: 1, backgroundColor: c.bg },
     center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 24 },
+
+    photoRow: { flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 18 },
+    photoCircle: { width: 80, height: 80, borderRadius: 40, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+    photoImg: { width: 80, height: 80, borderRadius: 40 },
+    photoLoading: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center' },
+    photoBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start', backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 9 },
+    photoBtnText: { fontSize: 13, fontWeight: '700', color: c.text },
+    photoHint: { fontSize: 11, color: c.textMuted, marginTop: 8 },
 
     dateGroupLabel: { fontSize: 13, color: c.textSecondary, fontWeight: '600', marginBottom: 8, marginTop: 2 },
     dateRow: { flexDirection: 'row', gap: 12 },

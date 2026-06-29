@@ -38,6 +38,13 @@
           "color": "#7B68EE",
           "sounds": []
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Mehmon rasmini tanlash uchun galereyaga ruxsat bering.",
+          "cameraPermission": "Mehmon rasmini olish uchun kameraga ruxsat bering."
+        }
       ]
     ],
     "experiments": {
