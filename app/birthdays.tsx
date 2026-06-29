@@ -8,19 +8,23 @@ import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import dayjs from 'dayjs';
 import { useAuthStore } from '../src/store/authStore';
+import { usePrefsStore } from '../src/store/prefsStore';
 import { apiClient } from '../src/api/client';
 import { EMPLOYEES_BIRTHDAYS } from '../src/api/urls';
 import { useTheme, useThemedStyles } from '../src/theme/ThemeProvider';
 import type { ThemeColors } from '../src/theme/palettes';
 import { EmployeeBirthday } from '../src/types';
+import { fetchAllEmployees, employeesQueryKey } from '../src/utils/employees';
 import { Icon } from '../src/components/Icon';
 
 const MONTHS_UZ = ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 'Iyul', 'Avgust', 'Sentyabr', 'Oktyabr', 'Noyabr', 'Dekabr'];
 
 export default function BirthdaysScreen() {
   const { user } = useAuthStore();
+  const { onlySubordinates } = usePrefsStore();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const myId = user?.employee?.id;
   const orgBranchId =
     user?.employee?.organization_branches?.[0]?.id ??
     user?.employee?.department?.organization_branch_id;
@@ -36,11 +40,31 @@ export default function BirthdaysScreen() {
     staleTime: 60 * 60 * 1000,
   });
 
+  // The birthdays endpoint returns the whole branch (no subordinate filter), so
+  // when "Faqat bo'ysunuvchilar" is on we intersect with the user's subordinates
+  // (resolved from the employees list, which carries supervisor_id).
+  const { data: empData } = useQuery({
+    queryKey: employeesQueryKey(orgBranchId),
+    queryFn: () => fetchAllEmployees(orgBranchId),
+    enabled: onlySubordinates && !!myId,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const subordinateIds = useMemo(() => {
+    if (!onlySubordinates || !myId) return null;
+    return new Set((empData?.items ?? []).filter((e) => e.supervisor_id === myId).map((e) => e.id));
+  }, [onlySubordinates, myId, empData]);
+
+  const base = useMemo(
+    () => (subordinateIds ? birthdays.filter((b) => subordinateIds.has(b.id)) : birthdays),
+    [birthdays, subordinateIds]
+  );
+
   const filtered = useMemo(() => {
-    if (!search.trim()) return birthdays;
+    if (!search.trim()) return base;
     const q = search.trim().toLowerCase();
-    return birthdays.filter((e) => e.legal_name.toLowerCase().includes(q) || (e.job_position?.name?.toLowerCase().includes(q) ?? false));
-  }, [birthdays, search]);
+    return base.filter((e) => e.legal_name.toLowerCase().includes(q) || (e.job_position?.name?.toLowerCase().includes(q) ?? false));
+  }, [base, search]);
 
   const today = dayjs();
 
@@ -50,7 +74,7 @@ export default function BirthdaysScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Icon name="chevronLeft" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Tug'ilgan kunlar{birthdays.length ? ` (${birthdays.length})` : ''}</Text>
+        <Text style={styles.headerTitle}>Tug'ilgan kunlar{base.length ? ` (${base.length})` : ''}</Text>
         <View style={{ width: 36 }} />
       </View>
 

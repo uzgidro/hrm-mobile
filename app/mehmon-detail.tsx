@@ -1,6 +1,7 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   View, Text, ScrollView, StyleSheet, Image, ActivityIndicator, Alert,
+  TouchableOpacity, Linking, Share,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -99,6 +100,20 @@ export default function MehmonDetailScreen() {
             <View style={styles.qrCard}>
               <Image source={{ uri: v.qr_path }} style={styles.qr} resizeMode="contain" />
               {!!v.card_no && <Text style={styles.cardNo}>Karta: {v.card_no}</Text>}
+              <View style={styles.qrActions}>
+                <TouchableOpacity style={styles.qrBtn} activeOpacity={0.85} onPress={() => Linking.openURL(v.qr_path!)}>
+                  <Icon name="arrowDown" size={17} color={colors.primary} />
+                  <Text style={styles.qrBtnText}>Yuklab olish</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.qrBtn}
+                  activeOpacity={0.85}
+                  onPress={() => Share.share({ message: `${v.legal_name || 'Mehmon'} — QR kod\n${v.qr_path}`, url: v.qr_path! })}
+                >
+                  <Icon name="mail" size={17} color={colors.primary} />
+                  <Text style={styles.qrBtnText}>Ulashish</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           )}
 
@@ -147,6 +162,9 @@ const makeStyles = (c: ThemeColors) =>
     qrCard: { backgroundColor: c.card, borderRadius: 16, borderWidth: 1, borderColor: c.cardBorder, padding: 16, alignItems: 'center', marginBottom: 12, gap: 10 },
     qr: { width: 180, height: 180, backgroundColor: '#fff', borderRadius: 8 },
     cardNo: { fontSize: 13, color: c.textSecondary, fontWeight: '600' },
+    qrActions: { flexDirection: 'row', gap: 10, alignSelf: 'stretch', marginTop: 4 },
+    qrBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 11, borderRadius: 12, backgroundColor: c.primarySoft, borderWidth: 1, borderColor: c.primary },
+    qrBtnText: { fontSize: 14, fontWeight: '700', color: c.primary },
 
     sectionLabel: { fontSize: 12, fontWeight: '700', color: c.textMuted, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 8, marginLeft: 4 },
     card: { backgroundColor: c.card, borderRadius: 16, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 14, marginBottom: 12 },
