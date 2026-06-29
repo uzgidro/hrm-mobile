@@ -9,10 +9,12 @@ import { router } from 'expo-router';
 import dayjs from 'dayjs';
 import { useAuthStore } from '../src/store/authStore';
 import { apiClient } from '../src/api/client';
-import { LETTER_CREATE, EMPLOYEES_LIST, ORGANIZATION_BRANCHES, ORGANIZATION_BRANCH_LEADERS } from '../src/api/urls';
+import * as DocumentPicker from 'expo-document-picker';
+import { LETTER_CREATE, LETTER_UPLOAD_ATTACHMENT, EMPLOYEES_LIST, ORGANIZATION_BRANCHES, ORGANIZATION_BRANCH_LEADERS } from '../src/api/urls';
 import { fetchAllEmployees } from '../src/utils/employees';
 import { employeeSubLabel } from '../src/utils/roles';
 import { PickerModal, type PickerOption } from '../src/components/PickerModal';
+import { AttachmentField, type PickedFile } from '../src/components/AttachmentField';
 import { DatePickerModal } from '../src/components/DatePicker';
 import { useTheme, useThemedStyles } from '../src/theme/ThemeProvider';
 import type { ThemeColors } from '../src/theme/palettes';
@@ -60,9 +62,17 @@ export default function CreateLetterScreen() {
 
   const [picker, setPicker] = useState<PickerKind>(null);
   const [datePicker, setDatePicker] = useState<DateKind>(null);
+  const [files, setFiles] = useState<PickedFile[]>([]);
   const [saving, setSaving] = useState(false);
 
   const isTrip = letterType === 'business_trip';
+
+  const pickFiles = async () => {
+    const res = await DocumentPicker.getDocumentAsync({ multiple: false, copyToCacheDirectory: true });
+    if (res.canceled || !res.assets?.[0]) return;
+    const a = res.assets[0];
+    setFiles([{ uri: a.uri, name: a.name, mimeType: a.mimeType }]); // single attachment (web parity)
+  };
 
   // ── Data ───────────────────────────────────────────────────────────────────
   const { data: signerEmps = [], isLoading: signersLoading } = useQuery<Employee[]>({
@@ -175,8 +185,18 @@ export default function CreateLetterScreen() {
     setSaving(true);
     try {
       const res = await apiClient.post(LETTER_CREATE, payload);
+      const letterId = res.data.id;
+      if (files.length) {
+        const fd = new FormData();
+        fd.append('file', { uri: files[0].uri, name: files[0].name, type: files[0].mimeType || 'application/octet-stream' } as any);
+        try {
+          await apiClient.post(LETTER_UPLOAD_ATTACHMENT(letterId), fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+        } catch {
+          Alert.alert('Eslatma', 'Xat saqlandi, lekin ilova yuklanmadi');
+        }
+      }
       qc.invalidateQueries({ queryKey: ['letters'] });
-      router.replace({ pathname: '/letter-detail', params: { id: res.data.id } } as any);
+      router.replace({ pathname: '/letter-detail', params: { id: letterId } } as any);
     } catch (err: any) {
       const detail = err?.response?.data?.detail;
       const msg = Array.isArray(detail) ? detail[0]?.msg : (detail || err?.message || 'Xatolik yuz berdi');
@@ -267,6 +287,9 @@ export default function CreateLetterScreen() {
             </Field>
           </>
         )}
+
+        {/* Ilova yoki asos */}
+        <AttachmentField label="Ilova yoki asos" files={files} onPick={pickFiles} onRemove={() => setFiles([])} />
 
         <View style={{ height: 40 }} />
       </ScrollView>

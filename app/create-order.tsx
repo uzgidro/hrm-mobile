@@ -8,10 +8,12 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useAuthStore } from '../src/store/authStore';
 import { apiClient } from '../src/api/client';
-import { ORDER_ACTS, ORDER_ACT_CATEGORIES, EMPLOYEES_LIST, DEPARTMENTS_LIST, ORGANIZATION_BRANCH_LEADERS } from '../src/api/urls';
+import * as DocumentPicker from 'expo-document-picker';
+import { ORDER_ACTS, ORDER_ACT_CATEGORIES, ORDER_ACT_DOCUMENTS, EMPLOYEES_LIST, DEPARTMENTS_LIST, ORGANIZATION_BRANCH_LEADERS } from '../src/api/urls';
 import { fetchAllEmployees } from '../src/utils/employees';
 import { isHR, employeeSubLabel, translateCategory } from '../src/utils/roles';
 import { PickerModal, type PickerOption } from '../src/components/PickerModal';
+import { AttachmentField, type PickedFile } from '../src/components/AttachmentField';
 import { useTheme, useThemedStyles } from '../src/theme/ThemeProvider';
 import type { ThemeColors } from '../src/theme/palettes';
 import type { Employee, OrderActCategory } from '../src/types';
@@ -40,7 +42,14 @@ export default function CreateOrderScreen() {
   const [submitterId, setSubmitterId] = useState<number | null>(null);
   const [familiarizerDeptIds, setFamiliarizerDeptIds] = useState<number[]>([]);
   const [approvers, setApprovers] = useState<Approver[]>([]);
+  const [files, setFiles] = useState<PickedFile[]>([]);
   const [saving, setSaving] = useState(false);
+
+  const pickFiles = async () => {
+    const res = await DocumentPicker.getDocumentAsync({ multiple: true, copyToCacheDirectory: true });
+    if (res.canceled) return;
+    setFiles((p) => [...p, ...res.assets.map((a) => ({ uri: a.uri, name: a.name, mimeType: a.mimeType }))]);
+  };
 
   const [picker, setPicker] = useState<PickerKind>(null);
   const [approverPickerIndex, setApproverPickerIndex] = useState<number | null>(null);
@@ -144,8 +153,18 @@ export default function CreateOrderScreen() {
     setSaving(true);
     try {
       const res = await apiClient.post(ORDER_ACTS, payload);
+      const orderId = res.data.id;
+      if (files.length) {
+        const fd = new FormData();
+        files.forEach((f) => fd.append('files', { uri: f.uri, name: f.name, type: f.mimeType || 'application/octet-stream' } as any));
+        try {
+          await apiClient.post(ORDER_ACT_DOCUMENTS(orderId), fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+        } catch {
+          Alert.alert('Eslatma', "Buyruq saqlandi, lekin ba'zi fayllar yuklanmadi");
+        }
+      }
       qc.invalidateQueries({ queryKey: ['order-acts'] });
-      router.replace({ pathname: '/order-detail', params: { id: res.data.id } } as any);
+      router.replace({ pathname: '/order-detail', params: { id: orderId } } as any);
     } catch (err: any) {
       const detail = err?.response?.data?.detail;
       const msg = Array.isArray(detail) ? detail[0]?.msg : (detail || err?.message || 'Xatolik yuz berdi');
@@ -227,6 +246,9 @@ export default function CreateOrderScreen() {
             onClear={submitterId ? () => setSubmitterId(null) : undefined}
           />
         </Field>
+
+        {/* Ilova (fayllar) */}
+        <AttachmentField files={files} onPick={pickFiles} onRemove={(i) => setFiles((p) => p.filter((_, idx) => idx !== i))} />
 
         {/* Buyruq bilan tanishuvchilar (bo'limlar) */}
         <Field label="Buyruq bilan tanishuvchilar">
