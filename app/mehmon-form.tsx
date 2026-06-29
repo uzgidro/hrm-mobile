@@ -14,7 +14,7 @@ import type { ThemeColors } from '../src/theme/palettes';
 import { ScreenHeader } from '../src/components/ScreenHeader';
 import { FormInput } from '../src/components/FormInput';
 import { Icon } from '../src/components/Icon';
-import { DatePickerModal } from '../src/components/DatePicker';
+import { DateTimePickerModal } from '../src/components/DateTimePicker';
 import type { Visitor } from '../src/types';
 
 export default function MehmonFormScreen() {
@@ -110,12 +110,20 @@ export default function MehmonFormScreen() {
                 <Icon name="calendar" size={15} color={colors.primary} />
                 <Text style={styles.dateValue}>{dayjs(validFrom).format('DD.MM.YYYY')}</Text>
               </View>
+              <View style={styles.dateValueRow}>
+                <Icon name="clock" size={15} color={colors.textSecondary} />
+                <Text style={styles.dateTime}>{dayjs(validFrom).format('HH:mm')}</Text>
+              </View>
             </TouchableOpacity>
             <TouchableOpacity style={styles.dateField} onPress={() => setPicker('until')} activeOpacity={0.7}>
               <Text style={styles.dateLabel}>Ketish</Text>
               <View style={styles.dateValueRow}>
                 <Icon name="calendar" size={15} color={colors.primary} />
                 <Text style={styles.dateValue}>{dayjs(validUntil).format('DD.MM.YYYY')}</Text>
+              </View>
+              <View style={styles.dateValueRow}>
+                <Icon name="clock" size={15} color={colors.textSecondary} />
+                <Text style={styles.dateTime}>{dayjs(validUntil).format('HH:mm')}</Text>
               </View>
             </TouchableOpacity>
           </View>
@@ -133,18 +141,18 @@ export default function MehmonFormScreen() {
         </ScrollView>
       )}
 
-      <DatePickerModal
+      <DateTimePickerModal
         visible={picker === 'from'}
         value={validFrom}
-        title="Kelish sanasi"
-        onConfirm={(d) => setValidFrom(dayjs(d).startOf('day').toISOString())}
+        title="Kelish vaqti"
+        onConfirm={(iso) => setValidFrom(iso)}
         onClose={() => setPicker(null)}
       />
-      <DatePickerModal
+      <DateTimePickerModal
         visible={picker === 'until'}
         value={validUntil}
-        title="Ketish sanasi"
-        onConfirm={(d) => setValidUntil(dayjs(d).endOf('day').toISOString())}
+        title="Ketish vaqti"
+        onConfirm={(iso) => setValidUntil(iso)}
         onClose={() => setPicker(null)}
       />
     </SafeAreaView>
@@ -161,8 +169,9 @@ const makeStyles = (c: ThemeColors) =>
     dateRow: { flexDirection: 'row', gap: 12 },
     dateField: { flex: 1, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, borderRadius: 12, padding: 12 },
     dateLabel: { fontSize: 11, color: c.textMuted, marginBottom: 6 },
-    dateValueRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    dateValueRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
     dateValue: { fontSize: 14, color: c.text, fontWeight: '600' },
+    dateTime: { fontSize: 14, color: c.textSecondary, fontWeight: '600' },
     hint: { fontSize: 11, color: c.textMuted, marginTop: 8 },
 
     saveBtn: { flexDirection: 'row', gap: 8, backgroundColor: c.primary, borderRadius: 14, paddingVertical: 15, alignItems: 'center', justifyContent: 'center', marginTop: 22 },
