@@ -9,7 +9,7 @@ import { router } from 'expo-router';
 import dayjs from 'dayjs';
 import { useAuthStore } from '../src/store/authStore';
 import { apiClient } from '../src/api/client';
-import { LETTER_CREATE, EMPLOYEES_LIST, ORGANIZATION_BRANCHES } from '../src/api/urls';
+import { LETTER_CREATE, EMPLOYEES_LIST, ORGANIZATION_BRANCHES, ORGANIZATION_BRANCH_LEADERS } from '../src/api/urls';
 import { fetchAllEmployees } from '../src/utils/employees';
 import { employeeSubLabel } from '../src/utils/roles';
 import { PickerModal, type PickerOption } from '../src/components/PickerModal';
@@ -47,6 +47,7 @@ export default function CreateLetterScreen() {
   const [letterDate, setLetterDate] = useState<string>(dayjs().format('YYYY-MM-DD'));
   const [shortSummary, setShortSummary] = useState('');
   const [description, setDescription] = useState('');
+  const [workPlan, setWorkPlan] = useState('');
   const [mainSignerId, setMainSignerId] = useState<number | null>(null);
   const [ordinarySigners, setOrdinarySigners] = useState<number[]>([]);
   // business trip
@@ -76,10 +77,18 @@ export default function CreateLetterScreen() {
   const { data: rahbariyatEmps = [], isLoading: rahbariyatLoading } = useQuery<Employee[]>({
     queryKey: ['letter-rahbariyat', branchId],
     enabled: isTrip,
-    queryFn: () =>
-      apiClient.get(EMPLOYEES_LIST, {
+    queryFn: async () => {
+      // Prefer the filial's designated leaders (like web); fallback to deputy/ministr.
+      if (branchId) {
+        const branchLeaders = await apiClient.get(ORGANIZATION_BRANCH_LEADERS(branchId))
+          .then((r) => (Array.isArray(r.data) ? r.data : []).map((l: any) => l.employee).filter(Boolean) as Employee[])
+          .catch(() => [] as Employee[]);
+        if (branchLeaders.length) return branchLeaders;
+      }
+      return apiClient.get(EMPLOYEES_LIST, {
         params: { multi_org_employee_role: ['deputy', 'ministr'], include_multi_org: true, size: 100, ...(branchId ? { organization_branch_id: branchId } : {}) },
-      }).then((r) => { const d = r.data; return Array.isArray(d) ? d : (d?.items ?? []); }),
+      }).then((r) => { const d = r.data; return (Array.isArray(d) ? d : (d?.items ?? [])) as Employee[]; });
+    },
     staleTime: 5 * 60 * 1000,
   });
 
@@ -155,6 +164,7 @@ export default function CreateLetterScreen() {
       payload.rahbariyat_ids = rahbariyatIds;
       payload.departure_date = departureDate || null;
       payload.arrival_date = arrivalDate || null;
+      payload.work_plan = workPlan.trim() || null;
     } else {
       payload.assigned_signers = [
         ...(mainSignerId ? [{ employee_id: mainSignerId, signer_type: 'main' }] : []),
@@ -228,6 +238,10 @@ export default function CreateLetterScreen() {
 
             <Field styles={styles} label="Borishdan maqsad">
               <TextInput style={[styles.textArea, { minHeight: 100 }]} placeholder="Borishdan maqsad..." placeholderTextColor={colors.textMuted} value={description} onChangeText={setDescription} multiline textAlignVertical="top" />
+            </Field>
+
+            <Field styles={styles} label="Xizmat safari ish rejasi">
+              <TextInput style={[styles.textArea, { minHeight: 100 }]} placeholder="Ish rejasi..." placeholderTextColor={colors.textMuted} value={workPlan} onChangeText={setWorkPlan} multiline textAlignVertical="top" />
             </Field>
 
             <Field styles={styles} label="Rahbariyat (Ministr / Deputy)" required>

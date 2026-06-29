@@ -69,6 +69,7 @@ export const LETTER_UPLOAD_ATTACHMENT = (id: number) => `letters/${id}/upload-at
 
 // Organization branches
 export const ORGANIZATION_BRANCHES = 'organization-branches';
+export const ORGANIZATION_BRANCH_LEADERS = (id: number) => `organization-branches/${id}/leaders`;
 
 // Order acts (Buyruqlar / decrees)
 export const ORDER_ACTS = 'order-acts';

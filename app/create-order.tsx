@@ -8,7 +8,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useAuthStore } from '../src/store/authStore';
 import { apiClient } from '../src/api/client';
-import { ORDER_ACTS, ORDER_ACT_CATEGORIES, EMPLOYEES_LIST, DEPARTMENTS_LIST } from '../src/api/urls';
+import { ORDER_ACTS, ORDER_ACT_CATEGORIES, EMPLOYEES_LIST, DEPARTMENTS_LIST, ORGANIZATION_BRANCH_LEADERS } from '../src/api/urls';
 import { fetchAllEmployees } from '../src/utils/employees';
 import { isHR, employeeSubLabel, translateCategory } from '../src/utils/roles';
 import { PickerModal, type PickerOption } from '../src/components/PickerModal';
@@ -68,11 +68,19 @@ export default function CreateOrderScreen() {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Leadership: "raisi" lavozimidagilar + ministr roli (faqat HR buyruqlarida kerak).
+  // Rahbariyat (leadership) — barcha buyruqlar uchun kerak (web bilan bir xil).
+  // 1) Filialga belgilangan rahbarlar bo'lsa — shular. 2) Aks holda: "raisi"
+  //    lavozimidagilar + ministr roli (maslahatchilar chiqarib tashlanadi).
   const { data: leadership = [], isLoading: leadershipLoading } = useQuery<Employee[]>({
-    queryKey: ['leadership', branchId],
-    enabled: hr,
+    queryKey: ['order-leadership', branchId],
+    enabled: !!branchId,
     queryFn: async () => {
+      if (branchId) {
+        const branchLeaders = await apiClient.get(ORGANIZATION_BRANCH_LEADERS(branchId))
+          .then((r) => (Array.isArray(r.data) ? r.data : []).map((l: any) => l.employee).filter(Boolean) as Employee[])
+          .catch(() => [] as Employee[]);
+        if (branchLeaders.length) return branchLeaders;
+      }
       const [raisiRes, ministrRes] = await Promise.all([
         apiClient.get(EMPLOYEES_LIST, {
           params: { job_position_name_search: 'raisi', size: 50, ...(branchId ? { organization_branch_id: branchId } : {}) },
@@ -113,7 +121,7 @@ export default function CreateOrderScreen() {
   async function handleCreate() {
     if (!categoryId) { Alert.alert('Xato', 'Buyruq turi tanlanishi shart'); return; }
     if (!description.trim()) { Alert.alert('Xato', 'Buyruq matni kiritilishi shart'); return; }
-    if (hr && !leadershipId) { Alert.alert('Xato', 'Rahbariyatdan biri tanlanishi shart'); return; }
+    if (!leadershipId) { Alert.alert('Xato', 'Rahbariyatdan biri tanlanishi shart'); return; }
     if (!branchId) { Alert.alert('Xato', 'Filial aniqlanmadi'); return; }
 
     const assigned_signers = [
