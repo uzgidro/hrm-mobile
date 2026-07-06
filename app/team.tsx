@@ -1,8 +1,8 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
-  TouchableOpacity, Image, ActivityIndicator, RefreshControl,
+  TouchableOpacity, ActivityIndicator, RefreshControl,
 } from 'react-native';
 import { useQueries } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -19,24 +19,11 @@ import { canAccessPage } from '../src/utils/roles';
 import { fetchAllAttendanceEvents, attendanceQueryKey } from '../src/utils/attendance';
 import { fetchAllEmployees, employeesQueryKey } from '../src/utils/employees';
 import { Icon, IconName } from '../src/components/Icon';
+import { EmployeeAvatar } from '../src/components/EmployeeAvatar';
 
 interface WorkLeavePage { items: WorkLeave[]; total: number }
 
-function EmployeeAvatar({ emp, size = 44, c }: { emp: Employee | EmployeeBirthday; size?: number; c: ThemeColors }) {
-  const r = size / 2;
-  if (emp.photo_path) {
-    return <Image source={{ uri: emp.photo_path }} style={{ width: size, height: size, borderRadius: r }} />;
-  }
-  return (
-    <View style={{ width: size, height: size, borderRadius: r, backgroundColor: c.primarySoft, alignItems: 'center', justifyContent: 'center' }}>
-      <Text style={{ fontSize: size * 0.38, fontWeight: '700', color: c.primaryLight }}>
-        {(emp.legal_name || 'X').charAt(0).toUpperCase()}
-      </Text>
-    </View>
-  );
-}
-
-function DonutChart({ total, present, late, onLeave, c, styles }: {
+const DonutChart = React.memo(function DonutChart({ total, present, late, onLeave, c, styles }: {
   total: number; present: number; late: number; onLeave: number; c: ThemeColors; styles: any;
 }) {
   const absent = Math.max(0, total - present - late - onLeave);
@@ -84,11 +71,41 @@ function DonutChart({ total, present, late, onLeave, c, styles }: {
       </View>
     </View>
   );
+});
+
+// Module-scope (not defined in the render body) so React keeps a stable
+// component identity across renders instead of remounting the subtree. Not
+// React.memo-wrapped: it always receives fresh `children`, so a memo compare
+// would never skip a render — only add cost.
+function SectionCard({
+  icon, title, rightLabel, onRightPress, loading, children, colors, styles,
+}: {
+  icon: IconName; title: string; rightLabel?: string; onRightPress?: () => void;
+  loading?: boolean; children: React.ReactNode; colors: ThemeColors; styles: any;
+}) {
+  return (
+    <View style={styles.card}>
+      <View style={styles.cardHeader}>
+        <View style={styles.cardTitleRow}>
+          <Icon name={icon} size={18} color={colors.textSecondary} />
+          <Text style={styles.cardTitle}>{title}</Text>
+        </View>
+        {rightLabel && (
+          <TouchableOpacity onPress={onRightPress}>
+            <Text style={styles.linkText}>{rightLabel}</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+      {loading ? (
+        <View style={styles.sectionLoading}><ActivityIndicator color={colors.primaryLight} size="small" /></View>
+      ) : children}
+    </View>
+  );
 }
 
 export default function TeamScreen() {
-  const { user } = useAuthStore();
-  const { onlySubordinates } = usePrefsStore();
+  const user = useAuthStore((s) => s.user);
+  const onlySubordinates = usePrefsStore((s) => s.onlySubordinates);
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const myId = user?.employee?.id;
@@ -125,16 +142,16 @@ export default function TeamScreen() {
   const isRefreshing = results.some((r) => r.isFetching);
   const refetchAll = () => results.forEach((r) => r.refetch());
 
-  const allEmployees: Employee[] = empQ.data?.items ?? [];
+  const allEmployees: Employee[] = useMemo(() => empQ.data?.items ?? [], [empQ.data]);
   // "Faqat bo'ysunuvchilar" — show only employees whose supervisor is the current user
   const employees: Employee[] = useMemo(
     () => (onlySubordinates && myId ? allEmployees.filter((e) => e.supervisor_id === myId) : allEmployees),
     [allEmployees, onlySubordinates, myId]
   );
   const empTotal: number = onlySubordinates ? employees.length : (empQ.data?.total ?? 0);
-  const events: AttendanceEvent[] = attQ.data?.items ?? [];
-  const workLeaves: WorkLeave[] = (leavesQ.data as WorkLeave[]) ?? [];
-  const birthdays: EmployeeBirthday[] = bDayQ.data ?? [];
+  const events: AttendanceEvent[] = useMemo(() => attQ.data?.items ?? [], [attQ.data]);
+  const workLeaves: WorkLeave[] = useMemo(() => (leavesQ.data as WorkLeave[]) ?? [], [leavesQ.data]);
+  const birthdays: EmployeeBirthday[] = useMemo(() => bDayQ.data ?? [], [bDayQ.data]);
 
   const empIdSet = useMemo(() => new Set(employees.map((e) => e.id)), [employees]);
 
@@ -178,42 +195,28 @@ export default function TeamScreen() {
     };
   }, [events, employees, workLeaves, today, empTotal, empIdSet]);
 
-  const recentLeaves = [...workLeaves]
-    .filter((l) => !l.employee?.id || empIdSet.has(l.employee.id))
-    .sort((a, b) => (b.created_at ?? String(b.id)).localeCompare(a.created_at ?? String(a.id)))
-    .slice(0, 3);
-  const topEmployees = employees.slice(0, 3);
-  const upcomingBirthdays = birthdays.slice(0, 3);
+  const recentLeaves = useMemo(
+    () =>
+      [...workLeaves]
+        .filter((l) => !l.employee?.id || empIdSet.has(l.employee.id))
+        .sort((a, b) => (b.created_at ?? String(b.id)).localeCompare(a.created_at ?? String(a.id)))
+        .slice(0, 3),
+    [workLeaves, empIdSet]
+  );
+  const topEmployees = useMemo(() => employees.slice(0, 3), [employees]);
+  const upcomingBirthdays = useMemo(() => birthdays.slice(0, 3), [birthdays]);
 
-  const STATUS_MAP: Record<string, { label: string; color: string }> = {
-    pending: { label: 'Kutilmoqda', color: colors.warning },
-    yuborildi: { label: 'Kutilmoqda', color: colors.warning },
-    approved: { label: 'Tasdiqlangan', color: colors.present },
-    tasdiqlangan: { label: 'Tasdiqlangan', color: colors.present },
-    signed: { label: 'Tasdiqlangan', color: colors.present },
-    rejected: { label: 'Rad etildi', color: colors.error },
-    rad_etilgan: { label: 'Rad etildi', color: colors.error },
-  };
-
-  const SectionCard = ({ icon, title, rightLabel, onRightPress, loading, children }: {
-    icon: IconName; title: string; rightLabel?: string; onRightPress?: () => void; loading?: boolean; children: React.ReactNode;
-  }) => (
-    <View style={styles.card}>
-      <View style={styles.cardHeader}>
-        <View style={styles.cardTitleRow}>
-          <Icon name={icon} size={18} color={colors.textSecondary} />
-          <Text style={styles.cardTitle}>{title}</Text>
-        </View>
-        {rightLabel && (
-          <TouchableOpacity onPress={onRightPress}>
-            <Text style={styles.linkText}>{rightLabel}</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-      {loading ? (
-        <View style={styles.sectionLoading}><ActivityIndicator color={colors.primaryLight} size="small" /></View>
-      ) : children}
-    </View>
+  const STATUS_MAP: Record<string, { label: string; color: string }> = useMemo(
+    () => ({
+      pending: { label: 'Kutilmoqda', color: colors.warning },
+      yuborildi: { label: 'Kutilmoqda', color: colors.warning },
+      approved: { label: 'Tasdiqlangan', color: colors.present },
+      tasdiqlangan: { label: 'Tasdiqlangan', color: colors.present },
+      signed: { label: 'Tasdiqlangan', color: colors.present },
+      rejected: { label: 'Rad etildi', color: colors.error },
+      rad_etilgan: { label: 'Rad etildi', color: colors.error },
+    }),
+    [colors]
   );
 
   return (
@@ -238,7 +241,7 @@ export default function TeamScreen() {
           </View>
         )}
 
-        <SectionCard icon="chart" title="Davomat" loading={empQ.isLoading || attQ.isLoading}>
+        <SectionCard icon="chart" title="Davomat" loading={empQ.isLoading || attQ.isLoading} colors={colors} styles={styles}>
           <View style={styles.chartRow}>
             <DonutChart c={colors} styles={styles}
               total={attendanceStats.total} present={attendanceStats.present}
@@ -278,7 +281,7 @@ export default function TeamScreen() {
           </TouchableOpacity>
         </SectionCard>
 
-        <SectionCard icon="checklist" title="So'rovlar" rightLabel="Barchasi" onRightPress={() => router.push('/team-leaves')} loading={leavesQ.isLoading}>
+        <SectionCard icon="checklist" title="So'rovlar" rightLabel="Barchasi" onRightPress={() => router.push('/team-leaves')} loading={leavesQ.isLoading} colors={colors} styles={styles}>
           {recentLeaves.length === 0 ? (
             <Text style={styles.emptyText}>So'rovlar yo'q</Text>
           ) : (
@@ -287,7 +290,7 @@ export default function TeamScreen() {
               return (
                 <TouchableOpacity key={leave.id} style={styles.leaveRow}
                   onPress={() => router.push({ pathname: '/leave-detail', params: { id: leave.id } })} activeOpacity={0.7}>
-                  <EmployeeAvatar c={colors} emp={(leave.employee as Employee) || { id: 0, legal_name: '?' }} size={48} />
+                  <EmployeeAvatar emp={(leave.employee as Employee) || { id: 0, legal_name: '?' }} size={48} />
                   <View style={styles.leaveInfo}>
                     <Text style={styles.leaveCat} numberOfLines={1}>{leave.type ?? "So'rov"}</Text>
                     <Text style={styles.leaveDate}>
@@ -305,7 +308,7 @@ export default function TeamScreen() {
           </TouchableOpacity>
         </SectionCard>
 
-        <SectionCard icon="users" title="Xodimlar" rightLabel={canAccessPage(user, 'employees') ? 'Barchasi' : undefined} onRightPress={() => router.push('/employees-list')} loading={empQ.isLoading}>
+        <SectionCard icon="users" title="Xodimlar" rightLabel={canAccessPage(user, 'employees') ? 'Barchasi' : undefined} onRightPress={() => router.push('/employees-list')} loading={empQ.isLoading} colors={colors} styles={styles}>
           {topEmployees.length === 0 ? (
             <Text style={styles.emptyText}>Xodimlar yo'q</Text>
           ) : (
@@ -313,7 +316,7 @@ export default function TeamScreen() {
               <TouchableOpacity key={emp.id}
                 style={[styles.empRow, idx < topEmployees.length - 1 && styles.empRowBorder]}
                 onPress={() => router.push({ pathname: '/profile-detail', params: { id: emp.id } })} activeOpacity={0.7}>
-                <EmployeeAvatar c={colors} emp={emp} size={48} />
+                <EmployeeAvatar emp={emp} size={48} />
                 <View style={styles.empInfo}>
                   <Text style={styles.empName} numberOfLines={1}>{emp.legal_name}</Text>
                   <Text style={styles.empPosition} numberOfLines={1}>{emp.job_position?.name ?? emp.department?.name ?? '—'}</Text>
@@ -325,10 +328,10 @@ export default function TeamScreen() {
         </SectionCard>
 
         {(bDayQ.isLoading || upcomingBirthdays.length > 0) && (
-          <SectionCard icon="cake" title="Tug'ilgan kunlar" rightLabel="Barchasi" onRightPress={() => router.push('/birthdays')} loading={bDayQ.isLoading}>
+          <SectionCard icon="cake" title="Tug'ilgan kunlar" rightLabel="Barchasi" onRightPress={() => router.push('/birthdays')} loading={bDayQ.isLoading} colors={colors} styles={styles}>
             {upcomingBirthdays.map((emp, idx) => (
               <View key={emp.id} style={[styles.empRow, idx < upcomingBirthdays.length - 1 && styles.empRowBorder]}>
-                <EmployeeAvatar c={colors} emp={emp} size={48} />
+                <EmployeeAvatar emp={emp} size={48} />
                 <View style={styles.empInfo}>
                   <Text style={styles.empName} numberOfLines={1}>{emp.legal_name}</Text>
                   <Text style={styles.empPosition} numberOfLines={1}>{emp.job_position?.name ?? '—'}</Text>

@@ -1,5 +1,5 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState, useCallback } from 'react';
+import { memo, useState, useCallback, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
   StyleSheet, RefreshControl,
@@ -20,7 +20,7 @@ const DAYS_SHORT = ['du', 'se', 'chor', 'pay', 'ju', 'sha', 'ya'];
 
 interface DayStat { date: string; isWeekend: boolean; isToday: boolean; hasAttendance: boolean; isAbsent: boolean; }
 
-function DonutChart({ attended, total, size = 160, c }: { attended: number; total: number; size?: number; c: ThemeColors }) {
+const DonutChart = memo(function DonutChart({ attended, total, size = 160, c }: { attended: number; total: number; size?: number; c: ThemeColors }) {
   const radius = 58;
   const strokeWidth = 14;
   const circumference = 2 * Math.PI * radius;
@@ -44,7 +44,7 @@ function DonutChart({ attended, total, size = 160, c }: { attended: number; tota
       <Circle cx={cx} cy={cy} r={radius - strokeWidth - 4} fill={c.card} />
     </Svg>
   );
-}
+});
 
 export default function EmployeeCalendarScreen() {
   const params = useLocalSearchParams<{ id: string; name?: string }>();
@@ -77,45 +77,48 @@ export default function EmployeeCalendarScreen() {
 
   const onRefresh = useCallback(async () => { setRefreshing(true); await refetch(); setRefreshing(false); }, [refetch]);
 
-  const eventsByDate = events.reduce<Record<string, AttendanceEvent[]>>((acc, ev) => {
+  const eventsByDate = useMemo(() => events.reduce<Record<string, AttendanceEvent[]>>((acc, ev) => {
     const d = dayjs(ev.happen_time).format('YYYY-MM-DD');
     if (!acc[d]) acc[d] = [];
     acc[d].push(ev);
     return acc;
-  }, {});
+  }, {}), [events]);
 
   const daysInMonth = currentMonth.daysInMonth();
   const firstDayOfWeek = (currentMonth.day() + 6) % 7;
 
-  const calendarDays: (DayStat | null)[] = [];
-  for (let i = 0; i < firstDayOfWeek; i++) calendarDays.push(null);
-  for (let d = 1; d <= daysInMonth; d++) {
-    const dateStr = currentMonth.date(d).format('YYYY-MM-DD');
-    const dayOfWeek = (currentMonth.date(d).day() + 6) % 7;
-    const isWeekend = dayOfWeek >= 5;
-    const isToday = dateStr === dayjs().format('YYYY-MM-DD');
-    const dayEvents = eventsByDate[dateStr] || [];
-    const isFuture = dayjs(dateStr).isAfter(dayjs(), 'day');
-    calendarDays.push({ date: dateStr, isWeekend, isToday, hasAttendance: dayEvents.length > 0, isAbsent: !isWeekend && dayEvents.length === 0 && !isFuture });
-  }
+  const calendarDays = useMemo<(DayStat | null)[]>(() => {
+    const days: (DayStat | null)[] = [];
+    for (let i = 0; i < firstDayOfWeek; i++) days.push(null);
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = currentMonth.date(d).format('YYYY-MM-DD');
+      const dayOfWeek = (currentMonth.date(d).day() + 6) % 7;
+      const isWeekend = dayOfWeek >= 5;
+      const isToday = dateStr === dayjs().format('YYYY-MM-DD');
+      const dayEvents = eventsByDate[dateStr] || [];
+      const isFuture = dayjs(dateStr).isAfter(dayjs(), 'day');
+      days.push({ date: dateStr, isWeekend, isToday, hasAttendance: dayEvents.length > 0, isAbsent: !isWeekend && dayEvents.length === 0 && !isFuture });
+    }
+    return days;
+  }, [currentMonth, firstDayOfWeek, daysInMonth, eventsByDate]);
 
-  const selectedEvents = eventsByDate[selectedDate] || [];
-  const entryEvents = selectedEvents.filter((e) => e.direction_type === 'entrance' || e.check_in_out_type === 1).sort((a, b) => dayjs(a.happen_time).diff(dayjs(b.happen_time)));
-  const exitEvents = selectedEvents.filter((e) => e.direction_type === 'exit' || e.check_in_out_type === 2).sort((a, b) => dayjs(a.happen_time).diff(dayjs(b.happen_time)));
+  const selectedEvents = useMemo(() => eventsByDate[selectedDate] || [], [eventsByDate, selectedDate]);
+  const entryEvents = useMemo(() => selectedEvents.filter((e) => e.direction_type === 'entrance' || e.check_in_out_type === 1).sort((a, b) => dayjs(a.happen_time).diff(dayjs(b.happen_time))), [selectedEvents]);
+  const exitEvents = useMemo(() => selectedEvents.filter((e) => e.direction_type === 'exit' || e.check_in_out_type === 2).sort((a, b) => dayjs(a.happen_time).diff(dayjs(b.happen_time))), [selectedEvents]);
   const selEntry = entryEvents[0];
   const selExit = exitEvents[exitEvents.length - 1];
 
-  const workDays = Array.from({ length: daysInMonth }, (_, i) => i + 1).filter((d) => {
+  const workDays = useMemo(() => Array.from({ length: daysInMonth }, (_, i) => i + 1).filter((d) => {
     const dw = (currentMonth.date(d).day() + 6) % 7;
     return dw < 5 && !currentMonth.date(d).isAfter(dayjs(), 'day');
-  }).length;
-  const attendedDays = Object.keys(eventsByDate).filter((dt) => ((dayjs(dt).day() + 6) % 7) < 5).length;
+  }).length, [currentMonth, daysInMonth]);
+  const attendedDays = useMemo(() => Object.keys(eventsByDate).filter((dt) => ((dayjs(dt).day() + 6) % 7) < 5).length, [eventsByDate]);
   const missedDays = Math.max(0, workDays - attendedDays);
-  const remainingWorkDays = Array.from({ length: daysInMonth }, (_, i) => i + 1).filter((d) => {
+  const remainingWorkDays = useMemo(() => Array.from({ length: daysInMonth }, (_, i) => i + 1).filter((d) => {
     const dt = currentMonth.date(d);
     const dw = (dt.day() + 6) % 7;
     return dw < 5 && dt.isAfter(dayjs(), 'day');
-  }).length;
+  }).length, [currentMonth, daysInMonth]);
 
   const displayName = employee?.legal_name ?? params.name ?? '—';
 

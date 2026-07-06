@@ -5,6 +5,17 @@
 
 import '@testing-library/react-native';
 
+// expo-image → a plain View that forwards props, so avatar tests can render
+// without the native image layer.
+jest.mock('expo-image', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  return {
+    Image: (props: Record<string, unknown>) =>
+      React.createElement(View, { ...props, testID: props.testID ?? 'expo-image' }),
+  };
+});
+
 // expo-secure-store → in-memory map so storage.ts works without the native layer.
 jest.mock('expo-secure-store', () => {
   const store = new Map<string, string>();

@@ -1,7 +1,8 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useEffect, useState, useCallback } from 'react';
+import { memo, useEffect, useState, useCallback } from 'react';
 import {
-  View, Text, ScrollView, StyleSheet, RefreshControl, Image, ActivityIndicator,
+  View, Text, FlatList, StyleSheet, RefreshControl, Image, ActivityIndicator,
+  type ListRenderItem,
 } from 'react-native';
 import dayjs from 'dayjs';
 import { useAuthStore } from '../src/store/authStore';
@@ -13,9 +14,37 @@ import { NewsPost } from '../src/types';
 import { ScreenHeader } from '../src/components/ScreenHeader';
 import { Icon } from '../src/components/Icon';
 
+type Styles = ReturnType<typeof makeStyles>;
+
+const NewsCard = memo(function NewsCard({ item, styles }: { item: NewsPost; styles: Styles }) {
+  return (
+    <View style={styles.card}>
+      <View style={styles.cardHeader}>
+        {item.author?.photo_path ? (
+          <Image source={{ uri: item.author.photo_path }} style={styles.avatar} />
+        ) : (
+          <View style={[styles.avatar, styles.avatarFallback]}>
+            <Text style={styles.avatarInitial}>{(item.author?.legal_name || 'A').charAt(0).toUpperCase()}</Text>
+          </View>
+        )}
+        <View style={styles.authorInfo}>
+          <Text style={styles.authorName}>{item.author?.legal_name || 'Admin'}</Text>
+          <Text style={styles.newsDate}>{dayjs(item.created_at).format('DD.MM.YYYY HH:mm')}</Text>
+        </View>
+      </View>
+
+      <Text style={styles.newsTitle}>{item.title}</Text>
+      {item.description ? <Text style={styles.newsDesc} numberOfLines={4}>{item.description}</Text> : null}
+
+      <View style={styles.tagWrapper}>
+        <Text style={styles.tag}>{item.organization_branch?.name || 'Barcha xodimlarga'}</Text>
+      </View>
+    </View>
+  );
+});
+
 export default function NewsScreen() {
-  const { user } = useAuthStore();
-  const branchId = user?.employee?.department?.organization_branch_id;
+  const branchId = useAuthStore((s) => s.user?.employee?.department?.organization_branch_id);
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
@@ -43,50 +72,34 @@ export default function NewsScreen() {
     setRefreshing(false);
   }, [loadNews]);
 
+  const renderItem = useCallback<ListRenderItem<NewsPost>>(
+    ({ item }) => <NewsCard item={item} styles={styles} />,
+    [styles],
+  );
+
+  const keyExtractor = useCallback((item: NewsPost) => String(item.id), []);
+
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScreenHeader title="Yangiliklar" />
       {loading ? (
         <View style={styles.center}><ActivityIndicator color={colors.primary} size="large" /></View>
       ) : (
-        <ScrollView
+        <FlatList
+          data={news}
+          renderItem={renderItem}
+          keyExtractor={keyExtractor}
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
-        >
-          {news.length === 0 ? (
+          ListEmptyComponent={
             <View style={styles.emptyWrapper}>
               <View style={styles.emptyIconWrap}><Icon name="news" size={30} color={colors.textMuted} /></View>
               <Text style={styles.emptyTitle}>Yangiliklar yo'q</Text>
               <Text style={styles.emptyText}>Hozircha yangiliklar mavjud emas</Text>
             </View>
-          ) : (
-            news.map((item) => (
-              <View key={item.id} style={styles.card}>
-                <View style={styles.cardHeader}>
-                  {item.author?.photo_path ? (
-                    <Image source={{ uri: item.author.photo_path }} style={styles.avatar} />
-                  ) : (
-                    <View style={[styles.avatar, styles.avatarFallback]}>
-                      <Text style={styles.avatarInitial}>{(item.author?.legal_name || 'A').charAt(0).toUpperCase()}</Text>
-                    </View>
-                  )}
-                  <View style={styles.authorInfo}>
-                    <Text style={styles.authorName}>{item.author?.legal_name || 'Admin'}</Text>
-                    <Text style={styles.newsDate}>{dayjs(item.created_at).format('DD.MM.YYYY HH:mm')}</Text>
-                  </View>
-                </View>
-
-                <Text style={styles.newsTitle}>{item.title}</Text>
-                {item.description ? <Text style={styles.newsDesc} numberOfLines={4}>{item.description}</Text> : null}
-
-                <View style={styles.tagWrapper}>
-                  <Text style={styles.tag}>{item.organization_branch?.name || 'Barcha xodimlarga'}</Text>
-                </View>
-              </View>
-            ))
-          )}
-        </ScrollView>
+          }
+        />
       )}
     </SafeAreaView>
   );

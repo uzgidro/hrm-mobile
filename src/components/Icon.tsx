@@ -63,7 +63,16 @@ type Props = {
   strokeWidth?: number;
 };
 
-export function Icon({ name, size = 24, color = '#000', strokeWidth = 2 }: Props) {
+// Memoized: Icon is rendered dozens of times per screen (tab bars, list rows,
+// headers) with primitive props, so React.memo skips re-rendering — and thus
+// re-running the glyph switch — whenever the parent re-renders with the same
+// name/size/color/strokeWidth.
+export const Icon = React.memo(function Icon({
+  name,
+  size = 24,
+  color = '#000',
+  strokeWidth = 2,
+}: Props) {
   const common = {
     stroke: color,
     strokeWidth,
@@ -77,7 +86,7 @@ export function Icon({ name, size = 24, color = '#000', strokeWidth = 2 }: Props
       {render(name, common)}
     </Svg>
   );
-}
+});
 
 function render(name: IconName, p: any) {
   switch (name) {

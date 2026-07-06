@@ -46,7 +46,8 @@
           "photosPermission": "Mehmon rasmini tanlash uchun galereyaga ruxsat bering.",
           "cameraPermission": "Mehmon rasmini olish uchun kameraga ruxsat bering."
         }
-      ]
+      ],
+      "expo-image"
     ],
     "experiments": {
       "typedRoutes": true

@@ -1,8 +1,8 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
-  TouchableOpacity, Image, ActivityIndicator,
+  TouchableOpacity, ActivityIndicator,
 } from 'react-native';
 import { useQueries } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -19,6 +19,7 @@ import { Employee, AttendanceEvent, WorkLeave } from '../src/types';
 import { fetchAllAttendanceEvents, attendanceQueryKey } from '../src/utils/attendance';
 import { fetchAllEmployees, employeesQueryKey } from '../src/utils/employees';
 import { Icon } from '../src/components/Icon';
+import { EmployeeAvatar } from '../src/components/EmployeeAvatar';
 
 dayjs.locale('uz');
 
@@ -45,19 +46,7 @@ function sectionColor(key: StatusGroup, c: ThemeColors) {
   return c.error;
 }
 
-function EmployeeAvatar({ emp, size = 44, c }: { emp: Employee; size?: number; c: ThemeColors }) {
-  const r = size / 2;
-  if (emp.photo_path) {
-    return <Image source={{ uri: emp.photo_path }} style={{ width: size, height: size, borderRadius: r }} />;
-  }
-  return (
-    <View style={{ width: size, height: size, borderRadius: r, backgroundColor: c.primarySoft, alignItems: 'center', justifyContent: 'center' }}>
-      <Text style={{ fontSize: size * 0.38, fontWeight: '700', color: c.primaryLight }}>{(emp.legal_name || 'X').charAt(0).toUpperCase()}</Text>
-    </View>
-  );
-}
-
-function DonutChart({ total, present, late, onLeave, activeFilter, onFilter, styles, c }: {
+const DonutChart = React.memo(function DonutChart({ total, present, late, onLeave, activeFilter, onFilter, styles, c }: {
   total: number; present: number; late: number; onLeave: number;
   activeFilter: StatusGroup | null; onFilter: (k: StatusGroup | null) => void; styles: any; c: ThemeColors;
 }) {
@@ -132,9 +121,9 @@ function DonutChart({ total, present, late, onLeave, activeFilter, onFilter, sty
       </View>
     </View>
   );
-}
+});
 
-function StatusSection({ section, styles, c }: { section: Section; styles: any; c: ThemeColors }) {
+const StatusSection = React.memo(function StatusSection({ section, styles, c }: { section: Section; styles: any; c: ThemeColors }) {
   const [expanded, setExpanded] = useState(false);
   const PREVIEW = 5;
   const shown = expanded ? section.items : section.items.slice(0, PREVIEW);
@@ -161,7 +150,7 @@ function StatusSection({ section, styles, c }: { section: Section; styles: any; 
           <TouchableOpacity key={row.employee.id}
             style={[styles.empRow, idx < shown.length - 1 && styles.empRowBorder]}
             onPress={() => router.push({ pathname: '/profile-detail', params: { id: row.employee.id } })} activeOpacity={0.7}>
-            <EmployeeAvatar emp={row.employee} size={48} c={c} />
+            <EmployeeAvatar emp={row.employee} size={48} />
             <View style={styles.empInfo}>
               <Text style={styles.empName} numberOfLines={1}>{row.employee.legal_name}</Text>
               <Text style={styles.empPosition} numberOfLines={1}>{row.employee.job_position?.name ?? row.employee.department?.name ?? '—'}</Text>
@@ -178,11 +167,11 @@ function StatusSection({ section, styles, c }: { section: Section; styles: any; 
       )}
     </View>
   );
-}
+});
 
 export default function AttendanceDetailScreen() {
-  const { user } = useAuthStore();
-  const { onlySubordinates } = usePrefsStore();
+  const user = useAuthStore((s) => s.user);
+  const onlySubordinates = usePrefsStore((s) => s.onlySubordinates);
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const myId = user?.employee?.id;
