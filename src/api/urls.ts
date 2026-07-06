@@ -41,6 +41,7 @@ export const PUSH_TOKENS = 'push-tokens';
 // Visitors (Mehmonlar)
 export const VISITORS_LIST = 'visitors';
 export const VISITOR_DETAIL = (id: number) => `visitors/${id}`;
+export const EMPLOYEE_VALIDATE_PHOTO = 'employees/me/validate-photo';
 
 // Projects (Loyihalar) — workspaces, columns, cards
 export const WORKSPACES_LIST = 'workspaces';
