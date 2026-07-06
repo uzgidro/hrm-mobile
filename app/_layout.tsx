@@ -79,19 +79,25 @@ function ThemedNavigation() {
   const queryClient = useQueryClient();
 
   // Refresh the in-app list / unread badge when a push lands in the foreground.
+  // Guarded so a limited/absent native notifications module (e.g. Expo Go on
+  // SDK 53+) can't crash the app on mount.
   useEffect(() => {
-    const received = Notifications.addNotificationReceivedListener(() => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
-    });
-    // Navigate when the user taps a push notification.
-    const response = Notifications.addNotificationResponseReceivedListener((r) => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      const route = routeForNotification(r.notification.request.content.data);
-      if (route) {
-        setTimeout(() => router.push(route as any), 400);
-      }
-    });
-    return () => { received.remove(); response.remove(); };
+    try {
+      const received = Notifications.addNotificationReceivedListener(() => {
+        queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      });
+      // Navigate when the user taps a push notification.
+      const response = Notifications.addNotificationResponseReceivedListener((r) => {
+        queryClient.invalidateQueries({ queryKey: ['notifications'] });
+        const route = routeForNotification(r.notification.request.content.data);
+        if (route) {
+          setTimeout(() => router.push(route as any), 400);
+        }
+      });
+      return () => { received.remove(); response.remove(); };
+    } catch {
+      return undefined;
+    }
   }, [queryClient]);
 
   return (

@@ -7,15 +7,20 @@ import { PUSH_TOKENS } from '../api/urls';
 import type { IconName } from '../components/Icon';
 
 // Foreground notifications: show banner + play sound.
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
+// Guarded: this runs at module import (the file is imported for side effects in
+// app/_layout.tsx). If the native notifications module is unavailable or limited
+// (e.g. Expo Go on SDK 53+), it must not throw and take down app startup.
+try {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+      shouldShowBanner: true,
+      shouldShowList: true,
+    }),
+  });
+} catch {}
 
 export async function requestNotificationPermissions(): Promise<boolean> {
   if (!Device.isDevice) return false;
