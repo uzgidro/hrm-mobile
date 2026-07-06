@@ -1,6 +1,7 @@
 import { darkColors } from '../theme/palettes';
+import { Env } from '../config/env';
 
-export const API_BASE_URL = 'https://hr-api.uzgidro.uz';
+export const API_BASE_URL = Env.apiUrl;
 
 // Backward-compatible static palette (dark). Screens that have not yet been
 // migrated to the theme system keep importing COLORS from here. New / redesigned

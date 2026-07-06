@@ -83,4 +83,5 @@ export const ORDER_ACT_DECREE_ACKNOWLEDGE = (id: number) => `order-acts/${id}/de
 export const ORDER_ACT_EDITOR_CONFIG = (id: number) => `order-acts/${id}/editor-config`;
 
 // OnlyOffice document server (public host that serves the editor api.js)
-export const ONLYOFFICE_SERVER_URL = 'https://doc-editor.uzgidro.uz';
+import { Env } from '../config/env';
+export const ONLYOFFICE_SERVER_URL = Env.onlyOfficeUrl;
