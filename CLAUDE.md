@@ -44,7 +44,8 @@ Expo SDK is **56** and its APIs have changed from earlier versions — consult h
 
 ## Conventions
 
-- Path alias `@/*` → `src/*` (tsconfig). App screens under `app/` typically import via relative paths.
+- **Target structure (in-progress migration):** logic lives in `src/features/<feature>/` (api/components/screens/hooks/utils), `app/` is routes-only (thin re-exports). See `src/features/README.md`. Screens migrate into features incrementally as work touches them — new code should follow this layout. No cross-feature imports.
+- Path alias `@/*` → `src/*` (tsconfig). App screens under `app/` typically import via relative paths; prefer `@/*` in new/moved code.
 - Status/domain string mapping (order stages, letter statuses, leave types, role→page) is centralized in `src/utils/*` — extend those rather than scattering conditionals in screens.
 - User-facing strings are Uzbek (no i18n library — literals throughout; `dayjs` uses the `uz` locale for weekday/month names). Match surrounding wording when adding UI text.
 - Large lists (attendance events, employees) are loaded with a **parallel-pagination** helper — see `src/utils/attendance.ts` and `src/utils/employees.ts`. Reuse these instead of hand-rolling page loops.
