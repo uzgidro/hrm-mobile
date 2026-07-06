@@ -39,6 +39,9 @@ export default function OrderDetailScreen() {
     queryKey: ['order-detail', orderId],
     queryFn: () => apiClient.get(ORDER_ACT_DETAIL(orderId)).then((r) => r.data),
     enabled: !!orderId,
+    // Decree state must reflect the server on every open (another signer in the
+    // approval chain may have acted). Override the global staleTime.
+    refetchOnMount: 'always',
   });
 
   const invalidate = () => {

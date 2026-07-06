@@ -1,6 +1,12 @@
 import axios from 'axios';
 import { API_BASE_URL } from '../constants';
-import { storage } from './storage';
+import {
+  getAccessToken,
+  getRefreshToken,
+  setAccessToken,
+  setRefreshToken,
+  clearTokens,
+} from './authToken';
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -9,7 +15,7 @@ export const apiClient = axios.create({
 });
 
 apiClient.interceptors.request.use(async (config) => {
-  const token = await storage.getItem('access_token');
+  const token = await getAccessToken();
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
@@ -22,7 +28,7 @@ apiClient.interceptors.request.use(async (config) => {
 let refreshPromise: Promise<string | null> | null = null;
 
 async function refreshAccessToken(): Promise<string | null> {
-  const refreshToken = await storage.getItem('refresh_token');
+  const refreshToken = await getRefreshToken();
   if (!refreshToken) return null;
   try {
     const { data } = await axios.post(
@@ -31,9 +37,9 @@ async function refreshAccessToken(): Promise<string | null> {
       { params: { refresh_token: refreshToken }, timeout: 20000 }
     );
     if (data?.access_token) {
-      await storage.setItem('access_token', data.access_token);
+      await setAccessToken(data.access_token);
       if (data.refresh_token) {
-        await storage.setItem('refresh_token', data.refresh_token);
+        await setRefreshToken(data.refresh_token);
       }
       return data.access_token as string;
     }
@@ -66,8 +72,7 @@ apiClient.interceptors.response.use(
         return apiClient(original);
       }
       // Refresh failed → tokens are no longer usable.
-      await storage.deleteItem('access_token');
-      await storage.deleteItem('refresh_token');
+      await clearTokens();
     }
     return Promise.reject(error);
   }

@@ -40,6 +40,9 @@ export default function MehmonDetailScreen() {
     queryKey: ['visitor', visitorId],
     queryFn: () => apiClient.get(VISITOR_DETAIL(visitorId)).then((r) => r.data),
     enabled: !!visitorId,
+    // Visitor status (active/checked-out) may change externally — always
+    // revalidate on open so stale action buttons aren't shown.
+    refetchOnMount: 'always',
   });
 
   const active = v?.is_active !== false;

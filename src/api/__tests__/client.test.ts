@@ -2,6 +2,7 @@ import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
 import { apiClient } from '../client';
 import { storage } from '../storage';
+import { __resetAccessTokenCache } from '../authToken';
 
 // The app's requests go through `apiClient`; the refresh call in client.ts uses
 // the default `axios` instance — mock both adapters.
@@ -13,6 +14,8 @@ beforeEach(async () => {
   refreshMock = new MockAdapter(axios);
   await storage.setItem('access_token', 'old-access');
   await storage.setItem('refresh_token', 'refresh-1');
+  // Reset the in-memory token cache so each test re-reads the seeded storage.
+  __resetAccessTokenCache();
 });
 
 afterEach(async () => {
@@ -32,6 +35,20 @@ describe('apiClient interceptors', () => {
 
     await apiClient.get('ping');
     expect(seen).toBe('Bearer old-access');
+  });
+
+  it('reads the access token from SecureStore once across many requests', async () => {
+    const SecureStore = require('expo-secure-store');
+    const getMock = SecureStore.getItemAsync as jest.Mock;
+    appMock.onGet('a').reply(200, {});
+    appMock.onGet('b').reply(200, {});
+    appMock.onGet('c').reply(200, {});
+
+    getMock.mockClear();
+    await Promise.all([apiClient.get('a'), apiClient.get('b'), apiClient.get('c')]);
+
+    const accessReads = getMock.mock.calls.filter((c: unknown[]) => c[0] === 'access_token').length;
+    expect(accessReads).toBe(1);
   });
 
   it('refreshes once on 401 and retries with the new token (single-flight)', async () => {

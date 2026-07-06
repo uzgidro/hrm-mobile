@@ -3,14 +3,16 @@ import { useEffect } from 'react';
 import { Stack, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as Notifications from 'expo-notifications';
-import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
+import { QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useAuthStore, USER_CACHE_KEY } from '../src/store/authStore';
 import { usePrefsStore } from '../src/store/prefsStore';
 import { apiClient } from '../src/api/client';
 import { storage } from '../src/api/storage';
+import { getAccessToken } from '../src/api/authToken';
 import { USER_INFO } from '../src/api/urls';
 import { User } from '../src/types';
+import { createAppQueryClient } from '../src/lib/queryClient';
 import { ThemeProvider, useTheme } from '../src/theme/ThemeProvider';
 import {
   requestNotificationPermissions,
@@ -19,7 +21,7 @@ import {
   routeForNotification,
 } from '../src/services/notifications';
 
-const queryClient = new QueryClient();
+const queryClient = createAppQueryClient();
 
 async function setupPushNotifications() {
   try {
@@ -36,7 +38,9 @@ function AuthLoader() {
   useEffect(() => {
     usePrefsStore.getState().hydrate();
     (async () => {
-      const token = await storage.getItem('access_token');
+      // Route the bootstrap read through getAccessToken so it primes the
+      // in-memory cache (the request interceptor reuses it, no second read).
+      const token = await getAccessToken();
       if (!token) {
         setLoading(false);
         router.replace('/(auth)/login');

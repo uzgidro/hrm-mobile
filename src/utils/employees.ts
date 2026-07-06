@@ -1,8 +1,12 @@
 import { apiClient } from '../api/client';
 import { EMPLOYEES_LIST } from '../api/urls';
 import { Employee } from '../types';
+import { mapWithConcurrency } from './concurrency';
 
 interface EmployeePage { items: Employee[]; total: number }
+
+// Max simultaneous page requests when paginating large lists.
+const PAGE_CONCURRENCY = 4;
 
 /**
  * Fetches ALL employees for a branch using parallel pagination.
@@ -22,12 +26,11 @@ export async function fetchAllEmployees(orgBranchId?: number): Promise<EmployeeP
   if (first.total <= 100) return first;
 
   const totalPages = Math.ceil(first.total / 100);
-  const rest = await Promise.all(
-    Array.from({ length: totalPages - 1 }, (_, i) =>
-      apiClient
-        .get<EmployeePage>(EMPLOYEES_LIST, { params: { ...base, page: i + 2 } })
-        .then((r) => (r.data?.items ?? []) as Employee[]),
-    ),
+  const pages = Array.from({ length: totalPages - 1 }, (_, i) => i + 2);
+  const rest = await mapWithConcurrency(pages, PAGE_CONCURRENCY, (page) =>
+    apiClient
+      .get<EmployeePage>(EMPLOYEES_LIST, { params: { ...base, page } })
+      .then((r) => (r.data?.items ?? []) as Employee[]),
   );
 
   const items = [...first.items, ...rest.flat()];

@@ -34,6 +34,9 @@ export default function LetterDetailScreen() {
     queryKey: ['letter-detail', letterId],
     queryFn: () => apiClient.get(LETTER_DETAIL(letterId)).then((r) => r.data),
     enabled: !!letterId,
+    // Approval state must reflect the server on every open (another signer may
+    // have acted). Override the global staleTime so it always revalidates.
+    refetchOnMount: 'always',
   });
 
   const invalidate = () => {

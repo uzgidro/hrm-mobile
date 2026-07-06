@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { storage } from '../api/storage';
+import { setAccessToken, setRefreshToken, clearTokens } from '../api/authToken';
 import { User } from '../types';
 
 const USER_CACHE_KEY = 'cached_user';
@@ -25,15 +26,15 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   login: async (accessToken, refreshToken, user) => {
-    await storage.setItem('access_token', accessToken);
-    await storage.setItem('refresh_token', refreshToken);
+    // Route token writes through authToken so the in-memory cache stays in sync.
+    await setAccessToken(accessToken);
+    await setRefreshToken(refreshToken);
     await storage.setItem(USER_CACHE_KEY, JSON.stringify(user));
     set({ user, isAuthenticated: true, isLoading: false });
   },
 
   logout: async () => {
-    await storage.deleteItem('access_token');
-    await storage.deleteItem('refresh_token');
+    await clearTokens();
     await storage.deleteItem(USER_CACHE_KEY);
     set({ user: null, isAuthenticated: false });
   },

@@ -1,8 +1,12 @@
 import { apiClient } from '../api/client';
 import { TURNSTILE_ATTENDANCE_EVENTS } from '../api/urls';
 import { AttendanceEvent } from '../types';
+import { mapWithConcurrency } from './concurrency';
 
 interface AttendancePage { items: AttendanceEvent[]; total: number }
+
+// Max simultaneous page requests; attendance can span up to 20 pages.
+const PAGE_CONCURRENCY = 4;
 
 async function paginatedFetch(params: Record<string, unknown>): Promise<AttendancePage> {
   const firstRes = await apiClient.get(TURNSTILE_ATTENDANCE_EVENTS, { params });
@@ -15,16 +19,15 @@ async function paginatedFetch(params: Record<string, unknown>): Promise<Attendan
 
   // Parallel pagination for remaining pages (cap at 20 pages = 2000 events)
   const totalPages = Math.min(Math.ceil(raw.total / 100), 20);
-  const rest = await Promise.all(
-    Array.from({ length: totalPages - 1 }, (_, i) =>
-      apiClient
-        .get(TURNSTILE_ATTENDANCE_EVENTS, { params: { ...params, page: i + 2 } })
-        .then((r) => {
-          const d = r.data as any;
-          return ((Array.isArray(d) ? d : d?.items) ?? []) as AttendanceEvent[];
-        })
-        .catch(() => [] as AttendanceEvent[]),
-    ),
+  const pages = Array.from({ length: totalPages - 1 }, (_, i) => i + 2);
+  const rest = await mapWithConcurrency(pages, PAGE_CONCURRENCY, (page) =>
+    apiClient
+      .get(TURNSTILE_ATTENDANCE_EVENTS, { params: { ...params, page } })
+      .then((r) => {
+        const d = r.data as any;
+        return ((Array.isArray(d) ? d : d?.items) ?? []) as AttendanceEvent[];
+      })
+      .catch(() => [] as AttendanceEvent[]),
   );
   const items = [...raw.items, ...rest.flat()];
   return { items, total: raw.total };
