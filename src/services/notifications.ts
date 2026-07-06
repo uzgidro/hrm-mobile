@@ -1,4 +1,3 @@
-import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
@@ -6,12 +5,29 @@ import { apiClient } from '../api/client';
 import { PUSH_TOKENS } from '../api/urls';
 import type { IconName } from '../components/Icon';
 
-// Foreground notifications: show banner + play sound.
-// Guarded: this runs at module import (the file is imported for side effects in
-// app/_layout.tsx). If the native notifications module is unavailable or limited
-// (e.g. Expo Go on SDK 53+), it must not throw and take down app startup.
+// expo-notifications is loaded lazily and defensively. Importing it at the top
+// level throws in Expo Go (SDK 53+ removed remote push there), which would crash
+// app startup since this file is imported for side effects in app/_layout.tsx.
+// Requiring it on demand and treating an unavailable module as "no push" keeps
+// the app running; a development build gets the real native module.
+type NotificationsModule = typeof import('expo-notifications');
+let cachedModule: NotificationsModule | null | undefined;
+
+function getNotifications(): NotificationsModule | null {
+  if (cachedModule === undefined) {
+    try {
+      cachedModule = require('expo-notifications') as NotificationsModule;
+    } catch {
+      cachedModule = null;
+    }
+  }
+  return cachedModule;
+}
+
+// Foreground notifications: show banner + play sound. Guarded — a missing/limited
+// native module must not throw at import.
 try {
-  Notifications.setNotificationHandler({
+  getNotifications()?.setNotificationHandler({
     handleNotification: async () => ({
       shouldShowAlert: true,
       shouldPlaySound: true,
@@ -23,21 +39,27 @@ try {
 } catch {}
 
 export async function requestNotificationPermissions(): Promise<boolean> {
-  if (!Device.isDevice) return false;
-  const { status: existing } = await Notifications.getPermissionsAsync();
-  if (existing === 'granted') return true;
-  const { status } = await Notifications.requestPermissionsAsync();
-  return status === 'granted';
+  const N = getNotifications();
+  if (!N || !Device.isDevice) return false;
+  try {
+    const { status: existing } = await N.getPermissionsAsync();
+    if (existing === 'granted') return true;
+    const { status } = await N.requestPermissionsAsync();
+    return status === 'granted';
+  } catch {
+    return false;
+  }
 }
 
 export async function getExpoPushToken(): Promise<string | null> {
+  const N = getNotifications();
   try {
-    if (!Device.isDevice) return null;
+    if (!N || !Device.isDevice) return null;
     const projectId =
       Constants.expoConfig?.extra?.eas?.projectId ??
       (Constants as any).easConfig?.projectId ??
       undefined;
-    const tokenData = await Notifications.getExpoPushTokenAsync(projectId ? { projectId } : undefined);
+    const tokenData = await N.getExpoPushTokenAsync(projectId ? { projectId } : undefined);
     return tokenData.data;
   } catch {
     return null;
@@ -48,6 +70,28 @@ export async function registerTokenWithBackend(token: string): Promise<void> {
   try {
     await apiClient.post(PUSH_TOKENS, { token, platform: Platform.OS });
   } catch {}
+}
+
+// Subscribe to foreground receipt + tap events. Returns an unsubscribe function.
+// Routing is resolved here so callers never touch the native module directly.
+export function addNotificationListeners(handlers: {
+  onForeground: () => void;
+  onTap: (route: string | null) => void;
+}): () => void {
+  const N = getNotifications();
+  if (!N) return () => {};
+  try {
+    const received = N.addNotificationReceivedListener(() => handlers.onForeground());
+    const response = N.addNotificationResponseReceivedListener((r) => {
+      handlers.onTap(routeForNotification(r.notification.request.content.data));
+    });
+    return () => {
+      received.remove();
+      response.remove();
+    };
+  } catch {
+    return () => {};
+  }
 }
 
 // Resolve a navigation target from either:

@@ -2,7 +2,6 @@ import '../src/services/notifications';
 import { useEffect } from 'react';
 import { Stack, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import * as Notifications from 'expo-notifications';
 import { QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useAuthStore, USER_CACHE_KEY } from '../src/store/authStore';
@@ -18,7 +17,7 @@ import {
   requestNotificationPermissions,
   getExpoPushToken,
   registerTokenWithBackend,
-  routeForNotification,
+  addNotificationListeners,
 } from '../src/services/notifications';
 
 const queryClient = createAppQueryClient();
@@ -78,26 +77,17 @@ function ThemedNavigation() {
   const { colors, isDark } = useTheme();
   const queryClient = useQueryClient();
 
-  // Refresh the in-app list / unread badge when a push lands in the foreground.
-  // Guarded so a limited/absent native notifications module (e.g. Expo Go on
-  // SDK 53+) can't crash the app on mount.
+  // Refresh the in-app list / unread badge when a push lands in the foreground,
+  // and navigate on tap. The listener helper lazy-loads the native module and
+  // no-ops if it's unavailable (e.g. Expo Go), so this can't crash on mount.
   useEffect(() => {
-    try {
-      const received = Notifications.addNotificationReceivedListener(() => {
+    return addNotificationListeners({
+      onForeground: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+      onTap: (route) => {
         queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      });
-      // Navigate when the user taps a push notification.
-      const response = Notifications.addNotificationResponseReceivedListener((r) => {
-        queryClient.invalidateQueries({ queryKey: ['notifications'] });
-        const route = routeForNotification(r.notification.request.content.data);
-        if (route) {
-          setTimeout(() => router.push(route as any), 400);
-        }
-      });
-      return () => { received.remove(); response.remove(); };
-    } catch {
-      return undefined;
-    }
+        if (route) setTimeout(() => router.push(route as any), 400);
+      },
+    });
   }, [queryClient]);
 
   return (
