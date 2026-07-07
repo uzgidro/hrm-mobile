@@ -120,7 +120,11 @@ export default function HomeScreen() {
     queryClient.prefetchQuery({ queryKey: employeesQueryKey(orgBranchId), queryFn: () => fetchAllEmployees(orgBranchId), staleTime: 5 * 60 * 1000 });
     queryClient.prefetchQuery({ queryKey: attendanceQueryKey(today, orgBranchId), queryFn: () => fetchAllAttendanceEvents(today, orgBranchId), staleTime: 3 * 60 * 1000 });
     queryClient.prefetchQuery({
-      queryKey: ['team-birthdays', orgBranchId],
+      // Same key shape as the birthdays feature's birthdayKeys.list(orgBranchId)
+      // so the Team screen's birthday card reads this warmed entry instead of
+      // refetching. (Kept inline like the employees/attendance keys above; the
+      // home tab isn't on the feature layer yet.)
+      queryKey: ['birthdays', 'list', orgBranchId ?? null],
       queryFn: () => apiClient.get(EMPLOYEES_BIRTHDAYS, { params: orgBranchId ? { organization_branch_id: orgBranchId } : {} }).then((r) => r.data),
       staleTime: 60 * 60 * 1000,
     });
