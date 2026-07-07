@@ -39,6 +39,59 @@ export function currentStageType(o: OrderAct): 'approver' | 'leadership' | null 
   return null;
 }
 
+// Every action/edit permission the decree detail screen derives from
+// (order, employeeId). Extracted verbatim from the old inline OrderDetailScreen
+// logic so the web-parity approval chain lives in one tested place. Backend
+// permissions remain the final authority; these only decide which buttons and
+// which editor mode to offer.
+export interface DecreePermissions {
+  canApprove: boolean;
+  canResubmit: boolean;
+  canForward: boolean;
+  canRegister: boolean;
+  canAcknowledge: boolean;
+  hasActions: boolean;
+  docLocked: boolean;
+  canEditDoc: boolean;
+}
+
+export function decreePermissions(o: OrderAct, employeeId?: number): DecreePermissions {
+  const stage = currentStageType(o);
+  const stageSigners = (o.assigned_signers ?? []).filter((s) => s.signer_type === stage);
+  const iAmStageSigner =
+    !!stage && stageSigners.some((s) => (s.employee_id ?? s.employee?.id) === employeeId);
+  const iSigned = (o.signers ?? []).some((s) => (s.employee_id ?? s.employee?.id) === employeeId);
+  const canApprove = iAmStageSigner && !iSigned;
+
+  const isCreator = o.created_by_id === employeeId || o.submitter_id === employeeId;
+  const canResubmit = o.status === 'changes_requested' && isCreator;
+  const canForward = o.status === 'approved' && isCreator;
+  const canRegister = o.status === 'pending_chancellery' && isCreator;
+
+  const myFam = (o.familiarizers ?? []).find(
+    (f) => (f.employee_id ?? f.employee?.id) === employeeId
+  );
+  const canAcknowledge =
+    !!myFam && !myFam.acknowledged && (o.status === 'confirmed' || o.status === 'applied');
+
+  const hasActions = canApprove || canResubmit || canForward || canRegister || canAcknowledge;
+
+  const docLocked =
+    o.status === 'confirmed' || o.status === 'applied' || o.status === 'rejected';
+  const canEditDoc = !docLocked && (isCreator || canApprove);
+
+  return {
+    canApprove,
+    canResubmit,
+    canForward,
+    canRegister,
+    canAcknowledge,
+    hasActions,
+    docLocked,
+    canEditDoc,
+  };
+}
+
 // Does the given employee need to act on this decree right now?
 export function needsMyAction(o: OrderAct, employeeId?: number): boolean {
   if (!employeeId) return false;
