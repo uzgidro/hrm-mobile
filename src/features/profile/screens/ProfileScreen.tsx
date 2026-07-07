@@ -30,8 +30,9 @@ export default function ProfileScreen() {
         text: 'Ha, chiqish',
         style: 'destructive',
         onPress: async () => {
+          // logout() flips isAuthenticated → the root Stack.Protected guard
+          // redirects to (auth) and clears the tabs history automatically.
           await logout();
-          router.replace('/(auth)/login');
         },
       },
     ]);

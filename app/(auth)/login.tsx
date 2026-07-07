@@ -4,7 +4,6 @@ import {
   StyleSheet, KeyboardAvoidingView, Platform,
   ActivityIndicator, Alert,
 } from 'react-native';
-import { router } from 'expo-router';
 import { apiClient } from '../../src/api/client';
 import { useAuthStore } from '../../src/store/authStore';
 import { AUTH_LOGIN, USER_INFO } from '../../src/api/urls';
@@ -43,8 +42,9 @@ export default function LoginScreen() {
       const meRes = await apiClient.get<User>(USER_INFO, {
         headers: { Authorization: `Bearer ${data.access_token}` },
       });
+      // login() sets isAuthenticated → the Stack.Protected guard in the root
+      // layout redirects to (tabs) automatically; no imperative navigation.
       await login(data.access_token, data.refresh_token, meRes.data);
-      router.replace('/(tabs)');
     } catch (e: unknown) {
       const err = e as { response?: { data?: { detail?: string | Array<{ msg: string }> } } };
       const detail = err?.response?.data?.detail;
