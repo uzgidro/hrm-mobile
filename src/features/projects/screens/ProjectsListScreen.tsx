@@ -28,7 +28,7 @@ export default function LoyihalarScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScreenHeader title="Loyihalar" right={<HeaderAction icon="plus" onPress={() => router.push('/loyiha-form' as any)} />} />
+      <ScreenHeader title="Loyihalar" right={<HeaderAction icon="plus" onPress={() => router.push('/loyiha-form')} />} />
       {isLoading ? (
         <LoadingView />
       ) : (
@@ -44,7 +44,7 @@ export default function LoyihalarScreen() {
               <TouchableOpacity
                 style={styles.card}
                 activeOpacity={0.8}
-                onPress={() => router.push({ pathname: '/loyiha-detail', params: { id: item.id } } as any)}
+                onPress={() => router.push({ pathname: '/loyiha-detail', params: { id: String(item.id) } })}
               >
                 <View style={styles.cardTop}>
                   <View style={styles.iconWrap}><Icon name="board" size={22} color={colors.primary} /></View>

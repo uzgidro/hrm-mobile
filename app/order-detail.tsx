@@ -155,8 +155,8 @@ export default function OrderDetailScreen() {
               onPress={() =>
                 router.push({
                   pathname: '/order-document',
-                  params: { id: orderId, mode: canEditDoc ? 'edit' : 'view' },
-                } as any)
+                  params: { id: String(orderId), mode: canEditDoc ? 'edit' : 'view' },
+                })
               }
             >
               <Icon name="doc" size={16} color={colors.primary} />

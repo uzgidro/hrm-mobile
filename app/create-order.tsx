@@ -164,7 +164,7 @@ export default function CreateOrderScreen() {
         }
       }
       qc.invalidateQueries({ queryKey: ['order-acts'] });
-      router.replace({ pathname: '/order-detail', params: { id: orderId } } as any);
+      router.replace({ pathname: '/order-detail', params: { id: String(orderId) } });
     } catch (err: any) {
       const detail = err?.response?.data?.detail;
       const msg = Array.isArray(detail) ? detail[0]?.msg : (detail || err?.message || 'Xatolik yuz berdi');

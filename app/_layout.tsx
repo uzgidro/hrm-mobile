@@ -1,6 +1,6 @@
 import '../src/services/notifications'; // side effect: sets the foreground notification handler
 import { useEffect } from 'react';
-import { Stack, router } from 'expo-router';
+import { Stack, router, type Href } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -31,7 +31,7 @@ function ThemedNavigation() {
       onForeground: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
       onTap: (route) => {
         queryClient.invalidateQueries({ queryKey: ['notifications'] });
-        if (route) setTimeout(() => router.push(route as any), 400);
+        if (route) setTimeout(() => router.push(route as Href), 400);
       },
     });
   }, [queryClient]);

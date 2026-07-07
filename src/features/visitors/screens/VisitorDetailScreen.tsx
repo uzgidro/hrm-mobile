@@ -63,7 +63,7 @@ export default function MehmonDetailScreen() {
         title="Mehmon"
         right={
           <View style={{ flexDirection: 'row', gap: 8 }}>
-            <HeaderAction icon="edit" onPress={() => router.push({ pathname: '/mehmon-form', params: { id: visitorId } } as any)} />
+            <HeaderAction icon="edit" onPress={() => router.push({ pathname: '/mehmon-form', params: { id: String(visitorId) } })} />
             <HeaderAction icon="trash" onPress={onDelete} color={colors.error} />
           </View>
         }

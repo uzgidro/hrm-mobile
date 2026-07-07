@@ -166,7 +166,7 @@ export default function HomeScreen() {
             <Text style={styles.greeting}>{dateStr}</Text>
             <Text style={styles.userName} numberOfLines={1}>{employee?.legal_name || 'Foydalanuvchi'}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.bellBtn} onPress={() => router.push('/notifications' as any)} activeOpacity={0.8}>
+          <TouchableOpacity style={styles.bellBtn} onPress={() => router.push('/notifications')} activeOpacity={0.8}>
             <Icon name="bell" size={21} color={colors.text} />
             {unreadCount > 0 && (
               <View style={styles.bellBadge}>

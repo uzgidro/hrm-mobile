@@ -62,7 +62,7 @@ export default function LettersScreen() {
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
         <Text style={styles.title}>Xatlar</Text>
-        <TouchableOpacity style={styles.fab} onPress={() => router.push('/create-letter' as any)} activeOpacity={0.8}>
+        <TouchableOpacity style={styles.fab} onPress={() => router.push('/create-letter')} activeOpacity={0.8}>
           <Icon name="plus" size={22} color={colors.onPrimary} strokeWidth={2.4} />
         </TouchableOpacity>
       </View>
@@ -108,7 +108,7 @@ export default function LettersScreen() {
                 <TouchableOpacity
                   key={l.id}
                   style={[styles.card, action && styles.cardAction]}
-                  onPress={() => router.push({ pathname: '/letter-detail', params: { id: l.id } } as any)}
+                  onPress={() => router.push({ pathname: '/letter-detail', params: { id: String(l.id) } })}
                   activeOpacity={0.8}
                 >
                   <View style={styles.cardTop}>

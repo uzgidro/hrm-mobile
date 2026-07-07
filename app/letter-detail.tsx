@@ -100,7 +100,7 @@ export default function LetterDetailScreen() {
             <TouchableOpacity
               style={styles.docBtn}
               activeOpacity={0.85}
-              onPress={() => router.push({ pathname: '/letter-document', params: { id: letterId } } as any)}
+              onPress={() => router.push({ pathname: '/letter-document', params: { id: String(letterId) } })}
             >
               <Icon name="doc" size={16} color={colors.primary} />
               <Text style={styles.docBtnText}>Hujjatni ochish</Text>

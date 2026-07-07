@@ -4,7 +4,7 @@ import {
   FlatList, RefreshControl,
 } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { router } from 'expo-router';
+import { router, type Href } from 'expo-router';
 import dayjs from 'dayjs';
 import { useAuthStore } from '@/store/authStore';
 import { getApiErrorMessage } from '@/api/errors';
@@ -53,7 +53,7 @@ export default function NotificationsScreen() {
   const onPressItem = async (n: Notification) => {
     await markRead(n);
     const route = routeForNotification(n as any);
-    if (route) router.push(route as any);
+    if (route) router.push(route as Href);
   };
 
   return (

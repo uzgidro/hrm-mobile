@@ -102,7 +102,7 @@ export default function LoyihaDetailScreen() {
         title={ws?.name || 'Loyiha'}
         right={
           <View style={{ flexDirection: 'row', gap: 8 }}>
-            <HeaderAction icon="edit" onPress={() => router.push({ pathname: '/loyiha-form', params: { id: workspaceId } } as any)} />
+            <HeaderAction icon="edit" onPress={() => router.push({ pathname: '/loyiha-form', params: { id: String(workspaceId) } })} />
             {canDelete && <HeaderAction icon="trash" onPress={onDelete} color={colors.error} />}
           </View>
         }

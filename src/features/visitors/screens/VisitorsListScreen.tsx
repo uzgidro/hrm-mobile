@@ -42,7 +42,7 @@ export default function MehmonlarScreen() {
         <Text style={styles.title}>Mehmonlar</Text>
         {visitors.length > 0 && <Text style={styles.count}>{visitors.length}</Text>}
         <View style={{ flex: 1 }} />
-        <TouchableOpacity style={styles.addBtn} onPress={() => router.push('/mehmon-form' as any)} activeOpacity={0.85}>
+        <TouchableOpacity style={styles.addBtn} onPress={() => router.push('/mehmon-form')} activeOpacity={0.85}>
           <Icon name="plus" size={22} color={colors.onPrimary} strokeWidth={2.4} />
         </TouchableOpacity>
       </View>
@@ -78,7 +78,7 @@ export default function MehmonlarScreen() {
               <TouchableOpacity
                 style={styles.card}
                 activeOpacity={0.8}
-                onPress={() => router.push({ pathname: '/mehmon-detail', params: { id: item.id } } as any)}
+                onPress={() => router.push({ pathname: '/mehmon-detail', params: { id: String(item.id) } })}
               >
                 {item.photo_path ? (
                   <Image source={{ uri: item.photo_path }} style={styles.avatar} />

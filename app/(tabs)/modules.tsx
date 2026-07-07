@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, useWindowDimensions,
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, type Href } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../../src/store/authStore';
 import { apiClient } from '../../src/api/client';
@@ -108,7 +108,7 @@ export default function ModulesScreen() {
                   key={item.key}
                   style={[styles.tile, { width: tileWidth }]}
                   activeOpacity={0.75}
-                  onPress={() => router.push(item.route as any)}
+                  onPress={() => router.push(item.route as Href)}
                 >
                   <View style={styles.iconWrap}>
                     <Icon name={item.icon} size={24} color={colors.primary} />

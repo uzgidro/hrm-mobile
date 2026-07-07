@@ -69,7 +69,7 @@ export default function OrdersScreen() {
         <Text style={styles.title}>Buyruqlar</Text>
         <TouchableOpacity
           style={styles.fab}
-          onPress={() => router.push('/create-order' as any)}
+          onPress={() => router.push('/create-order')}
           activeOpacity={0.8}
         >
           <Icon name="plus" size={22} color={colors.onPrimary} strokeWidth={2.4} />

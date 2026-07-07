@@ -196,7 +196,7 @@ export default function CreateLetterScreen() {
         }
       }
       qc.invalidateQueries({ queryKey: ['letters'] });
-      router.replace({ pathname: '/letter-detail', params: { id: letterId } } as any);
+      router.replace({ pathname: '/letter-detail', params: { id: String(letterId) } });
     } catch (err: any) {
       const detail = err?.response?.data?.detail;
       const msg = Array.isArray(detail) ? detail[0]?.msg : (detail || err?.message || 'Xatolik yuz berdi');

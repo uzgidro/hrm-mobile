@@ -119,7 +119,7 @@ export default function MehmonFormScreen() {
         const res = await createMut.mutateAsync(payload);
         // Open the new guest's detail so the auto-generated QR is shown immediately.
         const newId = (res as any)?.id;
-        if (newId) router.replace({ pathname: '/mehmon-detail', params: { id: newId } } as any);
+        if (newId) router.replace({ pathname: '/mehmon-detail', params: { id: String(newId) } });
         else router.back();
       }
     } catch (e) {
