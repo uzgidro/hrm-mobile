@@ -1,0 +1,42 @@
+# Smoke-navigate every bottom tab and assert each screen renders its content.
+# Assumes an authenticated session (run login.yaml first, or launch already
+# logged in). Exercises the migrated feature screens end-to-end.
+#
+# Tabs are tapped by testID (tab-home/orders/letters/modules/guests, set via
+# tabBarButtonTestID in app/(tabs)/_layout.tsx) — the 10px tab labels aren't
+# reliably matchable text. Assertions target prominent on-screen content.
+appId: uz.uzgidro.hrm
+---
+- launchApp
+- assertVisible: 'Bugungi jadval' # dashboard schedule card
+
+# Buyruqlar (orders) — decomposed OrdersListScreen
+- tapOn:
+    id: 'tab-orders'
+- assertVisible: 'Menda' # orders filter chip
+
+# Xatlar (letters) — decomposed LettersListScreen
+- tapOn:
+    id: 'tab-letters'
+- assertVisible:
+    text: 'Xatlar'
+    index: 0
+
+# Modullar (modules)
+- tapOn:
+    id: 'tab-modules'
+- assertVisible:
+    text: 'Modullar'
+    index: 0
+
+# Mehmonlar (guests / visitors) — migrated VisitorsListScreen
+- tapOn:
+    id: 'tab-guests'
+- assertVisible:
+    text: 'Mehmonlar'
+    index: 0
+
+# Back to the dashboard
+- tapOn:
+    id: 'tab-home'
+- assertVisible: 'Bugungi jadval'

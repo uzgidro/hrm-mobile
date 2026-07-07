@@ -1,0 +1,31 @@
+# Guests (Mehmonlar) flow — the migrated visitors feature. Open the list, open
+# the create-guest form, verify it renders, then back out without saving.
+# Authenticated session required. The tab is tapped by testID (set via
+# tabBarButtonTestID in app/(tabs)/_layout.tsx).
+appId: uz.uzgidro.hrm
+---
+- launchApp
+- waitForAnimationToEnd
+# Mehmonlar (guests).
+- tapOn:
+    id: 'tab-guests'
+- waitForAnimationToEnd
+- assertVisible:
+    text: 'Mehmonlar'
+    index: 0
+
+# Open the guest-create form via the top-right + button (pushes /mehmon-form).
+- tapOn:
+    point: 92%,11%
+- waitForAnimationToEnd
+# The guest form screen opened (VisitorFormScreen).
+- assertVisible: 'Yangi mehmon'
+- assertVisible: 'Saqlash' # the save button confirms the form fully rendered
+
+# Leave via the on-screen back chevron without saving.
+- tapOn:
+    point: 7%,11%
+- waitForAnimationToEnd
+- assertVisible:
+    text: 'Mehmonlar'
+    index: 0

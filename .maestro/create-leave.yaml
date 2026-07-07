@@ -1,0 +1,41 @@
+# Exercises the decomposed CreateLeaveScreen: open the leave-request form from
+# the dashboard, verify every field renders, interact with the extracted
+# type-sheet + date-time picker, then leave WITHOUT submitting (so no real
+# request is created). Authenticated session required.
+appId: uz.uzgidro.hrm
+---
+- launchApp
+- assertVisible: 'Bugungi jadval'
+
+# Open the leave-request form via the dashboard "So'rov yaratish" button.
+- tapOn: "So'rov yaratish"
+- assertVisible: "So'rov yuborish"
+
+# The form fields (from the decomposed screen) are all present.
+- assertVisible: "So'rov turi *"
+- assertVisible: 'Boshlanish *'
+- assertVisible: 'Tugash *'
+- assertVisible: 'Rahbar (Tasdiqlovchi)'
+- assertVisible: "Izoh (ixtiyoriy)"
+- assertVisible: 'Yuborish'
+
+# Open the extracted LeaveTypeSheet and pick a preset.
+- tapOn:
+    below: "So'rov turi *"
+- assertVisible: "So'rov turini tanlang"
+- tapOn: "Kasallik"
+- assertVisible: 'Kasallik'
+
+# Open the extracted LeaveDateTimePicker and close it without changes.
+- tapOn:
+    below: 'Boshlanish *'
+- assertVisible: 'Tayyor'
+- tapOn: 'Bekor'
+
+# Fill the optional comment (proves the textarea works).
+- tapOn: 'Sababni qisqacha yozing...'
+- inputText: 'E2E smoke'
+- assertVisible: 'E2E smoke'
+# We deliberately do NOT tap "Yuborish" so no real leave request is created.
+# The decomposed screen + its extracted type-sheet/date-picker/textarea are all
+# verified above; that is the scope of this flow.

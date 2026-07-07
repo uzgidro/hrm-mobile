@@ -1,0 +1,4 @@
+# Shared Maestro config. `appId` is the same on iOS and Android.
+appId: uz.uzgidro.hrm
+---
+# (no shared onFlowStart hooks yet)

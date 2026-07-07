@@ -15,9 +15,17 @@ npm start          # expo start (Metro, dev server)
 npm run ios        # expo run:ios   (native build)
 npm run android    # expo run:android
 npm run web        # expo start --web
+
+npm test           # jest (jest-expo + RNTL 14 + axios-mock-adapter)
+npm run typecheck  # tsc --noEmit (strict mode)
+npm run lint       # eslint (eslint-config-expo/flat)
 ```
 
-There is **no test runner, linter, or typecheck script** configured. To typecheck manually: `npx tsc --noEmit` (strict mode is on). Builds ship via EAS (`eas.json`: `preview` = internal APK, `production` = app-bundle with autoIncrement).
+Every change should keep `npm test`, `npm run typecheck`, and `npm run lint` green. Builds ship via EAS (`eas.json`: `preview` = internal APK, `production` = app-bundle with autoIncrement).
+
+**Testing conventions** (see `src/test/`): unit-test pure functions and data-layer request/query factories with `axios-mock-adapter`; component tests via the awaited `renderWithProviders`. Do **not** test hooks with `renderHook` — under RNTL 14 it deadlocks the jest worker; split hooks into a thin `useMutation`/`useQuery` wrapper over a pure request function and test the function. E2E smoke flows live in `.maestro/` (see its README) and run against a dev build on a simulator/emulator.
+
+Expo SDK is **56** and its APIs have changed from earlier versions — consult https://docs.expo.dev/versions/v56.0.0/ before writing native/Expo code.
 
 Expo SDK is **56** and its APIs have changed from earlier versions — consult https://docs.expo.dev/versions/v56.0.0/ before writing native/Expo code.
 
@@ -25,7 +33,7 @@ Expo SDK is **56** and its APIs have changed from earlier versions — consult h
 
 **Routing** is file-based via Expo Router with typed routes (`app/`). `app/_layout.tsx` is the single source of navigation truth: it wraps everything in `SafeAreaProvider → ThemeProvider → QueryClientProvider`, and every stack screen must be declared there. Two route groups: `(auth)/` (login) and `(tabs)/` (bottom tabs). All other screens are flat files in `app/` pushed onto the root stack.
 
-**Auth bootstrap** lives in the `AuthLoader` component inside `app/_layout.tsx`. On launch it reads `access_token` from secure storage, calls `auth/me`, and routes to `(tabs)` or `(auth)/login`. On network failure (not 401/403) it falls back to the cached user (`cached_user`) so the app works offline. Tokens and the user cache go through `src/api/storage.ts`, which is a **SecureStore wrapper with a `localStorage` fallback on web** (SecureStore doesn't exist on web).
+**Auth bootstrap** — routing is **declarative**: `app/_layout.tsx` wraps screens in `<Stack.Protected guard={isAuthenticated}>` (tabs + inner screens) and `<Stack.Protected guard={!isAuthenticated}>` (`(auth)`), so login/logout flips `authStore.isAuthenticated` and the guard redirects automatically — do **not** add imperative `router.replace` for auth navigation. The `useAuthBootstrap` hook (`src/auth/`) resolves the session on launch and drives the native splash: it seeds a cached user immediately (non-blocking startup) then refreshes `auth/me` in the background. The pure, tested resolver is `resolveBootstrap()` in `src/auth/bootstrap.ts` — its five branches (no token / auth-me ok / 401-403 → logout / network error → cached user offline / no cache → login) are the auth contract; change it there, not inline. Tokens and the user cache go through `src/api/storage.ts` (a **SecureStore wrapper with a `localStorage` fallback on web**), and the access token is cached in memory via `src/api/authToken.ts` (read once, not per request).
 
 **API layer** (`src/api/`):
 - `client.ts` — the shared axios instance. A request interceptor attaches the bearer token; a response interceptor does **single-flight token refresh**: the first 401 starts one refresh promise and all concurrent 401s await it, so parallel queries on app-open don't each rotate the session and log the user out. If refresh fails, tokens are deleted. **Always import `apiClient` from here** — don't create new axios instances (a raw `axios.post` is used only inside the refresh call itself, to avoid interceptor recursion).
@@ -33,6 +41,8 @@ Expo SDK is **56** and its APIs have changed from earlier versions — consult h
 - Data fetching uses **TanStack Query** directly (`useQuery`/`useMutation` with `apiClient`). `src/hooks/useApi.ts` (`useGet`/`usePost`) is a simpler legacy pattern still used by some screens — prefer React Query for new work.
 
 **State**: **Zustand**, not Redux/Context, for app state. `authStore` (user, auth flags, login/logout, plus `isMasterAdmin`/`isEmployee`/`isHR` helpers) and `prefsStore` (theme preference, hydrated on launch). React Query owns all server state.
+
+**Errors & UX states** — the QueryClient (`src/lib/queryClient.ts`) has a `QueryCache`/`MutationCache` `onError` that auto-shows a toast (`src/lib/toast.ts` + `<ToastHost/>` in the root layout): background query refetch failures toast (stale data stays), first-load query errors are left to the screen's `<ErrorState/>`, and every mutation error toasts unless it sets `meta: { skipErrorToast: true }`. Error text is normalized via `getApiErrorMessage(e, fallback)` (`src/api/errors.ts`) — use it in catch blocks instead of hand-parsing `detail`. A root `<RootErrorBoundary/>` catches render crashes. Screens use the shared `<LoadingView/>` / `<EmptyState/>` / `<ErrorState/>` from `src/components/StateViews.tsx` rather than inline `ActivityIndicator`/empty blocks.
 
 **Roles & access** (`src/utils/roles.ts`) — the critical shared logic. It mirrors the web's `roleHelpers.js` 1:1. Special roles are `type === 'employee'` with `is_multi_org_user === true` and a `multi_org_employee_role` (`hr | kpp | ministr | deputy | chancellery | ...`), which may arrive as a **string or an array** — always resolve via `getMultiOrgRoles()`, never read the field directly. `canAccessPage(user, pageKey)` decides page/tab visibility and is what gates tab `href`s in `app/(tabs)/_layout.tsx` (a tab is hidden by setting `href: null`). When changing who-can-see-what, keep it consistent with the web's nav config.
 
@@ -44,7 +54,7 @@ Expo SDK is **56** and its APIs have changed from earlier versions — consult h
 
 ## Conventions
 
-- **Target structure (in-progress migration):** logic lives in `src/features/<feature>/` (api/components/screens/hooks/utils), `app/` is routes-only (thin re-exports). See `src/features/README.md`. Screens migrate into features incrementally as work touches them — new code should follow this layout. No cross-feature imports.
+- **Feature structure:** logic lives in `src/features/<feature>/` (api/components/screens/hooks/utils), `app/` is routes-only (thin re-exports like `export { default } from '@/features/<f>/screens/XScreen'`). See `src/features/README.md`. Most screens are migrated (visitors, orders, letters, leaves, employees, projects, profile, attendance, birthdays, news, notifications); `app/(tabs)/index.tsx` (home dashboard) and the auth/infra screens remain outside. New code follows this layout. **No cross-feature imports** — a feature reaches other features only through shared `src/utils/*`, `src/api/*`, or `src/components/*`. Each feature's data access is a per-feature `api/queries.ts` (hierarchical `xKeys` + `queryOptions` factories) + `api/mutations.ts` (pure request fns + thin `useMutation` hooks invalidating `xKeys.all`); see the `visitors` feature as the reference.
 - Path alias `@/*` → `src/*` (tsconfig). App screens under `app/` typically import via relative paths; prefer `@/*` in new/moved code.
 - Status/domain string mapping (order stages, letter statuses, leave types, role→page) is centralized in `src/utils/*` — extend those rather than scattering conditionals in screens.
 - User-facing strings are Uzbek (no i18n library — literals throughout; `dayjs` uses the `uz` locale for weekday/month names). Match surrounding wording when adding UI text.

@@ -1,0 +1,26 @@
+# Login flow. Provide credentials to actually sign in:
+#   maestro test -e USERNAME=... -e PASSWORD=... .maestro/login.yaml
+# With no credentials it assumes an already-authenticated session and just
+# asserts the dashboard is reachable (so the flow is safe to run either way).
+appId: uz.uzgidro.hrm
+env:
+  USERNAME: ""
+  PASSWORD: ""
+---
+- launchApp
+- runFlow:
+    # Only drive the login form when credentials were supplied AND the login
+    # button is on screen.
+    when:
+      visible: 'Kirish'
+      true: ${USERNAME != ""}
+    commands:
+      - tapOn: 'Username yoki email'
+      - inputText: ${USERNAME}
+      - tapOn:
+          below: 'Parol'
+      - inputText: ${PASSWORD}
+      - tapOn: 'Kirish'
+
+# Either way we should be authenticated — the dashboard schedule card shows.
+- assertVisible: 'Bugungi jadval'

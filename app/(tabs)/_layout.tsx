@@ -57,12 +57,13 @@ export default function TabsLayout() {
     >
       <Tabs.Screen
         name="index"
-        options={{ tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="home" label="Asosiy" colors={colors} /> }}
+        options={{ tabBarButtonTestID: 'tab-home', tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="home" label="Asosiy" colors={colors} /> }}
       />
       <Tabs.Screen
         name="orders"
         options={{
           href: canAccessPage(user, 'orders') ? undefined : null,
+          tabBarButtonTestID: 'tab-orders',
           tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="orders" label="Buyruqlar" colors={colors} />,
         }}
       />
@@ -70,16 +71,17 @@ export default function TabsLayout() {
         name="letters"
         options={{
           href: canAccessPage(user, 'letters') ? undefined : null,
+          tabBarButtonTestID: 'tab-letters',
           tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="mail" label="Xatlar" colors={colors} />,
         }}
       />
       <Tabs.Screen
         name="modules"
-        options={{ tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="grid" label="Modullar" colors={colors} /> }}
+        options={{ tabBarButtonTestID: 'tab-modules', tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="grid" label="Modullar" colors={colors} /> }}
       />
       <Tabs.Screen
         name="mehmonlar"
-        options={{ tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="guest" label="Mehmonlar" colors={colors} /> }}
+        options={{ tabBarButtonTestID: 'tab-guests', tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="guest" label="Mehmonlar" colors={colors} /> }}
       />
       {/* Profil — bottom bardan olib tashlandi; tepadagi avatar va Modullar orqali ochiladi */}
       <Tabs.Screen name="profile" options={{ href: null }} />
