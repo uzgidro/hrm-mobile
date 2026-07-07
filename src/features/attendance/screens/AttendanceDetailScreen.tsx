@@ -2,7 +2,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useState, useMemo } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
-  TouchableOpacity, ActivityIndicator,
+  TouchableOpacity,
 } from 'react-native';
 import { useQueries } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -16,6 +16,7 @@ import type { ThemeColors } from '@/theme/palettes';
 import { Employee, AttendanceEvent, WorkLeave } from '@/types';
 import { fetchAllEmployees, employeesQueryKey } from '@/utils/employees';
 import { Icon } from '@/components/Icon';
+import { LoadingView } from '@/components/StateViews';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { dayAttendanceQuery, teamLeavesQuery } from '../api/queries';
 
@@ -270,7 +271,7 @@ export default function AttendanceDetailScreen() {
       </View>
 
       {isLoading ? (
-        <View style={styles.loadingWrapper}><ActivityIndicator color={colors.primaryLight} size="large" /></View>
+        <LoadingView />
       ) : (
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           {onlySubordinates && (
@@ -298,7 +299,6 @@ export default function AttendanceDetailScreen() {
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     safe: { flex: 1, backgroundColor: c.bg },
-    loadingWrapper: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 
     header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
     backBtn: { width: 36, height: 36, justifyContent: 'center' },

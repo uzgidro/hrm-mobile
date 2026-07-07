@@ -9,6 +9,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
+import { LoadingView } from '@/components/StateViews';
 import { getApiErrorMessage } from '@/api/errors';
 import { getMyProfile, useUpdateMyProfile } from '../api/mutations';
 
@@ -109,9 +110,7 @@ export default function ProfileEditScreen() {
   if (loading) {
     return (
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-        <View style={styles.loadingWrapper}>
-          <ActivityIndicator color={styles._spinner.color} size="large" />
-        </View>
+        <LoadingView />
       </SafeAreaView>
     );
   }
@@ -233,10 +232,8 @@ function Field({
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     safe: { flex: 1, backgroundColor: c.bg },
-    _spinner: { color: c.primaryLight },
     _placeholder: { color: c.textMuted },
     _onPrimary: { color: c.onPrimary },
-    loadingWrapper: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 
     header: {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',

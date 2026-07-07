@@ -1,7 +1,7 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   View, Text, ScrollView, StyleSheet,
-  TouchableOpacity, Image, ActivityIndicator,
+  TouchableOpacity, Image,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
@@ -11,6 +11,7 @@ import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { WorkExperience, Education } from '@/types';
 import { Icon, type IconName } from '@/components/Icon';
+import { LoadingView, ErrorState } from '@/components/StateViews';
 import { employeeDetailQuery } from '../api/queries';
 
 const GENDER_MAP: Record<number, string> = { 1: 'Erkak', 2: 'Ayol' };
@@ -35,7 +36,7 @@ export default function EmployeeDetailScreen() {
   // Own profile → see everything. Other employees → only HR/admin see sensitive data.
   const canViewSensitive = isOwnProfile || isMasterAdmin(user) || isHR(user) || user?.type === 'admin';
 
-  const { data: employee = null, isLoading } = useQuery(employeeDetailQuery(employeeId ?? 0));
+  const { data: employee = null, isLoading, refetch } = useQuery(employeeDetailQuery(employeeId ?? 0));
   // Preserve the original imperative semantics: with no id the fetch never ran
   // and `loading` stayed true (spinner shown indefinitely). React Query disables
   // the query when id is falsy, so replicate that "stuck loading" state.
@@ -44,9 +45,7 @@ export default function EmployeeDetailScreen() {
   if (loading) {
     return (
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-        <View style={styles.loadingWrapper}>
-          <ActivityIndicator color={styles._spinner.color} size="large" />
-        </View>
+        <LoadingView />
       </SafeAreaView>
     );
   }
@@ -55,9 +54,7 @@ export default function EmployeeDetailScreen() {
     return (
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
         <Header styles={styles} title="Ma'lumotnoma" />
-        <View style={styles.loadingWrapper}>
-          <Text style={styles.errorText}>Ma'lumot topilmadi</Text>
-        </View>
+        <ErrorState title="Ma'lumot topilmadi" onRetry={() => refetch()} />
       </SafeAreaView>
     );
   }
@@ -243,9 +240,6 @@ function Divider({ styles }: { styles: any }) {
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     safe: { flex: 1, backgroundColor: c.bg },
-    _spinner: { color: c.primaryLight },
-    loadingWrapper: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    errorText: { color: c.textSecondary, fontSize: 15 },
 
     header: {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',

@@ -1,7 +1,7 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { memo, useCallback } from 'react';
 import {
-  View, Text, FlatList, StyleSheet, RefreshControl, Image, ActivityIndicator,
+  View, Text, FlatList, StyleSheet, RefreshControl, Image,
   type ListRenderItem,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
@@ -11,7 +11,7 @@ import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import type { NewsPost } from '@/types';
 import { ScreenHeader } from '@/components/ScreenHeader';
-import { Icon } from '@/components/Icon';
+import { LoadingView, EmptyState } from '@/components/StateViews';
 import { newsListQuery } from '../api/queries';
 
 type Styles = ReturnType<typeof makeStyles>;
@@ -61,7 +61,7 @@ export default function NewsScreen() {
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScreenHeader title="Yangiliklar" />
       {isLoading ? (
-        <View style={styles.center}><ActivityIndicator color={colors.primary} size="large" /></View>
+        <LoadingView />
       ) : (
         <FlatList
           data={news}
@@ -71,11 +71,11 @@ export default function NewsScreen() {
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={isFetching && !isLoading} onRefresh={refetch} tintColor={colors.primary} />}
           ListEmptyComponent={
-            <View style={styles.emptyWrapper}>
-              <View style={styles.emptyIconWrap}><Icon name="news" size={30} color={colors.textMuted} /></View>
-              <Text style={styles.emptyTitle}>Yangiliklar yo'q</Text>
-              <Text style={styles.emptyText}>Hozircha yangiliklar mavjud emas</Text>
-            </View>
+            <EmptyState
+              icon="news"
+              title="Yangiliklar yo'q"
+              message="Hozircha yangiliklar mavjud emas"
+            />
           }
         />
       )}
@@ -86,7 +86,6 @@ export default function NewsScreen() {
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     safe: { flex: 1, backgroundColor: c.bg },
-    center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     content: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 32 },
 
     card: { backgroundColor: c.card, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: c.cardBorder },
@@ -103,9 +102,4 @@ const makeStyles = (c: ThemeColors) =>
 
     tagWrapper: { marginTop: 4, alignSelf: 'flex-start', backgroundColor: c.primarySoft, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
     tag: { fontSize: 12, color: c.primary, fontWeight: '600' },
-
-    emptyWrapper: { alignItems: 'center', paddingTop: 90, gap: 10 },
-    emptyIconWrap: { width: 64, height: 64, borderRadius: 32, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
-    emptyTitle: { fontSize: 17, fontWeight: '700', color: c.text },
-    emptyText: { fontSize: 14, color: c.textSecondary },
   });

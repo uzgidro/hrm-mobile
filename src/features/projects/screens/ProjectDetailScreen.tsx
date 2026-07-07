@@ -12,6 +12,7 @@ import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { ScreenHeader, HeaderAction } from '@/components/ScreenHeader';
 import { Icon } from '@/components/Icon';
+import { LoadingView, EmptyState } from '@/components/StateViews';
 import { isMasterAdmin } from '@/utils/roles';
 import { getApiErrorMessage } from '@/api/errors';
 import type { WorkspaceCard } from '@/types';
@@ -107,7 +108,7 @@ export default function LoyihaDetailScreen() {
         }
       />
       {isLoading || !ws ? (
-        <View style={styles.center}><ActivityIndicator color={colors.primary} size="large" /></View>
+        <LoadingView />
       ) : (
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           {!!ws.description && (
@@ -145,10 +146,7 @@ export default function LoyihaDetailScreen() {
           </View>
 
           {columns.length === 0 ? (
-            <View style={styles.empty}>
-              <View style={styles.emptyIconWrap}><Icon name="board" size={28} color={colors.textMuted} /></View>
-              <Text style={styles.emptyText}>Ustunlar yo'q</Text>
-            </View>
+            <EmptyState icon="board" title="Ustunlar yo'q" />
           ) : (
             columns.map((col, idx) => {
               const cards = (cardQueries[idx]?.data ?? []) as WorkspaceCard[];
@@ -236,7 +234,6 @@ export default function LoyihaDetailScreen() {
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     safe: { flex: 1, backgroundColor: c.bg },
-    center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     content: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 24 },
 
     card: { backgroundColor: c.card, borderRadius: 16, borderWidth: 1, borderColor: c.cardBorder, padding: 16, marginBottom: 12 },
@@ -272,10 +269,6 @@ const makeStyles = (c: ThemeColors) =>
 
     addCardBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, marginTop: 8, borderRadius: 10, borderWidth: 1, borderColor: c.cardBorder, borderStyle: 'dashed' },
     addCardText: { fontSize: 13, color: c.textSecondary, fontWeight: '600' },
-
-    empty: { alignItems: 'center', paddingVertical: 30, gap: 10 },
-    emptyIconWrap: { width: 60, height: 60, borderRadius: 30, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, alignItems: 'center', justifyContent: 'center' },
-    emptyText: { color: c.textMuted, fontSize: 14 },
 
     modalOverlay: { flex: 1, backgroundColor: c.overlay, justifyContent: 'center', paddingHorizontal: 28 },
     modalCard: { backgroundColor: c.card, borderRadius: 18, padding: 18 },

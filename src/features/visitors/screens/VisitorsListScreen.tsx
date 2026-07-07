@@ -2,7 +2,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useMemo, useState } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
-  ActivityIndicator, RefreshControl, Image, FlatList,
+  RefreshControl, Image, FlatList,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -11,6 +11,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
+import { LoadingView, EmptyState } from '@/components/StateViews';
 import { visitorsListQuery } from '../api/queries';
 
 export default function MehmonlarScreen() {
@@ -63,7 +64,7 @@ export default function MehmonlarScreen() {
       </View>
 
       {isLoading ? (
-        <View style={styles.center}><ActivityIndicator color={colors.primary} size="large" /></View>
+        <LoadingView />
       ) : (
         <FlatList
           data={filtered}
@@ -114,10 +115,7 @@ export default function MehmonlarScreen() {
             );
           }}
           ListEmptyComponent={
-            <View style={styles.empty}>
-              <View style={styles.emptyIconWrap}><Icon name="guest" size={30} color={colors.textMuted} /></View>
-              <Text style={styles.emptyText}>{search ? 'Hech narsa topilmadi' : "Mehmonlar yo'q"}</Text>
-            </View>
+            <EmptyState icon="guest" title={search ? 'Hech narsa topilmadi' : "Mehmonlar yo'q"} />
           }
         />
       )}
@@ -128,7 +126,6 @@ export default function MehmonlarScreen() {
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     safe: { flex: 1, backgroundColor: c.bg },
-    center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     header: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
     title: { fontSize: 26, fontWeight: '800', color: c.text },
     count: { fontSize: 14, fontWeight: '700', color: c.textMuted, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2 },
@@ -157,8 +154,4 @@ const makeStyles = (c: ThemeColors) =>
     badge: { paddingHorizontal: 9, paddingVertical: 3, borderRadius: 8 },
     badgeText: { fontSize: 11, fontWeight: '700' },
     validText: { fontSize: 11, color: c.textMuted },
-
-    empty: { alignItems: 'center', paddingTop: 90, gap: 10 },
-    emptyIconWrap: { width: 64, height: 64, borderRadius: 32, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, alignItems: 'center', justifyContent: 'center' },
-    emptyText: { color: c.textMuted, fontSize: 15 },
   });

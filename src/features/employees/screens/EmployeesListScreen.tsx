@@ -2,7 +2,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useMemo } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  ActivityIndicator, Image, FlatList, TextInput,
+  Image, FlatList, TextInput,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -11,6 +11,7 @@ import { usePrefsStore } from '@/store/prefsStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
+import { LoadingView, EmptyState } from '@/components/StateViews';
 import { AccessDenied } from '@/components/AccessDenied';
 import { canAccessPage } from '@/utils/roles';
 import { employeesListQuery } from '../api/queries';
@@ -81,9 +82,7 @@ export default function EmployeesListScreen() {
       </View>
 
       {isLoading ? (
-        <View style={styles.center}>
-          <ActivityIndicator color={colors.primaryLight} size="large" />
-        </View>
+        <LoadingView />
       ) : (
         <FlatList
           data={filtered}
@@ -112,10 +111,7 @@ export default function EmployeesListScreen() {
             </TouchableOpacity>
           )}
           ListEmptyComponent={
-            <View style={styles.emptyWrapper}>
-              <View style={styles.emptyIconWrap}><Icon name="users" size={30} color={colors.textMuted} /></View>
-              <Text style={styles.emptyText}>{search ? 'Topilmadi' : "Xodimlar yo'q"}</Text>
-            </View>
+            <EmptyState icon="users" title={search ? 'Topilmadi' : "Xodimlar yo'q"} />
           }
         />
       )}
@@ -126,7 +122,6 @@ export default function EmployeesListScreen() {
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     safe: { flex: 1, backgroundColor: c.bg },
-    center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 
     header: {
       flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14,
@@ -159,9 +154,4 @@ const makeStyles = (c: ThemeColors) =>
     empName: { fontSize: 14, fontWeight: '700', color: c.text },
     empSub: { fontSize: 12, color: c.textMuted, marginTop: 2 },
     arrowIcon: { fontSize: 22, color: c.textMuted },
-
-    emptyWrapper: { alignItems: 'center', paddingTop: 80, gap: 12 },
-    emptyIcon: { fontSize: 48 },
-    emptyIconWrap: { width: 64, height: 64, borderRadius: 32, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, alignItems: 'center', justifyContent: 'center' },
-    emptyText: { color: c.textMuted, fontSize: 15 },
   });

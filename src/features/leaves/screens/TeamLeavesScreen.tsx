@@ -2,7 +2,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useMemo } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
-  TouchableOpacity, ActivityIndicator, RefreshControl, Image,
+  TouchableOpacity, RefreshControl, Image,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -11,6 +11,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
+import { LoadingView, EmptyState } from '@/components/StateViews';
 import { teamLeavesQuery } from '../api/queries';
 
 function statusMeta(status: string, c: ThemeColors) {
@@ -84,7 +85,7 @@ export default function TeamLeavesScreen() {
 
       <View style={{ flex: 1 }}>
         {isLoading ? (
-          <View style={styles.center}><ActivityIndicator color={colors.primaryLight} size="large" /></View>
+          <LoadingView />
         ) : (
           <ScrollView
             contentContainerStyle={styles.content}
@@ -92,10 +93,7 @@ export default function TeamLeavesScreen() {
             refreshControl={<RefreshControl refreshing={isFetching && !isLoading} onRefresh={refetch} tintColor={colors.primaryLight} />}
           >
             {filtered.length === 0 ? (
-              <View style={styles.emptyWrapper}>
-                <View style={styles.emptyIconWrap}><Icon name="checklist" size={30} color={colors.textMuted} /></View>
-                <Text style={styles.emptyText}>So'rovlar yo'q</Text>
-              </View>
+              <EmptyState icon="checklist" title="So'rovlar yo'q" />
             ) : (
               filtered.map((leave) => {
                 const st = statusMeta(leave.status, colors);
@@ -150,7 +148,6 @@ export default function TeamLeavesScreen() {
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     safe: { flex: 1, backgroundColor: c.bg },
-    center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 
     header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
     backBtn: { width: 36, height: 36, justifyContent: 'center' },
@@ -167,10 +164,6 @@ const makeStyles = (c: ThemeColors) =>
     monthChipTextActive: { color: c.onPrimary },
 
     content: { paddingHorizontal: 16, paddingTop: 10 },
-    emptyWrapper: { alignItems: 'center', paddingTop: 80, gap: 12 },
-    emptyIcon: { fontSize: 48 },
-    emptyIconWrap: { width: 64, height: 64, borderRadius: 32, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, alignItems: 'center', justifyContent: 'center' },
-    emptyText: { color: c.textMuted, fontSize: 15 },
 
     card: { backgroundColor: c.card, borderRadius: 16, borderWidth: 1, borderColor: c.cardBorder, padding: 14, marginBottom: 10, gap: 6 },
     empRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 },

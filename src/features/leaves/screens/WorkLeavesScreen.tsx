@@ -2,7 +2,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useMemo } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
-  TouchableOpacity, ActivityIndicator, RefreshControl, Image,
+  TouchableOpacity, RefreshControl, Image,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -11,6 +11,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
+import { LoadingView, EmptyState } from '@/components/StateViews';
 import { WorkLeave } from '@/types';
 import { myLeavesQuery, assignedLeavesQuery } from '../api/queries';
 
@@ -193,7 +194,7 @@ export default function WorkLeavesScreen() {
 
       <View style={{ flex: 1 }}>
         {isLoading ? (
-          <View style={styles.center}><ActivityIndicator color={colors.primaryLight} size="large" /></View>
+          <LoadingView />
         ) : (
           <ScrollView
             contentContainerStyle={styles.content}
@@ -202,10 +203,10 @@ export default function WorkLeavesScreen() {
           >
             {isSupervisor ? (
               filteredIncoming.length === 0 ? (
-                <View style={styles.emptyWrapper}>
-                  <View style={styles.emptyIconWrap}><Icon name="checklist" size={30} color={colors.textMuted} /></View>
-                  <Text style={styles.emptyText}>{incomingFilter === 'action' ? "Kutilayotgan so'rovlar yo'q" : "So'rovlar yo'q"}</Text>
-                </View>
+                <EmptyState
+                  icon="checklist"
+                  title={incomingFilter === 'action' ? "Kutilayotgan so'rovlar yo'q" : "So'rovlar yo'q"}
+                />
               ) : (
                 filteredIncoming.map((leave) => {
                   const alreadySigned = leave.signers?.some((s) => s.id === employeeId);
@@ -215,10 +216,7 @@ export default function WorkLeavesScreen() {
               )
             ) : (
               filteredMyLeaves.length === 0 ? (
-                <View style={styles.emptyWrapper}>
-                  <View style={styles.emptyIconWrap}><Icon name="checklist" size={30} color={colors.textMuted} /></View>
-                  <Text style={styles.emptyText}>So'rovlar yo'q</Text>
-                </View>
+                <EmptyState icon="checklist" title="So'rovlar yo'q" />
               ) : (
                 filteredMyLeaves.map((leave) => <LeaveCard key={leave.id} leave={leave} styles={styles} colors={colors} />)
               )
@@ -240,7 +238,6 @@ export default function WorkLeavesScreen() {
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     safe: { flex: 1, backgroundColor: c.bg },
-    center: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 80 },
 
     header: {
       flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14,
@@ -263,10 +260,6 @@ const makeStyles = (c: ThemeColors) =>
     filterTabTextActive: { color: c.onPrimary },
 
     content: { paddingHorizontal: 16, paddingTop: 8 },
-
-    emptyWrapper: { alignItems: 'center', paddingTop: 80, gap: 12 },
-    emptyIconWrap: { width: 64, height: 64, borderRadius: 32, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, alignItems: 'center', justifyContent: 'center' },
-    emptyText: { color: c.textMuted, fontSize: 15 },
 
     card: { backgroundColor: c.card, borderRadius: 16, borderWidth: 1, borderColor: c.cardBorder, padding: 14, marginBottom: 10, gap: 6 },
     cardHighlight: { borderColor: c.warning, backgroundColor: c.warningSoft },

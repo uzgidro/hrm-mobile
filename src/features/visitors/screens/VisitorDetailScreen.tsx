@@ -1,6 +1,6 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-  View, Text, ScrollView, StyleSheet, Image, ActivityIndicator, Alert,
+  View, Text, ScrollView, StyleSheet, Image, Alert,
   TouchableOpacity, Linking, Share,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -10,6 +10,7 @@ import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { ScreenHeader, HeaderAction } from '@/components/ScreenHeader';
 import { Icon, IconName } from '@/components/Icon';
+import { LoadingView } from '@/components/StateViews';
 import { getApiErrorMessage } from '@/api/errors';
 import { visitorDetailQuery } from '../api/queries';
 import { useDeleteVisitor } from '../api/mutations';
@@ -68,7 +69,7 @@ export default function MehmonDetailScreen() {
         }
       />
       {isLoading || !v ? (
-        <View style={styles.center}><ActivityIndicator color={colors.primary} size="large" /></View>
+        <LoadingView />
       ) : (
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           <View style={styles.hero}>
@@ -141,7 +142,6 @@ export default function MehmonDetailScreen() {
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     safe: { flex: 1, backgroundColor: c.bg },
-    center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     content: { paddingHorizontal: 16, paddingBottom: 24 },
 
     hero: { alignItems: 'center', paddingVertical: 8, marginBottom: 12 },

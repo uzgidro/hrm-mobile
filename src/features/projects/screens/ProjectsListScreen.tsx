@@ -1,6 +1,6 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-  View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, RefreshControl, Image, FlatList,
+  View, Text, StyleSheet, TouchableOpacity, RefreshControl, Image, FlatList,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -8,6 +8,7 @@ import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { ScreenHeader, HeaderAction } from '@/components/ScreenHeader';
 import { Icon } from '@/components/Icon';
+import { LoadingView, EmptyState } from '@/components/StateViews';
 import { myWorkspacesQuery } from '../api/queries';
 
 function Stat({ icon, value, styles, colors }: { icon: any; value: number; styles: any; colors: ThemeColors }) {
@@ -29,7 +30,7 @@ export default function LoyihalarScreen() {
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScreenHeader title="Loyihalar" right={<HeaderAction icon="plus" onPress={() => router.push('/loyiha-form' as any)} />} />
       {isLoading ? (
-        <View style={styles.center}><ActivityIndicator color={colors.primary} size="large" /></View>
+        <LoadingView />
       ) : (
         <FlatList
           data={items}
@@ -77,10 +78,7 @@ export default function LoyihalarScreen() {
             );
           }}
           ListEmptyComponent={
-            <View style={styles.empty}>
-              <View style={styles.emptyIconWrap}><Icon name="board" size={30} color={colors.textMuted} /></View>
-              <Text style={styles.emptyText}>Loyihalar yo'q</Text>
-            </View>
+            <EmptyState icon="board" title="Loyihalar yo'q" />
           }
         />
       )}
@@ -91,7 +89,6 @@ export default function LoyihalarScreen() {
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     safe: { flex: 1, backgroundColor: c.bg },
-    center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     content: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 24 },
 
     card: { backgroundColor: c.card, borderRadius: 16, borderWidth: 1, borderColor: c.cardBorder, padding: 16, marginBottom: 12 },
@@ -111,8 +108,4 @@ const makeStyles = (c: ThemeColors) =>
     avText: { fontSize: 10, fontWeight: '700', color: c.primary },
     avMore: { backgroundColor: c.cardBorder, alignItems: 'center', justifyContent: 'center' },
     avMoreText: { fontSize: 9, fontWeight: '700', color: c.textSecondary },
-
-    empty: { alignItems: 'center', paddingTop: 90, gap: 10 },
-    emptyIconWrap: { width: 64, height: 64, borderRadius: 32, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, alignItems: 'center', justifyContent: 'center' },
-    emptyText: { color: c.textMuted, fontSize: 15 },
   });

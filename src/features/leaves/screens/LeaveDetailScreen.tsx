@@ -12,6 +12,7 @@ import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Employee } from '@/types';
 import { Icon } from '@/components/Icon';
+import { LoadingView, EmptyState } from '@/components/StateViews';
 import { getApiErrorMessage } from '@/api/errors';
 import { leaveDetailQuery } from '../api/queries';
 import { useSignLeave, useRejectLeave } from '../api/mutations';
@@ -127,7 +128,7 @@ export default function LeaveDetailScreen() {
     return (
       <SafeAreaView style={s.safe} edges={['top', 'bottom']}>
         <HeaderBar />
-        <View style={s.center}><ActivityIndicator color={colors.primaryLight} size="large" /></View>
+        <LoadingView />
       </SafeAreaView>
     );
   }
@@ -136,7 +137,7 @@ export default function LeaveDetailScreen() {
     return (
       <SafeAreaView style={s.safe} edges={['top', 'bottom']}>
         <HeaderBar />
-        <View style={s.center}><Text style={s.errorText}>Ma'lumot topilmadi</Text></View>
+        <EmptyState title="Ma'lumot topilmadi" />
       </SafeAreaView>
     );
   }
@@ -233,8 +234,6 @@ export default function LeaveDetailScreen() {
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     safe: { flex: 1, backgroundColor: c.bg },
-    center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    errorText: { color: c.textSecondary, fontSize: 15 },
 
     header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
     backBtn: { width: 36, height: 36, justifyContent: 'center' },

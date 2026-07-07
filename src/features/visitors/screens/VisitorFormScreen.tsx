@@ -12,6 +12,7 @@ import type { ThemeColors } from '@/theme/palettes';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { FormInput } from '@/components/FormInput';
 import { Icon } from '@/components/Icon';
+import { LoadingView } from '@/components/StateViews';
 import { DateTimePickerModal } from '@/components/DateTimePicker';
 import { getApiErrorMessage } from '@/api/errors';
 import { getVisitor } from '../api/queries';
@@ -132,7 +133,7 @@ export default function MehmonFormScreen() {
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScreenHeader title={isEdit ? 'Mehmonni tahrirlash' : "Yangi mehmon"} />
       {hydrating ? (
-        <View style={styles.center}><ActivityIndicator color={colors.primary} size="large" /></View>
+        <LoadingView />
       ) : (
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           {/* Rasm */}
@@ -222,7 +223,6 @@ export default function MehmonFormScreen() {
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     safe: { flex: 1, backgroundColor: c.bg },
-    center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 24 },
 
     photoRow: { flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 18 },

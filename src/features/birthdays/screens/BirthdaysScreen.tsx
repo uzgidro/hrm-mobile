@@ -2,7 +2,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useMemo } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  ActivityIndicator, Image, FlatList, TextInput,
+  Image, FlatList, TextInput,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -13,6 +13,7 @@ import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { fetchAllEmployees, employeesQueryKey } from '@/utils/employees';
 import { Icon } from '@/components/Icon';
+import { LoadingView, EmptyState } from '@/components/StateViews';
 import { birthdaysListQuery } from '../api/queries';
 
 const MONTHS_UZ = ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 'Iyul', 'Avgust', 'Sentyabr', 'Oktyabr', 'Noyabr', 'Dekabr'];
@@ -81,7 +82,7 @@ export default function BirthdaysScreen() {
       </View>
 
       {isLoading ? (
-        <View style={styles.center}><ActivityIndicator color={colors.primaryLight} size="large" /></View>
+        <LoadingView />
       ) : (
         <FlatList
           data={filtered}
@@ -129,10 +130,7 @@ export default function BirthdaysScreen() {
             );
           }}
           ListEmptyComponent={
-            <View style={styles.emptyWrapper}>
-              <View style={styles.emptyIconWrap}><Icon name="cake" size={30} color={colors.textMuted} /></View>
-              <Text style={styles.emptyText}>{search ? 'Topilmadi' : "Tug'ilgan kun yo'q"}</Text>
-            </View>
+            <EmptyState icon="cake" title={search ? 'Topilmadi' : "Tug'ilgan kun yo'q"} />
           }
         />
       )}
@@ -143,7 +141,6 @@ export default function BirthdaysScreen() {
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     safe: { flex: 1, backgroundColor: c.bg },
-    center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 
     header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
     backBtn: { width: 36, height: 36, justifyContent: 'center' },
@@ -175,9 +172,4 @@ const makeStyles = (c: ThemeColors) =>
     todayBadge: { fontSize: 11, color: c.warning, fontWeight: '700' },
     soonBadge: { fontSize: 11, color: c.primaryLight, fontWeight: '700', backgroundColor: c.primarySoft, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8 },
     arrowIcon: { fontSize: 22, color: c.textMuted },
-
-    emptyWrapper: { alignItems: 'center', paddingTop: 80, gap: 12 },
-    emptyIcon: { fontSize: 48 },
-    emptyIconWrap: { width: 64, height: 64, borderRadius: 32, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, alignItems: 'center', justifyContent: 'center' },
-    emptyText: { color: c.textMuted, fontSize: 15 },
   });

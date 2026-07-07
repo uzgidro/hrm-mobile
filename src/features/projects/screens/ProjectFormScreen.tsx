@@ -11,6 +11,7 @@ import type { ThemeColors } from '@/theme/palettes';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { FormInput } from '@/components/FormInput';
 import { Icon } from '@/components/Icon';
+import { LoadingView } from '@/components/StateViews';
 import { PickerModal } from '@/components/PickerModal';
 import { fetchAllEmployees, employeesQueryKey } from '@/utils/employees';
 import { employeeSubLabel } from '@/utils/roles';
@@ -113,7 +114,7 @@ export default function LoyihaFormScreen() {
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScreenHeader title={isEdit ? 'Loyihani tahrirlash' : 'Yangi loyiha'} />
       {hydrating ? (
-        <View style={styles.center}><ActivityIndicator color={colors.primary} size="large" /></View>
+        <LoadingView />
       ) : (
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <FormInput label="Loyiha nomi" value={name} onChangeText={(t) => { setName(t); setError(''); }} placeholder="Masalan: 2026 rejasi" required error={error} />
@@ -184,7 +185,6 @@ export default function LoyihaFormScreen() {
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     safe: { flex: 1, backgroundColor: c.bg },
-    center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 24 },
 
     label: { fontSize: 13, color: c.textSecondary, fontWeight: '600', marginBottom: 6 },

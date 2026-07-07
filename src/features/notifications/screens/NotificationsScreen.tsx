@@ -1,6 +1,6 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-  View, Text, StyleSheet, TouchableOpacity, ActivityIndicator,
+  View, Text, StyleSheet, TouchableOpacity,
   FlatList, RefreshControl,
 } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -13,6 +13,7 @@ import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import type { Notification } from '@/types';
 import { Icon } from '@/components/Icon';
+import { LoadingView, EmptyState } from '@/components/StateViews';
 import { notificationKeys, notificationsListQuery } from '../api/queries';
 import { markNotificationRead, markAllNotificationsRead } from '../api/mutations';
 
@@ -72,7 +73,7 @@ export default function NotificationsScreen() {
       </View>
 
       {isLoading ? (
-        <View style={styles.center}><ActivityIndicator color={colors.primaryLight} size="large" /></View>
+        <LoadingView />
       ) : (
         <FlatList
           data={items}
@@ -104,10 +105,7 @@ export default function NotificationsScreen() {
             );
           }}
           ListEmptyComponent={
-            <View style={styles.empty}>
-              <View style={styles.emptyIconWrap}><Icon name="bell" size={30} color={colors.textMuted} /></View>
-              <Text style={styles.emptyText}>Bildirishnomalar yo'q</Text>
-            </View>
+            <EmptyState icon="bell" title="Bildirishnomalar yo'q" />
           }
         />
       )}
@@ -118,7 +116,6 @@ export default function NotificationsScreen() {
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     safe: { flex: 1, backgroundColor: c.bg },
-    center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
     backBtn: { width: 40, height: 40, justifyContent: 'center' },
     backArrow: { fontSize: 22, color: c.text, fontWeight: '300' },
@@ -135,9 +132,4 @@ const makeStyles = (c: ThemeColors) =>
     title: { fontSize: 14, fontWeight: '700', color: c.text, flexShrink: 1 },
     body: { fontSize: 13, color: c.textSecondary, marginTop: 4, lineHeight: 18 },
     date: { fontSize: 11, color: c.textMuted, marginTop: 6 },
-
-    empty: { alignItems: 'center', paddingTop: 100, gap: 12 },
-    emptyIcon: { fontSize: 48 },
-    emptyIconWrap: { width: 64, height: 64, borderRadius: 32, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, alignItems: 'center', justifyContent: 'center' },
-    emptyText: { color: c.textMuted, fontSize: 15 },
   });
