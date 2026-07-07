@@ -6,13 +6,11 @@ import {
 import { router, type Href } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../../src/store/authStore';
-import { apiClient } from '../../src/api/client';
-import { WORK_LEAVES, NOTIFICATIONS_LIST } from '../../src/api/urls';
 import { useTheme, useThemedStyles } from '../../src/theme/ThemeProvider';
 import type { ThemeColors } from '../../src/theme/palettes';
 import { Icon, IconName } from '../../src/components/Icon';
 import { canAccessPage, type PageKey } from '../../src/utils/roles';
-import type { WorkLeave } from '../../src/types';
+import { homeAssignedLeavesQuery, homeNotificationsQuery } from '@/features/dashboard/api/queries';
 
 type Item = { key: string; icon: IconName; label: string; route: string; access: PageKey; badge?: number };
 type Section = { title: string; items: Item[] };
@@ -27,26 +25,16 @@ export default function ModulesScreen() {
 
   const tileWidth = (width - 16 * 2 - 12 * 2) / 3;
 
-  const { data: assignedLeaves = [] } = useQuery<WorkLeave[]>({
-    queryKey: ['assigned-leaves-home', employee?.id],
-    queryFn: () =>
-      apiClient.get(WORK_LEAVES, { params: { assigned_signer: true, size: 50 } }).then((r) => {
-        const d = r.data;
-        return Array.isArray(d) ? d : (d?.items ?? []);
-      }),
+  // Reuse the dashboard's home factories so this tab shares their cache entries
+  // (assigned-leaves keyed under ['work-leaves'] refreshes on any sign/reject;
+  // notifications under ['notifications'] refreshes on push/mark-read).
+  const { data: assignedLeaves = [] } = useQuery({
+    ...homeAssignedLeavesQuery(employee?.id),
     enabled: !!employee?.id && isSupervisor,
-    staleTime: 30 * 1000,
   });
 
-  const { data: notifications = [] } = useQuery<any[]>({
-    queryKey: ['notifications', employee?.id],
-    queryFn: () =>
-      apiClient.get(NOTIFICATIONS_LIST).then((r) => {
-        const d = r.data;
-        return Array.isArray(d) ? d : (d?.items ?? []);
-      }),
-    enabled: !!employee?.id,
-    staleTime: 30 * 1000,
+  const { data: notifications = [] } = useQuery({
+    ...homeNotificationsQuery(employee?.id),
   });
 
   const pendingCount = useMemo(() => {
