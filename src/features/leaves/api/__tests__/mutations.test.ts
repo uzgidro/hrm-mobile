@@ -1,7 +1,7 @@
 import MockAdapter from 'axios-mock-adapter';
 import { apiClient } from '@/api/client';
-import { WORK_LEAVE_SIGN, WORK_LEAVE_REJECT } from '@/api/urls';
-import { signLeave, rejectLeave } from '../mutations';
+import { WORK_LEAVES, WORK_LEAVE_SIGN, WORK_LEAVE_REJECT } from '@/api/urls';
+import { signLeave, rejectLeave, createLeave } from '../mutations';
 
 let mock: MockAdapter;
 beforeEach(() => {
@@ -23,5 +23,20 @@ describe('leave request functions', () => {
     expect(data).toEqual({ id: 8, status: 'rejected' });
     expect(mock.history.post[0].url).toBe(WORK_LEAVE_REJECT(8));
     expect(JSON.parse(mock.history.post[0].data)).toEqual({ rejection_reason: 'sabab' });
+  });
+
+  it('createLeave POSTs the work-leaves endpoint with the request payload', async () => {
+    mock.onPost(WORK_LEAVES).reply(201, { id: 42 });
+    const payload = {
+      type: "Ta'til",
+      start_date: '2026-07-10T09:00:00.000Z',
+      end_date: '2026-07-10T18:00:00.000Z',
+      description: 'sabab',
+      assigned_signer_ids: [3],
+    };
+    const data = await createLeave(payload);
+    expect(data).toEqual({ id: 42 });
+    expect(mock.history.post[0].url).toBe(WORK_LEAVES);
+    expect(JSON.parse(mock.history.post[0].data)).toEqual(payload);
   });
 });
