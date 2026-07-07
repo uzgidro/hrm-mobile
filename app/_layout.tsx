@@ -19,6 +19,8 @@ import {
   registerTokenWithBackend,
   addNotificationListeners,
 } from '../src/services/notifications';
+import { RootErrorBoundary } from '../src/components/RootErrorBoundary';
+import { ToastHost } from '../src/components/ToastHost';
 
 const queryClient = createAppQueryClient();
 
@@ -128,6 +130,7 @@ function ThemedNavigation() {
         <Stack.Screen name="loyiha-detail" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="loyiha-form" options={{ animation: 'slide_from_bottom' }} />
       </Stack>
+      <ToastHost />
     </>
   );
 }
@@ -136,9 +139,11 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <ThemeProvider>
-        <QueryClientProvider client={queryClient}>
-          <ThemedNavigation />
-        </QueryClientProvider>
+        <RootErrorBoundary>
+          <QueryClientProvider client={queryClient}>
+            <ThemedNavigation />
+          </QueryClientProvider>
+        </RootErrorBoundary>
       </ThemeProvider>
     </SafeAreaProvider>
   );
