@@ -5,6 +5,7 @@ import {
   type ListRenderItem,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
@@ -17,6 +18,7 @@ import { newsListQuery } from '../api/queries';
 type Styles = ReturnType<typeof makeStyles>;
 
 const NewsCard = memo(function NewsCard({ item, styles }: { item: NewsPost; styles: Styles }) {
+  const { t } = useTranslation();
   return (
     <View style={styles.card}>
       <View style={styles.cardHeader}>
@@ -28,7 +30,7 @@ const NewsCard = memo(function NewsCard({ item, styles }: { item: NewsPost; styl
           </View>
         )}
         <View style={styles.authorInfo}>
-          <Text style={styles.authorName}>{item.author?.legal_name || 'Admin'}</Text>
+          <Text style={styles.authorName}>{item.author?.legal_name || t('news.authorFallback')}</Text>
           <Text style={styles.newsDate}>{dayjs(item.created_at).format('DD.MM.YYYY HH:mm')}</Text>
         </View>
       </View>
@@ -37,13 +39,14 @@ const NewsCard = memo(function NewsCard({ item, styles }: { item: NewsPost; styl
       {item.description ? <Text style={styles.newsDesc} numberOfLines={4}>{item.description}</Text> : null}
 
       <View style={styles.tagWrapper}>
-        <Text style={styles.tag}>{item.organization_branch?.name || 'Barcha xodimlarga'}</Text>
+        <Text style={styles.tag}>{item.organization_branch?.name || t('news.allEmployees')}</Text>
       </View>
     </View>
   );
 });
 
 export default function NewsScreen() {
+  const { t } = useTranslation();
   const branchId = useAuthStore((s) => s.user?.employee?.department?.organization_branch_id);
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -59,7 +62,7 @@ export default function NewsScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScreenHeader title="Yangiliklar" />
+      <ScreenHeader title={t('news.title')} />
       {isLoading ? (
         <LoadingView />
       ) : (
@@ -73,8 +76,8 @@ export default function NewsScreen() {
           ListEmptyComponent={
             <EmptyState
               icon="news"
-              title="Yangiliklar yo'q"
-              message="Hozircha yangiliklar mavjud emas"
+              title={t('news.empty')}
+              message={t('news.emptyMessage')}
             />
           }
         />

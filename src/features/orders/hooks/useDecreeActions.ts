@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { Alert } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
+import i18n from '@/i18n';
 import {
   approveDecree,
   rejectDecree,
@@ -34,13 +35,13 @@ export function useDecreeActions(orderId: number, refetch: () => void) {
         await fn();
         qc.invalidateQueries({ queryKey: orderKeys.all });
         refetch();
-        Alert.alert('Bajarildi', successMsg);
+        Alert.alert(i18n.t('orders.actionDoneTitle'), successMsg);
       } catch (e) {
         const detail = (e as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail;
         const msg = Array.isArray(detail)
           ? (detail[0] as { msg?: unknown })?.msg
-          : (detail ?? 'Amalni bajarishda xatolik');
-        Alert.alert('Xatolik', typeof msg === 'string' ? msg : 'Amalni bajarishda xatolik');
+          : (detail ?? i18n.t('orders.actionError'));
+        Alert.alert(i18n.t('errors.generic'), typeof msg === 'string' ? msg : i18n.t('orders.actionError'));
       } finally {
         setBusy(false);
       }
@@ -49,7 +50,7 @@ export function useDecreeActions(orderId: number, refetch: () => void) {
   );
 
   const approve = useCallback(
-    () => runAction(() => approveDecree(orderId), 'Buyruq tasdiqlandi'),
+    () => runAction(() => approveDecree(orderId), i18n.t('orders.approveSuccess')),
     [runAction, orderId]
   );
 
@@ -59,26 +60,26 @@ export function useDecreeActions(orderId: number, refetch: () => void) {
     (reason: string) => {
       const trimmed = reason.trim();
       if (!trimmed) {
-        Alert.alert('Xato', 'Sababni kiriting');
+        Alert.alert(i18n.t('orders.validationTitle'), i18n.t('orders.reasonRequired'));
         return Promise.resolve();
       }
-      return runAction(() => rejectDecree(orderId, trimmed), "O'zgartirish so'raldi");
+      return runAction(() => rejectDecree(orderId, trimmed), i18n.t('orders.rejectSuccess'));
     },
     [runAction, orderId]
   );
 
   const resubmit = useCallback(
-    () => runAction(() => resubmitDecree(orderId), 'Qayta yuborildi'),
+    () => runAction(() => resubmitDecree(orderId), i18n.t('orders.resubmitSuccess')),
     [runAction, orderId]
   );
 
   const forward = useCallback(
-    () => runAction(() => forwardDecree(orderId), 'Rahbariyatga yuborildi'),
+    () => runAction(() => forwardDecree(orderId), i18n.t('orders.forwardSuccess')),
     [runAction, orderId]
   );
 
   const acknowledge = useCallback(
-    () => runAction(() => acknowledgeDecree(orderId), 'Tanishildi'),
+    () => runAction(() => acknowledgeDecree(orderId), i18n.t('orders.acknowledgeSuccess')),
     [runAction, orderId]
   );
 
@@ -88,7 +89,7 @@ export function useDecreeActions(orderId: number, refetch: () => void) {
       const trimmed = actNumber.trim();
       return runAction(
         () => registerDecree(orderId, trimmed ? Number(trimmed) : undefined),
-        "Ro'yxatga olindi"
+        i18n.t('orders.registerSuccess')
       );
     },
     [runAction, orderId]

@@ -2,6 +2,7 @@ import * as Device from 'expo-device';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { Alert, Platform } from 'react-native';
 import { storage } from '../api/storage';
+import i18n from '@/i18n';
 
 // Google Play in-app update check, run once at app launch. expo-in-app-updates
 // is loaded lazily and defensively: the native module only exists in a
@@ -100,12 +101,12 @@ export async function checkAppUpdateOnLaunch(): Promise<void> {
     // "prompted" for the cooldown.
     await storage.setItem(UPDATE_PROMPT_TS_KEY, String(now));
     Alert.alert(
-      'Yangilanish mavjud',
-      "Ilovaning yangi versiyasi chiqdi. Yangilanishni hozir o'rnatishni tavsiya qilamiz.",
+      i18n.t('update.available'),
+      i18n.t('update.message'),
       [
-        { text: 'Keyinroq', style: 'cancel' },
+        { text: i18n.t('update.later'), style: 'cancel' },
         {
-          text: 'Yangilash',
+          text: i18n.t('update.install'),
           onPress: () => {
             void startUpdateSafely();
           },

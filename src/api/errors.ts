@@ -1,4 +1,5 @@
 import { AxiosError } from 'axios';
+import i18n from '@/i18n';
 
 // Normalized API error. The backend (FastAPI) reports failures as either
 // `{ detail: "message" }` or `{ detail: [{ msg, loc }, ...] }` (validation).
@@ -11,7 +12,10 @@ export interface ApiError {
   original: unknown;
 }
 
-const DEFAULT_MESSAGE = 'Xatolik yuz berdi';
+// Generic fallback message. Resolved lazily via a getter (not a const) so it
+// follows the current app language: the value is read at call time when a caller
+// omits an explicit fallback, not frozen at module load.
+const defaultMessage = (): string => i18n.t('errors.generic');
 
 function extractMessage(data: unknown): string | null {
   if (!data || typeof data !== 'object') return null;
@@ -27,12 +31,12 @@ function extractMessage(data: unknown): string | null {
   return null;
 }
 
-export function getApiErrorMessage(error: unknown, fallback: string = DEFAULT_MESSAGE): string {
+export function getApiErrorMessage(error: unknown, fallback?: string): string {
   const data = (error as AxiosError | undefined)?.response?.data;
-  return extractMessage(data) ?? fallback;
+  return extractMessage(data) ?? fallback ?? defaultMessage();
 }
 
-export function toApiError(error: unknown, fallback: string = DEFAULT_MESSAGE): ApiError {
+export function toApiError(error: unknown, fallback?: string): ApiError {
   const response = (error as AxiosError | undefined)?.response;
   return {
     message: getApiErrorMessage(error, fallback),

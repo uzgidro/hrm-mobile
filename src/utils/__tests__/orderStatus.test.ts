@@ -26,27 +26,38 @@ const colors: any = {
 const order = (o: Partial<OrderAct>): OrderAct => ({ id: 1, ...o }) as OrderAct;
 
 describe('ORDER_STATUS_META', () => {
-  it('locks in every known status label + kind', () => {
+  // Post-i18n: the map holds translation-key paths + kind (labels are resolved
+  // via i18n.t() at call time in statusMeta), so the enum CODES (Record keys)
+  // stay as backend contract identifiers and only the labelKey is localized.
+  it('locks in every known status labelKey + kind', () => {
     expect(ORDER_STATUS_META).toEqual({
-      draft: { label: 'Qoralama', kind: 'neutral' },
-      pending_approval: { label: 'Kelishish kutilmoqda', kind: 'pending' },
-      pending_leadership: { label: 'Rahbariyat imzosi kutilmoqda', kind: 'pending' },
-      pending_chancellery: { label: 'Kanselyariya kutilmoqda', kind: 'info' },
-      approved: { label: 'Kelishildi', kind: 'info' },
-      confirmed: { label: "Ro'yxatga olingan", kind: 'success' },
-      applied: { label: "Qo'llanildi", kind: 'success' },
-      changes_requested: { label: "O'zgartirish so'raldi", kind: 'error' },
-      rejected: { label: 'Rad etildi', kind: 'error' },
-      pending: { label: 'Kutilmoqda', kind: 'pending' },
-      signed: { label: 'Imzolandi', kind: 'success' },
+      draft: { labelKey: 'status.orderDraft', kind: 'neutral' },
+      pending_approval: { labelKey: 'status.orderPendingApproval', kind: 'pending' },
+      pending_leadership: { labelKey: 'status.orderPendingLeadership', kind: 'pending' },
+      pending_chancellery: { labelKey: 'status.orderPendingChancellery', kind: 'info' },
+      approved: { labelKey: 'status.orderApproved', kind: 'info' },
+      confirmed: { labelKey: 'status.orderConfirmed', kind: 'success' },
+      applied: { labelKey: 'status.orderApplied', kind: 'success' },
+      changes_requested: { labelKey: 'status.orderChangesRequested', kind: 'error' },
+      rejected: { labelKey: 'status.orderRejected', kind: 'error' },
+      pending: { labelKey: 'status.orderPending', kind: 'pending' },
+      signed: { labelKey: 'status.orderSigned', kind: 'success' },
     });
   });
 });
 
 describe('statusMeta', () => {
-  it('returns the meta for each known status', () => {
+  // Default test language is uz-Latn, so labels resolve to the original Uzbek.
+  it('resolves the label + kind for each known status', () => {
+    expect(statusMeta('draft')).toEqual({ label: 'Qoralama', kind: 'neutral' });
+    expect(statusMeta('pending_approval')).toEqual({ label: 'Kelishish kutilmoqda', kind: 'pending' });
+    expect(statusMeta('confirmed')).toEqual({ label: "Ro'yxatga olingan", kind: 'success' });
+    expect(statusMeta('rejected')).toEqual({ label: 'Rad etildi', kind: 'error' });
+  });
+
+  it('preserves the kind from the meta map for every known status', () => {
     for (const key of Object.keys(ORDER_STATUS_META)) {
-      expect(statusMeta(key)).toBe(ORDER_STATUS_META[key]);
+      expect(statusMeta(key).kind).toBe(ORDER_STATUS_META[key].kind);
     }
   });
 

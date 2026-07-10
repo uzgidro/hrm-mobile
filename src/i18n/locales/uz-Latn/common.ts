@@ -1,0 +1,25 @@
+// Shared, high-reuse labels (buttons, generic actions, generic states).
+// Features should reuse these instead of re-declaring "Bekor" / "OK" etc.
+export default {
+  ok: 'OK',
+  cancel: 'Bekor',
+  save: 'Saqlash',
+  delete: "O'chirish",
+  edit: "O'zgartirish",
+  add: "Qo'shish",
+  create: 'Yaratish',
+  send: 'Yuborish',
+  search: 'Qidirish...',
+  back: 'Orqaga',
+  done: 'Tayyor',
+  yes: 'Ha',
+  no: "Yo'q",
+  confirm: 'Tasdiqlash',
+  close: 'Yopish',
+  loading: 'Yuklanmoqda...',
+  notFound: 'Topilmadi',
+  empty: "Ma'lumot yo'q",
+  all: 'Barchasi',
+  retry: 'Qayta urinish',
+  success: 'Muvaffaqiyat',
+} as const;

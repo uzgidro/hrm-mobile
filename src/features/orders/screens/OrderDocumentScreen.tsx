@@ -6,6 +6,7 @@ import {
 import { WebView } from 'react-native-webview';
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { apiClient } from '@/api/client';
 import { ORDER_ACT_EDITOR_CONFIG, ONLYOFFICE_SERVER_URL } from '@/api/urls';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
@@ -18,6 +19,7 @@ export default function OrderDocumentScreen() {
   const orderId = Number(id);
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const { t } = useTranslation();
 
   const { data: config, isLoading, isError, refetch } = useQuery({
     queryKey: ['order-editor-config', orderId, mode],
@@ -58,12 +60,12 @@ export default function OrderDocumentScreen() {
     try {
       new DocsAPI.DocEditor("editor", ${JSON.stringify(editorConfig)});
     } catch (e) {
-      document.body.innerHTML = '<div style="padding:24px;font-family:sans-serif;color:#333">Hujjatni ochishda xatolik: ' + e.message + '</div>';
+      document.body.innerHTML = '<div style="padding:24px;font-family:sans-serif;color:#333">${t('orders.documentOpenError')}: ' + e.message + '</div>';
     }
   </script>
 </body>
 </html>`;
-  }, [config]);
+  }, [config, t]);
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
@@ -71,17 +73,17 @@ export default function OrderDocumentScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={10}>
           <Icon name="chevronLeft" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Hujjat</Text>
+        <Text style={styles.headerTitle}>{t('orders.documentTitle')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
       {isLoading ? (
         <View style={styles.center}>
           <ActivityIndicator color={colors.primaryLight} size="large" />
-          <Text style={styles.hint}>Hujjat yuklanmoqda...</Text>
+          <Text style={styles.hint}>{t('orders.documentLoading')}</Text>
         </View>
       ) : isError || !config ? (
-        <ErrorState title="Hujjatni yuklab bo'lmadi" onRetry={() => refetch()} />
+        <ErrorState title={t('orders.documentLoadError')} onRetry={() => refetch()} />
       ) : (
         <WebView
           originWhitelist={['*']}

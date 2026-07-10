@@ -1,5 +1,6 @@
 import { View, Text, TextInput, StyleSheet } from 'react-native';
 import dayjs from 'dayjs';
+import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import type { PickerOption } from '@/components/PickerModal';
@@ -8,8 +9,7 @@ import type { PickerKind, DateKind } from './LetterPickers';
 
 // The type-dependent field group of the create-letter form (business-trip vs
 // bildirgi/ariza). Selection state + option sources stay in the screen; this is
-// pure composition wired through the two openers and the text setters. All
-// Uzbek labels/placeholders and the type hint are preserved verbatim.
+// pure composition wired through the two openers and the text setters.
 export function LetterFormFields(props: {
   isTrip: boolean;
   typeHint: string;
@@ -41,6 +41,7 @@ export function LetterFormFields(props: {
   signersLoading: boolean;
   nameOf: (id: number | null, opts: PickerOption[]) => string | undefined;
 }) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const {
@@ -59,52 +60,52 @@ export function LetterFormFields(props: {
         <>
           <View style={styles.row2}>
             <View style={{ flex: 1 }}>
-              <Field label="Borish sanasi">
-                <Selector text={departureDate ? dayjs(departureDate).format('DD.MM.YYYY') : undefined} placeholder="Sana" onPress={() => onOpenDate('departure')} />
+              <Field label={t('letters.fieldDepartureDate')}>
+                <Selector text={departureDate ? dayjs(departureDate).format('DD.MM.YYYY') : undefined} placeholder={t('letters.placeholderDate')} onPress={() => onOpenDate('departure')} />
               </Field>
             </View>
             <View style={{ flex: 1 }}>
-              <Field label="Kelish sanasi">
-                <Selector text={arrivalDate ? dayjs(arrivalDate).format('DD.MM.YYYY') : undefined} placeholder="Sana" onPress={() => onOpenDate('arrival')} />
+              <Field label={t('letters.fieldArrivalDate')}>
+                <Selector text={arrivalDate ? dayjs(arrivalDate).format('DD.MM.YYYY') : undefined} placeholder={t('letters.placeholderDate')} onPress={() => onOpenDate('arrival')} />
               </Field>
             </View>
           </View>
 
-          <Field label="Viloyat(lar)">
-            <Selector loading={branchesLoading} text={regions.length ? `${regions.length} ta viloyat` : undefined} placeholder="Viloyatlarni tanlang..." onPress={() => onOpenPicker('regions')} />
+          <Field label={t('letters.fieldRegions')}>
+            <Selector loading={branchesLoading} text={regions.length ? t('letters.regionsSelected', { count: regions.length }) : undefined} placeholder={t('letters.placeholderRegions')} onPress={() => onOpenPicker('regions')} />
           </Field>
-          <Field label="Borish filiali(lar)" required>
-            <Selector loading={branchesLoading} text={destinationIds.length ? `${destinationIds.length} ta filial` : undefined} placeholder="Filiallarni tanlang..." onPress={() => onOpenPicker('destinations')} />
-          </Field>
-
-          <Field label="Borishdan maqsad">
-            <TextInput style={[styles.textArea, { minHeight: 100 }]} placeholder="Borishdan maqsad..." placeholderTextColor={colors.textMuted} value={description} onChangeText={onChangeDescription} multiline textAlignVertical="top" />
+          <Field label={t('letters.fieldDestinations')} required>
+            <Selector loading={branchesLoading} text={destinationIds.length ? t('letters.destinationsSelected', { count: destinationIds.length }) : undefined} placeholder={t('letters.placeholderDestinations')} onPress={() => onOpenPicker('destinations')} />
           </Field>
 
-          <Field label="Xizmat safari ish rejasi">
-            <TextInput style={[styles.textArea, { minHeight: 100 }]} placeholder="Ish rejasi..." placeholderTextColor={colors.textMuted} value={workPlan} onChangeText={onChangeWorkPlan} multiline textAlignVertical="top" />
+          <Field label={t('letters.fieldTripPurpose')}>
+            <TextInput style={[styles.textArea, { minHeight: 100 }]} placeholder={t('letters.placeholderTripPurpose')} placeholderTextColor={colors.textMuted} value={description} onChangeText={onChangeDescription} multiline textAlignVertical="top" />
           </Field>
 
-          <Field label="Rahbariyat (Ministr / Deputy)" required>
-            <Selector loading={rahbariyatLoading} text={rahbariyatIds.length ? `${rahbariyatIds.length} ta tanlandi` : undefined} placeholder="Rahbariyatni tanlang..." onPress={() => onOpenPicker('rahbariyat')} />
+          <Field label={t('letters.fieldWorkPlan')}>
+            <TextInput style={[styles.textArea, { minHeight: 100 }]} placeholder={t('letters.placeholderWorkPlan')} placeholderTextColor={colors.textMuted} value={workPlan} onChangeText={onChangeWorkPlan} multiline textAlignVertical="top" />
           </Field>
-          <Field label="Yuboruvchi shaxs" required>
-            <Selector loading={submittersLoading} text={nameOf(submitterId, submitterOptions)} placeholder="Yuboruvchini tanlang..." onPress={() => onOpenPicker('submitter')} />
+
+          <Field label={t('letters.fieldLeadership')} required>
+            <Selector loading={rahbariyatLoading} text={rahbariyatIds.length ? t('letters.leadershipSelected', { count: rahbariyatIds.length }) : undefined} placeholder={t('letters.placeholderLeadership')} onPress={() => onOpenPicker('rahbariyat')} />
+          </Field>
+          <Field label={t('letters.fieldSubmitter')} required>
+            <Selector loading={submittersLoading} text={nameOf(submitterId, submitterOptions)} placeholder={t('letters.placeholderSubmitter')} onPress={() => onOpenPicker('submitter')} />
           </Field>
         </>
       ) : (
         <>
-          <Field label="Qisqa mazmuni">
-            <TextInput style={styles.input} placeholder="Qisqa mazmun..." placeholderTextColor={colors.textMuted} value={shortSummary} onChangeText={onChangeShortSummary} />
+          <Field label={t('letters.fieldShortSummary')}>
+            <TextInput style={styles.input} placeholder={t('letters.placeholderShortSummary')} placeholderTextColor={colors.textMuted} value={shortSummary} onChangeText={onChangeShortSummary} />
           </Field>
-          <Field label="Matn">
-            <TextInput style={[styles.textArea, { minHeight: 140 }]} placeholder="Hujjat matni..." placeholderTextColor={colors.textMuted} value={description} onChangeText={onChangeDescription} multiline textAlignVertical="top" />
+          <Field label={t('letters.fieldText')}>
+            <TextInput style={[styles.textArea, { minHeight: 140 }]} placeholder={t('letters.placeholderText')} placeholderTextColor={colors.textMuted} value={description} onChangeText={onChangeDescription} multiline textAlignVertical="top" />
           </Field>
-          <Field label="Rahbariyat (imzolovchi)" required>
-            <Selector loading={signersLoading} text={nameOf(mainSignerId, signerOptions)} placeholder="Rahbariyatni tanlang..." onPress={() => onOpenPicker('main')} />
+          <Field label={t('letters.fieldMainSigner')} required>
+            <Selector loading={signersLoading} text={nameOf(mainSignerId, signerOptions)} placeholder={t('letters.placeholderLeadership')} onPress={() => onOpenPicker('main')} />
           </Field>
-          <Field label="Kelishuvchilar">
-            <Selector loading={signersLoading} text={ordinarySigners.length ? `${ordinarySigners.length} ta kelishuvchi` : undefined} placeholder="Kelishuvchilarni tanlang..." onPress={() => onOpenPicker('ordinary')} />
+          <Field label={t('letters.fieldCoordinators')}>
+            <Selector loading={signersLoading} text={ordinarySigners.length ? t('letters.coordinatorsSelected', { count: ordinarySigners.length }) : undefined} placeholder={t('letters.placeholderCoordinators')} onPress={() => onOpenPicker('ordinary')} />
           </Field>
         </>
       )}

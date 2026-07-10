@@ -4,6 +4,7 @@ import {
   View, Text, StyleSheet, TouchableOpacity,
   Image, FlatList, TextInput,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useAuthStore } from '@/store/authStore';
@@ -17,6 +18,7 @@ import { canAccessPage } from '@/utils/roles';
 import { employeesListQuery } from '../api/queries';
 
 export default function EmployeesListScreen() {
+  const { t } = useTranslation();
   const { user } = useAuthStore();
   const { onlySubordinates } = usePrefsStore();
   const { colors } = useTheme();
@@ -47,7 +49,7 @@ export default function EmployeesListScreen() {
   const totalLabel = onlySubordinates ? employees.length : (data?.total ?? 0);
 
   if (!canAccessPage(user, 'employees')) {
-    return <AccessDenied title="Xodimlar" />;
+    return <AccessDenied title={t('employees.accessTitle')} />;
   }
 
   return (
@@ -57,7 +59,7 @@ export default function EmployeesListScreen() {
           <Icon name="chevronLeft" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>
-          {onlySubordinates ? "Bo'ysunuvchilar" : 'Xodimlar'} {totalLabel ? `(${totalLabel})` : ''}
+          {onlySubordinates ? t('employees.subordinatesTitle') : t('employees.listTitle')} {totalLabel ? `(${totalLabel})` : ''}
         </Text>
         <View style={{ width: 36 }} />
       </View>
@@ -67,7 +69,7 @@ export default function EmployeesListScreen() {
           <Icon name="search" size={18} color={colors.textMuted} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Ism, lavozim, bo'lim..."
+            placeholder={t('employees.searchPlaceholder')}
             placeholderTextColor={colors.textMuted}
             value={search}
             onChangeText={setSearch}
@@ -111,7 +113,7 @@ export default function EmployeesListScreen() {
             </TouchableOpacity>
           )}
           ListEmptyComponent={
-            <EmptyState icon="users" title={search ? 'Topilmadi' : "Xodimlar yo'q"} />
+            <EmptyState icon="users" title={search ? t('employees.notFound') : t('employees.empty')} />
           }
         />
       )}

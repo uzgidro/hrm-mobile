@@ -1,4 +1,5 @@
 import { View, Text, TouchableOpacity, Switch, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
@@ -21,19 +22,20 @@ export function ApproversEditor({
 }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const { t } = useTranslation();
 
   return (
     <>
       <View style={styles.approversHead}>
-        <Text style={styles.fieldLabel}>Kelishuvchilar</Text>
+        <Text style={styles.fieldLabel}>{t('orders.approversLabel')}</Text>
         <TouchableOpacity style={styles.addApproverBtn} onPress={onAdd} activeOpacity={0.8}>
           <Icon name="plus" size={14} color={colors.primary} />
-          <Text style={styles.addApproverText}>Qo'shish</Text>
+          <Text style={styles.addApproverText}>{t('common.add')}</Text>
         </TouchableOpacity>
       </View>
 
       {approvers.length === 0 ? (
-        <Text style={styles.emptyApprovers}>Kelishuvchilar qo'shilmagan</Text>
+        <Text style={styles.emptyApprovers}>{t('orders.approversEmpty')}</Text>
       ) : (
         approvers.map((a, idx) => (
           <View key={idx} style={styles.approverCard}>
@@ -42,7 +44,7 @@ export function ApproversEditor({
                 <Selector
                   loading={employeesLoading}
                   text={nameFor(a.employee_id || null)}
-                  placeholder="FIO yoki lavozim"
+                  placeholder={t('orders.approverPlaceholder')}
                   onPress={() => onPick(idx)}
                 />
               </View>
@@ -51,7 +53,7 @@ export function ApproversEditor({
               </TouchableOpacity>
             </View>
             <View style={styles.editRow}>
-              <Text style={styles.editLabel}>Buyruqni tahrirlash huquqi</Text>
+              <Text style={styles.editLabel}>{t('orders.canEditDocLabel')}</Text>
               <Switch
                 value={a.can_edit_document}
                 onValueChange={(v) => onToggleEdit(idx, v)}

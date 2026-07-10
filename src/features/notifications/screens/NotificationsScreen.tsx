@@ -4,6 +4,7 @@ import {
   FlatList, RefreshControl,
 } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { router, type Href } from 'expo-router';
 import dayjs from 'dayjs';
 import { useAuthStore } from '@/store/authStore';
@@ -18,6 +19,7 @@ import { notificationKeys, notificationsListQuery } from '../api/queries';
 import { markNotificationRead, markAllNotificationsRead } from '../api/mutations';
 
 export default function NotificationsScreen() {
+  const { t } = useTranslation();
   const { user } = useAuthStore();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -62,10 +64,10 @@ export default function NotificationsScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={10}>
           <Icon name="chevronLeft" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Bildirishnomalar</Text>
+        <Text style={styles.headerTitle}>{t('notifications.screenTitle')}</Text>
         {unread > 0 ? (
           <TouchableOpacity onPress={markAllRead} hitSlop={8}>
-            <Text style={styles.markAll}>O'qildi</Text>
+            <Text style={styles.markAll}>{t('notifications.markAllRead')}</Text>
           </TouchableOpacity>
         ) : (
           <View style={{ width: 56 }} />
@@ -105,7 +107,7 @@ export default function NotificationsScreen() {
             );
           }}
           ListEmptyComponent={
-            <EmptyState icon="bell" title="Bildirishnomalar yo'q" />
+            <EmptyState icon="bell" title={t('notifications.empty')} />
           }
         />
       )}

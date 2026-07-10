@@ -3,6 +3,7 @@ import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Image, Switch, Platform,
 } from 'react-native';
 import { router } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import Constants from 'expo-constants';
 import { useAuthStore } from '@/store/authStore';
 import { usePrefsStore } from '@/store/prefsStore';
@@ -12,19 +13,27 @@ import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import type { ThemeMode } from '@/theme/ThemeProvider';
 import { Icon, IconName } from '@/components/Icon';
+import { Flag } from '@/components/Flag';
+import { useLangStore } from '@/store/langStore';
+import { LANGUAGES, LANGUAGE_NATIVE_NAME, LANGUAGE_FLAG } from '@/i18n/locales';
 
-const THEME_OPTIONS: { key: ThemeMode; label: string; icon: IconName }[] = [
-  { key: 'system', label: 'Tizim', icon: 'system' },
-  { key: 'light', label: "Yorug'", icon: 'sun' },
-  { key: 'dark', label: 'Tungi', icon: 'moon' },
+// `labelKey` is a profile.* catalog key; the label is resolved via t() at render
+// so it follows the active language. `key` stays the ThemeMode enum value.
+const THEME_OPTIONS: { key: ThemeMode; labelKey: string; icon: IconName }[] = [
+  { key: 'system', labelKey: 'profile.themeSystem', icon: 'system' },
+  { key: 'light', labelKey: 'profile.themeLight', icon: 'sun' },
+  { key: 'dark', labelKey: 'profile.themeDark', icon: 'moon' },
 ];
 
 export default function ProfileScreen() {
+  const { t } = useTranslation();
   const { user, logout } = useAuthStore();
   const employee = user?.employee;
   const { colors, mode, setMode } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { onlySubordinates, setOnlySubordinates } = usePrefsStore();
+  const language = useLangStore((s) => s.language);
+  const setLanguage = useLangStore((s) => s.setLanguage);
   // Per-field selectors: the lock store also mutates status/failedAttempts on
   // every unlock attempt, and this screen only cares about the biometrics flags.
   const biometricsSupported = useLockStore((s) => s.biometricsSupported);
@@ -43,10 +52,10 @@ export default function ProfileScreen() {
   };
 
   const handleLogout = () => {
-    Alert.alert('Chiqish', 'Tizimdan chiqishni xohlaysizmi?', [
-      { text: 'Bekor', style: 'cancel' },
+    Alert.alert(t('profile.logout'), t('profile.logoutConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'Ha, chiqish',
+        text: t('profile.logoutYes'),
         style: 'destructive',
         onPress: async () => {
           // logout() flips isAuthenticated → the root Stack.Protected guard
@@ -60,7 +69,7 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={styles.pageTitle}>Profil</Text>
+        <Text style={styles.pageTitle}>{t('profile.title')}</Text>
 
         {/* User card */}
         <View style={styles.card}>
@@ -76,7 +85,7 @@ export default function ProfileScreen() {
             )}
             <View style={{ flex: 1 }}>
               <Text style={styles.userName} numberOfLines={1}>
-                {employee?.legal_name || 'Foydalanuvchi'}
+                {employee?.legal_name || t('profile.userFallback')}
               </Text>
               {employee?.job_position?.name && (
                 <Text style={styles.userRole} numberOfLines={1}>
@@ -92,7 +101,7 @@ export default function ProfileScreen() {
               activeOpacity={0.8}
             >
               <Icon name="idcard" size={17} color={colors.textSecondary} />
-              <Text style={styles.actionBtnText}>Ma'lumotnoma</Text>
+              <Text style={styles.actionBtnText}>{t('profile.reference')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.actionBtn, styles.actionBtnPrimary]}
@@ -100,7 +109,7 @@ export default function ProfileScreen() {
               activeOpacity={0.85}
             >
               <Icon name="edit" size={17} color={colors.onPrimary} />
-              <Text style={styles.actionBtnPrimaryText}>O'zgartirish</Text>
+              <Text style={styles.actionBtnPrimaryText}>{t('common.edit')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -113,17 +122,17 @@ export default function ProfileScreen() {
             </View>
             <View style={styles.orgInfo}>
               <Text style={styles.orgName} numberOfLines={1}>
-                {employee?.department?.name || 'Tashkilot'}
+                {employee?.department?.name || t('profile.orgFallback')}
               </Text>
               <Text style={styles.orgBranch} numberOfLines={1}>
-                {employee?.organization_branches?.[0]?.name || 'Joriy filial'}
+                {employee?.organization_branches?.[0]?.name || t('profile.branchFallback')}
               </Text>
             </View>
           </View>
         </View>
 
         {/* Appearance */}
-        <Text style={styles.sectionLabel}>Ko'rinish</Text>
+        <Text style={styles.sectionLabel}>{t('profile.sectionAppearance')}</Text>
         <View style={styles.card}>
           <View style={styles.segmentRow}>
             {THEME_OPTIONS.map((opt) => {
@@ -137,7 +146,30 @@ export default function ProfileScreen() {
                 >
                   <Icon name={opt.icon} size={19} color={active ? colors.primary : colors.textSecondary} />
                   <Text style={[styles.segmentText, active && styles.segmentTextActive]}>
-                    {opt.label}
+                    {t(opt.labelKey)}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* Language */}
+        <Text style={styles.sectionLabel}>{t('profile.sectionLanguage')}</Text>
+        <View style={styles.card}>
+          <View style={styles.langGrid}>
+            {LANGUAGES.map((lang) => {
+              const active = language === lang;
+              return (
+                <TouchableOpacity
+                  key={lang}
+                  style={[styles.langOption, active && styles.segmentActive]}
+                  onPress={() => setLanguage(lang)}
+                  activeOpacity={0.8}
+                >
+                  <Flag code={LANGUAGE_FLAG[lang]} size={26} />
+                  <Text style={[styles.segmentText, active && styles.segmentTextActive]}>
+                    {LANGUAGE_NATIVE_NAME[lang]}
                   </Text>
                 </TouchableOpacity>
               );
@@ -146,14 +178,14 @@ export default function ProfileScreen() {
         </View>
 
         {/* Preferences */}
-        <Text style={styles.sectionLabel}>Sozlamalar</Text>
+        <Text style={styles.sectionLabel}>{t('profile.sectionSettings')}</Text>
         <View style={styles.card}>
           <View style={[styles.menuItem, styles.menuItemBorder]}>
             <View style={styles.menuItemLeft}>
               <View style={styles.menuIcon}><Icon name="users" size={18} color={colors.textSecondary} /></View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.menuLabel}>Faqat bo'ysunuvchilar</Text>
-                <Text style={styles.menuHint}>Jamoa va ro'yxatlarda faqat sizga biriktirilganlar</Text>
+                <Text style={styles.menuLabel}>{t('profile.onlySubordinates')}</Text>
+                <Text style={styles.menuHint}>{t('profile.onlySubordinatesHint')}</Text>
               </View>
             </View>
             <Switch
@@ -172,7 +204,7 @@ export default function ProfileScreen() {
             >
               <View style={styles.menuItemLeft}>
                 <View style={styles.menuIcon}><Icon name="lock" size={18} color={colors.textSecondary} /></View>
-                <Text style={styles.menuLabel}>PIN kodni o'zgartirish</Text>
+                <Text style={styles.menuLabel}>{t('profile.changePin')}</Text>
               </View>
               <View style={styles.menuChevron}>
                 <Icon name="chevronRight" size={18} color={colors.textMuted} />
@@ -181,12 +213,12 @@ export default function ProfileScreen() {
           )}
 
           {isNative && biometricsSupported && (
-            <View style={[styles.menuItem, styles.menuItemBorder]}>
+            <View style={styles.menuItem}>
               <View style={styles.menuItemLeft}>
                 <View style={styles.menuIcon}><Icon name="fingerprint" size={18} color={colors.textSecondary} /></View>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.menuLabel}>Biometrik kirish</Text>
-                  <Text style={styles.menuHint}>Barmoq izi yoki yuz bilan tez ochish</Text>
+                  <Text style={styles.menuLabel}>{t('profile.biometrics')}</Text>
+                  <Text style={styles.menuHint}>{t('profile.biometricsHint')}</Text>
                 </View>
               </View>
               <Switch
@@ -198,22 +230,15 @@ export default function ProfileScreen() {
             </View>
           )}
 
-          <View style={styles.menuItem}>
-            <View style={styles.menuItemLeft}>
-              <View style={styles.menuIcon}><Icon name="globe" size={18} color={colors.textSecondary} /></View>
-              <Text style={styles.menuLabel}>Til</Text>
-            </View>
-            <Text style={styles.menuValue}>O'zbekcha</Text>
-          </View>
         </View>
 
         {/* Logout */}
         <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.85}>
           <Icon name="logout" size={18} color={colors.error} />
-          <Text style={styles.logoutText}>Chiqish</Text>
+          <Text style={styles.logoutText}>{t('profile.logout')}</Text>
         </TouchableOpacity>
 
-        <Text style={styles.version}>{`Dastur versiyasi ${Constants.expoConfig?.version ?? '1.0.0'}`}</Text>
+        <Text style={styles.version}>{t('profile.version', { version: Constants.expoConfig?.version ?? '1.0.0' })}</Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -270,6 +295,14 @@ const makeStyles = (c: ThemeColors) =>
     segmentActive: { backgroundColor: c.primarySoft, borderColor: c.primary },
     segmentText: { fontSize: 12, fontWeight: '600', color: c.textSecondary },
     segmentTextActive: { color: c.primary, fontWeight: '800' },
+
+    // 2×2 grid for the 4 languages (a single row of 4 is too cramped).
+    langGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    langOption: {
+      width: '48%', flexGrow: 1, flexDirection: 'row', alignItems: 'center',
+      justifyContent: 'center', gap: 8, paddingVertical: 12, borderRadius: 12,
+      backgroundColor: c.bg, borderWidth: 1, borderColor: c.cardBorder,
+    },
 
     menuItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14 },
     menuItemBorder: { borderBottomWidth: 1, borderBottomColor: c.cardBorder },

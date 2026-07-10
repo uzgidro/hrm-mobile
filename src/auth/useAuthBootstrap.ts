@@ -11,6 +11,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useAuthStore } from '../store/authStore';
 import { usePrefsStore } from '../store/prefsStore';
 import { useLockStore } from '../store/lockStore';
+import { useLangStore } from '../store/langStore';
 import { resolveBootstrap, readCachedUser } from './bootstrap';
 import { setupPushNotifications } from './push';
 
@@ -33,6 +34,11 @@ export function useAuthBootstrap() {
 
     (async () => {
       usePrefsStore.getState().hydrate();
+
+      // Resolve the language BEFORE any hideSplash() below, same flash invariant
+      // as the lock: the first visible frame must already be in the right
+      // language. hydrate() never throws (falls back to the default language).
+      await useLangStore.getState().hydrate();
 
       // Resolve the lock state BEFORE any hideSplash() below — the invariant is
       // that the first visible frame already carries the PIN gate, so a

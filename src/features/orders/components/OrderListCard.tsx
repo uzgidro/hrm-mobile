@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import dayjs from 'dayjs';
+import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import type { OrderAct } from '@/types';
@@ -11,6 +12,7 @@ import { statusMeta, statusColor } from '@/utils/orderStatus';
 export function OrderListCard({ order, action }: { order: OrderAct; action: boolean }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const { t } = useTranslation();
   const meta = statusMeta(order.status);
   const sc = statusColor(meta.kind, colors);
 
@@ -22,7 +24,7 @@ export function OrderListCard({ order, action }: { order: OrderAct; action: bool
     >
       <View style={styles.cardTop}>
         <Text style={styles.cardCategory} numberOfLines={1}>
-          {order.category_rel?.name || 'Buyruq'}
+          {order.category_rel?.name || t('orders.fallbackTitle')}
           {order.act_number ? `  №${order.act_number}` : ''}
         </Text>
         <View style={[styles.badge, { backgroundColor: sc.bg }]}>
@@ -45,7 +47,7 @@ export function OrderListCard({ order, action }: { order: OrderAct; action: bool
 
       {action && (
         <View style={styles.actionTag}>
-          <Text style={styles.actionTagText}>Sizdan amal kutilmoqda</Text>
+          <Text style={styles.actionTagText}>{t('orders.actionExpected')}</Text>
         </View>
       )}
     </TouchableOpacity>

@@ -2,6 +2,7 @@
 // where the page simply isn't in their nav). Keeps a back button via ScreenHeader.
 import { View, Text, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 import type { ThemeColors } from '../theme/palettes';
 import { ScreenHeader } from './ScreenHeader';
@@ -10,13 +11,14 @@ import { Icon } from './Icon';
 export function AccessDenied({ title }: { title?: string }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const { t } = useTranslation();
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScreenHeader title={title ?? ''} />
       <View style={styles.center}>
         <View style={styles.iconWrap}><Icon name="lock" size={30} color={colors.textMuted} /></View>
-        <Text style={styles.title}>Ruxsat yo'q</Text>
-        <Text style={styles.text}>Bu sahifaga kirish huquqingiz yo'q</Text>
+        <Text style={styles.title}>{t('components.accessDeniedTitle')}</Text>
+        <Text style={styles.text}>{t('components.accessDeniedText')}</Text>
       </View>
     </SafeAreaView>
   );

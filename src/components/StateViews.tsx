@@ -2,6 +2,7 @@
 // inline ActivityIndicator + "nothing here" blocks scattered across screens.
 // All three centre themselves in the available space and read the theme.
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 import type { ThemeColors } from '../theme/palettes';
 import { Icon, type IconName } from './Icon';
@@ -43,7 +44,7 @@ export function EmptyState({
 
 // Error placeholder with an optional retry action (wire to react-query refetch).
 export function ErrorState({
-  title = 'Xatolik yuz berdi',
+  title,
   message,
   onRetry,
 }: {
@@ -53,16 +54,17 @@ export function ErrorState({
 }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const { t } = useTranslation();
   return (
     <View style={styles.center}>
       <View style={[styles.iconWrap, { backgroundColor: colors.errorSoft }]}>
         <Icon name="close" size={26} color={colors.error} />
       </View>
-      <Text style={styles.title}>{title}</Text>
+      <Text style={styles.title}>{title ?? t('errors.generic')}</Text>
       {!!message && <Text style={styles.dim}>{message}</Text>}
       {!!onRetry && (
         <Pressable onPress={onRetry} style={styles.retry} hitSlop={8}>
-          <Text style={styles.retryText}>Qayta urinish</Text>
+          <Text style={styles.retryText}>{t('common.retry')}</Text>
         </Pressable>
       )}
     </View>

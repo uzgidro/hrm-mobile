@@ -3,6 +3,7 @@
 // PIN string and auto-submits when it reaches maxLength. PinPad never touches a
 // store and never submits — it only reports the new value on each key press.
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
@@ -36,6 +37,10 @@ export function PinPad({
   onBiometric,
   disabled = false,
 }: PinPadProps) {
+  // Subscribe to language changes so the parent-supplied title/subtitle/error
+  // (all localized upstream) repaint on a language switch even though this
+  // presentational pad holds no strings of its own.
+  useTranslation();
   const styles = useThemedStyles(makeStyles);
   const { colors } = useTheme();
   const hasError = !!error;

@@ -1,3 +1,4 @@
+import i18n from '../i18n';
 import type { User, Employee } from '../types';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -119,16 +120,22 @@ export function canAccessPage(user: User | null | undefined, key: PageKey): bool
 export function employeeSubLabel(emp?: Employee): string {
   const jobPos =
     (typeof emp?.job_position === 'object' ? emp?.job_position?.name : (emp?.job_position as any)) || '';
-  return jobPos || 'Lavozim kiritilmagan';
+  return jobPos || i18n.t('status.noPosition');
 }
 
+// i18n note (same trade-off as orderStatus.ts): the category CODES (the Record
+// keys 'vacation', 'business_trip', 'sick_leave') are backend contract
+// identifiers and are NOT translated. The map holds `labelKey`s and the label
+// is resolved via i18n.t() at call time in translateCategory() so it follows
+// the current language.
 export const ORDER_CATEGORY_TRANSLATIONS: Record<string, string> = {
-  vacation: "Mehnat ta'tili",
-  business_trip: 'Xizmat safari',
-  sick_leave: 'Kasallik varaqasi',
+  vacation: 'status.categoryLeave',
+  business_trip: 'status.categoryBusinessTrip',
+  sick_leave: 'status.categorySickLeave',
 };
 
 export function translateCategory(name?: string): string {
-  if (!name) return 'Buyruq';
-  return ORDER_CATEGORY_TRANSLATIONS[name] || name;
+  if (!name) return i18n.t('status.categoryDefault');
+  const key = ORDER_CATEGORY_TRANSLATIONS[name];
+  return key ? i18n.t(key) : name;
 }

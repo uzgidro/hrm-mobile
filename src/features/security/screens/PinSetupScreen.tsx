@@ -6,6 +6,7 @@
 import { useState } from 'react';
 import { View, Alert, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { PinPad } from '@/features/security/components/PinPad';
 import { useLockStore } from '@/store/lockStore';
 import { isBiometricAvailable } from '@/auth/biometrics';
@@ -17,6 +18,7 @@ import { Icon } from '@/components/Icon';
 type Step = 'enter' | 'confirm';
 
 export default function PinSetupScreen() {
+  const { t } = useTranslation();
   const styles = useThemedStyles(makeStyles);
   const { colors } = useTheme();
   const setupPin = useLockStore((s) => s.setupPin);
@@ -35,11 +37,11 @@ export default function PinSetupScreen() {
   const offerBiometrics = async () => {
     if (!(await isBiometricAvailable())) return;
     Alert.alert(
-      'Biometrik kirish',
-      "Ilovani barmoq izi yoki yuz orqali ochishni yoqasizmi?",
+      t('security.biometricTitle'),
+      t('security.biometricMessage'),
       [
-        { text: 'Keyinroq', style: 'cancel' },
-        { text: 'Yoqish', onPress: () => setBiometricsEnabled(true) },
+        { text: t('security.biometricLater'), style: 'cancel' },
+        { text: t('security.biometricEnable'), onPress: () => setBiometricsEnabled(true) },
       ]
     );
   };
@@ -64,7 +66,7 @@ export default function PinSetupScreen() {
         await offerBiometrics();
       })();
     } else {
-      setError("PIN kodlar mos kelmadi. Qaytadan urinib ko'ring.");
+      setError(t('security.mismatch'));
       setFirstPin('');
       setValue('');
       setStep('enter');
@@ -78,11 +80,11 @@ export default function PinSetupScreen() {
     if (next.length === PIN_LENGTH) complete(next);
   };
 
-  const title = step === 'enter' ? "PIN kod o'rnating" : 'PIN kodni tasdiqlang';
+  const title = step === 'enter' ? t('security.setupTitle') : t('security.setupConfirmTitle');
   const subtitle =
     step === 'enter'
-      ? 'Ilovani himoyalash uchun 4 xonali PIN kod kiriting'
-      : 'PIN kodni qaytadan kiriting';
+      ? t('security.setupSubtitle')
+      : t('security.setupConfirmSubtitle');
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>

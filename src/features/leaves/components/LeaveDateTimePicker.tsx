@@ -4,18 +4,22 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
 import dayjs, { type Dayjs } from 'dayjs';
+import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
+import { monthName, weekdayNameShort } from '@/i18n/dates';
 
-const MONTHS_UZ = ['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentyabr','Oktyabr','Noyabr','Dekabr'];
-const DAYS_SHORT = ['du','se','chor','pay','ju','sha','ya'];
+// Monday-first weekday header (dayjs day(): Sunday=0..Saturday=6). The calendar
+// grid below is Monday-first, so we order the localized short names to match.
+const WEEK_DAY_INDEXES = [1, 2, 3, 4, 5, 6, 0];
 
 export function LeaveDateTimePicker({ value, visible, title, minDate, onConfirm, onClose }: {
   value: Dayjs; visible: boolean; title: string; minDate?: Dayjs; onConfirm: (v: Dayjs) => void; onClose: () => void;
 }) {
   const dp = useThemedStyles(makeDp);
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const [tab, setTab] = useState<'date' | 'time'>('date');
   const [month, setMonth] = useState(value.startOf('month'));
   const [selected, setSelected] = useState(value);
@@ -38,9 +42,9 @@ export function LeaveDateTimePicker({ value, visible, title, minDate, onConfirm,
       <View style={dp.overlay}>
         <View style={dp.sheet}>
           <View style={dp.header}>
-            <TouchableOpacity onPress={onClose}><Text style={dp.cancelText}>Bekor</Text></TouchableOpacity>
+            <TouchableOpacity onPress={onClose}><Text style={dp.cancelText}>{t('common.cancel')}</Text></TouchableOpacity>
             <Text style={dp.title}>{title}</Text>
-            <TouchableOpacity onPress={() => { onConfirm(selected); onClose(); }}><Text style={dp.confirmText}>Tayyor</Text></TouchableOpacity>
+            <TouchableOpacity onPress={() => { onConfirm(selected); onClose(); }}><Text style={dp.confirmText}>{t('common.done')}</Text></TouchableOpacity>
           </View>
 
           <View style={dp.tabs}>
@@ -58,10 +62,10 @@ export function LeaveDateTimePicker({ value, visible, title, minDate, onConfirm,
             <View style={dp.calWrap}>
               <View style={dp.monthNav}>
                 <TouchableOpacity onPress={() => setMonth(month.subtract(1, 'month'))} style={dp.navBtn}><Icon name="chevronLeft" size={20} color={colors.text} /></TouchableOpacity>
-                <Text style={dp.monthLabel}>{MONTHS_UZ[month.month()]} {month.year()}</Text>
+                <Text style={dp.monthLabel}>{monthName(month.month())} {month.year()}</Text>
                 <TouchableOpacity onPress={() => setMonth(month.add(1, 'month'))} style={dp.navBtn}><Icon name="chevronRight" size={20} color={colors.text} /></TouchableOpacity>
               </View>
-              <View style={dp.weekRow}>{DAYS_SHORT.map((d) => <Text key={d} style={dp.weekDay}>{d}</Text>)}</View>
+              <View style={dp.weekRow}>{WEEK_DAY_INDEXES.map((d) => <Text key={d} style={dp.weekDay}>{weekdayNameShort(d)}</Text>)}</View>
               <View style={dp.grid}>
                 {cells.map((day, i) => {
                   if (!day) return <View key={`e-${i}`} style={dp.cell} />;

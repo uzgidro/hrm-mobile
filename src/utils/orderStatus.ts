@@ -1,25 +1,43 @@
+import i18n from '../i18n';
 import type { ThemeColors } from '../theme/palettes';
 import type { OrderAct } from '../types';
 
 export type StatusKind = 'pending' | 'info' | 'success' | 'error' | 'neutral';
 
-export const ORDER_STATUS_META: Record<string, { label: string; kind: StatusKind }> = {
-  draft:               { label: 'Qoralama',                    kind: 'neutral' },
-  pending_approval:    { label: 'Kelishish kutilmoqda',        kind: 'pending' },
-  pending_leadership:  { label: 'Rahbariyat imzosi kutilmoqda', kind: 'pending' },
-  pending_chancellery: { label: 'Kanselyariya kutilmoqda',     kind: 'info' },
-  approved:            { label: 'Kelishildi',                  kind: 'info' },
-  confirmed:           { label: "Ro'yxatga olingan",          kind: 'success' },
-  applied:             { label: "Qo'llanildi",                 kind: 'success' },
-  changes_requested:   { label: "O'zgartirish so'raldi",      kind: 'error' },
-  rejected:            { label: 'Rad etildi',                  kind: 'error' },
+// i18n note: the order-act status CODES (the Record keys: 'draft',
+// 'pending_approval', …) are contract identifiers shared with the backend/web
+// dashboard and are NOT translated. Only the human-readable label is localized.
+// We store a `labelKey` (dotted path into the `status` namespace) rather than a
+// literal, and resolve it via i18n.t() at call time in statusMeta(), so the
+// label follows the current language.
+//
+// Reactivity contract: because the label is computed in a plain function (not
+// a hook), a component only re-computes it when it re-renders. i18n.changeLanguage
+// does NOT by itself re-render components that merely call this util. Therefore
+// any SCREEN that renders these labels must subscribe to language changes by
+// calling `useTranslation()` from react-i18next (even if it doesn't use the
+// returned `t` directly) — that hook re-renders the component on 'languageChanged',
+// which re-runs statusMeta() and refreshes the label. Feature waves add that
+// hook per screen. This keeps the util itself pure/React-free.
+export const ORDER_STATUS_META: Record<string, { labelKey: string; kind: StatusKind }> = {
+  draft:               { labelKey: 'status.orderDraft',              kind: 'neutral' },
+  pending_approval:    { labelKey: 'status.orderPendingApproval',    kind: 'pending' },
+  pending_leadership:  { labelKey: 'status.orderPendingLeadership',  kind: 'pending' },
+  pending_chancellery: { labelKey: 'status.orderPendingChancellery', kind: 'info' },
+  approved:            { labelKey: 'status.orderApproved',           kind: 'info' },
+  confirmed:           { labelKey: 'status.orderConfirmed',          kind: 'success' },
+  applied:             { labelKey: 'status.orderApplied',            kind: 'success' },
+  changes_requested:   { labelKey: 'status.orderChangesRequested',   kind: 'error' },
+  rejected:            { labelKey: 'status.orderRejected',           kind: 'error' },
   // work-leave style fallbacks
-  pending:             { label: 'Kutilmoqda',                  kind: 'pending' },
-  signed:              { label: 'Imzolandi',                   kind: 'success' },
+  pending:             { labelKey: 'status.orderPending',            kind: 'pending' },
+  signed:              { labelKey: 'status.orderSigned',             kind: 'success' },
 };
 
-export function statusMeta(status?: string) {
-  return ORDER_STATUS_META[status ?? ''] ?? { label: status || 'Noma\'lum', kind: 'neutral' as StatusKind };
+export function statusMeta(status?: string): { label: string; kind: StatusKind } {
+  const meta = ORDER_STATUS_META[status ?? ''];
+  if (meta) return { label: i18n.t(meta.labelKey), kind: meta.kind };
+  return { label: status || i18n.t('status.unknown'), kind: 'neutral' };
 }
 
 export function statusColor(kind: StatusKind, c: ThemeColors): { fg: string; bg: string } {

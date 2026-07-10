@@ -5,6 +5,7 @@ import {
   TouchableOpacity, ActivityIndicator, RefreshControl,
 } from 'react-native';
 import { useQueries } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';
 import dayjs from 'dayjs';
 import Svg, { Circle, G } from 'react-native-svg';
@@ -114,6 +115,7 @@ function SectionCard({
 }
 
 export default function TeamScreen() {
+  const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const onlySubordinates = usePrefsStore((s) => s.onlySubordinates);
   const { colors } = useTheme();
@@ -213,15 +215,15 @@ export default function TeamScreen() {
 
   const STATUS_MAP: Record<string, { label: string; color: string }> = useMemo(
     () => ({
-      pending: { label: 'Kutilmoqda', color: colors.warning },
-      yuborildi: { label: 'Kutilmoqda', color: colors.warning },
-      approved: { label: 'Tasdiqlangan', color: colors.present },
-      tasdiqlangan: { label: 'Tasdiqlangan', color: colors.present },
-      signed: { label: 'Tasdiqlangan', color: colors.present },
-      rejected: { label: 'Rad etildi', color: colors.error },
-      rad_etilgan: { label: 'Rad etildi', color: colors.error },
+      pending: { label: t('attendance.status.pending'), color: colors.warning },
+      yuborildi: { label: t('attendance.status.pending'), color: colors.warning },
+      approved: { label: t('attendance.status.approved'), color: colors.present },
+      tasdiqlangan: { label: t('attendance.status.approved'), color: colors.present },
+      signed: { label: t('attendance.status.approved'), color: colors.present },
+      rejected: { label: t('attendance.status.rejected'), color: colors.error },
+      rad_etilgan: { label: t('attendance.status.rejected'), color: colors.error },
     }),
-    [colors]
+    [colors, t]
   );
 
   return (
@@ -230,7 +232,7 @@ export default function TeamScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Icon name="chevronLeft" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Xodimlar</Text>
+        <Text style={styles.headerTitle}>{t('attendance.teamTitle')}</Text>
         <View style={{ width: 36 }} />
       </View>
 
@@ -242,11 +244,11 @@ export default function TeamScreen() {
         {onlySubordinates && (
           <View style={styles.filterNotice}>
             <Icon name="users" size={16} color={colors.primaryLight} />
-            <Text style={styles.filterNoticeText}>Faqat bo'ysunuvchilar ko'rsatilmoqda</Text>
+            <Text style={styles.filterNoticeText}>{t('attendance.onlySubordinatesTeam')}</Text>
           </View>
         )}
 
-        <SectionCard icon="chart" title="Davomat" loading={empQ.isLoading || attQ.isLoading} colors={colors} styles={styles}>
+        <SectionCard icon="chart" title={t('attendance.title')} loading={empQ.isLoading || attQ.isLoading} colors={colors} styles={styles}>
           <View style={styles.chartRow}>
             <DonutChart c={colors} styles={styles}
               total={attendanceStats.total} present={attendanceStats.present}
@@ -255,7 +257,7 @@ export default function TeamScreen() {
               {attendanceStats.late > 0 && (
                 <View style={styles.legendItem}>
                   <View style={[styles.legendDot, { backgroundColor: colors.warning }]} />
-                  <View><Text style={styles.legendCount}>{attendanceStats.late}</Text><Text style={styles.legendLabel}>kechikkan</Text></View>
+                  <View><Text style={styles.legendCount}>{attendanceStats.late}</Text><Text style={styles.legendLabel}>{t('attendance.legend.late')}</Text></View>
                 </View>
               )}
               <View style={styles.legendItem}>
@@ -264,31 +266,31 @@ export default function TeamScreen() {
                   <Text style={styles.legendCount}>
                     {Math.max(0, attendanceStats.total - attendanceStats.present - attendanceStats.late - attendanceStats.onLeave)}
                   </Text>
-                  <Text style={styles.legendLabel}>kelmagan</Text>
+                  <Text style={styles.legendLabel}>{t('attendance.legend.absent')}</Text>
                 </View>
               </View>
               {attendanceStats.onLeave > 0 && (
                 <View style={styles.legendItem}>
                   <View style={[styles.legendDot, { backgroundColor: colors.primaryLight }]} />
-                  <View><Text style={styles.legendCount}>{attendanceStats.onLeave}</Text><Text style={styles.legendLabel}>so'rovda</Text></View>
+                  <View><Text style={styles.legendCount}>{attendanceStats.onLeave}</Text><Text style={styles.legendLabel}>{t('attendance.legend.onLeaveTeam')}</Text></View>
                 </View>
               )}
               {attendanceStats.present > 0 && (
                 <View style={styles.legendItem}>
                   <View style={[styles.legendDot, { backgroundColor: colors.present }]} />
-                  <View><Text style={styles.legendCount}>{attendanceStats.present}</Text><Text style={styles.legendLabel}>keldi</Text></View>
+                  <View><Text style={styles.legendCount}>{attendanceStats.present}</Text><Text style={styles.legendLabel}>{t('attendance.legend.present')}</Text></View>
                 </View>
               )}
             </View>
           </View>
           <TouchableOpacity style={styles.primaryBtn} onPress={() => router.push('/attendance-detail')}>
-            <Text style={styles.primaryBtnText}>Tafsilotlar</Text>
+            <Text style={styles.primaryBtnText}>{t('attendance.details')}</Text>
           </TouchableOpacity>
         </SectionCard>
 
-        <SectionCard icon="checklist" title="So'rovlar" rightLabel="Barchasi" onRightPress={() => router.push('/team-leaves')} loading={leavesQ.isLoading} colors={colors} styles={styles}>
+        <SectionCard icon="checklist" title={t('attendance.requestsTitle')} rightLabel={t('common.all')} onRightPress={() => router.push('/team-leaves')} loading={leavesQ.isLoading} colors={colors} styles={styles}>
           {recentLeaves.length === 0 ? (
-            <Text style={styles.emptyText}>So'rovlar yo'q</Text>
+            <Text style={styles.emptyText}>{t('attendance.noRequests')}</Text>
           ) : (
             recentLeaves.map((leave) => {
               const st = STATUS_MAP[leave.status] ?? STATUS_MAP.pending;
@@ -297,7 +299,7 @@ export default function TeamScreen() {
                   onPress={() => router.push({ pathname: '/leave-detail', params: { id: leave.id } })} activeOpacity={0.7}>
                   <EmployeeAvatar emp={(leave.employee as Employee) || { id: 0, legal_name: '?' }} size={48} />
                   <View style={styles.leaveInfo}>
-                    <Text style={styles.leaveCat} numberOfLines={1}>{leave.type ?? "So'rov"}</Text>
+                    <Text style={styles.leaveCat} numberOfLines={1}>{leave.type ?? t('attendance.requestFallback')}</Text>
                     <Text style={styles.leaveDate}>
                       {dayjs(leave.start_date).format('D MMM YYYY, HH:mm')} – {dayjs(leave.end_date).format('HH:mm')}
                     </Text>
@@ -309,13 +311,13 @@ export default function TeamScreen() {
             })
           )}
           <TouchableOpacity style={styles.primaryBtn} onPress={() => router.push('/create-leave')}>
-            <Text style={styles.primaryBtnText}>So'rov yaratish</Text>
+            <Text style={styles.primaryBtnText}>{t('attendance.createRequest')}</Text>
           </TouchableOpacity>
         </SectionCard>
 
-        <SectionCard icon="users" title="Xodimlar" rightLabel={canAccessPage(user, 'employees') ? 'Barchasi' : undefined} onRightPress={() => router.push('/employees-list')} loading={empQ.isLoading} colors={colors} styles={styles}>
+        <SectionCard icon="users" title={t('attendance.teamTitle')} rightLabel={canAccessPage(user, 'employees') ? t('common.all') : undefined} onRightPress={() => router.push('/employees-list')} loading={empQ.isLoading} colors={colors} styles={styles}>
           {topEmployees.length === 0 ? (
-            <Text style={styles.emptyText}>Xodimlar yo'q</Text>
+            <Text style={styles.emptyText}>{t('attendance.noEmployees')}</Text>
           ) : (
             topEmployees.map((emp, idx) => (
               <TouchableOpacity key={emp.id}
@@ -333,7 +335,7 @@ export default function TeamScreen() {
         </SectionCard>
 
         {(bDayQ.isLoading || upcomingBirthdays.length > 0) && (
-          <SectionCard icon="cake" title="Tug'ilgan kunlar" rightLabel="Barchasi" onRightPress={() => router.push('/birthdays')} loading={bDayQ.isLoading} colors={colors} styles={styles}>
+          <SectionCard icon="cake" title={t('attendance.birthdaysTitle')} rightLabel={t('common.all')} onRightPress={() => router.push('/birthdays')} loading={bDayQ.isLoading} colors={colors} styles={styles}>
             {upcomingBirthdays.map((emp, idx) => (
               <View key={emp.id} style={[styles.empRow, idx < upcomingBirthdays.length - 1 && styles.empRowBorder]}>
                 <EmployeeAvatar emp={emp} size={48} />
@@ -345,7 +347,7 @@ export default function TeamScreen() {
                   <Text style={styles.bdayDate}>{emp.birth_date ? dayjs(emp.birth_date).format('D MMM') : '—'}</Text>
                   {emp.days_left === 0 && (
                     <View style={styles.bdayTodayRow}>
-                      <Text style={styles.bdayToday}>Bugun!</Text>
+                      <Text style={styles.bdayToday}>{t('attendance.birthdayToday')}</Text>
                       <Icon name="gift" size={14} color={colors.warning} />
                     </View>
                   )}
