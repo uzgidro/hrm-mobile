@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { apiClient } from '../../src/api/client';
 import { useAuthStore } from '../../src/store/authStore';
 import { useLangStore } from '../../src/store/langStore';
+import { setupPushNotifications } from '../../src/auth/push';
 import { AUTH_LOGIN, USER_INFO } from '../../src/api/urls';
 import { useTheme, useThemedStyles } from '../../src/theme/ThemeProvider';
 import type { ThemeColors } from '../../src/theme/palettes';
@@ -55,6 +56,12 @@ export default function LoginScreen() {
       // login() sets isAuthenticated → the Stack.Protected guard in the root
       // layout redirects to (tabs) automatically; no imperative navigation.
       await login(data.access_token, data.refresh_token, meRes.data);
+      // Ask for notification permission right after the FIRST successful login.
+      // The bootstrap path (returning user, saved token) already calls this, but a
+      // fresh form login doesn't go through resolveBootstrap — without this the OS
+      // prompt only appeared on the second launch. Best-effort and fully guarded:
+      // never blocks or breaks the login flow.
+      void setupPushNotifications();
     } catch (e: unknown) {
       const err = e as { response?: { data?: { detail?: string | Array<{ msg: string }> } } };
       const detail = err?.response?.data?.detail;
