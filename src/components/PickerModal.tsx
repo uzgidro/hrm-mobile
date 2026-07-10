@@ -3,6 +3,7 @@ import {
   View, Text, StyleSheet, Modal, TextInput, FlatList,
   TouchableOpacity, Image, ActivityIndicator,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 import type { ThemeColors } from '../theme/palettes';
 import { Icon } from './Icon';
@@ -31,6 +32,7 @@ export function PickerModal({
 }: Props) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
 
   const filtered = useMemo(() => {
@@ -58,7 +60,7 @@ export function PickerModal({
           <View style={styles.searchWrap}>
             <TextInput
               style={styles.search}
-              placeholder="Qidirish..."
+              placeholder={t('common.search')}
               placeholderTextColor={colors.textMuted}
               value={search}
               onChangeText={setSearch}
@@ -99,14 +101,14 @@ export function PickerModal({
                 );
               }}
               ListEmptyComponent={
-                <View style={styles.empty}><Text style={styles.emptyText}>Topilmadi</Text></View>
+                <View style={styles.empty}><Text style={styles.emptyText}>{t('common.notFound')}</Text></View>
               }
             />
           )}
 
           {multiple && (
             <TouchableOpacity style={styles.doneBtn} onPress={onClose} activeOpacity={0.85}>
-              <Text style={styles.doneText}>Tayyor</Text>
+              <Text style={styles.doneText}>{t('common.done')}</Text>
             </TouchableOpacity>
           )}
         </View>

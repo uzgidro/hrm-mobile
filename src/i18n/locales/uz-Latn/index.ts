@@ -16,6 +16,9 @@ import projects from './projects';
 import profile from './profile';
 import employees from './employees';
 import security from './security';
+import auth from './auth';
+import modules from './modules';
+import components from './components';
 
 export default {
   common,
@@ -34,4 +37,7 @@ export default {
   profile,
   employees,
   security,
+  auth,
+  modules,
+  components,
 } as const;

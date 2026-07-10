@@ -1,6 +1,7 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '../src/theme/ThemeProvider';
 import type { ThemeColors } from '../src/theme/palettes';
 import { Icon } from '../src/components/Icon';
@@ -8,22 +9,21 @@ import { Icon } from '../src/components/Icon';
 export default function SalaryScreen() {
   const { colors } = useTheme();
   const s = useThemedStyles(makeStyles);
+  const { t } = useTranslation();
   return (
     <SafeAreaView style={s.safe} edges={['top', 'bottom']}>
       <View style={s.header}>
         <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
           <Icon name="chevronLeft" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={s.headerTitle}>Oylik</Text>
+        <Text style={s.headerTitle}>{t('modules.labels.salary')}</Text>
         <View style={{ width: 36 }} />
       </View>
 
       <View style={s.body}>
         <View style={s.emptyIconWrap}><Icon name="chart" size={30} color={colors.textMuted} /></View>
-        <Text style={s.title}>Tez orada</Text>
-        <Text style={s.subtitle}>
-          Oylik ma'lumotlari moduli ishlab chiqilmoqda.{'\n'}Yaqin orada qo'shiladi.
-        </Text>
+        <Text style={s.title}>{t('modules.salary.title')}</Text>
+        <Text style={s.subtitle}>{t('modules.salary.description')}</Text>
       </View>
     </SafeAreaView>
   );

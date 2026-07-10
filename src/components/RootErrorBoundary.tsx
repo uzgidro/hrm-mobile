@@ -6,6 +6,7 @@
 import { Component, type ReactNode } from 'react';
 import { StyleSheet, Text, View, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 import type { ThemeColors } from '../theme/palettes';
 import { Icon } from './Icon';
@@ -23,21 +24,22 @@ interface State {
 function Fallback({ error, onReset }: { error: Error; onReset: () => void }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const { t } = useTranslation();
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <View style={styles.center}>
         <View style={styles.iconWrap}>
           <Icon name="close" size={30} color={colors.error} />
         </View>
-        <Text style={styles.title}>Nimadir noto&apos;g&apos;ri ketdi</Text>
-        <Text style={styles.text}>Ilovada kutilmagan xatolik yuz berdi.</Text>
+        <Text style={styles.title}>{t('components.crashTitle')}</Text>
+        <Text style={styles.text}>{t('components.crashText')}</Text>
         {__DEV__ && !!error?.message && (
           <Text style={styles.devText} numberOfLines={4}>
             {error.message}
           </Text>
         )}
         <Pressable onPress={onReset} style={styles.retry} hitSlop={8}>
-          <Text style={styles.retryText}>Qayta urinish</Text>
+          <Text style={styles.retryText}>{t('common.retry')}</Text>
         </Pressable>
       </View>
     </SafeAreaView>

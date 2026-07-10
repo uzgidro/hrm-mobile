@@ -4,6 +4,7 @@ import {
   StyleSheet, KeyboardAvoidingView, Platform,
   ActivityIndicator, Alert,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { apiClient } from '../../src/api/client';
 import { useAuthStore } from '../../src/store/authStore';
 import { AUTH_LOGIN, USER_INFO } from '../../src/api/urls';
@@ -20,10 +21,11 @@ export default function LoginScreen() {
   const { login } = useAuthStore();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const { t } = useTranslation();
 
   const handleLogin = async () => {
     if (!username.trim() || !password.trim()) {
-      Alert.alert('Xato', 'Login va parol kiritilishi shart');
+      Alert.alert(t('auth.errorTitle'), t('auth.credentialsRequired'));
       return;
     }
     setLoading(true);
@@ -48,8 +50,8 @@ export default function LoginScreen() {
     } catch (e: unknown) {
       const err = e as { response?: { data?: { detail?: string | Array<{ msg: string }> } } };
       const detail = err?.response?.data?.detail;
-      const msg = Array.isArray(detail) ? detail[0]?.msg : (detail || "Login yoki parol noto'g'ri");
-      Alert.alert('Kirish xatosi', typeof msg === 'string' ? msg : 'Xatolik yuz berdi');
+      const msg = Array.isArray(detail) ? detail[0]?.msg : (detail || t('auth.invalidCredentials'));
+      Alert.alert(t('auth.loginError'), typeof msg === 'string' ? msg : t('errors.generic'));
     } finally {
       setLoading(false);
     }
@@ -62,18 +64,18 @@ export default function LoginScreen() {
           <View style={styles.logoCircle}>
             <Text style={styles.logoText}>HR</Text>
           </View>
-          <Text style={styles.appName}>Uzgidro HRM</Text>
-          <Text style={styles.appSubtitle}>Xodimlar boshqaruv tizimi</Text>
+          <Text style={styles.appName}>{t('auth.appName')}</Text>
+          <Text style={styles.appSubtitle}>{t('auth.appSubtitle')}</Text>
         </View>
 
         <View style={styles.form}>
           <View style={styles.inputWrapper}>
-            <Text style={styles.label}>Foydalanuvchi nomi</Text>
+            <Text style={styles.label}>{t('auth.usernameLabel')}</Text>
             <TextInput
               style={styles.input}
               value={username}
               onChangeText={setUsername}
-              placeholder="Username yoki email"
+              placeholder={t('auth.usernamePlaceholder')}
               placeholderTextColor={colors.textMuted}
               autoCapitalize="none"
               autoCorrect={false}
@@ -81,7 +83,7 @@ export default function LoginScreen() {
           </View>
 
           <View style={styles.inputWrapper}>
-            <Text style={styles.label}>Parol</Text>
+            <Text style={styles.label}>{t('auth.passwordLabel')}</Text>
             <View style={styles.passwordRow}>
               <TextInput
                 style={[styles.input, { flex: 1, marginBottom: 0 }]}
@@ -104,7 +106,7 @@ export default function LoginScreen() {
             disabled={loading}
             activeOpacity={0.85}
           >
-            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.loginBtnText}>Kirish</Text>}
+            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.loginBtnText}>{t('auth.loginButton')}</Text>}
           </TouchableOpacity>
         </View>
 
