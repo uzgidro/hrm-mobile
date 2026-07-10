@@ -584,11 +584,14 @@ describe('employeeSubLabel', () => {
 // translateCategory + ORDER_CATEGORY_TRANSLATIONS
 // ─────────────────────────────────────────────────────────────────────────────
 describe('ORDER_CATEGORY_TRANSLATIONS', () => {
-  it('has the expected fixed mapping', () => {
+  // Post-i18n: the map holds translation-key paths (labels are resolved via
+  // i18n.t() at call time in translateCategory). The category CODES (Record
+  // keys) stay as backend contract identifiers; only labels are localized.
+  it('has the expected fixed code → labelKey mapping', () => {
     expect(ORDER_CATEGORY_TRANSLATIONS).toEqual({
-      vacation: "Mehnat ta'tili",
-      business_trip: 'Xizmat safari',
-      sick_leave: 'Kasallik varaqasi',
+      vacation: 'status.categoryLeave',
+      business_trip: 'status.categoryBusinessTrip',
+      sick_leave: 'status.categorySickLeave',
     });
   });
 });

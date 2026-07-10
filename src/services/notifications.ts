@@ -4,6 +4,7 @@ import { Platform } from 'react-native';
 import { apiClient } from '../api/client';
 import { PUSH_TOKENS } from '../api/urls';
 import type { IconName } from '../components/Icon';
+import i18n from '@/i18n';
 
 // expo-notifications is loaded lazily and defensively. Importing it at the top
 // level throws in Expo Go (SDK 53+ removed remote push there), which would crash
@@ -116,42 +117,73 @@ export function routeForNotification(data: any): string | null {
   return null;
 }
 
+// Icon + i18n title-key for each notification_type. The KEYS of this map are the
+// backend contract (the notification_type codes) and must not be renamed; only
+// the title is translatable, so it is stored as a `notifications.*` catalog key
+// rather than a literal string.
+const NOTIF_META: Record<string, { titleKey: string; icon: IconName }> = {
+  order_act_created: { titleKey: 'notifications.orderActCreated', icon: 'orders' },
+  order_act_signed: { titleKey: 'notifications.orderActSigned', icon: 'check' },
+  order_act_changes_requested: { titleKey: 'notifications.orderActChangesRequested', icon: 'edit' },
+  business_trip_created: { titleKey: 'notifications.businessTripCreated', icon: 'briefcase' },
+  business_trip_signed: { titleKey: 'notifications.businessTripSigned', icon: 'check' },
+  business_trip_stamped: { titleKey: 'notifications.businessTripStamped', icon: 'check' },
+  business_trip_rejected: { titleKey: 'notifications.businessTripRejected', icon: 'close' },
+  business_trip_report_submitted: {
+    titleKey: 'notifications.businessTripReportSubmitted',
+    icon: 'briefcase',
+  },
+  business_trip_report_stamped: {
+    titleKey: 'notifications.businessTripReportStamped',
+    icon: 'briefcase',
+  },
+  business_trip_report_approved: {
+    titleKey: 'notifications.businessTripReportApproved',
+    icon: 'check',
+  },
+  business_trip_extension_requested: {
+    titleKey: 'notifications.businessTripExtensionRequested',
+    icon: 'calendar',
+  },
+  business_trip_extension_approved: {
+    titleKey: 'notifications.businessTripExtensionApproved',
+    icon: 'calendar',
+  },
+  business_trip_extension_rejected: {
+    titleKey: 'notifications.businessTripExtensionRejected',
+    icon: 'close',
+  },
+  news_post_created: { titleKey: 'notifications.newsPostCreated', icon: 'news' },
+  workspace_created: { titleKey: 'notifications.workspaceCreated', icon: 'grid' },
+  workspace_updated: { titleKey: 'notifications.workspaceUpdated', icon: 'grid' },
+  workspace_member_added: { titleKey: 'notifications.workspaceMemberAdded', icon: 'users' },
+  card_created: { titleKey: 'notifications.cardCreated', icon: 'checklist' },
+  card_member_added: { titleKey: 'notifications.cardMemberAdded', icon: 'checklist' },
+  card_completed: { titleKey: 'notifications.cardCompleted', icon: 'check' },
+  card_rejected: { titleKey: 'notifications.cardRejected', icon: 'close' },
+  card_comment_created: { titleKey: 'notifications.cardCommentCreated', icon: 'mail' },
+  card_comment_mention: { titleKey: 'notifications.cardCommentMention', icon: 'mail' },
+  card_deadline_approaching: { titleKey: 'notifications.cardDeadlineApproaching', icon: 'clock' },
+};
+
 // Human-readable title + icon for an in-app notification, derived from its
 // notification_type (the backend only sends a type code + a description body).
+// The title is resolved via i18n.t() at call time, so it follows the CURRENT
+// app language — a notification title re-renders correctly after a language
+// switch. (The push BODY, which arrives as pre-composed text from the backend,
+// cannot be translated on the client; only these client-generated titles can.)
 export function notificationMeta(type: string): { title: string; icon: IconName } {
   const t = type || '';
-  const map: Record<string, { title: string; icon: IconName }> = {
-    order_act_created: { title: 'Yangi buyruq', icon: 'orders' },
-    order_act_signed: { title: 'Buyruq tasdiqlandi', icon: 'check' },
-    order_act_changes_requested: { title: "Buyruqqa tuzatish so'raldi", icon: 'edit' },
-    business_trip_created: { title: 'Yangi xizmat safari', icon: 'briefcase' },
-    business_trip_signed: { title: 'Safar imzolandi', icon: 'check' },
-    business_trip_stamped: { title: 'Safar tasdiqlandi', icon: 'check' },
-    business_trip_rejected: { title: 'Safar rad etildi', icon: 'close' },
-    business_trip_report_submitted: { title: 'Safar hisoboti', icon: 'briefcase' },
-    business_trip_report_stamped: { title: 'Hisobot tasdig’i', icon: 'briefcase' },
-    business_trip_report_approved: { title: 'Hisobot tasdiqlandi', icon: 'check' },
-    business_trip_extension_requested: { title: 'Safar muddati', icon: 'calendar' },
-    business_trip_extension_approved: { title: 'Muddat uzaytirildi', icon: 'calendar' },
-    business_trip_extension_rejected: { title: 'Muddat rad etildi', icon: 'close' },
-    news_post_created: { title: 'Yangilik', icon: 'news' },
-    workspace_created: { title: 'Yangi loyiha', icon: 'grid' },
-    workspace_updated: { title: 'Loyiha yangilandi', icon: 'grid' },
-    workspace_member_added: { title: 'Loyihaga qo’shildingiz', icon: 'users' },
-    card_created: { title: 'Yangi vazifa', icon: 'checklist' },
-    card_member_added: { title: 'Vazifa biriktirildi', icon: 'checklist' },
-    card_completed: { title: 'Vazifa bajarildi', icon: 'check' },
-    card_rejected: { title: 'Vazifa rad etildi', icon: 'close' },
-    card_comment_created: { title: 'Yangi izoh', icon: 'mail' },
-    card_comment_mention: { title: 'Sizni eslab o’tishdi', icon: 'mail' },
-    card_deadline_approaching: { title: 'Muddat yaqinlashmoqda', icon: 'clock' },
-  };
-  if (map[t]) return map[t];
+  const meta = NOTIF_META[t];
+  if (meta) return { title: i18n.t(meta.titleKey), icon: meta.icon };
   // Prefix fallbacks for any unmapped variants.
-  if (t.startsWith('order_act')) return { title: 'Buyruq', icon: 'orders' };
-  if (t.startsWith('business_trip')) return { title: 'Xizmat safari', icon: 'briefcase' };
-  if (t.startsWith('news')) return { title: 'Yangilik', icon: 'news' };
-  if (t.startsWith('workspace')) return { title: 'Loyiha', icon: 'grid' };
-  if (t.startsWith('card')) return { title: 'Vazifa', icon: 'checklist' };
-  return { title: 'Bildirishnoma', icon: 'bell' };
+  if (t.startsWith('order_act'))
+    return { title: i18n.t('notifications.orderFallback'), icon: 'orders' };
+  if (t.startsWith('business_trip'))
+    return { title: i18n.t('notifications.businessTripFallback'), icon: 'briefcase' };
+  if (t.startsWith('news')) return { title: i18n.t('notifications.newsFallback'), icon: 'news' };
+  if (t.startsWith('workspace'))
+    return { title: i18n.t('notifications.workspaceFallback'), icon: 'grid' };
+  if (t.startsWith('card')) return { title: i18n.t('notifications.cardFallback'), icon: 'checklist' };
+  return { title: i18n.t('notifications.generic'), icon: 'bell' };
 }

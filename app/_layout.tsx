@@ -5,6 +5,8 @@ import { Stack, router, type Href } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { I18nextProvider } from 'react-i18next';
+import i18n from '../src/i18n';
 import { useAuthStore } from '../src/store/authStore';
 import { useLockStore } from '../src/store/lockStore';
 import { createAppQueryClient } from '../src/lib/queryClient';
@@ -121,13 +123,15 @@ function ThemedNavigation() {
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
-      <ThemeProvider>
-        <RootErrorBoundary>
-          <QueryClientProvider client={queryClient}>
-            <ThemedNavigation />
-          </QueryClientProvider>
-        </RootErrorBoundary>
-      </ThemeProvider>
+      <I18nextProvider i18n={i18n}>
+        <ThemeProvider>
+          <RootErrorBoundary>
+            <QueryClientProvider client={queryClient}>
+              <ThemedNavigation />
+            </QueryClientProvider>
+          </RootErrorBoundary>
+        </ThemeProvider>
+      </I18nextProvider>
     </SafeAreaProvider>
   );
 }

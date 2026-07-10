@@ -12,6 +12,9 @@ import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import type { ThemeMode } from '@/theme/ThemeProvider';
 import { Icon, IconName } from '@/components/Icon';
+import { Flag } from '@/components/Flag';
+import { useLangStore } from '@/store/langStore';
+import { LANGUAGES, LANGUAGE_NATIVE_NAME, LANGUAGE_FLAG } from '@/i18n/locales';
 
 const THEME_OPTIONS: { key: ThemeMode; label: string; icon: IconName }[] = [
   { key: 'system', label: 'Tizim', icon: 'system' },
@@ -25,6 +28,8 @@ export default function ProfileScreen() {
   const { colors, mode, setMode } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { onlySubordinates, setOnlySubordinates } = usePrefsStore();
+  const language = useLangStore((s) => s.language);
+  const setLanguage = useLangStore((s) => s.setLanguage);
   // Per-field selectors: the lock store also mutates status/failedAttempts on
   // every unlock attempt, and this screen only cares about the biometrics flags.
   const biometricsSupported = useLockStore((s) => s.biometricsSupported);
@@ -145,6 +150,29 @@ export default function ProfileScreen() {
           </View>
         </View>
 
+        {/* Language */}
+        <Text style={styles.sectionLabel}>Til</Text>
+        <View style={styles.card}>
+          <View style={styles.langGrid}>
+            {LANGUAGES.map((lang) => {
+              const active = language === lang;
+              return (
+                <TouchableOpacity
+                  key={lang}
+                  style={[styles.langOption, active && styles.segmentActive]}
+                  onPress={() => setLanguage(lang)}
+                  activeOpacity={0.8}
+                >
+                  <Flag code={LANGUAGE_FLAG[lang]} size={26} />
+                  <Text style={[styles.segmentText, active && styles.segmentTextActive]}>
+                    {LANGUAGE_NATIVE_NAME[lang]}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
         {/* Preferences */}
         <Text style={styles.sectionLabel}>Sozlamalar</Text>
         <View style={styles.card}>
@@ -181,7 +209,7 @@ export default function ProfileScreen() {
           )}
 
           {isNative && biometricsSupported && (
-            <View style={[styles.menuItem, styles.menuItemBorder]}>
+            <View style={styles.menuItem}>
               <View style={styles.menuItemLeft}>
                 <View style={styles.menuIcon}><Icon name="fingerprint" size={18} color={colors.textSecondary} /></View>
                 <View style={{ flex: 1 }}>
@@ -198,13 +226,6 @@ export default function ProfileScreen() {
             </View>
           )}
 
-          <View style={styles.menuItem}>
-            <View style={styles.menuItemLeft}>
-              <View style={styles.menuIcon}><Icon name="globe" size={18} color={colors.textSecondary} /></View>
-              <Text style={styles.menuLabel}>Til</Text>
-            </View>
-            <Text style={styles.menuValue}>O'zbekcha</Text>
-          </View>
         </View>
 
         {/* Logout */}
@@ -270,6 +291,14 @@ const makeStyles = (c: ThemeColors) =>
     segmentActive: { backgroundColor: c.primarySoft, borderColor: c.primary },
     segmentText: { fontSize: 12, fontWeight: '600', color: c.textSecondary },
     segmentTextActive: { color: c.primary, fontWeight: '800' },
+
+    // 2×2 grid for the 4 languages (a single row of 4 is too cramped).
+    langGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    langOption: {
+      width: '48%', flexGrow: 1, flexDirection: 'row', alignItems: 'center',
+      justifyContent: 'center', gap: 8, paddingVertical: 12, borderRadius: 12,
+      backgroundColor: c.bg, borderWidth: 1, borderColor: c.cardBorder,
+    },
 
     menuItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14 },
     menuItemBorder: { borderBottomWidth: 1, borderBottomColor: c.cardBorder },
