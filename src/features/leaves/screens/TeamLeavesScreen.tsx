@@ -16,6 +16,7 @@ import { Icon } from '@/components/Icon';
 import { LoadingView, EmptyState } from '@/components/StateViews';
 import { monthName } from '@/i18n/dates';
 import { teamLeavesQuery } from '../api/queries';
+import { leaveTypeLabel } from '../components/LeaveTypeSheet';
 
 function statusMeta(status: string, c: ThemeColors, t: TFunction) {
   if (status === 'approved' || status === 'tasdiqlangan' || status === 'signed') return { label: t('leaves.statusApproved'), fg: c.success, bg: c.successSoft };
@@ -116,7 +117,7 @@ export default function TeamLeavesScreen() {
                       </View>
                     )}
                     <View style={styles.cardTop}>
-                      <Text style={styles.categoryName} numberOfLines={1}>{leave.type ?? t('leaves.typeFallback')}</Text>
+                      <Text style={styles.categoryName} numberOfLines={1}>{leave.type ? leaveTypeLabel(t, leave.type) : t('leaves.typeFallback')}</Text>
                       <View style={[styles.badge, { backgroundColor: st.bg }]}>
                         <Text style={[styles.badgeText, { color: st.fg }]}>{st.label}</Text>
                       </View>

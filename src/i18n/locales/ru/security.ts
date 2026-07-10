@@ -22,6 +22,8 @@ export default {
   forceLogoutTitle: 'Попытки исчерпаны',
   forceLogoutMessage: 'В целях безопасности вы вышли из системы. Войдите снова.',
 
+  biometricPrompt: 'Подтвердите, чтобы открыть приложение',
+
   biometricTitle: 'Биометрический вход',
   biometricMessage: 'Разблокировать приложение отпечатком пальца или по лицу?',
   biometricLater: 'Позже',

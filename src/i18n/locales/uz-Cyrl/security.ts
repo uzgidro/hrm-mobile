@@ -21,6 +21,8 @@ export default {
   forceLogoutTitle: 'Уринишлар сони тугади',
   forceLogoutMessage: 'Хавфсизлик мақсадида тизимдан чиқарилдингиз. Қайтадан киринг.',
 
+  biometricPrompt: 'Иловани очиш учун тасдиқланг',
+
   biometricTitle: 'Биометрик кириш',
   biometricMessage: 'Иловани бармоқ изи ёки юз орқали очишни ёқасизми?',
   biometricLater: 'Кейинроқ',

@@ -4,4 +4,6 @@ export default {
   generic: 'Произошла ошибка',
   saveFailed: 'Ошибка при сохранении',
   sendFailed: 'Ошибка при отправке запроса',
+  refreshFailed: 'Не удалось обновить данные',
+  actionFailed: 'Не удалось выполнить действие',
 } as const;

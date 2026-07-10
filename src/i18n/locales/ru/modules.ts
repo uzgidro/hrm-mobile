@@ -10,6 +10,10 @@ export default {
   },
 
   labels: {
+    home: 'Главная',
+    orders: 'Приказы',
+    letters: 'Письма',
+    modules: 'Модули',
     attendance: 'Посещаемость',
     requests: 'Заявки',
     projects: 'Проекты',

@@ -31,6 +31,9 @@ export default {
   forceLogoutTitle: 'Urinishlar soni tugadi',
   forceLogoutMessage: 'Xavfsizlik maqsadida tizimdan chiqarildingiz. Qaytadan kiring.',
 
+  // ── OS biometric prompt (shown by the native biometric sheet on unlock) ─────
+  biometricPrompt: 'Ilovani ochish uchun tasdiqlang',
+
   // ── Biometrics offer alert (after setup) ────────────────────────────────────
   biometricTitle: 'Biometrik kirish',
   biometricMessage: 'Ilovani barmoq izi yoki yuz orqali ochishni yoqasizmi?',

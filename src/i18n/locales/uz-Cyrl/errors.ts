@@ -4,4 +4,6 @@ export default {
   generic: 'Хатолик юз берди',
   saveFailed: 'Сақлашда хатолик юз берди',
   sendFailed: 'Сўров юборишда хатолик юз берди',
+  refreshFailed: "Маълумотни янгилаб бўлмади",
+  actionFailed: "Амални бажариб бўлмади",
 } as const;

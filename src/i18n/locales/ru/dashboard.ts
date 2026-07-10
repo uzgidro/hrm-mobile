@@ -7,14 +7,14 @@ export default {
   checkIn: 'Приход',
   checkOut: 'Уход',
 
-  incomingRequests: 'Входящие запросы',
-  requests: 'Запросы',
-  noIncomingRequests: 'Входящих запросов нет',
-  noRequests: 'Запросов нет',
+  incomingRequests: 'Входящие заявки',
+  requests: 'Заявки',
+  noIncomingRequests: 'Входящих заявок нет',
+  noRequests: 'Заявок нет',
   employeeFallback: 'Сотрудник',
-  leaveRequestFallback: 'Запрос на отсутствие',
+  leaveRequestFallback: 'Заявка на отпуск',
   actionNeeded: 'Требует утверждения',
-  createRequest: 'Создать запрос',
+  createRequest: 'Создать заявку',
 
   status: {
     pending: 'Ожидает',

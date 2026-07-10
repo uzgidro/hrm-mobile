@@ -18,7 +18,7 @@ export default {
 
   fieldPhone: 'Телефон',
   fieldTelegram: 'Телеграм',
-  fieldPin: 'ПИНФЛ',
+  fieldPin: 'ЖШШИР',
   hostSection: 'Принимающий',
   fieldHost: 'Сотрудник',
   fieldHostPhone: 'Внутренний номер',

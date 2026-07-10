@@ -40,6 +40,19 @@ export default {
   typeSheetTitle: "So'rov turini tanlang",
   typeCustomPlaceholder: "Yoki o'zingiz yozing...",
 
+  // Preset leave-type labels. Web-parity: the KEYS here are the exact
+  // LEAVE_TYPES *values* stored/POSTed as the leave `type` (never translated —
+  // see LeaveTypeSheet.tsx); only these display LABELS localize. A custom
+  // free-text type falls back to its own raw value (defaultValue at the call
+  // site), so it need not appear here.
+  presetType: {
+    "Xizmat topshirig'i": "Xizmat topshirig'i",
+    Kasallik: 'Kasallik',
+    "Ta'til": "Ta'til",
+    'Shaxsiy sabab': 'Shaxsiy sabab',
+    Boshqa: 'Boshqa',
+  },
+
   // ── Detail info rows ────────────────────────────────────────────────────────
   fieldType: "So'rov turi",
   fieldStart: 'Boshlanish',

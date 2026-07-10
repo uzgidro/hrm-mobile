@@ -18,7 +18,7 @@ import { Employee } from '@/types';
 import { Icon } from '@/components/Icon';
 import { useCreateLeave, type CreateLeavePayload } from '../api/mutations';
 import { LeaveDateTimePicker } from '../components/LeaveDateTimePicker';
-import { LeaveTypeSheet, LEAVE_TYPES } from '../components/LeaveTypeSheet';
+import { LeaveTypeSheet, LEAVE_TYPES, leaveTypeLabel } from '../components/LeaveTypeSheet';
 
 export default function CreateLeaveScreen() {
   const { user } = useAuthStore();
@@ -93,7 +93,7 @@ export default function CreateLeaveScreen() {
       <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
         <Text style={s.label}>{t('leaves.typeLabel')}</Text>
         <TouchableOpacity style={s.selector} onPress={() => setShowTypeSheet(true)} activeOpacity={0.7}>
-          <Text style={s.selectorText}>{leaveType}</Text>
+          <Text style={s.selectorText}>{leaveTypeLabel(t, leaveType)}</Text>
           <Icon name="chevronRight" size={20} color={colors.textMuted} />
         </TouchableOpacity>
 

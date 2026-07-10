@@ -16,6 +16,7 @@ import { Icon } from '@/components/Icon';
 import { LoadingView, EmptyState } from '@/components/StateViews';
 import { WorkLeave } from '@/types';
 import { myLeavesQuery, assignedLeavesQuery } from '../api/queries';
+import { leaveTypeLabel } from '../components/LeaveTypeSheet';
 
 type StatusFilter = 'all' | 'pending' | 'approved' | 'rejected';
 
@@ -75,7 +76,7 @@ function LeaveCard({ leave, showEmployee, actionNeeded, styles, colors }: {
         </View>
       )}
       <View style={styles.cardTop}>
-        <Text style={styles.categoryName} numberOfLines={1}>{leave.type ?? t('leaves.typeFallback')}</Text>
+        <Text style={styles.categoryName} numberOfLines={1}>{leave.type ? leaveTypeLabel(t, leave.type) : t('leaves.typeFallback')}</Text>
         <View style={[styles.badge, { backgroundColor: st.bg }]}>
           <Text style={[styles.badgeText, { color: st.fg }]}>{st.label}</Text>
         </View>

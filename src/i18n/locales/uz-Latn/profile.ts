@@ -56,7 +56,7 @@ export default {
   fieldPassportSeries: 'Pasport seriya',
   fieldPassportNumber: 'Pasport raqami',
   fieldPassportIssuedBy: 'Pasport berilgan joy',
-  fieldJshir: 'JSHIR',
+  fieldJshir: 'JSHSHIR',
   fieldPinfl: 'PINFL',
   fieldInn: 'INN',
   fieldPensionAccount: 'Pensiya hisob raqami',

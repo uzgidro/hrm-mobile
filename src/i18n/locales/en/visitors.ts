@@ -18,7 +18,7 @@ export default {
 
   fieldPhone: 'Phone',
   fieldTelegram: 'Telegram',
-  fieldPin: 'PIN',
+  fieldPin: 'JSHSHIR',
   hostSection: 'Host',
   fieldHost: 'Employee',
   fieldHostPhone: 'Extension',

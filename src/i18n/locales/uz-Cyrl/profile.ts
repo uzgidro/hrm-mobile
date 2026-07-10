@@ -42,7 +42,7 @@ export default {
   fieldPassportSeries: 'Паспорт серия',
   fieldPassportNumber: 'Паспорт рақами',
   fieldPassportIssuedBy: 'Паспорт берилган жой',
-  fieldJshir: 'ЖШИР',
+  fieldJshir: 'ЖШШИР',
   fieldPinfl: 'ПИНФЛ',
   fieldInn: 'ИНН',
   fieldPensionAccount: 'Пенсия ҳисоб рақами',

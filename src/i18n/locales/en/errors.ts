@@ -4,4 +4,6 @@ export default {
   generic: 'An error occurred',
   saveFailed: 'Failed to save',
   sendFailed: 'Failed to send the request',
+  refreshFailed: 'Failed to refresh data',
+  actionFailed: 'Failed to perform the action',
 } as const;

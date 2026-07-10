@@ -18,6 +18,7 @@ import { LoadingView, EmptyState } from '@/components/StateViews';
 import { getApiErrorMessage } from '@/api/errors';
 import { leaveDetailQuery } from '../api/queries';
 import { useSignLeave, useRejectLeave } from '../api/mutations';
+import { leaveTypeLabel } from '../components/LeaveTypeSheet';
 
 function isPending(status: string) { return status === 'pending' || status === 'yuborildi'; }
 function isApproved(status: string) { return status === 'approved' || status === 'tasdiqlangan' || status === 'signed'; }
@@ -168,7 +169,7 @@ export default function LeaveDetailScreen() {
         )}
 
         <View style={s.infoCard}>
-          <View style={s.infoRow}><Text style={s.infoLabel}>{t('leaves.fieldType')}</Text><Text style={s.infoValue}>{leave.type ?? t('leaves.typeFallback')}</Text></View>
+          <View style={s.infoRow}><Text style={s.infoLabel}>{t('leaves.fieldType')}</Text><Text style={s.infoValue}>{leave.type ? leaveTypeLabel(t, leave.type) : t('leaves.typeFallback')}</Text></View>
           <View style={s.divider} />
           <View style={s.infoRow}><Text style={s.infoLabel}>{t('leaves.fieldStart')}</Text><Text style={s.infoValue}>{dayjs(leave.start_date).format('DD.MM.YYYY HH:mm')}</Text></View>
           <View style={s.divider} />

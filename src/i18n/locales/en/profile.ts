@@ -42,7 +42,7 @@ export default {
   fieldPassportSeries: 'Passport series',
   fieldPassportNumber: 'Passport number',
   fieldPassportIssuedBy: 'Passport issued by',
-  fieldJshir: 'JSHIR',
+  fieldJshir: 'JSHSHIR',
   fieldPinfl: 'PINFL',
   fieldInn: 'INN',
   fieldPensionAccount: 'Pension account number',

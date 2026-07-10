@@ -17,6 +17,7 @@ import security from './security';
 import auth from './auth';
 import modules from './modules';
 import components from './components';
+import update from './update';
 
 export default {
   common,
@@ -38,4 +39,5 @@ export default {
   auth,
   modules,
   components,
+  update,
 } as const;

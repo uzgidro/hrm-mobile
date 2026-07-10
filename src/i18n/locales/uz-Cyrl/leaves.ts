@@ -30,6 +30,15 @@ export default {
   typeSheetTitle: 'Сўров турини танланг',
   typeCustomPlaceholder: 'Ёки ўзингиз ёзинг...',
 
+  // Preset leave-type labels. Keys are the untranslated LEAVE_TYPES values.
+  presetType: {
+    "Xizmat topshirig'i": 'Хизмат топшириғи',
+    Kasallik: 'Касаллик',
+    "Ta'til": 'Таътил',
+    'Shaxsiy sabab': 'Шахсий сабаб',
+    Boshqa: 'Бошқа',
+  },
+
   fieldType: 'Сўров тури',
   fieldStart: 'Бошланиш',
   fieldEnd: 'Тугаш',

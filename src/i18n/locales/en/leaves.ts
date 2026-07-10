@@ -30,6 +30,15 @@ export default {
   typeSheetTitle: 'Select request type',
   typeCustomPlaceholder: 'Or type your own...',
 
+  // Preset leave-type labels. Keys are the untranslated LEAVE_TYPES values.
+  presetType: {
+    "Xizmat topshirig'i": 'Business assignment',
+    Kasallik: 'Sick leave',
+    "Ta'til": 'Vacation',
+    'Shaxsiy sabab': 'Personal reason',
+    Boshqa: 'Other',
+  },
+
   fieldType: 'Request type',
   fieldStart: 'Start',
   fieldEnd: 'End',

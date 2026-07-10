@@ -74,7 +74,7 @@ export default {
     inn: 'INN',
     passport: 'Pasport',
     passportIssuedBy: 'Pasport berilgan joy',
-    jshshir: 'JSHIR',
+    jshshir: 'JSHSHIR',
     pensionAccount: 'Pensiya hisob raqami',
   },
 

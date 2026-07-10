@@ -10,6 +10,10 @@ export default {
   },
 
   labels: {
+    home: 'Асосий',
+    orders: 'Буйруқлар',
+    letters: 'Хатлар',
+    modules: 'Модуллар',
     attendance: 'Давомат',
     requests: "Сўровлар",
     projects: 'Лойиҳалар',

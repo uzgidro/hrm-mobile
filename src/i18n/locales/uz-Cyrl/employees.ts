@@ -61,7 +61,7 @@ export default {
     inn: 'INN',
     passport: 'Паспорт',
     passportIssuedBy: 'Паспорт берилган жой',
-    jshshir: 'ЖШИР',
+    jshshir: 'ЖШШИР',
     pensionAccount: 'Пенсия ҳисоб рақами',
   },
 

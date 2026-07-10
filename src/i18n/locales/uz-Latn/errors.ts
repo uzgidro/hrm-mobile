@@ -9,4 +9,7 @@ export default {
   generic: 'Xatolik yuz berdi',
   saveFailed: 'Saqlashda xatolik yuz berdi',
   sendFailed: "So'rov yuborishda xatolik yuz berdi",
+  // React Query cache onError toast fallbacks (src/lib/queryClient.ts).
+  refreshFailed: "Ma'lumotni yangilab bo'lmadi",
+  actionFailed: "Amalni bajarib bo'lmadi",
 } as const;

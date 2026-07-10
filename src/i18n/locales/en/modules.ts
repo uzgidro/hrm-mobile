@@ -10,6 +10,10 @@ export default {
   },
 
   labels: {
+    home: 'Home',
+    orders: 'Orders',
+    letters: 'Letters',
+    modules: 'Modules',
     attendance: 'Attendance',
     requests: 'Requests',
     projects: 'Projects',

@@ -3,11 +3,23 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, Modal } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
 
+// Web-parity: these strings are BOTH the option list AND the value stored/POSTed
+// as the leave `type` (CreateLeaveScreen sends `type: leaveType` verbatim), so
+// they must stay byte-identical — do NOT translate them. Only the *displayed*
+// label is localized, via t('leaves.presetType.<value>'); the raw value is the
+// i18n key (values contain no dots, so they are valid nested key paths) and also
+// the fallback for custom free-text types. See src/i18n/locales/*/leaves.ts.
 export const LEAVE_TYPES = ["Xizmat topshirig'i", 'Kasallik', "Ta'til", 'Shaxsiy sabab', 'Boshqa'];
+
+// Localized display label for a leave type; custom free-text falls back to itself.
+export function leaveTypeLabel(t: TFunction, value: string): string {
+  return t(`leaves.presetType.${value}`, { defaultValue: value });
+}
 
 export function LeaveTypeSheet({ visible, selected, onSelect, onClose }: {
   visible: boolean; selected: string; onSelect: (t: string) => void; onClose: () => void;
@@ -22,10 +34,10 @@ export function LeaveTypeSheet({ visible, selected, onSelect, onClose }: {
       <View style={ts.sheet}>
         <View style={ts.handle} />
         <Text style={ts.title}>{t('leaves.typeSheetTitle')}</Text>
-        {LEAVE_TYPES.map((t) => (
-          <TouchableOpacity key={t} style={ts.item} onPress={() => { onSelect(t); onClose(); }} activeOpacity={0.7}>
-            <Text style={[ts.itemText, selected === t && ts.itemTextActive]}>{t}</Text>
-            {selected === t && <Icon name="check" size={16} color={colors.primaryLight} />}
+        {LEAVE_TYPES.map((value) => (
+          <TouchableOpacity key={value} style={ts.item} onPress={() => { onSelect(value); onClose(); }} activeOpacity={0.7}>
+            <Text style={[ts.itemText, selected === value && ts.itemTextActive]}>{leaveTypeLabel(t, value)}</Text>
+            {selected === value && <Icon name="check" size={16} color={colors.primaryLight} />}
           </TouchableOpacity>
         ))}
         <View style={ts.customRow}>
