@@ -62,12 +62,14 @@
       "typedRoutes": true
     },
     "updates": {
-      "url": "https://u.expo.dev/REPLACE_WITH_EAS_PROJECT_ID"
+      "url": "https://u.expo.dev/cf579f3d-bd8a-41b9-9ff6-8facfb41af7a"
     },
     "extra": {
+      "router": {},
       "eas": {
-        "projectId": "REPLACE_WITH_EAS_PROJECT_ID"
+        "projectId": "cf579f3d-bd8a-41b9-9ff6-8facfb41af7a"
       }
-    }
+    },
+    "owner": "sukhrob.normurodov"
   }
 }
