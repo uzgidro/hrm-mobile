@@ -9,17 +9,21 @@
     "dayjs": "^1.11.21",
     "expo": "~56.0.14",
     "expo-constants": "~56.0.17",
+    "expo-crypto": "~56.0.4",
     "expo-device": "~56.0.4",
     "expo-document-picker": "~56.0.4",
     "expo-font": "~56.0.5",
     "expo-image": "~56.0.11",
     "expo-image-picker": "~56.0.19",
+    "expo-in-app-updates": "^0.12.0",
     "expo-linking": "~56.0.15",
+    "expo-local-authentication": "~56.0.4",
     "expo-notifications": "~56.0.19",
     "expo-router": "~56.2.13",
     "expo-secure-store": "~56.0.4",
     "expo-splash-screen": "~56.0.12",
     "expo-status-bar": "~56.0.4",
+    "expo-updates": "~56.0.21",
     "react": "19.2.3",
     "react-dom": "^19.2.3",
     "react-native": "0.85.3",
@@ -55,6 +59,9 @@
     "test:watch": "jest --watch",
     "typecheck": "tsc --noEmit",
     "lint": "eslint ."
+  },
+  "engines": {
+    "node": ">=20"
   },
   "private": true
 }

@@ -25,3 +25,24 @@ jest.mock('expo-secure-store', () => {
     deleteItemAsync: jest.fn(async (k: string) => void store.delete(k)),
   };
 });
+
+// expo-crypto → node:crypto, so PIN hashing is real (deterministic) in tests.
+jest.mock('expo-crypto', () => {
+  const { createHash } = require('crypto');
+  return {
+    CryptoDigestAlgorithm: { SHA256: 'SHA-256' },
+    digestStringAsync: jest.fn(async (_alg: string, data: string) =>
+      createHash('sha256').update(data, 'utf8').digest('hex')
+    ),
+    getRandomBytesAsync: jest.fn(async (n: number) =>
+      Uint8Array.from({ length: n }, (_, i) => (i * 31 + 7) % 256)
+    ),
+  };
+});
+
+// expo-local-authentication → configurable stub; tests flip the mocks per case.
+jest.mock('expo-local-authentication', () => ({
+  hasHardwareAsync: jest.fn(async () => false),
+  isEnrolledAsync: jest.fn(async () => false),
+  authenticateAsync: jest.fn(async () => ({ success: false })),
+}));
