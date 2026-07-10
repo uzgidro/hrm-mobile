@@ -54,7 +54,9 @@ export type IconName =
   | 'eyeOff'
   | 'guest'
   | 'board'
-  | 'trash';
+  | 'trash'
+  | 'fingerprint'
+  | 'backspace';
 
 type Props = {
   name: IconName;
@@ -421,6 +423,25 @@ function render(name: IconName, p: any) {
           <Path d="M6 6.5 7 20a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13.5" {...p} />
           <Line x1="10" y1="10" x2="10" y2="17" {...p} />
           <Line x1="14" y1="10" x2="14" y2="17" {...p} />
+        </>
+      );
+    case 'fingerprint':
+      // concentric ridge arcs, outermost first, each trailing off downward
+      return (
+        <>
+          <Path d="M7.5 5.4a8.4 8.4 0 0 1 9 0" {...p} />
+          <Path d="M4.5 12.5a7.5 7.5 0 0 1 15 0c0 2.9-.7 5.6-1.8 8" {...p} />
+          <Path d="M8 12.5a4 4 0 0 1 8 0c0 2.8-.5 5.4-1.5 7.8" {...p} />
+          <Path d="M12 12.5c0 2.6-.4 5.1-1.1 7.5" {...p} />
+        </>
+      );
+    case 'backspace':
+      // keyboard delete key: left-pointing tab with an × inside
+      return (
+        <>
+          <Path d="M20 5H9l-6 7 6 7h11a1.5 1.5 0 0 0 1.5-1.5v-11A1.5 1.5 0 0 0 20 5Z" {...p} />
+          <Line x1="12.5" y1="9.5" x2="17.5" y2="14.5" {...p} />
+          <Line x1="17.5" y1="9.5" x2="12.5" y2="14.5" {...p} />
         </>
       );
     default:
