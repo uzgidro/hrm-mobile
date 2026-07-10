@@ -1,20 +1,30 @@
 {
   "cli": {
     "version": ">= 12.0.0",
-    "appVersionSource": "local"
+    "appVersionSource": "remote"
   },
   "build": {
     "preview": {
+      "channel": "preview",
+      "distribution": "internal",
       "android": {
         "buildType": "apk"
-      },
-      "distribution": "internal"
+      }
     },
     "production": {
+      "channel": "production",
+      "autoIncrement": true,
       "android": {
         "buildType": "app-bundle"
-      },
-      "autoIncrement": true
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "android": {
+        "serviceAccountKeyPath": "./playstore-service-account.json",
+        "track": "internal"
+      }
     }
   }
 }

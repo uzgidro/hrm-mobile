@@ -1,0 +1,47 @@
+name: OTA Update (EAS Update)
+
+# Ship JS/asset-only changes to users without a store build. Pushing to master
+# publishes an update to the "production" channel; installed apps download it on
+# their next launch and apply it on the launch after that.
+#
+# runtimeVersion is "appVersion" (see app.json), so an update only reaches
+# binaries built from the same app.json version — a native change that isn't
+# accompanied by a version bump would otherwise ship JS that needs a missing
+# native module. TEAM RULE: any change to native deps (package.json) or plugins
+# (app.json) MUST bump expo.version in the same PR, then go out as a store
+# release, not an OTA.
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+concurrency:
+  group: ota-production
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Don't ship broken JS over the air — gate the update on green checks.
+      - name: Typecheck & test
+        run: |
+          npm run typecheck
+          npx jest --ci
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Publish OTA update
+        run: eas update --channel production --message "${{ github.event.head_commit.message || 'manual dispatch' }}" --non-interactive

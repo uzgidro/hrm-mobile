@@ -1,0 +1,46 @@
+name: Release to Google Play (internal)
+
+# Tag a commit on master as v<app.json version> (e.g. v1.1.0) to ship a store
+# build: EAS builds the app-bundle on Expo's servers and auto-submits it to the
+# Google Play *internal* track. Promotion to production stays manual in the
+# Play Console.
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  build-and-submit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Guard against a tag that doesn't match the shipped version — the store
+      # version comes from app.json, the tag is just the trigger.
+      - name: Verify tag matches app.json version
+        run: |
+          node -e "const v=require('./app.json').expo.version; const tag=process.env.GITHUB_REF_NAME; if ('v'+v!==tag) { console.error('Tag '+tag+' does not match app.json version '+v); process.exit(1); }"
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      # eas submit reads this path from the submit profile in eas.json.
+      - name: Write Play service-account key
+        env:
+          GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+        run: printf '%s' "$GOOGLE_SERVICE_ACCOUNT_KEY" > ./playstore-service-account.json
+
+      # Build the production app-bundle and hand it to EAS Submit on completion.
+      # --no-wait keeps the CI job short; build + submit finish on Expo's servers
+      # (watch progress on expo.dev). If a future run shows the submit not
+      # starting, drop --no-wait so the job waits for the build.
+      - name: Build & auto-submit to Play internal track
+        run: eas build --platform android --profile production --non-interactive --auto-submit --no-wait

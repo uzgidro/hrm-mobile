@@ -1,0 +1,30 @@
+name: CI
+
+# Static checks on every PR and on pushes to the long-lived branches.
+# Keeps refactoring (dev) and master (release) green before anything ships.
+on:
+  push:
+    branches: [refactoring, master]
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npx jest --ci
