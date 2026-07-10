@@ -1,10 +1,13 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Image, Switch,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Image, Switch, Platform,
 } from 'react-native';
 import { router } from 'expo-router';
+import Constants from 'expo-constants';
 import { useAuthStore } from '@/store/authStore';
 import { usePrefsStore } from '@/store/prefsStore';
+import { useLockStore } from '@/store/lockStore';
+import { authenticateBiometric } from '@/auth/biometrics';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import type { ThemeMode } from '@/theme/ThemeProvider';
@@ -22,6 +25,22 @@ export default function ProfileScreen() {
   const { colors, mode, setMode } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { onlySubordinates, setOnlySubordinates } = usePrefsStore();
+  // Per-field selectors: the lock store also mutates status/failedAttempts on
+  // every unlock attempt, and this screen only cares about the biometrics flags.
+  const biometricsSupported = useLockStore((s) => s.biometricsSupported);
+  const biometricsEnabled = useLockStore((s) => s.biometricsEnabled);
+  const setBiometricsEnabled = useLockStore((s) => s.setBiometricsEnabled);
+  const isNative = Platform.OS !== 'web';
+
+  const handleBiometricsToggle = async (next: boolean) => {
+    if (next) {
+      // Only enable after a successful biometric check.
+      const ok = await authenticateBiometric();
+      if (ok) await setBiometricsEnabled(true);
+    } else {
+      await setBiometricsEnabled(false);
+    }
+  };
 
   const handleLogout = () => {
     Alert.alert('Chiqish', 'Tizimdan chiqishni xohlaysizmi?', [
@@ -145,6 +164,40 @@ export default function ProfileScreen() {
             />
           </View>
 
+          {isNative && (
+            <TouchableOpacity
+              style={[styles.menuItem, styles.menuItemBorder]}
+              onPress={() => router.push('/change-pin')}
+              activeOpacity={0.7}
+            >
+              <View style={styles.menuItemLeft}>
+                <View style={styles.menuIcon}><Icon name="lock" size={18} color={colors.textSecondary} /></View>
+                <Text style={styles.menuLabel}>PIN kodni o'zgartirish</Text>
+              </View>
+              <View style={styles.menuChevron}>
+                <Icon name="chevronRight" size={18} color={colors.textMuted} />
+              </View>
+            </TouchableOpacity>
+          )}
+
+          {isNative && biometricsSupported && (
+            <View style={[styles.menuItem, styles.menuItemBorder]}>
+              <View style={styles.menuItemLeft}>
+                <View style={styles.menuIcon}><Icon name="fingerprint" size={18} color={colors.textSecondary} /></View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.menuLabel}>Biometrik kirish</Text>
+                  <Text style={styles.menuHint}>Barmoq izi yoki yuz bilan tez ochish</Text>
+                </View>
+              </View>
+              <Switch
+                value={biometricsEnabled}
+                onValueChange={handleBiometricsToggle}
+                trackColor={{ false: colors.cardBorder, true: colors.primary }}
+                thumbColor={'#fff'}
+              />
+            </View>
+          )}
+
           <View style={styles.menuItem}>
             <View style={styles.menuItemLeft}>
               <View style={styles.menuIcon}><Icon name="globe" size={18} color={colors.textSecondary} /></View>
@@ -160,7 +213,7 @@ export default function ProfileScreen() {
           <Text style={styles.logoutText}>Chiqish</Text>
         </TouchableOpacity>
 
-        <Text style={styles.version}>Dastur versiyasi 1.0.0</Text>
+        <Text style={styles.version}>{`Dastur versiyasi ${Constants.expoConfig?.version ?? '1.0.0'}`}</Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -225,6 +278,7 @@ const makeStyles = (c: ThemeColors) =>
     menuLabel: { fontSize: 15, color: c.text, fontWeight: '600' },
     menuHint: { fontSize: 11, color: c.textMuted, marginTop: 2 },
     menuValue: { fontSize: 14, color: c.textSecondary, fontWeight: '500' },
+    menuChevron: { marginLeft: 8 },
 
     logoutBtn: {
       flexDirection: 'row', gap: 8, backgroundColor: c.errorSoft, borderRadius: 14, paddingVertical: 15,

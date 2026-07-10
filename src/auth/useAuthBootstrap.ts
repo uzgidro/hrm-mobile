@@ -10,6 +10,7 @@ import { useEffect } from 'react';
 import * as SplashScreen from 'expo-splash-screen';
 import { useAuthStore } from '../store/authStore';
 import { usePrefsStore } from '../store/prefsStore';
+import { useLockStore } from '../store/lockStore';
 import { resolveBootstrap, readCachedUser } from './bootstrap';
 import { setupPushNotifications } from './push';
 
@@ -32,6 +33,12 @@ export function useAuthBootstrap() {
 
     (async () => {
       usePrefsStore.getState().hydrate();
+
+      // Resolve the lock state BEFORE any hideSplash() below — the invariant is
+      // that the first visible frame already carries the PIN gate, so a
+      // returning user never glimpses their dashboard before the lock. hydrate()
+      // never throws (fail-closed to 'setup-required').
+      await useLockStore.getState().hydrate();
 
       // Fast path: seed a cached user and drop the splash right away so a
       // returning user lands on their dashboard without waiting on the network.

@@ -1,16 +1,21 @@
 import '../src/services/notifications'; // side effect: sets the foreground notification handler
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import { Platform } from 'react-native';
 import { Stack, router, type Href } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useAuthStore } from '../src/store/authStore';
+import { useLockStore } from '../src/store/lockStore';
 import { createAppQueryClient } from '../src/lib/queryClient';
 import { ThemeProvider, useTheme } from '../src/theme/ThemeProvider';
 import { addNotificationListeners } from '../src/services/notifications';
 import { useAuthBootstrap } from '../src/auth/useAuthBootstrap';
+import { useAppLock } from '../src/auth/useAppLock';
+import { checkAppUpdateOnLaunch } from '../src/services/appUpdates';
 import { RootErrorBoundary } from '../src/components/RootErrorBoundary';
 import { ToastHost } from '../src/components/ToastHost';
+import LockOverlay from '../src/features/security/components/LockOverlay';
 
 const queryClient = createAppQueryClient();
 
@@ -18,10 +23,34 @@ function ThemedNavigation() {
   const { colors, isDark } = useTheme();
   const queryClient = useQueryClient();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const isLoading = useAuthStore((s) => s.isLoading);
+  const lockStatus = useLockStore((s) => s.status);
 
   // Resolve the session at launch (seeds the store, drives the native splash).
   // Routing is declarative below via Stack.Protected on isAuthenticated.
   useAuthBootstrap();
+
+  // Re-lock the app after it has spent RELOCK_AFTER_MS in the background.
+  // The hook self-guards (web / non-'unlocked'), so it needs no conditions here.
+  useAppLock();
+
+  // The mandatory PIN gate. Native-only (SecureStore + the lock store report
+  // 'unlocked' on web), rendered as a full-screen sibling of the navigator so
+  // it never fights the Stack.Protected auth guards. Shown while a signed-in
+  // user is still on 'setup-required' or 'locked'.
+  const lockVisible =
+    isAuthenticated && Platform.OS !== 'web' && lockStatus !== 'unlocked' && lockStatus !== 'unknown';
+
+  // Google Play in-app update check — once, after startup settles and the lock
+  // gate (if any) is cleared, so the native dialog never covers the splash or
+  // the PIN pad. The service self-guards platform/Expo Go/no-update.
+  const updateChecked = useRef(false);
+  useEffect(() => {
+    if (isLoading || updateChecked.current) return;
+    if (lockVisible) return;
+    updateChecked.current = true;
+    void checkAppUpdateOnLaunch();
+  }, [isLoading, lockVisible]);
 
   // Refresh the in-app list / unread badge when a push lands in the foreground,
   // and navigate on tap. The listener helper lazy-loads the native module and
@@ -79,9 +108,12 @@ function ThemedNavigation() {
           <Stack.Screen name="loyihalar" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="loyiha-detail" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="loyiha-form" options={{ animation: 'slide_from_bottom' }} />
+          <Stack.Screen name="change-pin" options={{ animation: 'slide_from_right' }} />
         </Stack.Protected>
       </Stack>
       <ToastHost />
+      {/* Above everything (incl. toasts): the PIN gate covers the whole app. */}
+      {lockVisible && <LockOverlay />}
     </>
   );
 }
