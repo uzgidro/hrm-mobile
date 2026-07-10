@@ -44,9 +44,12 @@ describe('UnlockScreen', () => {
     useAuthStore.setState({ user: USER, logout: jest.fn().mockResolvedValue(undefined) });
   });
 
-  it('renders the signed-in user name', async () => {
-    const { getByText } = await renderWithProviders(<UnlockScreen />);
-    expect(getByText('Ali Valiyev')).toBeTruthy();
+  it('does not reveal whose account this is (no name/photo on the lock screen)', async () => {
+    const { queryByText, getByText } = await renderWithProviders(<UnlockScreen />);
+    // Privacy: the lock screen must not show the signed-in user's identity to
+    // whoever is holding the phone — only the PIN prompt.
+    expect(queryByText('Ali Valiyev')).toBeNull();
+    expect(getByText('PIN kodni kiriting')).toBeTruthy();
   });
 
   it('calls unlockWithPin with the typed PIN once it reaches full length', async () => {

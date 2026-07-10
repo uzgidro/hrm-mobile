@@ -1,27 +1,30 @@
-// Cold-start / relock unlock. Shows the signed-in user's identity, then the
-// shared PinPad. Biometrics auto-fire once on mount (when enabled+supported)
-// and are re-triggerable via the pad's fingerprint key. The parent watches the
-// value length and submits at PIN_LENGTH; a correct PIN flips lockStore status
-// → 'unlocked' (overlay unmounts). Navigation stays declarative — a forced
-// logout only calls reset()+logout() and lets the auth guard redirect.
+// Cold-start / relock unlock. Shows a neutral brand lock icon (deliberately NOT
+// the user's photo/name — the lock screen must not reveal whose account this is
+// to whoever is holding the phone), then the shared PinPad. Biometrics auto-fire
+// once on mount (when enabled+supported) and are re-triggerable via the pad's
+// fingerprint key. The parent watches the value length and submits at
+// PIN_LENGTH; a correct PIN flips lockStore status → 'unlocked' (overlay
+// unmounts). Navigation stays declarative — a forced logout only calls
+// reset()+logout() and lets the auth guard redirect.
 import { useEffect, useRef, useState } from 'react';
-import { View, Text, Image, Alert, StyleSheet } from 'react-native';
+import { View, Alert, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PinPad } from '@/features/security/components/PinPad';
 import { useLockStore } from '@/store/lockStore';
 import { useAuthStore } from '@/store/authStore';
 import { PIN_LENGTH } from '@/auth/lockPolicy';
-import { useThemedStyles } from '@/theme/ThemeProvider';
+import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { Icon } from '@/components/Icon';
 
 export default function UnlockScreen() {
   const styles = useThemedStyles(makeStyles);
+  const { colors } = useTheme();
 
   const unlockWithPin = useLockStore((s) => s.unlockWithPin);
   const unlockWithBiometrics = useLockStore((s) => s.unlockWithBiometrics);
   const biometricsEnabled = useLockStore((s) => s.biometricsEnabled);
   const biometricsSupported = useLockStore((s) => s.biometricsSupported);
-  const employee = useAuthStore((s) => s.user?.employee);
 
   const [value, setValue] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -86,21 +89,12 @@ export default function UnlockScreen() {
     if (next.length === PIN_LENGTH) void submit(next);
   };
 
-  const name = employee?.legal_name || 'Foydalanuvchi';
-
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-      <View style={styles.identity}>
-        {employee?.photo_path ? (
-          <Image source={{ uri: employee.photo_path }} style={styles.avatar} />
-        ) : (
-          <View style={[styles.avatar, styles.avatarFallback]}>
-            <Text style={styles.avatarInitial}>{name.charAt(0).toUpperCase()}</Text>
-          </View>
-        )}
-        <Text style={styles.name} numberOfLines={1}>
-          {name}
-        </Text>
+      <View style={styles.brand}>
+        <View style={styles.brandCircle}>
+          <Icon name="lock" size={34} color={colors.primary} />
+        </View>
       </View>
       <View style={styles.padWrap}>
         <PinPad
@@ -119,14 +113,14 @@ export default function UnlockScreen() {
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     safe: { flex: 1, backgroundColor: c.bg },
-    identity: { alignItems: 'center', paddingTop: 32, gap: 12 },
-    avatar: { width: 72, height: 72, borderRadius: 36 },
-    avatarFallback: {
+    brand: { alignItems: 'center', paddingTop: 32 },
+    brandCircle: {
+      width: 72,
+      height: 72,
+      borderRadius: 36,
       backgroundColor: c.primarySoft,
       alignItems: 'center',
       justifyContent: 'center',
     },
-    avatarInitial: { fontSize: 30, fontWeight: '700', color: c.primary },
-    name: { fontSize: 17, fontWeight: '700', color: c.text },
     padWrap: { flex: 1, justifyContent: 'center', paddingHorizontal: 24 },
   });
