@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { PickerModal, type PickerOption } from '@/components/PickerModal';
 import { DatePickerModal } from '@/components/DatePicker';
 
@@ -53,6 +54,7 @@ export function LetterPickers(props: {
   onConfirmDepartureDate: (v: string) => void;
   onConfirmArrivalDate: (v: string) => void;
 }) {
+  const { t } = useTranslation();
   const {
     picker, datePicker, onClosePicker, onCloseDatePicker,
     typeOptions, selectedTypeValue, onSelectType,
@@ -67,30 +69,30 @@ export function LetterPickers(props: {
 
   return (
     <>
-      <PickerModal visible={picker === 'type'} title="Hujjat turi" options={typeOptions} selected={selectedTypeValue}
+      <PickerModal visible={picker === 'type'} title={t('letters.pickerType')} options={typeOptions} selected={selectedTypeValue}
         onClose={onClosePicker} onSelect={onSelectType} />
 
-      <PickerModal visible={picker === 'main'} title="Rahbariyat (imzolovchi)" options={signerOptions} loading={signersLoading} selected={mainSignerId}
+      <PickerModal visible={picker === 'main'} title={t('letters.pickerMainSigner')} options={signerOptions} loading={signersLoading} selected={mainSignerId}
         onClose={onClosePicker} onSelect={onSelectMain} />
 
-      <PickerModal visible={picker === 'ordinary'} title="Kelishuvchilar" options={ordinaryOptions} loading={signersLoading} multiple selected={ordinarySigners}
+      <PickerModal visible={picker === 'ordinary'} title={t('letters.pickerCoordinators')} options={ordinaryOptions} loading={signersLoading} multiple selected={ordinarySigners}
         onClose={onClosePicker} onSelect={() => {}} onToggle={onToggleOrdinary} />
 
-      <PickerModal visible={picker === 'rahbariyat'} title="Rahbariyat" options={rahbariyatOptions} loading={rahbariyatLoading} multiple selected={rahbariyatIds}
+      <PickerModal visible={picker === 'rahbariyat'} title={t('letters.pickerLeadership')} options={rahbariyatOptions} loading={rahbariyatLoading} multiple selected={rahbariyatIds}
         onClose={onClosePicker} onSelect={() => {}} onToggle={onToggleRahbariyat} />
 
-      <PickerModal visible={picker === 'submitter'} title="Yuboruvchi shaxs" options={submitterOptions} loading={submittersLoading} selected={submitterId}
+      <PickerModal visible={picker === 'submitter'} title={t('letters.pickerSubmitter')} options={submitterOptions} loading={submittersLoading} selected={submitterId}
         onClose={onClosePicker} onSelect={onSelectSubmitter} />
 
-      <PickerModal visible={picker === 'regions'} title="Viloyatlar" options={regionOptions} loading={branchesLoading} multiple selected={selectedRegionValues}
+      <PickerModal visible={picker === 'regions'} title={t('letters.pickerRegions')} options={regionOptions} loading={branchesLoading} multiple selected={selectedRegionValues}
         onClose={onClosePicker} onSelect={() => {}} onToggle={onToggleRegion} />
 
-      <PickerModal visible={picker === 'destinations'} title="Borish filiallari" options={destinationOptions} loading={branchesLoading} multiple selected={destinationIds}
+      <PickerModal visible={picker === 'destinations'} title={t('letters.pickerDestinations')} options={destinationOptions} loading={branchesLoading} multiple selected={destinationIds}
         onClose={onClosePicker} onSelect={() => {}} onToggle={onToggleDestination} />
 
-      <DatePickerModal visible={datePicker === 'letter'} value={letterDate} title="Sanasi" onClose={onCloseDatePicker} onConfirm={onConfirmLetterDate} />
-      <DatePickerModal visible={datePicker === 'departure'} value={departureDate} title="Borish sanasi" onClose={onCloseDatePicker} onConfirm={onConfirmDepartureDate} />
-      <DatePickerModal visible={datePicker === 'arrival'} value={arrivalDate} title="Kelish sanasi" onClose={onCloseDatePicker} onConfirm={onConfirmArrivalDate} />
+      <DatePickerModal visible={datePicker === 'letter'} value={letterDate} title={t('letters.fieldLetterDate')} onClose={onCloseDatePicker} onConfirm={onConfirmLetterDate} />
+      <DatePickerModal visible={datePicker === 'departure'} value={departureDate} title={t('letters.fieldDepartureDate')} onClose={onCloseDatePicker} onConfirm={onConfirmDepartureDate} />
+      <DatePickerModal visible={datePicker === 'arrival'} value={arrivalDate} title={t('letters.fieldArrivalDate')} onClose={onCloseDatePicker} onConfirm={onConfirmArrivalDate} />
     </>
   );
 }

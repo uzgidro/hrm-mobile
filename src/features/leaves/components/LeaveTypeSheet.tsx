@@ -2,6 +2,7 @@
 // custom type. Extracted verbatim from the old create-leave.tsx.
 import { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, Modal } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
@@ -13,13 +14,14 @@ export function LeaveTypeSheet({ visible, selected, onSelect, onClose }: {
 }) {
   const ts = useThemedStyles(makeTs);
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const [custom, setCustom] = useState('');
   return (
     <Modal visible={visible} transparent animationType="slide">
       <TouchableOpacity style={ts.overlay} activeOpacity={1} onPress={onClose} />
       <View style={ts.sheet}>
         <View style={ts.handle} />
-        <Text style={ts.title}>So'rov turini tanlang</Text>
+        <Text style={ts.title}>{t('leaves.typeSheetTitle')}</Text>
         {LEAVE_TYPES.map((t) => (
           <TouchableOpacity key={t} style={ts.item} onPress={() => { onSelect(t); onClose(); }} activeOpacity={0.7}>
             <Text style={[ts.itemText, selected === t && ts.itemTextActive]}>{t}</Text>
@@ -27,9 +29,9 @@ export function LeaveTypeSheet({ visible, selected, onSelect, onClose }: {
           </TouchableOpacity>
         ))}
         <View style={ts.customRow}>
-          <TextInput style={ts.customInput} placeholder="Yoki o'zingiz yozing..." placeholderTextColor={colors.textMuted} value={custom} onChangeText={setCustom} />
+          <TextInput style={ts.customInput} placeholder={t('leaves.typeCustomPlaceholder')} placeholderTextColor={colors.textMuted} value={custom} onChangeText={setCustom} />
           <TouchableOpacity style={[ts.customBtn, !custom.trim() && { opacity: 0.4 }]} disabled={!custom.trim()} onPress={() => { onSelect(custom.trim()); onClose(); }}>
-            <Text style={ts.customBtnText}>OK</Text>
+            <Text style={ts.customBtnText}>{t('common.ok')}</Text>
           </TouchableOpacity>
         </View>
       </View>

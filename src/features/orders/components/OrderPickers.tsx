@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { PickerModal, type PickerOption } from '@/components/PickerModal';
 
 export type PickerKind = 'category' | 'leadership' | 'submitter' | 'familiarizers' | null;
@@ -24,35 +25,36 @@ export function OrderPickers({
   departmentOptions: PickerOption[]; deptsLoading: boolean; familiarizerDeptIds: number[]; onToggleFamiliarizer: (v: number) => void;
   approverSelectedId: number | null; onSelectApprover: (v: number) => void;
 }) {
+  const { t } = useTranslation();
   return (
     <>
       <PickerModal
-        visible={picker === 'category'} title="Buyruq turlari" options={categoryOptions}
+        visible={picker === 'category'} title={t('orders.pickCategory')} options={categoryOptions}
         loading={catsLoading} selected={categoryId}
         onClose={onClosePicker}
         onSelect={onSelectCategory}
       />
       <PickerModal
-        visible={picker === 'leadership'} title="Rahbariyat" options={leadershipOptions}
+        visible={picker === 'leadership'} title={t('orders.pickLeadership')} options={leadershipOptions}
         loading={leadershipLoading} selected={leadershipId}
         onClose={onClosePicker}
         onSelect={onSelectLeadership}
       />
       <PickerModal
-        visible={picker === 'submitter'} title="Kirituvchi shaxs" options={employeeOptions}
+        visible={picker === 'submitter'} title={t('orders.pickSubmitter')} options={employeeOptions}
         loading={empsLoading} selected={submitterId}
         onClose={onClosePicker}
         onSelect={onSelectSubmitter}
       />
       <PickerModal
-        visible={picker === 'familiarizers'} title="Tanishuvchi bo'limlar" options={departmentOptions}
+        visible={picker === 'familiarizers'} title={t('orders.pickFamiliarizerDepts')} options={departmentOptions}
         loading={deptsLoading} multiple selected={familiarizerDeptIds}
         onClose={onClosePicker}
         onSelect={() => {}}
         onToggle={onToggleFamiliarizer}
       />
       <PickerModal
-        visible={approverPickerIndex !== null} title="Kelishuvchi" options={employeeOptions}
+        visible={approverPickerIndex !== null} title={t('orders.pickApprover')} options={employeeOptions}
         loading={empsLoading} selected={approverSelectedId}
         onClose={onCloseApproverPicker}
         onSelect={onSelectApprover}

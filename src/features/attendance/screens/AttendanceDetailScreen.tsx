@@ -5,9 +5,9 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useQueries } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';
 import dayjs from 'dayjs';
-import 'dayjs/locale/uz';
 import Svg, { Circle, G } from 'react-native-svg';
 import { useAuthStore } from '@/store/authStore';
 import { usePrefsStore } from '@/store/prefsStore';
@@ -15,27 +15,17 @@ import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Employee, AttendanceEvent, WorkLeave } from '@/types';
 import { fetchAllEmployees, employeesQueryKey } from '@/utils/employees';
+import { monthName, weekdayName } from '@/i18n/dates';
 import { Icon } from '@/components/Icon';
 import { LoadingView } from '@/components/StateViews';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { dayAttendanceQuery, teamLeavesQuery } from '../api/queries';
-
-dayjs.locale('uz');
-
-const MONTHS_UZ = ['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentyabr','Oktyabr','Noyabr','Dekabr'];
-const DAYS_UZ = ['Yak', 'Du', 'Se', 'Chor', 'Pay', 'Ju', 'Sha'];
 
 type StatusGroup = 'present' | 'late' | 'onLeave' | 'absent';
 
 interface GroupedEmployee { employee: Employee; entryTime?: string; exitTime?: string; leaveName?: string; }
 interface Section { key: StatusGroup; items: GroupedEmployee[]; }
 
-const SECTION_LABEL: Record<StatusGroup, string> = {
-  present: 'Keldi', late: 'Kechikkan', onLeave: "So'rov yuborilgan", absent: 'Kelmagan',
-};
-const SECTION_EMPTY: Record<StatusGroup, string> = {
-  present: "Kelgan xodim yo'q", late: "Kechikkan xodim yo'q", onLeave: "Ruxsat so'rovchi yo'q", absent: '',
-};
 const SECTION_ORDER: StatusGroup[] = ['present', 'late', 'onLeave', 'absent'];
 
 function sectionColor(key: StatusGroup, c: ThemeColors) {
@@ -49,6 +39,7 @@ const DonutChart = React.memo(function DonutChart({ total, present, late, onLeav
   total: number; present: number; late: number; onLeave: number;
   activeFilter: StatusGroup | null; onFilter: (k: StatusGroup | null) => void; styles: any; c: ThemeColors;
 }) {
+  const { t } = useTranslation();
   const absent = Math.max(0, total - present - late - onLeave);
   const size = 180;
   const cx = size / 2;
@@ -75,10 +66,10 @@ const DonutChart = React.memo(function DonutChart({ total, present, late, onLeav
   });
 
   const legendItems = [
-    { key: 'present' as StatusGroup, count: present, color: c.present, label: 'keldi' },
-    { key: 'late' as StatusGroup, count: late, color: c.warning, label: 'kechikkan' },
-    { key: 'absent' as StatusGroup, count: absent, color: c.error, label: 'kelmagan' },
-    { key: 'onLeave' as StatusGroup, count: onLeave, color: c.primaryLight, label: "so'rov" },
+    { key: 'present' as StatusGroup, count: present, color: c.present, label: t('attendance.legend.present') },
+    { key: 'late' as StatusGroup, count: late, color: c.warning, label: t('attendance.legend.late') },
+    { key: 'absent' as StatusGroup, count: absent, color: c.error, label: t('attendance.legend.absent') },
+    { key: 'onLeave' as StatusGroup, count: onLeave, color: c.primaryLight, label: t('attendance.legend.onLeave') },
   ].filter((it) => it.count > 0 || it.key === 'absent');
 
   const handleFilter = (key: StatusGroup) => onFilter(activeFilter === key ? null : key);
@@ -99,7 +90,7 @@ const DonutChart = React.memo(function DonutChart({ total, present, late, onLeav
         </Svg>
         <View style={styles.chartCenter}>
           <Text style={styles.chartTotal}>{activeFilter ? (allSegs.find((s) => s.key === activeFilter)?.value ?? total) : total}</Text>
-          {activeFilter && <Text style={styles.chartFilterLabel}>tozalash uchun bosing</Text>}
+          {activeFilter && <Text style={styles.chartFilterLabel}>{t('attendance.clearFilter')}</Text>}
         </View>
       </View>
       <View style={styles.legend}>
@@ -123,27 +114,29 @@ const DonutChart = React.memo(function DonutChart({ total, present, late, onLeav
 });
 
 const StatusSection = React.memo(function StatusSection({ section, styles, c }: { section: Section; styles: any; c: ThemeColors }) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const PREVIEW = 5;
   const shown = expanded ? section.items : section.items.slice(0, PREVIEW);
   const hasMore = section.items.length > PREVIEW;
+  const emptyLabel = section.key === 'absent' ? '' : t(`attendance.sectionEmpty.${section.key}`);
 
   return (
     <View style={styles.statusCard}>
       <View style={styles.statusHeader}>
         <View style={styles.statusTitleRow}>
           <View style={[styles.statusDot, { backgroundColor: sectionColor(section.key, c) }]} />
-          <Text style={styles.statusTitle}>{SECTION_LABEL[section.key]} ({section.items.length})</Text>
+          <Text style={styles.statusTitle}>{t(`attendance.section.${section.key}`)} ({section.items.length})</Text>
         </View>
         {hasMore && (
           <TouchableOpacity onPress={() => setExpanded((v) => !v)}>
-            <Text style={styles.linkText}>{expanded ? "Yig'ish" : "Barchasini ko'rsatish"}</Text>
+            <Text style={styles.linkText}>{expanded ? t('attendance.collapse') : t('attendance.showAll')}</Text>
           </TouchableOpacity>
         )}
       </View>
 
       {section.items.length === 0 ? (
-        <Text style={styles.emptySection}>{SECTION_EMPTY[section.key]}</Text>
+        <Text style={styles.emptySection}>{emptyLabel}</Text>
       ) : (
         shown.map((row, idx) => (
           <TouchableOpacity key={row.employee.id}
@@ -169,6 +162,7 @@ const StatusSection = React.memo(function StatusSection({ section, styles, c }: 
 });
 
 export default function AttendanceDetailScreen() {
+  const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const onlySubordinates = usePrefsStore((s) => s.onlySubordinates);
   const { colors } = useTheme();
@@ -182,7 +176,7 @@ export default function AttendanceDetailScreen() {
   const [sectionFilter, setSectionFilter] = useState<StatusGroup | null>(null);
   const selDay = dayjs(selectedDate);
   const isToday = selectedDate === dayjs().format('YYYY-MM-DD');
-  const dateLabel = `${selDay.date()} ${MONTHS_UZ[selDay.month()]} ${selDay.year()} (${DAYS_UZ[selDay.day()]})`;
+  const dateLabel = `${selDay.date()} ${monthName(selDay.month())} ${selDay.year()} (${weekdayName(selDay.day())})`;
 
   const prevDay = () => setSelectedDate(selDay.subtract(1, 'day').format('YYYY-MM-DD'));
   const nextDay = () => setSelectedDate(selDay.add(1, 'day').format('YYYY-MM-DD'));
@@ -224,7 +218,7 @@ export default function AttendanceDetailScreen() {
       if (!l.employee?.id) continue;
       const s = dayjs(l.start_date);
       const e = dayjs(l.end_date);
-      if (s.isBefore(dayEnd) && e.isAfter(dayStart)) leaveMap.set(l.employee.id, l.type ?? 'Ruxsat');
+      if (s.isBefore(dayEnd) && e.isAfter(dayStart)) leaveMap.set(l.employee.id, l.type ?? t('attendance.leaveFallback'));
     }
 
     const buckets: Record<StatusGroup, GroupedEmployee[]> = { present: [], late: [], onLeave: [], absent: [] };
@@ -246,7 +240,7 @@ export default function AttendanceDetailScreen() {
       sections: SECTION_ORDER.map((key) => ({ key, items: buckets[key] })),
       totalEmp: employees.length,
     };
-  }, [empQ.data, attQ.data, leavesQ.data, selectedDate, onlySubordinates, myId]);
+  }, [empQ.data, attQ.data, leavesQ.data, selectedDate, onlySubordinates, myId, t]);
 
   const presentCount = sections.find((s) => s.key === 'present')?.items.length ?? 0;
   const lateCount = sections.find((s) => s.key === 'late')?.items.length ?? 0;
@@ -259,7 +253,7 @@ export default function AttendanceDetailScreen() {
           <Icon name="chevronLeft" size={24} color={colors.text} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>Davomat</Text>
+          <Text style={styles.headerTitle}>{t('attendance.title')}</Text>
           <Text style={styles.headerDate}>{dateLabel}</Text>
         </View>
         <View style={styles.navBtns}>
@@ -277,7 +271,7 @@ export default function AttendanceDetailScreen() {
           {onlySubordinates && (
             <View style={styles.filterNotice}>
               <Icon name="users" size={16} color={colors.primaryLight} />
-              <Text style={styles.filterNoticeText}>Faqat bo'ysunuvchilar</Text>
+              <Text style={styles.filterNoticeText}>{t('attendance.onlySubordinates')}</Text>
             </View>
           )}
           <View style={styles.chartCard}>

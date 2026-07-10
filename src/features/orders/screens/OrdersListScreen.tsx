@@ -6,6 +6,7 @@ import {
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
@@ -17,10 +18,10 @@ import { OrderListCard } from '../components/OrderListCard';
 
 type Tab = 'action' | 'mine' | 'all';
 
-const TABS: { key: Tab; label: string }[] = [
-  { key: 'action', label: 'Menda' },
-  { key: 'mine', label: 'Mening' },
-  { key: 'all', label: 'Barchasi' },
+const TAB_KEYS: { key: Tab; labelKey: string }[] = [
+  { key: 'action', labelKey: 'orders.tabAction' },
+  { key: 'mine', labelKey: 'orders.tabMine' },
+  { key: 'all', labelKey: 'common.all' },
 ];
 
 export default function OrdersListScreen() {
@@ -29,6 +30,7 @@ export default function OrdersListScreen() {
   const employeeId = employee?.id;
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const { t } = useTranslation();
   const [tab, setTab] = useState<Tab>('action');
 
   const orgBranchId =
@@ -54,7 +56,7 @@ export default function OrdersListScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.title}>Buyruqlar</Text>
+        <Text style={styles.title}>{t('orders.title')}</Text>
         <TouchableOpacity
           style={styles.fab}
           onPress={() => router.push('/create-order')}
@@ -65,17 +67,17 @@ export default function OrdersListScreen() {
       </View>
 
       <View style={styles.tabsRow}>
-        {TABS.map((t) => {
-          const active = tab === t.key;
+        {TAB_KEYS.map((tabItem) => {
+          const active = tab === tabItem.key;
           return (
             <TouchableOpacity
-              key={t.key}
+              key={tabItem.key}
               style={[styles.tab, active && styles.tabActive]}
-              onPress={() => setTab(t.key)}
+              onPress={() => setTab(tabItem.key)}
               activeOpacity={0.8}
             >
-              <Text style={[styles.tabText, active && styles.tabTextActive]}>{t.label}</Text>
-              {t.key === 'action' && actionCount > 0 && (
+              <Text style={[styles.tabText, active && styles.tabTextActive]}>{t(tabItem.labelKey)}</Text>
+              {tabItem.key === 'action' && actionCount > 0 && (
                 <View style={styles.tabBadge}>
                   <Text style={styles.tabBadgeText}>{actionCount > 9 ? '9+' : actionCount}</Text>
                 </View>
@@ -99,7 +101,7 @@ export default function OrdersListScreen() {
             <View style={styles.emptyWrap}>
               <EmptyState
                 icon="doc"
-                title={tab === 'action' ? "Sizdan amal kutilayotgan buyruqlar yo'q" : "Buyruqlar yo'q"}
+                title={tab === 'action' ? t('orders.emptyAction') : t('orders.emptyAll')}
               />
             </View>
           ) : (

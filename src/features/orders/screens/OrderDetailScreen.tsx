@@ -4,6 +4,7 @@ import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-nati
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import dayjs from 'dayjs';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
@@ -24,6 +25,7 @@ export default function OrderDetailScreen() {
   const employeeId = user?.employee?.id;
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const { t } = useTranslation();
 
   const [rejectOpen, setRejectOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
@@ -77,10 +79,10 @@ export default function OrderDetailScreen() {
             <Text style={[styles.badgeText, { color: sc.fg }]}>{meta.label}</Text>
           </View>
           <Text style={styles.bigTitle}>
-            {order.category_rel?.name || 'Buyruq'}{order.act_number ? `  №${order.act_number}` : ''}
+            {order.category_rel?.name || t('orders.fallbackTitle')}{order.act_number ? `  №${order.act_number}` : ''}
           </Text>
           {!!order.act_date && (
-            <Text style={styles.subMeta}>Sana: {dayjs(order.act_date).format('DD.MM.YYYY')}</Text>
+            <Text style={styles.subMeta}>{t('orders.dateLabel')}: {dayjs(order.act_date).format('DD.MM.YYYY')}</Text>
           )}
           {!!order.document && (
             <TouchableOpacity
@@ -94,36 +96,36 @@ export default function OrderDetailScreen() {
               }
             >
               <Icon name="doc" size={16} color={colors.primary} />
-              <Text style={styles.docBtnText}>Hujjatni ochish</Text>
+              <Text style={styles.docBtnText}>{t('orders.openDocument')}</Text>
             </TouchableOpacity>
           )}
         </View>
 
         {/* Description */}
         {!!order.description && (
-          <Section title="Mazmuni"><Text style={styles.bodyText}>{order.description}</Text></Section>
+          <Section title={t('orders.sectionDescription')}><Text style={styles.bodyText}>{order.description}</Text></Section>
         )}
         {!!order.summary && (
-          <Section title="Qisqacha"><Text style={styles.bodyText}>{order.summary}</Text></Section>
+          <Section title={t('orders.sectionSummary')}><Text style={styles.bodyText}>{order.summary}</Text></Section>
         )}
         {!!order.plans && (
-          <Section title="Rejalar"><Text style={styles.bodyText}>{order.plans}</Text></Section>
+          <Section title={t('orders.sectionPlans')}><Text style={styles.bodyText}>{order.plans}</Text></Section>
         )}
 
         {/* People */}
-        <Section title="Ma'lumot">
-          {!!order.employee?.legal_name && <KV k="Xodim" v={order.employee.legal_name} />}
-          {!!order.submitter?.legal_name && <KV k="Yuboruvchi" v={order.submitter.legal_name} />}
-          {!!order.created_by?.legal_name && <KV k="Yaratdi" v={order.created_by.legal_name} />}
-          {!!order.planned_arrival_date && <KV k="Borish" v={dayjs(order.planned_arrival_date).format('DD.MM.YYYY')} />}
-          {!!order.planned_departure_date && <KV k="Qaytish" v={dayjs(order.planned_departure_date).format('DD.MM.YYYY')} />}
+        <Section title={t('orders.sectionInfo')}>
+          {!!order.employee?.legal_name && <KV k={t('orders.kvEmployee')} v={order.employee.legal_name} />}
+          {!!order.submitter?.legal_name && <KV k={t('orders.kvSubmitter')} v={order.submitter.legal_name} />}
+          {!!order.created_by?.legal_name && <KV k={t('orders.kvCreatedBy')} v={order.created_by.legal_name} />}
+          {!!order.planned_arrival_date && <KV k={t('orders.kvArrival')} v={dayjs(order.planned_arrival_date).format('DD.MM.YYYY')} />}
+          {!!order.planned_departure_date && <KV k={t('orders.kvDeparture')} v={dayjs(order.planned_departure_date).format('DD.MM.YYYY')} />}
         </Section>
 
         <DetailSections order={order} />
 
         {!!order.rejection_reason && (
           <View style={styles.rejectCard}>
-            <Text style={styles.rejectTitle}>O'zgartirish sababi</Text>
+            <Text style={styles.rejectTitle}>{t('orders.changeReasonTitle')}</Text>
             <Text style={styles.rejectText}>{order.rejection_reason}</Text>
           </View>
         )}

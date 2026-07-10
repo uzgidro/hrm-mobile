@@ -7,25 +7,27 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import dayjs from 'dayjs';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
 import { LoadingView, EmptyState } from '@/components/StateViews';
+import { monthName } from '@/i18n/dates';
 import { teamLeavesQuery } from '../api/queries';
 
-function statusMeta(status: string, c: ThemeColors) {
-  if (status === 'approved' || status === 'tasdiqlangan' || status === 'signed') return { label: 'Tasdiqlangan', fg: c.success, bg: c.successSoft };
-  if (status === 'rejected' || status === 'rad_etilgan') return { label: 'Rad etildi', fg: c.error, bg: c.errorSoft };
-  return { label: 'Kutilmoqda', fg: c.warning, bg: c.warningSoft };
+function statusMeta(status: string, c: ThemeColors, t: TFunction) {
+  if (status === 'approved' || status === 'tasdiqlangan' || status === 'signed') return { label: t('leaves.statusApproved'), fg: c.success, bg: c.successSoft };
+  if (status === 'rejected' || status === 'rad_etilgan') return { label: t('leaves.statusRejected'), fg: c.error, bg: c.errorSoft };
+  return { label: t('leaves.statusPending'), fg: c.warning, bg: c.warningSoft };
 }
-
-const MONTHS_UZ = ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 'Iyul', 'Avgust', 'Sentyabr', 'Oktyabr', 'Noyabr', 'Dekabr'];
 
 export default function TeamLeavesScreen() {
   const { user } = useAuthStore();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const { t } = useTranslation();
   const orgBranchId =
     user?.employee?.organization_branches?.[0]?.id ??
     user?.employee?.department?.organization_branch_id;
@@ -52,11 +54,11 @@ export default function TeamLeavesScreen() {
     const result = [];
     for (let i = 5; i >= 0; i--) {
       const m = now.subtract(i, 'month');
-      result.push({ month: m.month(), year: m.year(), label: MONTHS_UZ[m.month()] });
+      result.push({ month: m.month(), year: m.year(), label: monthName(m.month()) });
     }
     return result;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [t]);
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
@@ -64,7 +66,7 @@ export default function TeamLeavesScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Icon name="chevronLeft" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Jamoa so'rovlari</Text>
+        <Text style={styles.headerTitle}>{t('leaves.teamTitle')}</Text>
         <TouchableOpacity style={styles.addBtn} onPress={() => router.push('/create-leave')}>
           <Icon name="plus" size={24} color={colors.primaryLight} />
         </TouchableOpacity>
@@ -93,10 +95,10 @@ export default function TeamLeavesScreen() {
             refreshControl={<RefreshControl refreshing={isFetching && !isLoading} onRefresh={refetch} tintColor={colors.primaryLight} />}
           >
             {filtered.length === 0 ? (
-              <EmptyState icon="checklist" title="So'rovlar yo'q" />
+              <EmptyState icon="checklist" title={t('leaves.emptyLeaves')} />
             ) : (
               filtered.map((leave) => {
-                const st = statusMeta(leave.status, colors);
+                const st = statusMeta(leave.status, colors, t);
                 const sameDay = dayjs(leave.start_date).format('DD.MM.YYYY') === dayjs(leave.end_date).format('DD.MM.YYYY');
                 return (
                   <TouchableOpacity key={leave.id} style={styles.card}
@@ -114,7 +116,7 @@ export default function TeamLeavesScreen() {
                       </View>
                     )}
                     <View style={styles.cardTop}>
-                      <Text style={styles.categoryName} numberOfLines={1}>{leave.type ?? "So'rov"}</Text>
+                      <Text style={styles.categoryName} numberOfLines={1}>{leave.type ?? t('leaves.typeFallback')}</Text>
                       <View style={[styles.badge, { backgroundColor: st.bg }]}>
                         <Text style={[styles.badgeText, { color: st.fg }]}>{st.label}</Text>
                       </View>
@@ -132,7 +134,7 @@ export default function TeamLeavesScreen() {
                       )}
                     </View>
                     {leave.description ? <Text style={styles.comment} numberOfLines={2}>{leave.description}</Text> : null}
-                    {leave.created_at ? <Text style={styles.createdAt}>Yuborilgan: {dayjs(leave.created_at).format('DD.MM.YYYY HH:mm')}</Text> : null}
+                    {leave.created_at ? <Text style={styles.createdAt}>{t('leaves.createdAtPrefix', { date: dayjs(leave.created_at).format('DD.MM.YYYY HH:mm') })}</Text> : null}
                   </TouchableOpacity>
                 );
               })

@@ -1,4 +1,5 @@
 import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import type { DecreePermissions } from '@/utils/orderStatus';
@@ -20,6 +21,7 @@ export function DecreeActionBar({
 }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const { t } = useTranslation();
   if (!perms.hasActions) return null;
 
   return (
@@ -27,31 +29,31 @@ export function DecreeActionBar({
       {perms.canApprove && (
         <>
           <TouchableOpacity style={[styles.actBtn, styles.actReject]} disabled={busy} onPress={onReject} activeOpacity={0.85}>
-            <Text style={styles.actRejectText}>O'zgartirish</Text>
+            <Text style={styles.actRejectText}>{t('orders.actionRequestChange')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.actBtn, styles.actApprove]} disabled={busy} onPress={onApprove} activeOpacity={0.85}>
-            {busy ? <ActivityIndicator color={colors.onPrimary} /> : <Text style={styles.actApproveText}>Tasdiqlash</Text>}
+            {busy ? <ActivityIndicator color={colors.onPrimary} /> : <Text style={styles.actApproveText}>{t('orders.actionApprove')}</Text>}
           </TouchableOpacity>
         </>
       )}
       {perms.canResubmit && (
         <TouchableOpacity style={[styles.actBtn, styles.actApprove]} disabled={busy} onPress={onResubmit} activeOpacity={0.85}>
-          {busy ? <ActivityIndicator color={colors.onPrimary} /> : <Text style={styles.actApproveText}>Qayta yuborish</Text>}
+          {busy ? <ActivityIndicator color={colors.onPrimary} /> : <Text style={styles.actApproveText}>{t('orders.actionResubmit')}</Text>}
         </TouchableOpacity>
       )}
       {perms.canForward && (
         <TouchableOpacity style={[styles.actBtn, styles.actApprove]} disabled={busy} onPress={onForward} activeOpacity={0.85}>
-          {busy ? <ActivityIndicator color={colors.onPrimary} /> : <Text style={styles.actApproveText}>Rahbariyatga yuborish</Text>}
+          {busy ? <ActivityIndicator color={colors.onPrimary} /> : <Text style={styles.actApproveText}>{t('orders.actionForward')}</Text>}
         </TouchableOpacity>
       )}
       {perms.canRegister && (
         <TouchableOpacity style={[styles.actBtn, styles.actApprove]} disabled={busy} onPress={onRegister} activeOpacity={0.85}>
-          <Text style={styles.actApproveText}>Ro'yxatga olish</Text>
+          <Text style={styles.actApproveText}>{t('orders.actionRegister')}</Text>
         </TouchableOpacity>
       )}
       {perms.canAcknowledge && (
         <TouchableOpacity style={[styles.actBtn, styles.actApprove]} disabled={busy} onPress={onAcknowledge} activeOpacity={0.85}>
-          {busy ? <ActivityIndicator color={colors.onPrimary} /> : <Text style={styles.actApproveText}>Tanishdim</Text>}
+          {busy ? <ActivityIndicator color={colors.onPrimary} /> : <Text style={styles.actApproveText}>{t('orders.actionAcknowledge')}</Text>}
         </TouchableOpacity>
       )}
     </View>

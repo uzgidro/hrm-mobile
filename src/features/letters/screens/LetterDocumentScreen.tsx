@@ -6,6 +6,7 @@ import {
 import { WebView } from 'react-native-webview';
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { apiClient } from '@/api/client';
 import { LETTER_EDITOR_CONFIG, ONLYOFFICE_SERVER_URL } from '@/api/urls';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
@@ -14,6 +15,7 @@ import { Icon } from '@/components/Icon';
 import { ErrorState } from '@/components/StateViews';
 
 export default function LetterDocumentScreen() {
+  const { t } = useTranslation();
   const { id, mode = 'view' } = useLocalSearchParams<{ id: string; mode?: string }>();
   const letterId = Number(id);
   const { colors } = useTheme();
@@ -42,11 +44,11 @@ export default function LetterDocumentScreen() {
   <div id="editor"></div>
   <script type="text/javascript">
     try { new DocsAPI.DocEditor("editor", ${JSON.stringify(editorConfig)}); }
-    catch (e) { document.body.innerHTML = '<div style="padding:24px;font-family:sans-serif;color:#333">Hujjatni ochishda xatolik: ' + e.message + '</div>'; }
+    catch (e) { document.body.innerHTML = '<div style="padding:24px;font-family:sans-serif;color:#333">${t('letters.documentOpenError')}: ' + e.message + '</div>'; }
   </script>
 </body>
 </html>`;
-  }, [config]);
+  }, [config, t]);
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
@@ -54,17 +56,17 @@ export default function LetterDocumentScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={10}>
           <Icon name="chevronLeft" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Hujjat</Text>
+        <Text style={styles.headerTitle}>{t('letters.documentTitle')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
       {isLoading ? (
         <View style={styles.center}>
           <ActivityIndicator color={colors.primaryLight} size="large" />
-          <Text style={styles.hint}>Hujjat yuklanmoqda...</Text>
+          <Text style={styles.hint}>{t('letters.documentLoading')}</Text>
         </View>
       ) : isError || !config ? (
-        <ErrorState title="Hujjatni yuklab bo'lmadi" onRetry={() => refetch()} />
+        <ErrorState title={t('letters.documentLoadError')} onRetry={() => refetch()} />
       ) : (
         <WebView
           originWhitelist={['*']}

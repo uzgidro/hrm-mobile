@@ -1,4 +1,5 @@
 import { View, Text, Modal, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 
@@ -13,14 +14,15 @@ export function RejectModal({
 }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const { t } = useTranslation();
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
         <View style={styles.modalCard}>
-          <Text style={styles.modalTitle}>O'zgartirish so'rash</Text>
+          <Text style={styles.modalTitle}>{t('orders.rejectTitle')}</Text>
           <TextInput
             style={styles.modalInput}
-            placeholder="Sababni yozing..."
+            placeholder={t('orders.rejectPlaceholder')}
             placeholderTextColor={colors.textMuted}
             value={reason}
             onChangeText={onChangeReason}
@@ -28,10 +30,10 @@ export function RejectModal({
           />
           <View style={styles.modalActions}>
             <TouchableOpacity style={[styles.modalBtn, styles.modalCancel]} onPress={onClose}>
-              <Text style={styles.modalCancelText}>Bekor</Text>
+              <Text style={styles.modalCancelText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.modalBtn, styles.modalConfirm]} onPress={onSubmit}>
-              <Text style={styles.modalConfirmText}>Yuborish</Text>
+              <Text style={styles.modalConfirmText}>{t('common.send')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -48,15 +50,16 @@ export function RegisterModal({
 }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const { t } = useTranslation();
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
         <View style={styles.modalCard}>
-          <Text style={styles.modalTitle}>Ro'yxatga olish</Text>
-          <Text style={styles.modalHint}>Buyruq raqamini kiriting (ixtiyoriy)</Text>
+          <Text style={styles.modalTitle}>{t('orders.registerTitle')}</Text>
+          <Text style={styles.modalHint}>{t('orders.registerHint')}</Text>
           <TextInput
             style={styles.modalInput}
-            placeholder="Buyruq raqami"
+            placeholder={t('orders.registerPlaceholder')}
             placeholderTextColor={colors.textMuted}
             value={actNumber}
             onChangeText={onChangeActNumber}
@@ -64,10 +67,10 @@ export function RegisterModal({
           />
           <View style={styles.modalActions}>
             <TouchableOpacity style={[styles.modalBtn, styles.modalCancel]} onPress={onClose}>
-              <Text style={styles.modalCancelText}>Bekor</Text>
+              <Text style={styles.modalCancelText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.modalBtn, styles.modalConfirm]} onPress={onSubmit}>
-              <Text style={styles.modalConfirmText}>Tasdiqlash</Text>
+              <Text style={styles.modalConfirmText}>{t('common.confirm')}</Text>
             </TouchableOpacity>
           </View>
         </View>
