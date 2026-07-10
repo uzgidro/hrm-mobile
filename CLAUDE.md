@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-**HRM Uzgidro** — an Expo Router mobile app (iOS / Android / web) for Uzgidro's internal HR system. UI language is Uzbek. It is the mobile client of an existing web dashboard and deliberately mirrors the web's business rules (see "Web parity" below). Backend API: `https://hr-api.uzgidro.uz` (set in `src/constants/index.ts`).
+**HRM Uzgidro** — an Expo Router mobile app (iOS / Android / web) for Uzgidro's internal HR system. UI language is Uzbek. It is the mobile client of an existing web dashboard and deliberately mirrors the web's business rules (see "Web parity" below). Backend API defaults to `https://hr-api.uzgidro.uz`; both it and the OnlyOffice server are configured via `EXPO_PUBLIC_API_URL` / `EXPO_PUBLIC_ONLYOFFICE_URL` (see `.env.example`) and read through the frozen `Env` object in `src/config/env.ts` — access config via `Env`, never `process.env` or hard-coded URLs elsewhere.
 
 ## Commands
 
@@ -21,11 +21,12 @@ npm run typecheck  # tsc --noEmit (strict mode)
 npm run lint       # eslint (eslint-config-expo/flat)
 ```
 
-Every change should keep `npm test`, `npm run typecheck`, and `npm run lint` green. Builds ship via EAS (`eas.json`: `preview` = internal APK, `production` = app-bundle with autoIncrement).
+Every change should keep `npm test`, `npm run typecheck`, and `npm run lint` green.
+
+**Release / CI-CD.** Two long-lived branches: `refactoring` (dev) and `master` (release). CI (`.github/workflows/`) runs on both: `ci.yml` (typecheck/lint/jest on PR + push), `ota.yml` (push to `master` → `eas update --channel production`, an over-the-air JS/asset update), `release.yml` (tag `v<app.json version>` on `master` → `eas build --profile production --auto-submit` to the Google Play **internal** track; promotion to production stays manual in Play Console). `eas.json` uses `appVersionSource: remote` (EAS owns `versionCode`); `runtimeVersion` policy is `appVersion`.
+**Hard rule:** any change to native deps (`package.json`) or config plugins (`app.json`) MUST bump `expo.version` in the same PR and ship as a store release — an OTA that added a native requirement would reach binaries without that module. Pure JS/asset changes go out as OTAs from `master`. Local Android builds currently fail on a Gradle-9/JDK-21 toolchain mismatch (foojay `IBM_SEMERU`); build via EAS, not `expo run:android`.
 
 **Testing conventions** (see `src/test/`): unit-test pure functions and data-layer request/query factories with `axios-mock-adapter`; component tests via the awaited `renderWithProviders`. Do **not** test hooks with `renderHook` — under RNTL 14 it deadlocks the jest worker; split hooks into a thin `useMutation`/`useQuery` wrapper over a pure request function and test the function. E2E smoke flows live in `.maestro/` (see its README) and run against a dev build on a simulator/emulator.
-
-Expo SDK is **56** and its APIs have changed from earlier versions — consult https://docs.expo.dev/versions/v56.0.0/ before writing native/Expo code.
 
 Expo SDK is **56** and its APIs have changed from earlier versions — consult https://docs.expo.dev/versions/v56.0.0/ before writing native/Expo code.
 
@@ -38,7 +39,7 @@ Expo SDK is **56** and its APIs have changed from earlier versions — consult h
 **API layer** (`src/api/`):
 - `client.ts` — the shared axios instance. A request interceptor attaches the bearer token; a response interceptor does **single-flight token refresh**: the first 401 starts one refresh promise and all concurrent 401s await it, so parallel queries on app-open don't each rotate the session and log the user out. If refresh fails, tokens are deleted. **Always import `apiClient` from here** — don't create new axios instances (a raw `axios.post` is used only inside the refresh call itself, to avoid interceptor recursion).
 - `urls.ts` — every endpoint as a constant or `(id) => \`...\`` builder. Add new endpoints here rather than inlining path strings.
-- Data fetching uses **TanStack Query** directly (`useQuery`/`useMutation` with `apiClient`). `src/hooks/useApi.ts` (`useGet`/`usePost`) is a simpler legacy pattern still used by some screens — prefer React Query for new work.
+- Data fetching uses **TanStack Query** (`useQuery`/`useMutation` with `apiClient`), organized as per-feature `queries.ts`/`mutations.ts` factories (see Conventions).
 
 **State**: **Zustand**, not Redux/Context, for app state. `authStore` (user, auth flags, login/logout, plus `isMasterAdmin`/`isEmployee`/`isHR` helpers) and `prefsStore` (theme preference, hydrated on launch). React Query owns all server state.
 
@@ -50,11 +51,15 @@ Expo SDK is **56** and its APIs have changed from earlier versions — consult h
 
 **Push notifications** (`src/services/notifications.ts` + `_layout.tsx`) — imported for side effects at the top of `_layout.tsx`. Registers the Expo push token with the backend after login, invalidates the `['notifications']` query on foreground receipt, and `routeForNotification(data)` maps a notification payload to an in-app route on tap.
 
+**App lock (mandatory PIN + biometrics)** — a **native-only** gate (`Platform.OS !== 'web'`; on web `lockStore` reports `unlocked` and nothing renders). Pure logic in `src/auth/` (`pin.ts` — salted SHA-256 record in SecureStore; `lockPolicy.ts` — `PIN_LENGTH`/`MAX_ATTEMPTS`/relock window; `biometrics.ts` — `expo-local-authentication` wrapper; `useAppLock.ts` — AppState re-lock after 1 min background) + the `lockStore` state machine (`unknown → setup-required | locked → unlocked`). UI in `src/features/security/` (one controlled `PinPad` shared by setup/unlock/change screens). It is a **full-screen overlay** (`LockOverlay`), rendered as a sibling of the navigator in `_layout.tsx` — **not a route** — so it never fights the `Stack.Protected` auth guards. Two invariants to preserve: (1) `useAuthBootstrap` **awaits `useLockStore.hydrate()` before `hideSplash()`** so content never flashes before the lock; (2) 5 wrong attempts → the screen calls `reset()` + `authStore.logout()` (the store only reports `forceLogout`; it never imports authStore). `authStore.login`/`logout` both call `lockStore.reset()` so a PIN never carries across users.
+
+**In-app update check** (`src/services/appUpdates.ts`, wired once in `_layout.tsx` after unlock) — Google Play in-app updates via `expo-in-app-updates`, guarded no-op off-Android / in Expo Go / on web. `checkForUpdate` → an Uzbek Alert → `startUpdate(false)` (**flexible**; `true` = immediate). 24h cooldown, once per session. Distinct from **EAS Update** (`expo-updates`, OTA delivery — see Release above).
+
 **Documents** — Buyruqlar (order-acts / decrees) and Xatlar (letters) support an OnlyOffice editor rendered in a `react-native-webview`; the editor's `api.js` is served from `ONLYOFFICE_SERVER_URL` (`src/api/urls.ts`). Status/stage logic for these flows lives in `src/utils/orderStatus.ts` and `src/utils/letterStatus.ts`.
 
 ## Conventions
 
-- **Feature structure:** logic lives in `src/features/<feature>/` (api/components/screens/hooks/utils), `app/` is routes-only (thin re-exports like `export { default } from '@/features/<f>/screens/XScreen'`). See `src/features/README.md`. Most screens are migrated (visitors, orders, letters, leaves, employees, projects, profile, attendance, birthdays, news, notifications); `app/(tabs)/index.tsx` (home dashboard) and the auth/infra screens remain outside. New code follows this layout. **No cross-feature imports** — a feature reaches other features only through shared `src/utils/*`, `src/api/*`, or `src/components/*`. Each feature's data access is a per-feature `api/queries.ts` (hierarchical `xKeys` + `queryOptions` factories) + `api/mutations.ts` (pure request fns + thin `useMutation` hooks invalidating `xKeys.all`); see the `visitors` feature as the reference.
+- **Feature structure:** logic lives in `src/features/<feature>/` (api/components/screens/hooks/utils), `app/` is routes-only (thin re-exports like `export { default } from '@/features/<f>/screens/XScreen'`). See `src/features/README.md`. Nearly all screens are migrated (visitors, orders, letters, leaves, employees, projects, profile, attendance, birthdays, news, notifications, dashboard); only the login screen (`app/(auth)/login.tsx`) and a couple of small inline screens (`app/(tabs)/modules.tsx`, `app/salary.tsx`) remain outside. New code follows this layout. **No cross-feature imports** — a feature reaches other features only through shared `src/utils/*`, `src/api/*`, or `src/components/*`. Each feature's data access is a per-feature `api/queries.ts` (hierarchical `xKeys` + `queryOptions` factories) + `api/mutations.ts` (pure request fns + thin `useMutation` hooks invalidating `xKeys.all`); see the `visitors` feature as the reference.
 - Path alias `@/*` → `src/*` (tsconfig). App screens under `app/` typically import via relative paths; prefer `@/*` in new/moved code.
 - Status/domain string mapping (order stages, letter statuses, leave types, role→page) is centralized in `src/utils/*` — extend those rather than scattering conditionals in screens.
 - User-facing strings are Uzbek (no i18n library — literals throughout; `dayjs` uses the `uz` locale for weekday/month names). Match surrounding wording when adding UI text.
