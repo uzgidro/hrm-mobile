@@ -11,9 +11,17 @@ name: OTA Update (EAS Update)
 # (app.json) MUST bump expo.version in the same PR, then go out as a store
 # release, not an OTA.
 on:
-  push:
-    branches: [master]
+  # NOTE: auto-publish on push to master is temporarily disabled until the
+  # EXPO_TOKEN secret is set in the repo. Re-enable by uncommenting the push
+  # trigger below; until then OTAs go out via a manual "Run workflow".
+  # push:
+  #   branches: [master]
   workflow_dispatch:
+    inputs:
+      message:
+        description: Update message shown on expo.dev
+        required: false
+        default: manual dispatch
 
 concurrency:
   group: ota-production
@@ -44,4 +52,6 @@ jobs:
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Publish OTA update
-        run: eas update --channel production --message "${{ github.event.head_commit.message || 'manual dispatch' }}" --non-interactive
+        # When the push trigger is re-enabled, swap this for the commit message:
+        #   ${{ github.event.head_commit.message || github.event.inputs.message }}
+        run: eas update --channel production --message "${{ github.event.inputs.message || 'manual dispatch' }}" --non-interactive
