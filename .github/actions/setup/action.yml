@@ -1,0 +1,13 @@
+name: Setup Node + install
+description: Checkout is done by the caller; this sets up Node 22 with npm cache and installs deps.
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+        cache: npm
+
+    - run: npm ci
+      shell: bash

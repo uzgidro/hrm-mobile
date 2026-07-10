@@ -29,19 +29,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - run: npm ci
-
-      # Don't ship broken JS over the air — gate the update on green checks.
+      # Don't ship broken or vulnerable JS over the air — gate on green checks
+      # and the same high/critical dependency audit as CI.
       - name: Typecheck & test
         run: |
           npm run typecheck
           npx jest --ci
+      - name: Audit (fail on high/critical)
+        run: npm audit --audit-level=high
 
       - uses: expo/expo-github-action@v8
         with:
