@@ -3,6 +3,7 @@ import { Alert } from 'react-native';
 import { renderWithProviders, fireEvent, waitFor, act } from '@/test/renderWithProviders';
 import { useLockStore } from '@/store/lockStore';
 import { useAuthStore } from '@/store/authStore';
+import i18n from '@/i18n';
 import type { User } from '@/types';
 import UnlockScreen from '../UnlockScreen';
 
@@ -49,7 +50,9 @@ describe('UnlockScreen', () => {
     // Privacy: the lock screen must not show the signed-in user's identity to
     // whoever is holding the phone — only the PIN prompt.
     expect(queryByText('Ali Valiyev')).toBeNull();
-    expect(getByText('PIN kodni kiriting')).toBeTruthy();
+    // Renders under the uz-Latn default; assert via t() so the expectation
+    // tracks the catalog rather than a hard-coded literal.
+    expect(getByText(i18n.t('security.unlockTitle'))).toBeTruthy();
   });
 
   it('calls unlockWithPin with the typed PIN once it reaches full length', async () => {
@@ -76,7 +79,7 @@ describe('UnlockScreen', () => {
 
     await waitFor(() =>
       expect(getByTestId('pin-error')).toHaveTextContent(
-        "Noto'g'ri PIN kod. 4 ta urinish qoldi."
+        i18n.t('security.attemptsLeft', { count: 4 })
       )
     );
   });
@@ -99,14 +102,14 @@ describe('UnlockScreen', () => {
 
     await waitFor(() => expect(alertSpy).toHaveBeenCalledTimes(1));
     expect(alertSpy).toHaveBeenCalledWith(
-      'Urinishlar soni tugadi',
-      'Xavfsizlik maqsadida tizimdan chiqarildingiz. Qaytadan kiring.',
-      expect.arrayContaining([expect.objectContaining({ text: 'OK' })])
+      i18n.t('security.forceLogoutTitle'),
+      i18n.t('security.forceLogoutMessage'),
+      expect.arrayContaining([expect.objectContaining({ text: i18n.t('common.ok') })])
     );
 
     // Invoke the OK button's onPress and assert the wipe + logout run.
     const buttons = alertSpy.mock.calls[0][2] as { text: string; onPress?: () => void }[];
-    const ok = buttons.find((b) => b.text === 'OK')!;
+    const ok = buttons.find((b) => b.text === i18n.t('common.ok'))!;
     await ok.onPress!();
 
     expect(reset).toHaveBeenCalledTimes(1);

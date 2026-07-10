@@ -31,4 +31,9 @@ export default {
   workspaceFallback: 'Project',
   cardFallback: 'Task',
   generic: 'Notification',
+
+  // Notifications SCREEN chrome — see uz-Latn/notifications.ts.
+  screenTitle: 'Notifications',
+  markAllRead: 'Read',
+  empty: 'No notifications',
 } as const;

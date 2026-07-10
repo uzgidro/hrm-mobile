@@ -5,6 +5,7 @@ import {
   Image, FlatList, TextInput,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';
 import dayjs from 'dayjs';
 import { useAuthStore } from '@/store/authStore';
@@ -12,13 +13,13 @@ import { usePrefsStore } from '@/store/prefsStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { fetchAllEmployees, employeesQueryKey } from '@/utils/employees';
+import { monthName } from '@/i18n/dates';
 import { Icon } from '@/components/Icon';
 import { LoadingView, EmptyState } from '@/components/StateViews';
 import { birthdaysListQuery } from '../api/queries';
 
-const MONTHS_UZ = ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 'Iyul', 'Avgust', 'Sentyabr', 'Oktyabr', 'Noyabr', 'Dekabr'];
-
 export default function BirthdaysScreen() {
+  const { t } = useTranslation();
   const { user } = useAuthStore();
   const { onlySubordinates } = usePrefsStore();
   const { colors } = useTheme();
@@ -65,14 +66,14 @@ export default function BirthdaysScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Icon name="chevronLeft" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Tug'ilgan kunlar{base.length ? ` (${base.length})` : ''}</Text>
+        <Text style={styles.headerTitle}>{t('birthdays.title')}{base.length ? ` (${base.length})` : ''}</Text>
         <View style={{ width: 36 }} />
       </View>
 
       <View style={styles.searchWrapper}>
         <View style={styles.searchBox}>
           <Icon name="search" size={18} color={colors.textMuted} />
-          <TextInput style={styles.searchInput} placeholder="Qidirish..." placeholderTextColor={colors.textMuted} value={search} onChangeText={setSearch} returnKeyType="search" />
+          <TextInput style={styles.searchInput} placeholder={t('common.search')} placeholderTextColor={colors.textMuted} value={search} onChangeText={setSearch} returnKeyType="search" />
           {search.length > 0 && (
             <TouchableOpacity onPress={() => setSearch('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
               <Icon name="close" size={18} color={colors.textMuted} />
@@ -109,18 +110,18 @@ export default function BirthdaysScreen() {
                     {isToday && (
                       <View style={styles.todayBadgeRow}>
                         <Icon name="gift" size={13} color={colors.warning} />
-                        <Text style={styles.todayBadge}>Bugun!</Text>
+                        <Text style={styles.todayBadge}>{t('birthdays.today')}</Text>
                       </View>
                     )}
-                    {isSoon && !isToday && <Text style={styles.soonBadge}>{emp.days_left} kun</Text>}
+                    {isSoon && !isToday && <Text style={styles.soonBadge}>{t('birthdays.daysLeft', { count: emp.days_left })}</Text>}
                   </View>
                   <Text style={styles.empSub} numberOfLines={1}>{emp.job_position?.name ?? '—'}</Text>
                   {birthDay && (
                     <View style={styles.birthDateRow}>
                       <Icon name="cake" size={14} color={isToday ? colors.warning : colors.textSecondary} />
                       <Text style={[styles.birthDate, isToday && styles.birthDateToday]}>
-                        {birthDay.date()} {MONTHS_UZ[birthDay.month()]}
-                        <Text style={styles.yearLabel}>{' · '}{today.year() - birthDay.year()} yosh</Text>
+                        {birthDay.date()} {monthName(birthDay.month())}
+                        <Text style={styles.yearLabel}>{' · '}{t('birthdays.age', { count: today.year() - birthDay.year() })}</Text>
                       </Text>
                     </View>
                   )}
@@ -130,7 +131,7 @@ export default function BirthdaysScreen() {
             );
           }}
           ListEmptyComponent={
-            <EmptyState icon="cake" title={search ? 'Topilmadi' : "Tug'ilgan kun yo'q"} />
+            <EmptyState icon="cake" title={search ? t('common.notFound') : t('birthdays.empty')} />
           }
         />
       )}

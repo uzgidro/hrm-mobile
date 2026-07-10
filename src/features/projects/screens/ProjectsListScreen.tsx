@@ -3,6 +3,7 @@ import {
   View, Text, StyleSheet, TouchableOpacity, RefreshControl, Image, FlatList,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
@@ -21,6 +22,7 @@ function Stat({ icon, value, styles, colors }: { icon: any; value: number; style
 }
 
 export default function LoyihalarScreen() {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
@@ -28,7 +30,7 @@ export default function LoyihalarScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScreenHeader title="Loyihalar" right={<HeaderAction icon="plus" onPress={() => router.push('/loyiha-form')} />} />
+      <ScreenHeader title={t('projects.title')} right={<HeaderAction icon="plus" onPress={() => router.push('/loyiha-form')} />} />
       {isLoading ? (
         <LoadingView />
       ) : (
@@ -48,7 +50,7 @@ export default function LoyihalarScreen() {
               >
                 <View style={styles.cardTop}>
                   <View style={styles.iconWrap}><Icon name="board" size={22} color={colors.primary} /></View>
-                  <Text style={styles.name} numberOfLines={1}>{item.name || 'Loyiha'}</Text>
+                  <Text style={styles.name} numberOfLines={1}>{item.name || t('projects.nameFallback')}</Text>
                 </View>
                 {!!item.description && <Text style={styles.desc} numberOfLines={2}>{item.description}</Text>}
                 <View style={styles.metaRow}>
@@ -78,7 +80,7 @@ export default function LoyihalarScreen() {
             );
           }}
           ListEmptyComponent={
-            <EmptyState icon="board" title="Loyihalar yo'q" />
+            <EmptyState icon="board" title={t('projects.empty')} />
           }
         />
       )}

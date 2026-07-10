@@ -31,4 +31,9 @@ export default {
   workspaceFallback: 'Лойиҳа',
   cardFallback: 'Вазифа',
   generic: 'Билдиришнома',
+
+  // Notifications SCREEN chrome — see uz-Latn/notifications.ts.
+  screenTitle: 'Билдиришномалар',
+  markAllRead: "Ўқилди",
+  empty: "Билдиришномалар йўқ",
 } as const;

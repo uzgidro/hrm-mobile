@@ -31,4 +31,9 @@ export default {
   workspaceFallback: 'Проект',
   cardFallback: 'Задача',
   generic: 'Уведомление',
+
+  // Notifications SCREEN chrome — see uz-Latn/notifications.ts.
+  screenTitle: 'Уведомления',
+  markAllRead: 'Прочитано',
+  empty: 'Уведомлений нет',
 } as const;

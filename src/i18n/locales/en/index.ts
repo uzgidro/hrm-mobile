@@ -6,6 +6,14 @@ import attendance from './attendance';
 import leaves from './leaves';
 import orders from './orders';
 import letters from './letters';
+import birthdays from './birthdays';
+import news from './news';
+import dashboard from './dashboard';
+import visitors from './visitors';
+import projects from './projects';
+import profile from './profile';
+import employees from './employees';
+import security from './security';
 
 export default {
   common,
@@ -16,4 +24,12 @@ export default {
   leaves,
   orders,
   letters,
+  birthdays,
+  news,
+  dashboard,
+  visitors,
+  projects,
+  profile,
+  employees,
+  security,
 } as const;

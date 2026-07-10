@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
+import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
@@ -24,6 +25,7 @@ import {
 } from '../api/mutations';
 
 export default function MehmonFormScreen() {
+  const { t } = useTranslation();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const isEdit = !!id;
   const visitorId = Number(id);
@@ -70,7 +72,7 @@ export default function MehmonFormScreen() {
 
   const pickPhoto = async () => {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) { Alert.alert('Ruxsat kerak', 'Rasm tanlash uchun galereyaga ruxsat bering.'); return; }
+    if (!perm.granted) { Alert.alert(t('visitors.photoPermTitle'), t('visitors.photoPermMessage')); return; }
     const res = await ImagePicker.launchImageLibraryAsync({ allowsEditing: true, aspect: [1, 1], quality: 0.6, base64: true });
     if (res.canceled || !res.assets?.[0]?.base64) return;
     const asset = res.assets[0];
@@ -81,7 +83,7 @@ export default function MehmonFormScreen() {
     try {
       const { accepted, message } = await validateVisitorPhoto(asset.base64!);
       if (!accepted) {
-        Alert.alert('Rasm qabul qilinmadi', message || 'Terminal yuzni tanimadi. Boshqa rasm tanlang.');
+        Alert.alert(t('visitors.photoRejectedTitle'), message || t('visitors.photoRejectedMessage'));
         setPhotoBase64('');
         setPhotoPreview(existingPhoto);
       }
@@ -91,9 +93,9 @@ export default function MehmonFormScreen() {
   };
 
   const save = async () => {
-    if (!legalName.trim()) { setError('Ism-sharif kiritilishi shart'); return; }
+    if (!legalName.trim()) { setError(t('visitors.nameRequired')); return; }
     if (dayjs(validFrom).isAfter(dayjs(validUntil))) {
-      Alert.alert('Xatolik', "Ketish vaqti kelish vaqtidan keyin bo'lishi kerak");
+      Alert.alert(t('visitors.errorTitle'), t('visitors.untilBeforeFrom'));
       return;
     }
     setLoading(true);
@@ -123,7 +125,7 @@ export default function MehmonFormScreen() {
         else router.back();
       }
     } catch (e) {
-      Alert.alert('Xatolik', getApiErrorMessage(e, "Saqlashda xatolik yuz berdi"));
+      Alert.alert(t('visitors.errorTitle'), getApiErrorMessage(e, t('errors.saveFailed')));
     } finally {
       setLoading(false);
     }
@@ -131,7 +133,7 @@ export default function MehmonFormScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScreenHeader title={isEdit ? 'Mehmonni tahrirlash' : "Yangi mehmon"} />
+      <ScreenHeader title={isEdit ? t('visitors.editTitle') : t('visitors.createTitle')} />
       {hydrating ? (
         <LoadingView />
       ) : (
@@ -151,22 +153,22 @@ export default function MehmonFormScreen() {
             <View style={{ flex: 1 }}>
               <TouchableOpacity style={styles.photoBtn} onPress={pickPhoto} activeOpacity={0.8}>
                 <Icon name="edit" size={15} color={colors.text} />
-                <Text style={styles.photoBtnText}>{photoPreview ? 'Rasmni almashtirish' : 'Rasm yuklash'}</Text>
+                <Text style={styles.photoBtnText}>{photoPreview ? t('visitors.photoReplace') : t('visitors.photoUpload')}</Text>
               </TouchableOpacity>
-              <Text style={styles.photoHint}>Rasm bo'lsa, terminal yuzni tanib kiritadi. Bo'lmasa — QR orqali.</Text>
+              <Text style={styles.photoHint}>{t('visitors.photoHint')}</Text>
             </View>
           </View>
 
-          <FormInput label="F.I.SH" value={legalName} onChangeText={(t) => { setLegalName(t); setError(''); }} placeholder="Azimov Jasur Shamsiyevich" required error={error} />
-          <FormInput label="Tashkilot nomi" value={orgName} onChangeText={setOrgName} placeholder="O'zbekiston Milliy Banki" />
-          <FormInput label="Lavozim" value={jobPosition} onChangeText={setJobPosition} placeholder="Bosh mutaxassis" />
-          <FormInput label="Telegram" value={telegram} onChangeText={setTelegram} placeholder="jasur_azimov" />
-          <FormInput label="Telefon raqami" value={phone} onChangeText={setPhone} placeholder="+998 90 123 45 67" keyboardType="phone-pad" />
+          <FormInput label={t('visitors.labelName')} value={legalName} onChangeText={(text) => { setLegalName(text); setError(''); }} placeholder={t('visitors.placeholderName')} required error={error} />
+          <FormInput label={t('visitors.labelOrg')} value={orgName} onChangeText={setOrgName} placeholder={t('visitors.placeholderOrg')} />
+          <FormInput label={t('visitors.labelPosition')} value={jobPosition} onChangeText={setJobPosition} placeholder={t('visitors.placeholderPosition')} />
+          <FormInput label={t('visitors.labelTelegram')} value={telegram} onChangeText={setTelegram} placeholder={t('visitors.placeholderTelegram')} />
+          <FormInput label={t('visitors.labelPhone')} value={phone} onChangeText={setPhone} placeholder={t('visitors.placeholderPhone')} keyboardType="phone-pad" />
 
-          <Text style={styles.dateGroupLabel}>Kelish — Ketish vaqti</Text>
+          <Text style={styles.dateGroupLabel}>{t('visitors.dateGroupLabel')}</Text>
           <View style={styles.dateRow}>
             <TouchableOpacity style={styles.dateField} onPress={() => setPicker('from')} activeOpacity={0.7}>
-              <Text style={styles.dateLabel}>Kelish</Text>
+              <Text style={styles.dateLabel}>{t('visitors.dateFrom')}</Text>
               <View style={styles.dateValueRow}>
                 <Icon name="calendar" size={15} color={colors.primary} />
                 <Text style={styles.dateValue}>{dayjs(validFrom).format('DD.MM.YYYY')}</Text>
@@ -177,7 +179,7 @@ export default function MehmonFormScreen() {
               </View>
             </TouchableOpacity>
             <TouchableOpacity style={styles.dateField} onPress={() => setPicker('until')} activeOpacity={0.7}>
-              <Text style={styles.dateLabel}>Ketish</Text>
+              <Text style={styles.dateLabel}>{t('visitors.dateUntil')}</Text>
               <View style={styles.dateValueRow}>
                 <Icon name="calendar" size={15} color={colors.primary} />
                 <Text style={styles.dateValue}>{dayjs(validUntil).format('DD.MM.YYYY')}</Text>
@@ -188,13 +190,13 @@ export default function MehmonFormScreen() {
               </View>
             </TouchableOpacity>
           </View>
-          <Text style={styles.hint}>Ushbu muddatda mehmon kirish huquqiga ega bo'ladi.</Text>
+          <Text style={styles.hint}>{t('visitors.dateHint')}</Text>
 
           <TouchableOpacity style={[styles.saveBtn, loading && { opacity: 0.6 }]} onPress={save} disabled={loading} activeOpacity={0.85}>
             {loading ? <ActivityIndicator color={colors.onPrimary} /> : (
               <>
                 <Icon name="check" size={18} color={colors.onPrimary} />
-                <Text style={styles.saveText}>Saqlash</Text>
+                <Text style={styles.saveText}>{t('common.save')}</Text>
               </>
             )}
           </TouchableOpacity>
@@ -205,14 +207,14 @@ export default function MehmonFormScreen() {
       <DateTimePickerModal
         visible={picker === 'from'}
         value={validFrom}
-        title="Kelish vaqti"
+        title={t('visitors.fromPickerTitle')}
         onConfirm={(iso) => setValidFrom(iso)}
         onClose={() => setPicker(null)}
       />
       <DateTimePickerModal
         visible={picker === 'until'}
         value={validUntil}
-        title="Ketish vaqti"
+        title={t('visitors.untilPickerTitle')}
         onConfirm={(iso) => setValidUntil(iso)}
         onClose={() => setPicker(null)}
       />

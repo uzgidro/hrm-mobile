@@ -5,6 +5,7 @@ import {
   TouchableOpacity, ActivityIndicator, Alert, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { router } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
@@ -13,11 +14,13 @@ import { LoadingView } from '@/components/StateViews';
 import { getApiErrorMessage } from '@/api/errors';
 import { getMyProfile, useUpdateMyProfile } from '../api/mutations';
 
+// `key` is the API `maritial_status` enum code (never translated); `labelKey`
+// is a profile.maritalStatus.* catalog key resolved via t() at render time.
 const MARITAL_OPTIONS = [
-  { key: 'single', label: 'Turmush qurmagan' },
-  { key: 'married', label: 'Turmush qurgan' },
-  { key: 'divorced', label: 'Ajrashgan' },
-  { key: 'widowed', label: 'Beva' },
+  { key: 'single', labelKey: 'profile.maritalStatus.single' },
+  { key: 'married', labelKey: 'profile.maritalStatus.married' },
+  { key: 'divorced', labelKey: 'profile.maritalStatus.divorced' },
+  { key: 'widowed', labelKey: 'profile.maritalStatus.widowed' },
 ];
 
 type Form = {
@@ -43,6 +46,7 @@ const EMPTY: Form = {
 };
 
 export default function ProfileEditScreen() {
+  const { t } = useTranslation();
   const { user } = useAuthStore();
   const employeeId = user?.employee?.id;
   const styles = useThemedStyles(makeStyles);
@@ -81,7 +85,7 @@ export default function ProfileEditScreen() {
 
   const handleSave = async () => {
     if (!form.legal_name.trim()) {
-      Alert.alert('Xato', 'F.I.O. kiritilishi shart');
+      Alert.alert(t('profile.errorTitle'), t('profile.nameRequired'));
       return;
     }
     setSaving(true);
@@ -97,11 +101,11 @@ export default function ProfileEditScreen() {
       // the employee-detail cache on success.
       await updateMut.mutateAsync(payload);
 
-      Alert.alert('Saqlandi', "Ma'lumotlar yangilandi", [
-        { text: 'OK', onPress: () => router.back() },
+      Alert.alert(t('profile.savedTitle'), t('profile.savedMessage'), [
+        { text: t('common.ok'), onPress: () => router.back() },
       ]);
     } catch (e) {
-      Alert.alert('Xatolik', getApiErrorMessage(e, 'Saqlashda xatolik'));
+      Alert.alert(t('profile.saveErrorTitle'), getApiErrorMessage(e, t('errors.saveFailed')));
     } finally {
       setSaving(false);
     }
@@ -121,7 +125,7 @@ export default function ProfileEditScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Icon name="chevronLeft" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Ma'lumotlarni o'zgartirish</Text>
+        <Text style={styles.headerTitle}>{t('profile.editTitle')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -133,15 +137,15 @@ export default function ProfileEditScreen() {
           <View style={styles.noteRow}>
             <Icon name="lock" size={14} color={colors.textMuted} />
             <Text style={styles.noteText}>
-              Ish ma'lumotlari (bo'lim, lavozim, ish vaqti) faqat kadrlar bo'limi tomonidan o'zgartiriladi.
+              {t('profile.editNote')}
             </Text>
           </View>
 
-          <Card styles={styles} title="Shaxsiy">
-            <Field styles={styles} label="F.I.O." value={form.legal_name} onChange={set('legal_name')} />
-            <Field styles={styles} label="Manzil" value={form.address} onChange={set('address')} multiline />
+          <Card styles={styles} title={t('profile.sectionPersonal')}>
+            <Field styles={styles} label={t('profile.fieldName')} value={form.legal_name} onChange={set('legal_name')} />
+            <Field styles={styles} label={t('profile.fieldAddress')} value={form.address} onChange={set('address')} multiline />
             <View>
-              <Text style={styles.label}>Oilaviy holati</Text>
+              <Text style={styles.label}>{t('profile.fieldMaritalStatus')}</Text>
               <View style={styles.chipsRow}>
                 {MARITAL_OPTIONS.map((opt) => {
                   const active = form.maritial_status === opt.key;
@@ -152,7 +156,7 @@ export default function ProfileEditScreen() {
                       onPress={() => set('maritial_status')(opt.key)}
                       activeOpacity={0.8}
                     >
-                      <Text style={[styles.chipText, active && styles.chipTextActive]}>{opt.label}</Text>
+                      <Text style={[styles.chipText, active && styles.chipTextActive]}>{t(opt.labelKey)}</Text>
                     </TouchableOpacity>
                   );
                 })}
@@ -160,25 +164,25 @@ export default function ProfileEditScreen() {
             </View>
           </Card>
 
-          <Card styles={styles} title="Kontakt">
-            <Field styles={styles} label="Telefon" value={form.phone_number} onChange={set('phone_number')} keyboardType="phone-pad" />
-            <Field styles={styles} label="Ichki telefon" value={form.internal_phone_number} onChange={set('internal_phone_number')} keyboardType="phone-pad" />
+          <Card styles={styles} title={t('profile.sectionContact')}>
+            <Field styles={styles} label={t('profile.fieldPhone')} value={form.phone_number} onChange={set('phone_number')} keyboardType="phone-pad" />
+            <Field styles={styles} label={t('profile.fieldInternalPhone')} value={form.internal_phone_number} onChange={set('internal_phone_number')} keyboardType="phone-pad" />
           </Card>
 
-          <Card styles={styles} title="Hujjatlar">
+          <Card styles={styles} title={t('profile.sectionDocuments')}>
             <View style={styles.row2}>
               <View style={{ flex: 1 }}>
-                <Field styles={styles} label="Pasport seriya" value={form.pasport_series} onChange={set('pasport_series')} autoCapitalize="characters" />
+                <Field styles={styles} label={t('profile.fieldPassportSeries')} value={form.pasport_series} onChange={set('pasport_series')} autoCapitalize="characters" />
               </View>
               <View style={{ flex: 1.4 }}>
-                <Field styles={styles} label="Pasport raqami" value={form.pasport_number} onChange={set('pasport_number')} keyboardType="number-pad" />
+                <Field styles={styles} label={t('profile.fieldPassportNumber')} value={form.pasport_number} onChange={set('pasport_number')} keyboardType="number-pad" />
               </View>
             </View>
-            <Field styles={styles} label="Pasport berilgan joy" value={form.pasport_issue_by} onChange={set('pasport_issue_by')} />
-            <Field styles={styles} label="JSHIR" value={form.pasport_individual_number} onChange={set('pasport_individual_number')} keyboardType="number-pad" />
-            <Field styles={styles} label="PINFL" value={form.personal_identification_number} onChange={set('personal_identification_number')} keyboardType="number-pad" />
-            <Field styles={styles} label="INN" value={form.taxpayer_identification_number} onChange={set('taxpayer_identification_number')} keyboardType="number-pad" />
-            <Field styles={styles} label="Pensiya hisob raqami" value={form.individual_accumulative_pension_account_number} onChange={set('individual_accumulative_pension_account_number')} keyboardType="number-pad" />
+            <Field styles={styles} label={t('profile.fieldPassportIssuedBy')} value={form.pasport_issue_by} onChange={set('pasport_issue_by')} />
+            <Field styles={styles} label={t('profile.fieldJshir')} value={form.pasport_individual_number} onChange={set('pasport_individual_number')} keyboardType="number-pad" />
+            <Field styles={styles} label={t('profile.fieldPinfl')} value={form.personal_identification_number} onChange={set('personal_identification_number')} keyboardType="number-pad" />
+            <Field styles={styles} label={t('profile.fieldInn')} value={form.taxpayer_identification_number} onChange={set('taxpayer_identification_number')} keyboardType="number-pad" />
+            <Field styles={styles} label={t('profile.fieldPensionAccount')} value={form.individual_accumulative_pension_account_number} onChange={set('individual_accumulative_pension_account_number')} keyboardType="number-pad" />
           </Card>
 
           <TouchableOpacity
@@ -187,7 +191,7 @@ export default function ProfileEditScreen() {
             disabled={saving}
             activeOpacity={0.85}
           >
-            {saving ? <ActivityIndicator color={styles._onPrimary.color} /> : <Text style={styles.saveBtnText}>Saqlash</Text>}
+            {saving ? <ActivityIndicator color={styles._onPrimary.color} /> : <Text style={styles.saveBtnText}>{t('common.save')}</Text>}
           </TouchableOpacity>
 
           <View style={{ height: 40 }} />

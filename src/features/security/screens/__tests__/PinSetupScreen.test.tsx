@@ -2,6 +2,7 @@ import React from 'react';
 import { renderWithProviders, fireEvent, waitFor, act } from '@/test/renderWithProviders';
 import { useLockStore } from '@/store/lockStore';
 import * as biometrics from '@/auth/biometrics';
+import i18n from '@/i18n';
 import PinSetupScreen from '../PinSetupScreen';
 
 // expo-router@6 pulls ESM navigation internals that aren't transpiled; the
@@ -36,12 +37,12 @@ describe('PinSetupScreen', () => {
   it('advances from the enter step to the confirm step after 4 digits', async () => {
     const { getByTestId, getByText, queryByText } = await renderWithProviders(<PinSetupScreen />);
 
-    expect(getByText("PIN kod o'rnating")).toBeTruthy();
+    expect(getByText(i18n.t('security.setupTitle'))).toBeTruthy();
 
     await enterPin(getByTestId, '1234');
 
-    await waitFor(() => expect(getByText('PIN kodni tasdiqlang')).toBeTruthy());
-    expect(queryByText("PIN kod o'rnating")).toBeNull();
+    await waitFor(() => expect(getByText(i18n.t('security.setupConfirmTitle'))).toBeTruthy());
+    expect(queryByText(i18n.t('security.setupTitle'))).toBeNull();
   });
 
   it('calls setupPin when the confirm PIN matches', async () => {
@@ -51,7 +52,7 @@ describe('PinSetupScreen', () => {
     const { getByTestId, getByText } = await renderWithProviders(<PinSetupScreen />);
 
     await enterPin(getByTestId, '1234');
-    await waitFor(() => expect(getByText('PIN kodni tasdiqlang')).toBeTruthy());
+    await waitFor(() => expect(getByText(i18n.t('security.setupConfirmTitle'))).toBeTruthy());
 
     await enterPin(getByTestId, '1234');
     await waitFor(() => expect(setupPin).toHaveBeenCalledWith('1234'));
@@ -64,17 +65,17 @@ describe('PinSetupScreen', () => {
     const { getByTestId, getByText } = await renderWithProviders(<PinSetupScreen />);
 
     await enterPin(getByTestId, '1234');
-    await waitFor(() => expect(getByText('PIN kodni tasdiqlang')).toBeTruthy());
+    await waitFor(() => expect(getByText(i18n.t('security.setupConfirmTitle'))).toBeTruthy());
 
     await enterPin(getByTestId, '9999');
 
     await waitFor(() =>
       expect(getByTestId('pin-error')).toHaveTextContent(
-        "PIN kodlar mos kelmadi. Qaytadan urinib ko'ring."
+        i18n.t('security.mismatch')
       )
     );
     // Back on the enter step.
-    expect(getByText("PIN kod o'rnating")).toBeTruthy();
+    expect(getByText(i18n.t('security.setupTitle'))).toBeTruthy();
     expect(setupPin).not.toHaveBeenCalled();
   });
 });

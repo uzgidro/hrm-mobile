@@ -4,12 +4,14 @@ import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, Image,
 } from 'react-native';
 import dayjs from 'dayjs';
-import 'dayjs/locale/uz';
 import { router } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { monthName, weekdayName } from '@/i18n/dates';
 import { Icon } from '@/components/Icon';
 import { AttendanceEvent } from '@/types';
 import {
@@ -20,18 +22,14 @@ import {
   prefetchHomeData,
 } from '../api/queries';
 
-dayjs.locale('uz');
-
-const DAYS_UZ = ['Yakshanba', 'Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma', 'Shanba'];
-const MONTHS_UZ = ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 'Iyul', 'Avgust', 'Sentyabr', 'Oktyabr', 'Noyabr', 'Dekabr'];
-
-function statusInfo(status: string, c: ThemeColors) {
-  if (status === 'approved' || status === 'tasdiqlangan' || status === 'signed') return { label: 'Tasdiqlangan', color: c.success };
-  if (status === 'rejected' || status === 'rad_etilgan') return { label: 'Rad etildi', color: c.error };
-  return { label: 'Kutilmoqda', color: c.warning };
+function statusInfo(status: string, c: ThemeColors, t: TFunction) {
+  if (status === 'approved' || status === 'tasdiqlangan' || status === 'signed') return { label: t('dashboard.status.approved'), color: c.success };
+  if (status === 'rejected' || status === 'rad_etilgan') return { label: t('dashboard.status.rejected'), color: c.error };
+  return { label: t('dashboard.status.pending'), color: c.warning };
 }
 
 export default function HomeScreen() {
+  const { t } = useTranslation();
   const { user } = useAuthStore();
   const employee = user?.employee;
   const queryClient = useQueryClient();
@@ -42,7 +40,7 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
 
   const now = dayjs();
-  const dateStr = `${DAYS_UZ[now.day()]}, ${now.date()} ${MONTHS_UZ[now.month()]}`;
+  const dateStr = `${weekdayName(now.day())}, ${now.date()} ${monthName(now.month())}`;
   const initials = (employee?.legal_name || 'F U')
     .split(' ')
     .slice(0, 2)
@@ -125,7 +123,7 @@ export default function HomeScreen() {
           </TouchableOpacity>
           <TouchableOpacity style={{ flex: 1 }} activeOpacity={0.8} onPress={() => router.push('/(tabs)/profile')}>
             <Text style={styles.greeting}>{dateStr}</Text>
-            <Text style={styles.userName} numberOfLines={1}>{employee?.legal_name || 'Foydalanuvchi'}</Text>
+            <Text style={styles.userName} numberOfLines={1}>{employee?.legal_name || t('dashboard.userFallback')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.bellBtn} onPress={() => router.push('/notifications')} activeOpacity={0.8}>
             <Icon name="bell" size={21} color={colors.text} />
@@ -142,7 +140,7 @@ export default function HomeScreen() {
           <View style={styles.cardHeaderRow}>
             <View style={styles.cardTitleRow}>
               <Icon name="clock" size={17} color={colors.primary} />
-              <Text style={styles.cardTitle}>Bugungi jadval</Text>
+              <Text style={styles.cardTitle}>{t('dashboard.scheduleTitle')}</Text>
             </View>
             {employee?.working_hours_start && (
               <Text style={styles.scheduleTime}>{employee.working_hours_start} – {employee.working_hours_end}</Text>
@@ -154,7 +152,7 @@ export default function HomeScreen() {
                 <Icon name="arrowDown" size={16} color={colors.success} />
               </View>
               <Text style={styles.attendanceTime}>{entry ? dayjs(entry.happen_time).format('HH:mm') : '--:--'}</Text>
-              <Text style={styles.attendanceLbl}>Kelish</Text>
+              <Text style={styles.attendanceLbl}>{t('dashboard.checkIn')}</Text>
             </View>
             <View style={styles.attendanceDivider} />
             <View style={styles.attendanceItem}>
@@ -162,7 +160,7 @@ export default function HomeScreen() {
                 <Icon name="arrowUp" size={16} color={colors.error} />
               </View>
               <Text style={styles.attendanceTime}>{exit ? dayjs(exit.happen_time).format('HH:mm') : '--:--'}</Text>
-              <Text style={styles.attendanceLbl}>Ketish</Text>
+              <Text style={styles.attendanceLbl}>{t('dashboard.checkOut')}</Text>
             </View>
           </View>
         </View>
@@ -172,34 +170,34 @@ export default function HomeScreen() {
           <View style={styles.cardHeaderRow}>
             <View style={styles.cardTitleRow}>
               <Icon name="checklist" size={17} color={colors.primary} />
-              <Text style={styles.cardTitle}>{isSupervisor ? "Kiruvchi so'rovlar" : "So'rovlar"}</Text>
+              <Text style={styles.cardTitle}>{isSupervisor ? t('dashboard.incomingRequests') : t('dashboard.requests')}</Text>
               {isSupervisor && pendingCount > 0 && (
                 <View style={styles.inlineBadge}><Text style={styles.inlineBadgeText}>{pendingCount}</Text></View>
               )}
             </View>
             <TouchableOpacity onPress={() => router.push('/work-leaves')} hitSlop={8}>
-              <Text style={styles.linkText}>Barchasi</Text>
+              <Text style={styles.linkText}>{t('common.all')}</Text>
             </TouchableOpacity>
           </View>
 
           {isSupervisor ? (
             recentAssigned.length === 0 ? (
-              <Text style={styles.emptyText}>Kiruvchi so'rovlar yo'q</Text>
+              <Text style={styles.emptyText}>{t('dashboard.noIncomingRequests')}</Text>
             ) : (
               recentAssigned.map((leave) => {
                 const needsAction = (leave.status === 'pending' || leave.status === 'yuborildi') && !leave.signers?.some((s) => s.id === employee?.id);
-                const st = statusInfo(leave.status, colors);
+                const st = statusInfo(leave.status, colors, t);
                 return (
                   <TouchableOpacity key={leave.id} style={styles.leaveRow}
                     onPress={() => router.push({ pathname: '/leave-detail', params: { id: leave.id } })} activeOpacity={0.75}>
                     <View style={styles.leaveInfo}>
-                      <Text style={styles.leaveName}>{leave.employee?.legal_name ?? 'Xodim'}</Text>
-                      <Text style={styles.leaveDate}>{leave.type || "Ruxsat so'rovi"}</Text>
+                      <Text style={styles.leaveName}>{leave.employee?.legal_name ?? t('dashboard.employeeFallback')}</Text>
+                      <Text style={styles.leaveDate}>{leave.type || t('dashboard.leaveRequestFallback')}</Text>
                       <Text style={styles.leaveDate}>{dayjs(leave.start_date).format('D MMM, HH:mm')} – {dayjs(leave.end_date).format('HH:mm')}</Text>
                     </View>
                     <View style={{ alignItems: 'flex-end', gap: 4 }}>
                       <Text style={[styles.leaveStatus, { color: st.color }]}>{st.label}</Text>
-                      {needsAction && <Text style={styles.actionHint}>Tasdiqlash kerak</Text>}
+                      {needsAction && <Text style={styles.actionHint}>{t('dashboard.actionNeeded')}</Text>}
                     </View>
                   </TouchableOpacity>
                 );
@@ -207,15 +205,15 @@ export default function HomeScreen() {
             )
           ) : (
             myLeaves.length === 0 ? (
-              <Text style={styles.emptyText}>So'rovlar yo'q</Text>
+              <Text style={styles.emptyText}>{t('dashboard.noRequests')}</Text>
             ) : (
               myLeaves.map((leave) => {
-                const st = statusInfo(leave.status, colors);
+                const st = statusInfo(leave.status, colors, t);
                 return (
                   <TouchableOpacity key={leave.id} style={styles.leaveRow}
                     onPress={() => router.push({ pathname: '/leave-detail', params: { id: leave.id } })} activeOpacity={0.75}>
                     <View style={styles.leaveInfo}>
-                      <Text style={styles.leaveName}>{leave.type || "Ruxsat so'rovi"}</Text>
+                      <Text style={styles.leaveName}>{leave.type || t('dashboard.leaveRequestFallback')}</Text>
                       <Text style={styles.leaveDate}>{dayjs(leave.start_date).format('D MMM YYYY, HH:mm')}-{dayjs(leave.end_date).format('HH:mm')}</Text>
                     </View>
                     <Text style={[styles.leaveStatus, { color: st.color }]}>{st.label}</Text>
@@ -228,7 +226,7 @@ export default function HomeScreen() {
           {!isSupervisor && (
             <TouchableOpacity style={styles.createBtn} onPress={() => router.push('/create-leave')} activeOpacity={0.85}>
               <Icon name="plus" size={18} color={colors.onPrimary} />
-              <Text style={styles.createBtnText}>So'rov yaratish</Text>
+              <Text style={styles.createBtnText}>{t('dashboard.createRequest')}</Text>
             </TouchableOpacity>
           )}
         </View>

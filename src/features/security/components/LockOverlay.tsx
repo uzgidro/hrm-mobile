@@ -5,12 +5,16 @@
 // beneath it. Any other status renders nothing (the null branch is defensive —
 // _layout only mounts this when it should be visible).
 import { View, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useLockStore } from '@/store/lockStore';
 import { useTheme } from '@/theme/ThemeProvider';
 import PinSetupScreen from '@/features/security/screens/PinSetupScreen';
 import UnlockScreen from '@/features/security/screens/UnlockScreen';
 
 export default function LockOverlay() {
+  // Subscribe to language changes so the chosen child screen (which holds the
+  // localized copy) repaints on a switch while this gate stays mounted.
+  useTranslation();
   const status = useLockStore((s) => s.status);
   const { colors } = useTheme();
 

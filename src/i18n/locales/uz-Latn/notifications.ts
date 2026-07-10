@@ -44,4 +44,12 @@ export default {
   cardFallback: 'Vazifa',
   // last-resort title for a completely unknown type
   generic: 'Bildirishnoma',
+
+  // ── Notifications SCREEN (NotificationsScreen) chrome ────────────────────────
+  // Added in the i18n feature wave. The title keys above are consumed by the
+  // notification service; these keys are the on-screen list UI. Kept in the same
+  // namespace on purpose (the screen renders these titles).
+  screenTitle: 'Bildirishnomalar',
+  markAllRead: "O'qildi",
+  empty: "Bildirishnomalar yo'q",
 } as const;

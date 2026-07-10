@@ -7,15 +7,18 @@ import {
 import Svg, { Circle } from 'react-native-svg';
 import dayjs from 'dayjs';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { AttendanceEvent } from '@/types';
 import { Icon } from '@/components/Icon';
+import { monthName, weekdayNameShort } from '@/i18n/dates';
 import { employeeDetailQuery, employeeAttendanceQuery } from '../api/queries';
 
-const MONTHS_UZ = ['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentyabr','Oktyabr','Noyabr','Dekabr'];
-const DAYS_SHORT = ['du', 'se', 'chor', 'pay', 'ju', 'sha', 'ya'];
+// Weekday header, Monday-first. dayjs indexes weekdays Sunday=0, so map the
+// Monday-first column order onto those indices and pull the localized short name.
+const WEEKDAY_INDICES = [1, 2, 3, 4, 5, 6, 0];
 
 interface DayStat { date: string; isWeekend: boolean; isToday: boolean; hasAttendance: boolean; isAbsent: boolean; }
 
@@ -46,6 +49,7 @@ const DonutChart = memo(function DonutChart({ attended, total, size = 160, c }: 
 });
 
 export default function EmployeeCalendarScreen() {
+  const { t } = useTranslation();
   const params = useLocalSearchParams<{ id: string; name?: string }>();
   const employeeId = Number(params.id);
   const { colors } = useTheme();
@@ -116,7 +120,7 @@ export default function EmployeeCalendarScreen() {
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle} numberOfLines={1}>{displayName}</Text>
-          <Text style={styles.headerSub}>Davomat</Text>
+          <Text style={styles.headerSub}>{t('employees.attendance')}</Text>
         </View>
         <View style={{ width: 40 }} />
       </View>
@@ -129,11 +133,11 @@ export default function EmployeeCalendarScreen() {
         <View style={styles.card}>
           <View style={styles.monthNav}>
             <TouchableOpacity style={styles.navBtn} onPress={() => setCurrentMonth(currentMonth.subtract(1, 'month'))}><Icon name="chevronLeft" size={20} color={colors.text} /></TouchableOpacity>
-            <Text style={styles.monthTitle}>{MONTHS_UZ[currentMonth.month()]} {currentMonth.year()}</Text>
+            <Text style={styles.monthTitle}>{monthName(currentMonth.month())} {currentMonth.year()}</Text>
             <TouchableOpacity style={styles.navBtn} onPress={() => setCurrentMonth(currentMonth.add(1, 'month'))}><Icon name="chevronRight" size={20} color={colors.text} /></TouchableOpacity>
           </View>
 
-          <View style={styles.weekRow}>{DAYS_SHORT.map((d) => <Text key={d} style={styles.weekDayLabel}>{d}</Text>)}</View>
+          <View style={styles.weekRow}>{WEEKDAY_INDICES.map((d) => <Text key={d} style={styles.weekDayLabel}>{weekdayNameShort(d)}</Text>)}</View>
 
           <View style={styles.calendarGrid}>
             {calendarDays.map((day, i) => {
@@ -156,28 +160,28 @@ export default function EmployeeCalendarScreen() {
           <View style={styles.entryExitRow}>
             <View style={styles.entryExitItem}>
               <Text style={styles.entryExitTime}>{selEntry ? dayjs(selEntry.happen_time).format('HH:mm') : '--:--'}</Text>
-              <Text style={styles.entryExitLabel}>kirish</Text>
+              <Text style={styles.entryExitLabel}>{t('employees.entry')}</Text>
             </View>
             <View style={styles.entryExitDivider} />
             <View style={styles.entryExitItem}>
               <Text style={styles.entryExitTime}>{selExit ? dayjs(selExit.happen_time).format('HH:mm') : '--:--'}</Text>
-              <Text style={styles.entryExitLabel}>chiqish</Text>
+              <Text style={styles.entryExitLabel}>{t('employees.exit')}</Text>
             </View>
           </View>
         </View>
 
         {employee?.working_hours_start && (
           <View style={styles.card}>
-            <View style={styles.cardTitleRow}><Icon name="chart" size={16} color={colors.textSecondary} /><Text style={styles.cardTitle}>Ish jadvali</Text></View>
+            <View style={styles.cardTitleRow}><Icon name="chart" size={16} color={colors.textSecondary} /><Text style={styles.cardTitle}>{t('employees.scheduleTitle')}</Text></View>
             <View style={styles.scheduleRow}>
               <View style={styles.scheduleItem}>
                 <Text style={styles.scheduleValue}>{employee.working_hours_start} - {employee.working_hours_end}</Text>
-                <Text style={styles.scheduleLabel}>ish kuni</Text>
+                <Text style={styles.scheduleLabel}>{t('employees.workDay')}</Text>
               </View>
               {employee.lunch_start_time && (
                 <View style={styles.scheduleItem}>
                   <Text style={styles.scheduleValue}>{employee.lunch_start_time} - {employee.lunch_end_time}</Text>
-                  <Text style={styles.scheduleLabel}>tanaffus</Text>
+                  <Text style={styles.scheduleLabel}>{t('employees.break')}</Text>
                 </View>
               )}
             </View>
@@ -185,22 +189,22 @@ export default function EmployeeCalendarScreen() {
         )}
 
         <View style={styles.card}>
-          <View style={styles.cardTitleRow}><Icon name="target" size={16} color={colors.textSecondary} /><Text style={styles.cardTitle}>Qaydnoma</Text></View>
+          <View style={styles.cardTitleRow}><Icon name="target" size={16} color={colors.textSecondary} /><Text style={styles.cardTitle}>{t('employees.logTitle')}</Text></View>
           {selectedEvents.length === 0 ? (
-            <Text style={styles.emptyText}>Ro'yxat bo'sh</Text>
+            <Text style={styles.emptyText}>{t('employees.logEmpty')}</Text>
           ) : (
             selectedEvents.map((ev) => (
               <View key={ev.id} style={styles.eventRow}>
                 <Text style={styles.eventTime}>{dayjs(ev.happen_time).format('HH:mm')}</Text>
                 <Icon name={ev.direction_type === 'entrance' ? 'chevronRight' : 'chevronLeft'} size={16} color={colors.textSecondary} />
-                <Text style={styles.eventDir}>{ev.direction_type === 'entrance' ? 'Kirish' : 'Chiqish'}</Text>
+                <Text style={styles.eventDir}>{ev.direction_type === 'entrance' ? t('employees.entryTitle') : t('employees.exitTitle')}</Text>
               </View>
             ))
           )}
         </View>
 
         <View style={styles.card}>
-          <View style={styles.cardTitleRow}><Icon name="briefcase" size={16} color={colors.textSecondary} /><Text style={styles.cardTitle}>Oylik statistika {MONTHS_UZ[currentMonth.month()]} {currentMonth.year()}</Text></View>
+          <View style={styles.cardTitleRow}><Icon name="briefcase" size={16} color={colors.textSecondary} /><Text style={styles.cardTitle}>{t('employees.monthlyStats')} {monthName(currentMonth.month())} {currentMonth.year()}</Text></View>
           <View style={styles.statsRow}>
             <View style={styles.donutWrapper}>
               <DonutChart attended={attendedDays} total={workDays} c={colors} />
@@ -210,17 +214,17 @@ export default function EmployeeCalendarScreen() {
               <View style={styles.legendItem}>
                 <View style={[styles.legendDot, { backgroundColor: colors.error }]} />
                 <Text style={styles.legendText}>{missedDays} ({workDays > 0 ? Math.round((missedDays / workDays) * 100) : 0}%)</Text>
-                <Text style={styles.legendLabel}>kelinmadi</Text>
+                <Text style={styles.legendLabel}>{t('employees.missed')}</Text>
               </View>
               <View style={styles.legendItem}>
                 <View style={[styles.legendDot, { backgroundColor: colors.textMuted }]} />
                 <Text style={styles.legendText}>{remainingWorkDays} ({workDays > 0 ? Math.round((remainingWorkDays / workDays) * 100) : 0}%)</Text>
-                <Text style={styles.legendLabel}>qoldi</Text>
+                <Text style={styles.legendLabel}>{t('employees.remaining')}</Text>
               </View>
             </View>
           </View>
-          <Text style={styles.hoursText}>{workDays * 8} soat</Text>
-          <Text style={styles.hoursLabel}>rejaga muvofiq</Text>
+          <Text style={styles.hoursText}>{t('employees.hours', { count: workDays * 8 })}</Text>
+          <Text style={styles.hoursLabel}>{t('employees.perPlan')}</Text>
         </View>
 
         <View style={{ height: 32 }} />
