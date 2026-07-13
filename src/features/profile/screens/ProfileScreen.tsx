@@ -1,6 +1,7 @@
+import { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Image, Switch, Platform,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, Image, Switch, Platform,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -13,6 +14,7 @@ import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import type { ThemeMode } from '@/theme/ThemeProvider';
 import { Icon, IconName } from '@/components/Icon';
+import { ConfirmSheet } from '@/components/ConfirmSheet';
 import { Flag } from '@/components/Flag';
 import { useLangStore } from '@/store/langStore';
 import { LANGUAGES, LANGUAGE_NATIVE_NAME, LANGUAGE_FLAG } from '@/i18n/locales';
@@ -40,6 +42,7 @@ export default function ProfileScreen() {
   const biometricsEnabled = useLockStore((s) => s.biometricsEnabled);
   const setBiometricsEnabled = useLockStore((s) => s.setBiometricsEnabled);
   const isNative = Platform.OS !== 'web';
+  const [logoutConfirm, setLogoutConfirm] = useState(false);
 
   const handleBiometricsToggle = async (next: boolean) => {
     if (next) {
@@ -51,19 +54,11 @@ export default function ProfileScreen() {
     }
   };
 
-  const handleLogout = () => {
-    Alert.alert(t('profile.logout'), t('profile.logoutConfirm'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('profile.logoutYes'),
-        style: 'destructive',
-        onPress: async () => {
-          // logout() flips isAuthenticated → the root Stack.Protected guard
-          // redirects to (auth) and clears the tabs history automatically.
-          await logout();
-        },
-      },
-    ]);
+  const confirmLogout = async () => {
+    setLogoutConfirm(false);
+    // logout() flips isAuthenticated → the root Stack.Protected guard
+    // redirects to (auth) and clears the tabs history automatically.
+    await logout();
   };
 
   return (
@@ -233,13 +228,25 @@ export default function ProfileScreen() {
         </View>
 
         {/* Logout */}
-        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.85}>
+        <TouchableOpacity style={styles.logoutBtn} onPress={() => setLogoutConfirm(true)} activeOpacity={0.85}>
           <Icon name="logout" size={18} color={colors.error} />
           <Text style={styles.logoutText}>{t('profile.logout')}</Text>
         </TouchableOpacity>
 
         <Text style={styles.version}>{t('profile.version', { version: Constants.expoConfig?.version ?? '1.0.0' })}</Text>
       </ScrollView>
+
+      <ConfirmSheet
+        visible={logoutConfirm}
+        title={t('profile.logout')}
+        message={t('profile.logoutConfirm')}
+        confirmLabel={t('profile.logoutYes')}
+        cancelLabel={t('common.cancel')}
+        icon="logout"
+        destructive
+        onConfirm={confirmLogout}
+        onCancel={() => setLogoutConfirm(false)}
+      />
     </SafeAreaView>
   );
 }

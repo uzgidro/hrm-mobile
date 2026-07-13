@@ -56,6 +56,7 @@ export type IconName =
   | 'board'
   | 'trash'
   | 'fingerprint'
+  | 'help'
   | 'backspace';
 
 type Props = {
@@ -433,6 +434,15 @@ function render(name: IconName, p: any) {
           <Path d="M4.5 12.5a7.5 7.5 0 0 1 15 0c0 2.9-.7 5.6-1.8 8" {...p} />
           <Path d="M8 12.5a4 4 0 0 1 8 0c0 2.8-.5 5.4-1.5 7.8" {...p} />
           <Path d="M12 12.5c0 2.6-.4 5.1-1.1 7.5" {...p} />
+        </>
+      );
+    case 'help':
+      // question mark inside a circle — neutral confirmation glyph
+      return (
+        <>
+          <Circle cx="12" cy="12" r="9" {...p} />
+          <Path d="M9.5 9.2a2.5 2.5 0 0 1 4.6 1.3c0 1.7-2.1 2-2.1 3.5" {...p} />
+          <Line x1="12" y1="17" x2="12" y2="17.01" {...p} />
         </>
       );
     case 'backspace':
