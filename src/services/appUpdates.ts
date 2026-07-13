@@ -1,7 +1,8 @@
 import * as Device from 'expo-device';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
-import { Alert, Platform } from 'react-native';
+import { Platform } from 'react-native';
 import { storage } from '../api/storage';
+import { confirm } from '@/lib/confirm';
 import i18n from '@/i18n';
 
 // Google Play in-app update check, run once at app launch. expo-in-app-updates
@@ -100,19 +101,19 @@ export async function checkAppUpdateOnLaunch(): Promise<void> {
     // Persist first so a crash/kill between prompt and press still counts as
     // "prompted" for the cooldown.
     await storage.setItem(UPDATE_PROMPT_TS_KEY, String(now));
-    Alert.alert(
-      i18n.t('update.available'),
-      i18n.t('update.message'),
-      [
-        { text: i18n.t('update.later'), style: 'cancel' },
-        {
-          text: i18n.t('update.install'),
-          onPress: () => {
-            void startUpdateSafely();
-          },
-        },
-      ]
-    );
+    // In-app confirm sheet (not an OS Alert); confirm() is imperative so it works
+    // from this non-React service. Install is a positive action → not destructive.
+    if (
+      await confirm({
+        title: i18n.t('update.available'),
+        message: i18n.t('update.message'),
+        confirmLabel: i18n.t('update.install'),
+        cancelLabel: i18n.t('update.later'),
+        icon: 'arrowDown',
+      })
+    ) {
+      void startUpdateSafely();
+    }
   } catch {
     // Startup path — swallow everything.
   }

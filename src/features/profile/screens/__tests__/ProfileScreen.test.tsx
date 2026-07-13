@@ -3,6 +3,7 @@ import Constants from 'expo-constants';
 import { renderWithProviders, fireEvent, act, waitFor } from '@/test/renderWithProviders';
 import { useLockStore } from '@/store/lockStore';
 import { useAuthStore } from '@/store/authStore';
+import { getConfirm, answerConfirm, __resetConfirm } from '@/lib/confirm';
 import i18n from '@/i18n';
 import ProfileScreen from '../ProfileScreen';
 
@@ -17,6 +18,7 @@ describe('ProfileScreen', () => {
   // test order.
   beforeEach(async () => {
     await i18n.changeLanguage('uz-Latn');
+    __resetConfirm();
   });
 
   it('renders the security rows (native) and the dynamic version', async () => {
@@ -35,46 +37,50 @@ describe('ProfileScreen', () => {
     expect(getByText(i18n.t('profile.version', { version }))).toBeTruthy();
   });
 
-  it('confirms logout through the in-app sheet, not an OS Alert', async () => {
+  it('requests a logout confirmation via the global confirm store and logs out on confirm', async () => {
     const logout = jest.fn().mockResolvedValue(undefined);
     useAuthStore.setState({ logout });
 
-    const { getByText, getByTestId, queryByTestId } = await renderWithProviders(<ProfileScreen />);
+    const { getByText } = await renderWithProviders(<ProfileScreen />);
 
-    // No confirmation visible until the logout row is tapped.
-    expect(queryByTestId('confirm-sheet-confirm')).toBeNull();
+    // No confirmation pending until the logout row is tapped.
+    expect(getConfirm()).toBeNull();
 
     await act(async () => {
       fireEvent.press(getByText(i18n.t('profile.logout')));
     });
 
-    // The in-app confirm sheet shows (title + confirm/cancel buttons).
-    await waitFor(() => expect(getByTestId('confirm-sheet-confirm')).toBeTruthy());
-    expect(getByText(i18n.t('profile.logoutConfirm'))).toBeTruthy();
-
-    await act(async () => {
-      fireEvent.press(getByTestId('confirm-sheet-confirm'));
+    // The screen asked the global confirm store (rendered by <ConfirmHost/> in
+    // the real app), not an OS Alert.
+    await waitFor(() => expect(getConfirm()).not.toBeNull());
+    expect(getConfirm()).toMatchObject({
+      title: i18n.t('profile.logout'),
+      destructive: true,
     });
 
-    expect(logout).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      answerConfirm(true);
+    });
+
+    await waitFor(() => expect(logout).toHaveBeenCalledTimes(1));
   });
 
-  it('does not log out when the sheet is cancelled', async () => {
+  it('does not log out when the confirmation is cancelled', async () => {
     const logout = jest.fn().mockResolvedValue(undefined);
     useAuthStore.setState({ logout });
 
-    const { getByText, getByTestId, queryByTestId } = await renderWithProviders(<ProfileScreen />);
+    const { getByText } = await renderWithProviders(<ProfileScreen />);
 
     await act(async () => {
       fireEvent.press(getByText(i18n.t('profile.logout')));
     });
-    await waitFor(() => expect(getByTestId('confirm-sheet-cancel')).toBeTruthy());
+    await waitFor(() => expect(getConfirm()).not.toBeNull());
 
     await act(async () => {
-      fireEvent.press(getByTestId('confirm-sheet-cancel'));
+      answerConfirm(false);
     });
 
     expect(logout).not.toHaveBeenCalled();
-    await waitFor(() => expect(queryByTestId('confirm-sheet-confirm')).toBeNull());
+    expect(getConfirm()).toBeNull();
   });
 });
