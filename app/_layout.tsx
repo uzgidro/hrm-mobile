@@ -17,6 +17,7 @@ import { useAppLock } from '../src/auth/useAppLock';
 import { checkAppUpdateOnLaunch } from '../src/services/appUpdates';
 import { RootErrorBoundary } from '../src/components/RootErrorBoundary';
 import { ToastHost } from '../src/components/ToastHost';
+import { ConfirmHost } from '../src/components/ConfirmHost';
 import LockOverlay from '../src/features/security/components/LockOverlay';
 
 const queryClient = createAppQueryClient();
@@ -114,6 +115,9 @@ function ThemedNavigation() {
         </Stack.Protected>
       </Stack>
       <ToastHost />
+      {/* Global confirm dialogs (logout, delete, reject, update) rendered once
+          here so imperative confirm() works from hooks and services too. */}
+      <ConfirmHost />
       {/* Above everything (incl. toasts): the PIN gate covers the whole app. */}
       {lockVisible && <LockOverlay />}
     </>

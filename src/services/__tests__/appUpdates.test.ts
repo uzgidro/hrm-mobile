@@ -1,18 +1,23 @@
 // Tests for the on-launch Google Play in-app update check.
 // The pure cooldown decision (shouldPromptForUpdate) is unit-tested directly;
 // checkAppUpdateOnLaunch is driven end-to-end with the native module, device,
-// execution environment and Alert mocked out.
+// execution environment and the confirm() store mocked out.
 
-import { Alert, Platform } from 'react-native';
+import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { checkForUpdate, startUpdate } from 'expo-in-app-updates';
 import { storage } from '../../api/storage';
+import { confirm } from '../../lib/confirm';
 import {
   UPDATE_PROMPT_COOLDOWN_MS,
   __resetAppUpdates,
   checkAppUpdateOnLaunch,
   shouldPromptForUpdate,
 } from '../appUpdates';
+
+// The update prompt now goes through the global confirm() store instead of an
+// OS Alert; mock it so we can assert the request and drive the user's answer.
+jest.mock('../../lib/confirm', () => ({ confirm: jest.fn() }));
 
 // The native module doesn't exist in the jest environment — replace it with
 // configurable fns. Implementations are (re-)set in beforeEach/tests so each
@@ -83,7 +88,7 @@ describe('shouldPromptForUpdate', () => {
 });
 
 describe('checkAppUpdateOnLaunch', () => {
-  let alertSpy: jest.SpyInstance;
+  const confirmMock = jest.mocked(confirm);
 
   beforeEach(async () => {
     // jest-expo runs as iOS by default, but the update check is Android-only.
@@ -95,7 +100,9 @@ describe('checkAppUpdateOnLaunch', () => {
     __resetAppUpdates();
     // The expo-secure-store in-memory Map persists across tests in this file.
     await storage.deleteItem(UPDATE_PROMPT_TS_KEY);
-    alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    confirmMock.mockReset();
+    // Default: user dismisses the prompt (returns false) unless a test overrides.
+    confirmMock.mockResolvedValue(false);
     mockCheckForUpdate.mockResolvedValue({ updateAvailable: true, storeVersion: '99' });
     mockStartUpdate.mockResolvedValue(true);
   });
@@ -108,14 +115,14 @@ describe('checkAppUpdateOnLaunch', () => {
     const before = Date.now();
     await checkAppUpdateOnLaunch();
 
-    expect(alertSpy).toHaveBeenCalledTimes(1);
-    expect(alertSpy).toHaveBeenCalledWith(
-      'Yangilanish mavjud',
-      "Ilovaning yangi versiyasi chiqdi. Yangilanishni hozir o'rnatishni tavsiya qilamiz.",
-      expect.arrayContaining([
-        expect.objectContaining({ text: 'Keyinroq', style: 'cancel' }),
-        expect.objectContaining({ text: 'Yangilash' }),
-      ])
+    expect(confirmMock).toHaveBeenCalledTimes(1);
+    expect(confirmMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Yangilanish mavjud',
+        message: "Ilovaning yangi versiyasi chiqdi. Yangilanishni hozir o'rnatishni tavsiya qilamiz.",
+        confirmLabel: 'Yangilash',
+        cancelLabel: 'Keyinroq',
+      })
     );
 
     const raw = await storage.getItem(UPDATE_PROMPT_TS_KEY);
@@ -124,11 +131,11 @@ describe('checkAppUpdateOnLaunch', () => {
     expect(ts).toBeGreaterThanOrEqual(before);
     expect(ts).toBeLessThanOrEqual(Date.now());
 
-    // The timestamp is deliberately persisted BEFORE the Alert, so a crash
+    // The timestamp is deliberately persisted BEFORE the prompt, so a crash
     // between the two still counts as "prompted" for the cooldown.
     const setItemOrder = jest.mocked(SecureStore.setItemAsync).mock.invocationCallOrder.at(-1)!;
-    const alertOrder = alertSpy.mock.invocationCallOrder[0];
-    expect(setItemOrder).toBeLessThan(alertOrder);
+    const confirmOrder = confirmMock.mock.invocationCallOrder[0];
+    expect(setItemOrder).toBeLessThan(confirmOrder);
   });
 
   it('runs at most once per app session', async () => {
@@ -136,7 +143,7 @@ describe('checkAppUpdateOnLaunch', () => {
     await checkAppUpdateOnLaunch();
 
     expect(mockCheckForUpdate).toHaveBeenCalledTimes(1);
-    expect(alertSpy).toHaveBeenCalledTimes(1);
+    expect(confirmMock).toHaveBeenCalledTimes(1);
   });
 
   it('does not prompt when the update cannot be started (flexible disallowed or in progress)', async () => {
@@ -155,7 +162,7 @@ describe('checkAppUpdateOnLaunch', () => {
     });
     await checkAppUpdateOnLaunch();
 
-    expect(alertSpy).not.toHaveBeenCalled();
+    expect(confirmMock).not.toHaveBeenCalled();
     expect(await storage.getItem(UPDATE_PROMPT_TS_KEY)).toBeNull();
   });
 
@@ -164,7 +171,7 @@ describe('checkAppUpdateOnLaunch', () => {
 
     await checkAppUpdateOnLaunch();
 
-    expect(alertSpy).not.toHaveBeenCalled();
+    expect(confirmMock).not.toHaveBeenCalled();
   });
 
   it('does nothing when no update is available', async () => {
@@ -172,7 +179,7 @@ describe('checkAppUpdateOnLaunch', () => {
 
     await checkAppUpdateOnLaunch();
 
-    expect(alertSpy).not.toHaveBeenCalled();
+    expect(confirmMock).not.toHaveBeenCalled();
     expect(await storage.getItem(UPDATE_PROMPT_TS_KEY)).toBeNull();
   });
 
@@ -182,18 +189,14 @@ describe('checkAppUpdateOnLaunch', () => {
     await checkAppUpdateOnLaunch();
 
     expect(mockCheckForUpdate).not.toHaveBeenCalled();
-    expect(alertSpy).not.toHaveBeenCalled();
+    expect(confirmMock).not.toHaveBeenCalled();
   });
 
-  it("starts a flexible update when 'Yangilash' is pressed", async () => {
+  it('starts a flexible update when the user confirms', async () => {
+    // User taps "Yangilash" → confirm() resolves true.
+    confirmMock.mockResolvedValue(true);
+
     await checkAppUpdateOnLaunch();
-
-    type AlertButton = { text?: string; onPress?: () => void };
-    const buttons = alertSpy.mock.calls[0][2] as AlertButton[];
-    const updateButton = buttons.find((b) => b.text === 'Yangilash');
-    expect(updateButton?.onPress).toBeDefined();
-
-    updateButton?.onPress?.();
     // startUpdateSafely awaits the module call; give the microtask queue a turn.
     await Promise.resolve();
 
@@ -201,10 +204,19 @@ describe('checkAppUpdateOnLaunch', () => {
     expect(mockStartUpdate).toHaveBeenCalledWith(false);
   });
 
+  it('does not start an update when the user dismisses the prompt', async () => {
+    confirmMock.mockResolvedValue(false);
+
+    await checkAppUpdateOnLaunch();
+    await Promise.resolve();
+
+    expect(mockStartUpdate).not.toHaveBeenCalled();
+  });
+
   it('swallows checkForUpdate failures without crashing or prompting', async () => {
     mockCheckForUpdate.mockRejectedValue(new Error('Play Services unavailable'));
 
     await expect(checkAppUpdateOnLaunch()).resolves.toBeUndefined();
-    expect(alertSpy).not.toHaveBeenCalled();
+    expect(confirmMock).not.toHaveBeenCalled();
   });
 });

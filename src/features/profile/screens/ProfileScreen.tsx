@@ -1,6 +1,6 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Image, Switch, Platform,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, Image, Switch, Platform,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -13,6 +13,7 @@ import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import type { ThemeMode } from '@/theme/ThemeProvider';
 import { Icon, IconName } from '@/components/Icon';
+import { confirm } from '@/lib/confirm';
 import { Flag } from '@/components/Flag';
 import { useLangStore } from '@/store/langStore';
 import { LANGUAGES, LANGUAGE_NATIVE_NAME, LANGUAGE_FLAG } from '@/i18n/locales';
@@ -51,19 +52,19 @@ export default function ProfileScreen() {
     }
   };
 
-  const handleLogout = () => {
-    Alert.alert(t('profile.logout'), t('profile.logoutConfirm'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('profile.logoutYes'),
-        style: 'destructive',
-        onPress: async () => {
-          // logout() flips isAuthenticated → the root Stack.Protected guard
-          // redirects to (auth) and clears the tabs history automatically.
-          await logout();
-        },
-      },
-    ]);
+  const handleLogout = async () => {
+    const ok = await confirm({
+      title: t('profile.logout'),
+      message: t('profile.logoutConfirm'),
+      confirmLabel: t('profile.logoutYes'),
+      cancelLabel: t('common.cancel'),
+      icon: 'logout',
+      destructive: true,
+    });
+    if (!ok) return;
+    // logout() flips isAuthenticated → the root Stack.Protected guard
+    // redirects to (auth) and clears the tabs history automatically.
+    await logout();
   };
 
   return (

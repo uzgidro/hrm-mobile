@@ -24,6 +24,7 @@ import {
 } from '../auth/pin';
 import { MAX_ATTEMPTS, attemptsRemaining } from '../auth/lockPolicy';
 import { isBiometricAvailable, authenticateBiometric } from '../auth/biometrics';
+import { dismissAllConfirms } from '../lib/confirm';
 
 export type LockStatus = 'unknown' | 'setup-required' | 'locked' | 'unlocked';
 
@@ -157,6 +158,12 @@ export const useLockStore = create<LockState>((set, get) => {
     lock: () => {
       if (Platform.OS === 'web') return;
       if (get().status !== 'unlocked') return;
+      // A ConfirmSheet is a native Modal that renders in its own window ABOVE
+      // the LockOverlay (a plain View) — so an open confirm would float over the
+      // PIN gate and stay tappable. Dismiss any pending confirm (resolving it to
+      // false/cancelled) before locking so a destructive action can't be
+      // confirmed over the lock.
+      dismissAllConfirms();
       set({ status: 'locked' });
     },
 

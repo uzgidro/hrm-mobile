@@ -78,4 +78,55 @@ describe('PinSetupScreen', () => {
     expect(getByText(i18n.t('security.setupTitle'))).toBeTruthy();
     expect(setupPin).not.toHaveBeenCalled();
   });
+
+  it('fires the native biometric prompt on confirm and enables on success', async () => {
+    jest.spyOn(biometrics, 'isBiometricAvailable').mockResolvedValue(true);
+    const authSpy = jest.spyOn(biometrics, 'authenticateBiometric').mockResolvedValue(true);
+    const setupPin = jest.fn().mockResolvedValue(undefined);
+    const setBiometricsEnabled = jest.fn().mockResolvedValue(undefined);
+    useLockStore.setState({ setupPin, setBiometricsEnabled });
+
+    const { getByTestId, getByText } = await renderWithProviders(<PinSetupScreen />);
+
+    await enterPin(getByTestId, '1234');
+    await waitFor(() => expect(getByText(i18n.t('security.setupConfirmTitle'))).toBeTruthy());
+    await enterPin(getByTestId, '1234');
+
+    // The native biometric prompt is invoked (no in-app question), and a
+    // successful scan enables biometric unlock.
+    await waitFor(() => expect(authSpy).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(setBiometricsEnabled).toHaveBeenCalledWith(true));
+  });
+
+  it('does not fire the biometric prompt when biometrics are unavailable', async () => {
+    jest.spyOn(biometrics, 'isBiometricAvailable').mockResolvedValue(false);
+    const authSpy = jest.spyOn(biometrics, 'authenticateBiometric').mockResolvedValue(false);
+    const setupPin = jest.fn().mockResolvedValue(undefined);
+    useLockStore.setState({ setupPin });
+
+    const { getByTestId, getByText } = await renderWithProviders(<PinSetupScreen />);
+
+    await enterPin(getByTestId, '1234');
+    await waitFor(() => expect(getByText(i18n.t('security.setupConfirmTitle'))).toBeTruthy());
+    await enterPin(getByTestId, '1234');
+
+    await waitFor(() => expect(setupPin).toHaveBeenCalledWith('1234'));
+    expect(authSpy).not.toHaveBeenCalled();
+  });
+
+  it('does not enable biometrics when the native prompt is cancelled', async () => {
+    jest.spyOn(biometrics, 'isBiometricAvailable').mockResolvedValue(true);
+    const authSpy = jest.spyOn(biometrics, 'authenticateBiometric').mockResolvedValue(false);
+    const setBiometricsEnabled = jest.fn().mockResolvedValue(undefined);
+    useLockStore.setState({ setBiometricsEnabled });
+
+    const { getByTestId, getByText } = await renderWithProviders(<PinSetupScreen />);
+
+    await enterPin(getByTestId, '1234');
+    await waitFor(() => expect(getByText(i18n.t('security.setupConfirmTitle'))).toBeTruthy());
+    await enterPin(getByTestId, '1234');
+
+    await waitFor(() => expect(authSpy).toHaveBeenCalledTimes(1));
+    expect(setBiometricsEnabled).not.toHaveBeenCalled();
+  });
 });

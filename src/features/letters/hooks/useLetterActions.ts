@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { Alert } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
+import { confirm } from '@/lib/confirm';
 import { signLetter, rejectLetter } from '../api/mutations';
 import { letterKeys } from '../api/queries';
 
@@ -16,8 +17,9 @@ import { letterKeys } from '../api/queries';
 // the open detail updates immediately — matching the old
 // invalidate(['letter-detail',id]) + invalidate(['letters']) + refetch().
 //
-// `reject` shows the destructive confirmation Alert before firing, exactly like
-// the old onReject. Alert copy is localized via t().
+// `reject` awaits the global confirm() sheet before firing (destructive) —
+// replacing the old OS confirmation Alert. The done/error notices stay as
+// Alert. Copy is localized via t().
 export function useLetterActions(letterId: number, refetch: () => void) {
   const { t } = useTranslation();
   const qc = useQueryClient();
@@ -44,11 +46,17 @@ export function useLetterActions(letterId: number, refetch: () => void) {
 
   const sign = useCallback(() => run(() => signLetter(letterId), t('letters.signed')), [run, letterId, t]);
 
-  const reject = useCallback(() => {
-    Alert.alert(t('letters.rejectConfirmTitle'), t('letters.rejectConfirmMessage'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      { text: t('letters.reject'), style: 'destructive', onPress: () => run(() => rejectLetter(letterId), t('letters.rejected')) },
-    ]);
+  const reject = useCallback(async () => {
+    const ok = await confirm({
+      title: t('letters.rejectConfirmTitle'),
+      message: t('letters.rejectConfirmMessage'),
+      confirmLabel: t('letters.reject'),
+      cancelLabel: t('common.cancel'),
+      icon: 'close',
+      destructive: true,
+    });
+    if (!ok) return;
+    run(() => rejectLetter(letterId), t('letters.rejected'));
   }, [run, letterId, t]);
 
   return { busy, sign, reject };

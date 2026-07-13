@@ -13,6 +13,7 @@ import { ScreenHeader, HeaderAction } from '@/components/ScreenHeader';
 import { Icon, IconName } from '@/components/Icon';
 import { LoadingView } from '@/components/StateViews';
 import { getApiErrorMessage } from '@/api/errors';
+import { confirm } from '@/lib/confirm';
 import { visitorDetailQuery } from '../api/queries';
 import { useDeleteVisitor } from '../api/mutations';
 
@@ -44,19 +45,20 @@ export default function MehmonDetailScreen() {
 
   const active = v?.is_active !== false;
 
-  const onDelete = () => {
-    Alert.alert(t('visitors.deleteTitle'), t('visitors.deleteConfirm'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('visitors.deleteConfirmAction'), style: 'destructive',
-        onPress: () => {
-          del.mutate(visitorId, {
-            onSuccess: () => router.back(),
-            onError: (e) => Alert.alert(t('visitors.errorTitle'), getApiErrorMessage(e, t('visitors.deleteError'))),
-          });
-        },
-      },
-    ]);
+  const onDelete = async () => {
+    const ok = await confirm({
+      title: t('visitors.deleteTitle'),
+      message: t('visitors.deleteConfirm'),
+      confirmLabel: t('visitors.deleteConfirmAction'),
+      cancelLabel: t('common.cancel'),
+      icon: 'trash',
+      destructive: true,
+    });
+    if (!ok) return;
+    del.mutate(visitorId, {
+      onSuccess: () => router.back(),
+      onError: (e) => Alert.alert(t('visitors.errorTitle'), getApiErrorMessage(e, t('visitors.deleteError'))),
+    });
   };
 
   return (

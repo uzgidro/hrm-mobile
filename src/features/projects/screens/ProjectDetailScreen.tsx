@@ -16,6 +16,7 @@ import { Icon } from '@/components/Icon';
 import { LoadingView, EmptyState } from '@/components/StateViews';
 import { isMasterAdmin } from '@/utils/roles';
 import { getApiErrorMessage } from '@/api/errors';
+import { confirm } from '@/lib/confirm';
 import type { WorkspaceCard } from '@/types';
 import { workspaceDetailQuery, columnCardsQuery } from '../api/queries';
 import {
@@ -83,19 +84,20 @@ export default function LoyihaDetailScreen() {
     }
   };
 
-  const onDelete = () => {
-    Alert.alert(t('projects.deleteTitle'), t('projects.deleteConfirm'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('projects.deleteYes'), style: 'destructive',
-        onPress: () => {
-          deleteWs.mutate(workspaceId, {
-            onSuccess: () => router.back(),
-            onError: (e) => Alert.alert(t('projects.errorTitle'), getApiErrorMessage(e, t('projects.deleteError'))),
-          });
-        },
-      },
-    ]);
+  const onDelete = async () => {
+    const ok = await confirm({
+      title: t('projects.deleteTitle'),
+      message: t('projects.deleteConfirm'),
+      confirmLabel: t('projects.deleteYes'),
+      cancelLabel: t('common.cancel'),
+      icon: 'trash',
+      destructive: true,
+    });
+    if (!ok) return;
+    deleteWs.mutate(workspaceId, {
+      onSuccess: () => router.back(),
+      onError: (e) => Alert.alert(t('projects.errorTitle'), getApiErrorMessage(e, t('projects.deleteError'))),
+    });
   };
 
   return (
