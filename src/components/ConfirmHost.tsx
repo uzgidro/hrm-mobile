@@ -10,10 +10,11 @@ export function ConfirmHost() {
   const active = useSyncExternalStore(subscribeConfirm, getConfirm, getConfirm);
 
   return (
+    // One stable ConfirmSheet instance: `visible` drives its enter (slide-up +
+    // fade) and its reset on close. A prior version keyed it by request id, which
+    // remounted the sheet on every open/close and skipped the entrance animation
+    // — the stable mount lets `visible` toggling animate as designed.
     <ConfirmSheet
-      // Keep the sheet mounted; `visible` toggles so the exit/enter animation
-      // runs. The key resets internal animation state per distinct request.
-      key={active?.id ?? 'none'}
       visible={active !== null}
       title={active?.title ?? ''}
       message={active?.message}
