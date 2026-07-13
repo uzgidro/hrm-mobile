@@ -2,6 +2,7 @@ import {
   confirm,
   getConfirm,
   answerConfirm,
+  dismissAllConfirms,
   subscribeConfirm,
   __resetConfirm,
 } from '../confirm';
@@ -69,6 +70,22 @@ describe('confirm store', () => {
 
   it('answerConfirm is a no-op when there is no active request', () => {
     expect(() => answerConfirm(true)).not.toThrow();
+    expect(getConfirm()).toBeNull();
+  });
+
+  it('dismissAllConfirms resolves the active and every queued request to false', async () => {
+    const p1 = confirm({ ...OPTS, title: 'First' });
+    const p2 = confirm({ ...OPTS, title: 'Second' });
+
+    dismissAllConfirms();
+
+    await expect(p1).resolves.toBe(false);
+    await expect(p2).resolves.toBe(false);
+    expect(getConfirm()).toBeNull();
+  });
+
+  it('dismissAllConfirms is a no-op when idle', () => {
+    expect(() => dismissAllConfirms()).not.toThrow();
     expect(getConfirm()).toBeNull();
   });
 });

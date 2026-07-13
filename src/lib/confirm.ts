@@ -70,10 +70,22 @@ export function answerConfirm(answer: boolean): void {
   current.resolve(answer);
 }
 
-// Test-only: clear all state (and reject nothing — pending promises are dropped).
-export function __resetConfirm(): void {
+// Force-dismiss the active request AND everything queued, resolving each to
+// false. Used when the app-lock engages (a confirm must not float over the PIN
+// gate) or on teardown — so every awaiting caller settles (as "cancelled")
+// rather than hanging. No-op when idle.
+export function dismissAllConfirms(): void {
+  if (!active && queue.length === 0) return;
+  const pending = active ? [active, ...queue] : [...queue];
   active = null;
   queue.length = 0;
-  nextId = 1;
   emit();
+  for (const req of pending) req.resolve(false);
+}
+
+// Test-only: clear all state. Resolves any pending promises to false first so a
+// test that awaited confirm() never hangs.
+export function __resetConfirm(): void {
+  dismissAllConfirms();
+  nextId = 1;
 }
