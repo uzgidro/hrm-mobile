@@ -24,7 +24,14 @@ export interface ConfirmOptions {
 
 interface ConfirmRequest extends ConfirmOptions {
   id: number;
-  resolve: (answer: boolean) => void;
+  // Usually one resolver; a duplicate confirm() (same title+message fired again
+  // before the first is answered — e.g. a double-tap) attaches its resolver here
+  // instead of stacking a second dialog, so all awaiters settle on one answer.
+  resolvers: ((answer: boolean) => void)[];
+}
+
+function isSameDialog(a: ConfirmRequest, o: ConfirmOptions): boolean {
+  return a.title === o.title && a.message === o.message;
 }
 
 let nextId = 1;
@@ -48,9 +55,20 @@ export function getConfirm(): ConfirmRequest | null {
 }
 
 // Show a confirmation and resolve to the user's choice. Never rejects.
+// A confirm() identical (same title+message) to the active or a queued request
+// is de-duplicated: its promise rides along with the existing one rather than
+// opening a second sheet. This collapses a double-tap (the button stays enabled
+// during the await-confirm window) into a single dialog and a single answer.
 export function confirm(opts: ConfirmOptions): Promise<boolean> {
   return new Promise<boolean>((resolve) => {
-    const req: ConfirmRequest = { ...opts, id: nextId++, resolve };
+    const existing =
+      (active && isSameDialog(active, opts) && active) ||
+      queue.find((q) => isSameDialog(q, opts));
+    if (existing) {
+      existing.resolvers.push(resolve);
+      return;
+    }
+    const req: ConfirmRequest = { ...opts, id: nextId++, resolvers: [resolve] };
     if (active) {
       queue.push(req);
     } else {
@@ -67,7 +85,7 @@ export function answerConfirm(answer: boolean): void {
   if (!current) return;
   active = queue.shift() ?? null;
   emit();
-  current.resolve(answer);
+  for (const resolve of current.resolvers) resolve(answer);
 }
 
 // Force-dismiss the active request AND everything queued, resolving each to
@@ -80,7 +98,7 @@ export function dismissAllConfirms(): void {
   active = null;
   queue.length = 0;
   emit();
-  for (const req of pending) req.resolve(false);
+  for (const req of pending) for (const resolve of req.resolvers) resolve(false);
 }
 
 // Test-only: clear all state. Resolves any pending promises to false first so a

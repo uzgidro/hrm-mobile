@@ -88,4 +88,28 @@ describe('confirm store', () => {
     expect(() => dismissAllConfirms()).not.toThrow();
     expect(getConfirm()).toBeNull();
   });
+
+  it('de-duplicates an identical confirm (double-tap) into one dialog and one answer', async () => {
+    const p1 = confirm(OPTS);
+    const p2 = confirm(OPTS); // same title+message → rides along, no second dialog
+
+    // Only one dialog is active; nothing queued.
+    expect(getConfirm()?.title).toBe('Delete?');
+    answerConfirm(true);
+
+    // Both awaiters get the single answer.
+    await expect(p1).resolves.toBe(true);
+    await expect(p2).resolves.toBe(true);
+    // No leftover queued duplicate.
+    expect(getConfirm()).toBeNull();
+  });
+
+  it('does not de-duplicate confirms with different text', () => {
+    confirm({ ...OPTS, title: 'A' });
+    confirm({ ...OPTS, title: 'B' });
+    // Distinct dialogs: first active, second queued.
+    expect(getConfirm()?.title).toBe('A');
+    answerConfirm(true);
+    expect(getConfirm()?.title).toBe('B');
+  });
 });
