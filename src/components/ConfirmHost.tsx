@@ -22,8 +22,10 @@ export function ConfirmHost() {
       cancelLabel={active?.cancelLabel ?? ''}
       icon={active?.icon}
       destructive={active?.destructive}
-      onConfirm={() => answerConfirm(true)}
-      onCancel={() => answerConfirm(false)}
+      // Pass the request id so a second handler firing in the same tick (button
+      // + backdrop + back button) can't answer the next promoted request.
+      onConfirm={() => answerConfirm(true, active?.id)}
+      onCancel={() => answerConfirm(false, active?.id)}
     />
   );
 }

@@ -80,9 +80,16 @@ export function confirm(opts: ConfirmOptions): Promise<boolean> {
 
 // Answer the ACTIVE request (true = confirm, false = cancel/dismiss), resolve
 // its promise, then promote the next queued request (if any). No-op when idle.
-export function answerConfirm(answer: boolean): void {
+//
+// `requestId` guards against re-entrancy: the sheet wires the same answer to a
+// button, the backdrop, and the Android back button, so two can fire in one tick
+// — without the guard the second call would answer the NEXT promoted request
+// with the wrong answer. Passing the id the handler was rendered for makes a
+// stale second call a no-op.
+export function answerConfirm(answer: boolean, requestId?: number): void {
   const current = active;
   if (!current) return;
+  if (requestId !== undefined && requestId !== current.id) return;
   active = queue.shift() ?? null;
   emit();
   for (const resolve of current.resolvers) resolve(answer);

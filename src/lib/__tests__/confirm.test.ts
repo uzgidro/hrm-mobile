@@ -112,4 +112,23 @@ describe('confirm store', () => {
     answerConfirm(true);
     expect(getConfirm()?.title).toBe('B');
   });
+
+  it('ignores an answer whose requestId no longer matches the active request', async () => {
+    const p1 = confirm({ ...OPTS, title: 'A' });
+    const p2 = confirm({ ...OPTS, title: 'B' });
+    const firstId = getConfirm()!.id;
+
+    // First tick: answer A (correct id). This promotes B into active.
+    answerConfirm(true, firstId);
+    await expect(p1).resolves.toBe(true);
+
+    // A stale second handler for A fires in the same interaction: it must NOT
+    // answer B (now active) with A's answer.
+    answerConfirm(false, firstId);
+    expect(getConfirm()?.title).toBe('B'); // B still waiting
+
+    // B is answered only by its own handler.
+    answerConfirm(false, getConfirm()!.id);
+    await expect(p2).resolves.toBe(false);
+  });
 });
