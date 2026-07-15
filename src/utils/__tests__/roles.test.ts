@@ -7,6 +7,7 @@ import {
   isEmployee,
   isEmployeeLike,
   isAccounting,
+  isDashboardViewer,
   isHR,
   isSingleRoleHR,
   isDeputy,
@@ -61,6 +62,7 @@ const kanselariyaUser = multiOrgUser('kanselariya');
 const ministrUser = multiOrgUser('ministr');
 const deputyUser = multiOrgUser('deputy');
 const accountingUser = multiOrgUser('accounting');
+const dashboardUser = multiOrgUser('dashboard');
 const secretariatUser: User = {
   id: 9,
   type: 'employee',
@@ -259,6 +261,28 @@ describe('isAccounting', () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// isDashboardViewer (Kuzatuvchi)
+// ─────────────────────────────────────────────────────────────────────────────
+describe('isDashboardViewer', () => {
+  it('true when the (first) multi-org role is dashboard', () => {
+    expect(isDashboardViewer(dashboardUser)).toBe(true);
+    expect(isDashboardViewer(multiOrgUser(['dashboard']))).toBe(true);
+  });
+
+  it('false when dashboard is not first (getMultiOrgRole returns first only)', () => {
+    expect(isDashboardViewer(multiOrgUser(['hr', 'dashboard']))).toBe(false);
+  });
+
+  it('false for non-dashboard / regular / accounting / master-admin / null', () => {
+    expect(isDashboardViewer(regularUser)).toBe(false);
+    expect(isDashboardViewer(accountingUser)).toBe(false);
+    expect(isDashboardViewer(masterAdminUser)).toBe(false);
+    expect(isDashboardViewer(null)).toBe(false);
+    expect(isDashboardViewer(undefined)).toBe(false);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // isEmployeeLike — regular OR accounting (mirrors web roleHelpers.js)
 // ─────────────────────────────────────────────────────────────────────────────
 describe('isEmployeeLike', () => {
@@ -269,6 +293,10 @@ describe('isEmployeeLike', () => {
 
   it('true for an accounting multi-org employee', () => {
     expect(isEmployeeLike(accountingUser)).toBe(true);
+  });
+
+  it('true for a dashboard (Kuzatuvchi) multi-org employee', () => {
+    expect(isEmployeeLike(dashboardUser)).toBe(true);
   });
 
   it('false for other multi-org roles and master-admin', () => {
@@ -542,6 +570,16 @@ describe('canAccessPage', () => {
       // Buxgalter = employee-like: sees the full regular-employee surface,
       // NOT the employees directory. Same row as `regular` (web parity).
       user: accountingUser,
+      row: {
+        home: true, orders: true, letters: true, guests: true, projects: true,
+        employees: false, attendance: true, requests: true,
+        salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true,
+      },
+    },
+    dashboard: {
+      // Kuzatuvchi (dashboard) = employee-like: same regular-employee surface,
+      // NOT the employees directory. Same row as `regular` (web parity).
+      user: dashboardUser,
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
         employees: false, attendance: true, requests: true,

@@ -68,17 +68,29 @@ export function isAccounting(user?: User | null): boolean {
 }
 
 /**
- * Accounting (buxgalter) gets the WHOLE regular-employee experience — the
- * employee menu, personal pages, employee-scoped rights — plus an extra
- * Davomat page. When gating a personal page or an employee-scope right, use
- * this instead of `isEmployee`: otherwise the multi-org flag would strip an
- * accountant of employee features. Mirrors the web's roleHelpers.js
- * `isEmployeeLike` (added web-side in e83f0bb). Branch-level accounting
- * (accounting_branch_ids / canActAsAccounting) is intentionally NOT mirrored
- * yet — those fields and the accounting letters tab don't exist on mobile.
+ * true for "Kuzatuvchi" (dashboard) multi-org employees. On the web they are a
+ * regular employee whose HOME page is an HR-style attendance dashboard (other
+ * people's keldi-ketdi); no extra pages/export. That home dashboard is a web-
+ * only surface not yet built on mobile — we mirror only the ROLE so page/tab
+ * visibility (canAccessPage) treats them as employee-like. Mirrors the web's
+ * roleHelpers.js isDashboardViewer (added web-side in b86dc9d).
+ */
+export function isDashboardViewer(user?: User | null): boolean {
+  return getMultiOrgRole(user) === 'dashboard';
+}
+
+/**
+ * Accounting (buxgalter) AND Kuzatuvchi (dashboard) get the WHOLE regular-
+ * employee experience — the employee menu, personal pages, employee-scoped
+ * rights. When gating a personal page or an employee-scope right, use this
+ * instead of `isEmployee`: otherwise the multi-org flag would strip them of
+ * employee features. Mirrors the web's roleHelpers.js `isEmployeeLike`
+ * (accounting e83f0bb, dashboard b86dc9d). Branch-level accounting and the
+ * web-only home surfaces (accountant's Davomat list, Kuzatuvchi's HR dashboard)
+ * are intentionally NOT mirrored yet — those don't exist on mobile.
  */
 export function isEmployeeLike(user?: User | null): boolean {
-  return isEmployee(user) || isAccounting(user);
+  return isEmployee(user) || isAccounting(user) || isDashboardViewer(user);
 }
 
 export function isMinister(user?: User | null): boolean {
