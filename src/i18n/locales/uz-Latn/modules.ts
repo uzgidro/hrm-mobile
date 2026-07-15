@@ -28,6 +28,7 @@ export default {
     employees: 'Xodimlar',
     guests: 'Mehmonlar',
     documents: 'Hujjatlar',
+    kpi: 'KPI',
     birthdays: "Tug'ilgan kun",
     news: 'Yangiliklar',
     notifications: 'Bildirishnoma',
