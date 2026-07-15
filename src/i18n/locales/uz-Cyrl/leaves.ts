@@ -51,6 +51,9 @@ export default {
 
   approve: 'Тасдиқлаш',
   reject: 'Рад этиш',
+  delete: 'Ўчириш',
+  deleteConfirmTitle: 'Сўровни ўчириш',
+  deleteConfirmMessage: 'Ушбу сўровни ўчирмоқчимисиз? Бу амални бекор қилиб бўлмайди.',
   actionNeeded: 'Тасдиқлаш керак',
   rejectReasonTitle: 'Рад этиш сабаби',
   rejectReasonPlaceholder: 'Сабабни ёзинг...',
@@ -72,4 +75,6 @@ export default {
 
   approveError: 'Тасдиқлашда хатолик юз берди',
   rejectError: 'Рад этишда хатолик юз берди',
+  deletedSuccess: 'Сўров ўчирилди',
+  deleteError: 'Ўчиришда хатолик юз берди',
 } as const;

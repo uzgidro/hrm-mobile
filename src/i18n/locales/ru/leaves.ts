@@ -54,6 +54,9 @@ export default {
 
   approve: 'Утвердить',
   reject: 'Отклонить',
+  delete: 'Удалить',
+  deleteConfirmTitle: 'Удалить заявку',
+  deleteConfirmMessage: 'Удалить эту заявку? Это действие нельзя отменить.',
   actionNeeded: 'Требует утверждения',
   rejectReasonTitle: 'Причина отклонения',
   rejectReasonPlaceholder: 'Укажите причину...',
@@ -75,4 +78,6 @@ export default {
 
   approveError: 'Ошибка при утверждении',
   rejectError: 'Ошибка при отклонении',
+  deletedSuccess: 'Заявка удалена',
+  deleteError: 'Ошибка при удалении',
 } as const;

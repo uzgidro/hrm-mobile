@@ -68,9 +68,12 @@ export default {
   // ── Actions ─────────────────────────────────────────────────────────────────
   approve: 'Tasdiqlash',
   reject: 'Rad etish',
+  delete: "O'chirish",
   actionNeeded: 'Tasdiqlash kerak',
   rejectReasonTitle: 'Rad etish sababi',
   rejectReasonPlaceholder: 'Sababni yozing...',
+  deleteConfirmTitle: "So'rovni o'chirish",
+  deleteConfirmMessage: "Ushbu so'rovni o'chirmoqchimisiz? Bu amalni bekor qilib bo'lmaydi.",
 
   // ── Statuses ────────────────────────────────────────────────────────────────
   statusApproved: 'Tasdiqlangan',
@@ -89,8 +92,10 @@ export default {
   createdSuccess: "So'rov yuborildi",
   approvedSuccess: "So'rov tasdiqlandi",
   rejectedSuccess: "So'rov rad etildi",
+  deletedSuccess: "So'rov o'chirildi",
 
   // ── Error fallbacks ─────────────────────────────────────────────────────────
   approveError: 'Tasdiqlashda xatolik yuz berdi',
   rejectError: 'Rad etishda xatolik yuz berdi',
+  deleteError: "O'chirishda xatolik yuz berdi",
 } as const;
