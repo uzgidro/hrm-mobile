@@ -22,6 +22,7 @@ export default {
     employees: 'Сотрудники',
     guests: 'Гости',
     documents: 'Документы',
+    kpi: 'KPI',
     birthdays: 'Дни рождения',
     news: 'Новости',
     notifications: 'Уведомления',

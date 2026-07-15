@@ -11,6 +11,7 @@ import news from './news';
 import dashboard from './dashboard';
 import visitors from './visitors';
 import documents from './documents';
+import kpi from './kpi';
 import projects from './projects';
 import profile from './profile';
 import employees from './employees';
@@ -34,6 +35,7 @@ export default {
   dashboard,
   visitors,
   documents,
+  kpi,
   projects,
   profile,
   employees,

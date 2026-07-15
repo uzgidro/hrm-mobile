@@ -331,3 +331,77 @@ export interface DocumentFolder {
   created_at?: string;
   updated_at?: string;
 }
+
+// ── KPI (Verifix-style scorecard, kpi/*) ─────────────────────────────────────
+// Codes below (direction M|L, statuses, fact_source) are backend contract
+// identifiers — never translated, only their display labels localize.
+
+// KPI definition. direction 'M' = more-is-better, 'L' = penalty (subtracted).
+export interface KpiIndicator {
+  id: number;
+  name?: string | null;
+  description?: string | null;
+  direction?: 'M' | 'L' | null;
+  measure?: string | null;
+  weight?: number | null;
+  has_tasks?: boolean | null;
+  max_percent?: number | null;
+  fact_source?: 'manual' | 'task' | 'gather' | 'formula' | null;
+  group_name?: string | null;
+  is_active?: boolean | null;
+}
+
+// Employee work item under a has_tasks entry. `score` is set only by the
+// supervisor on confirm — the owner submits names only.
+export interface KpiTask {
+  id: number;
+  entry_id?: number | null;
+  name?: string | null;
+  score?: number | null;
+  status?: 'draft' | 'submitted' | 'confirmed' | 'rejected' | string | null;
+  review_note?: string | null;
+  reviewed_by_id?: number | null;
+}
+
+// One employee × indicator × period plan/fact row. Status carries BOTH legacy
+// ('draft'/'locked') and new ('N'/'I'/'D') values — treat locked ≡ D, draft ≡ N.
+export interface KpiEntry {
+  id: number;
+  indicator_id?: number | null;
+  employee_id?: number | null;
+  period_start?: string | null;
+  period_end?: string | null;
+  plan_value?: number | null;
+  fact_value?: number | null;
+  result_coef?: number | null;
+  result_percent?: number | null;
+  status?: string | null;
+  note?: string | null;
+  indicator?: KpiIndicator | null;
+  employee?: Employee | null;
+  tasks?: KpiTask[] | null;
+}
+
+export interface KpiScorecardProfile {
+  id?: number | null;
+  legal_name?: string | null;
+  photo_path?: string | null;
+  job_position_name?: string | null;
+  department_name?: string | null;
+  supervisor_name?: string | null;
+  work_schedule?: string | null;
+  gender?: string | null;
+  period_begin?: string | null;
+  period_end?: string | null;
+}
+
+// GET kpi/my-scorecard envelope. `result_percent` is the backend-computed
+// gauge value (Σ M-facts − Σ L-facts, clamped ≥0) — do not recompute.
+export interface KpiScorecard {
+  employee_id?: number | null;
+  result_percent?: number | null;
+  profile?: KpiScorecardProfile | null;
+  period?: string | null; // 'YYYY-MM'
+  available_periods?: string[] | null;
+  entries?: KpiEntry[] | null;
+}
