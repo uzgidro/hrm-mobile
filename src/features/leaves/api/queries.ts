@@ -1,6 +1,7 @@
 import { queryOptions } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
 import { WORK_LEAVES, WORK_LEAVE_DETAIL } from '@/api/urls';
+import { fetchAllEmployees, employeesQueryKey } from '@/utils/employees';
 import type { WorkLeave } from '@/types';
 
 // Hierarchical query keys — `all` is a strict prefix of every list and detail
@@ -61,5 +62,19 @@ export function leaveDetailQuery(id: number) {
     // Sign/reject changes leave status externally — always revalidate on open so
     // the approval buttons don't go stale (mirrors visitorDetailQuery).
     refetchOnMount: 'always',
+  });
+}
+
+// Candidate supervisors to pick when the employee has no supervisor pre-assigned
+// (web parity: RequestPermissionDrawer loads employees only then). Reuses the
+// SHARED roster helper + key so the cache is shared with the employees/team
+// screens — do NOT fork this into a leaves-specific key. `enabled` lets the
+// screen load it only when a pick is actually needed.
+export function leaveSupervisorsQuery(orgBranchId?: number, enabled = true) {
+  return queryOptions({
+    queryKey: employeesQueryKey(orgBranchId),
+    queryFn: () => fetchAllEmployees(orgBranchId),
+    staleTime: 5 * 60 * 1000,
+    enabled,
   });
 }

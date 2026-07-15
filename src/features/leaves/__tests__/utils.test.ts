@@ -1,5 +1,7 @@
 import type { WorkLeave, Employee } from '@/types';
-import { canActOnLeave, canDeleteLeave } from '../utils';
+import { canActOnLeave, canDeleteLeave, supervisorOptions } from '../utils';
+
+jest.mock('@/i18n', () => ({ __esModule: true, default: { t: (k: string) => k } }));
 
 // ── Fixtures ─────────────────────────────────────────────────────────────────
 const ME = 100;
@@ -118,5 +120,23 @@ describe('canDeleteLeave', () => {
 
     const someSigner = leave({ employee_id: ME, status: 'pending', assigned_signers: [], signers: [emp(500)] });
     expect(canDeleteLeave(someSigner, ME)).toBe(false);
+  });
+});
+
+describe('supervisorOptions', () => {
+  it('returns [] for undefined employees', () => {
+    expect(supervisorOptions(undefined, ME)).toEqual([]);
+  });
+
+  it('maps employees to picker options and excludes self', () => {
+    const roster = [emp(ME), emp(200), emp(300)];
+    const opts = supervisorOptions(roster, ME);
+    expect(opts.map((o) => o.value)).toEqual([200, 300]);
+    expect(opts[0]).toMatchObject({ value: 200, label: 'Emp 200' });
+  });
+
+  it('keeps everyone when self id is undefined', () => {
+    const roster = [emp(200), emp(300)];
+    expect(supervisorOptions(roster, undefined).map((o) => o.value)).toEqual([200, 300]);
   });
 });

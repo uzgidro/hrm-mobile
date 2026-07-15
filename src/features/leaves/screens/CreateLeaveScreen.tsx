@@ -1,5 +1,5 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
   TouchableOpacity, TextInput, ActivityIndicator, Alert,
@@ -16,7 +16,10 @@ import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Employee } from '@/types';
 import { Icon } from '@/components/Icon';
+import { PickerModal } from '@/components/PickerModal';
 import { useCreateLeave, type CreateLeavePayload } from '../api/mutations';
+import { leaveSupervisorsQuery } from '../api/queries';
+import { supervisorOptions } from '../utils';
 import { LeaveDateTimePicker } from '../components/LeaveDateTimePicker';
 import { LeaveTypeSheet, LEAVE_TYPES, leaveTypeLabel } from '../components/LeaveTypeSheet';
 
@@ -36,6 +39,8 @@ export default function CreateLeaveScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [showTypeSheet, setShowTypeSheet] = useState(false);
   const [activePicker, setActivePicker] = useState<'start' | 'end' | null>(null);
+  const [showSupervisorPicker, setShowSupervisorPicker] = useState(false);
+  const [pickedSupervisorId, setPickedSupervisorId] = useState<number | null>(null);
 
   const { data: employeeFull, isLoading: supervisorLoading } = useQuery<Employee>({
     queryKey: ['employee-full', employeeId],
@@ -44,11 +49,32 @@ export default function CreateLeaveScreen() {
     staleTime: 10 * 60 * 1000,
   });
 
-  const supervisor: Employee | undefined = employeeFull?.supervisor ?? user?.employee?.supervisor;
+  const assignedSupervisor: Employee | undefined = employeeFull?.supervisor ?? user?.employee?.supervisor;
+  // No pre-assigned supervisor → the user must PICK one (web parity: the drawer
+  // loads employees only in that case). Roster is fetched lazily via `enabled`.
+  const needsPick = !supervisorLoading && !assignedSupervisor;
+  const branchId =
+    user?.employee?.organization_branches?.[0]?.id ??
+    user?.employee?.department?.organization_branch_id;
+  const { data: roster, isLoading: rosterLoading } = useQuery(
+    leaveSupervisorsQuery(branchId, needsPick),
+  );
+  const options = useMemo(() => supervisorOptions(roster?.items, employeeId), [roster, employeeId]);
+  const pickedSupervisor = useMemo(
+    () => roster?.items?.find((e) => e.id === pickedSupervisorId),
+    [roster, pickedSupervisorId],
+  );
+
+  // Effective signer id: the assigned supervisor, else the picked one.
+  const effectiveSupervisorId = assignedSupervisor?.id ?? pickedSupervisorId ?? undefined;
 
   const handleSubmit = useCallback(async () => {
     if (endDate.isBefore(startDate) || endDate.isSame(startDate)) {
       Alert.alert(t('leaves.errorTitle'), t('leaves.endMustBeAfterStart'));
+      return;
+    }
+    if (!effectiveSupervisorId) {
+      Alert.alert(t('leaves.errorTitle'), t('leaves.supervisorRequired'));
       return;
     }
     setSubmitting(true);
@@ -58,8 +84,8 @@ export default function CreateLeaveScreen() {
         start_date: startDate.toISOString(),
         end_date: endDate.toISOString(),
         description: description.trim() || undefined,
+        assigned_signer_ids: [effectiveSupervisorId],
       };
-      if (supervisor?.id) payload.assigned_signer_ids = [supervisor.id];
       await createLeaveMut.mutateAsync(payload);
       Alert.alert(t('common.success'), t('leaves.createdSuccess'), [{ text: t('common.ok'), onPress: () => router.back() }]);
     } catch (e) {
@@ -67,7 +93,7 @@ export default function CreateLeaveScreen() {
     } finally {
       setSubmitting(false);
     }
-  }, [leaveType, startDate, endDate, description, supervisor, createLeaveMut, t]);
+  }, [leaveType, startDate, endDate, description, effectiveSupervisorId, createLeaveMut, t]);
 
   const diffMin = endDate.diff(startDate, 'minute');
   const durationText = (() => {
@@ -125,23 +151,38 @@ export default function CreateLeaveScreen() {
         {diffMin <= 0 && endDate.isValid() && <Text style={s.errorText}>{t('leaves.endBeforeStart')}</Text>}
 
         <Text style={s.label}>{t('leaves.supervisorLabel')}</Text>
-        <View style={s.supervisorCard}>
-          {supervisorLoading ? (
-            <ActivityIndicator size="small" color={colors.primaryLight} />
-          ) : supervisor ? (
-            <>
-              <View style={s.supervisorAvatar}><Text style={s.supervisorAvatarText}>{(supervisor.legal_name || 'X').charAt(0)}</Text></View>
-              <View style={s.supervisorInfo}>
-                <Text style={s.supervisorName}>{supervisor.legal_name}</Text>
-                <Text style={s.supervisorSub} numberOfLines={1}>{supervisor.job_position?.name ?? supervisor.department?.name ?? '—'}</Text>
-              </View>
-              <Icon name="lock" size={14} color={colors.textMuted} />
-            </>
-          ) : (
-            <Text style={s.noSupervisorText}>{t('leaves.noSupervisor')}</Text>
-          )}
-        </View>
-        {!supervisorLoading && !supervisor && <Text style={s.supervisorHint}>{t('leaves.supervisorHint')}</Text>}
+        {supervisorLoading ? (
+          <View style={s.supervisorCard}><ActivityIndicator size="small" color={colors.primaryLight} /></View>
+        ) : assignedSupervisor ? (
+          // Pre-assigned supervisor — read-only (locked).
+          <View style={s.supervisorCard}>
+            <View style={s.supervisorAvatar}><Text style={s.supervisorAvatarText}>{(assignedSupervisor.legal_name || 'X').charAt(0)}</Text></View>
+            <View style={s.supervisorInfo}>
+              <Text style={s.supervisorName}>{assignedSupervisor.legal_name}</Text>
+              <Text style={s.supervisorSub} numberOfLines={1}>{assignedSupervisor.job_position?.name ?? assignedSupervisor.department?.name ?? '—'}</Text>
+            </View>
+            <Icon name="lock" size={14} color={colors.textMuted} />
+          </View>
+        ) : (
+          // No supervisor assigned — pick one (web parity).
+          <TouchableOpacity style={s.supervisorCard} onPress={() => setShowSupervisorPicker(true)} activeOpacity={0.7} disabled={rosterLoading}>
+            {pickedSupervisor ? (
+              <>
+                <View style={s.supervisorAvatar}><Text style={s.supervisorAvatarText}>{(pickedSupervisor.legal_name || 'X').charAt(0)}</Text></View>
+                <View style={s.supervisorInfo}>
+                  <Text style={s.supervisorName}>{pickedSupervisor.legal_name}</Text>
+                  <Text style={s.supervisorSub} numberOfLines={1}>{pickedSupervisor.job_position?.name ?? pickedSupervisor.department?.name ?? '—'}</Text>
+                </View>
+                <Icon name="chevronRight" size={20} color={colors.textMuted} />
+              </>
+            ) : (
+              <>
+                <Text style={s.noSupervisorText}>{t('leaves.pickSupervisor')}</Text>
+                {rosterLoading ? <ActivityIndicator size="small" color={colors.primaryLight} /> : <Icon name="chevronRight" size={20} color={colors.textMuted} />}
+              </>
+            )}
+          </TouchableOpacity>
+        )}
 
         <Text style={s.label}>{t('leaves.commentLabel')}</Text>
         <TextInput style={s.textarea} placeholder={t('leaves.commentPlaceholder')} placeholderTextColor={colors.textMuted} value={description} onChangeText={setDescription} multiline numberOfLines={4} textAlignVertical="top" />
@@ -157,6 +198,15 @@ export default function CreateLeaveScreen() {
       <LeaveDateTimePicker visible={activePicker === 'start'} title={t('leaves.startPickerTitle')} value={startDate}
         onConfirm={(v) => { setStartDate(v); if (v.isAfter(endDate)) setEndDate(v.add(1, 'hour')); }} onClose={() => setActivePicker(null)} />
       <LeaveDateTimePicker visible={activePicker === 'end'} title={t('leaves.endPickerTitle')} value={endDate} minDate={startDate} onConfirm={setEndDate} onClose={() => setActivePicker(null)} />
+      <PickerModal
+        visible={showSupervisorPicker}
+        title={t('leaves.pickSupervisorTitle')}
+        options={options}
+        loading={rosterLoading}
+        selected={pickedSupervisorId}
+        onClose={() => setShowSupervisorPicker(false)}
+        onSelect={(v) => { setPickedSupervisorId(v); setShowSupervisorPicker(false); }}
+      />
     </SafeAreaView>
   );
 }
