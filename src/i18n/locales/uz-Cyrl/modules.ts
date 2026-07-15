@@ -21,6 +21,7 @@ export default {
     team: 'Жамоа',
     employees: 'Ходимлар',
     guests: 'Меҳмонлар',
+    documents: 'Ҳужжатлар',
     birthdays: "Туғилган кун",
     news: 'Янгиликлар',
     notifications: 'Билдиришнома',

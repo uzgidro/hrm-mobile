@@ -88,6 +88,16 @@ export const ORDER_ACT_DECREE_REGISTER = (id: number) => `order-acts/${id}/decre
 export const ORDER_ACT_DECREE_ACKNOWLEDGE = (id: number) => `order-acts/${id}/decree/acknowledge`;
 export const ORDER_ACT_EDITOR_CONFIG = (id: number) => `order-acts/${id}/editor-config`;
 
+// Documents (Hujjatlar) — files/folders storage, view-only on mobile.
+// Folders are flat (no nesting) and embed their files[] inline. Root (folder-
+// less) files are fetched with ?folder_id=0. File bytes are reachable ONLY via
+// the JWT-signed OnlyOffice editor-config (there is no raw-download endpoint);
+// the config route ignores any `mode` param and decides view/edit server-side
+// (a plain viewer always gets mode:'view').
+export const FOLDERS_LIST = 'folders';
+export const FILES_LIST = 'files';
+export const FILE_EDITOR_CONFIG = (id: number) => `files/${id}/editor-config`;
+
 // OnlyOffice document server (public host that serves the editor api.js)
 import { Env } from '../config/env';
 export const ONLYOFFICE_SERVER_URL = Env.onlyOfficeUrl;

@@ -41,6 +41,7 @@ export type IconName =
   | 'close'
   | 'check'
   | 'doc'
+  | 'folder'
   | 'inbox'
   | 'settings'
   | 'lock'
@@ -314,6 +315,12 @@ function render(name: IconName, p: any) {
       );
     case 'check':
       return <Polyline points="4 12 10 18 20 6" {...p} />;
+    case 'folder':
+      return (
+        <>
+          <Path d="M3.5 6.5a1.5 1.5 0 0 1 1.5-1.5h4l2 2.5h8a1.5 1.5 0 0 1 1.5 1.5v8a1.5 1.5 0 0 1-1.5 1.5H5a1.5 1.5 0 0 1-1.5-1.5z" {...p} />
+        </>
+      );
     case 'inbox':
       return (
         <>

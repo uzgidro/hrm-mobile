@@ -21,6 +21,7 @@ export default {
     team: 'Team',
     employees: 'Employees',
     guests: 'Guests',
+    documents: 'Documents',
     birthdays: 'Birthdays',
     news: 'News',
     notifications: 'Notifications',
