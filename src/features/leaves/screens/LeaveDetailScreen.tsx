@@ -16,11 +16,12 @@ import { Employee } from '@/types';
 import { Icon } from '@/components/Icon';
 import { LoadingView, EmptyState } from '@/components/StateViews';
 import { getApiErrorMessage } from '@/api/errors';
+import { isHR } from '@/utils/roles';
 import { leaveDetailQuery } from '../api/queries';
 import { useSignLeave, useRejectLeave } from '../api/mutations';
+import { canActOnLeave } from '../utils';
 import { leaveTypeLabel } from '../components/LeaveTypeSheet';
 
-function isPending(status: string) { return status === 'pending' || status === 'yuborildi'; }
 function isApproved(status: string) { return status === 'approved' || status === 'tasdiqlangan' || status === 'signed'; }
 function isRejected(status: string) { return status === 'rejected' || status === 'rad_etilgan'; }
 
@@ -92,11 +93,11 @@ export default function LeaveDetailScreen() {
   const signMutation = useSignLeave(leaveId);
   const rejectMutation = useRejectLeave(leaveId);
 
-  const canApprove = !!(
-    leave && isPending(leave.status) && employeeId &&
-    leave.assigned_signers?.some((sg) => sg.id === employeeId) &&
-    !leave.signers?.some((sg) => sg.id === employeeId)
-  );
+  // Web parity: HR is view-only (never signs/rejects). canActOnLeave mirrors the
+  // web's canActOnWorkLeave — the sign/reject buttons appear only for a
+  // non-HR assigned signer on a pending request they haven't signed yet.
+  const { canSign, canReject } = canActOnLeave(leave, employeeId, { isHR: isHR(user) });
+  const canApprove = canSign || canReject;
 
   const handleApprove = useCallback(async () => {
     setActing(true);

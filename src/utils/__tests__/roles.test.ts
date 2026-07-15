@@ -5,6 +5,8 @@ import {
   hasMultiOrgRole,
   isMasterAdmin,
   isEmployee,
+  isEmployeeLike,
+  isAccounting,
   isHR,
   isSingleRoleHR,
   isDeputy,
@@ -58,6 +60,7 @@ const chancelleryUser = multiOrgUser('chancellery');
 const kanselariyaUser = multiOrgUser('kanselariya');
 const ministrUser = multiOrgUser('ministr');
 const deputyUser = multiOrgUser('deputy');
+const accountingUser = multiOrgUser('accounting');
 const secretariatUser: User = {
   id: 9,
   type: 'employee',
@@ -230,6 +233,55 @@ describe('isEmployee', () => {
   it('false for null/undefined', () => {
     expect(isEmployee(null)).toBe(false);
     expect(isEmployee(undefined)).toBe(false);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// isAccounting
+// ─────────────────────────────────────────────────────────────────────────────
+describe('isAccounting', () => {
+  it('true when the (first) multi-org role is accounting', () => {
+    expect(isAccounting(accountingUser)).toBe(true);
+    expect(isAccounting(multiOrgUser(['accounting']))).toBe(true);
+  });
+
+  it('false when accounting is not first (getMultiOrgRole returns first only)', () => {
+    expect(isAccounting(multiOrgUser(['hr', 'accounting']))).toBe(false);
+  });
+
+  it('false for non-accounting / regular / master-admin / null', () => {
+    expect(isAccounting(regularUser)).toBe(false);
+    expect(isAccounting(hrSingleUser)).toBe(false);
+    expect(isAccounting(masterAdminUser)).toBe(false);
+    expect(isAccounting(null)).toBe(false);
+    expect(isAccounting(undefined)).toBe(false);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// isEmployeeLike — regular OR accounting (mirrors web roleHelpers.js)
+// ─────────────────────────────────────────────────────────────────────────────
+describe('isEmployeeLike', () => {
+  it('true for a regular (non multi-org) employee', () => {
+    expect(isEmployeeLike(regularUser)).toBe(true);
+    expect(isEmployeeLike(secretariatUser)).toBe(true);
+  });
+
+  it('true for an accounting multi-org employee', () => {
+    expect(isEmployeeLike(accountingUser)).toBe(true);
+  });
+
+  it('false for other multi-org roles and master-admin', () => {
+    expect(isEmployeeLike(hrSingleUser)).toBe(false);
+    expect(isEmployeeLike(kppUser)).toBe(false);
+    expect(isEmployeeLike(deputyUser)).toBe(false);
+    expect(isEmployeeLike(ministrUser)).toBe(false);
+    expect(isEmployeeLike(masterAdminUser)).toBe(false);
+  });
+
+  it('false for null/undefined', () => {
+    expect(isEmployeeLike(null)).toBe(false);
+    expect(isEmployeeLike(undefined)).toBe(false);
   });
 });
 
@@ -483,6 +535,16 @@ describe('canAccessPage', () => {
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
         employees: true, attendance: true, requests: true,
+        salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true,
+      },
+    },
+    accounting: {
+      // Buxgalter = employee-like: sees the full regular-employee surface,
+      // NOT the employees directory. Same row as `regular` (web parity).
+      user: accountingUser,
+      row: {
+        home: true, orders: true, letters: true, guests: true, projects: true,
+        employees: false, attendance: true, requests: true,
         salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true,
       },
     },
