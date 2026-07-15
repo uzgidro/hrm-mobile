@@ -29,6 +29,16 @@ export function isMasterAdmin(user?: User | null): boolean {
   return user?.type === 'master-admin' || getMultiOrgRole(user) === 'ministr';
 }
 
+/**
+ * STRICTLY the master-admin account type — excludes ministr. Mirrors the web's
+ * roleHelpers.js isSiteMasterAdmin: use it for rights the backend grants only
+ * to type === 'master-admin' (e.g. KPI management/review override) — gating
+ * those on isMasterAdmin would show ministr actions the backend then rejects.
+ */
+export function isSiteMasterAdmin(user?: User | null): boolean {
+  return user?.type === 'master-admin';
+}
+
 /** regular employee (not multi-org) */
 export function isEmployee(user?: User | null): boolean {
   return user?.type === 'employee' && !user?.employee?.is_multi_org_user;
@@ -102,7 +112,9 @@ export function isSecretariat(user?: User | null): boolean {
 }
 
 export function canAccessChairmanTasks(user?: User | null): boolean {
-  return isSecretariat(user) || isMinister(user);
+  // Web parity (roleHelpers.js): secretariat (full CRUD), minister (view), and
+  // the site master-admin.
+  return isSecretariat(user) || isMinister(user) || isSiteMasterAdmin(user);
 }
 
 // ── Page visibility — derived from the web navConfig role tables ──────────────

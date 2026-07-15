@@ -53,4 +53,17 @@ export default {
   deleteConfirmTitle: 'Вазифани ўчириш',
   deleteConfirmMessage: 'Ушбу вазифани ўчирмоқчимисиз?',
   deleteAction: 'Ўчириш',
+
+  teamTitle: 'Ходимларим самарадорлиги',
+  teamEntries: 'Кўрсаткичлар',
+  teamPending: 'Тасдиқ кутмоқда',
+  teamAllDone: 'Якунланган',
+  teamEmpty: 'Сизга бириктирилган ходимлар йўқ',
+  bonusesTitle: 'Бонуслар',
+  reviewConfirm: 'Тасдиқ',
+  reviewReject: 'Рад',
+  reviewScoreLabel: 'Баҳо (%)',
+  reviewNoteLabel: 'Рад этиш сабаби',
+  reviewConfirmAction: 'Тасдиқлаш',
+  reviewRejectAction: 'Рад этиш',
 } as const;

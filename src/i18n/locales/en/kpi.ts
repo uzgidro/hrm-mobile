@@ -53,4 +53,17 @@ export default {
   deleteConfirmTitle: 'Delete task',
   deleteConfirmMessage: 'Delete this task?',
   deleteAction: 'Delete',
+
+  teamTitle: 'My team performance',
+  teamEntries: 'Indicators',
+  teamPending: 'Awaiting review',
+  teamAllDone: 'Finalized',
+  teamEmpty: 'No employees report to you',
+  bonusesTitle: 'Bonuses',
+  reviewConfirm: 'Confirm',
+  reviewReject: 'Reject',
+  reviewScoreLabel: 'Score (%)',
+  reviewNoteLabel: 'Rejection reason',
+  reviewConfirmAction: 'Confirm',
+  reviewRejectAction: 'Reject',
 } as const;

@@ -126,6 +126,42 @@ export function canActOnTask(
   return isOwner && !entryLocked && task.status === 'draft';
 }
 
+// ── Supervisor review rules ──────────────────────────────────────────────────
+// Mirrors the BACKEND authorization for POST kpi/tasks/{id}/review exactly:
+// direct supervisor (entry.employee.supervisor_id === me) OR manager
+// (HR/master-admin). Computed from data — unlike the web, which hard-codes
+// canReview per navigation branch — so it also holds when arriving via a push
+// deep link. Never for the owner themselves (no self-review).
+export function canReviewEntry(
+  entry: KpiEntry,
+  { myEmployeeId, isManager }: { myEmployeeId: number | undefined; isManager: boolean }
+): boolean {
+  if (myEmployeeId == null) return false;
+  if (entry.employee_id === myEmployeeId) return false;
+  return isManager || entry.employee?.supervisor_id === myEmployeeId;
+}
+
+// Confirm/reject buttons appear only on SUBMITTED tasks of an unlocked entry.
+export function canReviewTask(
+  task: KpiTask,
+  { canReview, entryLocked }: { canReview: boolean; entryLocked: boolean }
+): boolean {
+  return canReview && !entryLocked && task.status === 'submitted';
+}
+
+// Parse the supervisor's confirm-score input. Empty = 0 (web/backend parity —
+// score is optional and defaults to 0); a comma decimal separator is accepted
+// (RU/UZ numeric keyboards emit it); garbage or negatives → null so the caller
+// BLOCKS the submit — a NaN would silently confirm the task with score 0, and
+// a confirmed task cannot be re-reviewed. Backend rejects score < 0.
+export function parseScore(input: string): number | null {
+  const raw = input.trim();
+  if (!raw) return 0;
+  const n = Number(raw.replace(',', '.'));
+  if (Number.isNaN(n) || n < 0) return null;
+  return n;
+}
+
 // "Tasdiqlangan yig'indi" — confirmed task scores sum (backend mirrors this
 // into entry.fact_value, capped at indicator.max_percent).
 export function confirmedTaskSum(tasks: KpiTask[] | undefined): number {

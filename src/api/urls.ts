@@ -105,10 +105,13 @@ export const FILE_EDITOR_CONFIG = (id: number) => `files/${id}/editor-config`;
 // recompute it client-side. Task scores are entered only by the supervisor on
 // confirm; the employee submits task names only.
 export const KPI_MY_SCORECARD = 'kpi/my-scorecard';
+export const KPI_MY_TEAM = 'kpi/my-team';
 export const KPI_ENTRY_DETAIL = (id: number) => `kpi/entries/${id}`;
 export const KPI_TASKS = 'kpi/tasks';
 export const KPI_TASK_DETAIL = (id: number) => `kpi/tasks/${id}`;
 export const KPI_TASK_SUBMIT = (id: number) => `kpi/tasks/${id}/submit`;
+export const KPI_TASK_REVIEW = (id: number) => `kpi/tasks/${id}/review`;
+export const KPI_BONUSES = 'kpi/bonuses';
 
 // OnlyOffice document server (public host that serves the editor api.js)
 import { Env } from '../config/env';

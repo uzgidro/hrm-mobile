@@ -10,8 +10,11 @@ import {
   resultColorKey,
   canAddTask,
   canActOnTask,
+  canReviewEntry,
+  canReviewTask,
   isEntryLocked,
   confirmedTaskSum,
+  parseScore,
 } from '../utils';
 
 const entry = (o: Partial<KpiEntry>): KpiEntry => ({ id: 1, ...o });
@@ -184,6 +187,81 @@ describe('canActOnTask', () => {
   it('an unknown/new status is NOT actionable (strict === draft, web parity)', () => {
     expect(canActOnTask(task({ status: 'weird' }), { isOwner: true, entryLocked: false })).toBe(false);
     expect(canActOnTask(task({ status: null }), { isOwner: true, entryLocked: false })).toBe(false);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Supervisor review rules — mirror the BACKEND check (review_task): direct
+// supervisor (entry.employee.supervisor_id) OR manager (HR/master-admin).
+// ─────────────────────────────────────────────────────────────────────────────
+describe('canReviewEntry', () => {
+  const subordinateEntry = entry({
+    employee_id: 7,
+    employee: { id: 7, supervisor_id: 1 } as never,
+  });
+
+  it('true for the direct supervisor of the entry owner', () => {
+    expect(canReviewEntry(subordinateEntry, { myEmployeeId: 1, isManager: false })).toBe(true);
+  });
+
+  it('true for a manager (HR/master-admin) even when not the supervisor', () => {
+    expect(canReviewEntry(subordinateEntry, { myEmployeeId: 99, isManager: true })).toBe(true);
+  });
+
+  it('false for the owner themselves — no self-review even for a manager', () => {
+    const own = entry({ employee_id: 1, employee: { id: 1, supervisor_id: 5 } as never });
+    expect(canReviewEntry(own, { myEmployeeId: 1, isManager: false })).toBe(false);
+    expect(canReviewEntry(own, { myEmployeeId: 1, isManager: true })).toBe(false);
+  });
+
+  it('false for an unrelated employee', () => {
+    expect(canReviewEntry(subordinateEntry, { myEmployeeId: 99, isManager: false })).toBe(false);
+  });
+
+  it('false when my employee id is unknown', () => {
+    expect(canReviewEntry(subordinateEntry, { myEmployeeId: undefined, isManager: false })).toBe(false);
+  });
+});
+
+describe('canReviewTask', () => {
+  const ctx = { canReview: true, entryLocked: false };
+
+  it('review buttons only on SUBMITTED tasks while the entry is unlocked', () => {
+    expect(canReviewTask(task({ status: 'submitted' }), ctx)).toBe(true);
+  });
+
+  it('blocked for draft/confirmed/rejected, locked entry, or no review right', () => {
+    expect(canReviewTask(task({ status: 'draft' }), ctx)).toBe(false);
+    expect(canReviewTask(task({ status: 'confirmed' }), ctx)).toBe(false);
+    expect(canReviewTask(task({ status: 'rejected' }), ctx)).toBe(false);
+    expect(canReviewTask(task({ status: 'submitted' }), { canReview: true, entryLocked: true })).toBe(false);
+    expect(canReviewTask(task({ status: 'submitted' }), { canReview: false, entryLocked: false })).toBe(false);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// parseScore — the confirm-score input guard. Empty = 0 (web/backend parity:
+// score is optional and defaults to 0); comma decimals accepted (RU/UZ numeric
+// keyboards); garbage → null so the UI can block the submit instead of silently
+// confirming an unre-reviewable task with score 0.
+// ─────────────────────────────────────────────────────────────────────────────
+describe('parseScore', () => {
+  it('parses plain and decimal numbers', () => {
+    expect(parseScore('80')).toBe(80);
+    expect(parseScore('80.5')).toBe(80.5);
+    expect(parseScore(' 12 ')).toBe(12);
+  });
+  it('accepts a comma decimal separator (RU/UZ keyboards)', () => {
+    expect(parseScore('80,5')).toBe(80.5);
+  });
+  it('empty input means 0 (deliberate web/backend parity)', () => {
+    expect(parseScore('')).toBe(0);
+    expect(parseScore('   ')).toBe(0);
+  });
+  it('garbage and negatives are invalid (null) — backend rejects score < 0', () => {
+    expect(parseScore('abc')).toBeNull();
+    expect(parseScore('8o')).toBeNull();
+    expect(parseScore('-5')).toBeNull();
   });
 });
 

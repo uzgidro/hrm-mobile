@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
-import { KPI_TASKS, KPI_TASK_DETAIL, KPI_TASK_SUBMIT } from '@/api/urls';
+import { KPI_TASKS, KPI_TASK_DETAIL, KPI_TASK_SUBMIT, KPI_TASK_REVIEW } from '@/api/urls';
 import type { KpiTask } from '@/types';
 import { kpiKeys } from './queries';
 
@@ -22,6 +22,27 @@ export function submitKpiTask(id: number): Promise<KpiTask> {
 
 export function deleteKpiTask(id: number): Promise<void> {
   return apiClient.delete(KPI_TASK_DETAIL(id)).then(() => undefined);
+}
+
+// Supervisor review (web EntryTasksPage doReview parity): confirm carries the
+// score (0 fallback — the backend treats a missing score as 0), reject carries
+// the note (null when empty). Backend allows the direct supervisor or HR/
+// master-admin; confirmed scores roll into entry.fact_value server-side.
+export interface KpiTaskReviewPayload {
+  action: 'confirm' | 'reject';
+  score?: number | string;
+  review_note?: string;
+}
+
+export function reviewKpiTask(id: number, payload: KpiTaskReviewPayload): Promise<KpiTask> {
+  // Comma decimals normalized (RU/UZ keyboards). The screen validates via
+  // parseScore() and blocks garbage; the || 0 here only covers the deliberate
+  // empty-score case (backend parity: missing score means 0).
+  const data =
+    payload.action === 'confirm'
+      ? { action: 'confirm', score: Number(String(payload.score ?? '').replace(',', '.')) || 0 }
+      : { action: 'reject', review_note: payload.review_note || null };
+  return apiClient.post<KpiTask>(KPI_TASK_REVIEW(id), data).then((r) => r.data);
 }
 
 // ── Mutation hooks ───────────────────────────────────────────────────────────
@@ -61,6 +82,15 @@ export function useDeleteKpiTask() {
   const invalidate = useInvalidateKpi();
   return useMutation({
     mutationFn: deleteKpiTask,
+    onSuccess: invalidate,
+  });
+}
+
+export function useReviewKpiTask() {
+  const invalidate = useInvalidateKpi();
+  return useMutation({
+    mutationFn: ({ id, ...payload }: { id: number } & KpiTaskReviewPayload) =>
+      reviewKpiTask(id, payload),
     onSuccess: invalidate,
   });
 }
