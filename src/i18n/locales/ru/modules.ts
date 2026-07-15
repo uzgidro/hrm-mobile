@@ -21,6 +21,7 @@ export default {
     team: 'Команда',
     employees: 'Сотрудники',
     guests: 'Гости',
+    documents: 'Документы',
     birthdays: 'Дни рождения',
     news: 'Новости',
     notifications: 'Уведомления',

@@ -27,6 +27,7 @@ export default {
     team: 'Jamoa',
     employees: 'Xodimlar',
     guests: 'Mehmonlar',
+    documents: 'Hujjatlar',
     birthdays: "Tug'ilgan kun",
     news: 'Yangiliklar',
     notifications: 'Bildirishnoma',

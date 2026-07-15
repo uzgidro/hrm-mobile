@@ -108,7 +108,7 @@ export function canAccessChairmanTasks(user?: User | null): boolean {
 // ── Page visibility — derived from the web navConfig role tables ──────────────
 export type PageKey =
   | 'home' | 'orders' | 'letters' | 'guests' | 'projects'
-  | 'employees' | 'attendance' | 'requests'
+  | 'employees' | 'attendance' | 'requests' | 'documents'
   | 'salary' | 'team' | 'birthdays' | 'news' | 'notifications' | 'profile';
 
 /** Whether the given user may see a page. Mirrors which web NAV the role gets. */
@@ -130,8 +130,11 @@ export function canAccessPage(user: User | null | undefined, key: PageKey): bool
     case 'employees':
       return isMasterAdmin(user) || isHR(user) || isDeputy(user);
     // Attendance & leave requests: not for KPP or chancellery.
+    // Documents (Hujjatlar): web guards /hujjatlar with the same rule — KPP and
+    // chancellery are redirected away (App.jsx route guard + nav omission).
     case 'attendance':
     case 'requests':
+    case 'documents':
       return !kpp && !chancellery;
     // Personal / convenience pages — always available.
     case 'home':

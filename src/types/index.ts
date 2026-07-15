@@ -298,3 +298,36 @@ export interface WorkspaceCard {
   is_completed?: boolean;
   members?: { id?: number; member?: Employee }[];
 }
+
+// ── Documents / Hujjatlar (files & folders storage, view-only on mobile) ──────
+// Backend FileScope enum: literal string values (never translated — web parity).
+export type DocumentScope = 'public' | 'private' | 'branch';
+
+// A stored file. Bytes are reachable only through the OnlyOffice editor-config
+// (see urls.ts) — there is no raw-download URL on this shape.
+export interface HrmFile {
+  id: number;
+  original_filename?: string | null;
+  file_filename?: string | null;
+  content_type?: string | null;
+  folder_id?: number | null;
+  scope?: DocumentScope | null;
+  share_slug?: string | null;
+  created_by_id?: number | null;
+  created_by?: Employee | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// A flat folder (no nesting / no parent_id) that embeds its files[] inline.
+// Note: the backend exposes only `created_by_id` here, never a nested employee.
+export interface DocumentFolder {
+  id: number;
+  name?: string | null;
+  scope?: DocumentScope | null;
+  organization_branch_id?: number | null;
+  created_by_id?: number | null;
+  files?: HrmFile[] | null;
+  created_at?: string;
+  updated_at?: string;
+}

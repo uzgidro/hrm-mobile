@@ -12,6 +12,7 @@ import birthdays from './birthdays';
 import news from './news';
 import dashboard from './dashboard';
 import visitors from './visitors';
+import documents from './documents';
 import projects from './projects';
 import profile from './profile';
 import employees from './employees';
@@ -34,6 +35,7 @@ export default {
   news,
   dashboard,
   visitors,
+  documents,
   projects,
   profile,
   employees,
