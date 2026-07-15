@@ -62,6 +62,25 @@ export function isChancellery(user?: User | null): boolean {
   return role === 'chancellery' || role === 'kanselariya';
 }
 
+/** true for Buxgalteriya (accounting) multi-org employees */
+export function isAccounting(user?: User | null): boolean {
+  return getMultiOrgRole(user) === 'accounting';
+}
+
+/**
+ * Accounting (buxgalter) gets the WHOLE regular-employee experience — the
+ * employee menu, personal pages, employee-scoped rights — plus an extra
+ * Davomat page. When gating a personal page or an employee-scope right, use
+ * this instead of `isEmployee`: otherwise the multi-org flag would strip an
+ * accountant of employee features. Mirrors the web's roleHelpers.js
+ * `isEmployeeLike` (added web-side in e83f0bb). Branch-level accounting
+ * (accounting_branch_ids / canActAsAccounting) is intentionally NOT mirrored
+ * yet — those fields and the accounting letters tab don't exist on mobile.
+ */
+export function isEmployeeLike(user?: User | null): boolean {
+  return isEmployee(user) || isAccounting(user);
+}
+
 export function isMinister(user?: User | null): boolean {
   return getMultiOrgRole(user) === 'ministr';
 }
