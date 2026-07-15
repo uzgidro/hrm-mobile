@@ -6,6 +6,7 @@ import {
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useQuery, useQueries } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
@@ -15,6 +16,7 @@ import { Icon } from '@/components/Icon';
 import { LoadingView, EmptyState } from '@/components/StateViews';
 import { isMasterAdmin } from '@/utils/roles';
 import { getApiErrorMessage } from '@/api/errors';
+import { confirm } from '@/lib/confirm';
 import type { WorkspaceCard } from '@/types';
 import { workspaceDetailQuery, columnCardsQuery } from '../api/queries';
 import {
@@ -22,6 +24,7 @@ import {
 } from '../api/mutations';
 
 export default function LoyihaDetailScreen() {
+  const { t } = useTranslation();
   const { id } = useLocalSearchParams<{ id: string }>();
   const workspaceId = Number(id);
   const { user } = useAuthStore();
@@ -67,7 +70,7 @@ export default function LoyihaDetailScreen() {
       }
       setModal(null);
     } catch (e) {
-      Alert.alert('Xatolik', getApiErrorMessage(e, 'Saqlashda xatolik'));
+      Alert.alert(t('projects.errorTitle'), getApiErrorMessage(e, t('errors.saveFailed')));
     } finally {
       setBusy(false);
     }
@@ -77,29 +80,30 @@ export default function LoyihaDetailScreen() {
     try {
       await toggleCard.mutateAsync({ card, columnId });
     } catch (e) {
-      Alert.alert('Xatolik', getApiErrorMessage(e, "Amalni bajarib bo'lmadi"));
+      Alert.alert(t('projects.errorTitle'), getApiErrorMessage(e, t('projects.toggleError')));
     }
   };
 
-  const onDelete = () => {
-    Alert.alert('O\'chirish', "Loyihani o'chirishni xohlaysizmi?", [
-      { text: 'Bekor', style: 'cancel' },
-      {
-        text: "Ha, o'chirish", style: 'destructive',
-        onPress: () => {
-          deleteWs.mutate(workspaceId, {
-            onSuccess: () => router.back(),
-            onError: (e) => Alert.alert('Xatolik', getApiErrorMessage(e, "O'chirishda xatolik (faqat yaratuvchi o'chira oladi)")),
-          });
-        },
-      },
-    ]);
+  const onDelete = async () => {
+    const ok = await confirm({
+      title: t('projects.deleteTitle'),
+      message: t('projects.deleteConfirm'),
+      confirmLabel: t('projects.deleteYes'),
+      cancelLabel: t('common.cancel'),
+      icon: 'trash',
+      destructive: true,
+    });
+    if (!ok) return;
+    deleteWs.mutate(workspaceId, {
+      onSuccess: () => router.back(),
+      onError: (e) => Alert.alert(t('projects.errorTitle'), getApiErrorMessage(e, t('projects.deleteError'))),
+    });
   };
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScreenHeader
-        title={ws?.name || 'Loyiha'}
+        title={ws?.name || t('projects.nameFallback')}
         right={
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <HeaderAction icon="edit" onPress={() => router.push({ pathname: '/loyiha-form', params: { id: String(workspaceId) } })} />
@@ -117,7 +121,7 @@ export default function LoyihaDetailScreen() {
 
           {members.length > 0 && (
             <>
-              <Text style={styles.sectionLabel}>A'zolar ({members.length})</Text>
+              <Text style={styles.sectionLabel}>{t('projects.membersTitle', { count: members.length })}</Text>
               <View style={styles.card}>
                 <View style={styles.memberWrap}>
                   {members.map((m, i) => (
@@ -129,7 +133,7 @@ export default function LoyihaDetailScreen() {
                           <Text style={styles.memberAvText}>{(m.member?.legal_name || '?').charAt(0).toUpperCase()}</Text>
                         </View>
                       )}
-                      <Text style={styles.memberName} numberOfLines={1}>{m.member?.legal_name || 'Xodim'}</Text>
+                      <Text style={styles.memberName} numberOfLines={1}>{m.member?.legal_name || t('projects.memberFallback')}</Text>
                     </View>
                   ))}
                 </View>
@@ -138,15 +142,15 @@ export default function LoyihaDetailScreen() {
           )}
 
           <View style={styles.colHeaderRow}>
-            <Text style={styles.sectionLabel}>Ustunlar</Text>
+            <Text style={styles.sectionLabel}>{t('projects.columnsTitle')}</Text>
             <TouchableOpacity style={styles.addColBtn} onPress={openColumn} activeOpacity={0.8}>
               <Icon name="plus" size={15} color={colors.primary} />
-              <Text style={styles.addColText}>Ustun</Text>
+              <Text style={styles.addColText}>{t('projects.columnAdd')}</Text>
             </TouchableOpacity>
           </View>
 
           {columns.length === 0 ? (
-            <EmptyState icon="board" title="Ustunlar yo'q" />
+            <EmptyState icon="board" title={t('projects.columnsEmpty')} />
           ) : (
             columns.map((col, idx) => {
               const cards = (cardQueries[idx]?.data ?? []) as WorkspaceCard[];
@@ -155,7 +159,7 @@ export default function LoyihaDetailScreen() {
                 <View key={col.id} style={styles.column}>
                   <View style={styles.columnHeader}>
                     <View style={[styles.colDot, { backgroundColor: col.color || colors.primary }]} />
-                    <Text style={styles.columnName} numberOfLines={1}>{col.name || 'Ustun'}</Text>
+                    <Text style={styles.columnName} numberOfLines={1}>{col.name || t('projects.columnFallback')}</Text>
                     <Text style={styles.columnCount}>{cards.length}</Text>
                   </View>
                   {loading ? (
@@ -168,7 +172,7 @@ export default function LoyihaDetailScreen() {
                         </TouchableOpacity>
                         <View style={{ flex: 1 }}>
                           <Text style={[styles.taskTitle, cd.is_completed && styles.taskTitleDone]} numberOfLines={2}>
-                            {cd.title || 'Vazifa'}
+                            {cd.title || t('projects.taskFallback')}
                           </Text>
                           {!!cd.description && <Text style={styles.taskDesc} numberOfLines={2}>{cd.description}</Text>}
                           {!!cd.end_date && (
@@ -183,7 +187,7 @@ export default function LoyihaDetailScreen() {
                   )}
                   <TouchableOpacity style={styles.addCardBtn} onPress={() => openCard(col.id)} activeOpacity={0.8}>
                     <Icon name="plus" size={15} color={colors.textSecondary} />
-                    <Text style={styles.addCardText}>Vazifa qo'shish</Text>
+                    <Text style={styles.addCardText}>{t('projects.taskAdd')}</Text>
                   </TouchableOpacity>
                 </View>
               );
@@ -197,12 +201,12 @@ export default function LoyihaDetailScreen() {
       <Modal visible={!!modal} transparent animationType="fade" onRequestClose={() => setModal(null)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>{modal?.type === 'column' ? 'Yangi ustun' : 'Yangi vazifa'}</Text>
+            <Text style={styles.modalTitle}>{modal?.type === 'column' ? t('projects.newColumn') : t('projects.newTask')}</Text>
             <TextInput
               style={styles.modalInput}
               value={field1}
               onChangeText={setField1}
-              placeholder={modal?.type === 'column' ? 'Ustun nomi' : 'Vazifa sarlavhasi'}
+              placeholder={modal?.type === 'column' ? t('projects.columnNamePlaceholder') : t('projects.taskTitlePlaceholder')}
               placeholderTextColor={colors.textMuted}
               autoFocus
             />
@@ -211,17 +215,17 @@ export default function LoyihaDetailScreen() {
                 style={[styles.modalInput, styles.modalMultiline]}
                 value={field2}
                 onChangeText={setField2}
-                placeholder="Tavsif (ixtiyoriy)"
+                placeholder={t('projects.taskDescPlaceholder')}
                 placeholderTextColor={colors.textMuted}
                 multiline
               />
             )}
             <View style={styles.modalActions}>
               <TouchableOpacity style={styles.modalCancel} onPress={() => setModal(null)} disabled={busy}>
-                <Text style={styles.modalCancelText}>Bekor</Text>
+                <Text style={styles.modalCancelText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.modalSave, (busy || !field1.trim()) && { opacity: 0.5 }]} onPress={submitModal} disabled={busy || !field1.trim()}>
-                {busy ? <ActivityIndicator color={colors.onPrimary} size="small" /> : <Text style={styles.modalSaveText}>Saqlash</Text>}
+                {busy ? <ActivityIndicator color={colors.onPrimary} size="small" /> : <Text style={styles.modalSaveText}>{t('common.save')}</Text>}
               </TouchableOpacity>
             </View>
           </View>

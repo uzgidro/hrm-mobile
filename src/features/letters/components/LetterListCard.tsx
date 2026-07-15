@@ -1,15 +1,18 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import dayjs from 'dayjs';
+import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import type { Letter } from '@/types';
 import { letterStatusMeta, letterTypeLabel, statusColor } from '@/utils/letterStatus';
 
-// One row of the letters list. `action` = "sizning imzoyingiz kutilmoqda"
-// (derived by the list screen via canSignLetter) which highlights the card
-// border + tag.
+// One row of the letters list. `action` = the current user's signature is
+// pending (derived by the list screen via canSignLetter) which highlights the
+// card border + tag. useTranslation() re-renders the util-sourced status/type
+// labels on a language switch.
 export function LetterListCard({ letter, action }: { letter: Letter; action: boolean }) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const meta = letterStatusMeta(letter);
@@ -41,7 +44,7 @@ export function LetterListCard({ letter, action }: { letter: Letter; action: boo
 
       {action && (
         <View style={styles.actionTag}>
-          <Text style={styles.actionTagText}>Sizning imzoyingiz kutilmoqda</Text>
+          <Text style={styles.actionTagText}>{t('letters.actionPending')}</Text>
         </View>
       )}
     </TouchableOpacity>

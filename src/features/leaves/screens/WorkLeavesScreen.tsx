@@ -7,6 +7,8 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import dayjs from 'dayjs';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
@@ -14,6 +16,7 @@ import { Icon } from '@/components/Icon';
 import { LoadingView, EmptyState } from '@/components/StateViews';
 import { WorkLeave } from '@/types';
 import { myLeavesQuery, assignedLeavesQuery } from '../api/queries';
+import { leaveTypeLabel } from '../components/LeaveTypeSheet';
 
 type StatusFilter = 'all' | 'pending' | 'approved' | 'rejected';
 
@@ -21,30 +24,33 @@ function isPendingStatus(s: string) { return s === 'pending' || s === 'yuborildi
 function isApprovedStatus(s: string) { return s === 'approved' || s === 'tasdiqlangan' || s === 'signed'; }
 function isRejectedStatus(s: string) { return s === 'rejected' || s === 'rad_etilgan'; }
 
-function statusMeta(status: string, c: ThemeColors) {
-  if (isApprovedStatus(status)) return { label: 'Tasdiqlangan', fg: c.success, bg: c.successSoft };
-  if (isRejectedStatus(status)) return { label: 'Rad etildi', fg: c.error, bg: c.errorSoft };
-  return { label: 'Kutilmoqda', fg: c.warning, bg: c.warningSoft };
+function statusMeta(status: string, c: ThemeColors, t: TFunction) {
+  if (isApprovedStatus(status)) return { label: t('leaves.statusApproved'), fg: c.success, bg: c.successSoft };
+  if (isRejectedStatus(status)) return { label: t('leaves.statusRejected'), fg: c.error, bg: c.errorSoft };
+  return { label: t('leaves.statusPending'), fg: c.warning, bg: c.warningSoft };
 }
 
-const MY_FILTERS: { key: StatusFilter; label: string }[] = [
-  { key: 'all', label: 'Barchasi' },
-  { key: 'pending', label: 'Kutilmoqda' },
-  { key: 'approved', label: 'Tasdiqlangan' },
-  { key: 'rejected', label: 'Rad etildi' },
+// Filter tabs carry a translation key; the label text is resolved at render so
+// it switches with the app language.
+const MY_FILTERS: { key: StatusFilter; labelKey: string }[] = [
+  { key: 'all', labelKey: 'common.all' },
+  { key: 'pending', labelKey: 'leaves.statusPending' },
+  { key: 'approved', labelKey: 'leaves.statusApproved' },
+  { key: 'rejected', labelKey: 'leaves.statusRejected' },
 ];
 
-const INCOMING_FILTERS: { key: 'all' | 'action' | 'approved' | 'rejected'; label: string }[] = [
-  { key: 'all', label: 'Barchasi' },
-  { key: 'action', label: 'Kutilmoqda' },
-  { key: 'approved', label: 'Tasdiqlangan' },
-  { key: 'rejected', label: 'Rad etildi' },
+const INCOMING_FILTERS: { key: 'all' | 'action' | 'approved' | 'rejected'; labelKey: string }[] = [
+  { key: 'all', labelKey: 'common.all' },
+  { key: 'action', labelKey: 'leaves.statusPending' },
+  { key: 'approved', labelKey: 'leaves.statusApproved' },
+  { key: 'rejected', labelKey: 'leaves.statusRejected' },
 ];
 
 function LeaveCard({ leave, showEmployee, actionNeeded, styles, colors }: {
   leave: WorkLeave; showEmployee?: boolean; actionNeeded?: boolean; styles: any; colors: ThemeColors;
 }) {
-  const st = statusMeta(leave.status, colors);
+  const { t } = useTranslation();
+  const st = statusMeta(leave.status, colors, t);
   const sameDay = dayjs(leave.start_date).format('DD.MM.YYYY') === dayjs(leave.end_date).format('DD.MM.YYYY');
   return (
     <TouchableOpacity
@@ -54,7 +60,7 @@ function LeaveCard({ leave, showEmployee, actionNeeded, styles, colors }: {
     >
       {actionNeeded && (
         <View style={styles.actionBadgeRow}>
-          <View style={styles.actionBadge}><Text style={styles.actionBadgeText}>Tasdiqlash kerak</Text></View>
+          <View style={styles.actionBadge}><Text style={styles.actionBadgeText}>{t('leaves.actionNeeded')}</Text></View>
         </View>
       )}
       {showEmployee && leave.employee && (
@@ -70,7 +76,7 @@ function LeaveCard({ leave, showEmployee, actionNeeded, styles, colors }: {
         </View>
       )}
       <View style={styles.cardTop}>
-        <Text style={styles.categoryName} numberOfLines={1}>{leave.type ?? "So'rov"}</Text>
+        <Text style={styles.categoryName} numberOfLines={1}>{leave.type ? leaveTypeLabel(t, leave.type) : t('leaves.typeFallback')}</Text>
         <View style={[styles.badge, { backgroundColor: st.bg }]}>
           <Text style={[styles.badgeText, { color: st.fg }]}>{st.label}</Text>
         </View>
@@ -88,7 +94,7 @@ function LeaveCard({ leave, showEmployee, actionNeeded, styles, colors }: {
         )}
       </View>
       {leave.description ? <Text style={styles.comment} numberOfLines={2}>{leave.description}</Text> : null}
-      {leave.created_at ? <Text style={styles.createdAt}>Yuborilgan: {dayjs(leave.created_at).format('DD.MM.YYYY HH:mm')}</Text> : null}
+      {leave.created_at ? <Text style={styles.createdAt}>{t('leaves.createdAtPrefix', { date: dayjs(leave.created_at).format('DD.MM.YYYY HH:mm') })}</Text> : null}
     </TouchableOpacity>
   );
 }
@@ -99,6 +105,7 @@ export default function WorkLeavesScreen() {
   const employeeId = employee?.id;
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const { t } = useTranslation();
   const isSupervisor = !employee?.supervisor;
 
   const [myFilter, setMyFilter] = useState<StatusFilter>('all');
@@ -160,7 +167,7 @@ export default function WorkLeavesScreen() {
           <Text style={styles.backArrow}>{'<'}</Text>
         </TouchableOpacity>
         <View style={styles.headerTitleRow}>
-          <Text style={styles.headerTitle}>{isSupervisor ? "Kiruvchi so'rovlar" : "So'rovlar"}</Text>
+          <Text style={styles.headerTitle}>{isSupervisor ? t('leaves.incomingTitle') : t('leaves.myTitle')}</Text>
           {isSupervisor && pendingCount > 0 && (
             <View style={styles.countBadge}><Text style={styles.countBadgeText}>{pendingCount}</Text></View>
           )}
@@ -184,7 +191,7 @@ export default function WorkLeavesScreen() {
                 activeOpacity={0.7}
               >
                 <Text style={[styles.filterTabText, active && styles.filterTabTextActive]}>
-                  {f.label}{isSupervisor && f.key === 'action' && pendingCount > 0 ? ` (${pendingCount})` : ''}
+                  {t(f.labelKey)}{isSupervisor && f.key === 'action' && pendingCount > 0 ? ` (${pendingCount})` : ''}
                 </Text>
               </TouchableOpacity>
             );
@@ -205,7 +212,7 @@ export default function WorkLeavesScreen() {
               filteredIncoming.length === 0 ? (
                 <EmptyState
                   icon="checklist"
-                  title={incomingFilter === 'action' ? "Kutilayotgan so'rovlar yo'q" : "So'rovlar yo'q"}
+                  title={incomingFilter === 'action' ? t('leaves.emptyPending') : t('leaves.emptyLeaves')}
                 />
               ) : (
                 filteredIncoming.map((leave) => {
@@ -216,7 +223,7 @@ export default function WorkLeavesScreen() {
               )
             ) : (
               filteredMyLeaves.length === 0 ? (
-                <EmptyState icon="checklist" title="So'rovlar yo'q" />
+                <EmptyState icon="checklist" title={t('leaves.emptyLeaves')} />
               ) : (
                 filteredMyLeaves.map((leave) => <LeaveCard key={leave.id} leave={leave} styles={styles} colors={colors} />)
               )

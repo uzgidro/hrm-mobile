@@ -4,18 +4,22 @@
 import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity } from 'react-native';
 import dayjs, { Dayjs } from 'dayjs';
+import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 import type { ThemeColors } from '../theme/palettes';
 import { Icon } from './Icon';
+import { monthName, weekdayNameShort } from '@/i18n/dates';
 
-const MONTHS_UZ = ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 'Iyul', 'Avgust', 'Sentyabr', 'Oktyabr', 'Noyabr', 'Dekabr'];
-const DAYS_SHORT = ['Du', 'Se', 'Ch', 'Pa', 'Ju', 'Sh', 'Ya'];
+// Monday-first weekday header. dayjs day() indexes Sunday=0..Saturday=6, and the
+// calendar grid below is Monday-first, so order the localized short names to match.
+const WEEK_DAY_INDEXES = [1, 2, 3, 4, 5, 6, 0];
 
 export function DateTimePickerModal({
   visible, value, title, onConfirm, onClose,
 }: { visible: boolean; value?: string | null; title: string; onConfirm: (iso: string) => void; onClose: () => void }) {
   const dp = useThemedStyles(makeDp);
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const init = value ? dayjs(value) : dayjs();
   const [tab, setTab] = useState<'date' | 'time'>('date');
   const [month, setMonth] = useState<Dayjs>(init.startOf('month'));
@@ -43,10 +47,10 @@ export function DateTimePickerModal({
       <View style={dp.overlay}>
         <View style={dp.sheet}>
           <View style={dp.header}>
-            <TouchableOpacity onPress={onClose}><Text style={dp.cancelText}>Bekor</Text></TouchableOpacity>
+            <TouchableOpacity onPress={onClose}><Text style={dp.cancelText}>{t('common.cancel')}</Text></TouchableOpacity>
             <Text style={dp.title}>{title}</Text>
             <TouchableOpacity onPress={() => { onConfirm(selected.second(0).toISOString()); onClose(); }}>
-              <Text style={dp.confirmText}>Tayyor</Text>
+              <Text style={dp.confirmText}>{t('common.done')}</Text>
             </TouchableOpacity>
           </View>
 
@@ -65,10 +69,10 @@ export function DateTimePickerModal({
             <View style={dp.calWrap}>
               <View style={dp.monthNav}>
                 <TouchableOpacity onPress={() => setMonth(month.subtract(1, 'month'))} style={dp.navBtn}><Icon name="chevronLeft" size={20} color={colors.text} /></TouchableOpacity>
-                <Text style={dp.monthLabel}>{MONTHS_UZ[month.month()]} {month.year()}</Text>
+                <Text style={dp.monthLabel}>{monthName(month.month())} {month.year()}</Text>
                 <TouchableOpacity onPress={() => setMonth(month.add(1, 'month'))} style={dp.navBtn}><Icon name="chevronRight" size={20} color={colors.text} /></TouchableOpacity>
               </View>
-              <View style={dp.weekRow}>{DAYS_SHORT.map((d) => <Text key={d} style={dp.weekDay}>{d}</Text>)}</View>
+              <View style={dp.weekRow}>{WEEK_DAY_INDEXES.map((d) => <Text key={d} style={dp.weekDay}>{weekdayNameShort(d)}</Text>)}</View>
               <View style={dp.grid}>
                 {cells.map((day, i) => {
                   if (!day) return <View key={`e-${i}`} style={dp.cell} />;
@@ -95,14 +99,14 @@ export function DateTimePickerModal({
                   <TouchableOpacity style={dp.timeBtn} onPress={() => changeHour(1)}><Icon name="arrowUp" size={20} color={colors.primary} /></TouchableOpacity>
                   <Text style={dp.timeVal}>{String(selected.hour()).padStart(2, '0')}</Text>
                   <TouchableOpacity style={dp.timeBtn} onPress={() => changeHour(-1)}><Icon name="arrowDown" size={20} color={colors.primary} /></TouchableOpacity>
-                  <Text style={dp.timeUnit}>soat</Text>
+                  <Text style={dp.timeUnit}>{t('components.hourUnit')}</Text>
                 </View>
                 <Text style={dp.timeSep}>:</Text>
                 <View style={dp.timeCol}>
                   <TouchableOpacity style={dp.timeBtn} onPress={() => changeMinute(5)}><Icon name="arrowUp" size={20} color={colors.primary} /></TouchableOpacity>
                   <Text style={dp.timeVal}>{String(selected.minute()).padStart(2, '0')}</Text>
                   <TouchableOpacity style={dp.timeBtn} onPress={() => changeMinute(-5)}><Icon name="arrowDown" size={20} color={colors.primary} /></TouchableOpacity>
-                  <Text style={dp.timeUnit}>daqiqa</Text>
+                  <Text style={dp.timeUnit}>{t('components.minuteUnit')}</Text>
                 </View>
               </View>
               <View style={dp.quickMins}>

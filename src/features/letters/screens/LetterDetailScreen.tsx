@@ -3,6 +3,7 @@ import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-nati
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import dayjs from 'dayjs';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
@@ -17,6 +18,7 @@ import { DetailHeader, Section, KV, SignerRow } from '../components/DetailParts'
 import { LetterActionBar } from '../components/LetterActionBar';
 
 export default function LetterDetailScreen() {
+  const { t } = useTranslation();
   const { id } = useLocalSearchParams<{ id: string }>();
   const letterId = Number(id);
   const { user } = useAuthStore();
@@ -54,7 +56,7 @@ export default function LetterDetailScreen() {
           <Text style={styles.bigTitle}>
             {letterTypeLabel(letter.letter_type)}{letter.letter_number ? `  №${letter.letter_number}` : ''}
           </Text>
-          {!!letter.letter_date && <Text style={styles.subMeta}>Sana: {dayjs(letter.letter_date).format('DD.MM.YYYY')}</Text>}
+          {!!letter.letter_date && <Text style={styles.subMeta}>{t('letters.fieldDate')}: {dayjs(letter.letter_date).format('DD.MM.YYYY')}</Text>}
           {hasDoc && (
             <TouchableOpacity
               style={styles.docBtn}
@@ -62,31 +64,31 @@ export default function LetterDetailScreen() {
               onPress={() => router.push({ pathname: '/letter-document', params: { id: String(letterId) } })}
             >
               <Icon name="doc" size={16} color={colors.primary} />
-              <Text style={styles.docBtnText}>Hujjatni ochish</Text>
+              <Text style={styles.docBtnText}>{t('letters.openDocument')}</Text>
             </TouchableOpacity>
           )}
         </View>
 
         {!!letter.description && (
-          <Section title="Mazmuni"><Text style={styles.bodyText}>{letter.description}</Text></Section>
+          <Section title={t('letters.sectionContent')}><Text style={styles.bodyText}>{letter.description}</Text></Section>
         )}
 
-        <Section title="Ma'lumot">
+        <Section title={t('letters.sectionInfo')}>
           {!!(letter.employee?.legal_name || letter.submitter?.legal_name) &&
-            <KV k="Muallif" v={(letter.employee?.legal_name || letter.submitter?.legal_name)!} />}
-          {!!letter.departure_date && <KV k="Ketish" v={dayjs(letter.departure_date).format('DD.MM.YYYY')} />}
-          {!!letter.arrival_date && <KV k="Qaytish" v={dayjs(letter.arrival_date).format('DD.MM.YYYY')} />}
+            <KV k={t('letters.fieldAuthor')} v={(letter.employee?.legal_name || letter.submitter?.legal_name)!} />}
+          {!!letter.departure_date && <KV k={t('letters.fieldDeparture')} v={dayjs(letter.departure_date).format('DD.MM.YYYY')} />}
+          {!!letter.arrival_date && <KV k={t('letters.fieldReturn')} v={dayjs(letter.arrival_date).format('DD.MM.YYYY')} />}
         </Section>
 
         {timeline.length > 0 && (
-          <Section title="Imzolovchilar">
-            {timeline.map((t) => <SignerRow key={t.key} item={t} />)}
+          <Section title={t('letters.sectionSigners')}>
+            {timeline.map((entry) => <SignerRow key={entry.key} item={entry} />)}
           </Section>
         )}
 
         {!!letter.rejection_reason && (
           <View style={styles.rejectCard}>
-            <Text style={styles.rejectTitle}>Rad etish sababi</Text>
+            <Text style={styles.rejectTitle}>{t('letters.rejectionReason')}</Text>
             <Text style={styles.rejectText}>{letter.rejection_reason}</Text>
           </View>
         )}

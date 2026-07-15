@@ -3,6 +3,11 @@ export const AUTH_LOGIN = 'auth/login';
 export const AUTH_REFRESH = 'auth/refresh';
 export const USER_INFO = 'auth/me';
 
+// OneID (YaIT) SSO — mobile flow. SSO_LOGIN is opened in the system browser
+// (not called via apiClient); SSO_EXCHANGE trades the one-time code for tokens.
+export const SSO_LOGIN = 'sso/login';
+export const SSO_EXCHANGE = 'sso/exchange';
+
 // Employee
 export const EMPLOYEE_DETAIL = (id: number) => `employees/${id}`;
 export const EMPLOYEE_ATTENDANCE_CALENDAR = (id: number) => `employees/${id}/attendance-calendar`;
@@ -82,6 +87,16 @@ export const ORDER_ACT_DECREE_FORWARD = (id: number) => `order-acts/${id}/decree
 export const ORDER_ACT_DECREE_REGISTER = (id: number) => `order-acts/${id}/decree/register`;
 export const ORDER_ACT_DECREE_ACKNOWLEDGE = (id: number) => `order-acts/${id}/decree/acknowledge`;
 export const ORDER_ACT_EDITOR_CONFIG = (id: number) => `order-acts/${id}/editor-config`;
+
+// Documents (Hujjatlar) — files/folders storage, view-only on mobile.
+// Folders are flat (no nesting) and embed their files[] inline. Root (folder-
+// less) files are fetched with ?folder_id=0. File bytes are reachable ONLY via
+// the JWT-signed OnlyOffice editor-config (there is no raw-download endpoint);
+// the config route ignores any `mode` param and decides view/edit server-side
+// (a plain viewer always gets mode:'view').
+export const FOLDERS_LIST = 'folders';
+export const FILES_LIST = 'files';
+export const FILE_EDITOR_CONFIG = (id: number) => `files/${id}/editor-config`;
 
 // OnlyOffice document server (public host that serves the editor api.js)
 import { Env } from '../config/env';

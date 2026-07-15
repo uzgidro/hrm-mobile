@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
@@ -23,6 +24,7 @@ import {
 } from '../api/mutations';
 
 export default function LoyihaFormScreen() {
+  const { t } = useTranslation();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const isEdit = !!id;
   const wsId = Number(id);
@@ -78,7 +80,7 @@ export default function LoyihaFormScreen() {
     setMemberIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
   const save = async () => {
-    if (!name.trim()) { setError('Loyiha nomi kiritilishi shart'); return; }
+    if (!name.trim()) { setError(t('projects.nameRequired')); return; }
     setLoading(true);
     const payload = { name: name.trim(), description: description.trim() };
     try {
@@ -102,7 +104,7 @@ export default function LoyihaFormScreen() {
       qc.invalidateQueries({ queryKey: projectKeys.all });
       router.back();
     } catch (e) {
-      Alert.alert('Xatolik', getApiErrorMessage(e, 'Saqlashda xatolik yuz berdi'));
+      Alert.alert(t('projects.errorTitle'), getApiErrorMessage(e, t('errors.saveFailed')));
     } finally {
       setLoading(false);
     }
@@ -112,20 +114,20 @@ export default function LoyihaFormScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScreenHeader title={isEdit ? 'Loyihani tahrirlash' : 'Yangi loyiha'} />
+      <ScreenHeader title={isEdit ? t('projects.editTitle') : t('projects.createTitle')} />
       {hydrating ? (
         <LoadingView />
       ) : (
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-          <FormInput label="Loyiha nomi" value={name} onChangeText={(t) => { setName(t); setError(''); }} placeholder="Masalan: 2026 rejasi" required error={error} />
-          <FormInput label="Tavsif" value={description} onChangeText={setDescription} placeholder="Loyiha haqida qisqacha..." multiline />
+          <FormInput label={t('projects.nameLabel')} value={name} onChangeText={(v) => { setName(v); setError(''); }} placeholder={t('projects.namePlaceholder')} required error={error} />
+          <FormInput label={t('projects.descLabel')} value={description} onChangeText={setDescription} placeholder={t('projects.descPlaceholder')} multiline />
 
           {/* Loyiha a'zolari */}
-          <Text style={styles.label}>Loyiha a'zolari</Text>
+          <Text style={styles.label}>{t('projects.membersLabel')}</Text>
           <TouchableOpacity style={styles.memberPick} onPress={() => setPickerOpen(true)} activeOpacity={0.8}>
             <Icon name="users" size={18} color={colors.primary} />
             <Text style={styles.memberPickText}>
-              {memberIds.length > 0 ? `${memberIds.length} ta xodim tanlandi` : 'Xodimlarni tanlang...'}
+              {memberIds.length > 0 ? t('projects.membersSelected', { count: memberIds.length }) : t('projects.membersPlaceholder')}
             </Text>
             <Icon name="chevronRight" size={18} color={colors.textMuted} />
           </TouchableOpacity>
@@ -149,13 +151,13 @@ export default function LoyihaFormScreen() {
               ))}
             </View>
           )}
-          <Text style={styles.hint}>A'zolar loyiha vazifalarini ko'rishlari va ularda ishtirok etishlari mumkin.</Text>
+          <Text style={styles.hint}>{t('projects.membersHint')}</Text>
 
           <TouchableOpacity style={[styles.saveBtn, loading && { opacity: 0.6 }]} onPress={save} disabled={loading} activeOpacity={0.85}>
             {loading ? <ActivityIndicator color={colors.onPrimary} /> : (
               <>
                 <Icon name="check" size={18} color={colors.onPrimary} />
-                <Text style={styles.saveText}>Saqlash</Text>
+                <Text style={styles.saveText}>{t('common.save')}</Text>
               </>
             )}
           </TouchableOpacity>
@@ -165,7 +167,7 @@ export default function LoyihaFormScreen() {
 
       <PickerModal
         visible={pickerOpen}
-        title="Loyiha a'zolari"
+        title={t('projects.membersLabel')}
         multiple
         selected={memberIds}
         options={employees.map((e) => ({

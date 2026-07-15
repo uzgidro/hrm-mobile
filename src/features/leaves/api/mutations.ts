@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
-import { WORK_LEAVES, WORK_LEAVE_SIGN, WORK_LEAVE_REJECT } from '@/api/urls';
+import { WORK_LEAVES, WORK_LEAVE_SIGN, WORK_LEAVE_REJECT, WORK_LEAVE_DETAIL } from '@/api/urls';
 import { leaveKeys } from './queries';
 
 export interface CreateLeavePayload {
@@ -24,6 +24,10 @@ export function rejectLeave(id: number, reason: string): Promise<unknown> {
 
 export function createLeave(payload: CreateLeavePayload): Promise<unknown> {
   return apiClient.post(WORK_LEAVES, payload).then((r) => r.data);
+}
+
+export function deleteLeave(id: number): Promise<unknown> {
+  return apiClient.delete(WORK_LEAVE_DETAIL(id)).then((r) => r.data);
 }
 
 // ── Mutation hooks ──────────────────────────────────────────────────────────
@@ -51,6 +55,14 @@ export function useCreateLeave() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: createLeave,
+    onSuccess: () => qc.invalidateQueries({ queryKey: leaveKeys.all }),
+  });
+}
+
+export function useDeleteLeave(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => deleteLeave(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: leaveKeys.all }),
   });
 }

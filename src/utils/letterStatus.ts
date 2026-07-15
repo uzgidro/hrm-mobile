@@ -1,21 +1,30 @@
-import type { ThemeColors } from '../theme/palettes';
+import i18n from '../i18n';
 import type { Letter, LetterSigner } from '../types';
 import type { StatusKind } from './orderStatus';
 import { statusColor } from './orderStatus';
 
 export { statusColor };
 
+// i18n note (same trade-off as orderStatus.ts): the letter-type CODES (the
+// Record keys: 'bildirgi', 'application', 'business_trip', …) are contract
+// identifiers and are NOT translated. Only the displayed labels are localized.
+// The map holds `labelKey`s (dotted paths into the `status` namespace) and the
+// concrete label is resolved via i18n.t() at call time so it follows the
+// current language. Several distinct codes ('bildirgi'/'explanatory'/…) map to
+// the same label key — that mirrors the original 1:many code→label mapping.
 export const LETTER_TYPE_LABELS: Record<string, string> = {
-  bildirgi: 'Bildirgi',
-  explanotary: 'Bildirgi',
-  explanatory: 'Bildirgi',
-  notification: 'Bildirgi',
-  application: 'Ariza',
-  business_trip: 'Xizmat safari',
+  bildirgi: 'status.letterTypeNotification',
+  explanotary: 'status.letterTypeNotification',
+  explanatory: 'status.letterTypeNotification',
+  notification: 'status.letterTypeNotification',
+  application: 'status.letterTypeApplication',
+  business_trip: 'status.letterTypeBusinessTrip',
 };
 
 export function letterTypeLabel(type?: string): string {
-  return LETTER_TYPE_LABELS[type ?? ''] || type || 'Xat';
+  const key = LETTER_TYPE_LABELS[type ?? ''];
+  if (key) return i18n.t(key);
+  return type || i18n.t('status.letterTypeDefault');
 }
 
 export function normalizeLetterType(type?: string): string {
@@ -112,37 +121,44 @@ export function getSigningTimeline(l: Letter): TimelineItem[] {
   const isAriza = isApplication(l);
   const isTrip = isBusinessTrip(l);
 
-  const push = (s: LetterSigner, fallbackRole: string, signedText: string) => {
+  // Roles and status texts are resolved through i18n.t() at call time so the
+  // timeline follows the current language (see the trade-off note above).
+  const push = (s: LetterSigner, fallbackRoleKey: string, signedTextKey: string) => {
     const id = sid(s);
     const signed = hasSigned(l, id);
     const rejected = hasRejected(l, id);
     items.push({
       key: `${s.signer_type}-${s.employee_id}`,
-      name: s.employee?.legal_name || "Noma'lum",
-      role: (typeof s.employee?.job_position === 'object' ? s.employee?.job_position?.name : '') || fallbackRole,
+      name: s.employee?.legal_name || i18n.t('status.unknown'),
+      role: (typeof s.employee?.job_position === 'object' ? s.employee?.job_position?.name : '') || i18n.t(fallbackRoleKey),
       status: signed ? 'signed' : rejected ? 'rejected' : 'pending',
-      statusText: signed ? signedText : rejected ? 'Rad etdi' : 'Kutilmoqda',
+      statusText: signed ? i18n.t(signedTextKey) : rejected ? i18n.t('status.timelineRejected') : i18n.t('status.timelinePending'),
     });
   };
 
   if (isTrip) {
-    getManagementSigners(l).forEach((s) => push(s, 'Rahbariyat', 'Tasdiqladi'));
+    getManagementSigners(l).forEach((s) => push(s, 'status.roleLeadership', 'status.timelineApproved'));
     const main = getMainSigner(l);
-    if (main) push(main, "Boshlig'i", 'Imzoladi');
+    if (main) push(main, 'status.roleChief', 'status.timelineSigned');
     return items;
   }
 
-  getOrdinarySigners(l).forEach((s) => push(s, 'Kelishuvchi', isAriza ? 'Imzoladi' : 'Roziman'));
+  getOrdinarySigners(l).forEach((s) =>
+    push(s, 'status.roleCoordinator', isAriza ? 'status.timelineSigned' : 'status.timelineAgreed'),
+  );
   const main = getMainSigner(l);
-  if (main) push(main, 'Imzolovchi', 'Imzoladi');
+  if (main) push(main, 'status.roleSigner', 'status.timelineSigned');
   return items;
 }
 
+// i18n note: labels resolved via i18n.t() at call time; the letter status
+// CODES compared against ('registered', 'review', 'management_review', …) are
+// backend contract identifiers and are NOT translated.
 export function letterStatusMeta(l: Letter): { label: string; kind: StatusKind } {
-  if (isLetterRejected(l)) return { label: 'Rad etildi', kind: 'error' };
-  if (l.is_stamped || l.status === 'registered' || l.status === 'stamped') return { label: "Ro'yxatga olingan", kind: 'success' };
-  if (isLetterSigned(l)) return { label: 'Imzolangan', kind: 'success' };
-  if (l.status === 'review') return { label: 'Devonxonada', kind: 'info' };
-  if (l.status === 'management_review') return { label: 'Rahbariyatda', kind: 'pending' };
-  return { label: 'Kutilmoqda', kind: 'pending' };
+  if (isLetterRejected(l)) return { label: i18n.t('status.letterRejected'), kind: 'error' };
+  if (l.is_stamped || l.status === 'registered' || l.status === 'stamped') return { label: i18n.t('status.letterRegistered'), kind: 'success' };
+  if (isLetterSigned(l)) return { label: i18n.t('status.letterSignedStatus'), kind: 'success' };
+  if (l.status === 'review') return { label: i18n.t('status.letterInChancellery'), kind: 'info' };
+  if (l.status === 'management_review') return { label: i18n.t('status.letterInLeadership'), kind: 'pending' };
+  return { label: i18n.t('status.letterPending'), kind: 'pending' };
 }

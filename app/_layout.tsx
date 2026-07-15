@@ -5,6 +5,8 @@ import { Stack, router, type Href } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { I18nextProvider } from 'react-i18next';
+import i18n from '../src/i18n';
 import { useAuthStore } from '../src/store/authStore';
 import { useLockStore } from '../src/store/lockStore';
 import { createAppQueryClient } from '../src/lib/queryClient';
@@ -15,6 +17,7 @@ import { useAppLock } from '../src/auth/useAppLock';
 import { checkAppUpdateOnLaunch } from '../src/services/appUpdates';
 import { RootErrorBoundary } from '../src/components/RootErrorBoundary';
 import { ToastHost } from '../src/components/ToastHost';
+import { ConfirmHost } from '../src/components/ConfirmHost';
 import LockOverlay from '../src/features/security/components/LockOverlay';
 
 const queryClient = createAppQueryClient();
@@ -107,11 +110,16 @@ function ThemedNavigation() {
           <Stack.Screen name="mehmon-form" options={{ animation: 'slide_from_bottom' }} />
           <Stack.Screen name="loyihalar" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="loyiha-detail" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="hujjatlar" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="hujjat-viewer" options={{ animation: 'slide_from_bottom' }} />
           <Stack.Screen name="loyiha-form" options={{ animation: 'slide_from_bottom' }} />
           <Stack.Screen name="change-pin" options={{ animation: 'slide_from_right' }} />
         </Stack.Protected>
       </Stack>
       <ToastHost />
+      {/* Global confirm dialogs (logout, delete, reject, update) rendered once
+          here so imperative confirm() works from hooks and services too. */}
+      <ConfirmHost />
       {/* Above everything (incl. toasts): the PIN gate covers the whole app. */}
       {lockVisible && <LockOverlay />}
     </>
@@ -121,13 +129,15 @@ function ThemedNavigation() {
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
-      <ThemeProvider>
-        <RootErrorBoundary>
-          <QueryClientProvider client={queryClient}>
-            <ThemedNavigation />
-          </QueryClientProvider>
-        </RootErrorBoundary>
-      </ThemeProvider>
+      <I18nextProvider i18n={i18n}>
+        <ThemeProvider>
+          <RootErrorBoundary>
+            <QueryClientProvider client={queryClient}>
+              <ThemedNavigation />
+            </QueryClientProvider>
+          </RootErrorBoundary>
+        </ThemeProvider>
+      </I18nextProvider>
     </SafeAreaProvider>
   );
 }

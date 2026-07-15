@@ -5,6 +5,7 @@ import { renderWithProviders, fireEvent, waitFor, act } from '@/test/renderWithP
 import { useLockStore } from '@/store/lockStore';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/lib/toast';
+import i18n from '@/i18n';
 import ChangePinScreen from '../ChangePinScreen';
 
 // The screen only uses `router.back` from expo-router; mock it so the test
@@ -51,7 +52,7 @@ describe('ChangePinScreen', () => {
 
     await enterPin(getByTestId, '9999');
 
-    await waitFor(() => expect(getByText('Yangi PIN kod kiriting')).toBeTruthy());
+    await waitFor(() => expect(getByText(i18n.t('security.changeNewTitle'))).toBeTruthy());
     expect(verifyCurrentPin).toHaveBeenCalledWith('9999');
   });
 
@@ -62,10 +63,10 @@ describe('ChangePinScreen', () => {
     await enterPin(getByTestId, '0000');
 
     await waitFor(() =>
-      expect(getByText("Noto'g'ri PIN kod. 3 ta urinish qoldi.")).toBeTruthy()
+      expect(getByText(i18n.t('security.attemptsLeft', { count: 3 }))).toBeTruthy()
     );
     // Still on the current step.
-    expect(getByText('Joriy PIN kodni kiriting')).toBeTruthy();
+    expect(getByText(i18n.t('security.changeCurrentTitle'))).toBeTruthy();
   });
 
   it('walks the full happy path: current → new → confirm → setupPin + toast + back', async () => {
@@ -73,17 +74,17 @@ describe('ChangePinScreen', () => {
 
     // current
     await enterPin(getByTestId, '1111');
-    await waitFor(() => expect(getByText('Yangi PIN kod kiriting')).toBeTruthy());
+    await waitFor(() => expect(getByText(i18n.t('security.changeNewTitle'))).toBeTruthy());
 
     // new
     await enterPin(getByTestId, '1234');
-    await waitFor(() => expect(getByText('Yangi PIN kodni tasdiqlang')).toBeTruthy());
+    await waitFor(() => expect(getByText(i18n.t('security.changeConfirmTitle'))).toBeTruthy());
 
     // confirm (matching)
     await enterPin(getByTestId, '1234');
 
     await waitFor(() => expect(setupPin).toHaveBeenCalledWith('1234'));
-    expect(mockToastSuccess).toHaveBeenCalledWith("PIN kod o'zgartirildi");
+    expect(mockToastSuccess).toHaveBeenCalledWith(i18n.t('security.changeSuccess'));
     expect(mockRouterBack).toHaveBeenCalledTimes(1);
   });
 
@@ -91,19 +92,19 @@ describe('ChangePinScreen', () => {
     const { getByTestId, getByText } = await renderWithProviders(<ChangePinScreen />);
 
     await enterPin(getByTestId, '1111');
-    await waitFor(() => expect(getByText('Yangi PIN kod kiriting')).toBeTruthy());
+    await waitFor(() => expect(getByText(i18n.t('security.changeNewTitle'))).toBeTruthy());
 
     await enterPin(getByTestId, '1234');
-    await waitFor(() => expect(getByText('Yangi PIN kodni tasdiqlang')).toBeTruthy());
+    await waitFor(() => expect(getByText(i18n.t('security.changeConfirmTitle'))).toBeTruthy());
 
     // confirm with a different PIN
     await enterPin(getByTestId, '5678');
 
     await waitFor(() =>
-      expect(getByText("PIN kodlar mos kelmadi. Qaytadan urinib ko'ring.")).toBeTruthy()
+      expect(getByText(i18n.t('security.mismatch'))).toBeTruthy()
     );
     // Back on the "new" step.
-    expect(getByText('Yangi PIN kod kiriting')).toBeTruthy();
+    expect(getByText(i18n.t('security.changeNewTitle'))).toBeTruthy();
     expect(setupPin).not.toHaveBeenCalled();
   });
 
@@ -116,8 +117,8 @@ describe('ChangePinScreen', () => {
 
     await waitFor(() => expect(alertSpy).toHaveBeenCalledTimes(1));
     const [title, message, buttons] = alertSpy.mock.calls[0];
-    expect(title).toBe('Urinishlar soni tugadi');
-    expect(message).toBe('Xavfsizlik maqsadida tizimdan chiqarildingiz. Qaytadan kiring.');
+    expect(title).toBe(i18n.t('security.forceLogoutTitle'));
+    expect(message).toBe(i18n.t('security.forceLogoutMessage'));
 
     // Invoke the OK button's handler and assert the wipe-then-logout sequence.
     const okButton = (buttons as { text: string; onPress?: () => void }[])[0];

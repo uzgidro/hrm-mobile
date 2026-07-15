@@ -5,6 +5,7 @@ import {
   RefreshControl, Image, FlatList,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';
 import dayjs from 'dayjs';
 import { useAuthStore } from '@/store/authStore';
@@ -15,6 +16,7 @@ import { LoadingView, EmptyState } from '@/components/StateViews';
 import { visitorsListQuery } from '../api/queries';
 
 export default function MehmonlarScreen() {
+  const { t } = useTranslation();
   const { user } = useAuthStore();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -39,7 +41,7 @@ export default function MehmonlarScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.title}>Mehmonlar</Text>
+        <Text style={styles.title}>{t('visitors.listTitle')}</Text>
         {visitors.length > 0 && <Text style={styles.count}>{visitors.length}</Text>}
         <View style={{ flex: 1 }} />
         <TouchableOpacity style={styles.addBtn} onPress={() => router.push('/mehmon-form')} activeOpacity={0.85}>
@@ -51,7 +53,7 @@ export default function MehmonlarScreen() {
         <Icon name="search" size={18} color={colors.textMuted} />
         <TextInput
           style={styles.searchInput}
-          placeholder="Ism, tashkilot yoki qabul qiluvchi..."
+          placeholder={t('visitors.searchPlaceholder')}
           placeholderTextColor={colors.textMuted}
           value={search}
           onChangeText={setSearch}
@@ -88,7 +90,7 @@ export default function MehmonlarScreen() {
                   </View>
                 )}
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.name} numberOfLines={1}>{item.legal_name || 'Mehmon'}</Text>
+                  <Text style={styles.name} numberOfLines={1}>{item.legal_name || t('visitors.nameFallback')}</Text>
                   {!!(item.organization_name || item.job_position) && (
                     <Text style={styles.sub} numberOfLines={1}>
                       {[item.organization_name, item.job_position].filter(Boolean).join(' · ')}
@@ -104,7 +106,7 @@ export default function MehmonlarScreen() {
                 <View style={styles.right}>
                   <View style={[styles.badge, { backgroundColor: active ? colors.successSoft : colors.errorSoft }]}>
                     <Text style={[styles.badgeText, { color: active ? colors.success : colors.error }]}>
-                      {active ? 'Aktiv' : 'Nofaol'}
+                      {active ? t('visitors.statusActive') : t('visitors.statusInactive')}
                     </Text>
                   </View>
                   {!!item.valid_until && (
@@ -115,7 +117,7 @@ export default function MehmonlarScreen() {
             );
           }}
           ListEmptyComponent={
-            <EmptyState icon="guest" title={search ? 'Hech narsa topilmadi' : "Mehmonlar yo'q"} />
+            <EmptyState icon="guest" title={search ? t('visitors.emptySearch') : t('visitors.emptyList')} />
           }
         />
       )}

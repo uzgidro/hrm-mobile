@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
@@ -12,6 +13,7 @@ import { ScreenHeader, HeaderAction } from '@/components/ScreenHeader';
 import { Icon, IconName } from '@/components/Icon';
 import { LoadingView } from '@/components/StateViews';
 import { getApiErrorMessage } from '@/api/errors';
+import { confirm } from '@/lib/confirm';
 import { visitorDetailQuery } from '../api/queries';
 import { useDeleteVisitor } from '../api/mutations';
 
@@ -31,6 +33,7 @@ function Row({ icon, label, value, styles, colors }: {
 }
 
 export default function MehmonDetailScreen() {
+  const { t } = useTranslation();
   const { id } = useLocalSearchParams<{ id: string }>();
   const visitorId = Number(id);
   const { colors } = useTheme();
@@ -42,25 +45,26 @@ export default function MehmonDetailScreen() {
 
   const active = v?.is_active !== false;
 
-  const onDelete = () => {
-    Alert.alert('O\'chirish', "Mehmonni o'chirishni xohlaysizmi?", [
-      { text: 'Bekor', style: 'cancel' },
-      {
-        text: "Ha, o'chirish", style: 'destructive',
-        onPress: () => {
-          del.mutate(visitorId, {
-            onSuccess: () => router.back(),
-            onError: (e) => Alert.alert('Xatolik', getApiErrorMessage(e, "O'chirishda xatolik")),
-          });
-        },
-      },
-    ]);
+  const onDelete = async () => {
+    const ok = await confirm({
+      title: t('visitors.deleteTitle'),
+      message: t('visitors.deleteConfirm'),
+      confirmLabel: t('visitors.deleteConfirmAction'),
+      cancelLabel: t('common.cancel'),
+      icon: 'trash',
+      destructive: true,
+    });
+    if (!ok) return;
+    del.mutate(visitorId, {
+      onSuccess: () => router.back(),
+      onError: (e) => Alert.alert(t('visitors.errorTitle'), getApiErrorMessage(e, t('visitors.deleteError'))),
+    });
   };
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScreenHeader
-        title="Mehmon"
+        title={t('visitors.detailTitle')}
         right={
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <HeaderAction icon="edit" onPress={() => router.push({ pathname: '/mehmon-form', params: { id: String(visitorId) } })} />
@@ -80,13 +84,13 @@ export default function MehmonDetailScreen() {
                 <Text style={styles.photoInitial}>{(v.legal_name || '?').charAt(0).toUpperCase()}</Text>
               </View>
             )}
-            <Text style={styles.name}>{v.legal_name || 'Mehmon'}</Text>
+            <Text style={styles.name}>{v.legal_name || t('visitors.nameFallback')}</Text>
             {!!(v.organization_name || v.job_position) && (
               <Text style={styles.sub}>{[v.organization_name, v.job_position].filter(Boolean).join(' · ')}</Text>
             )}
             <View style={[styles.badge, { backgroundColor: active ? colors.successSoft : colors.errorSoft }]}>
               <Text style={[styles.badgeText, { color: active ? colors.success : colors.error }]}>
-                {active ? 'Aktiv ruxsat' : 'Nofaol'}
+                {active ? t('visitors.permitActive') : t('visitors.statusInactive')}
               </Text>
             </View>
           </View>
@@ -94,43 +98,43 @@ export default function MehmonDetailScreen() {
           {!!v.qr_path && (
             <View style={styles.qrCard}>
               <Image source={{ uri: v.qr_path }} style={styles.qr} resizeMode="contain" />
-              {!!v.card_no && <Text style={styles.cardNo}>Karta: {v.card_no}</Text>}
+              {!!v.card_no && <Text style={styles.cardNo}>{t('visitors.cardNo', { value: v.card_no })}</Text>}
               <View style={styles.qrActions}>
                 <TouchableOpacity style={styles.qrBtn} activeOpacity={0.85} onPress={() => Linking.openURL(v.qr_path!)}>
                   <Icon name="arrowDown" size={17} color={colors.primary} />
-                  <Text style={styles.qrBtnText}>Yuklab olish</Text>
+                  <Text style={styles.qrBtnText}>{t('visitors.qrDownload')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.qrBtn}
                   activeOpacity={0.85}
-                  onPress={() => Share.share({ message: `${v.legal_name || 'Mehmon'} — QR kod\n${v.qr_path}`, url: v.qr_path! })}
+                  onPress={() => Share.share({ message: `${t('visitors.qrShareMessage', { name: v.legal_name || t('visitors.nameFallback') })}\n${v.qr_path}`, url: v.qr_path! })}
                 >
                   <Icon name="mail" size={17} color={colors.primary} />
-                  <Text style={styles.qrBtnText}>Ulashish</Text>
+                  <Text style={styles.qrBtnText}>{t('visitors.qrShare')}</Text>
                 </TouchableOpacity>
               </View>
             </View>
           )}
 
           <View style={styles.card}>
-            <Row icon="phone" label="Telefon" value={v.phone_number} styles={styles} colors={colors} />
-            <Row icon="mail" label="Telegram" value={v.telegram_username ? `@${v.telegram_username.replace(/^@/, '')}` : ''} styles={styles} colors={colors} />
-            <Row icon="idcard" label="JSHSHIR" value={v.personal_identification_number} styles={styles} colors={colors} />
+            <Row icon="phone" label={t('visitors.fieldPhone')} value={v.phone_number} styles={styles} colors={colors} />
+            <Row icon="mail" label={t('visitors.fieldTelegram')} value={v.telegram_username ? `@${v.telegram_username.replace(/^@/, '')}` : ''} styles={styles} colors={colors} />
+            <Row icon="idcard" label={t('visitors.fieldPin')} value={v.personal_identification_number} styles={styles} colors={colors} />
           </View>
 
-          <Text style={styles.sectionLabel}>Qabul qiluvchi</Text>
+          <Text style={styles.sectionLabel}>{t('visitors.hostSection')}</Text>
           <View style={styles.card}>
-            <Row icon="user" label="Xodim" value={v.host_employee_name} styles={styles} colors={colors} />
-            <Row icon="phone" label="Ichki raqam" value={v.host_employee_internal_phone} styles={styles} colors={colors} />
-            <Row icon="building" label="Filial" value={v.organization_branch?.name} styles={styles} colors={colors} />
+            <Row icon="user" label={t('visitors.fieldHost')} value={v.host_employee_name} styles={styles} colors={colors} />
+            <Row icon="phone" label={t('visitors.fieldHostPhone')} value={v.host_employee_internal_phone} styles={styles} colors={colors} />
+            <Row icon="building" label={t('visitors.fieldBranch')} value={v.organization_branch?.name} styles={styles} colors={colors} />
           </View>
 
-          <Text style={styles.sectionLabel}>Ruxsat muddati</Text>
+          <Text style={styles.sectionLabel}>{t('visitors.permitSection')}</Text>
           <View style={styles.card}>
-            <Row icon="calendar" label="Boshlanishi" value={v.valid_from ? dayjs(v.valid_from).format('DD.MM.YYYY HH:mm') : ''} styles={styles} colors={colors} />
-            <Row icon="calendar" label="Tugashi" value={v.valid_until ? dayjs(v.valid_until).format('DD.MM.YYYY HH:mm') : ''} styles={styles} colors={colors} />
-            <Row icon="clock" label="Oxirgi tashrif" value={v.last_visit_time ? dayjs(v.last_visit_time).format('DD.MM.YYYY HH:mm') : ''} styles={styles} colors={colors} />
-            <Row icon="checklist" label="Tashriflar soni" value={v.visit_count != null ? String(v.visit_count) : ''} styles={styles} colors={colors} />
+            <Row icon="calendar" label={t('visitors.fieldValidFrom')} value={v.valid_from ? dayjs(v.valid_from).format('DD.MM.YYYY HH:mm') : ''} styles={styles} colors={colors} />
+            <Row icon="calendar" label={t('visitors.fieldValidUntil')} value={v.valid_until ? dayjs(v.valid_until).format('DD.MM.YYYY HH:mm') : ''} styles={styles} colors={colors} />
+            <Row icon="clock" label={t('visitors.fieldLastVisit')} value={v.last_visit_time ? dayjs(v.last_visit_time).format('DD.MM.YYYY HH:mm') : ''} styles={styles} colors={colors} />
+            <Row icon="checklist" label={t('visitors.fieldVisitCount')} value={v.visit_count != null ? String(v.visit_count) : ''} styles={styles} colors={colors} />
           </View>
           <View style={{ height: 24 }} />
         </ScrollView>

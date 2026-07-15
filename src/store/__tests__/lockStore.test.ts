@@ -16,6 +16,7 @@ import {
   writePinRecord,
 } from '../../auth/pin';
 import { MAX_ATTEMPTS } from '../../auth/lockPolicy';
+import { confirm, getConfirm, __resetConfirm } from '../../lib/confirm';
 import { useLockStore, type UnlockResult } from '../lockStore';
 
 const mockGetItem = jest.mocked(SecureStore.getItemAsync);
@@ -37,6 +38,7 @@ beforeEach(async () => {
   await storage.deleteItem(PIN_RECORD_KEY);
   await storage.deleteItem(BIOMETRICS_KEY);
   await storage.deleteItem(FAILED_ATTEMPTS_KEY);
+  __resetConfirm();
   // clearMocks wipes call history but NOT implementations set by a previous
   // test — pin the local-auth defaults back to "nothing available".
   mockHasHardware.mockResolvedValue(false);
@@ -302,6 +304,18 @@ describe('lock', () => {
     useLockStore.setState({ status: 'unlocked' });
     useLockStore.getState().lock();
     expect(useLockStore.getState().status).toBe('unlocked');
+  });
+
+  it('dismisses an open confirm (resolving it false) so it cannot float over the lock', async () => {
+    useLockStore.setState({ status: 'unlocked' });
+    const answered = confirm({ title: 'Delete?', confirmLabel: 'Yes', cancelLabel: 'No' });
+    expect(getConfirm()).not.toBeNull();
+
+    useLockStore.getState().lock();
+
+    expect(useLockStore.getState().status).toBe('locked');
+    expect(getConfirm()).toBeNull();
+    await expect(answered).resolves.toBe(false);
   });
 });
 

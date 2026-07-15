@@ -7,6 +7,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { isHR, employeeSubLabel, translateCategory } from '@/utils/roles';
 import { getApiErrorMessage } from '@/api/errors';
@@ -35,6 +36,7 @@ export default function CreateOrderScreen() {
 
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const { t } = useTranslation();
   const createMutation = useCreateOrder();
 
   const [categoryId, setCategoryId] = useState<number | null>(null);
@@ -63,7 +65,7 @@ export default function CreateOrderScreen() {
 
   // ── Options ──────────────────────────────────────────────────────────────────
   const empOption = (e: Employee): PickerOption => ({
-    value: e.id, label: e.legal_name || "Noma'lum", subLabel: employeeSubLabel(e), photo: e.photo_path ?? null,
+    value: e.id, label: e.legal_name || t('status.unknown'), subLabel: employeeSubLabel(e), photo: e.photo_path ?? null,
   });
   const employeeOptions = useMemo(() => (empData?.items ?? []).map(empOption), [empData]);
   const leadershipOptions = useMemo(() => leadership.map(empOption), [leadership]);
@@ -80,10 +82,10 @@ export default function CreateOrderScreen() {
 
   // ── Submit ───────────────────────────────────────────────────────────────────
   async function handleCreate() {
-    if (!categoryId) { Alert.alert('Xato', 'Buyruq turi tanlanishi shart'); return; }
-    if (!description.trim()) { Alert.alert('Xato', 'Buyruq matni kiritilishi shart'); return; }
-    if (!leadershipId) { Alert.alert('Xato', 'Rahbariyatdan biri tanlanishi shart'); return; }
-    if (!branchId) { Alert.alert('Xato', 'Filial aniqlanmadi'); return; }
+    if (!categoryId) { Alert.alert(t('orders.validationTitle'), t('orders.categoryRequired')); return; }
+    if (!description.trim()) { Alert.alert(t('orders.validationTitle'), t('orders.descriptionRequired')); return; }
+    if (!leadershipId) { Alert.alert(t('orders.validationTitle'), t('orders.leadershipRequired')); return; }
+    if (!branchId) { Alert.alert(t('orders.validationTitle'), t('orders.branchNotFound')); return; }
 
     const assigned_signers = [
       ...approvers
@@ -107,11 +109,11 @@ export default function CreateOrderScreen() {
       const orderId = await createMutation.mutateAsync({
         payload,
         files,
-        onFilesError: () => Alert.alert('Eslatma', "Buyruq saqlandi, lekin ba'zi fayllar yuklanmadi"),
+        onFilesError: () => Alert.alert(t('orders.filesPartialTitle'), t('orders.filesPartialMessage')),
       });
       router.replace({ pathname: '/order-detail', params: { id: String(orderId) } });
     } catch (err) {
-      Alert.alert('Xato', getApiErrorMessage(err, 'Xatolik yuz berdi'));
+      Alert.alert(t('orders.validationTitle'), getApiErrorMessage(err, t('errors.generic')));
     } finally {
       setSaving(false);
     }
@@ -125,8 +127,8 @@ export default function CreateOrderScreen() {
           <Icon name="chevronLeft" size={24} color={colors.text} />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
-          <Text style={styles.title}>Yangi buyruq</Text>
-          <Text style={styles.subtitle}>{hr ? "Kadr buyrug'i" : "Xodim buyrug'i"}</Text>
+          <Text style={styles.title}>{t('orders.createTitle')}</Text>
+          <Text style={styles.subtitle}>{hr ? t('orders.hrSubtitle') : t('orders.employeeSubtitle')}</Text>
         </View>
         <TouchableOpacity
           style={[styles.createBtn, saving && styles.createBtnDisabled]}
@@ -134,52 +136,52 @@ export default function CreateOrderScreen() {
           disabled={saving}
           activeOpacity={0.8}
         >
-          {saving ? <ActivityIndicator size="small" color={colors.onPrimary} /> : <Text style={styles.createBtnText}>Yaratish</Text>}
+          {saving ? <ActivityIndicator size="small" color={colors.onPrimary} /> : <Text style={styles.createBtnText}>{t('common.create')}</Text>}
         </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Field label="Buyruq turlari" required>
+        <Field label={t('orders.categoryLabel')} required>
           <Selector
             loading={catsLoading}
             text={nameOf(categoryId, categoryOptions)}
-            placeholder="Tanlang..."
+            placeholder={t('orders.selectPlaceholder')}
             onPress={() => setPicker('category')}
           />
         </Field>
 
-        <Field label="Qisqacha mazmuni">
+        <Field label={t('orders.summaryLabel')}>
           <TextInput
-            style={styles.textArea} placeholder="Buyruqning qisqacha mazmuni..."
+            style={styles.textArea} placeholder={t('orders.summaryPlaceholder')}
             placeholderTextColor={colors.textMuted} value={summary} onChangeText={setSummary}
             multiline textAlignVertical="top"
           />
         </Field>
 
-        <Field label="Buyruq matni" required>
+        <Field label={t('orders.descriptionLabel')} required>
           <TextInput
-            style={[styles.textArea, { minHeight: 120 }]} placeholder="Buyruq to'liq matni..."
+            style={[styles.textArea, { minHeight: 120 }]} placeholder={t('orders.descriptionPlaceholder')}
             placeholderTextColor={colors.textMuted} value={description} onChangeText={setDescription}
             multiline textAlignVertical="top"
           />
         </Field>
 
         {hr && (
-          <Field label="Rahbariyat" required>
+          <Field label={t('orders.leadershipLabel')} required>
             <Selector
               loading={leadershipLoading}
               text={nameOf(leadershipId, leadershipOptions)}
-              placeholder="Rahbarni tanlang..."
+              placeholder={t('orders.leadershipPlaceholder')}
               onPress={() => setPicker('leadership')}
             />
           </Field>
         )}
 
-        <Field label="Kirituvchi shaxs">
+        <Field label={t('orders.submitterLabel')}>
           <Selector
             loading={empsLoading}
             text={nameOf(submitterId, employeeOptions)}
-            placeholder="Tanlang..."
+            placeholder={t('orders.selectPlaceholder')}
             onPress={() => setPicker('submitter')}
             onClear={submitterId ? () => setSubmitterId(null) : undefined}
           />
@@ -187,11 +189,11 @@ export default function CreateOrderScreen() {
 
         <AttachmentField files={files} onPick={pickFiles} onRemove={(i) => setFiles((p) => p.filter((_, idx) => idx !== i))} />
 
-        <Field label="Buyruq bilan tanishuvchilar">
+        <Field label={t('orders.familiarizersLabel')}>
           <Selector
             loading={deptsLoading}
-            text={familiarizerDeptIds.length ? `${familiarizerDeptIds.length} ta bo'lim tanlandi` : undefined}
-            placeholder="Bo'limlarni tanlang..."
+            text={familiarizerDeptIds.length ? t('orders.deptsSelected', { count: familiarizerDeptIds.length }) : undefined}
+            placeholder={t('orders.familiarizersPlaceholder')}
             onPress={() => setPicker('familiarizers')}
           />
         </Field>

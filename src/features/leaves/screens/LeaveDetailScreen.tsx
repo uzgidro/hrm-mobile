@@ -7,6 +7,8 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import dayjs from 'dayjs';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
@@ -14,17 +16,19 @@ import { Employee } from '@/types';
 import { Icon } from '@/components/Icon';
 import { LoadingView, EmptyState } from '@/components/StateViews';
 import { getApiErrorMessage } from '@/api/errors';
+import { isHR } from '@/utils/roles';
 import { leaveDetailQuery } from '../api/queries';
-import { useSignLeave, useRejectLeave } from '../api/mutations';
+import { useSignLeave, useRejectLeave, useDeleteLeave } from '../api/mutations';
+import { canActOnLeave, canDeleteLeave } from '../utils';
+import { leaveTypeLabel } from '../components/LeaveTypeSheet';
 
-function isPending(status: string) { return status === 'pending' || status === 'yuborildi'; }
 function isApproved(status: string) { return status === 'approved' || status === 'tasdiqlangan' || status === 'signed'; }
 function isRejected(status: string) { return status === 'rejected' || status === 'rad_etilgan'; }
 
-function getStatusMeta(status: string, c: ThemeColors) {
-  if (isApproved(status)) return { label: 'Tasdiqlangan', fg: c.success, bg: c.successSoft };
-  if (isRejected(status)) return { label: 'Rad etildi', fg: c.error, bg: c.errorSoft };
-  return { label: 'Kutilmoqda', fg: c.warning, bg: c.warningSoft };
+function getStatusMeta(status: string, c: ThemeColors, t: TFunction) {
+  if (isApproved(status)) return { label: t('leaves.statusApproved'), fg: c.success, bg: c.successSoft };
+  if (isRejected(status)) return { label: t('leaves.statusRejected'), fg: c.error, bg: c.errorSoft };
+  return { label: t('leaves.statusPending'), fg: c.warning, bg: c.warningSoft };
 }
 
 function EmpAvatar({ emp, size = 40, c }: { emp: Employee; size?: number; c: ThemeColors }) {
@@ -41,16 +45,17 @@ function EmpAvatar({ emp, size = 40, c }: { emp: Employee; size?: number; c: The
 function RejectModal({ visible, onConfirm, onClose, styles, colors }: {
   visible: boolean; onConfirm: (reason: string) => void; onClose: () => void; styles: any; colors: ThemeColors;
 }) {
+  const { t } = useTranslation();
   const [reason, setReason] = useState('');
   return (
     <Modal visible={visible} transparent animationType="slide">
       <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={onClose} />
       <View style={styles.sheet}>
         <View style={styles.handle} />
-        <Text style={styles.sheetTitle}>Rad etish sababi</Text>
+        <Text style={styles.sheetTitle}>{t('leaves.rejectReasonTitle')}</Text>
         <TextInput
           style={styles.sheetInput}
-          placeholder="Sababni yozing..."
+          placeholder={t('leaves.rejectReasonPlaceholder')}
           placeholderTextColor={colors.textMuted}
           value={reason}
           onChangeText={setReason}
@@ -60,10 +65,10 @@ function RejectModal({ visible, onConfirm, onClose, styles, colors }: {
         />
         <View style={styles.btnRow}>
           <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
-            <Text style={styles.cancelBtnText}>Bekor</Text>
+            <Text style={styles.cancelBtnText}>{t('common.cancel')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.confirmBtn, !reason.trim() && { opacity: 0.4 }]} disabled={!reason.trim()} onPress={() => { onConfirm(reason.trim()); setReason(''); }}>
-            <Text style={styles.confirmBtnText}>Rad etish</Text>
+            <Text style={styles.confirmBtnText}>{t('leaves.reject')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -78,6 +83,7 @@ export default function LeaveDetailScreen() {
   const employeeId = user?.employee?.id;
   const { colors } = useTheme();
   const s = useThemedStyles(makeStyles);
+  const { t } = useTranslation();
 
   const [acting, setActing] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
@@ -86,40 +92,71 @@ export default function LeaveDetailScreen() {
 
   const signMutation = useSignLeave(leaveId);
   const rejectMutation = useRejectLeave(leaveId);
+  const deleteMutation = useDeleteLeave(leaveId);
 
-  const canApprove = !!(
-    leave && isPending(leave.status) && employeeId &&
-    leave.assigned_signers?.some((sg) => sg.id === employeeId) &&
-    !leave.signers?.some((sg) => sg.id === employeeId)
-  );
+  // Web parity: HR is view-only (never signs/rejects). canActOnLeave mirrors the
+  // web's canActOnWorkLeave — the sign/reject buttons appear only for a
+  // non-HR assigned signer on a pending request they haven't signed yet.
+  const { canSign, canReject } = canActOnLeave(leave, employeeId, { isHR: isHR(user) });
+  const canApprove = canSign || canReject;
+
+  // Web parity: the author may withdraw (delete) their own request while it is
+  // still pending and unsigned (mirrors the web's canDeleteWorkLeave, shown on
+  // the "my" tab only — hence the ownership check inside canDeleteLeave).
+  const canDelete = canDeleteLeave(leave, employeeId);
 
   const handleApprove = useCallback(async () => {
     setActing(true);
     try {
       await signMutation.mutateAsync();
-      Alert.alert('Muvaffaqiyat', "So'rov tasdiqlandi");
+      Alert.alert(t('common.success'), t('leaves.approvedSuccess'));
     } catch (e) {
-      Alert.alert('Xato', getApiErrorMessage(e, 'Tasdiqlashda xatolik yuz berdi'));
+      Alert.alert(t('leaves.errorTitle'), getApiErrorMessage(e, t('leaves.approveError')));
     } finally { setActing(false); }
-  }, [signMutation]);
+  }, [signMutation, t]);
 
   const handleReject = useCallback(async (reason: string) => {
     setShowRejectModal(false);
     setActing(true);
     try {
       await rejectMutation.mutateAsync(reason);
-      Alert.alert('Muvaffaqiyat', "So'rov rad etildi");
+      Alert.alert(t('common.success'), t('leaves.rejectedSuccess'));
     } catch (e) {
-      Alert.alert('Xato', getApiErrorMessage(e, 'Rad etishda xatolik yuz berdi'));
+      Alert.alert(t('leaves.errorTitle'), getApiErrorMessage(e, t('leaves.rejectError')));
     } finally { setActing(false); }
-  }, [rejectMutation]);
+  }, [rejectMutation, t]);
 
-  const HeaderBar = () => (
+  const handleDelete = useCallback(() => {
+    Alert.alert(
+      t('leaves.deleteConfirmTitle'),
+      t('leaves.deleteConfirmMessage'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('leaves.delete'),
+          style: 'destructive',
+          onPress: async () => {
+            setActing(true);
+            try {
+              await deleteMutation.mutateAsync();
+              Alert.alert(t('common.success'), t('leaves.deletedSuccess'), [
+                { text: t('common.ok'), onPress: () => router.back() },
+              ]);
+            } catch (e) {
+              Alert.alert(t('leaves.errorTitle'), getApiErrorMessage(e, t('leaves.deleteError')));
+            } finally { setActing(false); }
+          },
+        },
+      ],
+    );
+  }, [deleteMutation, t]);
+
+  const headerBar = (
     <View style={s.header}>
       <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
         <Icon name="chevronLeft" size={24} color={colors.text} />
       </TouchableOpacity>
-      <Text style={s.headerTitle}>So'rov tafsiloti</Text>
+      <Text style={s.headerTitle}>{t('leaves.detailTitle')}</Text>
       <View style={{ width: 36 }} />
     </View>
   );
@@ -127,7 +164,7 @@ export default function LeaveDetailScreen() {
   if (isLoading) {
     return (
       <SafeAreaView style={s.safe} edges={['top', 'bottom']}>
-        <HeaderBar />
+        {headerBar}
         <LoadingView />
       </SafeAreaView>
     );
@@ -136,18 +173,18 @@ export default function LeaveDetailScreen() {
   if (!leave) {
     return (
       <SafeAreaView style={s.safe} edges={['top', 'bottom']}>
-        <HeaderBar />
-        <EmptyState title="Ma'lumot topilmadi" />
+        {headerBar}
+        <EmptyState title={t('leaves.notFound')} />
       </SafeAreaView>
     );
   }
 
-  const stMeta = getStatusMeta(leave.status, colors);
+  const stMeta = getStatusMeta(leave.status, colors, t);
   const sameDay = dayjs(leave.start_date).format('DD.MM.YYYY') === dayjs(leave.end_date).format('DD.MM.YYYY');
 
   return (
     <SafeAreaView style={s.safe} edges={['top', 'bottom']}>
-      <HeaderBar />
+      {headerBar}
 
       <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
         {leave.employee && (
@@ -164,35 +201,35 @@ export default function LeaveDetailScreen() {
         )}
 
         <View style={s.infoCard}>
-          <View style={s.infoRow}><Text style={s.infoLabel}>So'rov turi</Text><Text style={s.infoValue}>{leave.type ?? "So'rov"}</Text></View>
+          <View style={s.infoRow}><Text style={s.infoLabel}>{t('leaves.fieldType')}</Text><Text style={s.infoValue}>{leave.type ? leaveTypeLabel(t, leave.type) : t('leaves.typeFallback')}</Text></View>
           <View style={s.divider} />
-          <View style={s.infoRow}><Text style={s.infoLabel}>Boshlanish</Text><Text style={s.infoValue}>{dayjs(leave.start_date).format('DD.MM.YYYY HH:mm')}</Text></View>
+          <View style={s.infoRow}><Text style={s.infoLabel}>{t('leaves.fieldStart')}</Text><Text style={s.infoValue}>{dayjs(leave.start_date).format('DD.MM.YYYY HH:mm')}</Text></View>
           <View style={s.divider} />
-          <View style={s.infoRow}><Text style={s.infoLabel}>Tugash</Text><Text style={s.infoValue}>{dayjs(leave.end_date).format(sameDay ? 'HH:mm' : 'DD.MM.YYYY HH:mm')}</Text></View>
+          <View style={s.infoRow}><Text style={s.infoLabel}>{t('leaves.fieldEnd')}</Text><Text style={s.infoValue}>{dayjs(leave.end_date).format(sameDay ? 'HH:mm' : 'DD.MM.YYYY HH:mm')}</Text></View>
           {leave.description ? (
             <>
               <View style={s.divider} />
-              <View style={s.infoRow}><Text style={s.infoLabel}>Izoh</Text><Text style={[s.infoValue, { flex: 2 }]}>{leave.description}</Text></View>
+              <View style={s.infoRow}><Text style={s.infoLabel}>{t('leaves.fieldComment')}</Text><Text style={[s.infoValue, { flex: 2 }]}>{leave.description}</Text></View>
             </>
           ) : null}
           {leave.created_at ? (
             <>
               <View style={s.divider} />
-              <View style={s.infoRow}><Text style={s.infoLabel}>Yuborilgan</Text><Text style={s.infoValue}>{dayjs(leave.created_at).format('DD.MM.YYYY HH:mm')}</Text></View>
+              <View style={s.infoRow}><Text style={s.infoLabel}>{t('leaves.fieldCreated')}</Text><Text style={s.infoValue}>{dayjs(leave.created_at).format('DD.MM.YYYY HH:mm')}</Text></View>
             </>
           ) : null}
         </View>
 
         {isRejected(leave.status) && leave.rejection_reason ? (
           <View style={s.rejectionCard}>
-            <Text style={s.rejectionLabel}>Rad etish sababi</Text>
+            <Text style={s.rejectionLabel}>{t('leaves.rejectReasonTitle')}</Text>
             <Text style={s.rejectionText}>{leave.rejection_reason}</Text>
           </View>
         ) : null}
 
         {(leave.assigned_signers?.length ?? 0) > 0 && (
           <View style={s.signersCard}>
-            <Text style={s.signersTitle}>Tasdiqlovchilar</Text>
+            <Text style={s.signersTitle}>{t('leaves.signersTitle')}</Text>
             {leave.assigned_signers!.map((signer) => {
               const hasSigned = leave.signers?.some((sg) => sg.id === signer.id);
               return (
@@ -204,7 +241,7 @@ export default function LeaveDetailScreen() {
                   </View>
                   <View style={[s.signerStatus, { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: (hasSigned ? colors.success : colors.warning) === colors.success ? colors.successSoft : colors.warningSoft }]}>
                     <Icon name={hasSigned ? 'check' : 'clock'} size={13} color={hasSigned ? colors.success : colors.warning} />
-                    <Text style={[s.signerStatusText, { color: hasSigned ? colors.success : colors.warning }]}>{hasSigned ? 'Tasdiqladi' : 'Kutilmoqda'}</Text>
+                    <Text style={[s.signerStatusText, { color: hasSigned ? colors.success : colors.warning }]}>{hasSigned ? t('leaves.signerSigned') : t('leaves.statusPending')}</Text>
                   </View>
                 </View>
               );
@@ -215,12 +252,19 @@ export default function LeaveDetailScreen() {
         {canApprove && (
           <View style={s.actionRow}>
             <TouchableOpacity style={[s.rejectBtn, acting && { opacity: 0.5 }]} disabled={acting} onPress={() => setShowRejectModal(true)}>
-              {acting ? <ActivityIndicator color={colors.error} size="small" /> : <Text style={s.rejectBtnText}>Rad etish</Text>}
+              {acting ? <ActivityIndicator color={colors.error} size="small" /> : <Text style={s.rejectBtnText}>{t('leaves.reject')}</Text>}
             </TouchableOpacity>
             <TouchableOpacity style={[s.approveBtn, acting && { opacity: 0.5 }]} disabled={acting} onPress={handleApprove}>
-              {acting ? <ActivityIndicator color="#fff" size="small" /> : <Text style={s.approveBtnText}>Tasdiqlash</Text>}
+              {acting ? <ActivityIndicator color="#fff" size="small" /> : <Text style={s.approveBtnText}>{t('leaves.approve')}</Text>}
             </TouchableOpacity>
           </View>
+        )}
+
+        {canDelete && (
+          <TouchableOpacity style={[s.deleteBtn, acting && { opacity: 0.5 }]} disabled={acting} onPress={handleDelete}>
+            <Icon name="trash" size={16} color={colors.error} />
+            <Text style={s.deleteBtnText}>{t('leaves.delete')}</Text>
+          </TouchableOpacity>
         )}
 
         <View style={{ height: 32 }} />
@@ -273,6 +317,9 @@ const makeStyles = (c: ThemeColors) =>
     rejectBtnText: { color: c.error, fontSize: 15, fontWeight: '700' },
     approveBtn: { flex: 1, borderRadius: 14, paddingVertical: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: c.success },
     approveBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+
+    deleteBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 14, paddingVertical: 15, marginTop: 10, borderWidth: 1.5, borderColor: c.error },
+    deleteBtnText: { color: c.error, fontSize: 15, fontWeight: '700' },
 
     overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: c.overlay },
     sheet: { position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: c.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 16, paddingBottom: 32 },

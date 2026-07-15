@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import { useAuthStore, isMasterAdmin, isHR } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
@@ -14,18 +15,8 @@ import { Icon, type IconName } from '@/components/Icon';
 import { LoadingView, ErrorState } from '@/components/StateViews';
 import { employeeDetailQuery } from '../api/queries';
 
-const GENDER_MAP: Record<number, string> = { 1: 'Erkak', 2: 'Ayol' };
-const MARITAL_MAP: Record<string, string> = {
-  single: 'Turmush qurmagan',
-  married: 'Turmush qurgan',
-  divorced: 'Ajrashgan',
-  widowed: 'Beva',
-};
-const DAYS_MAP: Record<number, string> = {
-  0: 'Du', 1: 'Se', 2: 'Chor', 3: 'Pay', 4: 'Ju', 5: 'Sha', 6: 'Ya',
-};
-
 export default function EmployeeDetailScreen() {
+  const { t } = useTranslation();
   const { user } = useAuthStore();
   const params = useLocalSearchParams<{ id?: string }>();
   const employeeId = params.id ? Number(params.id) : user?.employee?.id;
@@ -53,14 +44,14 @@ export default function EmployeeDetailScreen() {
   if (!employee) {
     return (
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-        <Header styles={styles} title="Ma'lumotnoma" />
-        <ErrorState title="Ma'lumot topilmadi" onRetry={() => refetch()} />
+        <Header styles={styles} title={t('employees.detailTitle')} />
+        <ErrorState title={t('employees.detailNotFound')} onRetry={() => refetch()} />
       </SafeAreaView>
     );
   }
 
   const workDays = (employee.working_days || [])
-    .map((d) => DAYS_MAP[d] ?? '')
+    .map((d) => t(`employees.dayShort.${d}`, { defaultValue: '' }))
     .filter(Boolean)
     .join(', ');
 
@@ -68,7 +59,7 @@ export default function EmployeeDetailScreen() {
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <Header
         styles={styles}
-        title="Ma'lumotnoma"
+        title={t('employees.detailTitle')}
         onEdit={isOwnProfile ? () => router.push('/profile-edit') : undefined}
       />
 
@@ -96,74 +87,74 @@ export default function EmployeeDetailScreen() {
           activeOpacity={0.85}
         >
           <Icon name="calendar" size={18} color={colors.onPrimary} />
-          <Text style={styles.attendanceBtnText}>Davomat</Text>
+          <Text style={styles.attendanceBtnText}>{t('employees.attendance')}</Text>
         </TouchableOpacity>
 
         {canViewSensitive && (
-          <Section styles={styles} title="Shaxsiy ma'lumotlar" icon="user">
-            <InfoRow styles={styles} label="Tug'ilgan sana" value={employee.birth_date ? dayjs(employee.birth_date).format('DD.MM.YYYY') : null} />
+          <Section styles={styles} title={t('employees.section.personal')} icon="user">
+            <InfoRow styles={styles} label={t('employees.field.birthDate')} value={employee.birth_date ? dayjs(employee.birth_date).format('DD.MM.YYYY') : null} />
             <Divider styles={styles} />
-            <InfoRow styles={styles} label="Jinsi" value={employee.gender != null ? GENDER_MAP[employee.gender] : null} />
+            <InfoRow styles={styles} label={t('employees.field.gender')} value={employee.gender != null ? t(`employees.gender.${employee.gender}`, { defaultValue: '' }) || null : null} />
             <Divider styles={styles} />
-            <InfoRow styles={styles} label="Millati" value={employee.nationality} />
+            <InfoRow styles={styles} label={t('employees.field.nationality')} value={employee.nationality} />
             <Divider styles={styles} />
-            <InfoRow styles={styles} label="Oilaviy holati" value={employee.maritial_status ? (MARITAL_MAP[employee.maritial_status] ?? employee.maritial_status) : null} />
+            <InfoRow styles={styles} label={t('employees.field.marital')} value={employee.maritial_status ? (t(`employees.marital.${employee.maritial_status}`, { defaultValue: '' }) || employee.maritial_status) : null} />
             <Divider styles={styles} />
-            <InfoRow styles={styles} label="Manzil" value={employee.address} />
+            <InfoRow styles={styles} label={t('employees.field.address')} value={employee.address} />
           </Section>
         )}
 
-        <Section styles={styles} title="Kontakt ma'lumotlari" icon="phone">
-          <InfoRow styles={styles} label="Telefon" value={employee.phone_number} />
+        <Section styles={styles} title={t('employees.section.contact')} icon="phone">
+          <InfoRow styles={styles} label={t('employees.field.phone')} value={employee.phone_number} />
           <Divider styles={styles} />
-          <InfoRow styles={styles} label="Ichki telefon" value={employee.internal_phone_number} />
+          <InfoRow styles={styles} label={t('employees.field.internalPhone')} value={employee.internal_phone_number} />
           <Divider styles={styles} />
-          <InfoRow styles={styles} label="Email" value={employee.email} />
+          <InfoRow styles={styles} label={t('employees.field.email')} value={employee.email} />
         </Section>
 
         {canViewSensitive && (
-          <Section styles={styles} title="Ish ma'lumotlari" icon="briefcase">
-            <InfoRow styles={styles} label="Bo'lim" value={employee.department?.name} />
+          <Section styles={styles} title={t('employees.section.work')} icon="briefcase">
+            <InfoRow styles={styles} label={t('employees.field.department')} value={employee.department?.name} />
             <Divider styles={styles} />
-            <InfoRow styles={styles} label="Lavozim" value={employee.job_position?.name} />
+            <InfoRow styles={styles} label={t('employees.field.position')} value={employee.job_position?.name} />
             <Divider styles={styles} />
-            <InfoRow styles={styles} label="Ishga kirgan sana" value={employee.job_acceptance_date ? dayjs(employee.job_acceptance_date).format('DD.MM.YYYY') : null} />
+            <InfoRow styles={styles} label={t('employees.field.hireDate')} value={employee.job_acceptance_date ? dayjs(employee.job_acceptance_date).format('DD.MM.YYYY') : null} />
             <Divider styles={styles} />
-            <InfoRow styles={styles} label="Ish soati" value={employee.working_hours_start && employee.working_hours_end ? `${employee.working_hours_start} – ${employee.working_hours_end}` : null} />
+            <InfoRow styles={styles} label={t('employees.field.workHours')} value={employee.working_hours_start && employee.working_hours_end ? `${employee.working_hours_start} – ${employee.working_hours_end}` : null} />
             <Divider styles={styles} />
-            <InfoRow styles={styles} label="Tushlik" value={employee.lunch_start_time && employee.lunch_end_time ? `${employee.lunch_start_time} – ${employee.lunch_end_time}` : null} />
+            <InfoRow styles={styles} label={t('employees.field.lunch')} value={employee.lunch_start_time && employee.lunch_end_time ? `${employee.lunch_start_time} – ${employee.lunch_end_time}` : null} />
             <Divider styles={styles} />
-            <InfoRow styles={styles} label="Ish kunlari" value={workDays || null} />
+            <InfoRow styles={styles} label={t('employees.field.workDays')} value={workDays || null} />
             <Divider styles={styles} />
-            <InfoRow styles={styles} label="Rahbar" value={employee.supervisor?.legal_name} />
+            <InfoRow styles={styles} label={t('employees.field.supervisor')} value={employee.supervisor?.legal_name} />
           </Section>
         )}
 
         {canViewSensitive && (employee.personal_identification_number || employee.taxpayer_identification_number || employee.pasport_series) && (
-          <Section styles={styles} title="Hujjatlar" icon="idcard">
-            <InfoRow styles={styles} label="PINFL" value={employee.personal_identification_number} />
+          <Section styles={styles} title={t('employees.section.documents')} icon="idcard">
+            <InfoRow styles={styles} label={t('employees.field.pinfl')} value={employee.personal_identification_number} />
             <Divider styles={styles} />
-            <InfoRow styles={styles} label="INN" value={employee.taxpayer_identification_number} />
+            <InfoRow styles={styles} label={t('employees.field.inn')} value={employee.taxpayer_identification_number} />
             <Divider styles={styles} />
-            <InfoRow styles={styles} label="Pasport" value={employee.pasport_series && employee.pasport_number ? `${employee.pasport_series} ${employee.pasport_number}` : null} />
+            <InfoRow styles={styles} label={t('employees.field.passport')} value={employee.pasport_series && employee.pasport_number ? `${employee.pasport_series} ${employee.pasport_number}` : null} />
             <Divider styles={styles} />
-            <InfoRow styles={styles} label="Pasport berilgan joy" value={employee.pasport_issue_by} />
+            <InfoRow styles={styles} label={t('employees.field.passportIssuedBy')} value={employee.pasport_issue_by} />
             <Divider styles={styles} />
-            <InfoRow styles={styles} label="JSHIR" value={employee.pasport_individual_number} />
+            <InfoRow styles={styles} label={t('employees.field.jshshir')} value={employee.pasport_individual_number} />
             <Divider styles={styles} />
-            <InfoRow styles={styles} label="Pensiya hisob raqami" value={employee.individual_accumulative_pension_account_number} />
+            <InfoRow styles={styles} label={t('employees.field.pensionAccount')} value={employee.individual_accumulative_pension_account_number} />
           </Section>
         )}
 
         {canViewSensitive && (employee.work_experiences?.length ?? 0) > 0 && (
-          <Section styles={styles} title="Mehnat tajribasi" icon="building">
+          <Section styles={styles} title={t('employees.section.experience')} icon="building">
             {employee.work_experiences!.map((exp: WorkExperience, i: number) => (
               <View key={exp.id} style={styles.historyItem}>
                 {i > 0 && <Divider styles={styles} />}
                 <Text style={styles.historyTitle}>{exp.company_name}</Text>
                 <Text style={styles.historySubtitle}>{exp.position}</Text>
                 <Text style={styles.historyDate}>
-                  {dayjs(exp.start_date).format('DD.MM.YYYY')} – {exp.is_current ? 'hozirgi kungacha' : dayjs(exp.end_date).format('DD.MM.YYYY')}
+                  {dayjs(exp.start_date).format('DD.MM.YYYY')} – {exp.is_current ? t('employees.presentToDate') : dayjs(exp.end_date).format('DD.MM.YYYY')}
                 </Text>
               </View>
             ))}
@@ -171,14 +162,14 @@ export default function EmployeeDetailScreen() {
         )}
 
         {canViewSensitive && (employee.educations?.length ?? 0) > 0 && (
-          <Section styles={styles} title="Ta'lim" icon="graduation">
+          <Section styles={styles} title={t('employees.section.education')} icon="graduation">
             {employee.educations!.map((edu: Education, i: number) => (
               <View key={edu.id} style={styles.historyItem}>
                 {i > 0 && <Divider styles={styles} />}
                 <Text style={styles.historyTitle}>{edu.institution_name}</Text>
                 <Text style={styles.historySubtitle}>{edu.faculty_name} — {edu.degree_name}</Text>
                 <Text style={styles.historyDate}>
-                  {dayjs(edu.start_date).format('DD.MM.YYYY')} – {edu.is_current ? 'hozirgi kungacha' : dayjs(edu.end_date).format('DD.MM.YYYY')}
+                  {dayjs(edu.start_date).format('DD.MM.YYYY')} – {edu.is_current ? t('employees.presentToDate') : dayjs(edu.end_date).format('DD.MM.YYYY')}
                 </Text>
               </View>
             ))}

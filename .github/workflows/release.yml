@@ -4,28 +4,40 @@ name: Release to Google Play (internal)
 # build: EAS builds the app-bundle on Expo's servers and auto-submits it to the
 # Google Play *internal* track. Promotion to production stays manual in the
 # Play Console.
+#
+# Split into gates: verify (tag == version) and checks (typecheck/test/audit)
+# must pass before build-and-submit runs, so a broken or vulnerable release
+# never reaches the store.
 on:
   push:
     tags: ['v*']
 
 jobs:
-  build-and-submit:
+  verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - run: npm ci
-
-      # Guard against a tag that doesn't match the shipped version — the store
-      # version comes from app.json, the tag is just the trigger.
+      # The store version comes from app.json; the tag is just the trigger.
       - name: Verify tag matches app.json version
         run: |
           node -e "const v=require('./app.json').expo.version; const tag=process.env.GITHUB_REF_NAME; if ('v'+v!==tag) { console.error('Tag '+tag+' does not match app.json version '+v); process.exit(1); }"
+
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - run: npm run typecheck
+      - run: npx jest --ci
+      # Same high/critical dependency gate as CI — don't ship a vulnerable build.
+      - run: npm audit --audit-level=high
+
+  build-and-submit:
+    needs: [verify, checks]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
 
       - uses: expo/expo-github-action@v8
         with:

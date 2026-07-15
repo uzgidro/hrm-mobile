@@ -1,6 +1,7 @@
 // Presentational attachment list + "add file" button for the create forms.
 // The picking (expo-document-picker) and upload live in the screens.
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 import type { ThemeColors } from '../theme/palettes';
 import { Icon } from './Icon';
@@ -8,7 +9,7 @@ import { Icon } from './Icon';
 export type PickedFile = { uri: string; name: string; mimeType?: string };
 
 export function AttachmentField({
-  label = 'Ilova', files, onPick, onRemove,
+  label, files, onPick, onRemove,
 }: {
   label?: string;
   files: PickedFile[];
@@ -17,9 +18,10 @@ export function AttachmentField({
 }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const { t } = useTranslation();
   return (
     <View style={styles.wrap}>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={styles.label}>{label ?? t('components.attachmentLabel')}</Text>
       {files.map((f, i) => (
         <View key={`${f.uri}-${i}`} style={styles.fileRow}>
           <Icon name="doc" size={16} color={colors.primary} />
@@ -31,7 +33,7 @@ export function AttachmentField({
       ))}
       <TouchableOpacity style={styles.addBtn} onPress={onPick} activeOpacity={0.8}>
         <Icon name="plus" size={15} color={colors.primary} />
-        <Text style={styles.addText}>Fayl qo'shish</Text>
+        <Text style={styles.addText}>{t('components.addFile')}</Text>
       </TouchableOpacity>
     </View>
   );

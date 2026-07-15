@@ -5,6 +5,9 @@ import {
   hasMultiOrgRole,
   isMasterAdmin,
   isEmployee,
+  isEmployeeLike,
+  isAccounting,
+  isDashboardViewer,
   isHR,
   isSingleRoleHR,
   isDeputy,
@@ -58,6 +61,8 @@ const chancelleryUser = multiOrgUser('chancellery');
 const kanselariyaUser = multiOrgUser('kanselariya');
 const ministrUser = multiOrgUser('ministr');
 const deputyUser = multiOrgUser('deputy');
+const accountingUser = multiOrgUser('accounting');
+const dashboardUser = multiOrgUser('dashboard');
 const secretariatUser: User = {
   id: 9,
   type: 'employee',
@@ -68,7 +73,7 @@ const masterAdminUser: User = { id: 10, type: 'master-admin' };
 
 const ALL_PAGES: PageKey[] = [
   'home', 'orders', 'letters', 'guests', 'projects',
-  'employees', 'attendance', 'requests',
+  'employees', 'attendance', 'requests', 'documents',
   'salary', 'team', 'birthdays', 'news', 'notifications', 'profile',
 ];
 
@@ -230,6 +235,81 @@ describe('isEmployee', () => {
   it('false for null/undefined', () => {
     expect(isEmployee(null)).toBe(false);
     expect(isEmployee(undefined)).toBe(false);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// isAccounting
+// ─────────────────────────────────────────────────────────────────────────────
+describe('isAccounting', () => {
+  it('true when the (first) multi-org role is accounting', () => {
+    expect(isAccounting(accountingUser)).toBe(true);
+    expect(isAccounting(multiOrgUser(['accounting']))).toBe(true);
+  });
+
+  it('false when accounting is not first (getMultiOrgRole returns first only)', () => {
+    expect(isAccounting(multiOrgUser(['hr', 'accounting']))).toBe(false);
+  });
+
+  it('false for non-accounting / regular / master-admin / null', () => {
+    expect(isAccounting(regularUser)).toBe(false);
+    expect(isAccounting(hrSingleUser)).toBe(false);
+    expect(isAccounting(masterAdminUser)).toBe(false);
+    expect(isAccounting(null)).toBe(false);
+    expect(isAccounting(undefined)).toBe(false);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// isDashboardViewer (Kuzatuvchi)
+// ─────────────────────────────────────────────────────────────────────────────
+describe('isDashboardViewer', () => {
+  it('true when the (first) multi-org role is dashboard', () => {
+    expect(isDashboardViewer(dashboardUser)).toBe(true);
+    expect(isDashboardViewer(multiOrgUser(['dashboard']))).toBe(true);
+  });
+
+  it('false when dashboard is not first (getMultiOrgRole returns first only)', () => {
+    expect(isDashboardViewer(multiOrgUser(['hr', 'dashboard']))).toBe(false);
+  });
+
+  it('false for non-dashboard / regular / accounting / master-admin / null', () => {
+    expect(isDashboardViewer(regularUser)).toBe(false);
+    expect(isDashboardViewer(accountingUser)).toBe(false);
+    expect(isDashboardViewer(masterAdminUser)).toBe(false);
+    expect(isDashboardViewer(null)).toBe(false);
+    expect(isDashboardViewer(undefined)).toBe(false);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// isEmployeeLike — regular OR accounting (mirrors web roleHelpers.js)
+// ─────────────────────────────────────────────────────────────────────────────
+describe('isEmployeeLike', () => {
+  it('true for a regular (non multi-org) employee', () => {
+    expect(isEmployeeLike(regularUser)).toBe(true);
+    expect(isEmployeeLike(secretariatUser)).toBe(true);
+  });
+
+  it('true for an accounting multi-org employee', () => {
+    expect(isEmployeeLike(accountingUser)).toBe(true);
+  });
+
+  it('true for a dashboard (Kuzatuvchi) multi-org employee', () => {
+    expect(isEmployeeLike(dashboardUser)).toBe(true);
+  });
+
+  it('false for other multi-org roles and master-admin', () => {
+    expect(isEmployeeLike(hrSingleUser)).toBe(false);
+    expect(isEmployeeLike(kppUser)).toBe(false);
+    expect(isEmployeeLike(deputyUser)).toBe(false);
+    expect(isEmployeeLike(ministrUser)).toBe(false);
+    expect(isEmployeeLike(masterAdminUser)).toBe(false);
+  });
+
+  it('false for null/undefined', () => {
+    expect(isEmployeeLike(null)).toBe(false);
+    expect(isEmployeeLike(undefined)).toBe(false);
   });
 });
 
@@ -426,7 +506,7 @@ describe('canAccessPage', () => {
       user: regularUser,
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
-        employees: false, attendance: true, requests: true,
+        employees: false, attendance: true, requests: true, documents: true,
         salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true,
       },
     },
@@ -434,7 +514,7 @@ describe('canAccessPage', () => {
       user: hrSingleUser,
       row: {
         home: true, orders: true, letters: true, guests: true, projects: false,
-        employees: true, attendance: true, requests: true,
+        employees: true, attendance: true, requests: true, documents: true,
         salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true,
       },
     },
@@ -442,7 +522,7 @@ describe('canAccessPage', () => {
       user: hrMultiUser, // ['hr','deputy']
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
-        employees: true, attendance: true, requests: true,
+        employees: true, attendance: true, requests: true, documents: true,
         salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true,
       },
     },
@@ -450,7 +530,7 @@ describe('canAccessPage', () => {
       user: kppUser,
       row: {
         home: true, orders: false, letters: false, guests: true, projects: false,
-        employees: false, attendance: false, requests: false,
+        employees: false, attendance: false, requests: false, documents: false,
         salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true,
       },
     },
@@ -458,7 +538,7 @@ describe('canAccessPage', () => {
       user: chancelleryUser,
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
-        employees: false, attendance: false, requests: false,
+        employees: false, attendance: false, requests: false, documents: false,
         salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true,
       },
     },
@@ -466,7 +546,7 @@ describe('canAccessPage', () => {
       user: kanselariyaUser,
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
-        employees: false, attendance: false, requests: false,
+        employees: false, attendance: false, requests: false, documents: false,
         salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true,
       },
     },
@@ -474,7 +554,7 @@ describe('canAccessPage', () => {
       user: ministrUser,
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
-        employees: true, attendance: true, requests: true,
+        employees: true, attendance: true, requests: true, documents: true,
         salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true,
       },
     },
@@ -482,7 +562,27 @@ describe('canAccessPage', () => {
       user: deputyUser,
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
-        employees: true, attendance: true, requests: true,
+        employees: true, attendance: true, requests: true, documents: true,
+        salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true,
+      },
+    },
+    accounting: {
+      // Buxgalter = employee-like: sees the full regular-employee surface,
+      // NOT the employees directory. Same row as `regular` (web parity).
+      user: accountingUser,
+      row: {
+        home: true, orders: true, letters: true, guests: true, projects: true,
+        employees: false, attendance: true, requests: true, documents: true,
+        salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true,
+      },
+    },
+    dashboard: {
+      // Kuzatuvchi (dashboard) = employee-like: same regular-employee surface,
+      // NOT the employees directory. Same row as `regular` (web parity).
+      user: dashboardUser,
+      row: {
+        home: true, orders: true, letters: true, guests: true, projects: true,
+        employees: false, attendance: true, requests: true, documents: true,
         salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true,
       },
     },
@@ -490,7 +590,7 @@ describe('canAccessPage', () => {
       user: masterAdminUser,
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
-        employees: true, attendance: true, requests: true,
+        employees: true, attendance: true, requests: true, documents: true,
         salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true,
       },
     },
@@ -498,7 +598,7 @@ describe('canAccessPage', () => {
       user: secretariatUser, // is_secretariat does NOT affect page access
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
-        employees: false, attendance: true, requests: true,
+        employees: false, attendance: true, requests: true, documents: true,
         salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true,
       },
     },
@@ -506,7 +606,7 @@ describe('canAccessPage', () => {
       user: null,
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
-        employees: false, attendance: true, requests: true,
+        employees: false, attendance: true, requests: true, documents: true,
         salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true,
       },
     },
@@ -514,7 +614,7 @@ describe('canAccessPage', () => {
       user: undefined,
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
-        employees: false, attendance: true, requests: true,
+        employees: false, attendance: true, requests: true, documents: true,
         salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true,
       },
     },
@@ -541,11 +641,13 @@ describe('canAccessPage', () => {
     expect(canAccessPage(u, 'attendance')).toBe(false);
     expect(canAccessPage(u, 'requests')).toBe(false);
     expect(canAccessPage(u, 'projects')).toBe(false);
+    expect(canAccessPage(u, 'documents')).toBe(false);
   });
 
-  it('kanselariya spelling blocks attendance/requests like chancellery', () => {
+  it('kanselariya spelling blocks attendance/requests/documents like chancellery', () => {
     expect(canAccessPage(kanselariyaUser, 'attendance')).toBe(false);
     expect(canAccessPage(kanselariyaUser, 'requests')).toBe(false);
+    expect(canAccessPage(kanselariyaUser, 'documents')).toBe(false);
   });
 });
 
@@ -584,11 +686,14 @@ describe('employeeSubLabel', () => {
 // translateCategory + ORDER_CATEGORY_TRANSLATIONS
 // ─────────────────────────────────────────────────────────────────────────────
 describe('ORDER_CATEGORY_TRANSLATIONS', () => {
-  it('has the expected fixed mapping', () => {
+  // Post-i18n: the map holds translation-key paths (labels are resolved via
+  // i18n.t() at call time in translateCategory). The category CODES (Record
+  // keys) stay as backend contract identifiers; only labels are localized.
+  it('has the expected fixed code → labelKey mapping', () => {
     expect(ORDER_CATEGORY_TRANSLATIONS).toEqual({
-      vacation: "Mehnat ta'tili",
-      business_trip: 'Xizmat safari',
-      sick_leave: 'Kasallik varaqasi',
+      vacation: 'status.categoryLeave',
+      business_trip: 'status.categoryBusinessTrip',
+      sick_leave: 'status.categorySickLeave',
     });
   });
 });

@@ -2,6 +2,7 @@
 // (everything reports "unavailable" by default) — each test flips the stubs to
 // its own scenario.
 import * as LocalAuthentication from 'expo-local-authentication';
+import i18n from '@/i18n';
 import { isBiometricAvailable, authenticateBiometric } from '../biometrics';
 
 const mockHasHardware = jest.mocked(LocalAuthentication.hasHardwareAsync);
@@ -49,13 +50,14 @@ describe('authenticateBiometric', () => {
     expect(await authenticateBiometric()).toBe(false);
   });
 
-  it('keeps the device-credential fallback disabled and the Uzbek prompt', async () => {
+  it('keeps the device-credential fallback disabled and uses the localized prompt', async () => {
     mockAuthenticate.mockResolvedValue({ success: true });
     await authenticateBiometric();
+    // Prompt + cancel come from the catalog (uz-Latn default in tests).
     expect(mockAuthenticate).toHaveBeenCalledWith(
       expect.objectContaining({
-        promptMessage: 'Ilovani ochish uchun tasdiqlang',
-        cancelLabel: 'Bekor qilish',
+        promptMessage: i18n.t('security.biometricPrompt'),
+        cancelLabel: i18n.t('common.cancel'),
         disableDeviceFallback: true,
       })
     );

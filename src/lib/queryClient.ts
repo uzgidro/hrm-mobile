@@ -1,5 +1,6 @@
 import { QueryClient, QueryCache, MutationCache } from '@tanstack/react-query';
 import { getApiErrorMessage } from '../api/errors';
+import i18n from '@/i18n';
 import { toast } from './toast';
 
 // Global React Query defaults. The app previously used `new QueryClient()` with
@@ -27,7 +28,7 @@ export function createAppQueryClient(): QueryClient {
       onError: (error, query) => {
         if (metaSaysSkip(query.meta)) return;
         if (query.state.data === undefined) return; // initial load → screen owns it
-        toast.error(getApiErrorMessage(error, 'Maʼlumotni yangilab boʻlmadi'));
+        toast.error(getApiErrorMessage(error, i18n.t('errors.refreshFailed')));
       },
     }),
     // Mutations are user-initiated actions, so every failure gets a toast unless
@@ -35,7 +36,7 @@ export function createAppQueryClient(): QueryClient {
     mutationCache: new MutationCache({
       onError: (error, _vars, _ctx, mutation) => {
         if (metaSaysSkip(mutation.meta)) return;
-        toast.error(getApiErrorMessage(error, 'Amalni bajarib boʻlmadi'));
+        toast.error(getApiErrorMessage(error, i18n.t('errors.actionFailed')));
       },
     }),
     defaultOptions: {

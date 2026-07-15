@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet } from 'react-native';
 import dayjs from 'dayjs';
+import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
@@ -12,11 +13,12 @@ import { Section } from './DetailParts';
 export function DetailSections({ order }: { order: OrderAct }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const { t } = useTranslation();
 
   return (
     <>
       {(order.assigned_signers?.length ?? 0) > 0 && (
-        <Section title="Imzolovchilar">
+        <Section title={t('orders.sectionSigners')}>
           {order.assigned_signers!.map((s, i) => {
             const sid = s.employee_id ?? s.employee?.id;
             const signed = (order.signers ?? []).some((x) => (x.employee_id ?? x.employee?.id) === sid);
@@ -24,15 +26,15 @@ export function DetailSections({ order }: { order: OrderAct }) {
               <View key={s.id ?? i} style={styles.signerRow}>
                 <View style={[styles.signerDot, { backgroundColor: signed ? colors.success : colors.cardBorder }]} />
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.signerName}>{s.employee?.legal_name || 'Xodim'}</Text>
+                  <Text style={styles.signerName}>{s.employee?.legal_name || t('orders.signerFallback')}</Text>
                   <Text style={styles.signerType}>
-                    {s.signer_type === 'leadership' ? 'Rahbariyat' : 'Kelishuvchi'}
+                    {s.signer_type === 'leadership' ? t('orders.signerLeadership') : t('orders.signerApprover')}
                   </Text>
                 </View>
                 <View style={styles.signerStatusRow}>
                   {signed && <Icon name="check" size={14} color={colors.success} />}
                   <Text style={[styles.signerStatus, { color: signed ? colors.success : colors.textMuted }]}>
-                    {signed ? 'Imzolandi' : 'Kutilmoqda'}
+                    {signed ? t('orders.signed') : t('orders.waiting')}
                   </Text>
                 </View>
               </View>
@@ -42,15 +44,15 @@ export function DetailSections({ order }: { order: OrderAct }) {
       )}
 
       {(order.familiarizers?.length ?? 0) > 0 && (
-        <Section title="Tanishuvchilar">
+        <Section title={t('orders.sectionFamiliarizers')}>
           {order.familiarizers!.map((f, i) => (
             <View key={f.id ?? i} style={styles.signerRow}>
               <View style={[styles.signerDot, { backgroundColor: f.acknowledged ? colors.success : colors.cardBorder }]} />
-              <Text style={[styles.signerName, { flex: 1 }]}>{f.employee?.legal_name || 'Xodim'}</Text>
+              <Text style={[styles.signerName, { flex: 1 }]}>{f.employee?.legal_name || t('orders.signerFallback')}</Text>
               <View style={styles.signerStatusRow}>
                 {f.acknowledged && <Icon name="check" size={14} color={colors.success} />}
                 <Text style={[styles.signerStatus, { color: f.acknowledged ? colors.success : colors.textMuted }]}>
-                  {f.acknowledged ? 'Tanishdi' : 'Kutilmoqda'}
+                  {f.acknowledged ? t('orders.acknowledged') : t('orders.waiting')}
                 </Text>
               </View>
             </View>
@@ -59,10 +61,10 @@ export function DetailSections({ order }: { order: OrderAct }) {
       )}
 
       {(order.comments?.length ?? 0) > 0 && (
-        <Section title="Tarix">
+        <Section title={t('orders.sectionHistory')}>
           {order.comments!.map((cm, i) => (
             <View key={cm.id ?? i} style={styles.commentRow}>
-              <Text style={styles.commentAuthor}>{cm.employee?.legal_name || 'Xodim'}</Text>
+              <Text style={styles.commentAuthor}>{cm.employee?.legal_name || t('orders.signerFallback')}</Text>
               {!!cm.text && <Text style={styles.commentText}>{cm.text}</Text>}
               {!!cm.created_at && <Text style={styles.commentDate}>{dayjs(cm.created_at).format('DD.MM.YYYY HH:mm')}</Text>}
             </View>

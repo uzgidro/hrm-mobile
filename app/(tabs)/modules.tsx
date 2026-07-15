@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { router, type Href } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../src/store/authStore';
 import { useTheme, useThemedStyles } from '../../src/theme/ThemeProvider';
 import type { ThemeColors } from '../../src/theme/palettes';
@@ -22,6 +23,7 @@ export default function ModulesScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { width } = useWindowDimensions();
+  const { t } = useTranslation();
 
   const tileWidth = (width - 16 * 2 - 12 * 2) / 3;
 
@@ -49,29 +51,30 @@ export default function ModulesScreen() {
   const sections: Section[] = useMemo(() => {
     const raw: Section[] = [
       {
-        title: 'Faoliyat',
+        title: t('modules.sections.activity'),
         items: [
-          { key: 'attendance', icon: 'clock', label: 'Davomat', route: '/attendance-detail', access: 'attendance' },
-          { key: 'requests', icon: 'checklist', label: "So'rovlar", route: '/work-leaves', access: 'requests', badge: pendingCount },
-          { key: 'projects', icon: 'board', label: 'Loyihalar', route: '/loyihalar', access: 'projects' },
-          { key: 'salary', icon: 'wallet', label: 'Oylik', route: '/salary', access: 'salary' },
+          { key: 'attendance', icon: 'clock', label: t('modules.labels.attendance'), route: '/attendance-detail', access: 'attendance' },
+          { key: 'requests', icon: 'checklist', label: t('modules.labels.requests'), route: '/work-leaves', access: 'requests', badge: pendingCount },
+          { key: 'projects', icon: 'board', label: t('modules.labels.projects'), route: '/loyihalar', access: 'projects' },
+          { key: 'salary', icon: 'wallet', label: t('modules.labels.salary'), route: '/salary', access: 'salary' },
         ],
       },
       {
-        title: 'Jamoa',
+        title: t('modules.sections.team'),
         items: [
-          { key: 'team', icon: 'users', label: 'Jamoa', route: '/team', access: 'team' },
-          { key: 'employees', icon: 'idcard', label: 'Xodimlar', route: '/employees-list', access: 'employees' },
-          { key: 'guests', icon: 'guest', label: 'Mehmonlar', route: '/(tabs)/mehmonlar', access: 'guests' },
-          { key: 'birthdays', icon: 'gift', label: "Tug'ilgan kun", route: '/birthdays', access: 'birthdays' },
+          { key: 'team', icon: 'users', label: t('modules.labels.team'), route: '/team', access: 'team' },
+          { key: 'employees', icon: 'idcard', label: t('modules.labels.employees'), route: '/employees-list', access: 'employees' },
+          { key: 'guests', icon: 'guest', label: t('modules.labels.guests'), route: '/(tabs)/mehmonlar', access: 'guests' },
+          { key: 'birthdays', icon: 'gift', label: t('modules.labels.birthdays'), route: '/birthdays', access: 'birthdays' },
         ],
       },
       {
-        title: 'Boshqa',
+        title: t('modules.sections.other'),
         items: [
-          { key: 'news', icon: 'news', label: 'Yangiliklar', route: '/news', access: 'news' },
-          { key: 'notifications', icon: 'bell', label: 'Bildirishnoma', route: '/notifications', access: 'notifications', badge: unreadCount },
-          { key: 'profile', icon: 'user', label: 'Profil', route: '/(tabs)/profile', access: 'profile' },
+          { key: 'documents', icon: 'folder', label: t('modules.labels.documents'), route: '/hujjatlar', access: 'documents' },
+          { key: 'news', icon: 'news', label: t('modules.labels.news'), route: '/news', access: 'news' },
+          { key: 'notifications', icon: 'bell', label: t('modules.labels.notifications'), route: '/notifications', access: 'notifications', badge: unreadCount },
+          { key: 'profile', icon: 'user', label: t('modules.labels.profile'), route: '/(tabs)/profile', access: 'profile' },
         ],
       },
     ];
@@ -79,12 +82,12 @@ export default function ModulesScreen() {
     return raw
       .map((s) => ({ ...s, items: s.items.filter((it) => canAccessPage(user, it.access)) }))
       .filter((s) => s.items.length > 0);
-  }, [pendingCount, unreadCount, user]);
+  }, [pendingCount, unreadCount, user, t]);
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.title}>Modullar</Text>
+        <Text style={styles.title}>{t('modules.screenTitle')}</Text>
       </View>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {sections.map((section) => (

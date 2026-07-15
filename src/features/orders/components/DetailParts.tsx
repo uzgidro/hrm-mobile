@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
@@ -11,12 +12,13 @@ import { Icon } from '@/components/Icon';
 export function DetailHeader() {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const { t } = useTranslation();
   return (
     <View style={styles.header}>
       <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
         <Icon name="chevronLeft" size={24} color={colors.text} />
       </TouchableOpacity>
-      <Text style={styles.headerTitle}>Buyruq</Text>
+      <Text style={styles.headerTitle}>{t('orders.detailTitle')}</Text>
       <View style={{ width: 40 }} />
     </View>
   );

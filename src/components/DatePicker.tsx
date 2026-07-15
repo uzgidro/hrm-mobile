@@ -1,16 +1,20 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity } from 'react-native';
 import dayjs, { Dayjs } from 'dayjs';
+import { useTranslation } from 'react-i18next';
 import { useThemedStyles } from '../theme/ThemeProvider';
 import type { ThemeColors } from '../theme/palettes';
+import { monthName, weekdayNameShort } from '@/i18n/dates';
 
-const MONTHS_UZ = ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 'Iyul', 'Avgust', 'Sentyabr', 'Oktyabr', 'Noyabr', 'Dekabr'];
-const DAYS_SHORT = ['Du', 'Se', 'Ch', 'Pa', 'Ju', 'Sh', 'Ya'];
+// Monday-first weekday header. dayjs day() indexes Sunday=0..Saturday=6, and the
+// calendar grid below is Monday-first, so order the localized short names to match.
+const WEEK_DAY_INDEXES = [1, 2, 3, 4, 5, 6, 0];
 
 export function DatePickerModal({
   visible, value, title, onConfirm, onClose,
 }: { visible: boolean; value?: string | null; title: string; onConfirm: (iso: string) => void; onClose: () => void }) {
   const dp = useThemedStyles(makeDp);
+  const { t } = useTranslation();
   const init = value ? dayjs(value) : dayjs();
   const [month, setMonth] = useState<Dayjs>(init.startOf('month'));
   const [selected, setSelected] = useState<Dayjs>(init);
@@ -24,18 +28,18 @@ export function DatePickerModal({
       <View style={dp.overlay}>
         <View style={dp.sheet}>
           <View style={dp.header}>
-            <TouchableOpacity onPress={onClose}><Text style={dp.cancelText}>Bekor</Text></TouchableOpacity>
+            <TouchableOpacity onPress={onClose}><Text style={dp.cancelText}>{t('common.cancel')}</Text></TouchableOpacity>
             <Text style={dp.title}>{title}</Text>
             <TouchableOpacity onPress={() => { onConfirm(selected.format('YYYY-MM-DD')); onClose(); }}>
-              <Text style={dp.confirmText}>Tayyor</Text>
+              <Text style={dp.confirmText}>{t('common.done')}</Text>
             </TouchableOpacity>
           </View>
           <View style={dp.monthNav}>
             <TouchableOpacity onPress={() => setMonth(month.subtract(1, 'month'))} style={dp.navBtn}><Text style={dp.navText}>{'<'}</Text></TouchableOpacity>
-            <Text style={dp.monthLabel}>{MONTHS_UZ[month.month()]} {month.year()}</Text>
+            <Text style={dp.monthLabel}>{monthName(month.month())} {month.year()}</Text>
             <TouchableOpacity onPress={() => setMonth(month.add(1, 'month'))} style={dp.navBtn}><Text style={dp.navText}>{'>'}</Text></TouchableOpacity>
           </View>
-          <View style={dp.weekRow}>{DAYS_SHORT.map((d) => <Text key={d} style={dp.weekDay}>{d}</Text>)}</View>
+          <View style={dp.weekRow}>{WEEK_DAY_INDEXES.map((d) => <Text key={d} style={dp.weekDay}>{weekdayNameShort(d)}</Text>)}</View>
           <View style={dp.grid}>
             {cells.map((day, i) => {
               if (!day) return <View key={`e-${i}`} style={dp.cell} />;

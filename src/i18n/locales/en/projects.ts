@@ -1,0 +1,43 @@
+// English translation of the projects feature strings.
+// See uz-Latn/projects.ts for the meaning of each key.
+export default {
+  title: 'Projects',
+  nameFallback: 'Project',
+  empty: 'No projects',
+
+  membersTitle: 'Members ({{count}})',
+  memberFallback: 'Employee',
+  columnsTitle: 'Columns',
+  columnAdd: 'Column',
+  columnFallback: 'Column',
+  columnsEmpty: 'No columns',
+  taskFallback: 'Task',
+  taskAdd: 'Add task',
+
+  newColumn: 'New column',
+  newTask: 'New task',
+  columnNamePlaceholder: 'Column name',
+  taskTitlePlaceholder: 'Task title',
+  taskDescPlaceholder: 'Description (optional)',
+
+  deleteTitle: 'Delete',
+  deleteConfirm: 'Delete this project?',
+  deleteYes: 'Yes, delete',
+  deleteError: 'Failed to delete (only the creator can delete)',
+  toggleError: 'Could not complete the action',
+
+  editTitle: 'Edit project',
+  createTitle: 'New project',
+  nameLabel: 'Project name',
+  namePlaceholder: 'e.g. 2026 plan',
+  descLabel: 'Description',
+  descPlaceholder: 'A short note about the project...',
+  membersLabel: 'Project members',
+  membersSelected_one: '{{count}} employee selected',
+  membersSelected_other: '{{count}} employees selected',
+  membersPlaceholder: 'Select employees...',
+  membersHint: 'Members can see and take part in the project tasks.',
+  nameRequired: 'Project name is required',
+
+  errorTitle: 'Error',
+} as const;

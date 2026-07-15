@@ -1,3 +1,4 @@
+import i18n from '../i18n';
 import type { User, Employee } from '../types';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -61,6 +62,37 @@ export function isChancellery(user?: User | null): boolean {
   return role === 'chancellery' || role === 'kanselariya';
 }
 
+/** true for Buxgalteriya (accounting) multi-org employees */
+export function isAccounting(user?: User | null): boolean {
+  return getMultiOrgRole(user) === 'accounting';
+}
+
+/**
+ * true for "Kuzatuvchi" (dashboard) multi-org employees. On the web they are a
+ * regular employee whose HOME page is an HR-style attendance dashboard (other
+ * people's keldi-ketdi); no extra pages/export. That home dashboard is a web-
+ * only surface not yet built on mobile — we mirror only the ROLE so page/tab
+ * visibility (canAccessPage) treats them as employee-like. Mirrors the web's
+ * roleHelpers.js isDashboardViewer (added web-side in b86dc9d).
+ */
+export function isDashboardViewer(user?: User | null): boolean {
+  return getMultiOrgRole(user) === 'dashboard';
+}
+
+/**
+ * Accounting (buxgalter) AND Kuzatuvchi (dashboard) get the WHOLE regular-
+ * employee experience — the employee menu, personal pages, employee-scoped
+ * rights. When gating a personal page or an employee-scope right, use this
+ * instead of `isEmployee`: otherwise the multi-org flag would strip them of
+ * employee features. Mirrors the web's roleHelpers.js `isEmployeeLike`
+ * (accounting e83f0bb, dashboard b86dc9d). Branch-level accounting and the
+ * web-only home surfaces (accountant's Davomat list, Kuzatuvchi's HR dashboard)
+ * are intentionally NOT mirrored yet — those don't exist on mobile.
+ */
+export function isEmployeeLike(user?: User | null): boolean {
+  return isEmployee(user) || isAccounting(user) || isDashboardViewer(user);
+}
+
 export function isMinister(user?: User | null): boolean {
   return getMultiOrgRole(user) === 'ministr';
 }
@@ -76,7 +108,7 @@ export function canAccessChairmanTasks(user?: User | null): boolean {
 // ── Page visibility — derived from the web navConfig role tables ──────────────
 export type PageKey =
   | 'home' | 'orders' | 'letters' | 'guests' | 'projects'
-  | 'employees' | 'attendance' | 'requests'
+  | 'employees' | 'attendance' | 'requests' | 'documents'
   | 'salary' | 'team' | 'birthdays' | 'news' | 'notifications' | 'profile';
 
 /** Whether the given user may see a page. Mirrors which web NAV the role gets. */
@@ -98,8 +130,11 @@ export function canAccessPage(user: User | null | undefined, key: PageKey): bool
     case 'employees':
       return isMasterAdmin(user) || isHR(user) || isDeputy(user);
     // Attendance & leave requests: not for KPP or chancellery.
+    // Documents (Hujjatlar): web guards /hujjatlar with the same rule — KPP and
+    // chancellery are redirected away (App.jsx route guard + nav omission).
     case 'attendance':
     case 'requests':
+    case 'documents':
       return !kpp && !chancellery;
     // Personal / convenience pages — always available.
     case 'home':
@@ -119,16 +154,22 @@ export function canAccessPage(user: User | null | undefined, key: PageKey): bool
 export function employeeSubLabel(emp?: Employee): string {
   const jobPos =
     (typeof emp?.job_position === 'object' ? emp?.job_position?.name : (emp?.job_position as any)) || '';
-  return jobPos || 'Lavozim kiritilmagan';
+  return jobPos || i18n.t('status.noPosition');
 }
 
+// i18n note (same trade-off as orderStatus.ts): the category CODES (the Record
+// keys 'vacation', 'business_trip', 'sick_leave') are backend contract
+// identifiers and are NOT translated. The map holds `labelKey`s and the label
+// is resolved via i18n.t() at call time in translateCategory() so it follows
+// the current language.
 export const ORDER_CATEGORY_TRANSLATIONS: Record<string, string> = {
-  vacation: "Mehnat ta'tili",
-  business_trip: 'Xizmat safari',
-  sick_leave: 'Kasallik varaqasi',
+  vacation: 'status.categoryLeave',
+  business_trip: 'status.categoryBusinessTrip',
+  sick_leave: 'status.categorySickLeave',
 };
 
 export function translateCategory(name?: string): string {
-  if (!name) return 'Buyruq';
-  return ORDER_CATEGORY_TRANSLATIONS[name] || name;
+  if (!name) return i18n.t('status.categoryDefault');
+  const key = ORDER_CATEGORY_TRANSLATIONS[name];
+  return key ? i18n.t(key) : name;
 }

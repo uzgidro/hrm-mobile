@@ -27,14 +27,17 @@ describe('re-export', () => {
 });
 
 describe('LETTER_TYPE_LABELS', () => {
-  it('locks in the label map', () => {
+  // Post-i18n: the map holds translation-key paths (labels are resolved via
+  // i18n.t() at call time in letterTypeLabel). The letter-type CODES (Record
+  // keys) stay as backend contract identifiers; only labels are localized.
+  it('locks in the type → labelKey map', () => {
     expect(LETTER_TYPE_LABELS).toEqual({
-      bildirgi: 'Bildirgi',
-      explanotary: 'Bildirgi',
-      explanatory: 'Bildirgi',
-      notification: 'Bildirgi',
-      application: 'Ariza',
-      business_trip: 'Xizmat safari',
+      bildirgi: 'status.letterTypeNotification',
+      explanotary: 'status.letterTypeNotification',
+      explanatory: 'status.letterTypeNotification',
+      notification: 'status.letterTypeNotification',
+      application: 'status.letterTypeApplication',
+      business_trip: 'status.letterTypeBusinessTrip',
     });
   });
 });

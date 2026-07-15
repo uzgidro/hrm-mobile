@@ -46,3 +46,9 @@ jest.mock('expo-local-authentication', () => ({
   isEnrolledAsync: jest.fn(async () => false),
   authenticateAsync: jest.fn(async () => ({ success: false })),
 }));
+
+// expo-localization → deterministic device locale (Uzbek Latin) so language
+// detection is stable in tests; individual tests can override getLocales.
+jest.mock('expo-localization', () => ({
+  getLocales: jest.fn(() => [{ languageTag: 'uz-UZ', languageCode: 'uz', textDirection: 'ltr' }]),
+}));

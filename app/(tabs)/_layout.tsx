@@ -1,6 +1,7 @@
 import { Tabs } from 'expo-router';
 import { View, Text, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import type { ThemeColors } from '../../src/theme/palettes';
 import { Icon, IconName } from '../../src/components/Icon';
@@ -37,6 +38,7 @@ export default function TabsLayout() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const { user } = useAuthStore();
+  const { t } = useTranslation();
 
   return (
     <Tabs
@@ -57,14 +59,14 @@ export default function TabsLayout() {
     >
       <Tabs.Screen
         name="index"
-        options={{ tabBarButtonTestID: 'tab-home', tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="home" label="Asosiy" colors={colors} /> }}
+        options={{ tabBarButtonTestID: 'tab-home', tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="home" label={t('modules.labels.home')} colors={colors} /> }}
       />
       <Tabs.Screen
         name="orders"
         options={{
           href: canAccessPage(user, 'orders') ? undefined : null,
           tabBarButtonTestID: 'tab-orders',
-          tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="orders" label="Buyruqlar" colors={colors} />,
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="orders" label={t('modules.labels.orders')} colors={colors} />,
         }}
       />
       <Tabs.Screen
@@ -72,16 +74,16 @@ export default function TabsLayout() {
         options={{
           href: canAccessPage(user, 'letters') ? undefined : null,
           tabBarButtonTestID: 'tab-letters',
-          tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="mail" label="Xatlar" colors={colors} />,
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="mail" label={t('modules.labels.letters')} colors={colors} />,
         }}
       />
       <Tabs.Screen
         name="modules"
-        options={{ tabBarButtonTestID: 'tab-modules', tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="grid" label="Modullar" colors={colors} /> }}
+        options={{ tabBarButtonTestID: 'tab-modules', tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="grid" label={t('modules.labels.modules')} colors={colors} /> }}
       />
       <Tabs.Screen
         name="mehmonlar"
-        options={{ tabBarButtonTestID: 'tab-guests', tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="guest" label="Mehmonlar" colors={colors} /> }}
+        options={{ tabBarButtonTestID: 'tab-guests', tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="guest" label={t('modules.labels.guests')} colors={colors} /> }}
       />
       {/* Profil — bottom bardan olib tashlandi; tepadagi avatar va Modullar orqali ochiladi */}
       <Tabs.Screen name="profile" options={{ href: null }} />

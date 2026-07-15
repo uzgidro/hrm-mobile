@@ -2,29 +2,46 @@ name: CI
 
 # Static checks on every PR and on pushes to the long-lived branches.
 # Keeps refactoring (dev) and master (release) green before anything ships.
+# Split into independent jobs so a failure points straight at what broke
+# (typecheck vs lint vs test vs vulnerable deps) and they run in parallel.
 on:
   push:
     branches: [refactoring, master]
   pull_request:
 
 jobs:
-  checks:
+  typecheck:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - run: npm run typecheck
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - run: npm run lint
 
-      - run: npm ci
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - run: npx jest --ci
 
-      - name: Typecheck
-        run: npm run typecheck
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Test
-        run: npx jest --ci
+  # Dependency vulnerability gate. Fails the build on a high/critical advisory
+  # (moderate is reported but tolerated — the remaining ones are transitive
+  # Expo/RN deps with no fix short of a breaking SDK downgrade). Pin a fixed
+  # transitive version via `overrides` in package.json rather than lowering
+  # this threshold.
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - name: Report all advisories
+        run: npm audit || true
+      - name: Fail on high or critical
+        run: npm audit --audit-level=high

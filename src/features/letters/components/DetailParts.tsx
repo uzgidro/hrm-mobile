@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
@@ -10,6 +11,7 @@ import type { TimelineItem } from '@/utils/letterStatus';
 // screen file stays composition-only. Styles are colocated here.
 
 export function DetailHeader() {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   return (
@@ -17,7 +19,7 @@ export function DetailHeader() {
       <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={10}>
         <Icon name="chevronLeft" size={24} color={colors.text} />
       </TouchableOpacity>
-      <Text style={styles.headerTitle}>Xat</Text>
+      <Text style={styles.headerTitle}>{t('letters.detailTitle')}</Text>
       <View style={{ width: 40 }} />
     </View>
   );

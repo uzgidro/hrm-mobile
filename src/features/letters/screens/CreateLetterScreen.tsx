@@ -1,5 +1,5 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
   ScrollView, ActivityIndicator, Alert,
@@ -8,6 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import dayjs from 'dayjs';
 import * as DocumentPicker from 'expo-document-picker';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { employeeSubLabel } from '@/utils/roles';
 import { getApiErrorMessage } from '@/api/errors';
@@ -26,15 +27,19 @@ import { LetterFormFields } from '../components/LetterFormFields';
 import { LetterPickers, type PickerKind, type DateKind } from '../components/LetterPickers';
 
 type LetterType = 'explanatory' | 'application' | 'business_trip';
-const TYPE_OPTIONS: PickerOption[] = [
-  { value: 1, label: 'Bildirgi' },
-  { value: 2, label: 'Ariza' },
-  { value: 3, label: 'Xizmat safari' },
+// Value/labelKey pairs — the numeric picker values are internal (never sent to
+// the API; they map to the letter-type CODES below), the labels are localized
+// at render via t().
+const TYPE_OPTION_KEYS: { value: number; labelKey: string }[] = [
+  { value: 1, labelKey: 'letters.typeNotification' },
+  { value: 2, labelKey: 'letters.typeApplication' },
+  { value: 3, labelKey: 'letters.typeBusinessTrip' },
 ];
 const TYPE_BY_VALUE: Record<number, LetterType> = { 1: 'explanatory', 2: 'application', 3: 'business_trip' };
 const VALUE_BY_TYPE: Record<LetterType, number> = { explanatory: 1, application: 2, business_trip: 3 };
 
 export default function CreateLetterScreen() {
+  const { t } = useTranslation();
   const { user } = useAuthStore();
   const employee = user?.employee;
   const branchId = employee?.organization_branches?.[0]?.id ?? employee?.department?.organization_branch_id;
@@ -42,6 +47,11 @@ export default function CreateLetterScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const createMutation = useCreateLetter();
+
+  const TYPE_OPTIONS = useMemo<PickerOption[]>(
+    () => TYPE_OPTION_KEYS.map((o) => ({ value: o.value, label: t(o.labelKey) })),
+    [t]
+  );
 
   const [letterType, setLetterType] = useState<LetterType | null>(null);
   const [letterDate, setLetterDate] = useState<string>(dayjs().format('YYYY-MM-DD'));
@@ -79,11 +89,14 @@ export default function CreateLetterScreen() {
   const { data: branches = [], isLoading: branchesLoading } = useQuery(orgBranchesQuery(isTrip));
 
   // ── Options ──────────────────────────────────────────────────────────────────
-  const empOption = (e: Employee): PickerOption => ({ value: e.id, label: e.legal_name || "Noma'lum", subLabel: employeeSubLabel(e), photo: e.photo_path ?? null });
-  const signerOptions = useMemo(() => signerEmps.map(empOption), [signerEmps]);
+  const empOption = useCallback(
+    (e: Employee): PickerOption => ({ value: e.id, label: e.legal_name || t('status.unknown'), subLabel: employeeSubLabel(e), photo: e.photo_path ?? null }),
+    [t]
+  );
+  const signerOptions = useMemo(() => signerEmps.map(empOption), [signerEmps, empOption]);
   const ordinaryOptions = useMemo(() => signerOptions.filter((o) => o.value !== mainSignerId), [signerOptions, mainSignerId]);
-  const rahbariyatOptions = useMemo(() => rahbariyatEmps.map(empOption), [rahbariyatEmps]);
-  const submitterOptions = useMemo(() => (submitterData?.items ?? []).map(empOption), [submitterData]);
+  const rahbariyatOptions = useMemo(() => rahbariyatEmps.map(empOption), [rahbariyatEmps, empOption]);
+  const submitterOptions = useMemo(() => (submitterData?.items ?? []).map(empOption), [submitterData, empOption]);
 
   const regionOptions = useMemo<PickerOption[]>(() => {
     const set = Array.from(new Set(branches.map((b) => b.region).filter(Boolean)));
@@ -121,13 +134,13 @@ export default function CreateLetterScreen() {
 
   // ── Submit ───────────────────────────────────────────────────────────────────
   async function handleCreate() {
-    if (!letterType) { Alert.alert('Xato', 'Hujjat turi tanlanishi shart'); return; }
-    if (!branchId) { Alert.alert('Xato', 'Filial aniqlanmadi'); return; }
-    if (!isTrip && !mainSignerId) { Alert.alert('Xato', 'Rahbariyat (imzolovchi) tanlanishi shart'); return; }
+    if (!letterType) { Alert.alert(t('letters.validationTitle'), t('letters.typeRequired')); return; }
+    if (!branchId) { Alert.alert(t('letters.validationTitle'), t('letters.branchNotFound')); return; }
+    if (!isTrip && !mainSignerId) { Alert.alert(t('letters.validationTitle'), t('letters.mainSignerRequired')); return; }
     if (isTrip) {
-      if (destinationIds.length === 0) { Alert.alert('Xato', 'Kamida bitta borish filiali tanlanishi shart'); return; }
-      if (!submitterId) { Alert.alert('Xato', 'Yuboruvchi shaxs tanlanishi shart'); return; }
-      if (rahbariyatIds.length === 0) { Alert.alert('Xato', 'Kamida bitta rahbariyat tanlanishi shart'); return; }
+      if (destinationIds.length === 0) { Alert.alert(t('letters.validationTitle'), t('letters.destinationRequired')); return; }
+      if (!submitterId) { Alert.alert(t('letters.validationTitle'), t('letters.submitterRequired')); return; }
+      if (rahbariyatIds.length === 0) { Alert.alert(t('letters.validationTitle'), t('letters.leadershipRequired')); return; }
     }
 
     const desc = isTrip
@@ -161,20 +174,20 @@ export default function CreateLetterScreen() {
       const letterId = await createMutation.mutateAsync({
         payload,
         files,
-        onFilesError: () => Alert.alert('Eslatma', 'Xat saqlandi, lekin ilova yuklanmadi'),
+        onFilesError: () => Alert.alert(t('letters.attachmentNoticeTitle'), t('letters.attachmentFailed')),
       });
       router.replace({ pathname: '/letter-detail', params: { id: String(letterId) } });
     } catch (err) {
-      Alert.alert('Xato', getApiErrorMessage(err, 'Xatolik yuz berdi'));
+      Alert.alert(t('letters.validationTitle'), getApiErrorMessage(err, t('letters.createError')));
     } finally {
       setSaving(false);
     }
   }
 
   const typeHint = !letterType ? '' :
-    letterType === 'application' ? 'Ariza: barcha kelishuvchilar va rahbar imzolashi shart. Biror kishi rad etsa — hujjat bekor.' :
-    isTrip ? "Xizmat safari: rahbar tasdiqlagach, xat borish filiali HR akkountida ko'rinadi." :
-    'Bildirgi: faqat rahbar imzosi majburiy. Kelishuvchilar ixtiyoriy.';
+    letterType === 'application' ? t('letters.hintApplication') :
+    isTrip ? t('letters.hintBusinessTrip') :
+    t('letters.hintNotification');
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
@@ -182,19 +195,19 @@ export default function CreateLetterScreen() {
         <TouchableOpacity onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
           <Icon name="chevronLeft" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.title}>Yangi xat</Text>
+        <Text style={styles.title}>{t('letters.createTitle')}</Text>
         <TouchableOpacity style={[styles.createBtn, saving && styles.createBtnDisabled]} onPress={handleCreate} disabled={saving} activeOpacity={0.8}>
-          {saving ? <ActivityIndicator size="small" color={colors.onPrimary} /> : <Text style={styles.createBtnText}>Yaratish</Text>}
+          {saving ? <ActivityIndicator size="small" color={colors.onPrimary} /> : <Text style={styles.createBtnText}>{t('common.create')}</Text>}
         </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Field label="Hujjat turi" required>
-          <Selector text={letterType ? TYPE_OPTIONS.find((o) => TYPE_BY_VALUE[o.value] === letterType)?.label : undefined} placeholder="Tanlang..." onPress={() => setPicker('type')} />
+        <Field label={t('letters.fieldType')} required>
+          <Selector text={letterType ? TYPE_OPTIONS.find((o) => TYPE_BY_VALUE[o.value] === letterType)?.label : undefined} placeholder={t('letters.placeholderSelect')} onPress={() => setPicker('type')} />
         </Field>
 
-        <Field label="Sanasi">
-          <Selector text={letterDate ? dayjs(letterDate).format('DD.MM.YYYY') : undefined} placeholder="Sanani tanlang" onPress={() => setDatePicker('letter')} />
+        <Field label={t('letters.fieldLetterDate')}>
+          <Selector text={letterDate ? dayjs(letterDate).format('DD.MM.YYYY') : undefined} placeholder={t('letters.placeholderSelectDate')} onPress={() => setDatePicker('letter')} />
         </Field>
 
         <LetterFormFields
@@ -212,7 +225,7 @@ export default function CreateLetterScreen() {
           nameOf={nameOf}
         />
 
-        <AttachmentField label="Ilova yoki asos" files={files} onPick={pickFiles} onRemove={() => setFiles([])} />
+        <AttachmentField label={t('letters.fieldAttachment')} files={files} onPick={pickFiles} onRemove={() => setFiles([])} />
 
         <View style={{ height: 40 }} />
       </ScrollView>

@@ -9,6 +9,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { View, Alert, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { PinPad } from '@/features/security/components/PinPad';
 import { useLockStore } from '@/store/lockStore';
 import { useAuthStore } from '@/store/authStore';
@@ -18,6 +19,7 @@ import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
 
 export default function UnlockScreen() {
+  const { t } = useTranslation();
   const styles = useThemedStyles(makeStyles);
   const { colors } = useTheme();
 
@@ -36,11 +38,11 @@ export default function UnlockScreen() {
   // the lock footprint and logs out; the auth guard then redirects.
   const forceLogout = () => {
     Alert.alert(
-      'Urinishlar soni tugadi',
-      'Xavfsizlik maqsadida tizimdan chiqarildingiz. Qaytadan kiring.',
+      t('security.forceLogoutTitle'),
+      t('security.forceLogoutMessage'),
       [
         {
-          text: 'OK',
+          text: t('common.ok'),
           onPress: async () => {
             await useLockStore.getState().reset();
             await useAuthStore.getState().logout();
@@ -57,7 +59,7 @@ export default function UnlockScreen() {
       if (r.forceLogout) {
         forceLogout();
       } else if (!r.ok) {
-        setError(`Noto'g'ri PIN kod. ${r.remaining} ta urinish qoldi.`);
+        setError(t('security.attemptsLeft', { count: r.remaining }));
       }
       // On ok the store unlocks and the overlay unmounts — nothing to do here.
     } finally {
@@ -100,7 +102,7 @@ export default function UnlockScreen() {
         <PinPad
           value={value}
           onChange={onChange}
-          title="PIN kodni kiriting"
+          title={t('security.unlockTitle')}
           error={error}
           disabled={busy}
           onBiometric={biometricsUsable ? tryBiometric : undefined}

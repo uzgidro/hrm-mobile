@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
@@ -14,13 +15,14 @@ import { canSignLetter } from '@/utils/letterStatus';
 import { lettersListQuery, type LettersTab } from '../api/queries';
 import { LetterListCard } from '../components/LetterListCard';
 
-const TABS: { key: LettersTab; label: string }[] = [
-  { key: 'action', label: 'Menda' },
-  { key: 'mine', label: 'Mening' },
-  { key: 'all', label: 'Barchasi' },
+const TABS: { key: LettersTab; labelKey: string }[] = [
+  { key: 'action', labelKey: 'letters.tabAction' },
+  { key: 'mine', labelKey: 'letters.tabMine' },
+  { key: 'all', labelKey: 'common.all' },
 ];
 
 export default function LettersListScreen() {
+  const { t } = useTranslation();
   const { user } = useAuthStore();
   const employeeId = user?.employee?.id;
   const { colors } = useTheme();
@@ -42,24 +44,24 @@ export default function LettersListScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.title}>Xatlar</Text>
+        <Text style={styles.title}>{t('letters.listTitle')}</Text>
         <TouchableOpacity style={styles.fab} onPress={() => router.push('/create-letter')} activeOpacity={0.8}>
           <Icon name="plus" size={22} color={colors.onPrimary} strokeWidth={2.4} />
         </TouchableOpacity>
       </View>
 
       <View style={styles.tabsRow}>
-        {TABS.map((t) => {
-          const active = tab === t.key;
+        {TABS.map((tItem) => {
+          const active = tab === tItem.key;
           return (
             <TouchableOpacity
-              key={t.key}
+              key={tItem.key}
               style={[styles.tab, active && styles.tabActive]}
-              onPress={() => setTab(t.key)}
+              onPress={() => setTab(tItem.key)}
               activeOpacity={0.8}
             >
-              <Text style={[styles.tabText, active && styles.tabTextActive]}>{t.label}</Text>
-              {t.key === 'action' && tab === 'action' && actionCount > 0 && (
+              <Text style={[styles.tabText, active && styles.tabTextActive]}>{t(tItem.labelKey)}</Text>
+              {tItem.key === 'action' && tab === 'action' && actionCount > 0 && (
                 <View style={styles.tabBadge}><Text style={styles.tabBadgeText}>{actionCount > 9 ? '9+' : actionCount}</Text></View>
               )}
             </TouchableOpacity>
@@ -79,7 +81,7 @@ export default function LettersListScreen() {
             <View style={styles.emptyWrap}>
               <EmptyState
                 icon="mail"
-                title={tab === 'action' ? "Imzolash kutilayotgan xatlar yo'q" : "Xatlar yo'q"}
+                title={tab === 'action' ? t('letters.emptyAction') : t('letters.empty')}
               />
             </View>
           ) : (

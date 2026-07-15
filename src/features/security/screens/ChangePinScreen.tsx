@@ -8,6 +8,7 @@
 import { useState } from 'react';
 import { View, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { PinPad } from '@/features/security/components/PinPad';
 import { useLockStore } from '@/store/lockStore';
@@ -20,14 +21,16 @@ import { router } from 'expo-router';
 
 type Step = 'current' | 'new' | 'confirm';
 
-const STEP_TITLE: Record<Step, string> = {
-  current: 'Joriy PIN kodni kiriting',
-  new: 'Yangi PIN kod kiriting',
-  confirm: 'Yangi PIN kodni tasdiqlang',
-};
-
 export default function ChangePinScreen() {
+  const { t } = useTranslation();
   const styles = useThemedStyles(makeStyles);
+
+  const STEP_TITLE: Record<Step, string> = {
+    current: t('security.changeCurrentTitle'),
+    new: t('security.changeNewTitle'),
+    confirm: t('security.changeConfirmTitle'),
+  };
+
   const verifyCurrentPin = useLockStore((s) => s.verifyCurrentPin);
   const setupPin = useLockStore((s) => s.setupPin);
   const reset = useLockStore((s) => s.reset);
@@ -59,11 +62,11 @@ export default function ChangePinScreen() {
         const r = await verifyCurrentPin(pin);
         if (r.forceLogout) {
           Alert.alert(
-            'Urinishlar soni tugadi',
-            'Xavfsizlik maqsadida tizimdan chiqarildingiz. Qaytadan kiring.',
+            t('security.forceLogoutTitle'),
+            t('security.forceLogoutMessage'),
             [
               {
-                text: 'OK',
+                text: t('common.ok'),
                 onPress: () => {
                   // Wipe the lock footprint, then flip auth — the change-pin
                   // route sits under the authenticated guard, so it unmounts
@@ -80,7 +83,7 @@ export default function ChangePinScreen() {
           return;
         }
         if (!r.ok) {
-          setError(`Noto'g'ri PIN kod. ${r.remaining} ta urinish qoldi.`);
+          setError(t('security.attemptsLeft', { count: r.remaining }));
           setValue('');
           return;
         }
@@ -103,7 +106,7 @@ export default function ChangePinScreen() {
 
     // step === 'confirm'
     if (pin !== newPin) {
-      setError("PIN kodlar mos kelmadi. Qaytadan urinib ko'ring.");
+      setError(t('security.mismatch'));
       setStep('new');
       setNewPin('');
       setValue('');
@@ -112,7 +115,7 @@ export default function ChangePinScreen() {
     setBusy(true);
     try {
       await setupPin(newPin);
-      toast.success("PIN kod o'zgartirildi");
+      toast.success(t('security.changeSuccess'));
       router.back();
     } finally {
       setBusy(false);
@@ -121,7 +124,7 @@ export default function ChangePinScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-      <ScreenHeader title="PIN kodni o'zgartirish" />
+      <ScreenHeader title={t('security.changeTitle')} />
       <View style={styles.body}>
         <PinPad
           value={value}

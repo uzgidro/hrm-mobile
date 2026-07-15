@@ -1,10 +1,10 @@
 import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 
 // The sticky sign/reject bar shown only when the current user may act on the
-// letter (gating done by the screen via canSignLetter). Preserves the exact
-// Uzbek labels: "Rad etish" / "Imzolash".
+// letter (gating done by the screen via canSignLetter).
 export function LetterActionBar({
   busy,
   onSign,
@@ -14,15 +14,16 @@ export function LetterActionBar({
   onSign: () => void;
   onReject: () => void;
 }) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.actionBar}>
       <TouchableOpacity style={[styles.actBtn, styles.actReject]} disabled={busy} onPress={onReject} activeOpacity={0.85}>
-        <Text style={styles.actRejectText}>Rad etish</Text>
+        <Text style={styles.actRejectText}>{t('letters.reject')}</Text>
       </TouchableOpacity>
       <TouchableOpacity style={[styles.actBtn, styles.actApprove]} disabled={busy} onPress={onSign} activeOpacity={0.85}>
-        {busy ? <ActivityIndicator color={colors.onPrimary} /> : <Text style={styles.actApproveText}>Imzolash</Text>}
+        {busy ? <ActivityIndicator color={colors.onPrimary} /> : <Text style={styles.actApproveText}>{t('letters.sign')}</Text>}
       </TouchableOpacity>
     </View>
   );

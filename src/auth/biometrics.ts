@@ -1,4 +1,5 @@
 import { Platform } from 'react-native';
+import i18n from '@/i18n';
 
 // Thin defensive wrapper over expo-local-authentication. The native module is
 // loaded lazily and guarded: on web or when the module is unavailable (e.g. a
@@ -35,8 +36,8 @@ export async function authenticateBiometric(): Promise<boolean> {
   if (!auth) return false;
   try {
     const result = await auth.authenticateAsync({
-      promptMessage: 'Ilovani ochish uchun tasdiqlang',
-      cancelLabel: 'Bekor qilish',
+      promptMessage: i18n.t('security.biometricPrompt'),
+      cancelLabel: i18n.t('common.cancel'),
       // The app's own PIN pad is the fallback — don't offer the device
       // credential (system PIN/pattern) inside the biometric sheet.
       disableDeviceFallback: true,
