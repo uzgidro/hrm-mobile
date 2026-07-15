@@ -15,6 +15,9 @@ export default {
   commentPlaceholder: 'Кратко опишите причину...',
   noSupervisor: 'Руководитель не назначен',
   supervisorHint: 'Заявка отправляется напрямую в отдел кадров',
+  pickSupervisor: 'Выберите руководителя',
+  pickSupervisorTitle: 'Выбор руководителя',
+  supervisorRequired: 'Пожалуйста, выберите утверждающего руководителя',
   endBeforeStart: 'Время окончания должно быть позже начала',
 
   startPickerTitle: 'Время начала',

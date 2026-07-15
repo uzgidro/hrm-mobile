@@ -15,6 +15,9 @@ export default {
   commentPlaceholder: 'Сабабни қисқача ёзинг...',
   noSupervisor: 'Раҳбар бириктирилмаган',
   supervisorHint: 'Сўров HR бўлимига тўғридан-тўғри юборилади',
+  pickSupervisor: 'Раҳбарни танланг',
+  pickSupervisorTitle: 'Раҳбарни танлаш',
+  supervisorRequired: 'Илтимос, тасдиқловчи раҳбарни танланг',
   endBeforeStart: 'Тугаш вақти бошланишдан кейин бўлиши керак',
 
   startPickerTitle: 'Бошланиш вақти',

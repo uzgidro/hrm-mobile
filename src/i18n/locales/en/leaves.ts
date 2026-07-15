@@ -15,6 +15,9 @@ export default {
   commentPlaceholder: 'Briefly describe the reason...',
   noSupervisor: 'No supervisor assigned',
   supervisorHint: 'The request is sent directly to the HR department',
+  pickSupervisor: 'Select a supervisor',
+  pickSupervisorTitle: 'Select supervisor',
+  supervisorRequired: 'Please select an approving supervisor',
   endBeforeStart: 'End time must be after the start',
 
   startPickerTitle: 'Start time',

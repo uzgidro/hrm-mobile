@@ -4,7 +4,8 @@
 // function (no React) so it is unit-testable — screens call it, never re-derive
 // the rules inline.
 import type { WorkLeave, Employee } from '@/types';
-import { getMultiOrgRoles } from '@/utils/roles';
+import { getMultiOrgRoles, employeeSubLabel } from '@/utils/roles';
+import type { PickerOption } from '@/components/PickerModal';
 
 function isPending(status?: string): boolean {
   return status === 'pending' || status === 'yuborildi';
@@ -109,4 +110,24 @@ export function canDeleteLeave(
   }
   // No assigned signers: deletable only while nobody has signed.
   return signers.length === 0;
+}
+
+/**
+ * Build supervisor picker options from the employee roster, EXCLUDING the
+ * requester themselves (you can't be your own approver). Mirrors the web's
+ * RequestPermissionDrawer, which filters self out of the supervisor SelectField.
+ * Pure so it is unit-testable.
+ */
+export function supervisorOptions(
+  employees: Employee[] | undefined,
+  selfEmployeeId: number | undefined,
+): PickerOption[] {
+  return (employees ?? [])
+    .filter((e) => e.id !== selfEmployeeId)
+    .map((e) => ({
+      value: e.id,
+      label: e.legal_name || '—',
+      subLabel: employeeSubLabel(e),
+      photo: e.photo_path ?? null,
+    }));
 }
