@@ -7,9 +7,11 @@ export default {
   usernamePlaceholder: 'Логин или email',
   passwordLabel: 'Пароль',
   loginButton: 'Войти',
+  oneIdButton: 'Войти через OneID',
 
   errorTitle: 'Ошибка',
   credentialsRequired: 'Введите логин и пароль',
   loginError: 'Ошибка входа',
   invalidCredentials: 'Неверный логин или пароль',
+  oneIdError: 'Не удалось войти через OneID',
 } as const;

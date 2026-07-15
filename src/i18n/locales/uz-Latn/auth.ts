@@ -8,10 +8,12 @@ export default {
   usernamePlaceholder: 'Username yoki email',
   passwordLabel: 'Parol',
   loginButton: 'Kirish',
+  oneIdButton: 'OneID orqali kirish',
 
   // Validation + login error alerts
   errorTitle: 'Xato',
   credentialsRequired: 'Login va parol kiritilishi shart',
   loginError: 'Kirish xatosi',
   invalidCredentials: "Login yoki parol noto'g'ri",
+  oneIdError: "OneID orqali kirishda xatolik yuz berdi",
 } as const;

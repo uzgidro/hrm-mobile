@@ -2,7 +2,7 @@
   "expo": {
     "name": "HRM Uzgidro",
     "slug": "hrm-mobile",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "runtimeVersion": {
       "policy": "appVersion"
     },
@@ -57,7 +57,8 @@
         }
       ],
       "expo-image",
-      "expo-localization"
+      "expo-localization",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true

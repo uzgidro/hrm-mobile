@@ -3,6 +3,11 @@ export const AUTH_LOGIN = 'auth/login';
 export const AUTH_REFRESH = 'auth/refresh';
 export const USER_INFO = 'auth/me';
 
+// OneID (YaIT) SSO — mobile flow. SSO_LOGIN is opened in the system browser
+// (not called via apiClient); SSO_EXCHANGE trades the one-time code for tokens.
+export const SSO_LOGIN = 'sso/login';
+export const SSO_EXCHANGE = 'sso/exchange';
+
 // Employee
 export const EMPLOYEE_DETAIL = (id: number) => `employees/${id}`;
 export const EMPLOYEE_ATTENDANCE_CALENDAR = (id: number) => `employees/${id}/attendance-calendar`;

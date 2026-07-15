@@ -11,6 +11,7 @@ import { apiClient } from '../../src/api/client';
 import { useAuthStore } from '../../src/store/authStore';
 import { useLangStore } from '../../src/store/langStore';
 import { setupPushNotifications } from '../../src/auth/push';
+import { loginWithOneId } from '../../src/auth/oneid';
 import { AUTH_LOGIN, USER_INFO } from '../../src/api/urls';
 import { useTheme, useThemedStyles } from '../../src/theme/ThemeProvider';
 import type { ThemeColors } from '../../src/theme/palettes';
@@ -67,6 +68,23 @@ export default function LoginScreen() {
       const detail = err?.response?.data?.detail;
       const msg = Array.isArray(detail) ? detail[0]?.msg : (detail || t('auth.invalidCredentials'));
       Alert.alert(t('auth.loginError'), typeof msg === 'string' ? msg : t('errors.generic'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOneId = async () => {
+    setLoading(true);
+    try {
+      const res = await loginWithOneId();
+      // null = the user cancelled the browser; no error, just re-enable.
+      if (!res) return;
+      // Same seam as the form login: login() flips isAuthenticated and the
+      // Stack.Protected guard navigates; then register the push token.
+      await login(res.access_token, res.refresh_token, res.user);
+      void setupPushNotifications();
+    } catch {
+      Alert.alert(t('auth.loginError'), t('auth.oneIdError'));
     } finally {
       setLoading(false);
     }
@@ -163,6 +181,19 @@ export default function LoginScreen() {
           >
             {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.loginBtnText}>{t('auth.loginButton')}</Text>}
           </TouchableOpacity>
+
+          {/* OneID (YaIT) SSO — native only; the web SPA has its own OneID flow. */}
+          {Platform.OS !== 'web' && (
+            <TouchableOpacity
+              style={[styles.oneIdBtn, loading && styles.loginBtnDisabled]}
+              onPress={handleOneId}
+              disabled={loading}
+              activeOpacity={0.85}
+            >
+              <Icon name="idcard" size={18} color={colors.primary} />
+              <Text style={styles.oneIdBtnText}>{t('auth.oneIdButton')}</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         <Text style={styles.version}>v{Constants.expoConfig?.version ?? '1.0.0'}</Text>
@@ -217,6 +248,14 @@ const makeStyles = (c: ThemeColors) =>
     loginBtn: { backgroundColor: c.primary, borderRadius: 12, paddingVertical: 16, alignItems: 'center', marginTop: 8 },
     loginBtnDisabled: { opacity: 0.7 },
     loginBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+
+    // OneID: outline secondary button distinct from the primary password login.
+    oneIdBtn: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+      backgroundColor: c.card, borderWidth: 1, borderColor: c.primary,
+      borderRadius: 12, paddingVertical: 15,
+    },
+    oneIdBtnText: { color: c.primary, fontSize: 15, fontWeight: '700' },
 
     version: { textAlign: 'center', color: c.textMuted, fontSize: 12, marginTop: 32 },
   });

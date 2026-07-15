@@ -7,9 +7,11 @@ export default {
   usernamePlaceholder: 'Username or email',
   passwordLabel: 'Password',
   loginButton: 'Sign in',
+  oneIdButton: 'Sign in with OneID',
 
   errorTitle: 'Error',
   credentialsRequired: 'Username and password are required',
   loginError: 'Sign-in error',
   invalidCredentials: 'Invalid username or password',
+  oneIdError: 'Could not sign in with OneID',
 } as const;
