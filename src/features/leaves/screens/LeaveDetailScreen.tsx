@@ -18,8 +18,8 @@ import { LoadingView, EmptyState } from '@/components/StateViews';
 import { getApiErrorMessage } from '@/api/errors';
 import { isHR } from '@/utils/roles';
 import { leaveDetailQuery } from '../api/queries';
-import { useSignLeave, useRejectLeave } from '../api/mutations';
-import { canActOnLeave } from '../utils';
+import { useSignLeave, useRejectLeave, useDeleteLeave } from '../api/mutations';
+import { canActOnLeave, canDeleteLeave } from '../utils';
 import { leaveTypeLabel } from '../components/LeaveTypeSheet';
 
 function isApproved(status: string) { return status === 'approved' || status === 'tasdiqlangan' || status === 'signed'; }
@@ -92,12 +92,18 @@ export default function LeaveDetailScreen() {
 
   const signMutation = useSignLeave(leaveId);
   const rejectMutation = useRejectLeave(leaveId);
+  const deleteMutation = useDeleteLeave(leaveId);
 
   // Web parity: HR is view-only (never signs/rejects). canActOnLeave mirrors the
   // web's canActOnWorkLeave — the sign/reject buttons appear only for a
   // non-HR assigned signer on a pending request they haven't signed yet.
   const { canSign, canReject } = canActOnLeave(leave, employeeId, { isHR: isHR(user) });
   const canApprove = canSign || canReject;
+
+  // Web parity: the author may withdraw (delete) their own request while it is
+  // still pending and unsigned (mirrors the web's canDeleteWorkLeave, shown on
+  // the "my" tab only — hence the ownership check inside canDeleteLeave).
+  const canDelete = canDeleteLeave(leave, employeeId);
 
   const handleApprove = useCallback(async () => {
     setActing(true);
@@ -119,6 +125,31 @@ export default function LeaveDetailScreen() {
       Alert.alert(t('leaves.errorTitle'), getApiErrorMessage(e, t('leaves.rejectError')));
     } finally { setActing(false); }
   }, [rejectMutation, t]);
+
+  const handleDelete = useCallback(() => {
+    Alert.alert(
+      t('leaves.deleteConfirmTitle'),
+      t('leaves.deleteConfirmMessage'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('leaves.delete'),
+          style: 'destructive',
+          onPress: async () => {
+            setActing(true);
+            try {
+              await deleteMutation.mutateAsync();
+              Alert.alert(t('common.success'), t('leaves.deletedSuccess'), [
+                { text: t('common.ok'), onPress: () => router.back() },
+              ]);
+            } catch (e) {
+              Alert.alert(t('leaves.errorTitle'), getApiErrorMessage(e, t('leaves.deleteError')));
+            } finally { setActing(false); }
+          },
+        },
+      ],
+    );
+  }, [deleteMutation, t]);
 
   const headerBar = (
     <View style={s.header}>
@@ -229,6 +260,13 @@ export default function LeaveDetailScreen() {
           </View>
         )}
 
+        {canDelete && (
+          <TouchableOpacity style={[s.deleteBtn, acting && { opacity: 0.5 }]} disabled={acting} onPress={handleDelete}>
+            <Icon name="trash" size={16} color={colors.error} />
+            <Text style={s.deleteBtnText}>{t('leaves.delete')}</Text>
+          </TouchableOpacity>
+        )}
+
         <View style={{ height: 32 }} />
       </ScrollView>
 
@@ -279,6 +317,9 @@ const makeStyles = (c: ThemeColors) =>
     rejectBtnText: { color: c.error, fontSize: 15, fontWeight: '700' },
     approveBtn: { flex: 1, borderRadius: 14, paddingVertical: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: c.success },
     approveBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+
+    deleteBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 14, paddingVertical: 15, marginTop: 10, borderWidth: 1.5, borderColor: c.error },
+    deleteBtnText: { color: c.error, fontSize: 15, fontWeight: '700' },
 
     overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: c.overlay },
     sheet: { position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: c.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 16, paddingBottom: 32 },

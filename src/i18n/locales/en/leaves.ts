@@ -51,6 +51,9 @@ export default {
 
   approve: 'Approve',
   reject: 'Reject',
+  delete: 'Delete',
+  deleteConfirmTitle: 'Delete request',
+  deleteConfirmMessage: 'Delete this request? This action cannot be undone.',
   actionNeeded: 'Approval needed',
   rejectReasonTitle: 'Rejection reason',
   rejectReasonPlaceholder: 'Enter a reason...',
@@ -72,4 +75,6 @@ export default {
 
   approveError: 'Failed to approve',
   rejectError: 'Failed to reject',
+  deletedSuccess: 'Request deleted',
+  deleteError: 'Failed to delete',
 } as const;

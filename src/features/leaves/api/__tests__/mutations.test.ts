@@ -1,7 +1,7 @@
 import MockAdapter from 'axios-mock-adapter';
 import { apiClient } from '@/api/client';
-import { WORK_LEAVES, WORK_LEAVE_SIGN, WORK_LEAVE_REJECT } from '@/api/urls';
-import { signLeave, rejectLeave, createLeave } from '../mutations';
+import { WORK_LEAVES, WORK_LEAVE_SIGN, WORK_LEAVE_REJECT, WORK_LEAVE_DETAIL } from '@/api/urls';
+import { signLeave, rejectLeave, createLeave, deleteLeave } from '../mutations';
 
 let mock: MockAdapter;
 beforeEach(() => {
@@ -38,5 +38,11 @@ describe('leave request functions', () => {
     expect(data).toEqual({ id: 42 });
     expect(mock.history.post[0].url).toBe(WORK_LEAVES);
     expect(JSON.parse(mock.history.post[0].data)).toEqual(payload);
+  });
+
+  it('deleteLeave DELETEs the detail endpoint for the given id', async () => {
+    mock.onDelete(WORK_LEAVE_DETAIL(7)).reply(204);
+    await deleteLeave(7);
+    expect(mock.history.delete[0].url).toBe(WORK_LEAVE_DETAIL(7));
   });
 });

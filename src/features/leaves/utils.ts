@@ -67,3 +67,46 @@ export function canActOnLeave(
 
   return { canSign: !isSignDisabled, canReject: true };
 }
+
+/** True when `leave` belongs to the given employee (author of the request). */
+function isOwnLeave(leave: WorkLeave, employeeId: number): boolean {
+  return leave.employee_id === employeeId || leave.employee?.id === employeeId;
+}
+
+/**
+ * Can the current employee DELETE (withdraw) this leave request? Mirrors the
+ * web's canDeleteWorkLeave (RequestPermissionPage.jsx:104-119), which only
+ * surfaces on the "my" tab — so on mobile, where the detail screen is shared
+ * between own and others' requests, we additionally require ownership.
+ *
+ * Rules (web parity):
+ *   - only the author may delete;
+ *   - never once the request is finalized (approved/signed/rejected);
+ *   - if there are assigned signers, only while NONE of them has signed yet;
+ *   - if there are no assigned signers, only while there are no signers at all.
+ */
+export function canDeleteLeave(
+  leave: WorkLeave | undefined,
+  employeeId: number | undefined,
+): boolean {
+  if (!leave || employeeId == null) return false;
+  if (!isOwnLeave(leave, employeeId)) return false;
+
+  const status = leave.status;
+  if (
+    status === 'approved' || status === 'tasdiqlangan' || status === 'signed' ||
+    status === 'rejected' || status === 'rad_etilgan'
+  ) {
+    return false;
+  }
+
+  const signers = leave.signers ?? [];
+  const assignedSigners = leave.assigned_signers ?? [];
+
+  if (assignedSigners.length > 0) {
+    // Deletable only while no assigned signer has signed yet.
+    return !assignedSigners.some((a) => signers.some((s) => s.id === a.id));
+  }
+  // No assigned signers: deletable only while nobody has signed.
+  return signers.length === 0;
+}
