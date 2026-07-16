@@ -1,0 +1,21 @@
+// LLM assistant — uz-Cyrl. Key set must match uz-Latn exactly (parity test).
+export default {
+  title: 'Ёрдамчи',
+  subtitle: 'AI ёрдамчи',
+  newChat: 'Янги суҳбат',
+  sessionsTitle: 'Суҳбатлар',
+  sessionsEmpty: 'Суҳбатлар йўқ — янгисини бошланг',
+  sessionFallback: 'Суҳбат',
+  inputPlaceholder: 'Саволингизни ёзинг…',
+  send: 'Юбориш',
+  stop: 'Тўхтатиш',
+  retry: 'Қайта юбориш',
+  thinking: 'Ўйлаяпман…',
+  streamError: 'Жавоб олишда хатолик юз берди',
+  loadError: 'Суҳбатни юклашда хатолик',
+  deleteConfirmTitle: 'Суҳбатни ўчириш',
+  deleteConfirmMessage: 'Бу суҳбат бутунлай ўчирилади. Давом этасизми?',
+  loadMore: 'Яна кўрсатиш ({{shown}}/{{total}})',
+  loadMoreError: 'Рўйхат муддати тугаган — саволни қайта юборинг',
+  disclaimer: 'AI хато қилиши мумкин. Муҳим маълумотларни текширинг.',
+} as const;

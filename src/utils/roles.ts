@@ -121,7 +121,7 @@ export function canAccessChairmanTasks(user?: User | null): boolean {
 export type PageKey =
   | 'home' | 'orders' | 'letters' | 'guests' | 'projects'
   | 'employees' | 'attendance' | 'requests' | 'documents' | 'kpi'
-  | 'timesheet' | 'salary' | 'team' | 'birthdays' | 'news' | 'notifications' | 'profile';
+  | 'timesheet' | 'assistant' | 'salary' | 'team' | 'birthdays' | 'news' | 'notifications' | 'profile';
 
 /** Whether the given user may see a page. Mirrors which web NAV the role gets. */
 export function canAccessPage(user: User | null | undefined, key: PageKey): boolean {
@@ -156,6 +156,15 @@ export function canAccessPage(user: User | null | undefined, key: PageKey): bool
     case 'kpi':
     case 'timesheet':
       return !kpp && !chancellery;
+    // LLM assistant. STRICTER than the web on purpose (product decision
+    // 2026-07-16): the web hides the bot only from plain employees / KPP /
+    // monitoring (DashboardLayout.jsx:837), which lets accounting and the
+    // Kuzatuvchi (dashboard) roles see it merely because they're multi-org.
+    // Mobile closes those too via isEmployeeLike. NOTE: this is a UX gate —
+    // the backend /llm/* routes accept ANY authenticated user (no role gate
+    // server-side), so this mirrors intent, not a server rule.
+    case 'assistant':
+      return !isEmployeeLike(user) && !kpp;
     // Personal / convenience pages — always available.
     case 'home':
     case 'salary':

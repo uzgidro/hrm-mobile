@@ -26,6 +26,7 @@ export default {
     timesheet: 'Табель',
     navbatchilik: 'Дежурства',
     holidays: 'Праздники',
+    assistant: 'Ассистент',
     birthdays: 'Дни рождения',
     news: 'Новости',
     notifications: 'Уведомления',

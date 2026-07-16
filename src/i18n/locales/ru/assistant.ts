@@ -1,0 +1,21 @@
+// LLM assistant — ru. Key set must match uz-Latn exactly (parity test).
+export default {
+  title: 'Ассистент',
+  subtitle: 'AI-ассистент',
+  newChat: 'Новый чат',
+  sessionsTitle: 'Чаты',
+  sessionsEmpty: 'Чатов нет — начните новый',
+  sessionFallback: 'Чат',
+  inputPlaceholder: 'Напишите вопрос…',
+  send: 'Отправить',
+  stop: 'Остановить',
+  retry: 'Повторить',
+  thinking: 'Думаю…',
+  streamError: 'Ошибка получения ответа',
+  loadError: 'Ошибка загрузки чата',
+  deleteConfirmTitle: 'Удалить чат',
+  deleteConfirmMessage: 'Этот чат будет удалён навсегда. Продолжить?',
+  loadMore: 'Показать ещё ({{shown}}/{{total}})',
+  loadMoreError: 'Список устарел — задайте вопрос заново',
+  disclaimer: 'AI может ошибаться. Проверяйте важные данные.',
+} as const;

@@ -32,6 +32,7 @@ export default {
     timesheet: 'Tabel',
     navbatchilik: 'Navbatchilik',
     holidays: 'Bayramlar',
+    assistant: 'Yordamchi',
     birthdays: "Tug'ilgan kun",
     news: 'Yangiliklar',
     notifications: 'Bildirishnoma',

@@ -26,6 +26,7 @@ export default {
     timesheet: 'Timesheet',
     navbatchilik: 'Duty',
     holidays: 'Holidays',
+    assistant: 'Assistant',
     birthdays: 'Birthdays',
     news: 'News',
     notifications: 'Notifications',

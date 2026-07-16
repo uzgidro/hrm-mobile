@@ -9,6 +9,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { useAuthStore } from '@/store/authStore';
+import { canAccessPage } from '@/utils/roles';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { monthName, weekdayName } from '@/i18n/dates';
@@ -231,6 +232,20 @@ export default function HomeScreen() {
           )}
         </View>
       </ScrollView>
+
+      {/* LLM assistant FAB — web BotButton parity. Client gate only (the
+          backend /llm accepts any token); stricter than web: employee-like
+          and KPP roles never see it (see roles.ts 'assistant'). */}
+      {canAccessPage(user, 'assistant') && (
+        <TouchableOpacity
+          style={styles.assistantFab}
+          onPress={() => router.push('/assistant')}
+          activeOpacity={0.85}
+          testID="assistant-fab"
+        >
+          <Icon name="target" size={24} color={colors.onPrimary} strokeWidth={2.2} />
+        </TouchableOpacity>
+      )}
     </SafeAreaView>
   );
 }
@@ -278,5 +293,10 @@ const makeStyles = (c: ThemeColors) =>
     actionHint: { fontSize: 10, color: c.warning, fontWeight: '600' },
 
     createBtn: { flexDirection: 'row', gap: 8, backgroundColor: c.primary, borderRadius: 12, paddingVertical: 14, alignItems: 'center', justifyContent: 'center', marginTop: 14 },
+    assistantFab: {
+      position: 'absolute', right: 16, bottom: 20, width: 56, height: 56, borderRadius: 28,
+      backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center',
+      elevation: 6, shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 8, shadowOffset: { width: 0, height: 4 },
+    },
     createBtnText: { color: c.onPrimary, fontSize: 15, fontWeight: '700' },
   });

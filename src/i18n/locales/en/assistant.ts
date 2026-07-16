@@ -1,0 +1,21 @@
+// LLM assistant — en. Key set must match uz-Latn exactly (parity test).
+export default {
+  title: 'Assistant',
+  subtitle: 'AI assistant',
+  newChat: 'New chat',
+  sessionsTitle: 'Chats',
+  sessionsEmpty: 'No chats yet — start a new one',
+  sessionFallback: 'Chat',
+  inputPlaceholder: 'Type your question…',
+  send: 'Send',
+  stop: 'Stop',
+  retry: 'Retry',
+  thinking: 'Thinking…',
+  streamError: 'Failed to get a response',
+  loadError: 'Failed to load the chat',
+  deleteConfirmTitle: 'Delete chat',
+  deleteConfirmMessage: 'This chat will be permanently deleted. Continue?',
+  loadMore: 'Show more ({{shown}}/{{total}})',
+  loadMoreError: 'The list has expired — ask the question again',
+  disclaimer: 'AI can make mistakes. Verify important information.',
+} as const;
