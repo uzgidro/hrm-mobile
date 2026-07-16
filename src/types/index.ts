@@ -151,10 +151,28 @@ export interface Letter {
   employee?: Employee | null;
   created_by_id?: number | null;
   created_by?: Employee | null;
+  creator_employee_id?: number | null;
   created_at?: string;
   organization_branch_id?: number;
   assigned_signers?: LetterSigner[];
   signers?: LetterSigner[];
+
+  // ── Business-trip report stage (xizmat safari; OLD flow only) ──────────────
+  // flow_version 2 = NEW flow (main branch, no report stage); 1/null = OLD flow.
+  flow_version?: number | null;
+  // Set by KADR "Keldi" (hr-arrive / confirm-return) — gates report submission.
+  is_trip_confirmed?: boolean | null;
+  actual_return_date?: string | null;
+  // Report fields (authored via plain form; the DOCX is built server-side).
+  report_number?: string | null;
+  report_date?: string | null;
+  report_summary?: string | null;
+  report_task?: string | null;
+  report_content?: string | null;
+  report_attachment_path?: string | null;
+  report_filename?: string | null;
+  // Chancellery's reason when a submitted report is bounced back (report_returned).
+  return_reason?: string | null;
 }
 
 export interface NewsPost {

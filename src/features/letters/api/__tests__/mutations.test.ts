@@ -1,7 +1,10 @@
 import MockAdapter from 'axios-mock-adapter';
 import { apiClient } from '@/api/client';
-import { LETTER_CREATE, LETTER_SIGN, LETTER_REJECT, LETTER_UPLOAD_ATTACHMENT } from '@/api/urls';
-import { signLetter, rejectLetter, createLetter } from '../mutations';
+import {
+  LETTER_CREATE, LETTER_SIGN, LETTER_REJECT, LETTER_UPLOAD_ATTACHMENT,
+  LETTER_SUBMIT_REPORT, LETTER_RESET_REPORT, LETTER_UPLOAD_REPORT,
+} from '@/api/urls';
+import { signLetter, rejectLetter, createLetter, submitReport, resetReport, uploadReport } from '../mutations';
 
 let mock: MockAdapter;
 beforeEach(() => {
@@ -59,5 +62,50 @@ describe('createLetter', () => {
     const id = await createLetter({ letter_type: 'business_trip' }, [{ uri: 'file:///a.pdf', name: 'a.pdf' }], onFilesError);
     expect(id).toBe(300);
     expect(onFilesError).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('trip report request functions', () => {
+  it('submitReport POSTs the 4-field body, empty strings normalized to null (report_content kept)', async () => {
+    mock.onPost(LETTER_SUBMIT_REPORT(5)).reply(200, { id: 5, status: 'report_submitted' });
+    const data = await submitReport(5, {
+      report_date: '2026-07-16',
+      report_summary: '',
+      report_task: 'inspection',
+      report_content: 'went and did the thing',
+    });
+    expect(data).toEqual({ id: 5, status: 'report_submitted' });
+    expect(mock.history.post[0].url).toBe(LETTER_SUBMIT_REPORT(5));
+    expect(JSON.parse(mock.history.post[0].data)).toEqual({
+      report_date: '2026-07-16',
+      report_summary: null,
+      report_task: 'inspection',
+      report_content: 'went and did the thing',
+    });
+  });
+
+  it('submitReport sends report_number is never included (auto-assigned by backend)', async () => {
+    mock.onPost(LETTER_SUBMIT_REPORT(5)).reply(200, {});
+    await submitReport(5, { report_content: 'x' });
+    const body = JSON.parse(mock.history.post[0].data);
+    expect(body).not.toHaveProperty('report_number');
+    expect(body.report_content).toBe('x');
+    // omitted optional fields go out as null (web parity)
+    expect(body.report_date).toBeNull();
+  });
+
+  it('resetReport POSTs the reset endpoint with an empty body', async () => {
+    mock.onPost(LETTER_RESET_REPORT(9)).reply(200, { id: 9, status: 'management_approved' });
+    const data = await resetReport(9);
+    expect(data).toEqual({ id: 9, status: 'management_approved' });
+    expect(mock.history.post[0].data).toBeUndefined();
+  });
+
+  it('uploadReport posts a single file as multipart', async () => {
+    mock.onPost(LETTER_UPLOAD_REPORT(11)).reply(200, { id: 11, status: 'report_submitted' });
+    await uploadReport(11, { uri: 'file:///r.pdf', name: 'r.pdf', mimeType: 'application/pdf' });
+    const req = mock.history.post.find((r) => r.url === LETTER_UPLOAD_REPORT(11));
+    expect(req).toBeTruthy();
+    expect(req!.data instanceof FormData).toBe(true);
   });
 });

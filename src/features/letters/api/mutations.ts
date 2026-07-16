@@ -1,6 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
-import { LETTER_CREATE, LETTER_SIGN, LETTER_REJECT, LETTER_UPLOAD_ATTACHMENT } from '@/api/urls';
+import {
+  LETTER_CREATE, LETTER_SIGN, LETTER_REJECT, LETTER_UPLOAD_ATTACHMENT,
+  LETTER_SUBMIT_REPORT, LETTER_RESET_REPORT, LETTER_UPLOAD_REPORT,
+} from '@/api/urls';
 import type { PickedFile } from '@/components/AttachmentField';
 import { letterKeys } from './queries';
 
@@ -53,6 +56,47 @@ export async function createLetter(
   return letterId;
 }
 
+// ── Business-trip report (xizmat safari, OLD flow) ────────────────────────────
+// Plain-form submission: the employee types date/summary/task/content and the
+// backend builds the DOCX server-side. report_number is NEVER sent (auto). Empty
+// optional fields go out as null (web LetterReportDrawer parity); report_content
+// is the required body (the caller/UI enforces non-empty).
+export interface ReportForm {
+  report_date?: string;
+  report_summary?: string;
+  report_task?: string;
+  report_content: string;
+}
+
+export function submitReport(id: number, form: ReportForm): Promise<unknown> {
+  const body = {
+    report_date: form.report_date || null,
+    report_summary: form.report_summary || null,
+    report_task: form.report_task || null,
+    report_content: form.report_content,
+  };
+  return apiClient.post(LETTER_SUBMIT_REPORT(id), body).then((r) => r.data);
+}
+
+// Re-open a submitted report for editing (report_submitted → management_approved).
+export function resetReport(id: number): Promise<unknown> {
+  return apiClient.post(LETTER_RESET_REPORT(id)).then((r) => r.data);
+}
+
+// Optional: attach a single file report instead of / in addition to the text
+// (same multipart shape as the letter attachment upload).
+export function uploadReport(id: number, file: PickedFile): Promise<unknown> {
+  const fd = new FormData();
+  fd.append('file', {
+    uri: file.uri,
+    name: file.name,
+    type: file.mimeType || 'application/octet-stream',
+  } as unknown as Blob);
+  return apiClient
+    .post(LETTER_UPLOAD_REPORT(id), fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+    .then((r) => r.data);
+}
+
 // ── Thin mutation hooks ───────────────────────────────────────────────────────
 // Each invalidates the whole letter subtree on success (one call refreshes the
 // list and any open detail via the hierarchical key). The detail screen uses
@@ -80,6 +124,22 @@ export function useCreateLetter() {
   return useMutation({
     mutationFn: (args: { payload: CreateLetterPayload; files?: PickedFile[]; onFilesError?: () => void }) =>
       createLetter(args.payload, args.files, args.onFilesError),
+    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+  });
+}
+
+export function useSubmitReport(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (form: ReportForm) => submitReport(id, form),
+    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+  });
+}
+
+export function useResetReport(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => resetReport(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
   });
 }
