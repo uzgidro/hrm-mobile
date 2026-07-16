@@ -27,6 +27,11 @@ export default {
   letterInChancellery: 'In chancellery',
   letterInLeadership: 'With leadership',
   letterPending: 'Pending',
+  letterTripArrived: 'Report pending',
+  letterReportSubmitted: 'Report submitted',
+  letterReportReturned: 'Report returned',
+  letterReportReview: 'Report in leadership',
+  letterReportApproved: 'Report approved',
 
   // ── Signing-timeline status texts ───────────────────────────────────────────
   timelineApproved: 'Approved',

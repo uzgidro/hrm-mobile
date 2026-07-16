@@ -104,6 +104,7 @@ function ThemedNavigation() {
           <Stack.Screen name="create-letter" options={{ animation: 'slide_from_bottom' }} />
           <Stack.Screen name="letter-detail" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="letter-document" options={{ animation: 'slide_from_bottom' }} />
+          <Stack.Screen name="submit-report" options={{ animation: 'slide_from_bottom' }} />
           <Stack.Screen name="notifications" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="news" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="mehmon-detail" options={{ animation: 'slide_from_right' }} />

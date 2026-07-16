@@ -34,6 +34,11 @@ export default {
   letterInChancellery: 'Devonxonada',
   letterInLeadership: 'Rahbariyatda',
   letterPending: 'Kutilmoqda',
+  letterTripArrived: 'Hisobot kutilmoqda',
+  letterReportSubmitted: 'Hisobot yuborildi',
+  letterReportReturned: 'Hisobot qaytarildi',
+  letterReportReview: 'Hisobot rahbariyatda',
+  letterReportApproved: 'Hisobot tasdiqlandi',
 
   // ── Signing-timeline status texts — getSigningTimeline ──────────────────────
   timelineApproved: 'Tasdiqladi',

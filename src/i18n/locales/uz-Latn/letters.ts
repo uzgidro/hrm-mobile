@@ -121,4 +121,28 @@ export default {
   // ── Error fallbacks ─────────────────────────────────────────────────────────
   createError: 'Xatolik yuz berdi',
   actionError: 'Xatolik',
+
+  // ── Trip report (xizmat safari, OLD flow) ──
+  sectionReport: 'Hisobot',
+  reportTitle: 'Hisobot yuborish',
+  reportEditTitle: 'Hisobotni tahrirlash',
+  reportSubmit: 'Hisobot yuborish',
+  reportEdit: 'Hisobotni tahrirlash',
+  reportSend: 'Yuborish',
+  reportReset: "O'chirish",
+  reportNumber: 'Hisobot raqami',
+  reportDate: 'Sana',
+  reportSummary: 'Xulosa',
+  reportSummaryPlaceholder: 'Qisqacha xulosa...',
+  reportTask: 'Topshiriq',
+  reportTaskPlaceholder: 'Safari maqsadi / topshiriq...',
+  reportContent: 'Hisobot matni',
+  reportContentPlaceholder: 'Hisobot matnini kiriting...',
+  reportContentRequired: 'Hisobot matni kiritilmagan',
+  reportAttachment: 'Ilova (ixtiyoriy)',
+  reportReturnedReason: 'Qaytarish sababi',
+  reportFileFailed: "Hisobot yuborildi, lekin ilova yuklanmadi",
+  reportSubmitError: 'Hisobotni yuborishda xato',
+  reportResetConfirmTitle: "Hisobotni o'chirish",
+  reportResetConfirmMessage: "Hisobot o'chiriladi va qayta tahrirlash mumkin bo'ladi. Davom etilsinmi?",
 } as const;

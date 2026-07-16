@@ -27,6 +27,11 @@ export default {
   letterInChancellery: 'Девонхонада',
   letterInLeadership: 'Раҳбариятда',
   letterPending: 'Кутилмоқда',
+  letterTripArrived: 'Ҳисобот кутилмоқда',
+  letterReportSubmitted: 'Ҳисобот юборилди',
+  letterReportReturned: 'Ҳисобот қайтарилди',
+  letterReportReview: 'Ҳисобот раҳбариятда',
+  letterReportApproved: 'Ҳисобот тасдиқланди',
 
   // ── Signing-timeline status texts ───────────────────────────────────────────
   timelineApproved: 'Тасдиқлади',

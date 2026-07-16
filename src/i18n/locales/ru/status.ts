@@ -27,6 +27,11 @@ export default {
   letterInChancellery: 'В канцелярии',
   letterInLeadership: 'У руководства',
   letterPending: 'Ожидается',
+  letterTripArrived: 'Ожидается отчёт',
+  letterReportSubmitted: 'Отчёт отправлен',
+  letterReportReturned: 'Отчёт возвращён',
+  letterReportReview: 'Отчёт у руководства',
+  letterReportApproved: 'Отчёт утверждён',
 
   // ── Signing-timeline status texts ───────────────────────────────────────────
   timelineApproved: 'Утвердил',

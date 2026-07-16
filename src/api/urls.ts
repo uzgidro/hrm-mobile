@@ -72,6 +72,12 @@ export const LETTER_SIGN = (id: number) => `letters/${id}/sign`;
 export const LETTER_REJECT = (id: number) => `letters/${id}/reject`;
 export const LETTER_EDITOR_CONFIG = (id: number) => `letters/${id}/editor-config`;
 export const LETTER_UPLOAD_ATTACHMENT = (id: number) => `letters/${id}/upload-attachment`;
+// Business-trip report stage (xizmat safari, OLD flow). submit-report takes a
+// plain JSON body; upload-report is an optional single-file multipart; the
+// employee may reset a submitted report back to management_approved.
+export const LETTER_SUBMIT_REPORT = (id: number) => `letters/${id}/submit-report`;
+export const LETTER_UPLOAD_REPORT = (id: number) => `letters/${id}/upload-report`;
+export const LETTER_RESET_REPORT = (id: number) => `letters/${id}/reset-report`;
 
 // Organization branches
 export const ORGANIZATION_BRANCHES = 'organization-branches';

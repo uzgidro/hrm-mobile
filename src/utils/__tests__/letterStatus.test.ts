@@ -14,6 +14,10 @@ import {
   getSigningTimeline,
   letterStatusMeta,
   statusColor,
+  isNewTripFlow,
+  canSubmitReport,
+  canResetReport,
+  isReportReturned,
 } from '../letterStatus';
 import { statusColor as orderStatusColor } from '../orderStatus';
 import type { Letter } from '../../types';
@@ -418,5 +422,89 @@ describe('letterStatusMeta', () => {
   it('default -> Kutilmoqda pending', () => {
     expect(letterStatusMeta(letter({ status: 'whatever' }))).toEqual({ label: 'Kutilmoqda', kind: 'pending' });
     expect(letterStatusMeta(letter({}))).toEqual({ label: 'Kutilmoqda', kind: 'pending' });
+  });
+
+  // Report-stage statuses (business_trip, OLD flow). These come AFTER registration
+  // (is_stamped becomes true), so they must be checked BEFORE the is_stamped→
+  // registered fallthrough — otherwise a report_submitted trip reads "registered".
+  it('report statuses win over is_stamped and resolve to distinct kinds', () => {
+    expect(letterStatusMeta(letter({ status: 'management_approved', is_stamped: true })).kind).toBe('pending');
+    expect(letterStatusMeta(letter({ status: 'report_submitted', is_stamped: true })).kind).toBe('info');
+    expect(letterStatusMeta(letter({ status: 'report_returned', is_stamped: true })).kind).toBe('error');
+    expect(letterStatusMeta(letter({ status: 'report_management_review', is_stamped: true })).kind).toBe('pending');
+    expect(letterStatusMeta(letter({ status: 'report_approved', is_stamped: true })).kind).toBe('success');
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// isNewTripFlow — flow_version 2 = NEW (main branch, NO report stage);
+// 1 / null / undefined = OLD (report stage exists). Mirrors backend
+// _is_new_trip_flow.
+// ─────────────────────────────────────────────────────────────────────────────
+describe('isNewTripFlow', () => {
+  it('true only for flow_version === 2', () => {
+    expect(isNewTripFlow(letter({ flow_version: 2 }))).toBe(true);
+  });
+  it('false for old flow (1) and unset (null/undefined)', () => {
+    expect(isNewTripFlow(letter({ flow_version: 1 }))).toBe(false);
+    expect(isNewTripFlow(letter({ flow_version: null }))).toBe(false);
+    expect(isNewTripFlow(letter({}))).toBe(false);
+  });
+});
+
+// ── Report submission gate (web helpers.js:640 parity) ────────────────────────
+const trip = (o: Partial<Letter> = {}): Letter =>
+  letter({ letter_type: 'business_trip', creator_employee_id: 10, ...o });
+const ME = 10;
+
+describe('canSubmitReport', () => {
+  it('true for the creator on a confirmed management_approved trip', () => {
+    expect(canSubmitReport(trip({ status: 'management_approved', is_trip_confirmed: true }), ME)).toBe(true);
+  });
+  it('true for the submitter (not creator)', () => {
+    expect(
+      canSubmitReport(
+        trip({ status: 'management_approved', is_trip_confirmed: true, creator_employee_id: 999, submitter_id: ME }),
+        ME
+      )
+    ).toBe(true);
+  });
+  it('true while report_submitted (edit) and report_returned (resubmit)', () => {
+    expect(canSubmitReport(trip({ status: 'report_submitted' }), ME)).toBe(true);
+    expect(canSubmitReport(trip({ status: 'report_returned' }), ME)).toBe(true);
+  });
+  it('FALSE on management_approved when arrival is not confirmed', () => {
+    expect(canSubmitReport(trip({ status: 'management_approved', is_trip_confirmed: false }), ME)).toBe(false);
+    expect(canSubmitReport(trip({ status: 'management_approved' }), ME)).toBe(false);
+  });
+  it('false for the new flow (flow_version 2)', () => {
+    expect(
+      canSubmitReport(trip({ status: 'management_approved', is_trip_confirmed: true, flow_version: 2 }), ME)
+    ).toBe(false);
+  });
+  it('false for a non-author, past-stage statuses, non-trips and unknown me', () => {
+    expect(canSubmitReport(trip({ status: 'report_submitted', creator_employee_id: 999 }), ME)).toBe(false);
+    expect(canSubmitReport(trip({ status: 'report_management_review' }), ME)).toBe(false);
+    expect(canSubmitReport(trip({ status: 'report_approved' }), ME)).toBe(false);
+    expect(canSubmitReport(letter({ letter_type: 'application', status: 'report_submitted' }), ME)).toBe(false);
+    expect(canSubmitReport(trip({ status: 'report_submitted' }), undefined)).toBe(false);
+  });
+});
+
+describe('canResetReport', () => {
+  it('true for the author while report_submitted only', () => {
+    expect(canResetReport(trip({ status: 'report_submitted' }), ME)).toBe(true);
+  });
+  it('false otherwise', () => {
+    expect(canResetReport(trip({ status: 'report_returned' }), ME)).toBe(false);
+    expect(canResetReport(trip({ status: 'management_approved' }), ME)).toBe(false);
+    expect(canResetReport(trip({ status: 'report_submitted', creator_employee_id: 999 }), ME)).toBe(false);
+  });
+});
+
+describe('isReportReturned', () => {
+  it('true only for report_returned', () => {
+    expect(isReportReturned(trip({ status: 'report_returned' }))).toBe(true);
+    expect(isReportReturned(trip({ status: 'report_submitted' }))).toBe(false);
   });
 });

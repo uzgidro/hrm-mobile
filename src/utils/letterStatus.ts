@@ -55,6 +55,46 @@ export function getManagementSigners(l: Letter) {
 function isApplication(l: Letter) { return normalizeLetterType(l.letter_type) === 'application'; }
 function isBusinessTrip(l: Letter) { return normalizeLetterType(l.letter_type) === 'business_trip'; }
 
+// ── Business-trip report stage (xizmat safari, OLD flow only) ──────────────────
+// flow_version 2 = NEW flow (main branch): XODIM→KADR→RAHBAR→BUXGALTERIYA, with
+// NO report substage. 1 / null / undefined = OLD flow, which has the report
+// stage. Mirrors backend _is_new_trip_flow (letter.py:45).
+export function isNewTripFlow(l: Letter): boolean {
+  return l.flow_version === 2;
+}
+
+// Statuses a trip is in while the employee may submit/edit a report.
+const REPORT_SUBMITTABLE_STATUSES = ['management_approved', 'report_submitted', 'report_returned'];
+
+function isTripAuthor(l: Letter, employeeId?: number | null): boolean {
+  if (!employeeId) return false;
+  return eq(l.creator_employee_id, employeeId) || eq(l.submitter_id, employeeId);
+}
+
+export function isReportReturned(l: Letter): boolean {
+  return l.status === 'report_returned';
+}
+
+// Web helpers.js:640 (canSubmitReport) parity: OLD-flow business trip; status in
+// [management_approved, report_submitted, report_returned]; on management_approved
+// arrival must be confirmed (is_trip_confirmed) — else the backend 400s
+// arrival_not_confirmed; and the caller must be the trip's creator or submitter.
+export function canSubmitReport(l: Letter, employeeId?: number | null): boolean {
+  if (!isBusinessTrip(l) || isNewTripFlow(l)) return false;
+  if (!REPORT_SUBMITTABLE_STATUSES.includes(l.status ?? '')) return false;
+  if (l.status === 'management_approved' && !l.is_trip_confirmed) return false;
+  return isTripAuthor(l, employeeId);
+}
+
+// The author may reset a still-submitted report back to management_approved
+// (re-open for editing). Only while report_submitted. (Backend also allows HR;
+// the mobile author-only slice is a safe subset.)
+export function canResetReport(l: Letter, employeeId?: number | null): boolean {
+  if (!isBusinessTrip(l) || isNewTripFlow(l)) return false;
+  if (l.status !== 'report_submitted') return false;
+  return isTripAuthor(l, employeeId);
+}
+
 export function hasSigned(l: Letter, employeeId?: number | null) {
   if (!employeeId) return false;
   return (l.signers ?? []).some((s) => eq(sid(s), employeeId));
@@ -156,6 +196,16 @@ export function getSigningTimeline(l: Letter): TimelineItem[] {
 // backend contract identifiers and are NOT translated.
 export function letterStatusMeta(l: Letter): { label: string; kind: StatusKind } {
   if (isLetterRejected(l)) return { label: i18n.t('status.letterRejected'), kind: 'error' };
+  // Report-stage statuses (business_trip, OLD flow) come AFTER registration, so a
+  // report_* trip already has is_stamped=true — check these BEFORE the
+  // is_stamped→registered fallthrough or they'd all read "registered".
+  switch (l.status) {
+    case 'management_approved': return { label: i18n.t('status.letterTripArrived'), kind: 'pending' };
+    case 'report_submitted': return { label: i18n.t('status.letterReportSubmitted'), kind: 'info' };
+    case 'report_returned': return { label: i18n.t('status.letterReportReturned'), kind: 'error' };
+    case 'report_management_review': return { label: i18n.t('status.letterReportReview'), kind: 'pending' };
+    case 'report_approved': return { label: i18n.t('status.letterReportApproved'), kind: 'success' };
+  }
   if (l.is_stamped || l.status === 'registered' || l.status === 'stamped') return { label: i18n.t('status.letterRegistered'), kind: 'success' };
   if (isLetterSigned(l)) return { label: i18n.t('status.letterSignedStatus'), kind: 'success' };
   if (l.status === 'review') return { label: i18n.t('status.letterInChancellery'), kind: 'info' };

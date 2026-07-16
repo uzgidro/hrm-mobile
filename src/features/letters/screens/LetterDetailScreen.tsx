@@ -1,5 +1,5 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import dayjs from 'dayjs';
@@ -9,11 +9,15 @@ import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
 import { LoadingView } from '@/components/StateViews';
+import { confirm } from '@/lib/confirm';
+import { getApiErrorMessage } from '@/api/errors';
 import {
   letterStatusMeta, letterTypeLabel, canSignLetter, getSigningTimeline, statusColor,
+  canSubmitReport, canResetReport,
 } from '@/utils/letterStatus';
 import { letterDetailQuery } from '../api/queries';
 import { useLetterActions } from '../hooks/useLetterActions';
+import { useResetReport } from '../api/mutations';
 import { DetailHeader, Section, KV, SignerRow } from '../components/DetailParts';
 import { LetterActionBar } from '../components/LetterActionBar';
 
@@ -28,6 +32,7 @@ export default function LetterDetailScreen() {
 
   const { data: letter, isLoading, refetch } = useQuery(letterDetailQuery(letterId));
   const { busy, sign, reject } = useLetterActions(letterId, refetch);
+  const resetReportM = useResetReport(letterId);
 
   if (isLoading || !letter) {
     return (
@@ -43,6 +48,27 @@ export default function LetterDetailScreen() {
   const timeline = getSigningTimeline(letter);
   const canAct = canSignLetter(letter, employeeId);
   const hasDoc = !!letter.generated_document_path;
+
+  // ── Trip report (xizmat safari, OLD flow) ──
+  const canReport = canSubmitReport(letter, employeeId);
+  const canReset = canResetReport(letter, employeeId);
+  const hasReport = !!(letter.report_content || letter.report_summary || letter.report_task);
+  const openReportForm = () => router.push({ pathname: '/submit-report', params: { id: String(letterId) } });
+  const onResetReport = async () => {
+    const ok = await confirm({
+      title: t('letters.reportResetConfirmTitle'),
+      message: t('letters.reportResetConfirmMessage'),
+      confirmLabel: t('letters.reportReset'),
+      cancelLabel: t('common.cancel'),
+      icon: 'edit',
+      destructive: true,
+    });
+    if (!ok) return;
+    resetReportM.mutate(undefined, {
+      onSuccess: () => refetch(),
+      onError: (e) => Alert.alert(t('letters.actionError'), getApiErrorMessage(e, t('letters.actionError'))),
+    });
+  };
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
@@ -86,6 +112,50 @@ export default function LetterDetailScreen() {
           </Section>
         )}
 
+        {/* ── Trip report section (xizmat safari, OLD flow) ── */}
+        {letter.status === 'report_returned' && !!letter.return_reason && (
+          <View style={styles.rejectCard}>
+            <Text style={styles.rejectTitle}>{t('letters.reportReturnedReason')}</Text>
+            <Text style={styles.rejectText}>{letter.return_reason}</Text>
+          </View>
+        )}
+
+        {hasReport && (
+          <Section title={t('letters.sectionReport')}>
+            {!!letter.report_number && <KV k={t('letters.reportNumber')} v={letter.report_number} />}
+            {!!letter.report_date && <KV k={t('letters.reportDate')} v={dayjs(letter.report_date).format('DD.MM.YYYY')} />}
+            {!!letter.report_summary && <KV k={t('letters.reportSummary')} v={letter.report_summary} />}
+            {!!letter.report_task && <KV k={t('letters.reportTask')} v={letter.report_task} />}
+            {!!letter.report_content && (
+              <View style={styles.reportBody}>
+                <Text style={styles.reportBodyLabel}>{t('letters.reportContent')}</Text>
+                <Text style={styles.bodyText}>{letter.report_content}</Text>
+              </View>
+            )}
+          </Section>
+        )}
+
+        {(canReport || canReset) && (
+          <View style={styles.reportActions}>
+            {canReport && (
+              <TouchableOpacity style={styles.reportBtn} activeOpacity={0.85} onPress={openReportForm}>
+                <Icon name="edit" size={16} color={colors.onPrimary} />
+                <Text style={styles.reportBtnText}>{hasReport ? t('letters.reportEdit') : t('letters.reportSubmit')}</Text>
+              </TouchableOpacity>
+            )}
+            {canReset && (
+              <TouchableOpacity
+                style={[styles.reportBtn, styles.reportResetBtn]}
+                activeOpacity={0.85}
+                onPress={onResetReport}
+                disabled={resetReportM.isPending}
+              >
+                <Text style={[styles.reportBtnText, { color: colors.error }]}>{t('letters.reportReset')}</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+
         {!!letter.rejection_reason && (
           <View style={styles.rejectCard}>
             <Text style={styles.rejectTitle}>{t('letters.rejectionReason')}</Text>
@@ -116,4 +186,14 @@ const makeStyles = (c: ThemeColors) =>
     rejectCard: { backgroundColor: c.errorSoft, borderRadius: 14, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: c.error },
     rejectTitle: { fontSize: 13, fontWeight: '700', color: c.error, marginBottom: 4 },
     rejectText: { fontSize: 13, color: c.text, lineHeight: 19 },
+
+    reportBody: { marginTop: 8 },
+    reportBodyLabel: { fontSize: 12, color: c.textMuted, marginBottom: 4 },
+    reportActions: { flexDirection: 'row', gap: 10, marginBottom: 12 },
+    reportBtn: {
+      flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+      backgroundColor: c.primary, borderRadius: 12, paddingVertical: 14,
+    },
+    reportResetBtn: { flex: 0, paddingHorizontal: 18, backgroundColor: c.errorSoft, borderWidth: 1, borderColor: c.error },
+    reportBtnText: { color: c.onPrimary, fontSize: 14, fontWeight: '700' },
   });
