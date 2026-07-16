@@ -75,7 +75,7 @@ const masterAdminUser: User = { id: 10, type: 'master-admin' };
 const ALL_PAGES: PageKey[] = [
   'home', 'orders', 'letters', 'guests', 'projects',
   'employees', 'attendance', 'requests', 'documents', 'kpi',
-  'salary', 'team', 'birthdays', 'news', 'notifications', 'profile',
+  'timesheet', 'salary', 'team', 'birthdays', 'news', 'notifications', 'profile',
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -531,7 +531,7 @@ describe('canAccessPage', () => {
       user: regularUser,
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
-        employees: false, attendance: true, requests: true, documents: true, kpi: true,
+        employees: false, attendance: true, requests: true, documents: true, kpi: true, timesheet: true,
         salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true,
       },
     },
@@ -539,7 +539,7 @@ describe('canAccessPage', () => {
       user: hrSingleUser,
       row: {
         home: true, orders: true, letters: true, guests: true, projects: false,
-        employees: true, attendance: true, requests: true, documents: true, kpi: true,
+        employees: true, attendance: true, requests: true, documents: true, kpi: true, timesheet: true,
         salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true,
       },
     },
@@ -547,7 +547,7 @@ describe('canAccessPage', () => {
       user: hrMultiUser, // ['hr','deputy']
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
-        employees: true, attendance: true, requests: true, documents: true, kpi: true,
+        employees: true, attendance: true, requests: true, documents: true, kpi: true, timesheet: true,
         salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true,
       },
     },
@@ -555,7 +555,7 @@ describe('canAccessPage', () => {
       user: kppUser,
       row: {
         home: true, orders: false, letters: false, guests: true, projects: false,
-        employees: false, attendance: false, requests: false, documents: false, kpi: false,
+        employees: false, attendance: false, requests: false, documents: false, kpi: false, timesheet: false,
         salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true,
       },
     },
@@ -563,7 +563,7 @@ describe('canAccessPage', () => {
       user: chancelleryUser,
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
-        employees: false, attendance: false, requests: false, documents: false, kpi: false,
+        employees: false, attendance: false, requests: false, documents: false, kpi: false, timesheet: false,
         salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true,
       },
     },
@@ -571,7 +571,7 @@ describe('canAccessPage', () => {
       user: kanselariyaUser,
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
-        employees: false, attendance: false, requests: false, documents: false, kpi: false,
+        employees: false, attendance: false, requests: false, documents: false, kpi: false, timesheet: false,
         salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true,
       },
     },
@@ -579,7 +579,7 @@ describe('canAccessPage', () => {
       user: ministrUser,
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
-        employees: true, attendance: true, requests: true, documents: true, kpi: true,
+        employees: true, attendance: true, requests: true, documents: true, kpi: true, timesheet: true,
         salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true,
       },
     },
@@ -587,7 +587,7 @@ describe('canAccessPage', () => {
       user: deputyUser,
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
-        employees: true, attendance: true, requests: true, documents: true, kpi: true,
+        employees: true, attendance: true, requests: true, documents: true, kpi: true, timesheet: true,
         salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true,
       },
     },
@@ -597,7 +597,7 @@ describe('canAccessPage', () => {
       user: accountingUser,
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
-        employees: false, attendance: true, requests: true, documents: true, kpi: true,
+        employees: false, attendance: true, requests: true, documents: true, kpi: true, timesheet: true,
         salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true,
       },
     },
@@ -607,7 +607,7 @@ describe('canAccessPage', () => {
       user: dashboardUser,
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
-        employees: false, attendance: true, requests: true, documents: true, kpi: true,
+        employees: false, attendance: true, requests: true, documents: true, kpi: true, timesheet: true,
         salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true,
       },
     },
@@ -615,7 +615,7 @@ describe('canAccessPage', () => {
       user: masterAdminUser,
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
-        employees: true, attendance: true, requests: true, documents: true, kpi: true,
+        employees: true, attendance: true, requests: true, documents: true, kpi: true, timesheet: true,
         salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true,
       },
     },
@@ -623,7 +623,7 @@ describe('canAccessPage', () => {
       user: secretariatUser, // is_secretariat does NOT affect page access
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
-        employees: false, attendance: true, requests: true, documents: true, kpi: true,
+        employees: false, attendance: true, requests: true, documents: true, kpi: true, timesheet: true,
         salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true,
       },
     },
@@ -631,7 +631,7 @@ describe('canAccessPage', () => {
       user: null,
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
-        employees: false, attendance: true, requests: true, documents: true, kpi: true,
+        employees: false, attendance: true, requests: true, documents: true, kpi: true, timesheet: true,
         salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true,
       },
     },
@@ -639,7 +639,7 @@ describe('canAccessPage', () => {
       user: undefined,
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
-        employees: false, attendance: true, requests: true, documents: true, kpi: true,
+        employees: false, attendance: true, requests: true, documents: true, kpi: true, timesheet: true,
         salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true,
       },
     },
@@ -668,6 +668,7 @@ describe('canAccessPage', () => {
     expect(canAccessPage(u, 'projects')).toBe(false);
     expect(canAccessPage(u, 'documents')).toBe(false);
     expect(canAccessPage(u, 'kpi')).toBe(false);
+    expect(canAccessPage(u, 'timesheet')).toBe(false);
   });
 
   it('kanselariya spelling blocks attendance/requests/documents like chancellery', () => {
@@ -675,6 +676,11 @@ describe('canAccessPage', () => {
     expect(canAccessPage(kanselariyaUser, 'requests')).toBe(false);
     expect(canAccessPage(kanselariyaUser, 'documents')).toBe(false);
     expect(canAccessPage(kanselariyaUser, 'kpi')).toBe(false);
+    expect(canAccessPage(kanselariyaUser, 'timesheet')).toBe(false);
+  });
+
+  it('a plain employee can access the timesheet', () => {
+    expect(canAccessPage(regularUser, 'timesheet')).toBe(true);
   });
 });
 

@@ -121,7 +121,7 @@ export function canAccessChairmanTasks(user?: User | null): boolean {
 export type PageKey =
   | 'home' | 'orders' | 'letters' | 'guests' | 'projects'
   | 'employees' | 'attendance' | 'requests' | 'documents' | 'kpi'
-  | 'salary' | 'team' | 'birthdays' | 'news' | 'notifications' | 'profile';
+  | 'timesheet' | 'salary' | 'team' | 'birthdays' | 'news' | 'notifications' | 'profile';
 
 /** Whether the given user may see a page. Mirrors which web NAV the role gets. */
 export function canAccessPage(user: User | null | undefined, key: PageKey): boolean {
@@ -147,10 +147,14 @@ export function canAccessPage(user: User | null | undefined, key: PageKey): bool
     // KPI: same nav rule — the KPI item is in the master-admin/HR/deputy/
     // employee navs but absent from KPP_NAV and CHANCELLERY_NAV; a plain
     // employee sees ONLY their own scorecard (backend-scoped).
+    // Timesheet (Учёт времени: мой табель / дежурства / праздники) follows the
+    // same nav rule as attendance — the web /tabel, /navbatchilik and /holidays
+    // pages are all hidden from KPP and chancellery.
     case 'attendance':
     case 'requests':
     case 'documents':
     case 'kpi':
+    case 'timesheet':
       return !kpp && !chancellery;
     // Personal / convenience pages — always available.
     case 'home':

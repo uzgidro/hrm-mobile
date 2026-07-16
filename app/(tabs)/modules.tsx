@@ -54,6 +54,7 @@ export default function ModulesScreen() {
         title: t('modules.sections.activity'),
         items: [
           { key: 'attendance', icon: 'clock', label: t('modules.labels.attendance'), route: '/attendance-detail', access: 'attendance' },
+          { key: 'timesheet', icon: 'calendar', label: t('modules.labels.timesheet'), route: '/tabel', access: 'timesheet' },
           { key: 'requests', icon: 'checklist', label: t('modules.labels.requests'), route: '/work-leaves', access: 'requests', badge: pendingCount },
           { key: 'projects', icon: 'board', label: t('modules.labels.projects'), route: '/loyihalar', access: 'projects' },
           { key: 'kpi', icon: 'target', label: t('modules.labels.kpi'), route: '/kpi', access: 'kpi' },

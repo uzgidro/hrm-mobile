@@ -23,6 +23,7 @@ export default {
     guests: 'Гости',
     documents: 'Документы',
     kpi: 'KPI',
+    timesheet: 'Табель',
     birthdays: 'Дни рождения',
     news: 'Новости',
     notifications: 'Уведомления',

@@ -15,6 +15,11 @@ export const EMPLOYEE_ATTENDANCE_CALENDAR = (id: number) => `employees/${id}/att
 // Turnstile attendance
 export const TURNSTILE_ATTENDANCE_EVENTS = 'turnstile-attendance-events';
 
+// Time-tracking (Учёт времени) — read-only mobile surfaces.
+// The "monthly tabel grid": one row per employee with an attendance.calendar
+// {date -> status code} map. We request our own employee_id for "my tabel".
+export const TURNSTILE_ATTENDANCE_NORMALIZED = 'turnstile-attendance-events/normalized';
+
 // Work leaves (ruxsat so'rovlar)
 export const WORK_LEAVES = 'work-leaves';
 export const WORK_LEAVE_DETAIL = (id: number) => `work-leaves/${id}`;

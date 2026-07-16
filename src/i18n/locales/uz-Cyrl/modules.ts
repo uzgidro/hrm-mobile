@@ -23,6 +23,7 @@ export default {
     guests: 'Меҳмонлар',
     documents: 'Ҳужжатлар',
     kpi: 'KPI',
+    timesheet: 'Табель',
     birthdays: "Туғилган кун",
     news: 'Янгиликлар',
     notifications: 'Билдиришнома',

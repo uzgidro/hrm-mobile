@@ -29,6 +29,7 @@ export default {
     guests: 'Mehmonlar',
     documents: 'Hujjatlar',
     kpi: 'KPI',
+    timesheet: 'Tabel',
     birthdays: "Tug'ilgan kun",
     news: 'Yangiliklar',
     notifications: 'Bildirishnoma',

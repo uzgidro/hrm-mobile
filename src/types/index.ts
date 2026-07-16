@@ -456,3 +456,28 @@ export interface KpiBonus {
   bonus_percent?: number | null;
   amount?: number | null;
 }
+
+// ── Time-tracking (Учёт времени, read-only) ──────────────────────────────────
+// All codes below (calendar status codes, shift schedule_type) are backend
+// contract identifiers — never translated, only their display labels localize.
+
+// The per-employee attendance summary carried on GET
+// /turnstile-attendance-events/normalized. `calendar` is the month grid:
+// { "YYYY-MM-DD" -> status code } (present|late|absent|day_off|business_trip|
+// annual_leave|sick_leave|unpaid_leave|dekret|dismissed|work_leave|early_leave
+// and the label-mapped codes). This is the source for "Мой табель".
+export interface AttendanceSummary {
+  present_days_count?: number | null;
+  late_days_count?: number | null;
+  absent_days_count?: number | null;
+  work_duration_hours?: number | null;
+  calendar?: Record<string, string> | null;
+  daily_late_minutes?: Record<string, number> | null;
+}
+
+// One row of the normalized tabel grid: a full Employee plus its attendance
+// summary. For "my tabel" we request employee_id=me and read items[0].
+export interface EmployeeAttendance extends Employee {
+  attendance?: AttendanceSummary | null;
+}
+
