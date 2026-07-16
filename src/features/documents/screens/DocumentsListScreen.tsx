@@ -1,11 +1,11 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
-  View, Text, StyleSheet, TextInput, TouchableOpacity, RefreshControl, FlatList,
+  View, Text, StyleSheet, TextInput, TouchableOpacity, RefreshControl, FlatList, BackHandler,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
@@ -75,14 +75,33 @@ export default function DocumentsListScreen() {
     setActiveFolder(null);
   };
 
+  // Android system back / edge-swipe mirrors the header chevron: inside a
+  // folder it goes UP to the root list first (the folder is component state,
+  // not a route — without this, back would leave the whole screen).
+  useFocusEffect(
+    useCallback(() => {
+      if (!activeFolder) return undefined;
+      const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+        goRoot();
+        return true;
+      });
+      return () => sub.remove();
+    }, [activeFolder])
+  );
+
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
-        {openFolder ? (
-          <TouchableOpacity onPress={goRoot} style={styles.backBtn} hitSlop={10}>
-            <Icon name="chevronLeft" size={24} color={colors.text} />
-          </TouchableOpacity>
-        ) : null}
+        {/* In a folder the chevron goes up to the root list; at the root it
+            leaves the screen (back to Modules) — before, the root level had
+            no back affordance at all. */}
+        <TouchableOpacity
+          onPress={() => (openFolder ? goRoot() : router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
+          style={styles.backBtn}
+          hitSlop={10}
+        >
+          <Icon name="chevronLeft" size={24} color={colors.text} />
+        </TouchableOpacity>
         <Text style={styles.title} numberOfLines={1}>
           {openFolder ? (openFolder.name || t('documents.folderFallback')) : t('documents.title')}
         </Text>

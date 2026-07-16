@@ -41,6 +41,16 @@ export default function MehmonlarScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
+        {/* Guests is a bottom-bar tab, but it's also opened from the Modules
+            grid — the chevron walks the visited-tab history back (Modules →
+            Guests → back = Modules; as a cold tab it lands on Home). */}
+        <TouchableOpacity
+          onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
+          style={styles.backBtn}
+          hitSlop={10}
+        >
+          <Icon name="chevronLeft" size={26} color={colors.text} />
+        </TouchableOpacity>
         <Text style={styles.title}>{t('visitors.listTitle')}</Text>
         {visitors.length > 0 && <Text style={styles.count}>{visitors.length}</Text>}
         <View style={{ flex: 1 }} />
@@ -129,6 +139,7 @@ const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     safe: { flex: 1, backgroundColor: c.bg },
     header: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
+    backBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', marginLeft: -8, marginRight: -4 },
     title: { fontSize: 26, fontWeight: '800', color: c.text },
     count: { fontSize: 14, fontWeight: '700', color: c.textMuted, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2 },
     addBtn: { width: 42, height: 42, borderRadius: 14, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' },
