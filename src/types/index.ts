@@ -536,3 +536,48 @@ export interface DutyDay {
   employees?: Employee[] | null;
 }
 
+
+// ── LLM assistant (llm/*) ────────────────────────────────────────────────────
+// Role strings ('user' | 'assistant' | 'tool' | 'system') and interaction
+// statuses are backend contract identifiers — never translated.
+
+// A chat session (SessionRead). NOTE: the backend schema exposes NO
+// created_at/updated_at, and there is no auto-title — `name` stays "New Chat"
+// unless PATCHed.
+export interface LlmSession {
+  id: number;
+  name?: string | null;
+  created_by_id?: number | null;
+  system_prompt?: string | null;
+}
+
+// One stored message (MessageRead). The mobile client always requests
+// visible_only=true, so only role 'user' and final 'assistant' rows arrive.
+export interface LlmMessage {
+  id: number;
+  session_id?: number | null;
+  interaction_id?: number | null;
+  role: 'user' | 'assistant' | 'tool' | 'system' | string;
+  content?: string | null;
+  sequence?: number | null;
+  is_visible?: boolean | null;
+}
+
+// Non-stream POST llm/sessions/{id}/chat response.
+export interface LlmChatResponse {
+  response?: string | null;
+  interaction_id?: number | null;
+  session_id?: number | null;
+  status?: 'collecting' | 'executing' | 'completed' | 'failed' | string | null;
+}
+
+// GET llm/large-lists/{id} page (the [[LOAD_MORE:id:shown:total]] marker's
+// target). `rows` are cleaned scalar objects; `lines` is the legacy text form.
+export interface LlmLargeListPage {
+  lines?: string[] | null;
+  rows?: Record<string, unknown>[] | null;
+  offset: number;
+  next_offset: number;
+  total: number;
+  has_more: boolean;
+}

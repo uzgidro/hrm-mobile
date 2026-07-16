@@ -15,6 +15,7 @@ import visitors from './visitors';
 import documents from './documents';
 import kpi from './kpi';
 import timesheet from './timesheet';
+import assistant from './assistant';
 import projects from './projects';
 import profile from './profile';
 import employees from './employees';
@@ -40,6 +41,7 @@ export default {
   documents,
   kpi,
   timesheet,
+  assistant,
   projects,
   profile,
   employees,

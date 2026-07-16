@@ -30,6 +30,16 @@ export const WORK_SCHEDULE_DAYS = 'work-schedule-days';
 export const HOLIDAYS_LIST = 'holidays';
 export const DUTY_DAYS_LIST = 'duty-days';
 
+// LLM assistant. Owner-scoped sessions + streaming chat (SSE data: chunks).
+// NOTE: no role gate server-side — visibility is a CLIENT rule (roles.ts
+// 'assistant': stricter than web, see the plan note).
+export const LLM_SESSIONS = 'llm/sessions';
+export const LLM_SESSION_DETAIL = (id: number) => `llm/sessions/${id}`;
+export const LLM_SESSION_MESSAGES = (id: number) => `llm/sessions/${id}/messages`;
+export const LLM_SESSION_CHAT = (id: number) => `llm/sessions/${id}/chat`;
+export const LLM_SESSION_CHAT_STREAM = (id: number) => `llm/sessions/${id}/chat/stream`;
+export const LLM_LARGE_LIST = (listId: string) => `llm/large-lists/${listId}`;
+
 // Work leaves (ruxsat so'rovlar)
 export const WORK_LEAVES = 'work-leaves';
 export const WORK_LEAVE_DETAIL = (id: number) => `work-leaves/${id}`;
