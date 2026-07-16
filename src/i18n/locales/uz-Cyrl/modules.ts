@@ -25,6 +25,7 @@ export default {
     kpi: 'KPI',
     timesheet: 'Табель',
     navbatchilik: 'Навбатчилик',
+    holidays: 'Байрамлар',
     birthdays: "Туғилган кун",
     news: 'Янгиликлар',
     notifications: 'Билдиришнома',

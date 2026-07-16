@@ -60,6 +60,7 @@ export default function ModulesScreen() {
           ...(user?.is_navbatchi || employee?.department?.has_navbatchilik
             ? [{ key: 'navbatchilik', icon: 'clock' as IconName, label: t('modules.labels.navbatchilik'), route: '/navbatchilik', access: 'timesheet' as PageKey }]
             : []),
+          { key: 'holidays', icon: 'sun', label: t('modules.labels.holidays'), route: '/bayramlar', access: 'timesheet' },
           { key: 'requests', icon: 'checklist', label: t('modules.labels.requests'), route: '/work-leaves', access: 'requests', badge: pendingCount },
           { key: 'projects', icon: 'board', label: t('modules.labels.projects'), route: '/loyihalar', access: 'projects' },
           { key: 'kpi', icon: 'target', label: t('modules.labels.kpi'), route: '/kpi', access: 'kpi' },

@@ -6,8 +6,10 @@ import {
   NAVBATCHILIK_GROUPS_MY,
   NAVBATCHILIK_GROUP_MEMBERS,
   WORK_SCHEDULE_DAYS,
+  HOLIDAYS_LIST,
+  DUTY_DAYS_LIST,
 } from '@/api/urls';
-import type { Employee, EmployeeAttendance, NavbatchilikGroup, WorkScheduleDay } from '@/types';
+import type { DutyDay, Employee, EmployeeAttendance, Holiday, NavbatchilikGroup, WorkScheduleDay } from '@/types';
 
 // List endpoints return either a bare array or an { items } envelope.
 function unwrap<T>(d: any): T[] {
@@ -27,6 +29,8 @@ export const timesheetKeys = {
   groupMembers: (groupId: number) => [...timesheetKeys.all, 'duty-members', groupId] as const,
   myScheduleDays: (month: string, employeeId?: number) =>
     [...timesheetKeys.all, 'schedule-days', month, employeeId ?? null] as const,
+  holidays: (orgBranchId?: number) => [...timesheetKeys.all, 'holidays', orgBranchId ?? null] as const,
+  offDayDuty: () => [...timesheetKeys.all, 'off-day-duty'] as const,
 };
 
 // Fetch my monthly tabel row. `month` is 'YYYY-MM'; we expand it to the full
@@ -92,5 +96,32 @@ export function myScheduleDaysQuery(month: string, employeeId?: number) {
         })
         .then((r) => unwrap<WorkScheduleDay>(r.data)),
     staleTime: 5 * 60 * 1000,
+  });
+}
+
+// ── Wave 3 — "Праздники / дежурные дни" (read-only lists) ────────────────────
+
+// Branch-scoped holidays list (web HolidaysPage parity: size=100 + branch id).
+export function holidaysQuery(orgBranchId?: number) {
+  return queryOptions({
+    queryKey: timesheetKeys.holidays(orgBranchId),
+    queryFn: () =>
+      apiClient
+        .get(HOLIDAYS_LIST, {
+          params: { size: 100, ...(orgBranchId ? { organization_branch_id: orgBranchId } : {}) },
+        })
+        .then((r) => unwrap<Holiday>(r.data)),
+    staleTime: 60 * 60 * 1000,
+  });
+}
+
+// Duty-day ranges (who works through the off-days). The endpoint has no
+// filters — the backend returns the org's paginated list.
+export function offDayDutyQuery() {
+  return queryOptions({
+    queryKey: timesheetKeys.offDayDuty(),
+    queryFn: () =>
+      apiClient.get(DUTY_DAYS_LIST, { params: { size: 100 } }).then((r) => unwrap<DutyDay>(r.data)),
+    staleTime: 60 * 60 * 1000,
   });
 }

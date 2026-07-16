@@ -37,6 +37,17 @@ export default {
   membersCount_one: '{{count}} kishi',
   membersCount_other: '{{count}} kishi',
 
+  // ── Holidays / off-day duty (Wave 3) ──────────────────────────────────────
+  holidaysTitle: 'Bayramlar',
+  holidaysSubtitle: 'Bayram va dam olish kunlari',
+  holidaysTab: 'Bayramlar',
+  offDutyTab: 'Dam olishda ishlovchilar',
+  holidaysLoadError: 'Bayramlarni yuklashda xatolik',
+  holidaysEmpty: 'Bayramlar topilmadi',
+  offDutyEmpty: 'Dam olish kunlarida ishlovchilar belgilanmagan',
+  repeatableBadge: 'Har yili',
+  ongoingBadge: 'Hozir',
+
   // ── Calendar status code labels (codes stay untranslated) ────────────────
   codePresent: 'Kelgan',
   codeLate: 'Kechikkan',

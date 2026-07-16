@@ -31,6 +31,17 @@ export default {
   membersCount_few: '{{count}} человека',
   membersCount_many: '{{count}} человек',
 
+  // ── Holidays / off-day duty (Wave 3) ──────────────────────────────────────
+  holidaysTitle: 'Праздники',
+  holidaysSubtitle: 'Праздничные и выходные дни',
+  holidaysTab: 'Праздники',
+  offDutyTab: 'Работающие в выходные',
+  holidaysLoadError: 'Ошибка загрузки праздников',
+  holidaysEmpty: 'Праздники не найдены',
+  offDutyEmpty: 'Дежурные в выходные не назначены',
+  repeatableBadge: 'Ежегодно',
+  ongoingBadge: 'Сейчас',
+
   codePresent: 'Присутствовал',
   codeLate: 'Опоздание',
   codeEarlyLeave: 'Ранний уход',

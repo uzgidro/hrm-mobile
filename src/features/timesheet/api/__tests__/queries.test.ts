@@ -5,6 +5,8 @@ import {
   NAVBATCHILIK_GROUPS_MY,
   NAVBATCHILIK_GROUP_MEMBERS,
   WORK_SCHEDULE_DAYS,
+  HOLIDAYS_LIST,
+  DUTY_DAYS_LIST,
 } from '@/api/urls';
 import {
   timesheetKeys,
@@ -12,6 +14,8 @@ import {
   myNavbatchilikGroupsQuery,
   groupMembersQuery,
   myScheduleDaysQuery,
+  holidaysQuery,
+  offDayDutyQuery,
 } from '../queries';
 import type { EmployeeAttendance } from '@/types';
 
@@ -139,5 +143,45 @@ describe('myScheduleDaysQuery', () => {
     mock.onGet(WORK_SCHEDULE_DAYS).reply(200, { items: rows, total: 1 });
     const data = await (myScheduleDaysQuery('2026-07', 7).queryFn as () => Promise<unknown[]>)();
     expect(data).toEqual(rows);
+  });
+});
+
+describe('holidaysQuery', () => {
+  it('keys per branch under the timesheet root', () => {
+    expect(holidaysQuery(3).queryKey).toEqual(['timesheet', 'holidays', 3]);
+    expect(holidaysQuery().queryKey).toEqual(['timesheet', 'holidays', null]);
+  });
+
+  it('passes the branch filter and size (web HolidaysPage parity)', async () => {
+    mock.onGet(HOLIDAYS_LIST).reply(200, { items: [] });
+    await (holidaysQuery(3).queryFn as () => Promise<unknown>)();
+    expect(mock.history.get[0].params).toEqual({ size: 100, organization_branch_id: 3 });
+  });
+
+  it('omits the branch param when unknown', async () => {
+    mock.onGet(HOLIDAYS_LIST).reply(200, { items: [] });
+    await (holidaysQuery().queryFn as () => Promise<unknown>)();
+    expect(mock.history.get[0].params).toEqual({ size: 100 });
+  });
+
+  it('unwraps the envelope', async () => {
+    const rows = [{ id: 1, name: 'Navroz', date_from: '2026-03-21', date_to: '2026-03-21' }];
+    mock.onGet(HOLIDAYS_LIST).reply(200, { items: rows, total: 1 });
+    const data = await (holidaysQuery(3).queryFn as () => Promise<unknown[]>)();
+    expect(data).toEqual(rows);
+  });
+});
+
+describe('offDayDutyQuery', () => {
+  it('keys under the timesheet root, distinct from navbatchilik keys', () => {
+    expect(offDayDutyQuery().queryKey).toEqual(['timesheet', 'off-day-duty']);
+  });
+
+  it('fetches the paginated duty-days list', async () => {
+    const rows = [{ id: 1, date_from: '2026-01-01', date_to: '2026-01-02', employees: [] }];
+    mock.onGet(DUTY_DAYS_LIST).reply(200, { items: rows, total: 1 });
+    const data = await (offDayDutyQuery().queryFn as () => Promise<unknown[]>)();
+    expect(data).toEqual(rows);
+    expect(mock.history.get[0].params).toEqual({ size: 100 });
   });
 });

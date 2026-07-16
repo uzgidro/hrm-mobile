@@ -517,3 +517,22 @@ export interface WorkScheduleDay {
   working_hours_end?: string | null;
 }
 
+// A named non-working range (Bayramlar). is_repeatable = recurs yearly.
+export interface Holiday {
+  id: number;
+  name?: string | null;
+  date_from: string; // 'YYYY-MM-DD'
+  date_to: string;
+  is_repeatable?: boolean | null;
+  organization_branch_id?: number | null;
+}
+
+// A duty-day range with the employees who work through those off-days
+// (GET /duty-days — separate from both holidays and navbatchilik).
+export interface DutyDay {
+  id: number;
+  date_from: string; // 'YYYY-MM-DD'
+  date_to: string;
+  employees?: Employee[] | null;
+}
+

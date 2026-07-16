@@ -25,6 +25,7 @@ export default {
     kpi: 'KPI',
     timesheet: 'Timesheet',
     navbatchilik: 'Duty',
+    holidays: 'Holidays',
     birthdays: 'Birthdays',
     news: 'News',
     notifications: 'Notifications',

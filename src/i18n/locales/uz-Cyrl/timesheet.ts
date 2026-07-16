@@ -30,6 +30,17 @@ export default {
   membersCount_one: '{{count}} киши',
   membersCount_other: '{{count}} киши',
 
+  // ── Holidays / off-day duty (Wave 3) ──────────────────────────────────────
+  holidaysTitle: 'Байрамлар',
+  holidaysSubtitle: 'Байрам ва дам олиш кунлари',
+  holidaysTab: 'Байрамлар',
+  offDutyTab: 'Дам олишда ишловчилар',
+  holidaysLoadError: 'Байрамларни юклашда хатолик',
+  holidaysEmpty: 'Байрамлар топилмади',
+  offDutyEmpty: 'Дам олиш кунларида ишловчилар белгиланмаган',
+  repeatableBadge: 'Ҳар йили',
+  ongoingBadge: 'Ҳозир',
+
   codePresent: 'Келган',
   codeLate: 'Кечиккан',
   codeEarlyLeave: 'Эрта кетган',

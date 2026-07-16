@@ -30,6 +30,17 @@ export default {
   membersCount_one: '{{count}} person',
   membersCount_other: '{{count}} people',
 
+  // ── Holidays / off-day duty (Wave 3) ──────────────────────────────────────
+  holidaysTitle: 'Holidays',
+  holidaysSubtitle: 'Holidays and days off',
+  holidaysTab: 'Holidays',
+  offDutyTab: 'Working on days off',
+  holidaysLoadError: 'Failed to load holidays',
+  holidaysEmpty: 'No holidays found',
+  offDutyEmpty: 'No off-day duty assigned',
+  repeatableBadge: 'Yearly',
+  ongoingBadge: 'Now',
+
   codePresent: 'Present',
   codeLate: 'Late',
   codeEarlyLeave: 'Left early',
