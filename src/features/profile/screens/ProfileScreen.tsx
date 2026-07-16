@@ -70,7 +70,18 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={styles.pageTitle}>{t('profile.title')}</Text>
+        {/* Profile is a bar-less tab (href:null) opened from Modules/the avatar,
+            so it needs its own back affordance; back() walks the tab history. */}
+        <View style={styles.titleRow}>
+          <TouchableOpacity
+            onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
+            style={styles.backBtn}
+            hitSlop={10}
+          >
+            <Icon name="chevronLeft" size={26} color={colors.text} />
+          </TouchableOpacity>
+          <Text style={styles.pageTitle}>{t('profile.title')}</Text>
+        </View>
 
         {/* User card */}
         <View style={styles.card}>
@@ -249,7 +260,9 @@ const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     safe: { flex: 1, backgroundColor: c.bg },
     content: { paddingHorizontal: 16, paddingBottom: 40 },
-    pageTitle: { fontSize: 26, fontWeight: '800', color: c.text, paddingTop: 16, marginBottom: 16 },
+    titleRow: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingTop: 16, marginBottom: 16 },
+    backBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', marginLeft: -8 },
+    pageTitle: { fontSize: 26, fontWeight: '800', color: c.text },
 
     sectionLabel: {
       fontSize: 12, fontWeight: '700', color: c.textMuted,

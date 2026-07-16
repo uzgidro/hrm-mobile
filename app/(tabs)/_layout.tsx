@@ -42,6 +42,10 @@ export default function TabsLayout() {
 
   return (
     <Tabs
+      // System back / edge-swipe walks BACK THROUGH VISITED TABS (e.g.
+      // Modules → Mehmonlar → back lands on Modules) instead of the default
+      // 'firstRoute' jump to Home, which read as "the path got lost".
+      backBehavior="history"
       screenOptions={{
         headerShown: false,
         sceneStyle: { backgroundColor: colors.bg },
@@ -81,11 +85,9 @@ export default function TabsLayout() {
         name="modules"
         options={{ tabBarButtonTestID: 'tab-modules', tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="grid" label={t('modules.labels.modules')} colors={colors} /> }}
       />
-      <Tabs.Screen
-        name="mehmonlar"
-        options={{ tabBarButtonTestID: 'tab-guests', tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="guest" label={t('modules.labels.guests')} colors={colors} /> }}
-      />
-      {/* Profil — bottom bardan olib tashlandi; tepadagi avatar va Modullar orqali ochiladi */}
+      {/* Mehmonlar va Profil — bottom bardan olib tashlandi; Modullar plitkasi
+          orqali ochiladi (bar-less tab + header chevron + backBehavior history). */}
+      <Tabs.Screen name="mehmonlar" options={{ href: null }} />
       <Tabs.Screen name="profile" options={{ href: null }} />
     </Tabs>
   );
