@@ -54,6 +54,13 @@ export default function ModulesScreen() {
         title: t('modules.sections.activity'),
         items: [
           { key: 'attendance', icon: 'clock', label: t('modules.labels.attendance'), route: '/attendance-detail', access: 'attendance' },
+          { key: 'timesheet', icon: 'calendar', label: t('modules.labels.timesheet'), route: '/tabel', access: 'timesheet' },
+          // Web parity (navConfig.js): the Navbatchilik nav item is pruned when
+          // the user has neither dept-level duty nor group membership.
+          ...(user?.is_navbatchi || employee?.department?.has_navbatchilik
+            ? [{ key: 'navbatchilik', icon: 'clock' as IconName, label: t('modules.labels.navbatchilik'), route: '/navbatchilik', access: 'timesheet' as PageKey }]
+            : []),
+          { key: 'holidays', icon: 'sun', label: t('modules.labels.holidays'), route: '/bayramlar', access: 'timesheet' },
           { key: 'requests', icon: 'checklist', label: t('modules.labels.requests'), route: '/work-leaves', access: 'requests', badge: pendingCount },
           { key: 'projects', icon: 'board', label: t('modules.labels.projects'), route: '/loyihalar', access: 'projects' },
           { key: 'kpi', icon: 'target', label: t('modules.labels.kpi'), route: '/kpi', access: 'kpi' },
@@ -83,7 +90,7 @@ export default function ModulesScreen() {
     return raw
       .map((s) => ({ ...s, items: s.items.filter((it) => canAccessPage(user, it.access)) }))
       .filter((s) => s.items.length > 0);
-  }, [pendingCount, unreadCount, user, t]);
+  }, [pendingCount, unreadCount, user, employee?.department?.has_navbatchilik, t]);
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>

@@ -3,6 +3,8 @@ export interface User {
   type: 'employee' | 'master-admin' | 'admin';
   employee?: Employee;
   is_secretariat?: boolean;
+  /** member of a navbatchilik group (auth/me flag; gates the duty tile like the web nav) */
+  is_navbatchi?: boolean;
 }
 
 export interface Employee {
@@ -19,7 +21,7 @@ export interface Employee {
   lunch_end_time?: string;
   working_days?: number[];
   job_position?: { id: number; name: string };
-  department?: { id: number; name: string; organization_branch_id?: number };
+  department?: { id: number; name: string; organization_branch_id?: number; has_navbatchilik?: boolean };
   is_multi_org_user?: boolean;
   multi_org_employee_role?: string | string[];
   organization_branches?: OrganizationBranch[];
@@ -456,3 +458,81 @@ export interface KpiBonus {
   bonus_percent?: number | null;
   amount?: number | null;
 }
+
+// ── Time-tracking (Учёт времени, read-only) ──────────────────────────────────
+// All codes below (calendar status codes, shift schedule_type) are backend
+// contract identifiers — never translated, only their display labels localize.
+
+// The per-employee attendance summary carried on GET
+// /turnstile-attendance-events/normalized. `calendar` is the month grid:
+// { "YYYY-MM-DD" -> status code } (present|late|absent|day_off|business_trip|
+// annual_leave|sick_leave|unpaid_leave|dekret|dismissed|work_leave|early_leave
+// and the label-mapped codes). This is the source for "Мой табель".
+export interface AttendanceSummary {
+  present_days_count?: number | null;
+  late_days_count?: number | null;
+  absent_days_count?: number | null;
+  work_duration_hours?: number | null;
+  calendar?: Record<string, string> | null;
+  daily_late_minutes?: Record<string, number> | null;
+}
+
+// One row of the normalized tabel grid: a full Employee plus its attendance
+// summary. For "my tabel" we request employee_id=me and read items[0].
+export interface EmployeeAttendance extends Employee {
+  attendance?: AttendanceSummary | null;
+}
+
+// A duty shift within a navbatchilik group (name + start/end times).
+export interface NavbatchilikShift {
+  name?: string | null;
+  start?: string | null; // 'HH:MM'
+  end?: string | null;
+}
+
+// A navbatchilik (duty) group the current employee belongs to
+// (GET /navbatchilik-groups/my). employees are the direct members only — the
+// effective (department-expanded) roster comes from /{pk}/members.
+export interface NavbatchilikGroup {
+  id: number;
+  name?: string | null;
+  organization_branch_id?: number | null;
+  weekdays?: number[] | null;
+  shifts?: NavbatchilikShift[] | null;
+  is_active?: boolean | null;
+  employees?: Employee[] | null;
+  departments?: { id: number; name?: string | null }[] | null;
+  effective_member_count?: number | null;
+}
+
+// One assigned duty/shift day (GET /work-schedule-days). schedule_type is the
+// shift name (dept mode: K/T/D); is_day_off marks a rest day.
+export interface WorkScheduleDay {
+  id: number;
+  employee_id: number;
+  schedule_date: string; // 'YYYY-MM-DD'
+  schedule_type?: string | null;
+  is_day_off?: boolean | null;
+  working_hours_start?: string | null; // 'HH:MM:SS'
+  working_hours_end?: string | null;
+}
+
+// A named non-working range (Bayramlar). is_repeatable = recurs yearly.
+export interface Holiday {
+  id: number;
+  name?: string | null;
+  date_from: string; // 'YYYY-MM-DD'
+  date_to: string;
+  is_repeatable?: boolean | null;
+  organization_branch_id?: number | null;
+}
+
+// A duty-day range with the employees who work through those off-days
+// (GET /duty-days — separate from both holidays and navbatchilik).
+export interface DutyDay {
+  id: number;
+  date_from: string; // 'YYYY-MM-DD'
+  date_to: string;
+  employees?: Employee[] | null;
+}
+
