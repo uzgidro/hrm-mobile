@@ -48,6 +48,7 @@ export default {
   validationTitle: 'Xato',
   categoryRequired: 'Buyruq turi tanlanishi shart',
   descriptionRequired: 'Buyruq matni kiritilishi shart',
+  approverRequired: 'Kamida bitta kelishuvchi tanlanishi shart',
   leadershipRequired: 'Rahbariyatdan biri tanlanishi shart',
   branchNotFound: 'Filial aniqlanmadi',
   filesPartialTitle: 'Eslatma',

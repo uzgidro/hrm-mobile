@@ -84,6 +84,10 @@ export default function CreateOrderScreen() {
   async function handleCreate() {
     if (!categoryId) { Alert.alert(t('orders.validationTitle'), t('orders.categoryRequired')); return; }
     if (!description.trim()) { Alert.alert(t('orders.validationTitle'), t('orders.descriptionRequired')); return; }
+    // Web parity (AddOrderDrawer, c66c2af) + backend 7b3326f: decree/submit now
+    // 400s `approver_required` — without at least one kelishuvchi the decree
+    // would skip the agreement/sign stages straight to 'approved'.
+    if (!approvers.some((a) => a.employee_id)) { Alert.alert(t('orders.validationTitle'), t('orders.approverRequired')); return; }
     if (!leadershipId) { Alert.alert(t('orders.validationTitle'), t('orders.leadershipRequired')); return; }
     if (!branchId) { Alert.alert(t('orders.validationTitle'), t('orders.branchNotFound')); return; }
 
