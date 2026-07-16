@@ -44,6 +44,7 @@ export default {
   validationTitle: 'Хато',
   categoryRequired: 'Буйруқ тури танланиши шарт',
   descriptionRequired: 'Буйруқ матни киритилиши шарт',
+  approverRequired: 'Камида битта келишувчи танланиши шарт',
   leadershipRequired: 'Раҳбариятдан бири танланиши шарт',
   branchNotFound: 'Филиал аниқланмади',
   filesPartialTitle: 'Эслатма',

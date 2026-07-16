@@ -45,6 +45,7 @@ export default {
   validationTitle: 'Ошибка',
   categoryRequired: 'Необходимо выбрать тип приказа',
   descriptionRequired: 'Необходимо ввести текст приказа',
+  approverRequired: 'Выберите хотя бы одного согласующего',
   leadershipRequired: 'Необходимо выбрать одного из руководства',
   branchNotFound: 'Филиал не определён',
   filesPartialTitle: 'Примечание',

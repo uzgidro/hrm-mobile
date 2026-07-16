@@ -44,6 +44,7 @@ export default {
   validationTitle: 'Error',
   categoryRequired: 'Order type must be selected',
   descriptionRequired: 'Order text must be entered',
+  approverRequired: 'At least one approver is required',
   leadershipRequired: 'One of the leadership must be selected',
   branchNotFound: 'Branch could not be determined',
   filesPartialTitle: 'Note',
