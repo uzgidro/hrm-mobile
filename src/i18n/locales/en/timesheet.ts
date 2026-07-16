@@ -16,6 +16,20 @@ export default {
   lateByMinutes: '{{value}} min late',
   legendTitle: 'Legend',
 
+  // ── Duty roster (navbatchilik, Wave 2) ────────────────────────────────────
+  dutyTitle: 'Duty roster',
+  dutySubtitle: 'My duty schedule',
+  dutyLoadError: 'Failed to load the duty roster',
+  dutyEmpty: 'No duty schedule available',
+  dutyMonthEmpty: 'No duty assigned this month',
+  myDaysTitle: 'My days',
+  dutyDayOff: 'Day off',
+  shiftsLabel: 'Shifts',
+  weekdaysLabel: 'Weekdays',
+  membersTitle: 'Group members',
+  membersCount_one: '{{count}} person',
+  membersCount_other: '{{count}} people',
+
   codePresent: 'Present',
   codeLate: 'Late',
   codeEarlyLeave: 'Left early',

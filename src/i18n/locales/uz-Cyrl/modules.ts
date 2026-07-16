@@ -24,6 +24,7 @@ export default {
     documents: 'Ҳужжатлар',
     kpi: 'KPI',
     timesheet: 'Табель',
+    navbatchilik: 'Навбатчилик',
     birthdays: "Туғилган кун",
     news: 'Янгиликлар',
     notifications: 'Билдиришнома',

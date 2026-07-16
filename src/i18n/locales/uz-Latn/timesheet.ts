@@ -23,6 +23,20 @@ export default {
   lateByMinutes: '{{value}} daqiqa kechikkan',
   legendTitle: 'Belgilar',
 
+  // ── Duty roster (navbatchilik, Wave 2) ────────────────────────────────────
+  dutyTitle: 'Navbatchilik',
+  dutySubtitle: 'Mening navbatchilik jadvalim',
+  dutyLoadError: 'Navbatchilikni yuklashda xatolik',
+  dutyEmpty: 'Navbatchilik jadvali mavjud emas',
+  dutyMonthEmpty: 'Bu oyda navbatchilik belgilanmagan',
+  myDaysTitle: 'Mening kunlarim',
+  dutyDayOff: 'Dam olish',
+  shiftsLabel: 'Smenalar',
+  weekdaysLabel: 'Kunlar',
+  membersTitle: 'Guruh aʼzolari',
+  membersCount_one: '{{count}} kishi',
+  membersCount_other: '{{count}} kishi',
+
   // ── Calendar status code labels (codes stay untranslated) ────────────────
   codePresent: 'Kelgan',
   codeLate: 'Kechikkan',

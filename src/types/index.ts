@@ -3,6 +3,8 @@ export interface User {
   type: 'employee' | 'master-admin' | 'admin';
   employee?: Employee;
   is_secretariat?: boolean;
+  /** member of a navbatchilik group (auth/me flag; gates the duty tile like the web nav) */
+  is_navbatchi?: boolean;
 }
 
 export interface Employee {
@@ -19,7 +21,7 @@ export interface Employee {
   lunch_end_time?: string;
   working_days?: number[];
   job_position?: { id: number; name: string };
-  department?: { id: number; name: string; organization_branch_id?: number };
+  department?: { id: number; name: string; organization_branch_id?: number; has_navbatchilik?: boolean };
   is_multi_org_user?: boolean;
   multi_org_employee_role?: string | string[];
   organization_branches?: OrganizationBranch[];
@@ -479,5 +481,39 @@ export interface AttendanceSummary {
 // summary. For "my tabel" we request employee_id=me and read items[0].
 export interface EmployeeAttendance extends Employee {
   attendance?: AttendanceSummary | null;
+}
+
+// A duty shift within a navbatchilik group (name + start/end times).
+export interface NavbatchilikShift {
+  name?: string | null;
+  start?: string | null; // 'HH:MM'
+  end?: string | null;
+}
+
+// A navbatchilik (duty) group the current employee belongs to
+// (GET /navbatchilik-groups/my). employees are the direct members only — the
+// effective (department-expanded) roster comes from /{pk}/members.
+export interface NavbatchilikGroup {
+  id: number;
+  name?: string | null;
+  organization_branch_id?: number | null;
+  weekdays?: number[] | null;
+  shifts?: NavbatchilikShift[] | null;
+  is_active?: boolean | null;
+  employees?: Employee[] | null;
+  departments?: { id: number; name?: string | null }[] | null;
+  effective_member_count?: number | null;
+}
+
+// One assigned duty/shift day (GET /work-schedule-days). schedule_type is the
+// shift name (dept mode: K/T/D); is_day_off marks a rest day.
+export interface WorkScheduleDay {
+  id: number;
+  employee_id: number;
+  schedule_date: string; // 'YYYY-MM-DD'
+  schedule_type?: string | null;
+  is_day_off?: boolean | null;
+  working_hours_start?: string | null; // 'HH:MM:SS'
+  working_hours_end?: string | null;
 }
 

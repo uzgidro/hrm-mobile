@@ -16,6 +16,20 @@ export default {
   lateByMinutes: '{{value}} дақиқа кечиккан',
   legendTitle: 'Белгилар',
 
+  // ── Duty roster (navbatchilik, Wave 2) ────────────────────────────────────
+  dutyTitle: 'Навбатчилик',
+  dutySubtitle: 'Менинг навбатчилик жадвалим',
+  dutyLoadError: 'Навбатчиликни юклашда хатолик',
+  dutyEmpty: 'Навбатчилик жадвали мавжуд эмас',
+  dutyMonthEmpty: 'Бу ойда навбатчилик белгиланмаган',
+  myDaysTitle: 'Менинг кунларим',
+  dutyDayOff: 'Дам олиш',
+  shiftsLabel: 'Сменалар',
+  weekdaysLabel: 'Кунлар',
+  membersTitle: 'Гуруҳ аъзолари',
+  membersCount_one: '{{count}} киши',
+  membersCount_other: '{{count}} киши',
+
   codePresent: 'Келган',
   codeLate: 'Кечиккан',
   codeEarlyLeave: 'Эрта кетган',

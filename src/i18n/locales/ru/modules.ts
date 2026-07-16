@@ -24,6 +24,7 @@ export default {
     documents: 'Документы',
     kpi: 'KPI',
     timesheet: 'Табель',
+    navbatchilik: 'Дежурства',
     birthdays: 'Дни рождения',
     news: 'Новости',
     notifications: 'Уведомления',

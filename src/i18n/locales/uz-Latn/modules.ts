@@ -30,6 +30,7 @@ export default {
     documents: 'Hujjatlar',
     kpi: 'KPI',
     timesheet: 'Tabel',
+    navbatchilik: 'Navbatchilik',
     birthdays: "Tug'ilgan kun",
     news: 'Yangiliklar',
     notifications: 'Bildirishnoma',

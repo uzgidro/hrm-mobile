@@ -16,6 +16,21 @@ export default {
   lateByMinutes: 'Опоздание {{value}} мин',
   legendTitle: 'Обозначения',
 
+  // ── Duty roster (navbatchilik, Wave 2) ────────────────────────────────────
+  dutyTitle: 'Дежурства',
+  dutySubtitle: 'Мой график дежурств',
+  dutyLoadError: 'Ошибка загрузки дежурств',
+  dutyEmpty: 'График дежурств отсутствует',
+  dutyMonthEmpty: 'В этом месяце дежурств не назначено',
+  myDaysTitle: 'Мои дни',
+  dutyDayOff: 'Выходной',
+  shiftsLabel: 'Смены',
+  weekdaysLabel: 'Дни недели',
+  membersTitle: 'Состав группы',
+  membersCount_one: '{{count}} человек',
+  membersCount_few: '{{count}} человека',
+  membersCount_many: '{{count}} человек',
+
   codePresent: 'Присутствовал',
   codeLate: 'Опоздание',
   codeEarlyLeave: 'Ранний уход',
