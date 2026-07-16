@@ -4,6 +4,7 @@ import {
   getMultiOrgRole,
   hasMultiOrgRole,
   isMasterAdmin,
+  isSiteMasterAdmin,
   isEmployee,
   isEmployeeLike,
   isAccounting,
@@ -210,6 +211,27 @@ describe('isMasterAdmin', () => {
     // getMultiOrgRole returns first element; if ministr is not first, isMasterAdmin is false.
     expect(isMasterAdmin(multiOrgUser(['hr', 'ministr']))).toBe(false);
     expect(isMasterAdmin(multiOrgUser(['ministr', 'hr']))).toBe(true);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// isSiteMasterAdmin — STRICTLY the master-admin account type (excludes ministr)
+// ─────────────────────────────────────────────────────────────────────────────
+describe('isSiteMasterAdmin', () => {
+  it('true only for type master-admin', () => {
+    expect(isSiteMasterAdmin(masterAdminUser)).toBe(true);
+  });
+
+  it('false for ministr — unlike isMasterAdmin (backend grants the override only to the account type)', () => {
+    expect(isSiteMasterAdmin(ministrUser)).toBe(false);
+    expect(isMasterAdmin(ministrUser)).toBe(true); // the contrast that motivates this helper
+  });
+
+  it('false for everyone else and null/undefined', () => {
+    expect(isSiteMasterAdmin(regularUser)).toBe(false);
+    expect(isSiteMasterAdmin(hrSingleUser)).toBe(false);
+    expect(isSiteMasterAdmin(null)).toBe(false);
+    expect(isSiteMasterAdmin(undefined)).toBe(false);
   });
 });
 
@@ -486,10 +508,13 @@ describe('canAccessChairmanTasks', () => {
     expect(canAccessChairmanTasks(ministrUser)).toBe(true);
   });
 
+  it('true for the site master-admin (web parity)', () => {
+    expect(canAccessChairmanTasks(masterAdminUser)).toBe(true);
+  });
+
   it('false otherwise', () => {
     expect(canAccessChairmanTasks(regularUser)).toBe(false);
     expect(canAccessChairmanTasks(hrSingleUser)).toBe(false);
-    expect(canAccessChairmanTasks(masterAdminUser)).toBe(false);
     expect(canAccessChairmanTasks(null)).toBe(false);
   });
 });

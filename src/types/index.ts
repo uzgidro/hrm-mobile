@@ -423,3 +423,36 @@ export interface KpiScorecard {
   available_periods?: string[] | null;
   entries?: KpiEntry[] | null;
 }
+
+// One direct report's aggregate on GET kpi/my-team (no entries array — only
+// counts; open the member's scorecard via my-scorecard?employee_id=).
+export interface KpiTeamMember {
+  employee_id: number;
+  legal_name?: string | null;
+  photo_path?: string | null;
+  job_position_name?: string | null;
+  department_name?: string | null;
+  result_percent?: number | null;
+  entries_count?: number | null;
+  pending_tasks?: number | null; // tasks awaiting the supervisor's review
+  all_done?: boolean | null; // every entry finalized (locked/D)
+}
+
+// GET kpi/my-team envelope. Empty employees[] for a non-supervisor — safe to
+// call for everyone.
+export interface KpiTeam {
+  period_begin?: string | null;
+  period_end?: string | null;
+  employees?: KpiTeamMember[] | null;
+}
+
+// A bonus row attached to an entry (read-only for the employee). `amount` is
+// always null until the 1C payroll integration — render the percent only.
+export interface KpiBonus {
+  id: number;
+  object_type?: string | null;
+  object_id?: number | null;
+  oper_type_name?: string | null;
+  bonus_percent?: number | null;
+  amount?: number | null;
+}

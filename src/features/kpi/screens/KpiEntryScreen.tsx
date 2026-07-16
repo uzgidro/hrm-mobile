@@ -13,19 +13,23 @@ import { Icon } from '@/components/Icon';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { LoadingView, EmptyState, ErrorState } from '@/components/StateViews';
 import { confirm } from '@/lib/confirm';
+import { isHR, isSiteMasterAdmin } from '@/utils/roles';
 import type { KpiTask } from '@/types';
-import { kpiEntryQuery } from '../api/queries';
+import { kpiEntryQuery, entryBonusesQuery } from '../api/queries';
 import {
-  useAddKpiTask, useUpdateKpiTask, useSubmitKpiTask, useDeleteKpiTask,
+  useAddKpiTask, useUpdateKpiTask, useSubmitKpiTask, useDeleteKpiTask, useReviewKpiTask,
 } from '../api/mutations';
 import {
-  isEntryLocked, canAddTask, canActOnTask, taskStatusKey, confirmedTaskSum, entryResultDisplay,
+  isEntryLocked, canAddTask, canActOnTask, canReviewEntry, canReviewTask,
+  taskStatusKey, confirmedTaskSum, entryResultDisplay, parseScore,
 } from '../utils';
 
-// KPI entry detail (web EntryTasksPage, owner side): indicator summary + the
-// task list. The owner adds/edits/submits/deletes DRAFT tasks only while the
-// entry is unlocked; the SCORE is entered exclusively by the supervisor on
-// confirm (supervisor review is a later wave), so there is no score input here.
+// KPI entry detail (web EntryTasksPage): indicator summary + the task list +
+// read-only bonuses. The OWNER adds/edits/submits/deletes DRAFT tasks while the
+// entry is unlocked; the SUPERVISOR (entry.employee.supervisor_id) or HR/
+// master-admin reviews SUBMITTED tasks — confirm with a score or reject with a
+// note. canReview is derived from data (the backend's own rule), so it also
+// holds when arriving via a push deep link.
 export default function KpiEntryScreen() {
   const { t } = useTranslation();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -35,17 +39,32 @@ export default function KpiEntryScreen() {
   const styles = useThemedStyles(makeStyles);
 
   const { data: entry, isLoading, isError, refetch, isFetching } = useQuery(kpiEntryQuery(entryId));
+  const { data: bonuses = [] } = useQuery(entryBonusesQuery(entryId));
 
   const [newName, setNewName] = useState('');
   const [editing, setEditing] = useState<{ id: number; name: string } | null>(null);
+  // Supervisor review panel: confirm (score) or reject (note) for one task.
+  const [reviewing, setReviewing] = useState<
+    { id: number; mode: 'confirm'; score: string } | { id: number; mode: 'reject'; note: string } | null
+  >(null);
 
   const addTask = useAddKpiTask(entryId);
   const updateTask = useUpdateKpiTask();
   const submitTask = useSubmitKpiTask();
   const deleteTask = useDeleteKpiTask();
+  const reviewTask = useReviewKpiTask();
 
   const isOwner = !!user?.employee?.id && user.employee.id === entry?.employee_id;
   const locked = entry ? isEntryLocked(entry) : true;
+  // isSiteMasterAdmin (NOT isMasterAdmin): the backend grants KPI review only
+  // to the account type — isMasterAdmin includes ministr, whose review the
+  // backend would 403 (web uses isSiteMasterAdmin for exactly this reason).
+  const canReview = entry
+    ? canReviewEntry(entry, {
+        myEmployeeId: user?.employee?.id,
+        isManager: isHR(user) || isSiteMasterAdmin(user),
+      })
+    : false;
   const tasks = entry?.tasks ?? [];
   const confirmedSum = confirmedTaskSum(tasks);
   const maxPercent = entry?.indicator?.max_percent;
@@ -83,6 +102,20 @@ export default function KpiEntryScreen() {
       destructive: true,
     });
     if (ok) deleteTask.mutate(task.id);
+  };
+
+  // Supervisor: confirm carries the score; reject carries the note (web parity).
+  // A null parseScore (garbage/negative input) blocks the submit — a confirmed
+  // task cannot be re-reviewed, so a silent score-0 confirm is unacceptable.
+  const reviewScore = reviewing?.mode === 'confirm' ? parseScore(reviewing.score) : 0;
+  const onReview = () => {
+    if (!reviewing || reviewTask.isPending) return;
+    if (reviewing.mode === 'confirm' && reviewScore == null) return;
+    const payload =
+      reviewing.mode === 'confirm'
+        ? { id: reviewing.id, action: 'confirm' as const, score: reviewScore ?? 0 }
+        : { id: reviewing.id, action: 'reject' as const, review_note: reviewing.note };
+    reviewTask.mutate(payload, { onSuccess: () => setReviewing(null) });
   };
 
   const taskStatusStyle = (key: ReturnType<typeof taskStatusKey>) =>
@@ -212,20 +245,112 @@ export default function KpiEntryScreen() {
                             <TaskAction icon="trash" color={colors.error} onPress={() => onDeleteTask(task)} styles={styles} />
                           </View>
                         )}
+
+                        {/* Supervisor: score is entered HERE, on confirm (web parity) */}
+                        {canReviewTask(task, { canReview, entryLocked: locked }) && (
+                          <View style={styles.taskActions}>
+                            <TouchableOpacity
+                              style={[styles.reviewBtn, { backgroundColor: colors.successSoft }]}
+                              onPress={() => setReviewing({ id: task.id, mode: 'confirm', score: '' })}
+                              activeOpacity={0.8}
+                            >
+                              <Icon name="check" size={14} color={colors.success} />
+                              <Text style={[styles.reviewBtnText, { color: colors.success }]}>{t('kpi.reviewConfirm')}</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={[styles.reviewBtn, { backgroundColor: colors.errorSoft }]}
+                              onPress={() => setReviewing({ id: task.id, mode: 'reject', note: '' })}
+                              activeOpacity={0.8}
+                            >
+                              <Icon name="close" size={14} color={colors.error} />
+                              <Text style={[styles.reviewBtnText, { color: colors.error }]}>{t('kpi.reviewReject')}</Text>
+                            </TouchableOpacity>
+                          </View>
+                        )}
                       </View>
 
                       {st === 'rejected' && !!task.review_note && (
                         <Text style={styles.rejectNote}>{t('kpi.rejectNote')}: {task.review_note}</Text>
+                      )}
+
+                      {/* Inline review panel for the picked task. Re-gated on
+                          canReviewTask so a background refetch that flips the
+                          task/entry state (co-reviewer acted, period locked)
+                          drops the stale panel instead of submitting into a 400. */}
+                      {reviewing?.id === task.id &&
+                        canReviewTask(task, { canReview, entryLocked: locked }) && (
+                        <View style={styles.reviewPanel}>
+                          <Text style={styles.fieldLabel}>
+                            {reviewing.mode === 'confirm' ? t('kpi.reviewScoreLabel') : t('kpi.reviewNoteLabel')}
+                          </Text>
+                          {reviewing.mode === 'confirm' ? (
+                            <TextInput
+                              style={styles.reviewInput}
+                              keyboardType="numeric"
+                              autoFocus
+                              value={reviewing.score}
+                              onChangeText={(score) => setReviewing({ id: task.id, mode: 'confirm', score })}
+                            />
+                          ) : (
+                            <TextInput
+                              style={styles.reviewInput}
+                              autoFocus
+                              value={reviewing.note}
+                              onChangeText={(note) => setReviewing({ id: task.id, mode: 'reject', note })}
+                            />
+                          )}
+                          <View style={styles.reviewPanelActions}>
+                            <TouchableOpacity
+                              style={[
+                                styles.reviewActionBtn,
+                                { backgroundColor: reviewing.mode === 'confirm' ? colors.success : colors.error },
+                                (reviewTask.isPending || (reviewing.mode === 'confirm' && reviewScore == null)) && { opacity: 0.5 },
+                              ]}
+                              onPress={onReview}
+                              disabled={reviewTask.isPending || (reviewing.mode === 'confirm' && reviewScore == null)}
+                              activeOpacity={0.85}
+                            >
+                              <Text style={styles.reviewActionText}>
+                                {reviewing.mode === 'confirm' ? t('kpi.reviewConfirmAction') : t('kpi.reviewRejectAction')}
+                              </Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={styles.reviewCancelBtn}
+                              onPress={() => setReviewing(null)}
+                              activeOpacity={0.8}
+                            >
+                              <Text style={styles.reviewCancelText}>{t('common.cancel')}</Text>
+                            </TouchableOpacity>
+                          </View>
+                        </View>
                       )}
                     </View>
                   );
                 })
               )}
             </>
-          ) : (
+          ) : bonuses.length === 0 ? (
             // Non-task indicators (manual/gather/formula) have nothing actionable
             // for the owner — the fact is computed/entered elsewhere.
             <EmptyState icon="target" title={t('kpi.noTasksIndicator')} />
+          ) : null}
+
+          {/* ── Bonuses (read-only; amount stays null until 1C payroll) ── */}
+          {bonuses.length > 0 && (
+            <>
+              <Text style={styles.sectionLabel}>{t('kpi.bonusesTitle')}</Text>
+              <View style={styles.bonusCard}>
+                {bonuses.map((b, i) => (
+                  <View key={b.id} style={[styles.bonusRow, i > 0 && styles.bonusRowBorder]}>
+                    <Text style={styles.bonusName} numberOfLines={2}>{b.oper_type_name || '—'}</Text>
+                    <Text style={styles.bonusPercent}>
+                      {b.bonus_percent != null ? `${Number(b.bonus_percent)}%` : '—'}
+                    </Text>
+                    <Text style={styles.bonusAmount}>{b.amount != null ? String(b.amount) : '—'}</Text>
+                  </View>
+                ))}
+              </View>
+            </>
           )}
           <View style={{ height: 24 }} />
         </ScrollView>
@@ -316,4 +441,37 @@ const makeStyles = (c: ThemeColors) =>
       backgroundColor: c.bg, borderWidth: 1, borderColor: c.cardBorder,
     },
     rejectNote: { fontSize: 12, color: c.error, marginTop: 8, lineHeight: 17 },
+
+    reviewBtn: {
+      flexDirection: 'row', alignItems: 'center', gap: 4,
+      paddingHorizontal: 9, paddingVertical: 6, borderRadius: 9,
+    },
+    reviewBtnText: { fontSize: 12, fontWeight: '700' },
+    reviewPanel: {
+      marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: c.cardBorder, gap: 8,
+    },
+    reviewInput: {
+      backgroundColor: c.bg, borderRadius: 10, borderWidth: 1, borderColor: c.primary,
+      paddingHorizontal: 10, paddingVertical: 8, fontSize: 14, color: c.text,
+    },
+    reviewPanelActions: { flexDirection: 'row', gap: 8 },
+    reviewActionBtn: {
+      flex: 1, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center',
+    },
+    reviewActionText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+    reviewCancelBtn: {
+      paddingHorizontal: 16, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center',
+      backgroundColor: c.bg, borderWidth: 1, borderColor: c.cardBorder,
+    },
+    reviewCancelText: { color: c.textSecondary, fontWeight: '600', fontSize: 14 },
+
+    bonusCard: {
+      backgroundColor: c.card, borderRadius: 14, borderWidth: 1, borderColor: c.cardBorder,
+      paddingHorizontal: 14,
+    },
+    bonusRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12 },
+    bonusRowBorder: { borderTopWidth: 1, borderTopColor: c.cardBorder },
+    bonusName: { flex: 1, fontSize: 13.5, color: c.text, lineHeight: 18 },
+    bonusPercent: { fontSize: 14, fontWeight: '800', color: c.primary, minWidth: 48, textAlign: 'right' },
+    bonusAmount: { fontSize: 13, color: c.textMuted, minWidth: 40, textAlign: 'right' },
   });

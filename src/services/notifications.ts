@@ -105,14 +105,17 @@ export function routeForNotification(data: any): string | null {
   const orderId = data.order_act_id;
   const letterId = data.letter_id; // only present on push payloads
   const newsId = data.news_post_id;
+  const kpiEntryId = data.kpi_entry_id; // kpi_task_submitted/confirmed/rejected
 
   if (orderId) return `/order-detail?id=${orderId}`;
   if (letterId) return `/letter-detail?id=${letterId}`;
+  if (kpiEntryId) return `/kpi-entry?id=${kpiEntryId}`;
   if (newsId != null) return '/news';
 
   if (type.startsWith('order_act')) return '/(tabs)/orders';
   if (type.startsWith('business_trip')) return '/(tabs)/letters';
   if (type.startsWith('news')) return '/news';
+  if (type.startsWith('kpi')) return '/kpi';
   // card_* / workspace_* (Loyihalar) have no mobile screen yet — stay put.
   return null;
 }
@@ -164,6 +167,9 @@ const NOTIF_META: Record<string, { titleKey: string; icon: IconName }> = {
   card_comment_created: { titleKey: 'notifications.cardCommentCreated', icon: 'mail' },
   card_comment_mention: { titleKey: 'notifications.cardCommentMention', icon: 'mail' },
   card_deadline_approaching: { titleKey: 'notifications.cardDeadlineApproaching', icon: 'clock' },
+  kpi_task_submitted: { titleKey: 'notifications.kpiTaskSubmitted', icon: 'checklist' },
+  kpi_task_confirmed: { titleKey: 'notifications.kpiTaskConfirmed', icon: 'check' },
+  kpi_task_rejected: { titleKey: 'notifications.kpiTaskRejected', icon: 'close' },
 };
 
 // Human-readable title + icon for an in-app notification, derived from its
@@ -185,5 +191,6 @@ export function notificationMeta(type: string): { title: string; icon: IconName 
   if (t.startsWith('workspace'))
     return { title: i18n.t('notifications.workspaceFallback'), icon: 'grid' };
   if (t.startsWith('card')) return { title: i18n.t('notifications.cardFallback'), icon: 'checklist' };
+  if (t.startsWith('kpi')) return { title: i18n.t('notifications.kpiFallback'), icon: 'target' };
   return { title: i18n.t('notifications.generic'), icon: 'bell' };
 }

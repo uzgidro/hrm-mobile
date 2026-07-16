@@ -36,6 +36,10 @@ export default {
   cardCommentCreated: 'Yangi izoh',
   cardCommentMention: "Sizni eslab o'tishdi",
   cardDeadlineApproaching: 'Muddat yaqinlashmoqda',
+  kpiTaskSubmitted: 'Vazifa topshirildi',
+  kpiTaskConfirmed: 'Vazifa tasdiqlandi',
+  kpiTaskRejected: 'Vazifa rad etildi',
+  kpiFallback: 'KPI',
   // prefix fallbacks for unmapped variants of a known family
   orderFallback: 'Buyruq',
   businessTripFallback: 'Xizmat safari',

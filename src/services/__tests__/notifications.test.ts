@@ -3,7 +3,7 @@
 // time so they follow the current app language, while the type codes themselves
 // are a backend contract and must stay unchanged.
 import i18n from '@/i18n';
-import { notificationMeta } from '../notifications';
+import { notificationMeta, routeForNotification } from '../notifications';
 
 // The backend contract: every notification_type code the client knows about,
 // with the icon it must map to. If a code here is renamed, the backend push
@@ -33,6 +33,9 @@ const CONTRACT: { type: string; icon: string }[] = [
   { type: 'card_comment_created', icon: 'mail' },
   { type: 'card_comment_mention', icon: 'mail' },
   { type: 'card_deadline_approaching', icon: 'clock' },
+  { type: 'kpi_task_submitted', icon: 'checklist' },
+  { type: 'kpi_task_confirmed', icon: 'check' },
+  { type: 'kpi_task_rejected', icon: 'close' },
 ];
 
 describe('notificationMeta', () => {
@@ -91,5 +94,27 @@ describe('notificationMeta', () => {
       icon: 'bell',
     });
     expect(notificationMeta('')).toEqual({ title: 'Bildirishnoma', icon: 'bell' });
+  });
+
+  it('uses the kpi family fallback for an unmapped kpi_* variant', () => {
+    expect(notificationMeta('kpi_future_variant')).toEqual({ title: 'KPI', icon: 'target' });
+  });
+});
+
+// KPI deep-links. The backend push payload is {type: kpi_task_*, kpi_entry_id};
+// the in-app notification row carries the same kpi_entry_id FK.
+describe('routeForNotification — kpi', () => {
+  it('opens the entry detail when kpi_entry_id is present (push and in-app shapes)', () => {
+    expect(routeForNotification({ type: 'kpi_task_submitted', kpi_entry_id: 5 })).toBe('/kpi-entry?id=5');
+    expect(routeForNotification({ notification_type: 'kpi_task_confirmed', kpi_entry_id: 7 })).toBe('/kpi-entry?id=7');
+  });
+
+  it('falls back to the scorecard for a kpi type without an entry id', () => {
+    expect(routeForNotification({ type: 'kpi_task_rejected' })).toBe('/kpi');
+  });
+
+  it('does not affect non-kpi routes', () => {
+    expect(routeForNotification({ type: 'order_act_created', order_act_id: 3 })).toBe('/order-detail?id=3');
+    expect(routeForNotification({ type: 'totally_unknown' })).toBeNull();
   });
 });

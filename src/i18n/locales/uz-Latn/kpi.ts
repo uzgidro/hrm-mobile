@@ -63,4 +63,18 @@ export default {
   deleteConfirmTitle: "Vazifani o'chirish",
   deleteConfirmMessage: "Ushbu vazifani o'chirmoqchimisiz?",
   deleteAction: "O'chirish",
+
+  // ── Wave 2: supervisor review / team / bonuses ─────────────────────────────
+  teamTitle: 'Xodimlarim samaradorligi',
+  teamEntries: "Ko'rsatkichlar",
+  teamPending: 'Tasdiq kutmoqda',
+  teamAllDone: 'Yakunlangan',
+  teamEmpty: "Sizga biriktirilgan xodimlar yo'q",
+  bonusesTitle: 'Bonuslar',
+  reviewConfirm: 'Tasdiq',
+  reviewReject: 'Rad',
+  reviewScoreLabel: 'Baho (%)',
+  reviewNoteLabel: 'Rad etish sababi',
+  reviewConfirmAction: 'Tasdiqlash',
+  reviewRejectAction: 'Rad etish',
 } as const;

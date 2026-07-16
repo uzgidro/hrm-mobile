@@ -53,4 +53,17 @@ export default {
   deleteConfirmTitle: 'Удалить задачу',
   deleteConfirmMessage: 'Удалить эту задачу?',
   deleteAction: 'Удалить',
+
+  teamTitle: 'Эффективность моих сотрудников',
+  teamEntries: 'Показатели',
+  teamPending: 'Ждут подтверждения',
+  teamAllDone: 'Завершено',
+  teamEmpty: 'За вами не закреплены сотрудники',
+  bonusesTitle: 'Бонусы',
+  reviewConfirm: 'Принять',
+  reviewReject: 'Отклонить',
+  reviewScoreLabel: 'Оценка (%)',
+  reviewNoteLabel: 'Причина отклонения',
+  reviewConfirmAction: 'Подтвердить',
+  reviewRejectAction: 'Отклонить',
 } as const;

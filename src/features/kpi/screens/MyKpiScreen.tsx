@@ -5,16 +5,16 @@ import {
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import dayjs from 'dayjs';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon, type IconName } from '@/components/Icon';
-import { ScreenHeader } from '@/components/ScreenHeader';
+import { ScreenHeader, HeaderAction } from '@/components/ScreenHeader';
 import { LoadingView, EmptyState, ErrorState } from '@/components/StateViews';
 import { monthName } from '@/i18n/dates';
 import type { KpiEntry } from '@/types';
-import { myScorecardQuery } from '../api/queries';
+import { myScorecardQuery, myTeamQuery } from '../api/queries';
 import { KpiGauge } from '../components/KpiGauge';
 import {
   entryStatusKey, isPenaltyEntry, scorecardTotals, entryResultDisplay, resultColorKey,
@@ -23,6 +23,9 @@ import {
 // «Мой KPI» — the employee's personal Verifix scorecard (web EmployeeKpiScreen):
 // profile card + gauge + period chips + the entries list with a totals footer.
 // The gauge percent arrives computed from the backend — never recomputed here.
+// With an `employeeId` route param the SAME screen shows a subordinate's card
+// (my-scorecard?employee_id=, supervisor/HR only — backend 404s anyone else);
+// entered from the team screen, which a supervisor reaches via the header action.
 
 const fmtDate = (d?: string | null) => (d ? dayjs(d).format('DD.MM.YYYY') : '—');
 
@@ -37,10 +40,20 @@ export default function MyKpiScreen() {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const { employeeId } = useLocalSearchParams<{ employeeId?: string }>();
+  // Set only when a supervisor opens a direct report's card from the team screen.
+  const subordinateId = employeeId ? Number(employeeId) : undefined;
   // Selected period ('YYYY-MM'); '' = the current month.
   const [period, setPeriod] = useState('');
 
-  const { data, isLoading, isError, refetch, isFetching } = useQuery(myScorecardQuery(period));
+  const { data, isLoading, isError, refetch, isFetching } = useQuery(
+    myScorecardQuery(period, subordinateId)
+  );
+
+  // Own view only: probe for direct reports to decide whether to offer the team
+  // screen. Empty employees[] for a non-supervisor, so this is safe for everyone.
+  const teamQ = useQuery({ ...myTeamQuery(), enabled: !subordinateId });
+  const hasTeam = (teamQ.data?.employees?.length ?? 0) > 0;
 
   const profile = data?.profile;
   const entries = data?.entries ?? [];
@@ -71,7 +84,14 @@ export default function MyKpiScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScreenHeader title={t('kpi.title')} />
+      <ScreenHeader
+        title={subordinateId ? (profile?.legal_name || t('kpi.title')) : t('kpi.title')}
+        right={
+          !subordinateId && hasTeam ? (
+            <HeaderAction icon="users" onPress={() => router.push('/kpi-team')} />
+          ) : undefined
+        }
+      />
 
       {isLoading ? (
         <LoadingView />
