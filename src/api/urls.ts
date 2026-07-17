@@ -83,6 +83,9 @@ export const COLUMNS_LIST = 'columns';
 export const CARDS_LIST = 'cards';
 export const CARD_COMPLETE = (id: number) => `cards/${id}/complete`;
 export const CARD_UNCOMPLETE = (id: number) => `cards/${id}/uncomplete`;
+export const CARD_DETAIL = (id: number) => `cards/${id}`;
+export const CARD_REJECT = (id: number) => `cards/${id}/reject`;
+export const CARD_COMMENTS = (id: number) => `cards/${id}/comments`;
 
 // Employee self update
 export const EMPLOYEE_SELF_UPDATE = 'employees/me/self-update';

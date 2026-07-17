@@ -40,4 +40,26 @@ export default {
   nameRequired: 'Project name is required',
 
   errorTitle: 'Error',
+
+  // ── Card detail (view + status actions) ─────────────────────────────────────
+  cardDetailSubtitle: 'Task details',
+  cardLoadError: 'Failed to load the task',
+  statusActive: 'In progress',
+  statusCompleted: 'Completed',
+  statusRejected: 'Rejected',
+  attachmentsTitle: 'Files',
+  attachmentsEmpty: 'No files',
+  fileFallback: 'File',
+  commentsTitle: 'Comments',
+  commentsEmpty: 'No comments',
+  complete: 'Complete',
+  uncomplete: 'Reopen',
+  reject: 'Reject',
+  completed: 'Task completed',
+  uncompleted: 'Task reopened',
+  rejected: 'Task rejected',
+  rejectConfirmTitle: 'Reject task',
+  rejectConfirmMessage: 'Confirm rejecting the task?',
+  actionDoneTitle: 'Done',
+  actionError: 'Could not perform the action',
 } as const;

@@ -27,7 +27,7 @@ export default {
   dutyTitle: 'Navbatchilik',
   dutySubtitle: 'Mening navbatchilik jadvalim',
   dutyGridTitle: 'Navbatchilik jadvali',
-  dutyGridSubtitle: 'Guruh a`zolari — kun bo`yicha',
+  dutyGridSubtitle: "Guruh a'zolari — kun bo'yicha",
   dutyLoadError: 'Navbatchilikni yuklashda xatolik',
   dutyEmpty: 'Navbatchilik jadvali mavjud emas',
   dutyMonthEmpty: 'Bu oyda navbatchilik belgilanmagan',

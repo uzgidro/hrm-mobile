@@ -40,4 +40,26 @@ export default {
   nameRequired: 'Лойиҳа номи киритилиши шарт',
 
   errorTitle: 'Хатолик',
+
+  // ── Card detail (view + status actions) ─────────────────────────────────────
+  cardDetailSubtitle: 'Вазифа тафсилоти',
+  cardLoadError: 'Вазифани юклаб бўлмади',
+  statusActive: 'Бажарилмоқда',
+  statusCompleted: 'Бажарилди',
+  statusRejected: 'Рад этилди',
+  attachmentsTitle: 'Файллар',
+  attachmentsEmpty: 'Файллар йўқ',
+  fileFallback: 'Файл',
+  commentsTitle: 'Изоҳлар',
+  commentsEmpty: 'Изоҳлар йўқ',
+  complete: 'Бажарилди',
+  uncomplete: 'Қайтариш',
+  reject: 'Рад этиш',
+  completed: 'Вазифа бажарилди',
+  uncompleted: 'Вазифа қайтарилди',
+  rejected: 'Вазифа рад этилди',
+  rejectConfirmTitle: 'Вазифани рад этиш',
+  rejectConfirmMessage: 'Вазифани рад этишни тасдиқлайсизми?',
+  actionDoneTitle: 'Бажарилди',
+  actionError: 'Амални бажариб бўлмади',
 } as const;

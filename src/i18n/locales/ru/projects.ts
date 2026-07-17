@@ -41,4 +41,26 @@ export default {
   nameRequired: 'Необходимо указать название проекта',
 
   errorTitle: 'Ошибка',
+
+  // ── Card detail (view + status actions) ─────────────────────────────────────
+  cardDetailSubtitle: 'Детали задачи',
+  cardLoadError: 'Не удалось загрузить задачу',
+  statusActive: 'В работе',
+  statusCompleted: 'Выполнено',
+  statusRejected: 'Отклонено',
+  attachmentsTitle: 'Файлы',
+  attachmentsEmpty: 'Нет файлов',
+  fileFallback: 'Файл',
+  commentsTitle: 'Комментарии',
+  commentsEmpty: 'Нет комментариев',
+  complete: 'Выполнено',
+  uncomplete: 'Вернуть',
+  reject: 'Отклонить',
+  completed: 'Задача выполнена',
+  uncompleted: 'Задача возвращена',
+  rejected: 'Задача отклонена',
+  rejectConfirmTitle: 'Отклонить задачу',
+  rejectConfirmMessage: 'Подтверждаете отклонение задачи?',
+  actionDoneTitle: 'Готово',
+  actionError: 'Не удалось выполнить действие',
 } as const;

@@ -316,7 +316,49 @@ export interface WorkspaceCard {
   end_date?: string;
   column_id?: number;
   is_completed?: boolean;
-  members?: { id?: number; member?: Employee }[];
+  members?: { id?: number; member_id?: number; member?: Employee }[];
+}
+
+// Card label (nested `{ label }` per backend CardLabelRead).
+export interface CardLabel {
+  id?: number;
+  label?: { id?: number; name?: string; color?: string; workspace_id?: number };
+}
+
+// Card file attachment. `attachment_path` is a ready-to-open presigned MinIO URL
+// (open via Linking.openURL). No uploader/created_at on the backend schema.
+export interface CardAttachment {
+  id?: number;
+  card_id?: number;
+  original_filename?: string;
+  content_type?: string;
+  attachment_path?: string;
+}
+
+// Card comment (GET /cards/{id}/comments — NOT nested in the card detail).
+export interface CardComment {
+  id?: number;
+  card_id?: number;
+  author_id?: number;
+  text?: string;
+  is_edited?: boolean;
+  created_at?: string;
+  updated_at?: string;
+  author?: { id?: number; legal_name?: string; photo_path?: string };
+}
+
+// Full card detail (GET /cards/{id} → CardReadFull). Reject shows via
+// rejected_at != null; there is no separate status enum. "Assignee" = being in
+// members[] (or created_by_id) — the backend enforces who may act (403 otherwise).
+export interface WorkspaceCardFull extends WorkspaceCard {
+  position?: number;
+  completed_at?: string | null;
+  rejected_at?: string | null;
+  completed_by_id?: number | null;
+  rejected_by_id?: number | null;
+  created_by_id?: number | null;
+  labels?: CardLabel[];
+  attachments?: CardAttachment[];
 }
 
 // ── Documents / Hujjatlar (files & folders storage, view-only on mobile) ──────
