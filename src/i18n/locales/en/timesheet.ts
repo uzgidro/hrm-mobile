@@ -19,6 +19,8 @@ export default {
   // ── Duty roster (navbatchilik, Wave 2) ────────────────────────────────────
   dutyTitle: 'Duty roster',
   dutySubtitle: 'My duty schedule',
+  dutyGridTitle: 'Duty grid',
+  dutyGridSubtitle: 'Group members — by day',
   dutyLoadError: 'Failed to load the duty roster',
   dutyEmpty: 'No duty schedule available',
   dutyMonthEmpty: 'No duty assigned this month',
@@ -61,4 +63,14 @@ export default {
   codeUnknownReason: 'Unknown reason',
   codeDismissed: 'Dismissed',
   codeUnknown: 'Unknown',
+  // Day detail (Вход/Выход + График + Журнал) — raw turnstile events.
+  entry: 'in',
+  exit: 'out',
+  entryTitle: 'Entry',
+  exitTitle: 'Exit',
+  scheduleTitle: 'Work schedule',
+  workDay: 'work day',
+  break: 'break',
+  logTitle: 'Log',
+  logEmpty: 'List is empty',
 } as const;

@@ -25,6 +25,8 @@ export const TURNSTILE_ATTENDANCE_NORMALIZED = 'turnstile-attendance-events/norm
 export const NAVBATCHILIK_GROUPS_MY = 'navbatchilik-groups/my';
 export const NAVBATCHILIK_GROUP_MEMBERS = (id: number) => `navbatchilik-groups/${id}/members`;
 export const WORK_SCHEDULE_DAYS = 'work-schedule-days';
+// All group members' duty days in one request (backend feat/work-schedule-by-group).
+export const WORK_SCHEDULE_DAYS_BY_GROUP = (groupId: number) => `work-schedule-days/group/${groupId}`;
 // Holidays (Bayramlar) + duty-days (who works through the off-days) — two
 // SEPARATE backend resources; both read-only on mobile (CRUD stays on web).
 export const HOLIDAYS_LIST = 'holidays';

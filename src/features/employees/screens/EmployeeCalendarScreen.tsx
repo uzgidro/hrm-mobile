@@ -147,7 +147,10 @@ export default function EmployeeCalendarScreen() {
                 <TouchableOpacity key={day.date}
                   style={[styles.dayCell, day.isWeekend && styles.dayCellWeekend, day.isAbsent && styles.dayCellAbsent, day.isToday && styles.dayCellToday, isSelected && styles.dayCellSelected]}
                   onPress={() => setSelectedDate(day.date)} activeOpacity={0.75}>
-                  <Text style={[styles.dayText, day.isWeekend && styles.dayTextWeekend, day.isAbsent && styles.dayTextAbsent, (day.isToday || isSelected) && styles.dayTextToday]}>
+                  {/* "Today" fills the cell violet → white text reads. "Selected" (not
+                      today) has only a border, no fill → white would be invisible, so
+                      use the accent color instead (matches MyTimesheetScreen). */}
+                  <Text style={[styles.dayText, day.isWeekend && styles.dayTextWeekend, day.isAbsent && styles.dayTextAbsent, isSelected && !day.isToday && styles.dayTextSelected, day.isToday && styles.dayTextToday]}>
                     {dayjs(day.date).date().toString().padStart(2, '0')}
                   </Text>
                 </TouchableOpacity>
@@ -269,6 +272,7 @@ const makeStyles = (c: ThemeColors) =>
     dayTextWeekend: { color: c.primaryLight },
     dayTextAbsent: { color: c.error },
     dayTextToday: { color: '#fff', fontWeight: '800' },
+    dayTextSelected: { color: c.primaryLight, fontWeight: '800' },
 
     entryExitRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8 },
     entryExitItem: { flex: 1, alignItems: 'center', gap: 6 },

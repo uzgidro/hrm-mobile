@@ -26,6 +26,8 @@ export default {
   // ── Duty roster (navbatchilik, Wave 2) ────────────────────────────────────
   dutyTitle: 'Navbatchilik',
   dutySubtitle: 'Mening navbatchilik jadvalim',
+  dutyGridTitle: 'Navbatchilik jadvali',
+  dutyGridSubtitle: 'Guruh a`zolari — kun bo`yicha',
   dutyLoadError: 'Navbatchilikni yuklashda xatolik',
   dutyEmpty: 'Navbatchilik jadvali mavjud emas',
   dutyMonthEmpty: 'Bu oyda navbatchilik belgilanmagan',
@@ -69,4 +71,14 @@ export default {
   codeUnknownReason: 'Nomaʼlum sabab',
   codeDismissed: 'Ishdan boʻshatilgan',
   codeUnknown: 'Nomaʼlum',
+  // Day detail (Вход/Выход + График + Журнал) — raw turnstile events.
+  entry: 'kirish',
+  exit: 'chiqish',
+  entryTitle: 'Kirish',
+  exitTitle: 'Chiqish',
+  scheduleTitle: 'Ish jadvali',
+  workDay: 'ish kuni',
+  break: 'tanaffus',
+  logTitle: 'Qaydnoma',
+  logEmpty: "Ro'yxat bo'sh",
 } as const;

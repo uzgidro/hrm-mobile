@@ -118,6 +118,7 @@ function ThemedNavigation() {
           <Stack.Screen name="kpi-team" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="tabel" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="navbatchilik" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="navbatchilik-grid" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="bayramlar" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="assistant" options={{ animation: 'slide_from_bottom' }} />
           <Stack.Screen name="loyiha-form" options={{ animation: 'slide_from_bottom' }} />

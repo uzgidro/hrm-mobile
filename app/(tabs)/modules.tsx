@@ -57,8 +57,13 @@ export default function ModulesScreen() {
           { key: 'timesheet', icon: 'calendar', label: t('modules.labels.timesheet'), route: '/tabel', access: 'timesheet' },
           // Web parity (navConfig.js): the Navbatchilik nav item is pruned when
           // the user has neither dept-level duty nor group membership.
+          // Two "дежурства других" variants side by side (list-with-chips vs
+          // member×day grid) — the user will compare and we'll keep one.
           ...(user?.is_navbatchi || employee?.department?.has_navbatchilik
-            ? [{ key: 'navbatchilik', icon: 'clock' as IconName, label: t('modules.labels.navbatchilik'), route: '/navbatchilik', access: 'timesheet' as PageKey }]
+            ? [
+                { key: 'navbatchilik', icon: 'clock' as IconName, label: t('modules.labels.navbatchilik'), route: '/navbatchilik', access: 'timesheet' as PageKey },
+                { key: 'navbatchilikGrid', icon: 'calendar' as IconName, label: t('modules.labels.navbatchilikGrid'), route: '/navbatchilik-grid', access: 'timesheet' as PageKey },
+              ]
             : []),
           { key: 'holidays', icon: 'sun', label: t('modules.labels.holidays'), route: '/bayramlar', access: 'timesheet' },
           { key: 'assistant', icon: 'target', label: t('modules.labels.assistant'), route: '/assistant', access: 'assistant' },
