@@ -23,6 +23,7 @@ export default {
     guests: 'Меҳмонлар',
     documents: 'Ҳужжатлар',
     support: 'Техник ёрдам',
+    chairman: 'Кун тартиби',
     kpi: 'KPI',
     timesheet: 'Табель',
     navbatchilik: 'Навбатчилик',

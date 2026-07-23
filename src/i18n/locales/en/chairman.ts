@@ -1,0 +1,37 @@
+// Chairman agenda — English translation.
+export default {
+  title: 'Agenda',
+  subtitle: "Chairman's agenda",
+  empty: 'No tasks',
+  loadError: 'Failed to load the agenda',
+
+  prevMonth: 'Previous month',
+  nextMonth: 'Next month',
+  today: 'Today',
+
+  createTitle: 'New task',
+  editTitle: 'Edit task',
+  titleLabel: 'Title',
+  titlePlaceholder: 'Task title',
+  descriptionLabel: 'Description',
+  descriptionPlaceholder: 'Short description...',
+  participantsLabel: 'Participants',
+  participantsPlaceholder: 'List of participants',
+  dateLabel: 'Date',
+  startTimeLabel: 'Start time',
+  endTimeLabel: 'End time',
+  timePlaceholder: 'HH:MM',
+  save: 'Save',
+
+  created: 'Task added',
+  updated: 'Task updated',
+  deleted: 'Task deleted',
+  edit: 'Edit',
+  delete: 'Delete',
+  deleteConfirmTitle: 'Delete task',
+  deleteConfirmMessage: 'Confirm deleting this task?',
+  titleRequired: 'A title is required',
+  dateRequired: 'A date is required',
+  errorTitle: 'Error',
+  actionError: 'Could not perform the action',
+} as const;

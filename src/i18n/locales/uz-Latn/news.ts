@@ -14,4 +14,17 @@ export default {
   // Empty state
   empty: "Yangiliklar yo'q",
   emptyMessage: 'Hozircha yangiliklar mavjud emas',
+
+  // Create form (news-manager only)
+  createTitle: 'Yangi yangilik',
+  titleLabel: 'Sarlavha',
+  titlePlaceholder: 'Yangilik sarlavhasi',
+  descriptionLabel: 'Matn',
+  descriptionPlaceholder: 'Yangilik matni...',
+  branchLabel: 'Filial',
+  branchAllOption: 'Barcha filiallar',
+  save: 'Saqlash',
+  created: 'Yangilik joylandi',
+  titleRequired: 'Sarlavha kiritilishi shart',
+  errorTitle: 'Xatolik',
 } as const;

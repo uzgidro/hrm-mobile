@@ -1,0 +1,37 @@
+// Chairman agenda — uz-Cyrl transliteration of uz-Latn/chairman.ts.
+export default {
+  title: 'Кун тартиби',
+  subtitle: 'Раис кун тартиби',
+  empty: 'Вазифалар мавжуд эмас',
+  loadError: 'Кун тартибини юклашда хатолик',
+
+  prevMonth: 'Олдинги ой',
+  nextMonth: 'Кейинги ой',
+  today: 'Бугун',
+
+  createTitle: 'Янги вазифа',
+  editTitle: 'Вазифани таҳрирлаш',
+  titleLabel: 'Сарлавҳа',
+  titlePlaceholder: 'Вазифа сарлавҳаси',
+  descriptionLabel: 'Тавсиф',
+  descriptionPlaceholder: 'Қисқача тавсиф...',
+  participantsLabel: 'Иштирокчилар',
+  participantsPlaceholder: 'Иштирокчилар рўйхати',
+  dateLabel: 'Сана',
+  startTimeLabel: 'Бошланиш вақти',
+  endTimeLabel: 'Тугаш вақти',
+  timePlaceholder: 'HH:MM',
+  save: 'Сақлаш',
+
+  created: 'Вазифа қўшилди',
+  updated: 'Вазифа янгиланди',
+  deleted: 'Вазифа ўчирилди',
+  edit: 'Таҳрирлаш',
+  delete: 'Ўчириш',
+  deleteConfirmTitle: 'Вазифани ўчириш',
+  deleteConfirmMessage: 'Ушбу вазифани ўчиришни тасдиқлайсизми?',
+  titleRequired: 'Сарлавҳа киритилиши шарт',
+  dateRequired: 'Сана киритилиши шарт',
+  errorTitle: 'Хатолик',
+  actionError: 'Амални бажариб бўлмади',
+} as const;

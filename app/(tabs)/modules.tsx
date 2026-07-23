@@ -68,6 +68,7 @@ export default function ModulesScreen() {
           { key: 'holidays', icon: 'sun', label: t('modules.labels.holidays'), route: '/bayramlar', access: 'timesheet' },
           { key: 'assistant', icon: 'target', label: t('modules.labels.assistant'), route: '/assistant', access: 'assistant' },
           { key: 'requests', icon: 'checklist', label: t('modules.labels.requests'), route: '/work-leaves', access: 'requests', badge: pendingCount },
+          { key: 'chairman', icon: 'calendar', label: t('modules.labels.chairman'), route: '/chairman-tasks', access: 'chairman' },
           { key: 'projects', icon: 'board', label: t('modules.labels.projects'), route: '/loyihalar', access: 'projects' },
           { key: 'kpi', icon: 'target', label: t('modules.labels.kpi'), route: '/kpi', access: 'kpi' },
           { key: 'salary', icon: 'wallet', label: t('modules.labels.salary'), route: '/salary', access: 'salary' },

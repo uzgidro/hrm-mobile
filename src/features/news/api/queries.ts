@@ -1,7 +1,12 @@
 import { queryOptions } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
-import { NEWS_POSTS } from '@/api/urls';
+import { NEWS_POSTS, ORGANIZATION_BRANCHES } from '@/api/urls';
 import type { NewsPost } from '@/types';
+
+export interface NewsBranchOption {
+  id: number;
+  name: string;
+}
 
 // Hierarchical query keys — invalidating `newsKeys.all` refreshes both the list
 // and any open detail (prefix match). This is the per-feature queryOptions
@@ -26,5 +31,20 @@ export function newsListQuery(orgBranchId?: number) {
           // The API returns either a bare array or a { items } envelope.
           return (Array.isArray(d) ? d : (d?.items ?? [])) as NewsPost[];
         }),
+  });
+}
+
+// Organization branches for the news-create form's branch picker (news-manager
+// only). Empty selection = the post goes to all employees (branch null).
+export function newsBranchesQuery(enabled: boolean) {
+  return queryOptions({
+    queryKey: [...newsKeys.all, 'branches'] as const,
+    queryFn: () =>
+      apiClient.get(ORGANIZATION_BRANCHES).then((r) => {
+        const d = r.data;
+        return (Array.isArray(d) ? d : (d?.items ?? [])) as NewsBranchOption[];
+      }),
+    enabled,
+    staleTime: 5 * 60 * 1000,
   });
 }

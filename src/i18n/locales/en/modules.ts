@@ -23,6 +23,7 @@ export default {
     guests: 'Guests',
     documents: 'Documents',
     support: 'Support',
+    chairman: 'Agenda',
     kpi: 'KPI',
     timesheet: 'Timesheet',
     navbatchilik: 'Duty',

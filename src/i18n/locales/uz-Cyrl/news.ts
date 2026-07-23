@@ -8,4 +8,16 @@ export default {
 
   empty: "Янгиликлар йўқ",
   emptyMessage: 'Ҳозирча янгиликлар мавжуд эмас',
+
+  createTitle: 'Янги янгилик',
+  titleLabel: 'Сарлавҳа',
+  titlePlaceholder: 'Янгилик сарлавҳаси',
+  descriptionLabel: 'Матн',
+  descriptionPlaceholder: 'Янгилик матни...',
+  branchLabel: 'Филиал',
+  branchAllOption: 'Барча филиаллар',
+  save: 'Сақлаш',
+  created: 'Янгилик жойланди',
+  titleRequired: 'Сарлавҳа киритилиши шарт',
+  errorTitle: 'Хатолик',
 } as const;

@@ -100,6 +100,7 @@ function ThemedNavigation() {
           <Stack.Screen name="leave-detail" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="order-detail" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="create-order" options={{ animation: 'slide_from_bottom' }} />
+          <Stack.Screen name="create-news" options={{ animation: 'slide_from_bottom' }} />
           <Stack.Screen name="order-document" options={{ animation: 'slide_from_bottom' }} />
           <Stack.Screen name="create-letter" options={{ animation: 'slide_from_bottom' }} />
           <Stack.Screen name="letter-detail" options={{ animation: 'slide_from_right' }} />
@@ -112,6 +113,8 @@ function ThemedNavigation() {
           <Stack.Screen name="texnik-yordam" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="texnik-yordam-detail" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="texnik-yordam-form" options={{ animation: 'slide_from_bottom' }} />
+          <Stack.Screen name="chairman-tasks" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="chairman-task-form" options={{ animation: 'slide_from_bottom' }} />
           <Stack.Screen name="loyihalar" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="loyiha-detail" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="loyiha-card-detail" options={{ animation: 'slide_from_right' }} />

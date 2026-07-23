@@ -10,7 +10,6 @@ export const SSO_EXCHANGE = 'sso/exchange';
 
 // Employee
 export const EMPLOYEE_DETAIL = (id: number) => `employees/${id}`;
-export const EMPLOYEE_ATTENDANCE_CALENDAR = (id: number) => `employees/${id}/attendance-calendar`;
 
 // Turnstile attendance
 export const TURNSTILE_ATTENDANCE_EVENTS = 'turnstile-attendance-events';
@@ -50,9 +49,12 @@ export const WORK_LEAVE_REJECT = (id: number) => `work-leaves/${id}/reject`;
 
 // News
 export const NEWS_POSTS = 'news-posts';
+export const NEWS_POST_DETAIL = (id: number) => `news-posts/${id}`;
 
-// Dashboard
-export const DASHBOARD_MAIN = 'dashboard/main';
+// Chairman tasks (Raisning kun tartibi — agenda). Calendar-style entries: no
+// detail endpoint (the list carries everything). Manage = secretariat / admin.
+export const CHAIRMAN_TASKS = 'chairman-tasks';
+export const CHAIRMAN_TASK_DETAIL = (id: number) => `chairman-tasks/${id}`;
 
 // Notifications
 export const NOTIFICATIONS_LIST = 'notifications';
@@ -63,9 +65,8 @@ export const NOTIFICATIONS_READ_ALL = 'notifications/read-all';
 export const EMPLOYEES_LIST = 'employees';
 export const EMPLOYEES_BIRTHDAYS = 'employees/birthdays';
 
-// Departments & positions
+// Departments
 export const DEPARTMENTS_LIST = 'departments';
-export const JOB_POSITIONS_LIST = 'job-positions';
 
 // Push notifications
 export const PUSH_TOKENS = 'push-tokens';

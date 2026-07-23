@@ -1,0 +1,37 @@
+// Chairman agenda — Russian translation.
+export default {
+  title: 'Повестка дня',
+  subtitle: 'Повестка председателя',
+  empty: 'Задач нет',
+  loadError: 'Ошибка загрузки повестки',
+
+  prevMonth: 'Предыдущий месяц',
+  nextMonth: 'Следующий месяц',
+  today: 'Сегодня',
+
+  createTitle: 'Новая задача',
+  editTitle: 'Редактировать задачу',
+  titleLabel: 'Заголовок',
+  titlePlaceholder: 'Заголовок задачи',
+  descriptionLabel: 'Описание',
+  descriptionPlaceholder: 'Краткое описание...',
+  participantsLabel: 'Участники',
+  participantsPlaceholder: 'Список участников',
+  dateLabel: 'Дата',
+  startTimeLabel: 'Время начала',
+  endTimeLabel: 'Время окончания',
+  timePlaceholder: 'ЧЧ:ММ',
+  save: 'Сохранить',
+
+  created: 'Задача добавлена',
+  updated: 'Задача обновлена',
+  deleted: 'Задача удалена',
+  edit: 'Редактировать',
+  delete: 'Удалить',
+  deleteConfirmTitle: 'Удаление задачи',
+  deleteConfirmMessage: 'Подтверждаете удаление задачи?',
+  titleRequired: 'Необходимо указать заголовок',
+  dateRequired: 'Необходимо указать дату',
+  errorTitle: 'Ошибка',
+  actionError: 'Не удалось выполнить действие',
+} as const;
