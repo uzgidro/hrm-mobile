@@ -20,6 +20,7 @@ import { useLetterActions } from '../hooks/useLetterActions';
 import { useResetReport } from '../api/mutations';
 import { DetailHeader, Section, KV, SignerRow } from '../components/DetailParts';
 import { LetterActionBar } from '../components/LetterActionBar';
+import { TripMovementsSection } from '../components/TripMovementsSection';
 
 export default function LetterDetailScreen() {
   const { t } = useTranslation();
@@ -105,6 +106,8 @@ export default function LetterDetailScreen() {
           {!!letter.departure_date && <KV k={t('letters.fieldDeparture')} v={dayjs(letter.departure_date).format('DD.MM.YYYY')} />}
           {!!letter.arrival_date && <KV k={t('letters.fieldReturn')} v={dayjs(letter.arrival_date).format('DD.MM.YYYY')} />}
         </Section>
+
+        <TripMovementsSection letter={letter} user={user} onChanged={refetch} />
 
         {timeline.length > 0 && (
           <Section title={t('letters.sectionSigners')}>

@@ -86,6 +86,7 @@ export default function ModulesScreen() {
         title: t('modules.sections.other'),
         items: [
           { key: 'documents', icon: 'folder', label: t('modules.labels.documents'), route: '/hujjatlar', access: 'documents' },
+          { key: 'support', icon: 'help', label: t('modules.labels.support'), route: '/texnik-yordam', access: 'support' },
           { key: 'news', icon: 'news', label: t('modules.labels.news'), route: '/news', access: 'news' },
           { key: 'notifications', icon: 'bell', label: t('modules.labels.notifications'), route: '/notifications', access: 'notifications', badge: unreadCount },
           { key: 'profile', icon: 'user', label: t('modules.labels.profile'), route: '/(tabs)/profile', access: 'profile' },

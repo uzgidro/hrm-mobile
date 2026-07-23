@@ -22,6 +22,7 @@ export default {
     employees: 'Employees',
     guests: 'Guests',
     documents: 'Documents',
+    support: 'Support',
     kpi: 'KPI',
     timesheet: 'Timesheet',
     navbatchilik: 'Duty',

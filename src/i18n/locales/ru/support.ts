@@ -1,0 +1,50 @@
+// Support tickets — Russian translation.
+// See uz-Latn/support.ts for the meaning of each key.
+export default {
+  title: 'Техподдержка',
+  subtitle: 'Мои обращения',
+  empty: 'Обращений нет',
+  loadError: 'Ошибка загрузки обращений',
+
+  createTitle: 'Новое обращение',
+  priorityLabel: 'Приоритет',
+  descriptionLabel: 'Описание проблемы',
+  descriptionPlaceholder: 'Опишите проблему подробнее...',
+  ugeLabel: 'Номер компьютера (UGE)',
+  ugePlaceholder: 'Например: UGE-1024',
+  roomLabel: 'Номер кабинета',
+  roomPlaceholder: 'Например: 204',
+  filesLabel: 'Фото / видео (необязательно)',
+  submit: 'Отправить',
+  createdTitle: 'Отправлено',
+  createdMessage: 'Ваше обращение принято',
+  descriptionRequired: 'Необходимо описать проблему',
+
+  detailTitle: 'Обращение',
+  fieldAssignee: 'Специалист',
+  fieldCreated: 'Создано',
+  fieldRoom: 'Кабинет',
+  fieldUge: 'Компьютер',
+  attachmentsTitle: 'Вложения',
+  noAssignee: 'Ещё не назначен',
+
+  statusOpen: 'Открыто',
+  statusInProgress: 'В работе',
+  statusDone: 'Выполнено',
+  statusRated: 'Оценено',
+
+  priorityUrgent: 'Очень срочно',
+  priorityNormal: 'Срочно',
+  priorityLow: 'Не срочно',
+
+  rate: 'Оценить',
+  rateTitle: 'Оцените работу',
+  rateNotePlaceholder: 'Комментарий (необязательно)',
+  ratingLabel: 'Оценка',
+  rateDone: 'Оценено',
+  reopen: 'Переоткрыть',
+  reopenConfirmTitle: 'Переоткрытие',
+  reopenConfirmMessage: 'Подтверждаете переоткрытие обращения?',
+  reopenDone: 'Переоткрыто',
+  actionError: 'Не удалось выполнить действие',
+} as const;

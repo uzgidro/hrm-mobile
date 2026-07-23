@@ -109,6 +109,14 @@ export const LETTER_SUBMIT_REPORT = (id: number) => `letters/${id}/submit-report
 export const LETTER_UPLOAD_REPORT = (id: number) => `letters/${id}/upload-report`;
 export const LETTER_RESET_REPORT = (id: number) => `letters/${id}/reset-report`;
 
+// Business-trip movements (kelish/ketish) + return confirmation. Movements are a
+// nested collection under a letter; confirm-return sets is_trip_confirmed which
+// unblocks the report stage. Manage rights are branch-scoped (see isBranchHr).
+export const LETTER_TRIP_MOVEMENTS = (id: number) => `letters/${id}/trip-movements`;
+export const LETTER_TRIP_MOVEMENT = (id: number, mid: number) =>
+  `letters/${id}/trip-movements/${mid}`;
+export const LETTER_CONFIRM_RETURN = (id: number) => `letters/${id}/confirm-return`;
+
 // Organization branches
 export const ORGANIZATION_BRANCHES = 'organization-branches';
 export const ORGANIZATION_BRANCH_LEADERS = (id: number) => `organization-branches/${id}/leaders`;
@@ -150,6 +158,16 @@ export const KPI_TASK_DETAIL = (id: number) => `kpi/tasks/${id}`;
 export const KPI_TASK_SUBMIT = (id: number) => `kpi/tasks/${id}/submit`;
 export const KPI_TASK_REVIEW = (id: number) => `kpi/tasks/${id}/review`;
 export const KPI_BONUSES = 'kpi/bonuses';
+
+// Support tickets (Texnik yordam / АКТ helpdesk). Create is multipart (optional
+// image/video attachments). Employees create + see their own; AKT specialists
+// take/done; the creator rates/reopens.
+export const SUPPORT_TICKETS = 'support-tickets';
+export const SUPPORT_TICKET_DETAIL = (id: number) => `support-tickets/${id}`;
+export const SUPPORT_TICKET_TAKE = (id: number) => `support-tickets/${id}/take`;
+export const SUPPORT_TICKET_DONE = (id: number) => `support-tickets/${id}/done`;
+export const SUPPORT_TICKET_RATE = (id: number) => `support-tickets/${id}/rate`;
+export const SUPPORT_TICKET_REOPEN = (id: number) => `support-tickets/${id}/reopen`;
 
 // OnlyOffice document server (public host that serves the editor api.js)
 import { Env } from '../config/env';

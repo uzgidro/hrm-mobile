@@ -22,6 +22,7 @@ export default {
     employees: 'Сотрудники',
     guests: 'Гости',
     documents: 'Документы',
+    support: 'Техподдержка',
     kpi: 'KPI',
     timesheet: 'Табель',
     navbatchilik: 'Дежурства',

@@ -24,6 +24,16 @@ export default {
   fieldDeparture: 'Выезд',
   fieldReturn: 'Возвращение',
   sectionSigners: 'Подписанты',
+  // Business-trip movements (kelish/ketish) + return confirmation
+  sectionMovements: 'Движения (прибытие/убытие)',
+  movementArrived: 'Прибыл',
+  movementDeparted: 'Убыл',
+  movementEmpty: 'Движений нет',
+  movementFaceId: 'Face ID',
+  movementNote: 'Примечание (необязательно)',
+  confirmReturn: 'Подтвердить возвращение',
+  confirmReturnDateLabel: 'Дата возвращения сотрудника в свой филиал',
+  returnConfirmedBadge: 'Возвращение подтверждено: {{date}}',
   rejectionReason: 'Причина отклонения',
 
   // ── Action bar ──────────────────────────────────────────────────────────────

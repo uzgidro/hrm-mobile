@@ -3,8 +3,12 @@ import { apiClient } from '@/api/client';
 import {
   LETTER_CREATE, LETTER_SIGN, LETTER_REJECT, LETTER_UPLOAD_ATTACHMENT,
   LETTER_SUBMIT_REPORT, LETTER_RESET_REPORT, LETTER_UPLOAD_REPORT,
+  LETTER_TRIP_MOVEMENTS, LETTER_TRIP_MOVEMENT, LETTER_CONFIRM_RETURN,
 } from '@/api/urls';
-import { signLetter, rejectLetter, createLetter, submitReport, resetReport, uploadReport } from '../mutations';
+import {
+  signLetter, rejectLetter, createLetter, submitReport, resetReport, uploadReport,
+  confirmReturn, addTripMovement, deleteTripMovement,
+} from '../mutations';
 
 let mock: MockAdapter;
 beforeEach(() => {
@@ -107,5 +111,37 @@ describe('trip report request functions', () => {
     const req = mock.history.post.find((r) => r.url === LETTER_UPLOAD_REPORT(11));
     expect(req).toBeTruthy();
     expect(req!.data instanceof FormData).toBe(true);
+  });
+});
+
+describe('trip-movement request functions', () => {
+  it('confirmReturn POSTs { return_date, note } to the confirm-return endpoint', async () => {
+    mock.onPost(LETTER_CONFIRM_RETURN(5)).reply(200, { id: 5, is_trip_confirmed: true });
+    const data = await confirmReturn(5, { return_date: '2026-07-20', note: 'keldi' });
+    expect(data).toEqual({ id: 5, is_trip_confirmed: true });
+    expect(mock.history.post[0].url).toBe(LETTER_CONFIRM_RETURN(5));
+    expect(JSON.parse(mock.history.post[0].data)).toEqual({ return_date: '2026-07-20', note: 'keldi' });
+  });
+
+  it('confirmReturn omits note when not provided (sends null)', async () => {
+    mock.onPost(LETTER_CONFIRM_RETURN(5)).reply(200, {});
+    await confirmReturn(5, { return_date: '2026-07-20' });
+    expect(JSON.parse(mock.history.post[0].data)).toEqual({ return_date: '2026-07-20', note: null });
+  });
+
+  it('addTripMovement POSTs the movement body to the trip-movements endpoint', async () => {
+    mock.onPost(LETTER_TRIP_MOVEMENTS(7)).reply(201, { id: 3, event_type: 'departed' });
+    const data = await addTripMovement(7, { event_type: 'departed', event_date: '2026-07-10', branch_id: 2, note: null });
+    expect(data).toEqual({ id: 3, event_type: 'departed' });
+    expect(mock.history.post[0].url).toBe(LETTER_TRIP_MOVEMENTS(7));
+    expect(JSON.parse(mock.history.post[0].data)).toEqual({
+      event_type: 'departed', event_date: '2026-07-10', branch_id: 2, note: null,
+    });
+  });
+
+  it('deleteTripMovement DELETEs the nested movement endpoint', async () => {
+    mock.onDelete(LETTER_TRIP_MOVEMENT(7, 3)).reply(200, { detail: 'deleted' });
+    await deleteTripMovement(7, 3);
+    expect(mock.history.delete[0].url).toBe(LETTER_TRIP_MOVEMENT(7, 3));
   });
 });

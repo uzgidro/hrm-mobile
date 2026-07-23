@@ -54,6 +54,28 @@ export function isSingleRoleHR(user?: User | null): boolean {
   return roles.length === 1 && roles[0] === 'hr';
 }
 
+/** Branches where the user is an HR branch-leader (leadership_role='hr'), from /me. */
+export function getHrBranchIds(user?: User | null): number[] {
+  return user?.hr_branch_ids ?? [];
+}
+
+/** Branches the user's employee belongs to (multi-org membership). */
+export function getAllowedBranchIds(user?: User | null): number[] {
+  return user?.employee?.organization_branches?.map((b) => b.id) ?? [];
+}
+
+/**
+ * Branch-scoped HR check — mirrors the web roleHelpers.isBranchHr. True if the
+ * user is an HR branch-leader of `branchId`, or a multi-org HR who belongs to it.
+ * Use for rights the backend scopes to a specific branch (e.g. trip-movement
+ * management) — a plain isHR would let an HR of one branch act on another's data.
+ */
+export function isBranchHr(user: User | null | undefined, branchId?: number | null): boolean {
+  if (branchId == null) return false;
+  if (getHrBranchIds(user).map(Number).includes(Number(branchId))) return true;
+  return isHR(user) && getAllowedBranchIds(user).map(Number).includes(Number(branchId));
+}
+
 export function isDeputy(user?: User | null): boolean {
   return hasMultiOrgRole(user, 'deputy');
 }
@@ -121,7 +143,8 @@ export function canAccessChairmanTasks(user?: User | null): boolean {
 export type PageKey =
   | 'home' | 'orders' | 'letters' | 'guests' | 'projects'
   | 'employees' | 'attendance' | 'requests' | 'documents' | 'kpi'
-  | 'timesheet' | 'assistant' | 'salary' | 'team' | 'birthdays' | 'news' | 'notifications' | 'profile';
+  | 'timesheet' | 'assistant' | 'salary' | 'team' | 'birthdays' | 'news'
+  | 'notifications' | 'profile' | 'support';
 
 /** Whether the given user may see a page. Mirrors which web NAV the role gets. */
 export function canAccessPage(user: User | null | undefined, key: PageKey): boolean {
@@ -166,6 +189,9 @@ export function canAccessPage(user: User | null | undefined, key: PageKey): bool
     case 'assistant':
       return !isEmployeeLike(user) && !kpp;
     // Personal / convenience pages — always available.
+    // Support (Texnik yordam): any employee may file a ticket; the backend 400s
+    // (support_not_available) if the branch has no AKT specialist, surfaced as a
+    // toast rather than hiding the tile.
     case 'home':
     case 'salary':
     case 'team':
@@ -173,6 +199,7 @@ export function canAccessPage(user: User | null | undefined, key: PageKey): bool
     case 'news':
     case 'notifications':
     case 'profile':
+    case 'support':
       return true;
     default:
       return true;

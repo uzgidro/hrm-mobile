@@ -1,0 +1,50 @@
+// Support tickets — English translation.
+// See uz-Latn/support.ts for the meaning of each key.
+export default {
+  title: 'Support',
+  subtitle: 'My tickets',
+  empty: 'No tickets',
+  loadError: 'Failed to load tickets',
+
+  createTitle: 'New ticket',
+  priorityLabel: 'Priority',
+  descriptionLabel: 'Problem description',
+  descriptionPlaceholder: 'Describe the problem in detail...',
+  ugeLabel: 'Computer number (UGE)',
+  ugePlaceholder: 'e.g. UGE-1024',
+  roomLabel: 'Room number',
+  roomPlaceholder: 'e.g. 204',
+  filesLabel: 'Photo / video (optional)',
+  submit: 'Submit',
+  createdTitle: 'Submitted',
+  createdMessage: 'Your ticket has been received',
+  descriptionRequired: 'A problem description is required',
+
+  detailTitle: 'Ticket',
+  fieldAssignee: 'Specialist',
+  fieldCreated: 'Created',
+  fieldRoom: 'Room',
+  fieldUge: 'Computer',
+  attachmentsTitle: 'Attachments',
+  noAssignee: 'Not assigned yet',
+
+  statusOpen: 'Open',
+  statusInProgress: 'In progress',
+  statusDone: 'Done',
+  statusRated: 'Rated',
+
+  priorityUrgent: 'Very urgent',
+  priorityNormal: 'Urgent',
+  priorityLow: 'Not urgent',
+
+  rate: 'Rate',
+  rateTitle: 'Rate the work',
+  rateNotePlaceholder: 'Note (optional)',
+  ratingLabel: 'Rating',
+  rateDone: 'Rated',
+  reopen: 'Reopen',
+  reopenConfirmTitle: 'Reopen',
+  reopenConfirmMessage: 'Confirm reopening the ticket?',
+  reopenDone: 'Reopened',
+  actionError: 'Could not perform the action',
+} as const;

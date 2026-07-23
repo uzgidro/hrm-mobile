@@ -23,6 +23,16 @@ export default {
   fieldDeparture: 'Departure',
   fieldReturn: 'Return',
   sectionSigners: 'Signers',
+  // Business-trip movements (kelish/ketish) + return confirmation
+  sectionMovements: 'Movements (arrival/departure)',
+  movementArrived: 'Arrived',
+  movementDeparted: 'Departed',
+  movementEmpty: 'No movements',
+  movementFaceId: 'Face ID',
+  movementNote: 'Note (optional)',
+  confirmReturn: 'Confirm return',
+  confirmReturnDateLabel: 'Date the employee returned to their branch',
+  returnConfirmedBadge: 'Return confirmed: {{date}}',
   rejectionReason: 'Rejection reason',
 
   // ── Action bar ──────────────────────────────────────────────────────────────

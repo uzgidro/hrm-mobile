@@ -37,7 +37,7 @@ export function LetterListCard({ letter, action }: { letter: Letter; action: boo
 
       <View style={styles.cardMeta}>
         <Text style={styles.cardMetaText} numberOfLines={1}>
-          {letter.employee?.legal_name || letter.submitter?.legal_name || ''}
+          {letter.creator_employee?.legal_name || letter.submitter?.legal_name || ''}
         </Text>
         {!!letter.created_at && <Text style={styles.cardMetaText}>{dayjs(letter.created_at).format('DD.MM.YYYY')}</Text>}
       </View>

@@ -28,6 +28,7 @@ export default {
     employees: 'Xodimlar',
     guests: 'Mehmonlar',
     documents: 'Hujjatlar',
+    support: 'Texnik yordam',
     kpi: 'KPI',
     timesheet: 'Tabel',
     navbatchilik: 'Navbatchilik',

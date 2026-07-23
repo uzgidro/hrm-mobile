@@ -532,7 +532,7 @@ describe('canAccessPage', () => {
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
         employees: false, attendance: true, requests: true, documents: true, kpi: true, assistant: false, timesheet: true,
-        salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true,
+        salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
       },
     },
     hrSingle: {
@@ -540,7 +540,7 @@ describe('canAccessPage', () => {
       row: {
         home: true, orders: true, letters: true, guests: true, projects: false,
         employees: true, attendance: true, requests: true, documents: true, kpi: true, assistant: true, timesheet: true,
-        salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true,
+        salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
       },
     },
     hrMulti: {
@@ -548,7 +548,7 @@ describe('canAccessPage', () => {
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
         employees: true, attendance: true, requests: true, documents: true, kpi: true, assistant: true, timesheet: true,
-        salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true,
+        salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
       },
     },
     kpp: {
@@ -556,7 +556,7 @@ describe('canAccessPage', () => {
       row: {
         home: true, orders: false, letters: false, guests: true, projects: false,
         employees: false, attendance: false, requests: false, documents: false, kpi: false, assistant: false, timesheet: false,
-        salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true,
+        salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
       },
     },
     chancellery: {
@@ -564,7 +564,7 @@ describe('canAccessPage', () => {
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
         employees: false, attendance: false, requests: false, documents: false, kpi: false, assistant: true, timesheet: false,
-        salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true,
+        salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
       },
     },
     kanselariya: {
@@ -572,7 +572,7 @@ describe('canAccessPage', () => {
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
         employees: false, attendance: false, requests: false, documents: false, kpi: false, assistant: true, timesheet: false,
-        salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true,
+        salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
       },
     },
     ministr: {
@@ -580,7 +580,7 @@ describe('canAccessPage', () => {
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
         employees: true, attendance: true, requests: true, documents: true, kpi: true, assistant: true, timesheet: true,
-        salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true,
+        salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
       },
     },
     deputy: {
@@ -588,7 +588,7 @@ describe('canAccessPage', () => {
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
         employees: true, attendance: true, requests: true, documents: true, kpi: true, assistant: true, timesheet: true,
-        salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true,
+        salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
       },
     },
     accounting: {
@@ -598,7 +598,7 @@ describe('canAccessPage', () => {
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
         employees: false, attendance: true, requests: true, documents: true, kpi: true, assistant: false, timesheet: true,
-        salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true,
+        salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
       },
     },
     dashboard: {
@@ -608,7 +608,7 @@ describe('canAccessPage', () => {
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
         employees: false, attendance: true, requests: true, documents: true, kpi: true, assistant: false, timesheet: true,
-        salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true,
+        salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
       },
     },
     masterAdmin: {
@@ -616,7 +616,7 @@ describe('canAccessPage', () => {
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
         employees: true, attendance: true, requests: true, documents: true, kpi: true, assistant: true, timesheet: true,
-        salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true,
+        salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
       },
     },
     secretariat: {
@@ -624,7 +624,7 @@ describe('canAccessPage', () => {
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
         employees: false, attendance: true, requests: true, documents: true, kpi: true, assistant: false, timesheet: true,
-        salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true,
+        salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
       },
     },
     nullUser: {
@@ -632,7 +632,7 @@ describe('canAccessPage', () => {
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
         employees: false, attendance: true, requests: true, documents: true, kpi: true, assistant: true, timesheet: true,
-        salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true,
+        salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
       },
     },
     undefinedUser: {
@@ -640,7 +640,7 @@ describe('canAccessPage', () => {
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
         employees: false, attendance: true, requests: true, documents: true, kpi: true, assistant: true, timesheet: true,
-        salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true,
+        salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
       },
     },
   };
