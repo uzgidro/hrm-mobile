@@ -11,7 +11,9 @@ import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import type { NewsPost } from '@/types';
-import { ScreenHeader } from '@/components/ScreenHeader';
+import { ScreenHeader, HeaderAction } from '@/components/ScreenHeader';
+import { router } from 'expo-router';
+import { isNewsManager } from '@/utils/roles';
 import { LoadingView, EmptyState } from '@/components/StateViews';
 import { newsListQuery } from '../api/queries';
 
@@ -47,9 +49,11 @@ const NewsCard = memo(function NewsCard({ item, styles }: { item: NewsPost; styl
 
 export default function NewsScreen() {
   const { t } = useTranslation();
-  const branchId = useAuthStore((s) => s.user?.employee?.department?.organization_branch_id);
+  const user = useAuthStore((s) => s.user);
+  const branchId = user?.employee?.department?.organization_branch_id;
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const canManage = isNewsManager(user);
 
   const { data: news = [], isLoading, refetch, isFetching } = useQuery(newsListQuery(branchId));
 
@@ -62,7 +66,10 @@ export default function NewsScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScreenHeader title={t('news.title')} />
+      <ScreenHeader
+        title={t('news.title')}
+        right={canManage ? <HeaderAction icon="plus" onPress={() => router.push('/create-news')} /> : undefined}
+      />
       {isLoading ? (
         <LoadingView />
       ) : (

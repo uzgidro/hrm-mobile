@@ -29,6 +29,7 @@ export default {
     guests: 'Mehmonlar',
     documents: 'Hujjatlar',
     support: 'Texnik yordam',
+    chairman: 'Kun tartibi',
     kpi: 'KPI',
     timesheet: 'Tabel',
     navbatchilik: 'Navbatchilik',

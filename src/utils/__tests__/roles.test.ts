@@ -533,6 +533,7 @@ describe('canAccessPage', () => {
         home: true, orders: true, letters: true, guests: true, projects: true,
         employees: false, attendance: true, requests: true, documents: true, kpi: true, assistant: false, timesheet: true,
         salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
+        chairman: false,
       },
     },
     hrSingle: {
@@ -541,6 +542,7 @@ describe('canAccessPage', () => {
         home: true, orders: true, letters: true, guests: true, projects: false,
         employees: true, attendance: true, requests: true, documents: true, kpi: true, assistant: true, timesheet: true,
         salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
+        chairman: false,
       },
     },
     hrMulti: {
@@ -549,6 +551,7 @@ describe('canAccessPage', () => {
         home: true, orders: true, letters: true, guests: true, projects: true,
         employees: true, attendance: true, requests: true, documents: true, kpi: true, assistant: true, timesheet: true,
         salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
+        chairman: false,
       },
     },
     kpp: {
@@ -557,6 +560,7 @@ describe('canAccessPage', () => {
         home: true, orders: false, letters: false, guests: true, projects: false,
         employees: false, attendance: false, requests: false, documents: false, kpi: false, assistant: false, timesheet: false,
         salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
+        chairman: false,
       },
     },
     chancellery: {
@@ -565,6 +569,7 @@ describe('canAccessPage', () => {
         home: true, orders: true, letters: true, guests: true, projects: true,
         employees: false, attendance: false, requests: false, documents: false, kpi: false, assistant: true, timesheet: false,
         salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
+        chairman: false,
       },
     },
     kanselariya: {
@@ -573,6 +578,7 @@ describe('canAccessPage', () => {
         home: true, orders: true, letters: true, guests: true, projects: true,
         employees: false, attendance: false, requests: false, documents: false, kpi: false, assistant: true, timesheet: false,
         salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
+        chairman: false,
       },
     },
     ministr: {
@@ -581,6 +587,7 @@ describe('canAccessPage', () => {
         home: true, orders: true, letters: true, guests: true, projects: true,
         employees: true, attendance: true, requests: true, documents: true, kpi: true, assistant: true, timesheet: true,
         salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
+        chairman: true,
       },
     },
     deputy: {
@@ -589,6 +596,7 @@ describe('canAccessPage', () => {
         home: true, orders: true, letters: true, guests: true, projects: true,
         employees: true, attendance: true, requests: true, documents: true, kpi: true, assistant: true, timesheet: true,
         salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
+        chairman: false,
       },
     },
     accounting: {
@@ -599,6 +607,7 @@ describe('canAccessPage', () => {
         home: true, orders: true, letters: true, guests: true, projects: true,
         employees: false, attendance: true, requests: true, documents: true, kpi: true, assistant: false, timesheet: true,
         salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
+        chairman: false,
       },
     },
     dashboard: {
@@ -609,6 +618,7 @@ describe('canAccessPage', () => {
         home: true, orders: true, letters: true, guests: true, projects: true,
         employees: false, attendance: true, requests: true, documents: true, kpi: true, assistant: false, timesheet: true,
         salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
+        chairman: false,
       },
     },
     masterAdmin: {
@@ -617,14 +627,16 @@ describe('canAccessPage', () => {
         home: true, orders: true, letters: true, guests: true, projects: true,
         employees: true, attendance: true, requests: true, documents: true, kpi: true, assistant: true, timesheet: true,
         salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
+        chairman: true,
       },
     },
     secretariat: {
-      user: secretariatUser, // is_secretariat does NOT affect page access
+      user: secretariatUser, // is_secretariat only affects the chairman-agenda page
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
         employees: false, attendance: true, requests: true, documents: true, kpi: true, assistant: false, timesheet: true,
         salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
+        chairman: true,
       },
     },
     nullUser: {
@@ -633,6 +645,7 @@ describe('canAccessPage', () => {
         home: true, orders: true, letters: true, guests: true, projects: true,
         employees: false, attendance: true, requests: true, documents: true, kpi: true, assistant: true, timesheet: true,
         salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
+        chairman: false,
       },
     },
     undefinedUser: {
@@ -641,6 +654,7 @@ describe('canAccessPage', () => {
         home: true, orders: true, letters: true, guests: true, projects: true,
         employees: false, attendance: true, requests: true, documents: true, kpi: true, assistant: true, timesheet: true,
         salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
+        chairman: false,
       },
     },
   };

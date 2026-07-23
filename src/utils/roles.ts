@@ -139,12 +139,29 @@ export function canAccessChairmanTasks(user?: User | null): boolean {
   return isSecretariat(user) || isMinister(user) || isSiteMasterAdmin(user);
 }
 
+// CRUD gate for chairman tasks — the minister only views (web ChairmanTasksPage).
+export function canManageChairmanTasks(user?: User | null): boolean {
+  return isSecretariat(user) || isSiteMasterAdmin(user);
+}
+
+// May create/edit news posts. `/me` carries the resolved `is_news_manager` flag
+// (backend can_manage_news = master-admin | admin | HR | department news-manager);
+// we OR in the coarse roles so the gate holds even if the flag is absent.
+export function isNewsManager(user?: User | null): boolean {
+  return (
+    !!user?.is_news_manager ||
+    isMasterAdmin(user) ||
+    isHR(user) ||
+    user?.type === 'admin'
+  );
+}
+
 // ── Page visibility — derived from the web navConfig role tables ──────────────
 export type PageKey =
   | 'home' | 'orders' | 'letters' | 'guests' | 'projects'
   | 'employees' | 'attendance' | 'requests' | 'documents' | 'kpi'
   | 'timesheet' | 'assistant' | 'salary' | 'team' | 'birthdays' | 'news'
-  | 'notifications' | 'profile' | 'support';
+  | 'notifications' | 'profile' | 'support' | 'chairman';
 
 /** Whether the given user may see a page. Mirrors which web NAV the role gets. */
 export function canAccessPage(user: User | null | undefined, key: PageKey): boolean {
@@ -188,6 +205,9 @@ export function canAccessPage(user: User | null | undefined, key: PageKey): bool
     // server-side), so this mirrors intent, not a server rule.
     case 'assistant':
       return !isEmployeeLike(user) && !kpp;
+    // Chairman agenda (kun tartibi): secretariat / minister / site master-admin.
+    case 'chairman':
+      return canAccessChairmanTasks(user);
     // Personal / convenience pages — always available.
     // Support (Texnik yordam): any employee may file a ticket; the backend 400s
     // (support_not_available) if the branch has no AKT specialist, surfaced as a

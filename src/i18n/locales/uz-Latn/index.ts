@@ -25,6 +25,7 @@ import modules from './modules';
 import components from './components';
 import update from './update';
 import support from './support';
+import chairman from './chairman';
 
 export default {
   common,
@@ -52,4 +53,5 @@ export default {
   components,
   update,
   support,
+  chairman,
 } as const;

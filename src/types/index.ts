@@ -7,6 +7,8 @@ export interface User {
   is_navbatchi?: boolean;
   /** branches where this user is an HR branch-leader (leadership_role='hr'), from /me */
   hr_branch_ids?: number[];
+  /** may create/edit news posts (auth/me flag = can_manage_news on the backend) */
+  is_news_manager?: boolean;
 }
 
 export interface Employee {
@@ -207,6 +209,7 @@ export interface NewsPost {
   content?: string;
   created_at: string;
   author?: { legal_name: string; photo_path?: string };
+  organization_branch_id?: number | null;
   organization_branch?: OrganizationBranch;
 }
 
@@ -655,6 +658,23 @@ export interface SupportTicketAttachment {
   original_filename?: string | null;
   content_type?: string | null;
   file_url?: string | null;
+}
+
+// A chairman-task = one agenda (kun tartibi) calendar entry: title/participants/
+// date/time/color. No status or assignee — it's a scheduled event, not a task.
+export interface ChairmanTask {
+  id: number;
+  title: string;
+  description?: string | null;
+  participants?: string | null;
+  task_date: string;
+  start_time?: string | null;
+  end_time?: string | null;
+  color?: string | null;
+  position?: number | null;
+  organization_branch_id?: number | null;
+  created_by_id?: number | null;
+  created_by?: { id?: number; legal_name?: string } | null;
 }
 
 export interface SupportTicket {
