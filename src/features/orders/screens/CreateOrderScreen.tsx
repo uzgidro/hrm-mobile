@@ -170,16 +170,18 @@ export default function CreateOrderScreen() {
           />
         </Field>
 
-        {hr && (
-          <Field label={t('orders.leadershipLabel')} required>
-            <Selector
-              loading={leadershipLoading}
-              text={nameOf(leadershipId, leadershipOptions)}
-              placeholder={t('orders.leadershipPlaceholder')}
-              onPress={() => setPicker('leadership')}
-            />
-          </Field>
-        )}
+        {/* Leadership (rahbariyat) is required on EVERY order for every role —
+            mirrors the web (AddOrderDrawer renders it unconditionally). Gating it
+            behind `hr` hid a mandatory field from employees, so they could never
+            satisfy the `leadershipId` validation and were blocked from creating. */}
+        <Field label={t('orders.leadershipLabel')} required>
+          <Selector
+            loading={leadershipLoading}
+            text={nameOf(leadershipId, leadershipOptions)}
+            placeholder={t('orders.leadershipPlaceholder')}
+            onPress={() => setPicker('leadership')}
+          />
+        </Field>
 
         <Field label={t('orders.submitterLabel')}>
           <Selector

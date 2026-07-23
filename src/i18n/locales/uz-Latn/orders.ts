@@ -73,6 +73,7 @@ export default {
   // ── Detail sections (DetailSections) ────────────────────────────────────────
   sectionSigners: 'Imzolovchilar',
   sectionFamiliarizers: 'Tanishuvchilar',
+  assignFamiliarizersTitle: 'Tanishuvchilarni biriktirish',
   sectionHistory: 'Tarix',
   signerFallback: 'Xodim',
   signerLeadership: 'Rahbariyat',

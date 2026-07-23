@@ -9,6 +9,7 @@ import {
   ORDER_ACT_DECREE_FORWARD,
   ORDER_ACT_DECREE_REGISTER,
   ORDER_ACT_DECREE_ACKNOWLEDGE,
+  ORDER_ACT_DECREE_ASSIGN_FAMILIARIZERS,
 } from '@/api/urls';
 import {
   approveDecree,
@@ -17,6 +18,7 @@ import {
   forwardDecree,
   acknowledgeDecree,
   registerDecree,
+  assignFamiliarizers,
   createOrder,
 } from '../mutations';
 
@@ -72,6 +74,20 @@ describe('decree workflow request functions', () => {
     mock.onPost(ORDER_ACT_DECREE_REGISTER(7)).reply(200, { ok: true });
     await registerDecree(7);
     expect(JSON.parse(mock.history.post[0].data)).toEqual({});
+  });
+
+  it('assignFamiliarizers POSTs { employee_ids } to the assign endpoint', async () => {
+    mock.onPost(ORDER_ACT_DECREE_ASSIGN_FAMILIARIZERS(11)).reply(200, { id: 11 });
+    const data = await assignFamiliarizers(11, [3, 7, 9]);
+    expect(data).toEqual({ id: 11 });
+    expect(mock.history.post[0].url).toBe(ORDER_ACT_DECREE_ASSIGN_FAMILIARIZERS(11));
+    expect(JSON.parse(mock.history.post[0].data)).toEqual({ employee_ids: [3, 7, 9] });
+  });
+
+  it('assignFamiliarizers sends an empty list as { employee_ids: [] }', async () => {
+    mock.onPost(ORDER_ACT_DECREE_ASSIGN_FAMILIARIZERS(11)).reply(200, {});
+    await assignFamiliarizers(11, []);
+    expect(JSON.parse(mock.history.post[0].data)).toEqual({ employee_ids: [] });
   });
 });
 

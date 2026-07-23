@@ -70,6 +70,7 @@ export default {
   // ── Detail sections ─────────────────────────────────────────────────────────
   sectionSigners: 'Подписанты',
   sectionFamiliarizers: 'Ознакомляемые',
+  assignFamiliarizersTitle: 'Назначить ознакомляемых',
   sectionHistory: 'История',
   signerFallback: 'Сотрудник',
   signerLeadership: 'Руководство',
