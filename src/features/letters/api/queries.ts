@@ -3,12 +3,13 @@ import { apiClient } from '@/api/client';
 import {
   LETTERS_LIST,
   LETTER_DETAIL,
+  LETTER_TRIP_MOVEMENTS,
   EMPLOYEES_LIST,
   ORGANIZATION_BRANCHES,
   ORGANIZATION_BRANCH_LEADERS,
 } from '@/api/urls';
 import { fetchAllEmployees } from '@/utils/employees';
-import type { Employee, Letter } from '@/types';
+import type { Employee, Letter, BusinessTripMovement } from '@/types';
 
 // Hierarchical query keys.
 //
@@ -28,6 +29,7 @@ export const letterKeys = {
   all: ['letters'] as const,
   list: (tab: LettersTab) => [...letterKeys.all, tab] as const,
   detail: (id: number) => [...letterKeys.all, 'detail', id] as const,
+  tripMovements: (id: number) => [...letterKeys.all, 'trip-movements', id] as const,
 };
 
 // The list endpoint returns either a bare array or a { items } envelope.
@@ -59,6 +61,18 @@ export function letterDetailQuery(id: number) {
     enabled: !!id,
     // Sign state must reflect the server on every open — another signer may have
     // acted. Override the global staleTime so it always revalidates.
+    refetchOnMount: 'always',
+  });
+}
+
+// Business-trip movements (kelish/ketish) of a letter. A flat list from the
+// backend. Kept fresh on every open since another branch's HR may add movements.
+export function tripMovementsQuery(id: number) {
+  return queryOptions({
+    queryKey: letterKeys.tripMovements(id),
+    queryFn: () =>
+      apiClient.get<BusinessTripMovement[]>(LETTER_TRIP_MOVEMENTS(id)).then((r) => r.data ?? []),
+    enabled: !!id,
     refetchOnMount: 'always',
   });
 }

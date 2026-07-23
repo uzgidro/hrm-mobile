@@ -3,9 +3,22 @@ import { apiClient } from '@/api/client';
 import {
   LETTER_CREATE, LETTER_SIGN, LETTER_REJECT, LETTER_UPLOAD_ATTACHMENT,
   LETTER_SUBMIT_REPORT, LETTER_RESET_REPORT, LETTER_UPLOAD_REPORT,
+  LETTER_TRIP_MOVEMENTS, LETTER_TRIP_MOVEMENT, LETTER_CONFIRM_RETURN,
 } from '@/api/urls';
 import type { PickedFile } from '@/components/AttachmentField';
+import type { BusinessTripMovement } from '@/types';
 import { letterKeys } from './queries';
+
+export interface ConfirmReturnForm {
+  return_date: string;
+  note?: string | null;
+}
+export interface TripMovementForm {
+  event_type: 'arrived' | 'departed';
+  event_date: string;
+  branch_id?: number | null;
+  note?: string | null;
+}
 
 // ── Sign / reject request functions (pure; unit-testable without React) ───────
 // Both are a bare POST with NO body — exactly what the old letter-detail
@@ -140,6 +153,55 @@ export function useResetReport(id: number) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: () => resetReport(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+  });
+}
+
+// ── Business-trip movements + return confirmation ─────────────────────────────
+// confirm-return sets is_trip_confirmed on the backend, which unblocks the
+// report stage (canSubmitReport in letterStatus). note is normalized to null so
+// an empty input matches the web's omitted-optional behavior.
+export function confirmReturn(id: number, form: ConfirmReturnForm): Promise<unknown> {
+  return apiClient
+    .post(LETTER_CONFIRM_RETURN(id), { return_date: form.return_date, note: form.note ?? null })
+    .then((r) => r.data);
+}
+
+export function addTripMovement(id: number, form: TripMovementForm): Promise<BusinessTripMovement> {
+  return apiClient
+    .post<BusinessTripMovement>(LETTER_TRIP_MOVEMENTS(id), {
+      event_type: form.event_type,
+      event_date: form.event_date,
+      branch_id: form.branch_id ?? null,
+      note: form.note ?? null,
+    })
+    .then((r) => r.data);
+}
+
+export function deleteTripMovement(id: number, movementId: number): Promise<void> {
+  return apiClient.delete(LETTER_TRIP_MOVEMENT(id, movementId)).then(() => undefined);
+}
+
+export function useConfirmReturn(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (form: ConfirmReturnForm) => confirmReturn(id, form),
+    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+  });
+}
+
+export function useAddTripMovement(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (form: TripMovementForm) => addTripMovement(id, form),
+    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+  });
+}
+
+export function useDeleteTripMovement(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (movementId: number) => deleteTripMovement(id, movementId),
     onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
   });
 }

@@ -29,6 +29,16 @@ export default {
   fieldDeparture: 'Ketish',
   fieldReturn: 'Qaytish',
   sectionSigners: 'Imzolovchilar',
+  // Business-trip movements (kelish/ketish) + return confirmation
+  sectionMovements: 'Kelish / ketish belgilari',
+  movementArrived: 'Keldi',
+  movementDeparted: 'Ketdi',
+  movementEmpty: 'Harakatlar mavjud emas',
+  movementFaceId: 'Face ID',
+  movementNote: 'Izoh (ixtiyoriy)',
+  confirmReturn: 'Kelganini tasdiqlash',
+  confirmReturnDateLabel: 'Xodim o\'z filialiga kelgan sana',
+  returnConfirmedBadge: 'Qaytish tasdiqlangan: {{date}}',
   rejectionReason: 'Rad etish sababi',
 
   // ── Action bar ──────────────────────────────────────────────────────────────

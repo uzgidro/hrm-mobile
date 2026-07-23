@@ -1,0 +1,50 @@
+// Support tickets — uz-Cyrl transliteration of uz-Latn/support.ts.
+// See uz-Latn/support.ts for the meaning of each key.
+export default {
+  title: 'Техник ёрдам',
+  subtitle: 'Менинг мурожаатларим',
+  empty: 'Мурожаатлар йўқ',
+  loadError: 'Мурожаатларни юклашда хатолик',
+
+  createTitle: 'Янги мурожаат',
+  priorityLabel: 'Муҳимлик',
+  descriptionLabel: 'Муаммо тавсифи',
+  descriptionPlaceholder: 'Муаммони батафсил ёзинг...',
+  ugeLabel: 'Компьютер рақами (UGE)',
+  ugePlaceholder: 'Масалан: UGE-1024',
+  roomLabel: 'Хона рақами',
+  roomPlaceholder: 'Масалан: 204',
+  filesLabel: 'Расм / видео (ихтиёрий)',
+  submit: 'Юбориш',
+  createdTitle: 'Юборилди',
+  createdMessage: 'Мурожаатингиз қабул қилинди',
+  descriptionRequired: 'Муаммо тавсифи киритилиши шарт',
+
+  detailTitle: 'Мурожаат',
+  fieldAssignee: 'Мутахассис',
+  fieldCreated: 'Яратилган',
+  fieldRoom: 'Хона',
+  fieldUge: 'Компьютер',
+  attachmentsTitle: 'Иловалар',
+  noAssignee: 'Ҳали бириктирилмаган',
+
+  statusOpen: 'Очиқ',
+  statusInProgress: 'Бажарилмоқда',
+  statusDone: 'Бажарилди',
+  statusRated: 'Баҳоланди',
+
+  priorityUrgent: 'Жуда зарур',
+  priorityNormal: 'Зарур',
+  priorityLow: 'Зарур эмас',
+
+  rate: 'Баҳолаш',
+  rateTitle: 'Ишни баҳоланг',
+  rateNotePlaceholder: 'Изоҳ (ихтиёрий)',
+  ratingLabel: 'Баҳо',
+  rateDone: 'Баҳоланди',
+  reopen: 'Қайта очиш',
+  reopenConfirmTitle: 'Қайта очиш',
+  reopenConfirmMessage: 'Мурожаатни қайта очишни тасдиқлайсизми?',
+  reopenDone: 'Қайта очилди',
+  actionError: 'Амални бажариб бўлмади',
+} as const;

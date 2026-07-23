@@ -22,6 +22,7 @@ export default {
     employees: 'Ходимлар',
     guests: 'Меҳмонлар',
     documents: 'Ҳужжатлар',
+    support: 'Техник ёрдам',
     kpi: 'KPI',
     timesheet: 'Табель',
     navbatchilik: 'Навбатчилик',

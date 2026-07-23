@@ -109,6 +109,9 @@ function ThemedNavigation() {
           <Stack.Screen name="news" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="mehmon-detail" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="mehmon-form" options={{ animation: 'slide_from_bottom' }} />
+          <Stack.Screen name="texnik-yordam" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="texnik-yordam-detail" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="texnik-yordam-form" options={{ animation: 'slide_from_bottom' }} />
           <Stack.Screen name="loyihalar" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="loyiha-detail" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="loyiha-card-detail" options={{ animation: 'slide_from_right' }} />

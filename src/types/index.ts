@@ -5,6 +5,8 @@ export interface User {
   is_secretariat?: boolean;
   /** member of a navbatchilik group (auth/me flag; gates the duty tile like the web nav) */
   is_navbatchi?: boolean;
+  /** branches where this user is an HR branch-leader (leadership_role='hr'), from /me */
+  hr_branch_ids?: number[];
 }
 
 export interface Employee {
@@ -154,6 +156,7 @@ export interface Letter {
   created_by_id?: number | null;
   created_by?: Employee | null;
   creator_employee_id?: number | null;
+  creator_employee?: Employee | null;
   created_at?: string;
   organization_branch_id?: number;
   assigned_signers?: LetterSigner[];
@@ -175,6 +178,26 @@ export interface Letter {
   report_filename?: string | null;
   // Chancellery's reason when a submitted report is bounced back (report_returned).
   return_reason?: string | null;
+  // Destination branch(es) of a business trip — used with organization_branch_id
+  // to build the branch set that gates trip-movement management (isBranchHr).
+  destination_branch_id?: number | null;
+  destination_branches?: OrganizationBranch[] | null;
+}
+
+// A single kelish/ketish event of a business trip. event_type is a backend
+// contract string ('arrived' | 'departed') — never translated, only its label.
+// turnstile_event_id != null means the event came from a Face-ID turnstile.
+export interface BusinessTripMovement {
+  id: number;
+  letter_id?: number;
+  branch_id?: number | null;
+  branch?: OrganizationBranch | null;
+  event_type: 'arrived' | 'departed';
+  event_date: string;
+  sequence_order?: number;
+  note?: string | null;
+  is_confirmed?: boolean;
+  turnstile_event_id?: number | null;
 }
 
 export interface NewsPost {
@@ -622,4 +645,36 @@ export interface LlmLargeListPage {
   next_offset: number;
   total: number;
   has_more: boolean;
+}
+
+// ── Support tickets (Texnik yordam / АКТ helpdesk) ────────────────────────────
+// status/priority are backend contract strings — never translated, only their
+// display labels (see supportStatus util).
+export interface SupportTicketAttachment {
+  id: number;
+  original_filename?: string | null;
+  content_type?: string | null;
+  file_url?: string | null;
+}
+
+export interface SupportTicket {
+  id: number;
+  organization_branch_id?: number | null;
+  created_by_id?: number | null;
+  assignee_id?: number | null;
+  uge_number?: string | null;
+  room_number?: string | null;
+  priority: 'urgent' | 'normal' | 'low';
+  description: string;
+  status: 'open' | 'in_progress' | 'done' | 'rated';
+  taken_at?: string | null;
+  done_at?: string | null;
+  rated_at?: string | null;
+  rating?: number | null;
+  rating_note?: string | null;
+  created_at?: string | null;
+  creator_internal_number?: string | null;
+  creator?: Employee | null;
+  assignee?: Employee | null;
+  attachments?: SupportTicketAttachment[];
 }
