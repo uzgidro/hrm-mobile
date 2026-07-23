@@ -69,6 +69,7 @@ export default {
   // ── Detail sections ─────────────────────────────────────────────────────────
   sectionSigners: 'Имзоловчилар',
   sectionFamiliarizers: 'Танишувчилар',
+  assignFamiliarizersTitle: 'Танишувчиларни бириктириш',
   sectionHistory: 'Тарих',
   signerFallback: 'Ходим',
   signerLeadership: 'Раҳбарият',

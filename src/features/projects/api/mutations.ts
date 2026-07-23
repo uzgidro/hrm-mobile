@@ -9,8 +9,9 @@ import {
   CARD_COMPLETE,
   CARD_UNCOMPLETE,
   CARD_REJECT,
+  CARD_COMMENTS,
 } from '@/api/urls';
-import type { Workspace, WorkspaceColumn, WorkspaceCard } from '@/types';
+import type { Workspace, WorkspaceColumn, WorkspaceCard, CardComment } from '@/types';
 import { projectKeys } from './queries';
 
 export interface WorkspacePayload {
@@ -72,6 +73,14 @@ export function toggleCardComplete(card: WorkspaceCard): Promise<void> {
   return card.is_completed ? uncompleteCard(card.id) : completeCard(card.id);
 }
 
+// Post a comment on a card. The backend reads a single `text` field; we trim so
+// the caller doesn't have to (an all-whitespace body should be blocked at the UI).
+export function createCardComment(cardId: number, text: string): Promise<CardComment> {
+  return apiClient
+    .post<CardComment>(CARD_COMMENTS(cardId), { text: text.trim() })
+    .then((r) => r.data);
+}
+
 // ── Mutation hooks ──────────────────────────────────────────────────────────
 // Each invalidates the whole projects subtree on success (one call refreshes
 // the list, any open board detail and its per-column cards via the
@@ -129,5 +138,14 @@ export function useToggleCardComplete() {
     mutationFn: ({ card }: { card: WorkspaceCard; columnId: number }) => toggleCardComplete(card),
     onSuccess: (_data, { columnId }) =>
       qc.invalidateQueries({ queryKey: projectKeys.cards(columnId) }),
+  });
+}
+
+export function useCreateCardComment(cardId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (text: string) => createCardComment(cardId, text),
+    // Only that card's comment thread needs refreshing after a post.
+    onSuccess: () => qc.invalidateQueries({ queryKey: projectKeys.cardComments(cardId) }),
   });
 }

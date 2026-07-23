@@ -63,6 +63,7 @@ export default {
   fileFallback: 'Fayl',
   commentsTitle: 'Izohlar',
   commentsEmpty: "Izohlar yo'q",
+  commentPlaceholder: 'Izoh yozing...',
   complete: 'Bajarildi',
   uncomplete: 'Qaytarish',
   reject: 'Rad etish',

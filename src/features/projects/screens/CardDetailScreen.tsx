@@ -1,6 +1,7 @@
+import { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-  View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Linking, Image,
+  View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Linking, Image, TextInput,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -14,6 +15,7 @@ import { LoadingView, ErrorState } from '@/components/StateViews';
 import type { CardAttachment, CardComment } from '@/types';
 import { cardDetailQuery, cardCommentsQuery } from '../api/queries';
 import { useCardActions } from '../hooks/useCardActions';
+import { useCreateCardComment } from '../api/mutations';
 import { cardStatus, canActOnCard } from '../cardStatus';
 
 // Read-only card detail + status actions (complete / uncomplete / reject).
@@ -31,6 +33,14 @@ export default function CardDetailScreen() {
   const { data: card, isLoading, isError, refetch } = useQuery(cardDetailQuery(cardId));
   const { data: comments = [] } = useQuery(cardCommentsQuery(cardId));
   const { busy, complete, uncomplete, reject } = useCardActions(cardId, refetch);
+
+  const [commentText, setCommentText] = useState('');
+  const createComment = useCreateCardComment(cardId);
+  const sendComment = () => {
+    const text = commentText.trim();
+    if (!text || createComment.isPending) return;
+    createComment.mutate(text, { onSuccess: () => setCommentText('') });
+  };
 
   const status = card ? cardStatus(card) : 'active';
   const canAct = card ? canActOnCard(card, employeeId) : false;
@@ -136,7 +146,7 @@ export default function CardDetailScreen() {
               )}
             </View>
 
-            {/* Comments (read-only) */}
+            {/* Comments — read the thread, post a new one (backend enforces access). */}
             <View style={styles.card}>
               <View style={styles.sectionTitleRow}><Icon name="doc" size={16} color={colors.textSecondary} /><Text style={styles.sectionTitle}>{t('projects.commentsTitle')}</Text></View>
               {comments.length === 0 ? (
@@ -150,6 +160,27 @@ export default function CardDetailScreen() {
                   </View>
                 ))
               )}
+              <View style={styles.commentComposer}>
+                <TextInput
+                  style={styles.commentInput}
+                  placeholder={t('projects.commentPlaceholder')}
+                  placeholderTextColor={colors.textMuted}
+                  value={commentText}
+                  onChangeText={setCommentText}
+                  multiline
+                  textAlignVertical="top"
+                />
+                <TouchableOpacity
+                  style={[styles.commentSendBtn, (!commentText.trim() || createComment.isPending) && styles.commentSendBtnDisabled]}
+                  onPress={sendComment}
+                  disabled={!commentText.trim() || createComment.isPending}
+                  activeOpacity={0.8}
+                >
+                  {createComment.isPending
+                    ? <ActivityIndicator size="small" color={colors.onPrimary} />
+                    : <Icon name="arrowUp" size={18} color={colors.onPrimary} />}
+                </TouchableOpacity>
+              </View>
             </View>
 
             <View style={{ height: canAct ? 96 : 24 }} />
@@ -222,6 +253,11 @@ const makeStyles = (c: ThemeColors) =>
     commentAuthor: { fontSize: 13, fontWeight: '700', color: c.text },
     commentText: { fontSize: 14, color: c.textSecondary, marginTop: 2, lineHeight: 19 },
     commentDate: { fontSize: 11, color: c.textMuted, marginTop: 4 },
+
+    commentComposer: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginTop: 12, borderTopWidth: 1, borderTopColor: c.cardBorder, paddingTop: 12 },
+    commentInput: { flex: 1, minHeight: 40, maxHeight: 120, backgroundColor: c.bg, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, fontSize: 14, color: c.text },
+    commentSendBtn: { width: 40, height: 40, borderRadius: 10, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' },
+    commentSendBtnDisabled: { opacity: 0.5 },
 
     actionBar: { position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', gap: 10, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 24, backgroundColor: c.card, borderTopWidth: 1, borderTopColor: c.cardBorder },
     actionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 48, borderRadius: 12 },

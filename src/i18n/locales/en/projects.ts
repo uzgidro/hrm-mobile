@@ -52,6 +52,7 @@ export default {
   fileFallback: 'File',
   commentsTitle: 'Comments',
   commentsEmpty: 'No comments',
+  commentPlaceholder: 'Write a comment...',
   complete: 'Complete',
   uncomplete: 'Reopen',
   reject: 'Reject',

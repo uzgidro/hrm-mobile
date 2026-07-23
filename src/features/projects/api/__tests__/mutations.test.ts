@@ -8,6 +8,7 @@ import {
   CARDS_LIST,
   CARD_COMPLETE,
   CARD_UNCOMPLETE,
+  CARD_COMMENTS,
 } from '@/api/urls';
 import {
   createWorkspace,
@@ -20,6 +21,7 @@ import {
   completeCard,
   uncompleteCard,
   toggleCardComplete,
+  createCardComment,
 } from '../mutations';
 
 let mock: MockAdapter;
@@ -93,6 +95,22 @@ describe('column & card request functions', () => {
     mock.onPost(CARD_UNCOMPLETE(9)).reply(200);
     await expect(uncompleteCard(9)).resolves.toBeUndefined();
     expect(mock.history.post[0].url).toBe(CARD_UNCOMPLETE(9));
+  });
+});
+
+describe('createCardComment', () => {
+  it('POSTs { text } to cards/:id/comments and returns the created comment', async () => {
+    mock.onPost(CARD_COMMENTS(7)).reply(201, { id: 55, text: 'Izoh', author: { legal_name: 'X' } });
+    const created = await createCardComment(7, 'Izoh');
+    expect(created).toEqual({ id: 55, text: 'Izoh', author: { legal_name: 'X' } });
+    expect(mock.history.post[0].url).toBe(CARD_COMMENTS(7));
+    expect(JSON.parse(mock.history.post[0].data)).toEqual({ text: 'Izoh' });
+  });
+
+  it('trims surrounding whitespace before sending', async () => {
+    mock.onPost(CARD_COMMENTS(7)).reply(201, { id: 56 });
+    await createCardComment(7, '  hello  ');
+    expect(JSON.parse(mock.history.post[0].data)).toEqual({ text: 'hello' });
   });
 });
 

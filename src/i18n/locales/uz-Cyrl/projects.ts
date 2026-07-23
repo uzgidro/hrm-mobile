@@ -52,6 +52,7 @@ export default {
   fileFallback: 'Файл',
   commentsTitle: 'Изоҳлар',
   commentsEmpty: 'Изоҳлар йўқ',
+  commentPlaceholder: 'Изоҳ ёзинг...',
   complete: 'Бажарилди',
   uncomplete: 'Қайтариш',
   reject: 'Рад этиш',

@@ -53,6 +53,7 @@ export default {
   fileFallback: 'Файл',
   commentsTitle: 'Комментарии',
   commentsEmpty: 'Нет комментариев',
+  commentPlaceholder: 'Напишите комментарий...',
   complete: 'Выполнено',
   uncomplete: 'Вернуть',
   reject: 'Отклонить',

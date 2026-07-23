@@ -69,6 +69,7 @@ export default {
   // ── Detail sections ─────────────────────────────────────────────────────────
   sectionSigners: 'Signers',
   sectionFamiliarizers: 'Acknowledgers',
+  assignFamiliarizersTitle: 'Assign acknowledgers',
   sectionHistory: 'History',
   signerFallback: 'Employee',
   signerLeadership: 'Leadership',

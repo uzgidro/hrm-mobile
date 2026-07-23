@@ -9,6 +9,7 @@ import {
   ORDER_ACT_DECREE_FORWARD,
   ORDER_ACT_DECREE_REGISTER,
   ORDER_ACT_DECREE_ACKNOWLEDGE,
+  ORDER_ACT_DECREE_ASSIGN_FAMILIARIZERS,
 } from '@/api/urls';
 import type { PickedFile } from '@/components/AttachmentField';
 import { orderKeys } from './queries';
@@ -40,6 +41,15 @@ export function acknowledgeDecree(id: number): Promise<unknown> {
 export function registerDecree(id: number, actNumber?: number): Promise<unknown> {
   return apiClient
     .post(ORDER_ACT_DECREE_REGISTER(id), actNumber != null ? { act_number: actNumber } : {})
+    .then((r) => r.data);
+}
+
+// Replace the whole familiarizer list. The backend does a full replace but never
+// drops someone who already acknowledged, so the caller must send the complete
+// desired set of employee ids (already-acknowledged ones stay regardless).
+export function assignFamiliarizers(id: number, employeeIds: number[]): Promise<unknown> {
+  return apiClient
+    .post(ORDER_ACT_DECREE_ASSIGN_FAMILIARIZERS(id), { employee_ids: employeeIds })
     .then((r) => r.data);
 }
 
@@ -132,6 +142,14 @@ export function useAcknowledgeDecree(id: number) {
   });
 }
 
+export function useAssignFamiliarizers(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (employeeIds: number[]) => assignFamiliarizers(id, employeeIds),
+    onSuccess: () => qc.invalidateQueries({ queryKey: orderKeys.all }),
+  });
+}
+
 export function useRegisterDecree(id: number) {
   const qc = useQueryClient();
   return useMutation({
@@ -146,5 +164,8 @@ export function useCreateOrder() {
     mutationFn: (args: { payload: CreateOrderPayload; files?: PickedFile[]; onFilesError?: () => void }) =>
       createOrder(args.payload, args.files, args.onFilesError),
     onSuccess: () => qc.invalidateQueries({ queryKey: orderKeys.all }),
+    // CreateOrderScreen already shows the error via its own Alert in the catch
+    // block; skip the global mutation toast so a failed submit isn't surfaced twice.
+    meta: { skipErrorToast: true },
   });
 }

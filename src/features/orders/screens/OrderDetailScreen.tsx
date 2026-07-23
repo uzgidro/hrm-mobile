@@ -1,6 +1,6 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { useMemo, useState } from 'react';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import dayjs from 'dayjs';
@@ -8,11 +8,15 @@ import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import type { Employee } from '@/types';
 import { Icon } from '@/components/Icon';
 import { LoadingView } from '@/components/StateViews';
+import { PickerModal, type PickerOption } from '@/components/PickerModal';
 import { statusMeta, statusColor, decreePermissions } from '@/utils/orderStatus';
-import { orderDetailQuery } from '../api/queries';
+import { isHR, isSiteMasterAdmin, employeeSubLabel } from '@/utils/roles';
+import { orderDetailQuery, orderEmployeesQuery } from '../api/queries';
 import { useDecreeActions } from '../hooks/useDecreeActions';
+import { useAssignFamiliarizers } from '../api/mutations';
 import { DetailHeader, Section, KV } from '../components/DetailParts';
 import { DetailSections } from '../components/DetailSections';
 import { DecreeActionBar } from '../components/DecreeActionBar';
@@ -31,11 +35,61 @@ export default function OrderDetailScreen() {
   const [rejectReason, setRejectReason] = useState('');
   const [registerOpen, setRegisterOpen] = useState(false);
   const [actNumber, setActNumber] = useState('');
+  const [famOpen, setFamOpen] = useState(false);
+  const [famIds, setFamIds] = useState<number[]>([]);
 
   const { data: order, isLoading, refetch } = useQuery(orderDetailQuery(orderId));
 
   const { busy, approve, reject, resubmit, forward, acknowledge, register } =
     useDecreeActions(orderId, refetch);
+
+  const assignFam = useAssignFamiliarizers(orderId);
+  // Employees to pick from — scoped to the order's branch like the create form.
+  const { data: empData, isLoading: empsLoading } = useQuery(
+    orderEmployeesQuery(order?.organization_branch_id),
+  );
+  const empOptions = useMemo<PickerOption[]>(
+    () =>
+      (empData?.items ?? []).map((e: Employee) => ({
+        value: e.id,
+        label: e.legal_name || t('status.unknown'),
+        subLabel: employeeSubLabel(e),
+        photo: e.photo_path ?? null,
+      })),
+    [empData, t],
+  );
+  // Employees who already acknowledged can never be removed (backend keeps them),
+  // so a toggle off is ignored for them and they always stay in the sent list.
+  const ackedIds = useMemo(
+    () =>
+      (order?.familiarizers ?? [])
+        .filter((f) => f.acknowledged)
+        .map((f) => f.employee_id!)
+        .filter(Boolean),
+    [order],
+  );
+  const initialFamIds = useMemo(
+    () => (order?.familiarizers ?? []).map((f) => f.employee_id!).filter(Boolean),
+    [order],
+  );
+  const openFamPicker = () => {
+    setFamIds(initialFamIds);
+    setFamOpen(true);
+  };
+  const toggleFam = (id: number) => {
+    if (ackedIds.includes(id)) return; // acknowledged → locked in
+    setFamIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  };
+  // The picker's "Done"/X/back all route here. Only send when the set actually
+  // changed and is non-empty — closing without edits (or with nothing picked) is
+  // a cancel, not a submit, matching the web's disabled-when-empty submit button.
+  const sameSet = (a: number[], b: number[]) =>
+    a.length === b.length && a.every((x) => b.includes(x));
+  const closeFamPicker = () => {
+    setFamOpen(false);
+    if (famIds.length === 0 || sameSet(famIds, initialFamIds)) return;
+    assignFam.mutate(famIds, { onSuccess: () => refetch() });
+  };
 
   const onReject = async () => {
     // Blank reason: keep the modal open and let reject() show the original
@@ -67,6 +121,13 @@ export default function OrderDetailScreen() {
   const meta = statusMeta(order.status);
   const sc = statusColor(meta.kind, colors);
   const perms = decreePermissions(order, employeeId);
+
+  // Assigning familiarizers mirrors the web gate (OrderDetailModal): HR while the
+  // decree is `confirmed`, or a site master-admin (strict `type === 'master-admin'`,
+  // NOT ministr — the backend only grants this to the master-admin account, so
+  // gating on isMasterAdmin would show ministr a button the backend rejects).
+  const canAssignFamiliarizers =
+    isSiteMasterAdmin(user) || (isHR(user) && order.status === 'confirmed');
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
@@ -123,6 +184,20 @@ export default function OrderDetailScreen() {
 
         <DetailSections order={order} />
 
+        {canAssignFamiliarizers && (
+          <TouchableOpacity
+            style={styles.famBtn}
+            activeOpacity={0.85}
+            onPress={openFamPicker}
+            disabled={assignFam.isPending}
+          >
+            {assignFam.isPending
+              ? <ActivityIndicator size="small" color={colors.primary} />
+              : <Icon name="users" size={16} color={colors.primary} />}
+            <Text style={styles.famBtnText}>{t('orders.assignFamiliarizersTitle')}</Text>
+          </TouchableOpacity>
+        )}
+
         {!!order.rejection_reason && (
           <View style={styles.rejectCard}>
             <Text style={styles.rejectTitle}>{t('orders.changeReasonTitle')}</Text>
@@ -158,6 +233,17 @@ export default function OrderDetailScreen() {
         onClose={() => setRegisterOpen(false)}
         onSubmit={onRegister}
       />
+      <PickerModal
+        visible={famOpen}
+        title={t('orders.assignFamiliarizersTitle')}
+        options={empOptions}
+        loading={empsLoading}
+        multiple
+        selected={famIds}
+        onClose={closeFamPicker}
+        onSelect={() => {}}
+        onToggle={toggleFam}
+      />
     </SafeAreaView>
   );
 }
@@ -175,6 +261,8 @@ const makeStyles = (c: ThemeColors) =>
     subMeta: { fontSize: 13, color: c.textMuted },
     docBtn: { marginTop: 6, backgroundColor: c.primarySoft, borderRadius: 12, paddingVertical: 13, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
     docBtnText: { color: c.primary, fontSize: 14, fontWeight: '700' },
+    famBtn: { backgroundColor: c.primarySoft, borderRadius: 12, paddingVertical: 13, marginBottom: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+    famBtnText: { color: c.primary, fontSize: 14, fontWeight: '700' },
 
     bodyText: { fontSize: 14, color: c.text, lineHeight: 21 },
 
