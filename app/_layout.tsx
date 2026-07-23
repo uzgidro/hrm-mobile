@@ -111,6 +111,7 @@ function ThemedNavigation() {
           <Stack.Screen name="mehmon-form" options={{ animation: 'slide_from_bottom' }} />
           <Stack.Screen name="loyihalar" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="loyiha-detail" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="loyiha-card-detail" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="hujjatlar" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="hujjat-viewer" options={{ animation: 'slide_from_bottom' }} />
           <Stack.Screen name="kpi" options={{ animation: 'slide_from_right' }} />
@@ -118,6 +119,7 @@ function ThemedNavigation() {
           <Stack.Screen name="kpi-team" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="tabel" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="navbatchilik" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="navbatchilik-grid" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="bayramlar" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="assistant" options={{ animation: 'slide_from_bottom' }} />
           <Stack.Screen name="loyiha-form" options={{ animation: 'slide_from_bottom' }} />

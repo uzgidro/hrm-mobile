@@ -170,7 +170,11 @@ export default function LoyihaDetailScreen() {
                         <TouchableOpacity onPress={() => toggleComplete(cd, col.id)} hitSlop={8} style={[styles.checkbox, cd.is_completed && styles.checkboxOn]}>
                           {cd.is_completed && <Icon name="check" size={13} color={colors.onPrimary} />}
                         </TouchableOpacity>
-                        <View style={{ flex: 1 }}>
+                        <TouchableOpacity
+                          style={{ flex: 1 }}
+                          activeOpacity={0.7}
+                          onPress={() => router.push({ pathname: '/loyiha-card-detail', params: { id: String(cd.id) } })}
+                        >
                           <Text style={[styles.taskTitle, cd.is_completed && styles.taskTitleDone]} numberOfLines={2}>
                             {cd.title || t('projects.taskFallback')}
                           </Text>
@@ -181,7 +185,7 @@ export default function LoyihaDetailScreen() {
                               <Text style={styles.taskDate}>{dayjs(cd.end_date).format('DD.MM.YYYY')}</Text>
                             </View>
                           )}
-                        </View>
+                        </TouchableOpacity>
                       </View>
                     ))
                   )}

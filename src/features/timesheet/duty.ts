@@ -77,3 +77,22 @@ export function shiftIndexIn(shifts: NavbatchilikShift[] | null | undefined, nam
   if (!shifts || !name) return -1;
   return shifts.findIndex((s) => s.name === name);
 }
+
+// ── "Дежурства других" — whole-group schedule (member × day) ──────────────────
+
+/** A group's duty days keyed `${employee_id}_${schedule_date}`, dedup by highest
+ *  id per (employee, date) — mirrors the web NavbatchilikGrid's scheduleMap. */
+export function scheduleDayMap(days: WorkScheduleDay[]): Record<string, WorkScheduleDay> {
+  const map: Record<string, WorkScheduleDay> = {};
+  for (const d of days) {
+    const key = `${d.employee_id}_${d.schedule_date}`;
+    const prev = map[key];
+    if (!prev || d.id > prev.id) map[key] = d;
+  }
+  return map;
+}
+
+/** One employee's duty days out of a group's flat list, deduped + date-sorted. */
+export function daysForEmployee(days: WorkScheduleDay[], employeeId: number): WorkScheduleDay[] {
+  return sortScheduleDays(days.filter((d) => d.employee_id === employeeId));
+}

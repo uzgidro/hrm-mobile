@@ -1,4 +1,5 @@
-import type { AttendanceSummary } from '@/types';
+import dayjs from 'dayjs';
+import type { AttendanceEvent, AttendanceSummary } from '@/types';
 import type { ThemeColors } from '@/theme/palettes';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -96,5 +97,38 @@ export function tabelSummary(a?: AttendanceSummary | null): TabelSummary {
     late: num(a.late_days_count, 'late'),
     absent: num(a.absent_days_count, 'absent'),
     hours: Math.round((a.work_duration_hours ?? 0) * 10) / 10,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Раw entry/exit derivation for the day detail (Вход/Выход + Журнал). The
+// normalized tabel row has no per-event times, so this works off the raw
+// turnstile-attendance-events (GET /turnstile-attendance-events) that
+// EmployeeCalendarScreen also uses. An event is an entry when
+// direction_type==='entrance' OR check_in_out_type===1; an exit when
+// direction_type==='exit' OR check_in_out_type===2 (the backend sends either).
+
+export interface DayAttendanceDetail {
+  /** first entry event of the day (earliest), if any */
+  firstEntry?: AttendanceEvent;
+  /** last exit event of the day (latest), if any */
+  lastExit?: AttendanceEvent;
+  /** all of the day's events, chronologically ascending */
+  journal: AttendanceEvent[];
+}
+
+const isEntry = (e: AttendanceEvent) => e.direction_type === 'entrance' || e.check_in_out_type === 1;
+const isExit = (e: AttendanceEvent) => e.direction_type === 'exit' || e.check_in_out_type === 2;
+
+export function dayAttendanceDetail(events: AttendanceEvent[], date: string): DayAttendanceDetail {
+  const dayEvents = events
+    .filter((e) => dayjs(e.happen_time).format('YYYY-MM-DD') === date)
+    .sort((a, b) => dayjs(a.happen_time).diff(dayjs(b.happen_time)));
+  const entries = dayEvents.filter(isEntry);
+  const exits = dayEvents.filter(isExit);
+  return {
+    firstEntry: entries[0],
+    lastExit: exits[exits.length - 1],
+    journal: dayEvents,
   };
 }

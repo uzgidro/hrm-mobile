@@ -3,13 +3,15 @@ import dayjs from 'dayjs';
 import { apiClient } from '@/api/client';
 import {
   TURNSTILE_ATTENDANCE_NORMALIZED,
+  TURNSTILE_ATTENDANCE_EVENTS,
   NAVBATCHILIK_GROUPS_MY,
   NAVBATCHILIK_GROUP_MEMBERS,
   WORK_SCHEDULE_DAYS,
+  WORK_SCHEDULE_DAYS_BY_GROUP,
   HOLIDAYS_LIST,
   DUTY_DAYS_LIST,
 } from '@/api/urls';
-import type { DutyDay, Employee, EmployeeAttendance, Holiday, NavbatchilikGroup, WorkScheduleDay } from '@/types';
+import type { AttendanceEvent, DutyDay, Employee, EmployeeAttendance, Holiday, NavbatchilikGroup, WorkScheduleDay } from '@/types';
 
 // List endpoints return either a bare array or an { items } envelope.
 function unwrap<T>(d: any): T[] {
@@ -25,10 +27,14 @@ export const timesheetKeys = {
   all: ['timesheet'] as const,
   my: (month: string, employeeId?: number) =>
     [...timesheetKeys.all, 'my', month, employeeId ?? null] as const,
+  myEvents: (month: string, employeeId?: number) =>
+    [...timesheetKeys.all, 'my-events', month, employeeId ?? null] as const,
   myGroups: () => [...timesheetKeys.all, 'duty-groups'] as const,
   groupMembers: (groupId: number) => [...timesheetKeys.all, 'duty-members', groupId] as const,
   myScheduleDays: (month: string, employeeId?: number) =>
     [...timesheetKeys.all, 'schedule-days', month, employeeId ?? null] as const,
+  groupScheduleDays: (month: string, groupId?: number) =>
+    [...timesheetKeys.all, 'group-schedule-days', month, groupId ?? null] as const,
   holidays: (orgBranchId?: number) => [...timesheetKeys.all, 'holidays', orgBranchId ?? null] as const,
   offDayDuty: () => [...timesheetKeys.all, 'off-day-duty'] as const,
 };
@@ -50,6 +56,27 @@ export function myTimesheetQuery(month: string, employeeId?: number) {
         })
         .then((r) => unwrap<EmployeeAttendance>(r.data)[0] ?? null),
     staleTime: 5 * 60 * 1000,
+  });
+}
+
+// Raw turnstile entry/exit events for MY month — the normalized tabel row has no
+// per-event times, so the day-detail (Вход/Выход + Журнал) needs these. Same
+// endpoint EmployeeCalendarScreen uses, but kept inside the timesheet feature
+// (CLAUDE.md: no cross-feature imports; the URL constant is shared in src/api).
+export function myTimesheetEventsQuery(month: string, employeeId?: number) {
+  const start = dayjs(`${month}-01`);
+  const dateFrom = start.format('YYYY-MM-DD');
+  const dateTo = start.endOf('month').format('YYYY-MM-DD');
+  return queryOptions({
+    queryKey: timesheetKeys.myEvents(month, employeeId),
+    enabled: !!employeeId,
+    queryFn: () =>
+      apiClient
+        .get(TURNSTILE_ATTENDANCE_EVENTS, {
+          params: { employee_id: employeeId, date_from: dateFrom, date_to: dateTo },
+        })
+        .then((r) => unwrap<AttendanceEvent>(r.data)),
+    staleTime: 2 * 60 * 1000,
   });
 }
 
@@ -92,6 +119,28 @@ export function myScheduleDaysQuery(month: string, employeeId?: number) {
             date_from: start.format('YYYY-MM-DD'),
             date_to: start.endOf('month').format('YYYY-MM-DD'),
             size: 100,
+          },
+        })
+        .then((r) => unwrap<WorkScheduleDay>(r.data)),
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+// ALL group members' duty days for a month, in ONE request (backend resolves the
+// effective roster server-side → no N+1). Returns a flat WorkScheduleDay[] with
+// each row's employee_id; the screen keys them by `${employee_id}_${date}`.
+// "Дежурства других" — lets a group member see the whole group's schedule.
+export function groupScheduleDaysQuery(month: string, groupId?: number) {
+  const start = dayjs(`${month}-01`);
+  return queryOptions({
+    queryKey: timesheetKeys.groupScheduleDays(month, groupId),
+    enabled: !!groupId,
+    queryFn: () =>
+      apiClient
+        .get(WORK_SCHEDULE_DAYS_BY_GROUP(groupId as number), {
+          params: {
+            date_from: start.format('YYYY-MM-DD'),
+            date_to: start.endOf('month').format('YYYY-MM-DD'),
           },
         })
         .then((r) => unwrap<WorkScheduleDay>(r.data)),

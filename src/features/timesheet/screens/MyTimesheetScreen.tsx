@@ -13,8 +13,8 @@ import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
 import { LoadingView, ErrorState, EmptyState } from '@/components/StateViews';
 import { monthName, weekdayNameShort } from '@/i18n/dates';
-import { myTimesheetQuery } from '../api/queries';
-import { tabelCodeMeta, tabelCodeColor, legendCodesFor, tabelSummary } from '../utils';
+import { myTimesheetQuery, myTimesheetEventsQuery } from '../api/queries';
+import { tabelCodeMeta, tabelCodeColor, legendCodesFor, tabelSummary, dayAttendanceDetail } from '../utils';
 
 // Weekday header, Monday-first (dayjs indexes weekdays Sunday=0).
 const WEEKDAY_INDICES = [1, 2, 3, 4, 5, 6, 0];
@@ -44,12 +44,17 @@ export default function MyTimesheetScreen() {
   const monthKey = currentMonth.format('YYYY-MM');
   const query = myTimesheetQuery(monthKey, employeeId);
   const { data: row, isLoading, isError, refetch } = useQuery(query);
+  // Raw entry/exit events for Вход/Выход + Журнал (normalized row has no per-event
+  // times). Non-blocking: the tabel calendar renders without it.
+  const { data: events = [], refetch: refetchEvents } = useQuery(myTimesheetEventsQuery(monthKey, employeeId));
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await refetch();
+    await Promise.all([refetch(), refetchEvents()]);
     setRefreshing(false);
-  }, [refetch]);
+  }, [refetch, refetchEvents]);
+
+  const dayDetail = useMemo(() => dayAttendanceDetail(events, selectedDate), [events, selectedDate]);
 
   // Own useMemo so the `?? {}` fallback doesn't mint a new object every render
   // (it feeds the memoized grid/legend deps below).
@@ -167,6 +172,57 @@ export default function MyTimesheetScreen() {
 
           {hasData && (
             <View style={styles.card}>
+              <View style={styles.entryExitRow}>
+                <View style={styles.entryExitItem}>
+                  <Text style={styles.entryExitTime}>{dayDetail.firstEntry ? dayjs(dayDetail.firstEntry.happen_time).format('HH:mm') : '--:--'}</Text>
+                  <Text style={styles.entryExitLabel}>{t('timesheet.entry')}</Text>
+                </View>
+                <View style={styles.entryExitDivider} />
+                <View style={styles.entryExitItem}>
+                  <Text style={styles.entryExitTime}>{dayDetail.lastExit ? dayjs(dayDetail.lastExit.happen_time).format('HH:mm') : '--:--'}</Text>
+                  <Text style={styles.entryExitLabel}>{t('timesheet.exit')}</Text>
+                </View>
+              </View>
+            </View>
+          )}
+
+          {hasData && row?.working_hours_start && (
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>{t('timesheet.scheduleTitle')}</Text>
+              <View style={styles.scheduleRow}>
+                <View style={styles.scheduleItem}>
+                  <Text style={styles.scheduleValue}>{row.working_hours_start} - {row.working_hours_end}</Text>
+                  <Text style={styles.scheduleLabel}>{t('timesheet.workDay')}</Text>
+                </View>
+                {row.lunch_start_time && (
+                  <View style={styles.scheduleItem}>
+                    <Text style={styles.scheduleValue}>{row.lunch_start_time} - {row.lunch_end_time}</Text>
+                    <Text style={styles.scheduleLabel}>{t('timesheet.break')}</Text>
+                  </View>
+                )}
+              </View>
+            </View>
+          )}
+
+          {hasData && (
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>{t('timesheet.logTitle')}</Text>
+              {dayDetail.journal.length === 0 ? (
+                <Text style={styles.emptyText}>{t('timesheet.logEmpty')}</Text>
+              ) : (
+                dayDetail.journal.map((ev) => (
+                  <View key={ev.id} style={styles.eventRow}>
+                    <Text style={styles.eventTime}>{dayjs(ev.happen_time).format('HH:mm')}</Text>
+                    <Icon name={ev.direction_type === 'entrance' || ev.check_in_out_type === 1 ? 'chevronRight' : 'chevronLeft'} size={16} color={colors.textSecondary} />
+                    <Text style={styles.eventDir}>{ev.direction_type === 'entrance' || ev.check_in_out_type === 1 ? t('timesheet.entryTitle') : t('timesheet.exitTitle')}</Text>
+                  </View>
+                ))
+              )}
+            </View>
+          )}
+
+          {hasData && (
+            <View style={styles.card}>
               <Text style={styles.cardTitle}>{t('timesheet.summaryTitle')}</Text>
               <View style={styles.statsRow}>
                 <View style={styles.statItem}>
@@ -225,6 +281,21 @@ const makeStyles = (c: ThemeColors) =>
 
     card: { backgroundColor: c.card, borderRadius: 16, padding: 16, marginTop: 12, borderWidth: 1, borderColor: c.cardBorder },
     cardTitle: { fontSize: 15, fontWeight: '700', color: c.text, marginBottom: 12 },
+
+    // Day detail — Вход/Выход, График работы, Журнал (mirrors EmployeeCalendarScreen).
+    entryExitRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8 },
+    entryExitItem: { flex: 1, alignItems: 'center', gap: 6 },
+    entryExitTime: { fontSize: 22, fontWeight: '700', color: c.text, letterSpacing: 1 },
+    entryExitLabel: { fontSize: 12, color: c.textMuted, fontWeight: '500' },
+    entryExitDivider: { width: 1, height: 36, backgroundColor: c.cardBorder, marginHorizontal: 16 },
+    scheduleRow: { flexDirection: 'row', gap: 20 },
+    scheduleItem: { flex: 1 },
+    scheduleValue: { fontSize: 16, fontWeight: '700', color: c.text },
+    scheduleLabel: { fontSize: 12, color: c.textMuted, marginTop: 4 },
+    emptyText: { color: c.textMuted, textAlign: 'center', paddingVertical: 20, fontSize: 14 },
+    eventRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
+    eventTime: { fontSize: 14, fontWeight: '700', color: c.text, width: 44 },
+    eventDir: { fontSize: 13, color: c.textSecondary },
 
     monthNav: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
     navBtn: { width: 40, height: 40, backgroundColor: c.bg, borderRadius: 10, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: c.cardBorder },

@@ -1,7 +1,7 @@
 import { queryOptions } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
-import { WORKSPACES_LIST, WORKSPACE_DETAIL, CARDS_LIST } from '@/api/urls';
-import type { Workspace, WorkspaceCard } from '@/types';
+import { WORKSPACES_LIST, WORKSPACE_DETAIL, CARDS_LIST, CARD_DETAIL, CARD_COMMENTS } from '@/api/urls';
+import type { Workspace, WorkspaceCard, WorkspaceCardFull, CardComment } from '@/types';
 
 // Hierarchical query keys — invalidating `projectKeys.all` refreshes the
 // my-workspaces list, any open board detail and its per-column card lists
@@ -13,6 +13,8 @@ export const projectKeys = {
   myWorkspaces: () => [...projectKeys.all, 'mine'] as const,
   detail: (id: number) => [...projectKeys.all, 'detail', id] as const,
   cards: (columnId: number) => [...projectKeys.all, 'cards', columnId] as const,
+  card: (id: number) => [...projectKeys.all, 'card', id] as const,
+  cardComments: (id: number) => [...projectKeys.all, 'card', id, 'comments'] as const,
 };
 
 // Read a single workspace (used by the board detail query and the edit-form prefill).
@@ -60,6 +62,32 @@ export function columnCardsQuery(columnId: number) {
     enabled: !!columnId,
     // Cards are the board's externally-mutable content (other members complete
     // or add cards) — revalidate on open, matching workspaceDetailQuery.
+    refetchOnMount: 'always',
+  });
+}
+
+// Full card detail (GET /cards/{id}) — description, dates, members, labels,
+// attachments nested. Comments come separately (cardCommentsQuery).
+export function cardDetailQuery(id: number) {
+  return queryOptions({
+    queryKey: projectKeys.card(id),
+    queryFn: () => apiClient.get<WorkspaceCardFull>(CARD_DETAIL(id)).then((r) => r.data),
+    enabled: !!id,
+    // Status/members change externally — revalidate on open so the action
+    // buttons and completed/rejected state aren't stale.
+    refetchOnMount: 'always',
+  });
+}
+
+export function cardCommentsQuery(id: number) {
+  return queryOptions({
+    queryKey: projectKeys.cardComments(id),
+    queryFn: () =>
+      apiClient.get(CARD_COMMENTS(id)).then((r) => {
+        const d = r.data;
+        return (Array.isArray(d) ? d : (d?.items ?? [])) as CardComment[];
+      }),
+    enabled: !!id,
     refetchOnMount: 'always',
   });
 }

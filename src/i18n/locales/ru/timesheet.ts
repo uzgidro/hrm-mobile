@@ -19,6 +19,8 @@ export default {
   // ── Duty roster (navbatchilik, Wave 2) ────────────────────────────────────
   dutyTitle: 'Дежурства',
   dutySubtitle: 'Мой график дежурств',
+  dutyGridTitle: 'График дежурств',
+  dutyGridSubtitle: 'Сотрудники группы — по дням',
   dutyLoadError: 'Ошибка загрузки дежурств',
   dutyEmpty: 'График дежурств отсутствует',
   dutyMonthEmpty: 'В этом месяце дежурств не назначено',
@@ -62,4 +64,14 @@ export default {
   codeUnknownReason: 'Неизвестная причина',
   codeDismissed: 'Уволен',
   codeUnknown: 'Неизвестно',
+  // Day detail (Вход/Выход + График + Журнал) — raw turnstile events.
+  entry: 'вход',
+  exit: 'выход',
+  entryTitle: 'Вход',
+  exitTitle: 'Выход',
+  scheduleTitle: 'График работы',
+  workDay: 'рабочий день',
+  break: 'перерыв',
+  logTitle: 'Журнал',
+  logEmpty: 'Список пуст',
 } as const;

@@ -8,6 +8,7 @@ import {
   CARDS_LIST,
   CARD_COMPLETE,
   CARD_UNCOMPLETE,
+  CARD_REJECT,
 } from '@/api/urls';
 import type { Workspace, WorkspaceColumn, WorkspaceCard } from '@/types';
 import { projectKeys } from './queries';
@@ -60,6 +61,10 @@ export function completeCard(id: number): Promise<void> {
 
 export function uncompleteCard(id: number): Promise<void> {
   return apiClient.post(CARD_UNCOMPLETE(id)).then(() => undefined);
+}
+
+export function rejectCard(id: number): Promise<void> {
+  return apiClient.post(CARD_REJECT(id)).then(() => undefined);
 }
 
 // Toggle a card's completion in one call — mirrors the board checkbox.

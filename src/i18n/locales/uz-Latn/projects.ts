@@ -51,4 +51,26 @@ export default {
 
   // ── Alerts ──────────────────────────────────────────────────────────────────
   errorTitle: 'Xatolik',
+
+  // ── Card detail (view + status actions) ─────────────────────────────────────
+  cardDetailSubtitle: 'Vazifa tafsiloti',
+  cardLoadError: "Vazifani yuklab bo'lmadi",
+  statusActive: 'Bajarilmoqda',
+  statusCompleted: 'Bajarildi',
+  statusRejected: 'Rad etildi',
+  attachmentsTitle: 'Fayllar',
+  attachmentsEmpty: "Fayllar yo'q",
+  fileFallback: 'Fayl',
+  commentsTitle: 'Izohlar',
+  commentsEmpty: "Izohlar yo'q",
+  complete: 'Bajarildi',
+  uncomplete: 'Qaytarish',
+  reject: 'Rad etish',
+  completed: 'Vazifa bajarildi',
+  uncompleted: 'Vazifa qaytarildi',
+  rejected: 'Vazifa rad etildi',
+  rejectConfirmTitle: 'Vazifani rad etish',
+  rejectConfirmMessage: 'Vazifani rad etishni tasdiqlaysizmi?',
+  actionDoneTitle: 'Bajarildi',
+  actionError: "Amalni bajarib bo'lmadi",
 } as const;

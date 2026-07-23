@@ -25,6 +25,8 @@ export const TURNSTILE_ATTENDANCE_NORMALIZED = 'turnstile-attendance-events/norm
 export const NAVBATCHILIK_GROUPS_MY = 'navbatchilik-groups/my';
 export const NAVBATCHILIK_GROUP_MEMBERS = (id: number) => `navbatchilik-groups/${id}/members`;
 export const WORK_SCHEDULE_DAYS = 'work-schedule-days';
+// All group members' duty days in one request (backend feat/work-schedule-by-group).
+export const WORK_SCHEDULE_DAYS_BY_GROUP = (groupId: number) => `work-schedule-days/group/${groupId}`;
 // Holidays (Bayramlar) + duty-days (who works through the off-days) — two
 // SEPARATE backend resources; both read-only on mobile (CRUD stays on web).
 export const HOLIDAYS_LIST = 'holidays';
@@ -81,6 +83,9 @@ export const COLUMNS_LIST = 'columns';
 export const CARDS_LIST = 'cards';
 export const CARD_COMPLETE = (id: number) => `cards/${id}/complete`;
 export const CARD_UNCOMPLETE = (id: number) => `cards/${id}/uncomplete`;
+export const CARD_DETAIL = (id: number) => `cards/${id}`;
+export const CARD_REJECT = (id: number) => `cards/${id}/reject`;
+export const CARD_COMMENTS = (id: number) => `cards/${id}/comments`;
 
 // Employee self update
 export const EMPLOYEE_SELF_UPDATE = 'employees/me/self-update';

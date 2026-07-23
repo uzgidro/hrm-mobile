@@ -16,8 +16,8 @@ import { LoadingView, ErrorState, EmptyState } from '@/components/StateViews';
 import { monthName, weekdayNameShort } from '@/i18n/dates';
 import { employeeSubLabel } from '@/utils/roles';
 import type { Employee } from '@/types';
-import { myNavbatchilikGroupsQuery, groupMembersQuery, myScheduleDaysQuery } from '../api/queries';
-import { dutyDayMeta, sortScheduleDays, shiftColor, shiftIndexIn, timeRange, backendWeekdayToDayjs } from '../duty';
+import { myNavbatchilikGroupsQuery, groupMembersQuery, myScheduleDaysQuery, groupScheduleDaysQuery } from '../api/queries';
+import { dutyDayMeta, sortScheduleDays, shiftColor, shiftIndexIn, timeRange, backendWeekdayToDayjs, daysForEmployee } from '../duty';
 
 // "Мои дежурства" — READ-ONLY navbatchilik view (my duty days + my groups +
 // the group roster). The web employee page renders editable cells and relies
@@ -41,15 +41,19 @@ export default function MyDutyScreen() {
   const groups = useMemo(() => groupsQ.data ?? [], [groupsQ.data]);
   const selectedGroup = groups[Math.min(selectedGroupIdx, Math.max(0, groups.length - 1))];
   const membersQ = useQuery({ ...groupMembersQuery(selectedGroup?.id ?? 0), enabled: !!selectedGroup });
+  // All group members' days for the month, in one request — lets each member row
+  // show that member's own duty days ("дежурства других").
+  const groupDaysQ = useQuery({ ...groupScheduleDaysQuery(monthKey, selectedGroup?.id), enabled: !!selectedGroup });
 
   const days = useMemo(() => sortScheduleDays(daysQ.data ?? []), [daysQ.data]);
   const members: Employee[] = membersQ.data ?? [];
+  const groupDays = useMemo(() => groupDaysQ.data ?? [], [groupDaysQ.data]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([groupsQ.refetch(), daysQ.refetch(), selectedGroup ? membersQ.refetch() : Promise.resolve()]);
+    await Promise.all([groupsQ.refetch(), daysQ.refetch(), selectedGroup ? membersQ.refetch() : Promise.resolve(), selectedGroup ? groupDaysQ.refetch() : Promise.resolve()]);
     setRefreshing(false);
-  }, [groupsQ, daysQ, membersQ, selectedGroup]);
+  }, [groupsQ, daysQ, membersQ, groupDaysQ, selectedGroup]);
 
   const isLoading = groupsQ.isLoading || daysQ.isLoading;
   // Either query failing is an error — masking a failed schedule fetch as an
@@ -179,15 +183,37 @@ export default function MyDutyScreen() {
               {membersQ.isLoading ? (
                 <Text style={styles.emptyText}>…</Text>
               ) : (
-                members.map((emp, idx) => (
-                  <View key={emp.id} style={[styles.memberRow, idx < members.length - 1 && styles.memberRowBorder]}>
-                    <EmployeeAvatar emp={emp} size={40} />
-                    <View style={styles.memberInfo}>
-                      <Text style={styles.memberName} numberOfLines={1}>{emp.legal_name}</Text>
-                      <Text style={styles.memberSub} numberOfLines={1}>{employeeSubLabel(emp)}</Text>
+                members.map((emp, idx) => {
+                  const empDays = daysForEmployee(groupDays, emp.id);
+                  return (
+                    <View key={emp.id} style={[styles.memberBlock, idx < members.length - 1 && styles.memberRowBorder]}>
+                      <View style={styles.memberRow}>
+                        <EmployeeAvatar emp={emp} size={40} />
+                        <View style={styles.memberInfo}>
+                          <Text style={styles.memberName} numberOfLines={1}>{emp.legal_name}</Text>
+                          <Text style={styles.memberSub} numberOfLines={1}>{employeeSubLabel(emp)}</Text>
+                        </View>
+                      </View>
+                      {empDays.length > 0 && (
+                        <View style={styles.memberDaysRow}>
+                          {empDays.map((d) => {
+                            const meta = dutyDayMeta(d);
+                            const sIdx = shiftIndexIn(selectedGroup?.shifts, meta.label);
+                            const chipColor = meta.isDayOff
+                              ? colors.textMuted
+                              : sIdx >= 0 ? shiftColor(sIdx, colors) : colors.primaryLight;
+                            return (
+                              <View key={d.id} style={[styles.dayPill, { borderColor: chipColor }]}>
+                                <Text style={styles.dayPillDate}>{dayjs(d.schedule_date).format('D MMM')}</Text>
+                                <View style={[styles.dayPillDot, { backgroundColor: chipColor }]} />
+                              </View>
+                            );
+                          })}
+                        </View>
+                      )}
                     </View>
-                  </View>
-                ))
+                  );
+                })
               )}
             </View>
           )}
@@ -243,9 +269,14 @@ const makeStyles = (c: ThemeColors) =>
     weekdayPill: { backgroundColor: c.bg, borderWidth: 1, borderColor: c.cardBorder, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5 },
     weekdayPillText: { fontSize: 12, fontWeight: '600', color: c.textSecondary },
 
-    memberRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 },
+    memberBlock: { paddingVertical: 8 },
+    memberRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
     memberRowBorder: { borderBottomWidth: 1, borderBottomColor: c.cardBorder },
     memberInfo: { flex: 1 },
     memberName: { fontSize: 14, fontWeight: '600', color: c.text },
     memberSub: { fontSize: 12, color: c.textMuted, marginTop: 1 },
+    memberDaysRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8, marginLeft: 50 },
+    dayPill: { flexDirection: 'row', alignItems: 'center', gap: 5, borderWidth: 1, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
+    dayPillDate: { fontSize: 11, fontWeight: '600', color: c.textSecondary },
+    dayPillDot: { width: 6, height: 6, borderRadius: 3 },
   });
