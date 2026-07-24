@@ -441,16 +441,45 @@ export interface KpiIndicator {
   is_active?: boolean | null;
 }
 
-// Employee work item under a has_tasks entry. `score` is set only by the
-// supervisor on confirm — the owner submits names only.
+// A configurable, per-branch task status (Verifix catalog). `counts_for_fact`
+// rows roll their task scores into entry.fact_value on the backend.
+export interface KpiTaskStatus {
+  id: number;
+  name: string;
+  color?: string | null;
+  order_no?: number | null;
+  counts_for_fact: boolean;
+  is_active?: boolean;
+  organization_branch_id?: number | null;
+}
+
+// Employee work item under a has_tasks entry. Verifix: a task carries a `score`
+// (set on create or via set-grade) and a `status_id` pointing at the per-branch
+// status catalog (`task_status` is the expanded row). `status` is the legacy
+// string kept for back-compat.
 export interface KpiTask {
   id: number;
   entry_id?: number | null;
   name?: string | null;
   score?: number | null;
   status?: 'draft' | 'submitted' | 'confirmed' | 'rejected' | string | null;
+  status_id?: number | null;
+  task_status?: Partial<Pick<KpiTaskStatus, 'name' | 'color' | 'counts_for_fact' | 'order_no'>> | null;
   review_note?: string | null;
   reviewed_by_id?: number | null;
+}
+
+// The caller's permissions on ONE entry (backend KpiEntryAccess). Filled ONLY by
+// the entry-detail endpoint (GET kpi/entries/{id}); null in the scorecard/list.
+// manage_access (HR/master/kpi_admin) grants everything; owner => is_owner +
+// edit_access; supervisor => task_approve_access; stakeholder per grants.
+export interface KpiEntryAccess {
+  is_owner: boolean;
+  edit_access: boolean;
+  fact_insert_access: boolean;
+  status_change_access: boolean;
+  task_approve_access: boolean;
+  manage_access: boolean;
 }
 
 // One employee × indicator × period plan/fact row. Status carries BOTH legacy
@@ -459,6 +488,7 @@ export interface KpiEntry {
   id: number;
   indicator_id?: number | null;
   employee_id?: number | null;
+  organization_branch_id?: number | null;
   period_start?: string | null;
   period_end?: string | null;
   plan_value?: number | null;
@@ -470,6 +500,8 @@ export interface KpiEntry {
   indicator?: KpiIndicator | null;
   employee?: Employee | null;
   tasks?: KpiTask[] | null;
+  /** the caller's rights on this entry — only present on the detail endpoint */
+  my_access?: KpiEntryAccess | null;
 }
 
 export interface KpiScorecardProfile {

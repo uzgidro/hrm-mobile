@@ -1,24 +1,32 @@
-import type { KpiEntry, KpiTask } from '@/types';
+import type { KpiEntry, KpiTask, KpiEntryAccess } from '@/types';
 import {
   bandFor,
   KPI_BANDS,
   entryStatusKey,
-  taskStatusKey,
   isPenaltyEntry,
   scorecardTotals,
   entryResultDisplay,
   resultColorKey,
-  canAddTask,
-  canActOnTask,
-  canReviewEntry,
-  canReviewTask,
+  canEditTask,
+  canGradeTask,
+  canSetStatus,
+  canAddTaskV2,
   isEntryLocked,
-  confirmedTaskSum,
+  factSum,
   parseScore,
 } from '../utils';
 
 const entry = (o: Partial<KpiEntry>): KpiEntry => ({ id: 1, ...o });
 const task = (o: Partial<KpiTask>): KpiTask => ({ id: 1, ...o });
+const access = (o: Partial<KpiEntryAccess> = {}): KpiEntryAccess => ({
+  is_owner: false,
+  edit_access: false,
+  fact_insert_access: false,
+  status_change_access: false,
+  task_approve_access: false,
+  manage_access: false,
+  ...o,
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // bandFor — web KpiGauge.jsx parity: [0,20) [20,40) [40,60) [60,80) [80,100),
@@ -79,17 +87,6 @@ describe('isEntryLocked', () => {
     expect(isEntryLocked(entry({ status: 'I' }))).toBe(false);
     expect(isEntryLocked(entry({ status: 'draft' }))).toBe(false);
     expect(isEntryLocked(entry({}))).toBe(false);
-  });
-});
-
-describe('taskStatusKey', () => {
-  it('passes known statuses through and falls back to draft', () => {
-    expect(taskStatusKey('submitted')).toBe('submitted');
-    expect(taskStatusKey('confirmed')).toBe('confirmed');
-    expect(taskStatusKey('rejected')).toBe('rejected');
-    expect(taskStatusKey('draft')).toBe('draft');
-    expect(taskStatusKey('weird')).toBe('draft');
-    expect(taskStatusKey(null)).toBe('draft');
   });
 });
 
@@ -155,87 +152,59 @@ describe('resultColorKey', () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Owner task actions — web EntryTasksPage.jsx rules
+// Verifix task permissions — derived from entry.my_access (backend
+// KpiEntryAccess). manage_access (HR/master/kpi_admin) grants everything;
+// owner => edit_access; supervisor => task_approve_access; stakeholder per grant.
 // ─────────────────────────────────────────────────────────────────────────────
-describe('canAddTask', () => {
+describe('canEditTask', () => {
+  it('true with edit_access or manage_access', () => {
+    expect(canEditTask(access({ edit_access: true }))).toBe(true);
+    expect(canEditTask(access({ manage_access: true }))).toBe(true);
+  });
+  it('false without either, and for null access', () => {
+    expect(canEditTask(access())).toBe(false);
+    expect(canEditTask(null)).toBe(false);
+    expect(canEditTask(undefined)).toBe(false);
+  });
+});
+
+describe('canGradeTask', () => {
+  it('true for task_approve_access, edit_access (owner grades own), or manage_access', () => {
+    expect(canGradeTask(access({ task_approve_access: true }))).toBe(true);
+    expect(canGradeTask(access({ edit_access: true }))).toBe(true);
+    expect(canGradeTask(access({ manage_access: true }))).toBe(true);
+  });
+  it('false without any grade right and for null access', () => {
+    expect(canGradeTask(access())).toBe(false);
+    expect(canGradeTask(null)).toBe(false);
+  });
+});
+
+describe('canSetStatus', () => {
+  it('true for task_approve_access, status_change_access, or manage_access', () => {
+    expect(canSetStatus(access({ task_approve_access: true }))).toBe(true);
+    expect(canSetStatus(access({ status_change_access: true }))).toBe(true);
+    expect(canSetStatus(access({ manage_access: true }))).toBe(true);
+  });
+  it('false otherwise and for null access', () => {
+    expect(canSetStatus(access())).toBe(false);
+    expect(canSetStatus(null)).toBe(false);
+  });
+});
+
+describe('canAddTaskV2', () => {
   const hasTasks = { id: 1, has_tasks: true } as const;
-  it('owner may add only on a has_tasks entry that is not locked', () => {
-    expect(canAddTask(entry({ status: 'I', indicator: hasTasks }), true)).toBe(true);
-    expect(canAddTask(entry({ status: 'N', indicator: hasTasks }), true)).toBe(true);
+  it('needs edit_access AND a has_tasks indicator AND an unlocked entry', () => {
+    expect(canAddTaskV2(access({ edit_access: true }), entry({ status: 'I', indicator: hasTasks }))).toBe(true);
+    expect(canAddTaskV2(access({ manage_access: true }), entry({ status: 'N', indicator: hasTasks }))).toBe(true);
   });
-  it('blocked when locked, not owner, or indicator has no tasks', () => {
-    expect(canAddTask(entry({ status: 'locked', indicator: hasTasks }), true)).toBe(false);
-    expect(canAddTask(entry({ status: 'D', indicator: hasTasks }), true)).toBe(false);
-    expect(canAddTask(entry({ status: 'I', indicator: hasTasks }), false)).toBe(false);
-    expect(canAddTask(entry({ status: 'I', indicator: { id: 1, has_tasks: false } }), true)).toBe(false);
-    expect(canAddTask(entry({ status: 'I' }), true)).toBe(false);
-  });
-});
-
-describe('canActOnTask', () => {
-  it('owner may edit/submit/delete only DRAFT tasks on an unlocked entry', () => {
-    expect(canActOnTask(task({ status: 'draft' }), { isOwner: true, entryLocked: false })).toBe(true);
-  });
-  it('blocked for submitted/confirmed/rejected, locked entry, or non-owner', () => {
-    expect(canActOnTask(task({ status: 'submitted' }), { isOwner: true, entryLocked: false })).toBe(false);
-    expect(canActOnTask(task({ status: 'confirmed' }), { isOwner: true, entryLocked: false })).toBe(false);
-    expect(canActOnTask(task({ status: 'rejected' }), { isOwner: true, entryLocked: false })).toBe(false);
-    expect(canActOnTask(task({ status: 'draft' }), { isOwner: true, entryLocked: true })).toBe(false);
-    expect(canActOnTask(task({ status: 'draft' }), { isOwner: false, entryLocked: false })).toBe(false);
-  });
-
-  it('an unknown/new status is NOT actionable (strict === draft, web parity)', () => {
-    expect(canActOnTask(task({ status: 'weird' }), { isOwner: true, entryLocked: false })).toBe(false);
-    expect(canActOnTask(task({ status: null }), { isOwner: true, entryLocked: false })).toBe(false);
-  });
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Supervisor review rules — mirror the BACKEND check (review_task): direct
-// supervisor (entry.employee.supervisor_id) OR manager (HR/master-admin).
-// ─────────────────────────────────────────────────────────────────────────────
-describe('canReviewEntry', () => {
-  const subordinateEntry = entry({
-    employee_id: 7,
-    employee: { id: 7, supervisor_id: 1 } as never,
-  });
-
-  it('true for the direct supervisor of the entry owner', () => {
-    expect(canReviewEntry(subordinateEntry, { myEmployeeId: 1, isManager: false })).toBe(true);
-  });
-
-  it('true for a manager (HR/master-admin) even when not the supervisor', () => {
-    expect(canReviewEntry(subordinateEntry, { myEmployeeId: 99, isManager: true })).toBe(true);
-  });
-
-  it('false for the owner themselves — no self-review even for a manager', () => {
-    const own = entry({ employee_id: 1, employee: { id: 1, supervisor_id: 5 } as never });
-    expect(canReviewEntry(own, { myEmployeeId: 1, isManager: false })).toBe(false);
-    expect(canReviewEntry(own, { myEmployeeId: 1, isManager: true })).toBe(false);
-  });
-
-  it('false for an unrelated employee', () => {
-    expect(canReviewEntry(subordinateEntry, { myEmployeeId: 99, isManager: false })).toBe(false);
-  });
-
-  it('false when my employee id is unknown', () => {
-    expect(canReviewEntry(subordinateEntry, { myEmployeeId: undefined, isManager: false })).toBe(false);
-  });
-});
-
-describe('canReviewTask', () => {
-  const ctx = { canReview: true, entryLocked: false };
-
-  it('review buttons only on SUBMITTED tasks while the entry is unlocked', () => {
-    expect(canReviewTask(task({ status: 'submitted' }), ctx)).toBe(true);
-  });
-
-  it('blocked for draft/confirmed/rejected, locked entry, or no review right', () => {
-    expect(canReviewTask(task({ status: 'draft' }), ctx)).toBe(false);
-    expect(canReviewTask(task({ status: 'confirmed' }), ctx)).toBe(false);
-    expect(canReviewTask(task({ status: 'rejected' }), ctx)).toBe(false);
-    expect(canReviewTask(task({ status: 'submitted' }), { canReview: true, entryLocked: true })).toBe(false);
-    expect(canReviewTask(task({ status: 'submitted' }), { canReview: false, entryLocked: false })).toBe(false);
+  it('blocked when locked, no edit right, or the indicator has no tasks', () => {
+    expect(canAddTaskV2(access({ edit_access: true }), entry({ status: 'D', indicator: hasTasks }))).toBe(false);
+    expect(canAddTaskV2(access({ edit_access: true }), entry({ status: 'locked', indicator: hasTasks }))).toBe(false);
+    expect(canAddTaskV2(access(), entry({ status: 'I', indicator: hasTasks }))).toBe(false);
+    expect(canAddTaskV2(access({ edit_access: true }), entry({ status: 'I', indicator: { id: 1, has_tasks: false } }))).toBe(false);
+    expect(canAddTaskV2(access({ edit_access: true }), entry({ status: 'I' }))).toBe(false);
+    expect(canAddTaskV2(null, entry({ status: 'I', indicator: hasTasks }))).toBe(false);
   });
 });
 
@@ -265,18 +234,21 @@ describe('parseScore', () => {
   });
 });
 
-describe('confirmedTaskSum', () => {
-  it('sums scores of confirmed tasks only', () => {
+// factSum: the entry fact is the sum of scores of tasks whose task_status
+// counts_for_fact (backend _compute_entry_fact). Mirrors the backend server-side.
+describe('factSum', () => {
+  it('sums scores of tasks whose task_status.counts_for_fact is true', () => {
     const tasks = [
-      task({ id: 1, status: 'confirmed', score: 30 }),
-      task({ id: 2, status: 'confirmed', score: 20.5 }),
-      task({ id: 3, status: 'submitted', score: 99 }),
-      task({ id: 4, status: 'confirmed', score: null }),
+      task({ id: 1, score: 30, task_status: { counts_for_fact: true } }),
+      task({ id: 2, score: 20.5, task_status: { counts_for_fact: true } }),
+      task({ id: 3, score: 99, task_status: { counts_for_fact: false } }),
+      task({ id: 4, score: null, task_status: { counts_for_fact: true } }),
+      task({ id: 5, score: 10, task_status: null }),
     ];
-    expect(confirmedTaskSum(tasks)).toBe(50.5);
+    expect(factSum(tasks)).toBe(50.5);
   });
   it('empty/undefined → 0', () => {
-    expect(confirmedTaskSum([])).toBe(0);
-    expect(confirmedTaskSum(undefined)).toBe(0);
+    expect(factSum([])).toBe(0);
+    expect(factSum(undefined)).toBe(0);
   });
 });

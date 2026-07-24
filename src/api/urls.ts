@@ -149,15 +149,17 @@ export const FILE_EDITOR_CONFIG = (id: number) => `files/${id}/editor-config`;
 // attendance-analytics "employee-kpi" endpoints — those are an unrelated system.
 // my-scorecard without employee_id = the caller's own card; the gauge percent
 // is computed on the BACKEND (Σ M-facts − Σ L-facts, clamped ≥0) — never
-// recompute it client-side. Task scores are entered only by the supervisor on
-// confirm; the employee submits task names only.
+// recompute it client-side. Verifix task flow: a task is created with an
+// optional score; set-grade edits the score; set-status moves it through the
+// per-branch status catalog (task-statuses). Permissions come from entry.my_access.
 export const KPI_MY_SCORECARD = 'kpi/my-scorecard';
 export const KPI_MY_TEAM = 'kpi/my-team';
 export const KPI_ENTRY_DETAIL = (id: number) => `kpi/entries/${id}`;
 export const KPI_TASKS = 'kpi/tasks';
 export const KPI_TASK_DETAIL = (id: number) => `kpi/tasks/${id}`;
-export const KPI_TASK_SUBMIT = (id: number) => `kpi/tasks/${id}/submit`;
-export const KPI_TASK_REVIEW = (id: number) => `kpi/tasks/${id}/review`;
+export const KPI_TASK_SET_STATUS = (id: number) => `kpi/tasks/${id}/set-status`;
+export const KPI_TASK_SET_GRADE = (id: number) => `kpi/tasks/${id}/set-grade`;
+export const KPI_TASK_STATUSES = 'kpi/task-statuses';
 export const KPI_BONUSES = 'kpi/bonuses';
 
 // Support tickets (Texnik yordam / АКТ helpdesk). Create is multipart (optional

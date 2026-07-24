@@ -42,39 +42,29 @@ export default {
   indicator: "Ko'rsatkich turi",
   owner: 'Egasi',
   computedFact: 'Hisoblangan fakt',
-  confirmedSum: "Tasdiqlangan yig'indi",
   lockedNote: "Davr yakunlangan — o'zgartirib bo'lmaydi",
   noTasksIndicator: "Bu ko'rsatkich uchun vazifa kiritilmaydi",
 
-  // ── Tasks ─────────────────────────────────────────────────────────────────
+  // ── Tasks (Verifix: score + configurable status) ──────────────────────────
   tasksTitle: 'Vazifalar',
   emptyTasks: "Vazifa yo'q",
   addTaskPlaceholder: 'Bajargan ishingizni yozing...',
-  taskDraft: 'Qoralama',
-  taskSubmitted: 'Topshirilgan',
-  taskConfirmed: 'Tasdiqlangan',
-  taskRejected: 'Rad etilgan',
-  rejectNote: 'Rad etish sababi',
+  scorePlaceholder: 'Baho',
+  scoreLabel: 'Baho (%)',
+  setScore: 'Baho qo\'yish',
+  statusNone: 'Holat tanlanmagan',
+  pickStatusTitle: 'Holatni tanlang',
 
   // ── Confirm dialogs ───────────────────────────────────────────────────────
-  submitConfirmTitle: 'Vazifani topshirish',
-  submitConfirmMessage: 'Vazifa rahbarga baholash uchun yuboriladi.',
-  submitAction: 'Topshirish',
   deleteConfirmTitle: "Vazifani o'chirish",
   deleteConfirmMessage: "Ushbu vazifani o'chirmoqchimisiz?",
   deleteAction: "O'chirish",
 
-  // ── Wave 2: supervisor review / team / bonuses ─────────────────────────────
+  // ── Team / bonuses ─────────────────────────────────────────────────────────
   teamTitle: 'Xodimlarim samaradorligi',
   teamEntries: "Ko'rsatkichlar",
   teamPending: 'Tasdiq kutmoqda',
   teamAllDone: 'Yakunlangan',
   teamEmpty: "Sizga biriktirilgan xodimlar yo'q",
   bonusesTitle: 'Bonuslar',
-  reviewConfirm: 'Tasdiq',
-  reviewReject: 'Rad',
-  reviewScoreLabel: 'Baho (%)',
-  reviewNoteLabel: 'Rad etish sababi',
-  reviewConfirmAction: 'Tasdiqlash',
-  reviewRejectAction: 'Rad etish',
 } as const;

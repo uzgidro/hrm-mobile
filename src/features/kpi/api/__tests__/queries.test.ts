@@ -1,11 +1,11 @@
 import MockAdapter from 'axios-mock-adapter';
 import { keepPreviousData } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
-import { KPI_MY_SCORECARD, KPI_MY_TEAM, KPI_ENTRY_DETAIL, KPI_BONUSES } from '@/api/urls';
+import { KPI_MY_SCORECARD, KPI_MY_TEAM, KPI_ENTRY_DETAIL, KPI_BONUSES, KPI_TASK_STATUSES } from '@/api/urls';
 import {
-  kpiKeys, myScorecardQuery, myTeamQuery, kpiEntryQuery, entryBonusesQuery,
+  kpiKeys, myScorecardQuery, myTeamQuery, kpiEntryQuery, entryBonusesQuery, taskStatusesQuery,
 } from '../queries';
-import type { KpiScorecard, KpiEntry, KpiTeam, KpiBonus } from '@/types';
+import type { KpiScorecard, KpiEntry, KpiTeam, KpiBonus, KpiTaskStatus } from '@/types';
 
 let mock: MockAdapter;
 beforeEach(() => {
@@ -22,7 +22,9 @@ describe('kpiKeys', () => {
     expect(kpiKeys.team('')).toEqual(['kpi', 'team', '']);
     expect(kpiKeys.entry(5)).toEqual(['kpi', 'entry', 5]);
     expect(kpiKeys.bonuses(5)).toEqual(['kpi', 'bonuses', 5]);
-    for (const key of [kpiKeys.scorecard(''), kpiKeys.team(''), kpiKeys.entry(5), kpiKeys.bonuses(5)]) {
+    expect(kpiKeys.taskStatuses()).toEqual(['kpi', 'task-statuses', null]);
+    expect(kpiKeys.taskStatuses(5)).toEqual(['kpi', 'task-statuses', 5]);
+    for (const key of [kpiKeys.scorecard(''), kpiKeys.team(''), kpiKeys.entry(5), kpiKeys.bonuses(5), kpiKeys.taskStatuses()]) {
       expect(key.slice(0, 1)).toEqual(kpiKeys.all);
     }
   });
@@ -101,6 +103,30 @@ describe('entryBonusesQuery', () => {
 
   it('is disabled for a falsy entry id', () => {
     expect(entryBonusesQuery(0).enabled).toBe(false);
+  });
+});
+
+describe('taskStatusesQuery', () => {
+  it('keys under kpiKeys.all and fetches the per-branch status catalog', async () => {
+    const rows: KpiTaskStatus[] = [{ id: 1, name: 'Bajarildi', counts_for_fact: true }];
+    mock.onGet(KPI_TASK_STATUSES).reply(200, rows);
+    const opts = taskStatusesQuery();
+    expect(opts.queryKey).toEqual(['kpi', 'task-statuses', null]);
+    const data = await (opts.queryFn as () => Promise<KpiTaskStatus[]>)();
+    // no branch_id → the catalog for the user's own branch(es)
+    expect(mock.history.get[0].params).toEqual({});
+    expect(data).toHaveLength(1);
+  });
+
+  it('forwards branch_id when given (cross-branch supervisor dropdown)', async () => {
+    mock.onGet(KPI_TASK_STATUSES).reply(200, []);
+    await (taskStatusesQuery(5).queryFn as () => Promise<KpiTaskStatus[]>)();
+    expect(mock.history.get[0].params).toEqual({ branch_id: 5 });
+  });
+
+  it('defaults a non-array response to []', async () => {
+    mock.onGet(KPI_TASK_STATUSES).reply(200, null);
+    expect(await (taskStatusesQuery().queryFn as () => Promise<KpiTaskStatus[]>)()).toEqual([]);
   });
 });
 
