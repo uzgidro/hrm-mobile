@@ -20,6 +20,7 @@ export default {
     salary: 'Зарплата',
     team: 'Команда',
     employees: 'Сотрудники',
+    directory: 'Справочник',
     guests: 'Гости',
     documents: 'Документы',
     support: 'Техподдержка',

@@ -26,6 +26,7 @@ import components from './components';
 import update from './update';
 import support from './support';
 import chairman from './chairman';
+import directory from './directory';
 
 export default {
   common,
@@ -54,4 +55,5 @@ export default {
   update,
   support,
   chairman,
+  directory,
 } as const;

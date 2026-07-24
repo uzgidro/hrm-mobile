@@ -20,6 +20,7 @@ export default {
     salary: 'Salary',
     team: 'Team',
     employees: 'Employees',
+    directory: 'Directory',
     guests: 'Guests',
     documents: 'Documents',
     support: 'Support',

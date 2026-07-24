@@ -266,6 +266,21 @@ export interface EmployeeFull extends Employee {
   educations?: Education[];
 }
 
+// GET employees/phone-directory — a flat, unscoped company phone book for all
+// roles. Carries no PII; photo_path is already an absolute URL.
+export interface PhoneDirectoryEntry {
+  id: number;
+  legal_name?: string | null;
+  photo_path?: string | null;
+  photo_thumb_path?: string | null;
+  phone_number?: string | null;
+  internal_phone_number?: string | null;
+  job_position_name?: string | null;
+  job_position_razryad?: number | null;
+  department_name?: string | null;
+  branch_id?: number | null;
+}
+
 export interface EmployeeBirthday {
   id: number;
   legal_name: string;
