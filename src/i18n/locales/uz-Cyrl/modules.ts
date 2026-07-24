@@ -20,6 +20,7 @@ export default {
     salary: 'Ойлик',
     team: 'Жамоа',
     employees: 'Ходимлар',
+    directory: 'Маълумотнома',
     guests: 'Меҳмонлар',
     documents: 'Ҳужжатлар',
     support: 'Техник ёрдам',

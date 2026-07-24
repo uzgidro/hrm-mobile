@@ -79,6 +79,7 @@ export default function ModulesScreen() {
         items: [
           { key: 'team', icon: 'users', label: t('modules.labels.team'), route: '/team', access: 'team' },
           { key: 'employees', icon: 'idcard', label: t('modules.labels.employees'), route: '/employees-list', access: 'employees' },
+          { key: 'directory', icon: 'phone', label: t('modules.labels.directory'), route: '/phone-directory', access: 'directory' },
           { key: 'guests', icon: 'guest', label: t('modules.labels.guests'), route: '/(tabs)/mehmonlar', access: 'guests' },
           { key: 'birthdays', icon: 'gift', label: t('modules.labels.birthdays'), route: '/birthdays', access: 'birthdays' },
         ],

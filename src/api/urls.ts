@@ -64,6 +64,8 @@ export const NOTIFICATIONS_READ_ALL = 'notifications/read-all';
 // Employees list
 export const EMPLOYEES_LIST = 'employees';
 export const EMPLOYEES_BIRTHDAYS = 'employees/birthdays';
+// Company phone book — light, no PII, served to every role without scoping.
+export const PHONE_DIRECTORY = 'employees/phone-directory';
 
 // Departments
 export const DEPARTMENTS_LIST = 'departments';

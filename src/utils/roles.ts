@@ -161,7 +161,7 @@ export type PageKey =
   | 'home' | 'orders' | 'letters' | 'guests' | 'projects'
   | 'employees' | 'attendance' | 'requests' | 'documents' | 'kpi'
   | 'timesheet' | 'assistant' | 'salary' | 'team' | 'birthdays' | 'news'
-  | 'notifications' | 'profile' | 'support' | 'chairman';
+  | 'notifications' | 'profile' | 'support' | 'chairman' | 'directory';
 
 /** Whether the given user may see a page. Mirrors which web NAV the role gets. */
 export function canAccessPage(user: User | null | undefined, key: PageKey): boolean {
@@ -174,6 +174,10 @@ export function canAccessPage(user: User | null | undefined, key: PageKey): bool
       return !kpp;
     // Guests appear in every role's nav.
     case 'guests':
+      return true;
+    // Phone directory: a company phone book (no PII) the backend serves to any
+    // authenticated role without scoping — visible to everyone, KPP included.
+    case 'directory':
       return true;
     // Projects: everyone except single-role HR and KPP.
     case 'projects':

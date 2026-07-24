@@ -26,6 +26,7 @@ export default {
     salary: 'Oylik',
     team: 'Jamoa',
     employees: 'Xodimlar',
+    directory: "Ma'lumotnoma",
     guests: 'Mehmonlar',
     documents: 'Hujjatlar',
     support: 'Texnik yordam',
