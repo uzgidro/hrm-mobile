@@ -1,78 +1,85 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, RefreshControl,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useLocalSearchParams } from 'expo-router';
-import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { LoadingView, EmptyState, ErrorState } from '@/components/StateViews';
+import { PickerModal, type PickerOption } from '@/components/PickerModal';
 import { confirm } from '@/lib/confirm';
-import { isHR, isSiteMasterAdmin } from '@/utils/roles';
 import type { KpiTask } from '@/types';
-import { kpiEntryQuery, entryBonusesQuery } from '../api/queries';
+import { kpiEntryQuery, entryBonusesQuery, taskStatusesQuery } from '../api/queries';
 import {
-  useAddKpiTask, useUpdateKpiTask, useSubmitKpiTask, useDeleteKpiTask, useReviewKpiTask,
+  useAddKpiTask, useUpdateKpiTask, useDeleteKpiTask, useSetTaskStatus, useSetTaskGrade,
 } from '../api/mutations';
 import {
-  isEntryLocked, canAddTask, canActOnTask, canReviewEntry, canReviewTask,
-  taskStatusKey, confirmedTaskSum, entryResultDisplay, parseScore,
+  isEntryLocked, canAddTaskV2, canEditTask, canGradeTask, canSetStatus,
+  factSum, entryResultDisplay, parseScore,
 } from '../utils';
 
-// KPI entry detail (web EntryTasksPage): indicator summary + the task list +
-// read-only bonuses. The OWNER adds/edits/submits/deletes DRAFT tasks while the
-// entry is unlocked; the SUPERVISOR (entry.employee.supervisor_id) or HR/
-// master-admin reviews SUBMITTED tasks — confirm with a score or reject with a
-// note. canReview is derived from data (the backend's own rule), so it also
-// holds when arriving via a push deep link.
+// KPI entry detail (web EntryTasksPage, Verifix). Permissions come from
+// entry.my_access (filled only on this detail endpoint): edit_access adds/renames/
+// deletes tasks, task_approve/edit grades them, task_approve/status_change moves
+// them through the per-branch status catalog. The fact is the sum of scores in
+// counts_for_fact statuses. Read-only bonuses below.
 export default function KpiEntryScreen() {
   const { t } = useTranslation();
   const { id } = useLocalSearchParams<{ id: string }>();
   const entryId = Number(id);
-  const { user } = useAuthStore();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
   const { data: entry, isLoading, isError, refetch, isFetching } = useQuery(kpiEntryQuery(entryId));
+  // Fetch the status catalog for the ENTRY's branch (web parity) — a cross-branch
+  // supervisor needs the subordinate branch's statuses, not their own. Passing
+  // undefined until the entry loads returns the caller's own branch catalog.
+  const { data: statuses = [] } = useQuery(taskStatusesQuery(entry?.organization_branch_id ?? undefined));
   const { data: bonuses = [] } = useQuery(entryBonusesQuery(entryId));
 
+  // New-task composer (name + optional score).
   const [newName, setNewName] = useState('');
+  const [newScore, setNewScore] = useState('');
+  // Inline task-name edit.
   const [editing, setEditing] = useState<{ id: number; name: string } | null>(null);
-  // Supervisor review panel: confirm (score) or reject (note) for one task.
-  const [reviewing, setReviewing] = useState<
-    { id: number; mode: 'confirm'; score: string } | { id: number; mode: 'reject'; note: string } | null
-  >(null);
+  // Inline grade edit (task id + score string).
+  const [grading, setGrading] = useState<{ id: number; score: string } | null>(null);
+  // Status picker target task id.
+  const [statusPickerFor, setStatusPickerFor] = useState<number | null>(null);
 
   const addTask = useAddKpiTask(entryId);
   const updateTask = useUpdateKpiTask();
-  const submitTask = useSubmitKpiTask();
   const deleteTask = useDeleteKpiTask();
-  const reviewTask = useReviewKpiTask();
+  const setStatus = useSetTaskStatus();
+  const setGrade = useSetTaskGrade();
 
-  const isOwner = !!user?.employee?.id && user.employee.id === entry?.employee_id;
+  const access = entry?.my_access ?? null;
   const locked = entry ? isEntryLocked(entry) : true;
-  // isSiteMasterAdmin (NOT isMasterAdmin): the backend grants KPI review only
-  // to the account type — isMasterAdmin includes ministr, whose review the
-  // backend would 403 (web uses isSiteMasterAdmin for exactly this reason).
-  const canReview = entry
-    ? canReviewEntry(entry, {
-        myEmployeeId: user?.employee?.id,
-        isManager: isHR(user) || isSiteMasterAdmin(user),
-      })
-    : false;
+  const canEdit = canEditTask(access);
+  const canGrade = canGradeTask(access);
+  const canStatus = canSetStatus(access);
   const tasks = entry?.tasks ?? [];
-  const confirmedSum = confirmedTaskSum(tasks);
+  const factTotal = factSum(tasks);
   const maxPercent = entry?.indicator?.max_percent;
 
+  const statusOptions = useMemo<PickerOption[]>(
+    () => statuses.map((s) => ({ value: s.id, label: s.name })),
+    [statuses],
+  );
+
+  const newScoreValid = newScore.trim() === '' || parseScore(newScore) != null;
   const onAdd = () => {
     const name = newName.trim();
-    if (!name || addTask.isPending) return;
-    addTask.mutate(name, { onSuccess: () => setNewName('') });
+    if (!name || addTask.isPending || !newScoreValid) return;
+    addTask.mutate(
+      { name, score: newScore.trim() || undefined },
+      { onSuccess: () => { setNewName(''); setNewScore(''); } },
+    );
   };
 
   const onSaveEdit = () => {
@@ -81,15 +88,11 @@ export default function KpiEntryScreen() {
     updateTask.mutate({ id: editing.id, name }, { onSuccess: () => setEditing(null) });
   };
 
-  const onSubmitTask = async (task: KpiTask) => {
-    const ok = await confirm({
-      title: t('kpi.submitConfirmTitle'),
-      message: t('kpi.submitConfirmMessage'),
-      confirmLabel: t('kpi.submitAction'),
-      cancelLabel: t('common.cancel'),
-      icon: 'check',
-    });
-    if (ok) submitTask.mutate(task.id);
+  // Grade is valid when parseScore accepts it (empty = 0, garbage/negative = null).
+  const gradeValid = grading ? parseScore(grading.score) != null : false;
+  const onSaveGrade = () => {
+    if (!grading || setGrade.isPending || !gradeValid) return;
+    setGrade.mutate({ id: grading.id, score: grading.score }, { onSuccess: () => setGrading(null) });
   };
 
   const onDeleteTask = async (task: KpiTask) => {
@@ -104,28 +107,11 @@ export default function KpiEntryScreen() {
     if (ok) deleteTask.mutate(task.id);
   };
 
-  // Supervisor: confirm carries the score; reject carries the note (web parity).
-  // A null parseScore (garbage/negative input) blocks the submit — a confirmed
-  // task cannot be re-reviewed, so a silent score-0 confirm is unacceptable.
-  const reviewScore = reviewing?.mode === 'confirm' ? parseScore(reviewing.score) : 0;
-  const onReview = () => {
-    if (!reviewing || reviewTask.isPending) return;
-    if (reviewing.mode === 'confirm' && reviewScore == null) return;
-    const payload =
-      reviewing.mode === 'confirm'
-        ? { id: reviewing.id, action: 'confirm' as const, score: reviewScore ?? 0 }
-        : { id: reviewing.id, action: 'reject' as const, review_note: reviewing.note };
-    reviewTask.mutate(payload, { onSuccess: () => setReviewing(null) });
+  const onPickStatus = (statusId: number) => {
+    const taskId = statusPickerFor;
+    setStatusPickerFor(null);
+    if (taskId != null) setStatus.mutate({ id: taskId, statusId });
   };
-
-  const taskStatusStyle = (key: ReturnType<typeof taskStatusKey>) =>
-    key === 'confirmed'
-      ? { backgroundColor: colors.successSoft, color: colors.success }
-      : key === 'submitted'
-        ? { backgroundColor: colors.primarySoft, color: colors.primary }
-        : key === 'rejected'
-          ? { backgroundColor: colors.errorSoft, color: colors.error }
-          : { backgroundColor: colors.skeleton, color: colors.textSecondary };
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -159,9 +145,9 @@ export default function KpiEntryScreen() {
 
             {entry.indicator?.has_tasks && (
               <View style={styles.confirmedRow}>
-                <Text style={styles.confirmedLabel}>{t('kpi.confirmedSum')}</Text>
+                <Text style={styles.confirmedLabel}>{t('kpi.factSum')}</Text>
                 <Text style={styles.confirmedValue}>
-                  {confirmedSum}%{maxPercent != null ? `  /  max ${Number(maxPercent)}%` : ''}
+                  {factTotal}%{maxPercent != null ? `  /  max ${Number(maxPercent)}%` : ''}
                 </Text>
               </View>
             )}
@@ -179,25 +165,34 @@ export default function KpiEntryScreen() {
             <>
               <Text style={styles.sectionLabel}>{t('kpi.tasksTitle')}</Text>
 
-              {canAddTask(entry, isOwner) && (
-                <View style={styles.addRow}>
+              {canAddTaskV2(access, entry) && (
+                <View style={styles.addCard}>
                   <TextInput
                     style={styles.addInput}
                     placeholder={t('kpi.addTaskPlaceholder')}
                     placeholderTextColor={colors.textMuted}
                     value={newName}
                     onChangeText={setNewName}
-                    onSubmitEditing={onAdd}
-                    returnKeyType="done"
+                    multiline
                   />
-                  <TouchableOpacity
-                    style={[styles.addBtn, (!newName.trim() || addTask.isPending) && { opacity: 0.5 }]}
-                    onPress={onAdd}
-                    disabled={!newName.trim() || addTask.isPending}
-                    activeOpacity={0.85}
-                  >
-                    <Icon name="plus" size={20} color={colors.onPrimary} strokeWidth={2.4} />
-                  </TouchableOpacity>
+                  <View style={styles.addRow}>
+                    <TextInput
+                      style={[styles.scoreInput, !newScoreValid && styles.inputInvalid]}
+                      placeholder={t('kpi.scorePlaceholder')}
+                      placeholderTextColor={colors.textMuted}
+                      keyboardType="numeric"
+                      value={newScore}
+                      onChangeText={setNewScore}
+                    />
+                    <TouchableOpacity
+                      style={[styles.addBtn, (!newName.trim() || !newScoreValid || addTask.isPending) && { opacity: 0.5 }]}
+                      onPress={onAdd}
+                      disabled={!newName.trim() || !newScoreValid || addTask.isPending}
+                      activeOpacity={0.85}
+                    >
+                      <Icon name="plus" size={20} color={colors.onPrimary} strokeWidth={2.4} />
+                    </TouchableOpacity>
+                  </View>
                 </View>
               )}
 
@@ -205,13 +200,12 @@ export default function KpiEntryScreen() {
                 <EmptyState icon="checklist" title={t('kpi.emptyTasks')} />
               ) : (
                 tasks.map((task) => {
-                  const st = taskStatusKey(task.status);
-                  const stStyle = taskStatusStyle(st);
-                  const actable = canActOnTask(task, { isOwner, entryLocked: locked });
-                  const isEditing = editing?.id === task.id;
+                  const isEditingName = editing?.id === task.id;
+                  const isGrading = grading?.id === task.id;
+                  const pillColor = task.task_status?.color || colors.textMuted;
                   return (
                     <View key={task.id} style={styles.taskCard}>
-                      {isEditing ? (
+                      {isEditingName ? (
                         <TextInput
                           style={styles.editInput}
                           value={editing.name}
@@ -224,102 +218,68 @@ export default function KpiEntryScreen() {
                       )}
 
                       <View style={styles.taskMeta}>
-                        {/* Score is filled only after the supervisor confirms */}
-                        <Text style={styles.taskScore}>
-                          {task.score != null ? `${Number(task.score)}%` : '—'}
-                        </Text>
-                        <View style={[styles.statusPill, { backgroundColor: stStyle.backgroundColor }]}>
-                          <Text style={[styles.statusPillText, { color: stStyle.color }]}>
-                            {t(`kpi.task${st.charAt(0).toUpperCase()}${st.slice(1)}`)}
-                          </Text>
-                        </View>
+                        {/* Score — tappable for graders, otherwise a plain label */}
+                        {canGrade && !locked ? (
+                          <TouchableOpacity
+                            onPress={() => setGrading({ id: task.id, score: task.score != null ? String(task.score) : '' })}
+                            hitSlop={6}
+                            activeOpacity={0.7}
+                          >
+                            <Text style={[styles.taskScore, styles.taskScoreEditable]}>
+                              {task.score != null ? `${Number(task.score)}%` : t('kpi.setScore')}
+                            </Text>
+                          </TouchableOpacity>
+                        ) : (
+                          <Text style={styles.taskScore}>{task.score != null ? `${Number(task.score)}%` : '—'}</Text>
+                        )}
 
-                        {actable && (
+                        {/* Status pill — tappable for status-setters, opens the catalog picker */}
+                        <TouchableOpacity
+                          style={[styles.statusPill, { backgroundColor: `${pillColor}22` }]}
+                          disabled={!canStatus || locked}
+                          onPress={() => setStatusPickerFor(task.id)}
+                          activeOpacity={0.8}
+                        >
+                          <Text style={[styles.statusPillText, { color: pillColor }]} numberOfLines={1}>
+                            {task.task_status?.name || t('kpi.statusNone')}
+                          </Text>
+                          {canStatus && !locked && <Icon name="chevronRight" size={13} color={pillColor} />}
+                        </TouchableOpacity>
+
+                        {canEdit && !locked && (
                           <View style={styles.taskActions}>
-                            {isEditing ? (
+                            {isEditingName ? (
                               <TaskAction icon="check" color={colors.success} onPress={onSaveEdit} styles={styles} />
                             ) : (
                               <TaskAction icon="edit" color={colors.textSecondary} onPress={() => setEditing({ id: task.id, name: task.name ?? '' })} styles={styles} />
                             )}
-                            <TaskAction icon="arrowUp" color={colors.primary} onPress={() => onSubmitTask(task)} styles={styles} />
                             <TaskAction icon="trash" color={colors.error} onPress={() => onDeleteTask(task)} styles={styles} />
-                          </View>
-                        )}
-
-                        {/* Supervisor: score is entered HERE, on confirm (web parity) */}
-                        {canReviewTask(task, { canReview, entryLocked: locked }) && (
-                          <View style={styles.taskActions}>
-                            <TouchableOpacity
-                              style={[styles.reviewBtn, { backgroundColor: colors.successSoft }]}
-                              onPress={() => setReviewing({ id: task.id, mode: 'confirm', score: '' })}
-                              activeOpacity={0.8}
-                            >
-                              <Icon name="check" size={14} color={colors.success} />
-                              <Text style={[styles.reviewBtnText, { color: colors.success }]}>{t('kpi.reviewConfirm')}</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                              style={[styles.reviewBtn, { backgroundColor: colors.errorSoft }]}
-                              onPress={() => setReviewing({ id: task.id, mode: 'reject', note: '' })}
-                              activeOpacity={0.8}
-                            >
-                              <Icon name="close" size={14} color={colors.error} />
-                              <Text style={[styles.reviewBtnText, { color: colors.error }]}>{t('kpi.reviewReject')}</Text>
-                            </TouchableOpacity>
                           </View>
                         )}
                       </View>
 
-                      {st === 'rejected' && !!task.review_note && (
-                        <Text style={styles.rejectNote}>{t('kpi.rejectNote')}: {task.review_note}</Text>
-                      )}
-
-                      {/* Inline review panel for the picked task. Re-gated on
-                          canReviewTask so a background refetch that flips the
-                          task/entry state (co-reviewer acted, period locked)
-                          drops the stale panel instead of submitting into a 400. */}
-                      {reviewing?.id === task.id &&
-                        canReviewTask(task, { canReview, entryLocked: locked }) && (
-                        <View style={styles.reviewPanel}>
-                          <Text style={styles.fieldLabel}>
-                            {reviewing.mode === 'confirm' ? t('kpi.reviewScoreLabel') : t('kpi.reviewNoteLabel')}
-                          </Text>
-                          {reviewing.mode === 'confirm' ? (
-                            <TextInput
-                              style={styles.reviewInput}
-                              keyboardType="numeric"
-                              autoFocus
-                              value={reviewing.score}
-                              onChangeText={(score) => setReviewing({ id: task.id, mode: 'confirm', score })}
-                            />
-                          ) : (
-                            <TextInput
-                              style={styles.reviewInput}
-                              autoFocus
-                              value={reviewing.note}
-                              onChangeText={(note) => setReviewing({ id: task.id, mode: 'reject', note })}
-                            />
-                          )}
-                          <View style={styles.reviewPanelActions}>
+                      {/* Inline grade editor */}
+                      {isGrading && canGrade && !locked && (
+                        <View style={styles.gradePanel}>
+                          <Text style={styles.fieldLabel}>{t('kpi.scoreLabel')}</Text>
+                          <TextInput
+                            style={[styles.gradeInput, !gradeValid && styles.inputInvalid]}
+                            keyboardType="numeric"
+                            autoFocus
+                            value={grading.score}
+                            onChangeText={(score) => setGrading({ id: task.id, score })}
+                          />
+                          <View style={styles.gradeActions}>
                             <TouchableOpacity
-                              style={[
-                                styles.reviewActionBtn,
-                                { backgroundColor: reviewing.mode === 'confirm' ? colors.success : colors.error },
-                                (reviewTask.isPending || (reviewing.mode === 'confirm' && reviewScore == null)) && { opacity: 0.5 },
-                              ]}
-                              onPress={onReview}
-                              disabled={reviewTask.isPending || (reviewing.mode === 'confirm' && reviewScore == null)}
+                              style={[styles.gradeSaveBtn, (setGrade.isPending || !gradeValid) && { opacity: 0.5 }]}
+                              onPress={onSaveGrade}
+                              disabled={setGrade.isPending || !gradeValid}
                               activeOpacity={0.85}
                             >
-                              <Text style={styles.reviewActionText}>
-                                {reviewing.mode === 'confirm' ? t('kpi.reviewConfirmAction') : t('kpi.reviewRejectAction')}
-                              </Text>
+                              <Text style={styles.gradeSaveText}>{t('common.save')}</Text>
                             </TouchableOpacity>
-                            <TouchableOpacity
-                              style={styles.reviewCancelBtn}
-                              onPress={() => setReviewing(null)}
-                              activeOpacity={0.8}
-                            >
-                              <Text style={styles.reviewCancelText}>{t('common.cancel')}</Text>
+                            <TouchableOpacity style={styles.gradeCancelBtn} onPress={() => setGrading(null)} activeOpacity={0.8}>
+                              <Text style={styles.gradeCancelText}>{t('common.cancel')}</Text>
                             </TouchableOpacity>
                           </View>
                         </View>
@@ -355,6 +315,15 @@ export default function KpiEntryScreen() {
           <View style={{ height: 24 }} />
         </ScrollView>
       )}
+
+      <PickerModal
+        visible={statusPickerFor != null}
+        title={t('kpi.pickStatusTitle')}
+        options={statusOptions}
+        selected={statusPickerFor != null ? (tasks.find((x) => x.id === statusPickerFor)?.status_id ?? null) : null}
+        onClose={() => setStatusPickerFor(null)}
+        onSelect={onPickStatus}
+      />
     </SafeAreaView>
   );
 }
@@ -411,14 +380,24 @@ const makeStyles = (c: ThemeColors) =>
       textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 10, marginLeft: 2,
     },
 
-    addRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
+    addCard: {
+      backgroundColor: c.card, borderRadius: 14, borderWidth: 1, borderColor: c.cardBorder,
+      padding: 12, marginBottom: 12, gap: 8,
+    },
     addInput: {
-      flex: 1, minHeight: 44, paddingHorizontal: 12, paddingVertical: 10,
-      backgroundColor: c.card, borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder,
+      minHeight: 40, paddingHorizontal: 12, paddingVertical: 8,
+      backgroundColor: c.bg, borderRadius: 10, borderWidth: 1, borderColor: c.cardBorder,
       fontSize: 14, color: c.text,
     },
+    addRow: { flexDirection: 'row', gap: 8 },
+    scoreInput: {
+      flex: 1, minHeight: 44, paddingHorizontal: 12, paddingVertical: 10,
+      backgroundColor: c.bg, borderRadius: 10, borderWidth: 1, borderColor: c.cardBorder,
+      fontSize: 14, color: c.text,
+    },
+    inputInvalid: { borderColor: c.error },
     addBtn: {
-      width: 44, height: 44, borderRadius: 12, backgroundColor: c.primary,
+      width: 44, height: 44, borderRadius: 10, backgroundColor: c.primary,
       alignItems: 'center', justifyContent: 'center',
     },
 
@@ -433,37 +412,32 @@ const makeStyles = (c: ThemeColors) =>
     },
     taskMeta: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10 },
     taskScore: { fontSize: 14, fontWeight: '800', color: c.text, minWidth: 40 },
-    statusPill: { paddingHorizontal: 9, paddingVertical: 4, borderRadius: 8 },
+    taskScoreEditable: { color: c.primary },
+    statusPill: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 8, maxWidth: 150 },
     statusPillText: { fontSize: 11, fontWeight: '700' },
     taskActions: { flexDirection: 'row', gap: 4, marginLeft: 'auto' },
     taskActionBtn: {
       width: 32, height: 32, borderRadius: 9, alignItems: 'center', justifyContent: 'center',
       backgroundColor: c.bg, borderWidth: 1, borderColor: c.cardBorder,
     },
-    rejectNote: { fontSize: 12, color: c.error, marginTop: 8, lineHeight: 17 },
 
-    reviewBtn: {
-      flexDirection: 'row', alignItems: 'center', gap: 4,
-      paddingHorizontal: 9, paddingVertical: 6, borderRadius: 9,
-    },
-    reviewBtnText: { fontSize: 12, fontWeight: '700' },
-    reviewPanel: {
+    gradePanel: {
       marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: c.cardBorder, gap: 8,
     },
-    reviewInput: {
+    gradeInput: {
       backgroundColor: c.bg, borderRadius: 10, borderWidth: 1, borderColor: c.primary,
       paddingHorizontal: 10, paddingVertical: 8, fontSize: 14, color: c.text,
     },
-    reviewPanelActions: { flexDirection: 'row', gap: 8 },
-    reviewActionBtn: {
-      flex: 1, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center',
+    gradeActions: { flexDirection: 'row', gap: 8 },
+    gradeSaveBtn: {
+      flex: 1, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: c.primary,
     },
-    reviewActionText: { color: '#fff', fontWeight: '700', fontSize: 14 },
-    reviewCancelBtn: {
+    gradeSaveText: { color: c.onPrimary, fontWeight: '700', fontSize: 14 },
+    gradeCancelBtn: {
       paddingHorizontal: 16, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center',
       backgroundColor: c.bg, borderWidth: 1, borderColor: c.cardBorder,
     },
-    reviewCancelText: { color: c.textSecondary, fontWeight: '600', fontSize: 14 },
+    gradeCancelText: { color: c.textSecondary, fontWeight: '600', fontSize: 14 },
 
     bonusCard: {
       backgroundColor: c.card, borderRadius: 14, borderWidth: 1, borderColor: c.cardBorder,

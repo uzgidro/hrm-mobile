@@ -1,11 +1,11 @@
-import type { KpiEntry, KpiTask } from '@/types';
+import type { KpiEntry, KpiTask, KpiEntryAccess } from '@/types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Pure presentation/permission logic for the KPI feature. Mirrors the web
 // byte-for-byte: KpiGauge.jsx (bands), EmployeeKpiScreen.jsx (statuses, totals,
-// penalty display, result colors), EntryTasksPage.jsx (owner task rules).
-// Status/direction CODES are backend contract identifiers (web parity) — only
-// display labels localize, via the i18n keys referenced here.
+// penalty display, result colors), EntryTasksPage.jsx (task permissions read
+// from entry.my_access). Status/direction CODES are backend contract
+// identifiers (web parity) — only display labels localize, via the i18n keys.
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ── Gauge bands (Verifix 5-band, 100-scale) ──────────────────────────────────
@@ -48,13 +48,6 @@ export function entryStatusKey(status: string | null | undefined): EntryStatusKe
 // A finalized period — tasks/bonuses are immutable.
 export function isEntryLocked(entry: KpiEntry): boolean {
   return entry.status === 'locked' || entry.status === 'D';
-}
-
-export type TaskStatusKey = 'draft' | 'submitted' | 'confirmed' | 'rejected';
-
-export function taskStatusKey(status: string | null | undefined): TaskStatusKey {
-  if (status === 'submitted' || status === 'confirmed' || status === 'rejected') return status;
-  return 'draft';
 }
 
 // ── Penalty rows + table totals (web EmployeeKpiScreen) ──────────────────────
@@ -108,52 +101,37 @@ export function resultColorKey(value: number | null | undefined): ResultColorKey
   return 'bad';
 }
 
-// ── Owner task rules (web EntryTasksPage) ────────────────────────────────────
-// The owner adds tasks only on a has_tasks entry that is not finalized. Score
-// entry is supervisor-only (on confirm) — the owner never inputs a score.
-export function canAddTask(entry: KpiEntry, isOwner: boolean): boolean {
-  return isOwner && !!entry.indicator?.has_tasks && !isEntryLocked(entry);
+// ── Verifix task permissions (from entry.my_access) ──────────────────────────
+// The backend fills entry.my_access on the detail endpoint (KpiEntryAccess).
+// manage_access (HR/master/kpi_admin) grants every action; the helpers below
+// OR it in so a manager is never blocked. Mirrors the web EntryTasksPage, which
+// reads the same flags off entry.my_access instead of re-deriving from roles.
+
+// Add/rename/delete a task.
+export function canEditTask(access: KpiEntryAccess | null | undefined): boolean {
+  return !!access && (access.edit_access || access.manage_access);
 }
 
-// Edit/submit/delete are owner actions on DRAFT tasks only, while unlocked.
-// Strict equality (not taskStatusKey) mirrors the web's `t.status === 'draft'`
-// gate: an unknown/new backend status must NOT expose actions the server would
-// reject — taskStatusKey's draft fallback is for display labels only.
-export function canActOnTask(
-  task: KpiTask,
-  { isOwner, entryLocked }: { isOwner: boolean; entryLocked: boolean }
-): boolean {
-  return isOwner && !entryLocked && task.status === 'draft';
+// Set a task score (set-grade). Owners grade their own on create (edit_access);
+// approvers grade on review (task_approve_access).
+export function canGradeTask(access: KpiEntryAccess | null | undefined): boolean {
+  return !!access && (access.task_approve_access || access.edit_access || access.manage_access);
 }
 
-// ── Supervisor review rules ──────────────────────────────────────────────────
-// Mirrors the BACKEND authorization for POST kpi/tasks/{id}/review exactly:
-// direct supervisor (entry.employee.supervisor_id === me) OR manager
-// (HR/master-admin). Computed from data — unlike the web, which hard-codes
-// canReview per navigation branch — so it also holds when arriving via a push
-// deep link. Never for the owner themselves (no self-review).
-export function canReviewEntry(
-  entry: KpiEntry,
-  { myEmployeeId, isManager }: { myEmployeeId: number | undefined; isManager: boolean }
-): boolean {
-  if (myEmployeeId == null) return false;
-  if (entry.employee_id === myEmployeeId) return false;
-  return isManager || entry.employee?.supervisor_id === myEmployeeId;
+// Move a task through the status catalog (set-status).
+export function canSetStatus(access: KpiEntryAccess | null | undefined): boolean {
+  return !!access && (access.task_approve_access || access.status_change_access || access.manage_access);
 }
 
-// Confirm/reject buttons appear only on SUBMITTED tasks of an unlocked entry.
-export function canReviewTask(
-  task: KpiTask,
-  { canReview, entryLocked }: { canReview: boolean; entryLocked: boolean }
-): boolean {
-  return canReview && !entryLocked && task.status === 'submitted';
+// Add a new task: needs edit rights AND a has_tasks indicator AND an open entry.
+export function canAddTaskV2(access: KpiEntryAccess | null | undefined, entry: KpiEntry): boolean {
+  return canEditTask(access) && !!entry.indicator?.has_tasks && !isEntryLocked(entry);
 }
 
-// Parse the supervisor's confirm-score input. Empty = 0 (web/backend parity —
-// score is optional and defaults to 0); a comma decimal separator is accepted
-// (RU/UZ numeric keyboards emit it); garbage or negatives → null so the caller
-// BLOCKS the submit — a NaN would silently confirm the task with score 0, and
-// a confirmed task cannot be re-reviewed. Backend rejects score < 0.
+// Parse a grade input for display/validation. Empty = 0 (score is optional and
+// defaults to 0); a comma decimal separator is accepted (RU/UZ numeric keyboards
+// emit it); garbage or negatives → null so the caller BLOCKS the save — a NaN
+// would silently write score 0. Backend rejects score < 0 and > 100000.
 export function parseScore(input: string): number | null {
   const raw = input.trim();
   if (!raw) return 0;
@@ -162,10 +140,11 @@ export function parseScore(input: string): number | null {
   return n;
 }
 
-// "Tasdiqlangan yig'indi" — confirmed task scores sum (backend mirrors this
-// into entry.fact_value, capped at indicator.max_percent).
-export function confirmedTaskSum(tasks: KpiTask[] | undefined): number {
+// "Hisobga olingan yig'indi" — the entry fact is the sum of scores of tasks
+// whose status counts_for_fact (backend _compute_entry_fact). Mirrors the
+// backend so the screen can show the running total before its refetch lands.
+export function factSum(tasks: KpiTask[] | undefined): number {
   return (tasks ?? [])
-    .filter((t) => t.status === 'confirmed')
+    .filter((t) => t.task_status?.counts_for_fact)
     .reduce((s, t) => s + Number(t.score || 0), 0);
 }

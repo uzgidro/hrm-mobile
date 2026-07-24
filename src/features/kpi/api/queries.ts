@@ -1,7 +1,7 @@
 import { queryOptions, keepPreviousData } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
-import { KPI_MY_SCORECARD, KPI_MY_TEAM, KPI_ENTRY_DETAIL, KPI_BONUSES } from '@/api/urls';
-import type { KpiScorecard, KpiTeam, KpiEntry, KpiBonus } from '@/types';
+import { KPI_MY_SCORECARD, KPI_MY_TEAM, KPI_ENTRY_DETAIL, KPI_BONUSES, KPI_TASK_STATUSES } from '@/api/urls';
+import type { KpiScorecard, KpiTeam, KpiEntry, KpiBonus, KpiTaskStatus } from '@/types';
 
 // Hierarchical query keys — invalidating `kpiKeys.all` refreshes the scorecard
 // (any period/employee), the team roster, any open entry detail and its bonuses
@@ -13,6 +13,7 @@ export const kpiKeys = {
   team: (period: string) => [...kpiKeys.all, 'team', period] as const,
   entry: (id: number) => [...kpiKeys.all, 'entry', id] as const,
   bonuses: (entryId: number) => [...kpiKeys.all, 'bonuses', entryId] as const,
+  taskStatuses: (branchId?: number) => [...kpiKeys.all, 'task-statuses', branchId ?? null] as const,
 };
 
 // A scorecard. Without `employeeId` = the caller's own (the backend defaults to
@@ -61,6 +62,21 @@ export function kpiEntryQuery(id: number) {
     // Task statuses change externally (supervisor confirms/rejects) — always
     // revalidate on open so stale action buttons aren't shown.
     refetchOnMount: 'always',
+  });
+}
+
+// The per-branch task status catalog for the set-status dropdown. Without a
+// branchId the backend returns the catalog for the caller's own branch(es),
+// which is what the single-entry screen needs; a branchId is only for the
+// cross-branch supervisor case. Statuses change rarely — keep them warm.
+export function taskStatusesQuery(branchId?: number) {
+  return queryOptions({
+    queryKey: kpiKeys.taskStatuses(branchId),
+    queryFn: () =>
+      apiClient
+        .get<KpiTaskStatus[]>(KPI_TASK_STATUSES, { params: branchId ? { branch_id: branchId } : {} })
+        .then((r) => (Array.isArray(r.data) ? r.data : [])),
+    staleTime: 5 * 60 * 1000,
   });
 }
 
