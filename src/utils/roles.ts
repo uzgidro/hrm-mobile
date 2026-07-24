@@ -181,19 +181,22 @@ export function canAccessPage(user: User | null | undefined, key: PageKey): bool
     // Employees directory: only HR / deputy / master-admin (+ministr).
     case 'employees':
       return isMasterAdmin(user) || isHR(user) || isDeputy(user);
+    // KPI: same nav rule as attendance (absent from KPP_NAV / CHANCELLERY_NAV)
+    // AND gated by the auth/me flag kpi_enabled. The backend closes /kpi/*
+    // behind require_kpi_enabled (403 kpi_not_enabled, including /my-scorecard)
+    // for anyone outside the head branch, so we hide the tile rather than let
+    // them 403 on every tap. Mirrors the web navConfig `needsKpi` pruning.
+    case 'kpi':
+      return !kpp && !chancellery && !!user?.kpi_enabled;
     // Attendance & leave requests: not for KPP or chancellery.
     // Documents (Hujjatlar): web guards /hujjatlar with the same rule — KPP and
     // chancellery are redirected away (App.jsx route guard + nav omission).
-    // KPI: same nav rule — the KPI item is in the master-admin/HR/deputy/
-    // employee navs but absent from KPP_NAV and CHANCELLERY_NAV; a plain
-    // employee sees ONLY their own scorecard (backend-scoped).
     // Timesheet (Учёт времени: мой табель / дежурства / праздники) follows the
     // same nav rule as attendance — the web /tabel, /navbatchilik and /holidays
     // pages are all hidden from KPP and chancellery.
     case 'attendance':
     case 'requests':
     case 'documents':
-    case 'kpi':
     case 'timesheet':
       return !kpp && !chancellery;
     // LLM assistant. STRICTER than the web on purpose (product decision
