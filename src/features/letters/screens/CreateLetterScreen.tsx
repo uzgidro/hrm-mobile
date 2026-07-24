@@ -11,6 +11,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { employeeSubLabel } from '@/utils/roles';
+import { branchRegions, regionLabels, branchesInRegions } from '@/utils/tripRegions';
 import { getApiErrorMessage } from '@/api/errors';
 import { type PickerOption } from '@/components/PickerModal';
 import { AttachmentField, type PickedFile } from '@/components/AttachmentField';
@@ -98,14 +99,14 @@ export default function CreateLetterScreen() {
   const rahbariyatOptions = useMemo(() => rahbariyatEmps.map(empOption), [rahbariyatEmps, empOption]);
   const submitterOptions = useMemo(() => (submitterData?.items ?? []).map(empOption), [submitterData, empOption]);
 
-  const regionOptions = useMemo<PickerOption[]>(() => {
-    const set = Array.from(new Set(branches.map((b) => b.region).filter(Boolean)));
-    return set.map((r, i) => ({ value: i + 1, label: String(r) }));
-  }, [branches]);
+  const regionOptions = useMemo<PickerOption[]>(
+    () => regionLabels(branches).map((r, i) => ({ value: i + 1, label: r })),
+    [branches]
+  );
   const regionLabelByValue = (v: number) => regionOptions.find((o) => o.value === v)?.label;
 
   const destinationOptions = useMemo<PickerOption[]>(
-    () => branches.filter((b) => regions.length === 0 || regions.includes(b.region)).map((b) => ({ value: b.id, label: b.name, subLabel: b.region })),
+    () => branchesInRegions(branches, regions).map((b) => ({ value: b.id, label: b.name, subLabel: branchRegions(b).join(', ') })),
     [branches, regions]
   );
 
@@ -123,7 +124,7 @@ export default function CreateLetterScreen() {
       const next = p.includes(label) ? p.filter((x) => x !== label) : [...p, label];
       // prune destinations outside selected regions
       if (next.length > 0) {
-        const allowed = branches.filter((b) => next.includes(b.region)).map((b) => b.id);
+        const allowed = branchesInRegions(branches, next).map((b) => b.id);
         setDestinationIds((d) => d.filter((id) => allowed.includes(id)));
       }
       return next;
