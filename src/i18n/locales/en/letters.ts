@@ -130,6 +130,17 @@ export default {
   tripSubmitConfirmTitle: 'Submit trip',
   tripSubmitConfirmMessage: 'The business trip will be sent for signing.',
 
+  tripApprove: 'Approve',
+  approve_trip_confirmTitle: 'Approve trip',
+  approve_trip_confirmMessage: 'The business trip will be approved.',
+  approve_trip_done: 'Trip approved',
+  approve_report_confirmTitle: 'Approve report',
+  approve_report_confirmMessage: 'The trip report will be approved.',
+  approve_report_done: 'Report approved',
+  approve_guvohnoma_confirmTitle: 'Approve guvohnoma',
+  approve_guvohnoma_confirmMessage: 'The guvohnoma will be approved.',
+  approve_guvohnoma_done: 'Guvohnoma approved',
+
   sectionReport: 'Report',
   reportTitle: 'Submit report',
   reportEditTitle: 'Edit report',

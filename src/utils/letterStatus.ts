@@ -60,7 +60,7 @@ function isBusinessTrip(l: Letter) { return normalizeLetterType(l.letter_type) =
 // NO report substage. 1 / null / undefined = OLD flow, which has the report
 // stage. Mirrors backend _is_new_trip_flow (letter.py:45).
 export function isNewTripFlow(l: Letter): boolean {
-  return l.flow_version === 2;
+  return isBusinessTrip(l) && l.flow_version === 2;
 }
 
 // Statuses a trip is in while the employee may submit/edit a report.
@@ -138,8 +138,10 @@ export function canSignLetter(l: Letter, employeeId?: number): boolean {
   if (hasSigned(l, employeeId)) return false;
 
   if (isBusinessTrip(l)) {
-    if (assigned.signer_type === 'management') return l.status === 'management_review';
-    if (assigned.signer_type === 'main') return l.status === 'pending';
+    // Only the main signer signs a trip, and only in the OLD flow at 'pending'.
+    // The NEW flow is not signed (backend 400s). The management signer never
+    // signs — they approve via approve-trip/approve-report, not /sign.
+    if (assigned.signer_type === 'main') return l.status === 'pending' && !isNewTripFlow(l);
     return false;
   }
   if (isApplication(l)) return !isLetterRejected(l);
@@ -200,7 +202,20 @@ export function letterStatusMeta(l: Letter): { label: string; kind: StatusKind }
   // report_* trip already has is_stamped=true — check these BEFORE the
   // is_stamped→registered fallthrough or they'd all read "registered".
   switch (l.status) {
-    case 'management_approved': return { label: i18n.t('status.letterTripArrived'), kind: 'pending' };
+    // management_approved is dual-meaning: OLD flow = arrived / awaiting report;
+    // NEW flow = awaiting the leadership approve-trip. Show the right label so a
+    // leader doesn't see "awaiting report" on a trip they must approve.
+    case 'management_approved':
+      return isNewTripFlow(l)
+        ? { label: i18n.t('status.letterTripLeadershipPending'), kind: 'pending' }
+        : { label: i18n.t('status.letterTripArrived'), kind: 'pending' };
+    // registered_pending_rahbar waits on the leader; report_guvohnoma_review is a
+    // distinct stage (guvohnoma approval by the trip_approver) — keep them apart
+    // (web parity: the backend labels them differently).
+    case 'registered_pending_rahbar':
+      return { label: i18n.t('status.letterTripLeadershipPending'), kind: 'pending' };
+    case 'report_guvohnoma_review':
+      return { label: i18n.t('status.letterTripGuvohnomaReview'), kind: 'pending' };
     case 'report_submitted': return { label: i18n.t('status.letterReportSubmitted'), kind: 'info' };
     case 'report_returned': return { label: i18n.t('status.letterReportReturned'), kind: 'error' };
     case 'report_management_review': return { label: i18n.t('status.letterReportReview'), kind: 'pending' };

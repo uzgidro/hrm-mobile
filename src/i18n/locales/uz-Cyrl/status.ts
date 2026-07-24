@@ -28,6 +28,8 @@ export default {
   letterInLeadership: 'Раҳбариятда',
   letterPending: 'Кутилмоқда',
   letterTripArrived: 'Ҳисобот кутилмоқда',
+  letterTripLeadershipPending: 'Раҳбар тасдиғи кутилмоқда',
+  letterTripGuvohnomaReview: 'Гувоҳнома тасдиғида',
   letterReportSubmitted: 'Ҳисобот юборилди',
   letterReportReturned: 'Ҳисобот қайтарилди',
   letterReportReview: 'Ҳисобот раҳбариятда',

@@ -275,21 +275,34 @@ describe('canSignLetter', () => {
   });
 
   describe('business_trip', () => {
-    it('management can sign only when management_review', () => {
+    it('management never signs a trip (they approve via approve-trip/report, not /sign)', () => {
+      // The old code compared with a bare 'management_review' status the backend
+      // has no such status for trips; the management signer approves, never signs.
       const base = {
         letter_type: 'business_trip',
         assigned_signers: [{ signer_type: 'management', employee_id: 1 }],
       };
-      expect(canSignLetter(letter({ ...base, status: 'management_review' }), 1)).toBe(true);
+      expect(canSignLetter(letter({ ...base, status: 'management_approved' }), 1)).toBe(false);
+      expect(canSignLetter(letter({ ...base, status: 'report_management_review' }), 1)).toBe(false);
       expect(canSignLetter(letter({ ...base, status: 'pending' }), 1)).toBe(false);
     });
-    it('main can sign only when status pending', () => {
+    it('main signs only an OLD-flow trip at status pending', () => {
       const base = {
         letter_type: 'business_trip',
         assigned_signers: [{ signer_type: 'main', employee_id: 1 }],
       };
       expect(canSignLetter(letter({ ...base, status: 'pending' }), 1)).toBe(true);
-      expect(canSignLetter(letter({ ...base, status: 'management_review' }), 1)).toBe(false);
+      // OLD flow with a non-pending status → no sign.
+      expect(canSignLetter(letter({ ...base, status: 'management_approved' }), 1)).toBe(false);
+    });
+    it('main does NOT sign a NEW-flow trip even at pending (backend 400s)', () => {
+      const l = letter({
+        letter_type: 'business_trip',
+        status: 'pending',
+        flow_version: 2,
+        assigned_signers: [{ signer_type: 'main', employee_id: 1 }],
+      });
+      expect(canSignLetter(l, 1)).toBe(false);
     });
     it('other signer types can never sign a trip', () => {
       const l = letter({
@@ -434,6 +447,26 @@ describe('letterStatusMeta', () => {
     expect(letterStatusMeta(letter({ status: 'report_management_review', is_stamped: true })).kind).toBe('pending');
     expect(letterStatusMeta(letter({ status: 'report_approved', is_stamped: true })).kind).toBe('success');
   });
+
+  // management_approved means two different things: OLD flow = arrived / awaiting
+  // report; NEW flow = awaiting the leadership approve-trip. The badge must not
+  // say "awaiting report" on a NEW-flow trip the leader has to approve.
+  it('management_approved reads by flow: OLD = arrived, NEW = awaiting leadership', () => {
+    expect(letterStatusMeta(letter({ letter_type: 'business_trip', status: 'management_approved' })).label)
+      .toBe('Hisobot kutilmoqda');
+    expect(letterStatusMeta(letter({ letter_type: 'business_trip', status: 'management_approved', flow_version: 2 })).label)
+      .toBe("Rahbar tasdig'i kutilmoqda");
+  });
+
+  it('report_guvohnoma_review is its own guvohnoma-approval badge (web parity)', () => {
+    expect(letterStatusMeta(letter({ status: 'report_guvohnoma_review' })))
+      .toEqual({ label: "Guvohnoma tasdig'ida", kind: 'pending' });
+  });
+
+  it('registered_pending_rahbar gets the leadership-pending badge', () => {
+    expect(letterStatusMeta(letter({ status: 'registered_pending_rahbar' })))
+      .toEqual({ label: "Rahbar tasdig'i kutilmoqda", kind: 'pending' });
+  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -442,13 +475,16 @@ describe('letterStatusMeta', () => {
 // _is_new_trip_flow.
 // ─────────────────────────────────────────────────────────────────────────────
 describe('isNewTripFlow', () => {
-  it('true only for flow_version === 2', () => {
-    expect(isNewTripFlow(letter({ flow_version: 2 }))).toBe(true);
+  it('true only for a business_trip with flow_version === 2', () => {
+    expect(isNewTripFlow(letter({ letter_type: 'business_trip', flow_version: 2 }))).toBe(true);
   });
   it('false for old flow (1) and unset (null/undefined)', () => {
-    expect(isNewTripFlow(letter({ flow_version: 1 }))).toBe(false);
-    expect(isNewTripFlow(letter({ flow_version: null }))).toBe(false);
-    expect(isNewTripFlow(letter({}))).toBe(false);
+    expect(isNewTripFlow(letter({ letter_type: 'business_trip', flow_version: 1 }))).toBe(false);
+    expect(isNewTripFlow(letter({ letter_type: 'business_trip', flow_version: null }))).toBe(false);
+    expect(isNewTripFlow(letter({ letter_type: 'business_trip' }))).toBe(false);
+  });
+  it('false for a non-trip letter even with flow_version 2 (backend guards on type)', () => {
+    expect(isNewTripFlow(letter({ letter_type: 'application', flow_version: 2 }))).toBe(false);
   });
 });
 

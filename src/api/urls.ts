@@ -114,6 +114,12 @@ export const LETTER_RESET_REPORT = (id: number) => `letters/${id}/reset-report`;
 
 // The employee sends a trip draft into the flow (draft → pending).
 export const LETTER_SUBMIT_TRIP = (id: number) => `letters/${id}/submit-trip`;
+// Leadership approvals: approve-trip (NEW flow) / approve-report + approve-guvohnoma
+// (OLD flow). Gated on the server available_actions flags (the client cannot
+// compute the trip_approver rights).
+export const LETTER_APPROVE_TRIP = (id: number) => `letters/${id}/approve-trip`;
+export const LETTER_APPROVE_REPORT = (id: number) => `letters/${id}/approve-report`;
+export const LETTER_APPROVE_GUVOHNOMA = (id: number) => `letters/${id}/approve-guvohnoma`;
 
 // Business-trip movements (kelish/ketish, read-only list) + return confirmation.
 // confirm-return sets is_trip_confirmed which unblocks the report stage; its

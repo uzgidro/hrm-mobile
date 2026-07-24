@@ -4,10 +4,11 @@ import {
   LETTER_CREATE, LETTER_SIGN, LETTER_REJECT, LETTER_UPLOAD_ATTACHMENT,
   LETTER_SUBMIT_REPORT, LETTER_RESET_REPORT, LETTER_UPLOAD_REPORT,
   LETTER_CONFIRM_RETURN, LETTER_SUBMIT_TRIP,
+  LETTER_APPROVE_TRIP, LETTER_APPROVE_REPORT, LETTER_APPROVE_GUVOHNOMA,
 } from '@/api/urls';
 import {
   signLetter, rejectLetter, createLetter, submitReport, resetReport, uploadReport,
-  confirmReturn, submitTrip,
+  confirmReturn, submitTrip, approveTrip, approveReport, approveGuvohnoma,
 } from '../mutations';
 
 let mock: MockAdapter;
@@ -136,6 +137,30 @@ describe('submitTrip', () => {
     const data = await submitTrip(9);
     expect(data).toEqual({ id: 9, status: 'pending' });
     expect(mock.history.post[0].url).toBe(LETTER_SUBMIT_TRIP(9));
+    expect(mock.history.post[0].data).toBeUndefined();
+  });
+});
+
+describe('trip approve request functions (leadership)', () => {
+  it('approveTrip POSTs approve-trip with an empty body', async () => {
+    mock.onPost(LETTER_APPROVE_TRIP(4)).reply(200, { id: 4, status: 'report_approved' });
+    const data = await approveTrip(4);
+    expect(data).toEqual({ id: 4, status: 'report_approved' });
+    expect(mock.history.post[0].url).toBe(LETTER_APPROVE_TRIP(4));
+    expect(mock.history.post[0].data).toBeUndefined();
+  });
+
+  it('approveReport POSTs approve-report with an empty body', async () => {
+    mock.onPost(LETTER_APPROVE_REPORT(4)).reply(200, { id: 4, status: 'report_guvohnoma_review' });
+    await approveReport(4);
+    expect(mock.history.post[0].url).toBe(LETTER_APPROVE_REPORT(4));
+    expect(mock.history.post[0].data).toBeUndefined();
+  });
+
+  it('approveGuvohnoma POSTs approve-guvohnoma with an empty body', async () => {
+    mock.onPost(LETTER_APPROVE_GUVOHNOMA(4)).reply(200, { id: 4, status: 'report_approved' });
+    await approveGuvohnoma(4);
+    expect(mock.history.post[0].url).toBe(LETTER_APPROVE_GUVOHNOMA(4));
     expect(mock.history.post[0].data).toBeUndefined();
   });
 });

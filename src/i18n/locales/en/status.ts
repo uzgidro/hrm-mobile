@@ -28,6 +28,8 @@ export default {
   letterInLeadership: 'With leadership',
   letterPending: 'Pending',
   letterTripArrived: 'Report pending',
+  letterTripLeadershipPending: 'Awaiting leadership approval',
+  letterTripGuvohnomaReview: 'Awaiting guvohnoma approval',
   letterReportSubmitted: 'Report submitted',
   letterReportReturned: 'Report returned',
   letterReportReview: 'Report in leadership',

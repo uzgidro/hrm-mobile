@@ -35,6 +35,8 @@ export default {
   letterInLeadership: 'Rahbariyatda',
   letterPending: 'Kutilmoqda',
   letterTripArrived: 'Hisobot kutilmoqda',
+  letterTripLeadershipPending: "Rahbar tasdig'i kutilmoqda",
+  letterTripGuvohnomaReview: "Guvohnoma tasdig'ida",
   letterReportSubmitted: 'Hisobot yuborildi',
   letterReportReturned: 'Hisobot qaytarildi',
   letterReportReview: 'Hisobot rahbariyatda',

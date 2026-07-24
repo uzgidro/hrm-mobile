@@ -28,6 +28,8 @@ export default {
   letterInLeadership: 'У руководства',
   letterPending: 'Ожидается',
   letterTripArrived: 'Ожидается отчёт',
+  letterTripLeadershipPending: 'Ожидает утверждения руководителя',
+  letterTripGuvohnomaReview: 'На утверждении гувохномы',
   letterReportSubmitted: 'Отчёт отправлен',
   letterReportReturned: 'Отчёт возвращён',
   letterReportReview: 'Отчёт у руководства',

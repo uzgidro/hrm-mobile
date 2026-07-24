@@ -130,6 +130,17 @@ export default {
   tripSubmitConfirmTitle: 'Сафарни юбориш',
   tripSubmitConfirmMessage: 'Хизмат сафари имзолаш учун юборилади.',
 
+  tripApprove: 'Тасдиқлаш',
+  approve_trip_confirmTitle: 'Сафарни тасдиқлаш',
+  approve_trip_confirmMessage: 'Хизмат сафари тасдиқланади.',
+  approve_trip_done: 'Сафар тасдиқланди',
+  approve_report_confirmTitle: 'Ҳисоботни тасдиқлаш',
+  approve_report_confirmMessage: 'Сафар ҳисоботи тасдиқланади.',
+  approve_report_done: 'Ҳисобот тасдиқланди',
+  approve_guvohnoma_confirmTitle: 'Гувоҳномани тасдиқлаш',
+  approve_guvohnoma_confirmMessage: 'Гувоҳнома тасдиқланади.',
+  approve_guvohnoma_done: 'Гувоҳнома тасдиқланди',
+
   sectionReport: 'Ҳисобот',
   reportTitle: 'Ҳисобот юбориш',
   reportEditTitle: 'Ҳисоботни таҳрирлаш',

@@ -135,6 +135,17 @@ export default {
   tripSubmitConfirmTitle: 'Отправить командировку',
   tripSubmitConfirmMessage: 'Командировка будет отправлена на подпись.',
 
+  tripApprove: 'Утвердить',
+  approve_trip_confirmTitle: 'Утвердить командировку',
+  approve_trip_confirmMessage: 'Командировка будет утверждена.',
+  approve_trip_done: 'Командировка утверждена',
+  approve_report_confirmTitle: 'Утвердить отчёт',
+  approve_report_confirmMessage: 'Отчёт по командировке будет утверждён.',
+  approve_report_done: 'Отчёт утверждён',
+  approve_guvohnoma_confirmTitle: 'Утвердить гувохному',
+  approve_guvohnoma_confirmMessage: 'Гувохнома будет утверждена.',
+  approve_guvohnoma_done: 'Гувохнома утверждена',
+
   sectionReport: 'Отчёт',
   reportTitle: 'Отправить отчёт',
   reportEditTitle: 'Редактировать отчёт',

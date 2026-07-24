@@ -137,6 +137,18 @@ export default {
   tripSubmitConfirmTitle: 'Safarni yuborish',
   tripSubmitConfirmMessage: 'Xizmat safari imzolash uchun yuboriladi.',
 
+  // ── Trip leadership approvals (button + per-kind confirm/done copy) ──
+  tripApprove: 'Tasdiqlash',
+  approve_trip_confirmTitle: 'Safarni tasdiqlash',
+  approve_trip_confirmMessage: 'Xizmat safari tasdiqlanadi.',
+  approve_trip_done: 'Safar tasdiqlandi',
+  approve_report_confirmTitle: 'Hisobotni tasdiqlash',
+  approve_report_confirmMessage: 'Safar hisoboti tasdiqlanadi.',
+  approve_report_done: 'Hisobot tasdiqlandi',
+  approve_guvohnoma_confirmTitle: 'Guvohnomani tasdiqlash',
+  approve_guvohnoma_confirmMessage: 'Guvohnoma tasdiqlanadi.',
+  approve_guvohnoma_done: 'Guvohnoma tasdiqlandi',
+
   // ── Trip report (xizmat safari, OLD flow) ──
   sectionReport: 'Hisobot',
   reportTitle: 'Hisobot yuborish',
