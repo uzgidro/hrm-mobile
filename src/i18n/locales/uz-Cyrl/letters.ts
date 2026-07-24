@@ -126,6 +126,10 @@ export default {
   createError: 'Хатолик юз берди',
   actionError: 'Хатолик',
 
+  tripSubmit: 'Юбориш',
+  tripSubmitConfirmTitle: 'Сафарни юбориш',
+  tripSubmitConfirmMessage: 'Хизмат сафари имзолаш учун юборилади.',
+
   sectionReport: 'Ҳисобот',
   reportTitle: 'Ҳисобот юбориш',
   reportEditTitle: 'Ҳисоботни таҳрирлаш',

@@ -138,6 +138,20 @@ export interface LetterSigner {
   employee?: Employee;
 }
 
+// Per-user, per-record action flags the backend computes on the letter DETAIL
+// read (GET /letters/{id}), using the same logic that 403s the endpoints. The
+// client gates buttons on these — it does not re-derive trip rights (it does
+// not know the branch trip_approver). Null on the list; only present on detail.
+// Mirrors the KPI my_access pattern.
+export interface LetterAvailableActions {
+  can_submit_trip?: boolean;
+  can_sign?: boolean;
+  can_reject?: boolean;
+  can_approve_trip?: boolean;
+  can_approve_report?: boolean;
+  can_approve_guvohnoma?: boolean;
+}
+
 export interface Letter {
   id: number;
   letter_type?: string;
@@ -186,6 +200,8 @@ export interface Letter {
   // to build the branch set that gates trip-movement management (isBranchHr).
   destination_branch_id?: number | null;
   destination_branches?: OrganizationBranch[] | null;
+  /** action flags computed by the backend — only present on the detail read */
+  available_actions?: LetterAvailableActions | null;
 }
 
 // A single kelish/ketish event of a business trip. event_type is a backend

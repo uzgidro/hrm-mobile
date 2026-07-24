@@ -48,3 +48,4 @@ playstore-service-account.json
 
 # Editor / local
 .vscode/
+graphify-out/

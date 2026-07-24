@@ -131,6 +131,10 @@ export default {
   createError: 'Произошла ошибка',
   actionError: 'Ошибка',
 
+  tripSubmit: 'Отправить',
+  tripSubmitConfirmTitle: 'Отправить командировку',
+  tripSubmitConfirmMessage: 'Командировка будет отправлена на подпись.',
+
   sectionReport: 'Отчёт',
   reportTitle: 'Отправить отчёт',
   reportEditTitle: 'Редактировать отчёт',

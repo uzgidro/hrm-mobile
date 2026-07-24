@@ -3,20 +3,13 @@ import { apiClient } from '@/api/client';
 import {
   LETTER_CREATE, LETTER_SIGN, LETTER_REJECT, LETTER_UPLOAD_ATTACHMENT,
   LETTER_SUBMIT_REPORT, LETTER_RESET_REPORT, LETTER_UPLOAD_REPORT,
-  LETTER_TRIP_MOVEMENTS, LETTER_TRIP_MOVEMENT, LETTER_CONFIRM_RETURN,
+  LETTER_CONFIRM_RETURN, LETTER_SUBMIT_TRIP,
 } from '@/api/urls';
 import type { PickedFile } from '@/components/AttachmentField';
-import type { BusinessTripMovement } from '@/types';
 import { letterKeys } from './queries';
 
 export interface ConfirmReturnForm {
   return_date: string;
-  note?: string | null;
-}
-export interface TripMovementForm {
-  event_type: 'arrived' | 'departed';
-  event_date: string;
-  branch_id?: number | null;
   note?: string | null;
 }
 
@@ -167,21 +160,6 @@ export function confirmReturn(id: number, form: ConfirmReturnForm): Promise<unkn
     .then((r) => r.data);
 }
 
-export function addTripMovement(id: number, form: TripMovementForm): Promise<BusinessTripMovement> {
-  return apiClient
-    .post<BusinessTripMovement>(LETTER_TRIP_MOVEMENTS(id), {
-      event_type: form.event_type,
-      event_date: form.event_date,
-      branch_id: form.branch_id ?? null,
-      note: form.note ?? null,
-    })
-    .then((r) => r.data);
-}
-
-export function deleteTripMovement(id: number, movementId: number): Promise<void> {
-  return apiClient.delete(LETTER_TRIP_MOVEMENT(id, movementId)).then(() => undefined);
-}
-
 export function useConfirmReturn(id: number) {
   const qc = useQueryClient();
   return useMutation({
@@ -190,18 +168,18 @@ export function useConfirmReturn(id: number) {
   });
 }
 
-export function useAddTripMovement(id: number) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (form: TripMovementForm) => addTripMovement(id, form),
-    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
-  });
+// ── Business-trip submit (xodim "Yuborish": draft → pending) ──────────────────
+// Bare POST, no body — the backend generates the number/date (and, for the NEW
+// flow, the guvohnoma) server-side. The client never enters a manual decree
+// number, so the NEW-flow attachment requirement never applies here.
+export function submitTrip(id: number): Promise<unknown> {
+  return apiClient.post(LETTER_SUBMIT_TRIP(id)).then((r) => r.data);
 }
 
-export function useDeleteTripMovement(id: number) {
+export function useSubmitTrip(id: number) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (movementId: number) => deleteTripMovement(id, movementId),
+    mutationFn: () => submitTrip(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
   });
 }

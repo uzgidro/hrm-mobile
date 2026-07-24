@@ -132,6 +132,11 @@ export default {
   createError: 'Xatolik yuz berdi',
   actionError: 'Xatolik',
 
+  // ── Trip submit (xizmat safari: draft → pending) ──
+  tripSubmit: 'Yuborish',
+  tripSubmitConfirmTitle: 'Safarni yuborish',
+  tripSubmitConfirmMessage: 'Xizmat safari imzolash uchun yuboriladi.',
+
   // ── Trip report (xizmat safari, OLD flow) ──
   sectionReport: 'Hisobot',
   reportTitle: 'Hisobot yuborish',

@@ -112,12 +112,13 @@ export const LETTER_SUBMIT_REPORT = (id: number) => `letters/${id}/submit-report
 export const LETTER_UPLOAD_REPORT = (id: number) => `letters/${id}/upload-report`;
 export const LETTER_RESET_REPORT = (id: number) => `letters/${id}/reset-report`;
 
-// Business-trip movements (kelish/ketish) + return confirmation. Movements are a
-// nested collection under a letter; confirm-return sets is_trip_confirmed which
-// unblocks the report stage. Manage rights are branch-scoped (see isBranchHr).
+// The employee sends a trip draft into the flow (draft → pending).
+export const LETTER_SUBMIT_TRIP = (id: number) => `letters/${id}/submit-trip`;
+
+// Business-trip movements (kelish/ketish, read-only list) + return confirmation.
+// confirm-return sets is_trip_confirmed which unblocks the report stage; its
+// manage rights are branch-scoped (see isBranchHr).
 export const LETTER_TRIP_MOVEMENTS = (id: number) => `letters/${id}/trip-movements`;
-export const LETTER_TRIP_MOVEMENT = (id: number, mid: number) =>
-  `letters/${id}/trip-movements/${mid}`;
 export const LETTER_CONFIRM_RETURN = (id: number) => `letters/${id}/confirm-return`;
 
 // Organization branches

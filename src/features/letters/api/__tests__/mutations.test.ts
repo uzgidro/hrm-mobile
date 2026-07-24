@@ -3,11 +3,11 @@ import { apiClient } from '@/api/client';
 import {
   LETTER_CREATE, LETTER_SIGN, LETTER_REJECT, LETTER_UPLOAD_ATTACHMENT,
   LETTER_SUBMIT_REPORT, LETTER_RESET_REPORT, LETTER_UPLOAD_REPORT,
-  LETTER_TRIP_MOVEMENTS, LETTER_TRIP_MOVEMENT, LETTER_CONFIRM_RETURN,
+  LETTER_CONFIRM_RETURN, LETTER_SUBMIT_TRIP,
 } from '@/api/urls';
 import {
   signLetter, rejectLetter, createLetter, submitReport, resetReport, uploadReport,
-  confirmReturn, addTripMovement, deleteTripMovement,
+  confirmReturn, submitTrip,
 } from '../mutations';
 
 let mock: MockAdapter;
@@ -114,7 +114,7 @@ describe('trip report request functions', () => {
   });
 });
 
-describe('trip-movement request functions', () => {
+describe('confirmReturn request function', () => {
   it('confirmReturn POSTs { return_date, note } to the confirm-return endpoint', async () => {
     mock.onPost(LETTER_CONFIRM_RETURN(5)).reply(200, { id: 5, is_trip_confirmed: true });
     const data = await confirmReturn(5, { return_date: '2026-07-20', note: 'keldi' });
@@ -128,20 +128,14 @@ describe('trip-movement request functions', () => {
     await confirmReturn(5, { return_date: '2026-07-20' });
     expect(JSON.parse(mock.history.post[0].data)).toEqual({ return_date: '2026-07-20', note: null });
   });
+});
 
-  it('addTripMovement POSTs the movement body to the trip-movements endpoint', async () => {
-    mock.onPost(LETTER_TRIP_MOVEMENTS(7)).reply(201, { id: 3, event_type: 'departed' });
-    const data = await addTripMovement(7, { event_type: 'departed', event_date: '2026-07-10', branch_id: 2, note: null });
-    expect(data).toEqual({ id: 3, event_type: 'departed' });
-    expect(mock.history.post[0].url).toBe(LETTER_TRIP_MOVEMENTS(7));
-    expect(JSON.parse(mock.history.post[0].data)).toEqual({
-      event_type: 'departed', event_date: '2026-07-10', branch_id: 2, note: null,
-    });
-  });
-
-  it('deleteTripMovement DELETEs the nested movement endpoint', async () => {
-    mock.onDelete(LETTER_TRIP_MOVEMENT(7, 3)).reply(200, { detail: 'deleted' });
-    await deleteTripMovement(7, 3);
-    expect(mock.history.delete[0].url).toBe(LETTER_TRIP_MOVEMENT(7, 3));
+describe('submitTrip', () => {
+  it('POSTs the submit-trip endpoint with an empty body (draft → pending)', async () => {
+    mock.onPost(LETTER_SUBMIT_TRIP(9)).reply(200, { id: 9, status: 'pending' });
+    const data = await submitTrip(9);
+    expect(data).toEqual({ id: 9, status: 'pending' });
+    expect(mock.history.post[0].url).toBe(LETTER_SUBMIT_TRIP(9));
+    expect(mock.history.post[0].data).toBeUndefined();
   });
 });

@@ -126,6 +126,10 @@ export default {
   createError: 'An error occurred',
   actionError: 'Error',
 
+  tripSubmit: 'Submit',
+  tripSubmitConfirmTitle: 'Submit trip',
+  tripSubmitConfirmMessage: 'The business trip will be sent for signing.',
+
   sectionReport: 'Report',
   reportTitle: 'Submit report',
   reportEditTitle: 'Edit report',
