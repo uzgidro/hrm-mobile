@@ -9,6 +9,8 @@ export interface User {
   hr_branch_ids?: number[];
   /** may create/edit news posts (auth/me flag = can_manage_news on the backend) */
   is_news_manager?: boolean;
+  /** may access the KPI module — auth/me flag (backend scoping.kpi_enabled); gates the KPI tile like the web nav */
+  kpi_enabled?: boolean;
 }
 
 export interface Employee {

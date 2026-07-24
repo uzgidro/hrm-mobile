@@ -528,7 +528,9 @@ describe('canAccessPage', () => {
 
   const expected: Record<string, { user: User | null | undefined; row: Row }> = {
     regular: {
-      user: regularUser,
+      // kpi_enabled: the backend closes /kpi/* for anyone outside the head
+      // branch, so a head-branch employee carries the flag to keep kpi: true.
+      user: { ...regularUser, kpi_enabled: true },
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
         employees: false, attendance: true, requests: true, documents: true, kpi: true, assistant: false, timesheet: true,
@@ -537,7 +539,7 @@ describe('canAccessPage', () => {
       },
     },
     hrSingle: {
-      user: hrSingleUser,
+      user: { ...hrSingleUser, kpi_enabled: true },
       row: {
         home: true, orders: true, letters: true, guests: true, projects: false,
         employees: true, attendance: true, requests: true, documents: true, kpi: true, assistant: true, timesheet: true,
@@ -546,7 +548,7 @@ describe('canAccessPage', () => {
       },
     },
     hrMulti: {
-      user: hrMultiUser, // ['hr','deputy']
+      user: { ...hrMultiUser, kpi_enabled: true }, // ['hr','deputy']
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
         employees: true, attendance: true, requests: true, documents: true, kpi: true, assistant: true, timesheet: true,
@@ -582,7 +584,7 @@ describe('canAccessPage', () => {
       },
     },
     ministr: {
-      user: ministrUser,
+      user: { ...ministrUser, kpi_enabled: true },
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
         employees: true, attendance: true, requests: true, documents: true, kpi: true, assistant: true, timesheet: true,
@@ -591,7 +593,7 @@ describe('canAccessPage', () => {
       },
     },
     deputy: {
-      user: deputyUser,
+      user: { ...deputyUser, kpi_enabled: true },
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
         employees: true, attendance: true, requests: true, documents: true, kpi: true, assistant: true, timesheet: true,
@@ -602,7 +604,7 @@ describe('canAccessPage', () => {
     accounting: {
       // Buxgalter = employee-like: sees the full regular-employee surface,
       // NOT the employees directory. Same row as `regular` (web parity).
-      user: accountingUser,
+      user: { ...accountingUser, kpi_enabled: true },
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
         employees: false, attendance: true, requests: true, documents: true, kpi: true, assistant: false, timesheet: true,
@@ -613,7 +615,7 @@ describe('canAccessPage', () => {
     dashboard: {
       // Kuzatuvchi (dashboard) = employee-like: same regular-employee surface,
       // NOT the employees directory. Same row as `regular` (web parity).
-      user: dashboardUser,
+      user: { ...dashboardUser, kpi_enabled: true },
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
         employees: false, attendance: true, requests: true, documents: true, kpi: true, assistant: false, timesheet: true,
@@ -622,7 +624,7 @@ describe('canAccessPage', () => {
       },
     },
     masterAdmin: {
-      user: masterAdminUser,
+      user: { ...masterAdminUser, kpi_enabled: true },
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
         employees: true, attendance: true, requests: true, documents: true, kpi: true, assistant: true, timesheet: true,
@@ -631,7 +633,7 @@ describe('canAccessPage', () => {
       },
     },
     secretariat: {
-      user: secretariatUser, // is_secretariat only affects the chairman-agenda page
+      user: { ...secretariatUser, kpi_enabled: true }, // is_secretariat only affects the chairman-agenda page
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
         employees: false, attendance: true, requests: true, documents: true, kpi: true, assistant: false, timesheet: true,
@@ -643,7 +645,7 @@ describe('canAccessPage', () => {
       user: null,
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
-        employees: false, attendance: true, requests: true, documents: true, kpi: true, assistant: true, timesheet: true,
+        employees: false, attendance: true, requests: true, documents: true, kpi: false, assistant: true, timesheet: true,
         salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
         chairman: false,
       },
@@ -652,7 +654,7 @@ describe('canAccessPage', () => {
       user: undefined,
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
-        employees: false, attendance: true, requests: true, documents: true, kpi: true, assistant: true, timesheet: true,
+        employees: false, attendance: true, requests: true, documents: true, kpi: false, assistant: true, timesheet: true,
         salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
         chairman: false,
       },
@@ -695,6 +697,35 @@ describe('canAccessPage', () => {
 
   it('a plain employee can access the timesheet', () => {
     expect(canAccessPage(regularUser, 'timesheet')).toBe(true);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// canAccessPage — KPI flag gate (strict: no kpi_enabled => hidden)
+// The backend closes /kpi/* behind require_kpi_enabled (403 kpi_not_enabled)
+// for anyone outside the head branch, so the tile is hidden unless the flag is
+// present. Mirrors the web's navConfig `needsKpi` pruning.
+// ─────────────────────────────────────────────────────────────────────────────
+describe('canAccessPage kpi flag gate', () => {
+  it('a head-branch user WITH kpi_enabled sees kpi', () => {
+    expect(canAccessPage(multiOrgUser('hr', { kpi_enabled: true }), 'kpi')).toBe(true);
+  });
+
+  it('the same user WITHOUT the flag is denied kpi', () => {
+    expect(canAccessPage(multiOrgUser('hr'), 'kpi')).toBe(false);
+  });
+
+  it('a regular employee without the flag is denied kpi', () => {
+    expect(canAccessPage(regularUser, 'kpi')).toBe(false);
+  });
+
+  it('a master-admin without the flag is still denied kpi (flag is required)', () => {
+    expect(canAccessPage(masterAdminUser, 'kpi')).toBe(false);
+  });
+
+  it('kpp / chancellery stay denied even with the flag', () => {
+    expect(canAccessPage(multiOrgUser('kpp', { kpi_enabled: true }), 'kpi')).toBe(false);
+    expect(canAccessPage(multiOrgUser('chancellery', { kpi_enabled: true }), 'kpi')).toBe(false);
   });
 });
 
