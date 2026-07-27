@@ -3,7 +3,9 @@ import { Alert } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import { confirm } from '@/lib/confirm';
-import { signLetter, rejectLetter } from '../api/mutations';
+import {
+  signLetter, rejectLetter, approveTrip, approveReport, approveGuvohnoma,
+} from '../api/mutations';
 import { letterKeys } from '../api/queries';
 
 // Encapsulates the letter sign/reject workflow — the extracted, web-parity flow.
@@ -59,5 +61,25 @@ export function useLetterActions(letterId: number, refetch: () => void) {
     run(() => rejectLetter(letterId), t('letters.rejected'));
   }, [run, letterId, t]);
 
-  return { busy, sign, reject };
+  // Leadership approvals — same run() flow, guarded by a confirm sheet. Which one
+  // is offered is decided by the screen via the available_actions flags. The
+  // confirm/done copy is per-kind (approving a report or guvohnoma is not the
+  // same as approving the whole trip).
+  const approve = useCallback(
+    async (kind: 'trip' | 'report' | 'guvohnoma') => {
+      const fn = kind === 'trip' ? approveTrip : kind === 'report' ? approveReport : approveGuvohnoma;
+      const ok = await confirm({
+        title: t(`letters.approve_${kind}_confirmTitle`),
+        message: t(`letters.approve_${kind}_confirmMessage`),
+        confirmLabel: t('letters.tripApprove'),
+        cancelLabel: t('common.cancel'),
+        icon: 'check',
+      });
+      if (!ok) return;
+      run(() => fn(letterId), t(`letters.approve_${kind}_done`));
+    },
+    [run, letterId, t]
+  );
+
+  return { busy, sign, reject, approve };
 }

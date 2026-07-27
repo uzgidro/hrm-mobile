@@ -15,9 +15,12 @@ import {
   letterStatusMeta, letterTypeLabel, canSignLetter, getSigningTimeline, statusColor,
   canSubmitReport, canResetReport,
 } from '@/utils/letterStatus';
+import {
+  canSubmitTrip, canApproveTrip, canApproveReport, canApproveGuvohnoma, canRejectLetter,
+} from '@/utils/tripStatus';
 import { letterDetailQuery } from '../api/queries';
 import { useLetterActions } from '../hooks/useLetterActions';
-import { useResetReport } from '../api/mutations';
+import { useResetReport, useSubmitTrip } from '../api/mutations';
 import { DetailHeader, Section, KV, SignerRow } from '../components/DetailParts';
 import { LetterActionBar } from '../components/LetterActionBar';
 import { TripMovementsSection } from '../components/TripMovementsSection';
@@ -32,8 +35,9 @@ export default function LetterDetailScreen() {
   const styles = useThemedStyles(makeStyles);
 
   const { data: letter, isLoading, refetch } = useQuery(letterDetailQuery(letterId));
-  const { busy, sign, reject } = useLetterActions(letterId, refetch);
+  const { busy, sign, reject, approve } = useLetterActions(letterId, refetch);
   const resetReportM = useResetReport(letterId);
+  const submitTripM = useSubmitTrip(letterId);
 
   if (isLoading || !letter) {
     return (
@@ -47,12 +51,40 @@ export default function LetterDetailScreen() {
   const meta = letterStatusMeta(letter);
   const sc = statusColor(meta.kind, colors);
   const timeline = getSigningTimeline(letter);
-  const canAct = canSignLetter(letter, employeeId);
+  // Sign is a client gate (web-parity); reject is a server flag (a trip signer
+  // may reject without being able to sign). The bar shows each independently.
+  const canSign = canSignLetter(letter, employeeId);
+  const canReject = canRejectLetter(letter);
   const hasDoc = !!letter.generated_document_path;
+
+  // ── Trip leadership approvals (server flags; mutually-exclusive statuses) ──
+  const approveTripKind = canApproveTrip(letter)
+    ? 'trip'
+    : canApproveReport(letter)
+      ? 'report'
+      : canApproveGuvohnoma(letter)
+        ? 'guvohnoma'
+        : null;
 
   // ── Trip report (xizmat safari, OLD flow) ──
   const canReport = canSubmitReport(letter, employeeId);
   const canReset = canResetReport(letter, employeeId);
+  // The employee sends a trip draft into the flow (server flag, detail-only).
+  const canSend = canSubmitTrip(letter);
+  const onSubmitTrip = async () => {
+    const ok = await confirm({
+      title: t('letters.tripSubmitConfirmTitle'),
+      message: t('letters.tripSubmitConfirmMessage'),
+      confirmLabel: t('letters.tripSubmit'),
+      cancelLabel: t('common.cancel'),
+      icon: 'arrowUp',
+    });
+    if (!ok) return;
+    submitTripM.mutate(undefined, {
+      onSuccess: () => refetch(),
+      onError: (e) => Alert.alert(t('letters.actionError'), getApiErrorMessage(e, t('letters.actionError'))),
+    });
+  };
   const hasReport = !!(letter.report_content || letter.report_summary || letter.report_task);
   const openReportForm = () => router.push({ pathname: '/submit-report', params: { id: String(letterId) } });
   const onResetReport = async () => {
@@ -138,6 +170,30 @@ export default function LetterDetailScreen() {
           </Section>
         )}
 
+        {canSend && (
+          <TouchableOpacity
+            style={styles.submitTripBtn}
+            activeOpacity={0.85}
+            onPress={onSubmitTrip}
+            disabled={submitTripM.isPending}
+          >
+            <Icon name="arrowUp" size={16} color={colors.onPrimary} />
+            <Text style={styles.submitTripText}>{t('letters.tripSubmit')}</Text>
+          </TouchableOpacity>
+        )}
+
+        {approveTripKind && (
+          <TouchableOpacity
+            style={styles.approveBtn}
+            activeOpacity={0.85}
+            onPress={() => approve(approveTripKind)}
+            disabled={busy}
+          >
+            <Icon name="check" size={16} color={colors.onPrimary} />
+            <Text style={styles.approveText}>{t('letters.tripApprove')}</Text>
+          </TouchableOpacity>
+        )}
+
         {(canReport || canReset) && (
           <View style={styles.reportActions}>
             {canReport && (
@@ -169,7 +225,13 @@ export default function LetterDetailScreen() {
         <View style={{ height: 120 }} />
       </ScrollView>
 
-      {canAct && <LetterActionBar busy={busy} onSign={sign} onReject={reject} />}
+      {(canSign || canReject) && (
+        <LetterActionBar
+          busy={busy}
+          onSign={canSign ? sign : undefined}
+          onReject={canReject ? reject : undefined}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -190,6 +252,16 @@ const makeStyles = (c: ThemeColors) =>
     rejectTitle: { fontSize: 13, fontWeight: '700', color: c.error, marginBottom: 4 },
     rejectText: { fontSize: 13, color: c.text, lineHeight: 19 },
 
+    submitTripBtn: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+      backgroundColor: c.primary, borderRadius: 12, paddingVertical: 14, marginBottom: 12,
+    },
+    submitTripText: { color: c.onPrimary, fontSize: 14, fontWeight: '700' },
+    approveBtn: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+      backgroundColor: c.success, borderRadius: 12, paddingVertical: 14, marginBottom: 12,
+    },
+    approveText: { color: c.onPrimary, fontSize: 14, fontWeight: '700' },
     reportBody: { marginTop: 8 },
     reportBodyLabel: { fontSize: 12, color: c.textMuted, marginBottom: 4 },
     reportActions: { flexDirection: 'row', gap: 10, marginBottom: 12 },

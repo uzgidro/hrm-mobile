@@ -89,8 +89,8 @@ export function LetterFormFields(props: {
           <Field label={t('letters.fieldLeadership')} required>
             <Selector loading={rahbariyatLoading} text={rahbariyatIds.length ? t('letters.leadershipSelected', { count: rahbariyatIds.length }) : undefined} placeholder={t('letters.placeholderLeadership')} onPress={() => onOpenPicker('rahbariyat')} />
           </Field>
-          <Field label={t('letters.fieldSubmitter')} required>
-            <Selector loading={submittersLoading} text={nameOf(submitterId, submitterOptions)} placeholder={t('letters.placeholderSubmitter')} onPress={() => onOpenPicker('submitter')} />
+          <Field label={t('letters.fieldSubmitter')}>
+            <Selector loading={submittersLoading} text={nameOf(submitterId, submitterOptions)} placeholder={t('letters.placeholderSubmitterOptional')} onPress={() => onOpenPicker('submitter')} />
           </Field>
         </>
       ) : (

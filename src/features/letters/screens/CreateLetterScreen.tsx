@@ -11,6 +11,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { employeeSubLabel } from '@/utils/roles';
+import { branchRegions, regionLabels, branchesInRegions } from '@/utils/tripRegions';
 import { getApiErrorMessage } from '@/api/errors';
 import { type PickerOption } from '@/components/PickerModal';
 import { AttachmentField, type PickedFile } from '@/components/AttachmentField';
@@ -25,6 +26,7 @@ import { useCreateLetter } from '../api/mutations';
 import { Field, Selector } from '../components/FormParts';
 import { LetterFormFields } from '../components/LetterFormFields';
 import { LetterPickers, type PickerKind, type DateKind } from '../components/LetterPickers';
+import { buildLetterCreatePayload } from './letterCreatePayload';
 
 type LetterType = 'explanatory' | 'application' | 'business_trip';
 // Value/labelKey pairs — the numeric picker values are internal (never sent to
@@ -98,14 +100,14 @@ export default function CreateLetterScreen() {
   const rahbariyatOptions = useMemo(() => rahbariyatEmps.map(empOption), [rahbariyatEmps, empOption]);
   const submitterOptions = useMemo(() => (submitterData?.items ?? []).map(empOption), [submitterData, empOption]);
 
-  const regionOptions = useMemo<PickerOption[]>(() => {
-    const set = Array.from(new Set(branches.map((b) => b.region).filter(Boolean)));
-    return set.map((r, i) => ({ value: i + 1, label: String(r) }));
-  }, [branches]);
+  const regionOptions = useMemo<PickerOption[]>(
+    () => regionLabels(branches).map((r, i) => ({ value: i + 1, label: r })),
+    [branches]
+  );
   const regionLabelByValue = (v: number) => regionOptions.find((o) => o.value === v)?.label;
 
   const destinationOptions = useMemo<PickerOption[]>(
-    () => branches.filter((b) => regions.length === 0 || regions.includes(b.region)).map((b) => ({ value: b.id, label: b.name, subLabel: b.region })),
+    () => branchesInRegions(branches, regions).map((b) => ({ value: b.id, label: b.name, subLabel: branchRegions(b).join(', ') })),
     [branches, regions]
   );
 
@@ -123,7 +125,7 @@ export default function CreateLetterScreen() {
       const next = p.includes(label) ? p.filter((x) => x !== label) : [...p, label];
       // prune destinations outside selected regions
       if (next.length > 0) {
-        const allowed = branches.filter((b) => next.includes(b.region)).map((b) => b.id);
+        const allowed = branchesInRegions(branches, next).map((b) => b.id);
         setDestinationIds((d) => d.filter((id) => allowed.includes(id)));
       }
       return next;
@@ -138,36 +140,20 @@ export default function CreateLetterScreen() {
     if (!branchId) { Alert.alert(t('letters.validationTitle'), t('letters.branchNotFound')); return; }
     if (!isTrip && !mainSignerId) { Alert.alert(t('letters.validationTitle'), t('letters.mainSignerRequired')); return; }
     if (isTrip) {
+      // submitter is optional (web parity): an empty submitter means the author
+      // submits and signs their own trip — the backend handles it.
       if (destinationIds.length === 0) { Alert.alert(t('letters.validationTitle'), t('letters.destinationRequired')); return; }
-      if (!submitterId) { Alert.alert(t('letters.validationTitle'), t('letters.submitterRequired')); return; }
       if (rahbariyatIds.length === 0) { Alert.alert(t('letters.validationTitle'), t('letters.leadershipRequired')); return; }
     }
 
-    const desc = isTrip
-      ? (description.trim() || null)
-      : ([shortSummary.trim(), description.trim()].filter(Boolean).join('\n\n') || null);
-
-    const payload: Record<string, any> = {
-      letter_type: letterType,
-      letter_date: letterDate || null,
-      description: desc,
-      organization_branch_id: branchId,
-      employee_id: employee?.id,
-    };
-
-    if (isTrip) {
-      payload.destination_branch_ids = destinationIds;
-      payload.submitter_id = submitterId;
-      payload.rahbariyat_ids = rahbariyatIds;
-      payload.departure_date = departureDate || null;
-      payload.arrival_date = arrivalDate || null;
-      payload.work_plan = workPlan.trim() || null;
-    } else {
-      payload.assigned_signers = [
-        ...(mainSignerId ? [{ employee_id: mainSignerId, signer_type: 'main' }] : []),
-        ...ordinarySigners.filter((id) => id && id !== mainSignerId).map((id) => ({ employee_id: id, signer_type: 'ordinary' })),
-      ];
-    }
+    const payload = buildLetterCreatePayload({
+      isTrip, letterType, letterDate,
+      branchId, employeeId: employee?.id,
+      shortSummary, description, workPlan,
+      mainSignerId, ordinarySigners,
+      submitterId, rahbariyatIds, destinationIds,
+      departureDate, arrivalDate,
+    });
 
     setSaving(true);
     try {

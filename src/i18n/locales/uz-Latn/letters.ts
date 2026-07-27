@@ -76,7 +76,7 @@ export default {
   placeholderTripPurpose: 'Borishdan maqsad...',
   placeholderWorkPlan: 'Ish rejasi...',
   placeholderLeadership: 'Rahbariyatni tanlang...',
-  placeholderSubmitter: 'Yuboruvchini tanlang...',
+  placeholderSubmitterOptional: 'Bo\'sh qoldirilsa — o\'zingiz imzolaysiz',
   placeholderShortSummary: 'Qisqa mazmun...',
   placeholderText: 'Hujjat matni...',
   placeholderCoordinators: 'Kelishuvchilarni tanlang...',
@@ -116,7 +116,6 @@ export default {
   branchNotFound: 'Filial aniqlanmadi',
   mainSignerRequired: 'Rahbariyat (imzolovchi) tanlanishi shart',
   destinationRequired: 'Kamida bitta borish filiali tanlanishi shart',
-  submitterRequired: 'Yuboruvchi shaxs tanlanishi shart',
   leadershipRequired: 'Kamida bitta rahbariyat tanlanishi shart',
   attachmentNoticeTitle: 'Eslatma',
   attachmentFailed: 'Xat saqlandi, lekin ilova yuklanmadi',
@@ -131,6 +130,23 @@ export default {
   // ── Error fallbacks ─────────────────────────────────────────────────────────
   createError: 'Xatolik yuz berdi',
   actionError: 'Xatolik',
+
+  // ── Trip submit (xizmat safari: draft → pending) ──
+  tripSubmit: 'Yuborish',
+  tripSubmitConfirmTitle: 'Safarni yuborish',
+  tripSubmitConfirmMessage: 'Xizmat safari imzolash uchun yuboriladi.',
+
+  // ── Trip leadership approvals (button + per-kind confirm/done copy) ──
+  tripApprove: 'Tasdiqlash',
+  approve_trip_confirmTitle: 'Safarni tasdiqlash',
+  approve_trip_confirmMessage: 'Xizmat safari tasdiqlanadi.',
+  approve_trip_done: 'Safar tasdiqlandi',
+  approve_report_confirmTitle: 'Hisobotni tasdiqlash',
+  approve_report_confirmMessage: 'Safar hisoboti tasdiqlanadi.',
+  approve_report_done: 'Hisobot tasdiqlandi',
+  approve_guvohnoma_confirmTitle: 'Guvohnomani tasdiqlash',
+  approve_guvohnoma_confirmMessage: 'Guvohnoma tasdiqlanadi.',
+  approve_guvohnoma_done: 'Guvohnoma tasdiqlandi',
 
   // ── Trip report (xizmat safari, OLD flow) ──
   sectionReport: 'Hisobot',

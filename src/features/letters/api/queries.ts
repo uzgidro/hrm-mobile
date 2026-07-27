@@ -9,6 +9,7 @@ import {
   ORGANIZATION_BRANCH_LEADERS,
 } from '@/api/urls';
 import { fetchAllEmployees } from '@/utils/employees';
+import type { BranchLite } from '@/utils/tripRegions';
 import type { Employee, Letter, BusinessTripMovement } from '@/types';
 
 // Hierarchical query keys.
@@ -148,7 +149,7 @@ export function orgBranchesQuery(enabled: boolean) {
     queryKey: ['org-branches'] as const,
     enabled,
     queryFn: () =>
-      apiClient.get(ORGANIZATION_BRANCHES).then((r) => unwrapList<{ id: number; name: string; region: string }>(r.data)),
+      apiClient.get(ORGANIZATION_BRANCHES).then((r) => unwrapList<BranchLite>(r.data)),
     staleTime: 10 * 60 * 1000,
   });
 }

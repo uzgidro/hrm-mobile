@@ -71,7 +71,7 @@ export default {
   placeholderTripPurpose: 'Цель поездки...',
   placeholderWorkPlan: 'План работы...',
   placeholderLeadership: 'Выберите руководство...',
-  placeholderSubmitter: 'Выберите отправителя...',
+  placeholderSubmitterOptional: 'Если пусто — подпишете сами',
   placeholderShortSummary: 'Краткое содержание...',
   placeholderText: 'Текст документа...',
   placeholderCoordinators: 'Выберите согласующих...',
@@ -115,7 +115,6 @@ export default {
   branchNotFound: 'Филиал не определён',
   mainSignerRequired: 'Необходимо выбрать руководство (подписанта)',
   destinationRequired: 'Необходимо выбрать хотя бы один филиал назначения',
-  submitterRequired: 'Необходимо выбрать отправителя',
   leadershipRequired: 'Необходимо выбрать хотя бы одного руководителя',
   attachmentNoticeTitle: 'Примечание',
   attachmentFailed: 'Письмо сохранено, но приложение не загружено',
@@ -130,6 +129,21 @@ export default {
   // ── Error fallbacks ─────────────────────────────────────────────────────────
   createError: 'Произошла ошибка',
   actionError: 'Ошибка',
+
+  tripSubmit: 'Отправить',
+  tripSubmitConfirmTitle: 'Отправить командировку',
+  tripSubmitConfirmMessage: 'Командировка будет отправлена на подпись.',
+
+  tripApprove: 'Утвердить',
+  approve_trip_confirmTitle: 'Утвердить командировку',
+  approve_trip_confirmMessage: 'Командировка будет утверждена.',
+  approve_trip_done: 'Командировка утверждена',
+  approve_report_confirmTitle: 'Утвердить отчёт',
+  approve_report_confirmMessage: 'Отчёт по командировке будет утверждён.',
+  approve_report_done: 'Отчёт утверждён',
+  approve_guvohnoma_confirmTitle: 'Утвердить гувохному',
+  approve_guvohnoma_confirmMessage: 'Гувохнома будет утверждена.',
+  approve_guvohnoma_done: 'Гувохнома утверждена',
 
   sectionReport: 'Отчёт',
   reportTitle: 'Отправить отчёт',
