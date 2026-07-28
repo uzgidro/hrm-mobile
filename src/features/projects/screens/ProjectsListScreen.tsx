@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { useBreakpoint } from '@/utils/responsive';
 import { ScreenHeader, HeaderAction } from '@/components/ScreenHeader';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
@@ -25,6 +26,8 @@ export default function LoyihalarScreen() {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const bp = useBreakpoint();
+  const cols = bp.isTablet ? (bp.isLandscape ? 3 : 2) : 1;
 
   const { data: items = [], isLoading, refetch, isFetching } = useQuery(myWorkspacesQuery());
 
@@ -36,6 +39,9 @@ export default function LoyihalarScreen() {
       ) : (
         <FlatList
           data={items}
+          key={cols}
+          numColumns={cols}
+          columnWrapperStyle={cols > 1 ? styles.gridRow : undefined}
           keyExtractor={(w) => String(w.id)}
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
@@ -44,7 +50,7 @@ export default function LoyihalarScreen() {
             const members = item.members ?? [];
             return (
               <TouchableOpacity
-                style={styles.card}
+                style={[styles.card, cols > 1 && styles.cardGrid]}
                 activeOpacity={0.8}
                 onPress={() => router.push({ pathname: '/loyiha-detail', params: { id: String(item.id) } })}
               >
@@ -93,6 +99,8 @@ const makeStyles = (c: ThemeColors) =>
     content: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 24 },
 
     card: { backgroundColor: c.card, borderRadius: 16, borderWidth: 1, borderColor: c.cardBorder, padding: 16, marginBottom: 12 },
+    gridRow: { gap: 12 },
+    cardGrid: { flex: 1 },
     cardTop: { flexDirection: 'row', alignItems: 'center', gap: 12 },
     iconWrap: { width: 44, height: 44, borderRadius: 13, backgroundColor: c.primarySoft, alignItems: 'center', justifyContent: 'center' },
     name: { flex: 1, fontSize: 16, fontWeight: '700', color: c.text },

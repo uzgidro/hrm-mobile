@@ -9,6 +9,7 @@ import dayjs from 'dayjs';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { useBreakpoint } from '@/utils/responsive';
 import type { NewsPost } from '@/types';
 import { ScreenHeader, HeaderAction } from '@/components/ScreenHeader';
 import { Screen } from '@/components/Screen';
@@ -19,10 +20,10 @@ import { newsListQuery } from '../api/queries';
 
 type Styles = ReturnType<typeof makeStyles>;
 
-const NewsCard = memo(function NewsCard({ item, styles }: { item: NewsPost; styles: Styles }) {
+const NewsCard = memo(function NewsCard({ item, styles, grid }: { item: NewsPost; styles: Styles; grid?: boolean }) {
   const { t } = useTranslation();
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, grid && styles.cardGrid]}>
       <View style={styles.cardHeader}>
         {item.author?.photo_path ? (
           <Image source={{ uri: item.author.photo_path }} style={styles.avatar} />
@@ -53,13 +54,15 @@ export default function NewsScreen() {
   const branchId = user?.employee?.department?.organization_branch_id;
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const bp = useBreakpoint();
+  const cols = bp.isTablet ? (bp.isLandscape ? 3 : 2) : 1;
   const canManage = isNewsManager(user);
 
   const { data: news = [], isLoading, refetch, isFetching } = useQuery(newsListQuery(branchId));
 
   const renderItem = useCallback<ListRenderItem<NewsPost>>(
-    ({ item }) => <NewsCard item={item} styles={styles} />,
-    [styles],
+    ({ item }) => <NewsCard item={item} styles={styles} grid={cols > 1} />,
+    [styles, cols],
   );
 
   const keyExtractor = useCallback((item: NewsPost) => String(item.id), []);
@@ -75,6 +78,9 @@ export default function NewsScreen() {
       ) : (
         <FlatList
           data={news}
+          key={cols}
+          numColumns={cols}
+          columnWrapperStyle={cols > 1 ? styles.gridRow : undefined}
           renderItem={renderItem}
           keyExtractor={keyExtractor}
           contentContainerStyle={styles.content}
@@ -96,8 +102,10 @@ export default function NewsScreen() {
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     content: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 32 },
+    gridRow: { gap: 12 },
 
     card: { backgroundColor: c.card, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: c.cardBorder },
+    cardGrid: { flex: 1 },
     cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
     avatar: { width: 42, height: 42, borderRadius: 21 },
     avatarFallback: { backgroundColor: c.primarySoft, alignItems: 'center', justifyContent: 'center' },

@@ -11,6 +11,7 @@ import { getApiErrorMessage } from '@/api/errors';
 import { routeForNotification, notificationMeta } from '@/services/notifications';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { useBreakpoint } from '@/utils/responsive';
 import type { Notification } from '@/types';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
@@ -23,6 +24,8 @@ export default function NotificationsScreen() {
   const { user } = useAuthStore();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const bp = useBreakpoint();
+  const cols = bp.isTablet ? (bp.isLandscape ? 3 : 2) : 1;
   const qc = useQueryClient();
 
   const { data: items = [], isLoading, refetch, isFetching } = useQuery(
@@ -79,6 +82,9 @@ export default function NotificationsScreen() {
       ) : (
         <FlatList
           data={items}
+          key={cols}
+          numColumns={cols}
+          columnWrapperStyle={cols > 1 ? styles.gridRow : undefined}
           keyExtractor={(n) => String(n.id)}
           contentContainerStyle={styles.content}
           refreshControl={<RefreshControl refreshing={isFetching && !isLoading} onRefresh={refetch} tintColor={colors.primaryLight} />}
@@ -86,7 +92,7 @@ export default function NotificationsScreen() {
             const meta = notificationMeta(item.notification_type);
             return (
               <TouchableOpacity
-                style={[styles.card, !item.is_read && styles.cardUnread]}
+                style={[styles.card, !item.is_read && styles.cardUnread, cols > 1 && styles.cardGrid]}
                 activeOpacity={0.8}
                 onPress={() => onPressItem(item)}
               >
@@ -123,7 +129,9 @@ const makeStyles = (c: ThemeColors) =>
     headerTitle: { fontSize: 17, fontWeight: '700', color: c.text },
 
     content: { padding: 16, gap: 10 },
+    gridRow: { gap: 12 },
     card: { flexDirection: 'row', gap: 12, backgroundColor: c.card, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: c.cardBorder },
+    cardGrid: { flex: 1 },
     cardUnread: { borderColor: c.primary, backgroundColor: c.primarySoft },
     iconWrap: { width: 40, height: 40, borderRadius: 12, backgroundColor: c.bg, alignItems: 'center', justifyContent: 'center' },
     iconWrapUnread: { backgroundColor: c.card },
