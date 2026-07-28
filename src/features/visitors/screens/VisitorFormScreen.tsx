@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEffect, useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Image,
@@ -13,6 +12,7 @@ import type { ThemeColors } from '@/theme/palettes';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { FormInput } from '@/components/FormInput';
 import { Icon } from '@/components/Icon';
+import { Screen } from '@/components/Screen';
 import { LoadingView } from '@/components/StateViews';
 import { DateTimePickerModal } from '@/components/DateTimePicker';
 import { getApiErrorMessage } from '@/api/errors';
@@ -132,7 +132,7 @@ export default function MehmonFormScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <Screen edges={['top']}>
       <ScreenHeader title={isEdit ? t('visitors.editTitle') : t('visitors.createTitle')} />
       {hydrating ? (
         <LoadingView />
@@ -218,13 +218,12 @@ export default function MehmonFormScreen() {
         onConfirm={(iso) => setValidUntil(iso)}
         onClose={() => setPicker(null)}
       />
-    </SafeAreaView>
+    </Screen>
   );
 }
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    safe: { flex: 1, backgroundColor: c.bg },
     content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 24 },
 
     photoRow: { flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 18 },

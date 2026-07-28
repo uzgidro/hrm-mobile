@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useCallback, useMemo } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
@@ -16,6 +15,7 @@ import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Employee } from '@/types';
 import { Icon } from '@/components/Icon';
+import { Screen } from '@/components/Screen';
 import { PickerModal } from '@/components/PickerModal';
 import { useCreateLeave, type CreateLeavePayload } from '../api/mutations';
 import { leaveSupervisorsQuery } from '../api/queries';
@@ -109,7 +109,7 @@ export default function CreateLeaveScreen() {
   })();
 
   return (
-    <SafeAreaView style={s.safe}>
+    <Screen>
       <View style={s.header}>
         <TouchableOpacity onPress={() => router.back()} style={s.backBtn}><Icon name="chevronLeft" size={24} color={colors.text} /></TouchableOpacity>
         <Text style={s.headerTitle}>{t('leaves.createTitle')}</Text>
@@ -207,13 +207,12 @@ export default function CreateLeaveScreen() {
         onClose={() => setShowSupervisorPicker(false)}
         onSelect={(v) => { setPickedSupervisorId(v); setShowSupervisorPicker(false); }}
       />
-    </SafeAreaView>
+    </Screen>
   );
 }
 
 const makeS = (c: ThemeColors) =>
   StyleSheet.create({
-    safe: { flex: 1, backgroundColor: c.bg },
     header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
     backBtn: { width: 36, height: 36, justifyContent: 'center' },
     headerTitle: { flex: 1, fontSize: 20, fontWeight: '700', color: c.text, paddingLeft: 4 },

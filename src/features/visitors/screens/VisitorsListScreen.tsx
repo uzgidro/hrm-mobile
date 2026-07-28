@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useMemo, useState } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
@@ -12,6 +11,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
+import { Screen } from '@/components/Screen';
 import { LoadingView, EmptyState } from '@/components/StateViews';
 import { visitorsListQuery } from '../api/queries';
 
@@ -39,7 +39,7 @@ export default function MehmonlarScreen() {
   }, [visitors, search]);
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <Screen edges={['top']}>
       <View style={styles.header}>
         {/* Guests is a bottom-bar tab, but it's also opened from the Modules
             grid — the chevron walks the visited-tab history back (Modules →
@@ -131,13 +131,12 @@ export default function MehmonlarScreen() {
           }
         />
       )}
-    </SafeAreaView>
+    </Screen>
   );
 }
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    safe: { flex: 1, backgroundColor: c.bg },
     header: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
     backBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', marginLeft: -8, marginRight: -4 },
     title: { fontSize: 26, fontWeight: '800', color: c.text },

@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   View, Text, ScrollView, StyleSheet, Image, Alert,
   TouchableOpacity, Linking, Share,
@@ -11,6 +10,7 @@ import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { ScreenHeader, HeaderAction } from '@/components/ScreenHeader';
 import { Icon, IconName } from '@/components/Icon';
+import { Screen } from '@/components/Screen';
 import { LoadingView } from '@/components/StateViews';
 import { getApiErrorMessage } from '@/api/errors';
 import { confirm } from '@/lib/confirm';
@@ -62,7 +62,7 @@ export default function MehmonDetailScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <Screen edges={['top']}>
       <ScreenHeader
         title={t('visitors.detailTitle')}
         right={
@@ -139,13 +139,12 @@ export default function MehmonDetailScreen() {
           <View style={{ height: 24 }} />
         </ScrollView>
       )}
-    </SafeAreaView>
+    </Screen>
   );
 }
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    safe: { flex: 1, backgroundColor: c.bg },
     content: { paddingHorizontal: 16, paddingBottom: 24 },
 
     hero: { alignItems: 'center', paddingVertical: 8, marginBottom: 12 },

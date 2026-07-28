@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useMemo } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
@@ -13,6 +12,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
+import { Screen } from '@/components/Screen';
 import { LoadingView, EmptyState } from '@/components/StateViews';
 import { WorkLeave } from '@/types';
 import { myLeavesQuery, assignedLeavesQuery } from '../api/queries';
@@ -161,7 +161,7 @@ export default function WorkLeavesScreen() {
   const activeFilter = isSupervisor ? incomingFilter : myFilter;
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+    <Screen edges={['top', 'bottom']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Text style={styles.backArrow}>{'<'}</Text>
@@ -238,14 +238,12 @@ export default function WorkLeavesScreen() {
           <Icon name="plus" size={24} color={colors.onPrimary} strokeWidth={2.4} />
         </TouchableOpacity>
       )}
-    </SafeAreaView>
+    </Screen>
   );
 }
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    safe: { flex: 1, backgroundColor: c.bg },
-
     header: {
       flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14,
       borderBottomWidth: 1, borderBottomColor: c.cardBorder,
