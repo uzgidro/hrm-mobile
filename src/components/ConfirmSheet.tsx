@@ -12,6 +12,7 @@ import { Animated, Modal, Pressable, View, Text, TouchableOpacity, StyleSheet } 
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon, type IconName } from '@/components/Icon';
+import { useBreakpoint } from '@/utils/responsive';
 
 interface Props {
   visible: boolean;
@@ -38,6 +39,7 @@ export function ConfirmSheet({
 }: Props) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const bp = useBreakpoint();
   const accent = destructive ? colors.error : colors.primary;
   const accentSoft = destructive ? colors.errorSoft : colors.primarySoft;
 
@@ -63,10 +65,10 @@ export function ConfirmSheet({
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel} statusBarTranslucent>
       {/* Tapping the dimmed backdrop dismisses (same as cancel). */}
-      <Pressable style={[styles.fill, styles.backdrop]} onPress={onCancel}>
+      <Pressable style={[styles.fill, styles.backdrop, bp.isTablet && styles.fillCentered]} onPress={onCancel}>
         {/* Stop propagation so taps inside the sheet don't dismiss it. */}
-        <Animated.View style={{ transform: [{ translateY }] }}>
-          <Pressable style={styles.sheet} onPress={() => {}}>
+        <Animated.View style={[{ transform: [{ translateY: bp.isTablet ? 0 : translateY }] }, bp.isTablet && styles.dialogWrap]}>
+          <Pressable style={[styles.sheet, bp.isTablet && styles.sheetTablet]} onPress={() => {}}>
             <View style={styles.grabber} />
 
             <View style={[styles.iconCircle, { backgroundColor: accentSoft }]}>
@@ -106,7 +108,9 @@ const makeStyles = (c: ThemeColors) =>
     // Modal's fade animation cross-fades the whole window (dim included) in
     // place, so no grey scrim slides up from the bottom.
     fill: { flex: 1, justifyContent: 'flex-end' },
+    fillCentered: { justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 },
     backdrop: { backgroundColor: c.overlay },
+    dialogWrap: { width: '100%', maxWidth: 420, alignItems: 'stretch' },
     sheet: {
       backgroundColor: c.card,
       borderTopLeftRadius: 24,
@@ -116,6 +120,7 @@ const makeStyles = (c: ThemeColors) =>
       paddingBottom: 32,
       alignItems: 'center',
     },
+    sheetTablet: { borderRadius: 24, alignSelf: 'stretch' },
     grabber: {
       width: 40,
       height: 4,

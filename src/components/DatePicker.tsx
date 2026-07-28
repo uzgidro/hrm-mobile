@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useThemedStyles } from '../theme/ThemeProvider';
 import type { ThemeColors } from '../theme/palettes';
 import { monthName, weekdayNameShort } from '@/i18n/dates';
+import { useBreakpoint } from '../utils/responsive';
 
 // Monday-first weekday header. dayjs day() indexes Sunday=0..Saturday=6, and the
 // calendar grid below is Monday-first, so order the localized short names to match.
@@ -15,6 +16,7 @@ export function DatePickerModal({
 }: { visible: boolean; value?: string | null; title: string; onConfirm: (iso: string) => void; onClose: () => void }) {
   const dp = useThemedStyles(makeDp);
   const { t } = useTranslation();
+  const bp = useBreakpoint();
   const init = value ? dayjs(value) : dayjs();
   const [month, setMonth] = useState<Dayjs>(init.startOf('month'));
   const [selected, setSelected] = useState<Dayjs>(init);
@@ -25,8 +27,8 @@ export function DatePickerModal({
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={dp.overlay}>
-        <View style={dp.sheet}>
+      <View style={[dp.overlay, bp.isTablet && dp.overlayCentered]}>
+        <View style={[dp.sheet, bp.isTablet && dp.sheetTablet]}>
           <View style={dp.header}>
             <TouchableOpacity onPress={onClose}><Text style={dp.cancelText}>{t('common.cancel')}</Text></TouchableOpacity>
             <Text style={dp.title}>{title}</Text>
@@ -62,7 +64,12 @@ export function DatePickerModal({
 const makeDp = (c: ThemeColors) =>
   StyleSheet.create({
     overlay: { flex: 1, backgroundColor: c.overlay, justifyContent: 'flex-end' },
+    overlayCentered: { justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 },
     sheet: { backgroundColor: c.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingBottom: 28 },
+    sheetTablet: {
+      width: '100%', maxWidth: 420, borderRadius: 24,
+      borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '80%',
+    },
     header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
     title: { fontSize: 16, fontWeight: '700', color: c.text },
     cancelText: { fontSize: 14, color: c.textSecondary },
