@@ -66,8 +66,8 @@ export default function NotificationsScreen() {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{t('notifications.screenTitle')}</Text>
         {unread > 0 ? (
-          <TouchableOpacity onPress={markAllRead} hitSlop={8}>
-            <Text style={styles.markAll}>{t('notifications.markAllRead')}</Text>
+          <TouchableOpacity onPress={markAllRead} hitSlop={8} accessibilityLabel={t('notifications.markAllRead')}>
+            <Icon name="checkDouble" size={24} color={colors.primary} />
           </TouchableOpacity>
         ) : (
           <View style={{ width: 56 }} />
@@ -122,7 +122,6 @@ const makeStyles = (c: ThemeColors) =>
     backBtn: { width: 40, height: 40, justifyContent: 'center' },
     backArrow: { fontSize: 22, color: c.text, fontWeight: '300' },
     headerTitle: { fontSize: 17, fontWeight: '700', color: c.text },
-    markAll: { fontSize: 13, color: c.primary, fontWeight: '700', width: 56, textAlign: 'right' },
 
     content: { padding: 16, gap: 10 },
     card: { flexDirection: 'row', gap: 12, backgroundColor: c.card, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: c.cardBorder },

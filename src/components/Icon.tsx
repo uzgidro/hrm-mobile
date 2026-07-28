@@ -40,6 +40,7 @@ export type IconName =
   | 'search'
   | 'close'
   | 'check'
+  | 'checkDouble'
   | 'doc'
   | 'folder'
   | 'inbox'
@@ -315,6 +316,13 @@ function render(name: IconName, p: any) {
       );
     case 'check':
       return <Polyline points="4 12 10 18 20 6" {...p} />;
+    case 'checkDouble':
+      return (
+        <>
+          <Polyline points="1 12 6 17 15 6" {...p} />
+          <Polyline points="8 12 12.5 16.5 21.5 6" {...p} />
+        </>
+      );
     case 'folder':
       return (
         <>
