@@ -109,7 +109,7 @@ export default function CreateLeaveScreen() {
   })();
 
   return (
-    <Screen edges={['top']} maxWidth={600}>
+    <Screen edges={['top', 'bottom']} maxWidth={600}>
       <View style={s.header}>
         <TouchableOpacity onPress={() => router.back()} style={s.backBtn}><Icon name="chevronLeft" size={24} color={colors.text} /></TouchableOpacity>
         <Text style={s.headerTitle}>{t('leaves.createTitle')}</Text>
