@@ -126,13 +126,15 @@ export default function ChangePinScreen() {
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <ScreenHeader title={t('security.changeTitle')} />
       <View style={styles.body}>
-        <PinPad
-          value={value}
-          onChange={handleChange}
-          title={STEP_TITLE[step]}
-          error={error}
-          disabled={busy}
-        />
+        <View style={styles.padColumn}>
+          <PinPad
+            value={value}
+            onChange={handleChange}
+            title={STEP_TITLE[step]}
+            error={error}
+            disabled={busy}
+          />
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -141,5 +143,6 @@ export default function ChangePinScreen() {
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     safe: { flex: 1, backgroundColor: c.bg },
-    body: { flex: 1, justifyContent: 'center', paddingHorizontal: 24 },
+    body: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 },
+    padColumn: { width: '100%', maxWidth: 360 },
   });
