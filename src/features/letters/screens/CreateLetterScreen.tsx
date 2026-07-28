@@ -19,6 +19,7 @@ import type { ThemeColors } from '@/theme/palettes';
 import type { Employee } from '@/types';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
+import { useBreakpoint } from '@/utils/responsive';
 import {
   letterSignersQuery, letterRahbariyatQuery, letterSubmittersQuery, orgBranchesQuery,
 } from '../api/queries';
@@ -49,6 +50,8 @@ export default function CreateLetterScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const createMutation = useCreateLetter();
+  const bp = useBreakpoint();
+  const twoCol = bp.isTablet;
 
   const TYPE_OPTIONS = useMemo<PickerOption[]>(
     () => TYPE_OPTION_KEYS.map((o) => ({ value: o.value, label: t(o.labelKey) })),
@@ -188,13 +191,21 @@ export default function CreateLetterScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Field label={t('letters.fieldType')} required>
-          <Selector text={letterType ? TYPE_OPTIONS.find((o) => TYPE_BY_VALUE[o.value] === letterType)?.label : undefined} placeholder={t('letters.placeholderSelect')} onPress={() => setPicker('type')} />
-        </Field>
+        {/* Both short single-selects, adjacent — pair into a 2-column row on
+            tablet (Task 21); stack full-width on phone. */}
+        <View testID="letter-type-date-row" style={twoCol ? styles.fieldRow : undefined}>
+          <View testID="letter-field-type" style={twoCol ? styles.fieldHalf : undefined}>
+            <Field label={t('letters.fieldType')} required>
+              <Selector text={letterType ? TYPE_OPTIONS.find((o) => TYPE_BY_VALUE[o.value] === letterType)?.label : undefined} placeholder={t('letters.placeholderSelect')} onPress={() => setPicker('type')} />
+            </Field>
+          </View>
 
-        <Field label={t('letters.fieldLetterDate')}>
-          <Selector text={letterDate ? dayjs(letterDate).format('DD.MM.YYYY') : undefined} placeholder={t('letters.placeholderSelectDate')} onPress={() => setDatePicker('letter')} />
-        </Field>
+          <View testID="letter-field-letterDate" style={twoCol ? styles.fieldHalf : undefined}>
+            <Field label={t('letters.fieldLetterDate')}>
+              <Selector text={letterDate ? dayjs(letterDate).format('DD.MM.YYYY') : undefined} placeholder={t('letters.placeholderSelectDate')} onPress={() => setDatePicker('letter')} />
+            </Field>
+          </View>
+        </View>
 
         <LetterFormFields
           isTrip={isTrip}
@@ -250,4 +261,8 @@ const makeStyles = (c: ThemeColors) =>
     createBtnDisabled: { opacity: 0.6 },
     createBtnText: { color: c.onPrimary, fontWeight: '700', fontSize: 14 },
     content: { paddingHorizontal: 16, paddingTop: 4 },
+
+    // Task 21: 2-column pairing for short fields on tablet (bp.isTablet).
+    fieldRow: { flexDirection: 'row', gap: 12 },
+    fieldHalf: { flex: 1 },
   });
