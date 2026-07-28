@@ -31,6 +31,7 @@ export default {
   letterTripLeadershipPending: 'Ожидает утверждения руководителя',
   letterTripGuvohnomaReview: 'На утверждении гувохномы',
   letterReportSubmitted: 'Отчёт отправлен',
+  letterReturned: 'Возвращён',
   letterReportReturned: 'Отчёт возвращён',
   letterReportReview: 'Отчёт у руководства',
   letterReportApproved: 'Отчёт утверждён',

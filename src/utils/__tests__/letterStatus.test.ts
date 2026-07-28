@@ -20,6 +20,7 @@ import {
   isReportReturned,
 } from '../letterStatus';
 import { statusColor as orderStatusColor } from '../orderStatus';
+import i18n from '../../i18n';
 import type { Letter } from '../../types';
 
 const letter = (l: Partial<Letter>): Letter => ({ id: 1, ...l }) as Letter;
@@ -466,6 +467,12 @@ describe('letterStatusMeta', () => {
   it('registered_pending_rahbar gets the leadership-pending badge', () => {
     expect(letterStatusMeta(letter({ status: 'registered_pending_rahbar' })))
       .toEqual({ label: "Rahbar tasdig'i kutilmoqda", kind: 'pending' });
+  });
+
+  it('letter status "returned" (devonxona qaytardi) → letterReturned label, error kind', () => {
+    const meta = letterStatusMeta({ status: 'returned' } as Letter);
+    expect(meta.label).toBe(i18n.t('status.letterReturned'));
+    expect(meta.kind).toBe('error');
   });
 });
 

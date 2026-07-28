@@ -31,6 +31,7 @@ export default {
   letterTripLeadershipPending: 'Раҳбар тасдиғи кутилмоқда',
   letterTripGuvohnomaReview: 'Гувоҳнома тасдиғида',
   letterReportSubmitted: 'Ҳисобот юборилди',
+  letterReturned: 'Қайтарилган',
   letterReportReturned: 'Ҳисобот қайтарилди',
   letterReportReview: 'Ҳисобот раҳбариятда',
   letterReportApproved: 'Ҳисобот тасдиқланди',
