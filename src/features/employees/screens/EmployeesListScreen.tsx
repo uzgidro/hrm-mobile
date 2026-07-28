@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useMemo } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
@@ -12,6 +11,7 @@ import { usePrefsStore } from '@/store/prefsStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
+import { Screen } from '@/components/Screen';
 import { LoadingView, EmptyState } from '@/components/StateViews';
 import { AccessDenied } from '@/components/AccessDenied';
 import { canAccessPage } from '@/utils/roles';
@@ -53,7 +53,7 @@ export default function EmployeesListScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+    <Screen edges={['top', 'bottom']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Icon name="chevronLeft" size={24} color={colors.text} />
@@ -117,14 +117,12 @@ export default function EmployeesListScreen() {
           }
         />
       )}
-    </SafeAreaView>
+    </Screen>
   );
 }
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    safe: { flex: 1, backgroundColor: c.bg },
-
     header: {
       flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14,
       borderBottomWidth: 1, borderBottomColor: c.cardBorder,

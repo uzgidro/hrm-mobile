@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEffect, useState } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TextInput,
@@ -10,6 +9,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
+import { Screen } from '@/components/Screen';
 import { LoadingView } from '@/components/StateViews';
 import { getApiErrorMessage } from '@/api/errors';
 import { getMyProfile, useUpdateMyProfile } from '../api/mutations';
@@ -113,14 +113,14 @@ export default function ProfileEditScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+      <Screen edges={['top', 'bottom']}>
         <LoadingView />
-      </SafeAreaView>
+      </Screen>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+    <Screen edges={['top', 'bottom']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Icon name="chevronLeft" size={24} color={colors.text} />
@@ -197,7 +197,7 @@ export default function ProfileEditScreen() {
           <View style={{ height: 40 }} />
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </Screen>
   );
 }
 
@@ -235,7 +235,6 @@ function Field({
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    safe: { flex: 1, backgroundColor: c.bg },
     _placeholder: { color: c.textMuted },
     _onPrimary: { color: c.onPrimary },
 

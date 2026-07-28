@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   View, Text, ScrollView, StyleSheet,
   TouchableOpacity, Image,
@@ -12,6 +11,7 @@ import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { WorkExperience, Education } from '@/types';
 import { Icon, type IconName } from '@/components/Icon';
+import { Screen } from '@/components/Screen';
 import { LoadingView, ErrorState } from '@/components/StateViews';
 import { employeeDetailQuery } from '../api/queries';
 
@@ -35,18 +35,18 @@ export default function EmployeeDetailScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+      <Screen edges={['top', 'bottom']}>
         <LoadingView />
-      </SafeAreaView>
+      </Screen>
     );
   }
 
   if (!employee) {
     return (
-      <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+      <Screen edges={['top', 'bottom']}>
         <Header styles={styles} title={t('employees.detailTitle')} />
         <ErrorState title={t('employees.detailNotFound')} onRetry={() => refetch()} />
-      </SafeAreaView>
+      </Screen>
     );
   }
 
@@ -56,7 +56,7 @@ export default function EmployeeDetailScreen() {
     .join(', ');
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+    <Screen edges={['top', 'bottom']}>
       <Header
         styles={styles}
         title={t('employees.detailTitle')}
@@ -178,7 +178,7 @@ export default function EmployeeDetailScreen() {
 
         <View style={{ height: 32 }} />
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 }
 
@@ -230,8 +230,6 @@ function Divider({ styles }: { styles: any }) {
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    safe: { flex: 1, backgroundColor: c.bg },
-
     header: {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
       paddingHorizontal: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: c.cardBorder,

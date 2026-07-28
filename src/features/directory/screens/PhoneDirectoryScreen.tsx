@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useMemo, useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, FlatList, TextInput, Linking,
@@ -10,6 +9,7 @@ import { router } from 'expo-router';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
+import { Screen } from '@/components/Screen';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { LoadingView, EmptyState, ErrorState } from '@/components/StateViews';
 import type { PhoneDirectoryEntry } from '@/types';
@@ -42,7 +42,7 @@ export default function PhoneDirectoryScreen() {
   const dial = (phone: string) => Linking.openURL(`tel:${phone.replace(/\s+/g, '')}`);
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+    <Screen edges={['top', 'bottom']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Icon name="chevronLeft" size={24} color={colors.text} />
@@ -87,7 +87,7 @@ export default function PhoneDirectoryScreen() {
           }
         />
       )}
-    </SafeAreaView>
+    </Screen>
   );
 }
 
@@ -126,8 +126,6 @@ type Styles = ReturnType<typeof makeStyles>;
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    safe: { flex: 1, backgroundColor: c.bg },
-
     header: {
       flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14,
       borderBottomWidth: 1, borderBottomColor: c.cardBorder,
