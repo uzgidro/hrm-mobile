@@ -108,7 +108,7 @@ export default function ChairmanTaskFormScreen() {
   };
 
   return (
-    <Screen edges={['top', 'bottom']}>
+    <Screen edges={['top', 'bottom']} maxWidth={600}>
       <ScreenHeader
         title={t(editing ? 'chairman.editTitle' : 'chairman.createTitle')}
         right={editing ? <HeaderAction icon="trash" onPress={onDelete} /> : undefined}

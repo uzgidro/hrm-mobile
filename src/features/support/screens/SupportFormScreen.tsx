@@ -62,7 +62,7 @@ export default function SupportFormScreen() {
   };
 
   return (
-    <Screen edges={['top', 'bottom']}>
+    <Screen edges={['top', 'bottom']} maxWidth={600}>
       <ScreenHeader title={t('support.createTitle')} />
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Text style={styles.label}>{t('support.priorityLabel')}</Text>

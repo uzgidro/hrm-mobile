@@ -104,7 +104,7 @@ export default function SubmitReportScreen() {
   }
 
   return (
-    <Screen edges={['top', 'bottom']}>
+    <Screen edges={['top', 'bottom']} maxWidth={640}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
           <Icon name="chevronLeft" size={24} color={colors.text} />

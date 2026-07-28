@@ -113,7 +113,7 @@ export default function LoyihaFormScreen() {
   const selectedMembers = memberIds.map((mid) => empById.get(mid)).filter(Boolean) as Employee[];
 
   return (
-    <Screen edges={['top']}>
+    <Screen edges={['top']} maxWidth={600}>
       <ScreenHeader title={isEdit ? t('projects.editTitle') : t('projects.createTitle')} />
       {hydrating ? (
         <LoadingView />

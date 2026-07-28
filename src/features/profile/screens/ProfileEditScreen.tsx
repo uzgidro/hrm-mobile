@@ -120,7 +120,7 @@ export default function ProfileEditScreen() {
   }
 
   return (
-    <Screen edges={['top', 'bottom']}>
+    <Screen edges={['top', 'bottom']} maxWidth={600}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Icon name="chevronLeft" size={24} color={colors.text} />

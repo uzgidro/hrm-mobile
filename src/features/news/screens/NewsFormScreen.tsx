@@ -47,7 +47,7 @@ export default function NewsFormScreen() {
   };
 
   return (
-    <Screen edges={['top', 'bottom']}>
+    <Screen edges={['top', 'bottom']} maxWidth={640}>
       <ScreenHeader title={t('news.createTitle')} />
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <FormInput

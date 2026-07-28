@@ -132,7 +132,7 @@ export default function MehmonFormScreen() {
   };
 
   return (
-    <Screen edges={['top']}>
+    <Screen edges={['top']} maxWidth={600}>
       <ScreenHeader title={isEdit ? t('visitors.editTitle') : t('visitors.createTitle')} />
       {hydrating ? (
         <LoadingView />
