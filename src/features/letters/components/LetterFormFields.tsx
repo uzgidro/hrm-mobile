@@ -61,16 +61,17 @@ export function LetterFormFields(props: {
 
       {isTrip ? (
         <>
-          {/* departure/arrival dates: short paired fields — 2-column row on
-              tablet (Task 21), stacked full-width on phone. Previously a
-              hardcoded row2 regardless of device; now conditional. */}
-          <View testID="letter-departure-arrival-row" style={twoCol ? styles.fieldRow : undefined}>
-            <View testID="letter-field-departure" style={twoCol ? styles.fieldHalf : undefined}>
+          {/* departure/arrival dates: pre-existing intentional 2-up row
+              (predates the tablet adaptive work, web-parity) — left as-is,
+              unconditional on both phone and tablet. Task 21 only adds NEW
+              pairing for fields that previously stacked full-width. */}
+          <View testID="letter-departure-arrival-row" style={styles.fieldRow}>
+            <View testID="letter-field-departure" style={styles.fieldHalf}>
               <Field label={t('letters.fieldDepartureDate')}>
                 <Selector text={departureDate ? dayjs(departureDate).format('DD.MM.YYYY') : undefined} placeholder={t('letters.placeholderDate')} onPress={() => onOpenDate('departure')} />
               </Field>
             </View>
-            <View testID="letter-field-arrival" style={twoCol ? styles.fieldHalf : undefined}>
+            <View testID="letter-field-arrival" style={styles.fieldHalf}>
               <Field label={t('letters.fieldArrivalDate')}>
                 <Selector text={arrivalDate ? dayjs(arrivalDate).format('DD.MM.YYYY') : undefined} placeholder={t('letters.placeholderDate')} onPress={() => onOpenDate('arrival')} />
               </Field>

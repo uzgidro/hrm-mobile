@@ -2,10 +2,14 @@
 // form pair into 2-column rows; on phone they stack (Task 0 behavior).
 // multiline fields (trip purpose / work plan / letter text) must stay
 // full-width on both. Pairs under test:
-//  - CreateLetterScreen: fieldType + fieldLetterDate
-//  - LetterFormFields (business trip): departureDate + arrivalDate,
-//    fieldRegions + fieldDestinations, fieldLeadership + fieldSubmitter
-//  - LetterFormFields (non-trip): fieldMainSigner + fieldCoordinators
+//  - CreateLetterScreen: fieldType + fieldLetterDate (new pairing, tablet-only)
+//  - LetterFormFields (business trip): fieldRegions + fieldDestinations,
+//    fieldLeadership + fieldSubmitter (new pairing, tablet-only).
+//    departureDate + arrivalDate is a PRE-EXISTING intentional row (predates
+//    the tablet work, web-parity) — left unconditional on both devices;
+//    this test only locks it still renders, not a new phone/tablet branch.
+//  - LetterFormFields (non-trip): fieldMainSigner + fieldCoordinators (new
+//    pairing, tablet-only)
 import React from 'react';
 import { useWindowDimensions } from 'react-native';
 import MockAdapter from 'axios-mock-adapter';
@@ -64,15 +68,10 @@ describe('CreateLetterScreen (tablet two-column pairing)', () => {
     expect(row.props.style).toBeUndefined();
   });
 
-  it('business trip: pairs departure/arrival, regions/destinations, leadership/submitter on tablet', async () => {
+  it('business trip: pairs regions/destinations and leadership/submitter on tablet (new pairing)', async () => {
     (useWindowDimensions as jest.Mock).mockReturnValue(TABLET_LANDSCAPE);
     const { findByText, findByTestId } = await renderWithProviders(<CreateLetterScreen />);
     await openBusinessTripType(null, findByText);
-
-    const dateRow = await findByTestId('letter-departure-arrival-row');
-    expect(dateRow.props.style).toEqual(expect.objectContaining({ flexDirection: 'row' }));
-    expect((await findByTestId('letter-field-departure')).props.style).toEqual(expect.objectContaining({ flex: 1 }));
-    expect((await findByTestId('letter-field-arrival')).props.style).toEqual(expect.objectContaining({ flex: 1 }));
 
     const regionRow = await findByTestId('letter-regions-destinations-row');
     expect(regionRow.props.style).toEqual(expect.objectContaining({ flexDirection: 'row' }));
@@ -80,18 +79,28 @@ describe('CreateLetterScreen (tablet two-column pairing)', () => {
     const leadershipRow = await findByTestId('letter-leadership-submitter-row');
     expect(leadershipRow.props.style).toEqual(expect.objectContaining({ flexDirection: 'row' }));
 
+    // departure/arrival is a pre-existing intentional row (predates the
+    // tablet work) — still renders as a row on tablet too, unconditionally.
+    const dateRow = await findByTestId('letter-departure-arrival-row');
+    expect(dateRow.props.style).toEqual(expect.objectContaining({ flexDirection: 'row' }));
+
     // Multiline trip purpose / work plan stay full-width — no row wrapper.
     expect(await findByText('Borishdan maqsad')).toBeTruthy();
     expect(await findByText('Xizmat safari ish rejasi')).toBeTruthy();
   });
 
-  it('business trip: departure/arrival do not pair on phone (Task 0 stacking, no longer hardcoded row2)', async () => {
+  it('business trip: regions/destinations and leadership/submitter do not pair on phone', async () => {
     (useWindowDimensions as jest.Mock).mockReturnValue(PHONE_PORTRAIT);
     const { findByText, findByTestId } = await renderWithProviders(<CreateLetterScreen />);
     await openBusinessTripType(null, findByText);
 
-    const dateRow = await findByTestId('letter-departure-arrival-row');
-    expect(dateRow.props.style).toBeUndefined();
+    expect((await findByTestId('letter-regions-destinations-row')).props.style).toBeUndefined();
+    expect((await findByTestId('letter-leadership-submitter-row')).props.style).toBeUndefined();
+    // departure/arrival keeps its pre-existing row layout on phone too
+    // (unchanged by Task 21 — it was never a plain single-column stack).
+    expect((await findByTestId('letter-departure-arrival-row')).props.style).toEqual(
+      expect.objectContaining({ flexDirection: 'row' })
+    );
   });
 
   it('non-trip (bildirgi/ariza): pairs mainSigner + coordinators on tablet, not on phone', async () => {
