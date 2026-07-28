@@ -11,6 +11,7 @@ import type { TFunction } from 'i18next';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { useBreakpoint } from '@/utils/responsive';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { LoadingView, EmptyState } from '@/components/StateViews';
@@ -107,6 +108,8 @@ export default function WorkLeavesScreen() {
   const styles = useThemedStyles(makeStyles);
   const { t } = useTranslation();
   const isSupervisor = !employee?.supervisor;
+  const bp = useBreakpoint();
+  const cols = bp.isTablet ? (bp.isLandscape ? 3 : 2) : 1;
 
   const [myFilter, setMyFilter] = useState<StatusFilter>('all');
   const [incomingFilter, setIncomingFilter] = useState<'all' | 'action' | 'approved' | 'rejected'>('action');
@@ -221,17 +224,29 @@ export default function WorkLeavesScreen() {
                   title={incomingFilter === 'action' ? t('leaves.emptyPending') : t('leaves.emptyLeaves')}
                 />
               ) : (
-                filteredIncoming.map((leave) => {
-                  const alreadySigned = leave.signers?.some((s) => s.id === employeeId);
-                  const actionNeeded = isPendingStatus(leave.status) && !alreadySigned;
-                  return <LeaveCard key={leave.id} leave={leave} showEmployee actionNeeded={actionNeeded} styles={styles} colors={colors} />;
-                })
+                <View style={cols > 1 ? styles.wrapRow : undefined}>
+                  {filteredIncoming.map((leave) => {
+                    const alreadySigned = leave.signers?.some((s) => s.id === employeeId);
+                    const actionNeeded = isPendingStatus(leave.status) && !alreadySigned;
+                    return (
+                      <View key={leave.id} style={cols > 1 ? { flexBasis: `${100 / cols - 2}%`, flexGrow: 1 } : undefined}>
+                        <LeaveCard leave={leave} showEmployee actionNeeded={actionNeeded} styles={styles} colors={colors} />
+                      </View>
+                    );
+                  })}
+                </View>
               )
             ) : (
               filteredMyLeaves.length === 0 ? (
                 <EmptyState icon="checklist" title={t('leaves.emptyLeaves')} />
               ) : (
-                filteredMyLeaves.map((leave) => <LeaveCard key={leave.id} leave={leave} styles={styles} colors={colors} />)
+                <View style={cols > 1 ? styles.wrapRow : undefined}>
+                  {filteredMyLeaves.map((leave) => (
+                    <View key={leave.id} style={cols > 1 ? { flexBasis: `${100 / cols - 2}%`, flexGrow: 1 } : undefined}>
+                      <LeaveCard leave={leave} styles={styles} colors={colors} />
+                    </View>
+                  ))}
+                </View>
               )
             )}
             <View style={{ height: 80 }} />
@@ -265,6 +280,7 @@ const makeStyles = (c: ThemeColors) =>
     filterTabTextActive: { color: c.onPrimary },
 
     content: { paddingHorizontal: 16, paddingTop: 8 },
+    wrapRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
 
     card: { backgroundColor: c.card, borderRadius: 16, borderWidth: 1, borderColor: c.cardBorder, padding: 14, marginBottom: 10, gap: 6 },
     cardHighlight: { borderColor: c.warning, backgroundColor: c.warningSoft },
