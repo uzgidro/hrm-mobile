@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity, RefreshControl,
 } from 'react-native';
@@ -10,10 +10,13 @@ import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
+import { SplitLayout } from '@/components/SplitLayout';
 import { LoadingView, EmptyState } from '@/components/StateViews';
+import { useBreakpoint } from '@/utils/responsive';
 import { canSignLetter } from '@/utils/letterStatus';
 import { lettersListQuery, type LettersTab } from '../api/queries';
 import { LetterListCard } from '../components/LetterListCard';
+import { LetterDetailView } from '../components/LetterDetailView';
 
 const TABS: { key: LettersTab; labelKey: string }[] = [
   { key: 'action', labelKey: 'letters.tabAction' },
@@ -28,6 +31,9 @@ export default function LettersListScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const [tab, setTab] = useState<LettersTab>('action');
+  const bp = useBreakpoint();
+  const split = bp.isTablet && bp.isLandscape;
+  const [selectedId, setSelectedId] = useState<number | null>(null);
 
   const { data: letters = [], isLoading, refetch, isFetching } = useQuery(lettersListQuery(tab));
 
@@ -41,8 +47,19 @@ export default function LettersListScreen() {
     [letters]
   );
 
-  return (
-    <Screen edges={['top']}>
+  // Auto-select the first row when entering split with nothing selected yet
+  // (so the detail pane isn't blank on first tablet-landscape render); clear
+  // the selection when leaving split (rotate back to portrait / phone) so
+  // re-entering split starts fresh instead of resuming a stale id. Mirrors
+  // OrdersListScreen (T15) 1:1.
+  useEffect(() => {
+    if (split && selectedId == null && sorted.length > 0) setSelectedId(sorted[0].id);
+    if (!split) setSelectedId(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [split, sorted]);
+
+  const listPane = (
+    <>
       <View style={styles.header}>
         <Text style={styles.title}>{t('letters.listTitle')}</Text>
         <TouchableOpacity style={styles.fab} onPress={() => router.push('/create-letter')} activeOpacity={0.8}>
@@ -86,14 +103,34 @@ export default function LettersListScreen() {
             </View>
           ) : (
             sorted.map((l) => (
-              <LetterListCard key={l.id} letter={l} action={canSignLetter(l, employeeId)} />
+              <LetterListCard
+                key={l.id}
+                letter={l}
+                action={canSignLetter(l, employeeId)}
+                onPress={split ? () => setSelectedId(l.id) : undefined}
+                selected={split ? selectedId === l.id : undefined}
+              />
             ))
           )}
           <View style={{ height: 24 }} />
         </ScrollView>
       )}
-    </Screen>
+    </>
   );
+
+  if (split) {
+    return (
+      <Screen edges={['top']} maxWidth="full">
+        <SplitLayout
+          master={listPane}
+          detail={selectedId != null ? <LetterDetailView id={selectedId} embedded /> : null}
+          placeholder={<EmptyState icon="mail" title={t('letters.emptyAction')} />}
+        />
+      </Screen>
+    );
+  }
+
+  return <Screen edges={['top']}>{listPane}</Screen>;
 }
 
 const makeStyles = (c: ThemeColors) =>
