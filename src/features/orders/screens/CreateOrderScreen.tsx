@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useMemo, useState } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
@@ -17,6 +16,7 @@ import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import type { Employee } from '@/types';
 import { Icon } from '@/components/Icon';
+import { Screen } from '@/components/Screen';
 import {
   orderCategoriesQuery, orderEmployeesQuery, orderDepartmentsQuery, orderLeadershipQuery,
 } from '../api/queries';
@@ -125,7 +125,7 @@ export default function CreateOrderScreen() {
 
   // ── Render ───────────────────────────────────────────────────────────────────
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+    <Screen edges={['top', 'bottom']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
           <Icon name="chevronLeft" size={24} color={colors.text} />
@@ -236,13 +236,12 @@ export default function CreateOrderScreen() {
           setApproverPickerIndex(null);
         }}
       />
-    </SafeAreaView>
+    </Screen>
   );
 }
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    safe: { flex: 1, backgroundColor: c.bg },
     header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12, gap: 12 },
     backBtn: { padding: 4 },
     title: { fontSize: 19, fontWeight: '800', color: c.text },

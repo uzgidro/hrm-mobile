@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCallback, useMemo, useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
@@ -19,6 +18,7 @@ import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import type { Employee } from '@/types';
 import { Icon } from '@/components/Icon';
+import { Screen } from '@/components/Screen';
 import {
   letterSignersQuery, letterRahbariyatQuery, letterSubmittersQuery, orgBranchesQuery,
 } from '../api/queries';
@@ -176,7 +176,7 @@ export default function CreateLetterScreen() {
     t('letters.hintNotification');
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+    <Screen edges={['top', 'bottom']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
           <Icon name="chevronLeft" size={24} color={colors.text} />
@@ -237,13 +237,12 @@ export default function CreateLetterScreen() {
         letterDate={letterDate} departureDate={departureDate} arrivalDate={arrivalDate}
         onConfirmLetterDate={setLetterDate} onConfirmDepartureDate={setDepartureDate} onConfirmArrivalDate={setArrivalDate}
       />
-    </SafeAreaView>
+    </Screen>
   );
 }
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    safe: { flex: 1, backgroundColor: c.bg },
     header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12, gap: 12 },
     backBtn: { padding: 4 },
     title: { flex: 1, fontSize: 19, fontWeight: '800', color: c.text },

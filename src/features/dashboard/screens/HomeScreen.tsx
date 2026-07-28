@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, Image,
@@ -14,6 +13,7 @@ import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { monthName, weekdayName } from '@/i18n/dates';
 import { Icon } from '@/components/Icon';
+import { Screen } from '@/components/Screen';
 import { AttendanceEvent } from '@/types';
 import {
   homeAttendanceQuery,
@@ -107,7 +107,7 @@ export default function HomeScreen() {
   const exit = sortedToday.length > 1 ? sortedToday[sortedToday.length - 1] : undefined;
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <Screen edges={['top']}>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}
@@ -246,13 +246,12 @@ export default function HomeScreen() {
           <Icon name="target" size={24} color={colors.onPrimary} strokeWidth={2.2} />
         </TouchableOpacity>
       )}
-    </SafeAreaView>
+    </Screen>
   );
 }
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    safe: { flex: 1, backgroundColor: c.bg },
     scroll: { flex: 1 },
     content: { paddingHorizontal: 16, paddingBottom: 32 },
 

@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useMemo, useState } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
@@ -11,6 +10,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
+import { Screen } from '@/components/Screen';
 import { LoadingView, EmptyState } from '@/components/StateViews';
 import { needsMyAction } from '@/utils/orderStatus';
 import { ordersListQuery } from '../api/queries';
@@ -54,7 +54,7 @@ export default function OrdersListScreen() {
   }, [orders, tab, employeeId]);
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <Screen edges={['top']}>
       <View style={styles.header}>
         <Text style={styles.title}>{t('orders.title')}</Text>
         <TouchableOpacity
@@ -112,14 +112,12 @@ export default function OrdersListScreen() {
           <View style={{ height: 24 }} />
         </ScrollView>
       )}
-    </SafeAreaView>
+    </Screen>
   );
 }
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    safe: { flex: 1, backgroundColor: c.bg },
-
     header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
     title: { flex: 1, fontSize: 26, fontWeight: '800', color: c.text },
     fab: {

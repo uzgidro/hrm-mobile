@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useMemo, useState } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity, RefreshControl,
@@ -10,6 +9,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
+import { Screen } from '@/components/Screen';
 import { LoadingView, EmptyState } from '@/components/StateViews';
 import { canSignLetter } from '@/utils/letterStatus';
 import { lettersListQuery, type LettersTab } from '../api/queries';
@@ -42,7 +42,7 @@ export default function LettersListScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <Screen edges={['top']}>
       <View style={styles.header}>
         <Text style={styles.title}>{t('letters.listTitle')}</Text>
         <TouchableOpacity style={styles.fab} onPress={() => router.push('/create-letter')} activeOpacity={0.8}>
@@ -92,13 +92,12 @@ export default function LettersListScreen() {
           <View style={{ height: 24 }} />
         </ScrollView>
       )}
-    </SafeAreaView>
+    </Screen>
   );
 }
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    safe: { flex: 1, backgroundColor: c.bg },
     header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
     title: { flex: 1, fontSize: 26, fontWeight: '800', color: c.text },
     fab: { width: 42, height: 42, borderRadius: 14, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' },

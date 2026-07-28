@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, useWindowDimensions,
@@ -10,6 +9,7 @@ import { useAuthStore } from '../../src/store/authStore';
 import { useTheme, useThemedStyles } from '../../src/theme/ThemeProvider';
 import type { ThemeColors } from '../../src/theme/palettes';
 import { Icon, IconName } from '../../src/components/Icon';
+import { Screen } from '../../src/components/Screen';
 import { canAccessPage, type PageKey } from '../../src/utils/roles';
 import { homeAssignedLeavesQuery, homeNotificationsQuery } from '@/features/dashboard/api/queries';
 
@@ -102,7 +102,7 @@ export default function ModulesScreen() {
   }, [pendingCount, unreadCount, user, employee?.department?.has_navbatchilik, t]);
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <Screen edges={['top']}>
       <View style={styles.header}>
         <Text style={styles.title}>{t('modules.screenTitle')}</Text>
       </View>
@@ -134,13 +134,12 @@ export default function ModulesScreen() {
         ))}
         <View style={{ height: 24 }} />
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 }
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    safe: { flex: 1, backgroundColor: c.bg },
     header: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
     title: { fontSize: 26, fontWeight: '800', color: c.text },
     content: { paddingHorizontal: 16, paddingTop: 4 },
