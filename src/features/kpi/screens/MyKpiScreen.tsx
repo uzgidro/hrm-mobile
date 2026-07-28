@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Image,
@@ -10,6 +9,7 @@ import dayjs from 'dayjs';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon, type IconName } from '@/components/Icon';
+import { Screen } from '@/components/Screen';
 import { ScreenHeader, HeaderAction } from '@/components/ScreenHeader';
 import { LoadingView, EmptyState, ErrorState } from '@/components/StateViews';
 import { monthName } from '@/i18n/dates';
@@ -83,7 +83,7 @@ export default function MyKpiScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <Screen edges={['top']}>
       <ScreenHeader
         title={subordinateId ? (profile?.legal_name || t('kpi.title')) : t('kpi.title')}
         right={
@@ -235,7 +235,7 @@ export default function MyKpiScreen() {
           <View style={{ height: 24 }} />
         </ScrollView>
       )}
-    </SafeAreaView>
+    </Screen>
   );
 }
 
@@ -280,7 +280,6 @@ function TotalRow({
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    safe: { flex: 1, backgroundColor: c.bg },
     content: { paddingHorizontal: 16, paddingTop: 8 },
 
     card: {

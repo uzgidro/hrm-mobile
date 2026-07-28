@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   View, Text, StyleSheet, TouchableOpacity, RefreshControl, Image, FlatList,
 } from 'react-native';
@@ -9,6 +8,7 @@ import dayjs from 'dayjs';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
+import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { LoadingView, EmptyState, ErrorState } from '@/components/StateViews';
 import { myTeamQuery } from '../api/queries';
@@ -32,7 +32,7 @@ export default function KpiTeamScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <Screen edges={['top']}>
       <ScreenHeader title={t('kpi.teamTitle')} />
 
       {isLoading ? (
@@ -112,13 +112,12 @@ export default function KpiTeamScreen() {
           ListEmptyComponent={<EmptyState icon="users" title={t('kpi.teamEmpty')} />}
         />
       )}
-    </SafeAreaView>
+    </Screen>
   );
 }
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    safe: { flex: 1, backgroundColor: c.bg },
     content: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 24, flexGrow: 1 },
     periodNote: { fontSize: 12, color: c.textMuted, marginBottom: 10, marginLeft: 2 },
 

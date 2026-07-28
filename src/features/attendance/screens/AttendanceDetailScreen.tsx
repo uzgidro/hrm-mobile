@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useState, useMemo } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
@@ -17,6 +16,7 @@ import { Employee, AttendanceEvent, WorkLeave } from '@/types';
 import { fetchAllEmployees, employeesQueryKey } from '@/utils/employees';
 import { monthName, weekdayName } from '@/i18n/dates';
 import { Icon } from '@/components/Icon';
+import { Screen } from '@/components/Screen';
 import { LoadingView } from '@/components/StateViews';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { dayAttendanceQuery, teamLeavesQuery } from '../api/queries';
@@ -247,7 +247,7 @@ export default function AttendanceDetailScreen() {
   const onLeaveCount = sections.find((s) => s.key === 'onLeave')?.items.length ?? 0;
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+    <Screen edges={['top', 'bottom']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Icon name="chevronLeft" size={24} color={colors.text} />
@@ -286,14 +286,12 @@ export default function AttendanceDetailScreen() {
           <View style={{ height: 32 }} />
         </ScrollView>
       )}
-    </SafeAreaView>
+    </Screen>
   );
 }
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    safe: { flex: 1, backgroundColor: c.bg },
-
     header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
     backBtn: { width: 36, height: 36, justifyContent: 'center' },
     backArrow: { fontSize: 22, color: c.text, fontWeight: '300' },
