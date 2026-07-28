@@ -7,6 +7,7 @@ import { router } from 'expo-router';
 import dayjs from 'dayjs';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { useBreakpoint } from '@/utils/responsive';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
@@ -21,6 +22,8 @@ export default function KpiTeamScreen() {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const bp = useBreakpoint();
+  const cols = bp.isTablet ? (bp.isLandscape ? 3 : 2) : 1;
 
   // Current month; historical periods live on the member's card.
   const { data, isLoading, isError, refetch, isFetching } = useQuery(myTeamQuery());
@@ -42,6 +45,9 @@ export default function KpiTeamScreen() {
       ) : (
         <FlatList
           data={members}
+          key={cols}
+          numColumns={cols}
+          columnWrapperStyle={cols > 1 ? styles.gridRow : undefined}
           keyExtractor={(m) => String(m.employee_id)}
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
@@ -59,7 +65,7 @@ export default function KpiTeamScreen() {
             const pending = Number(m.pending_tasks || 0);
             return (
               <TouchableOpacity
-                style={styles.card}
+                style={[styles.card, cols > 1 && styles.cardGrid]}
                 activeOpacity={0.8}
                 onPress={() =>
                   router.push({ pathname: '/kpi', params: { employeeId: String(m.employee_id) } })
@@ -120,11 +126,13 @@ const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     content: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 24, flexGrow: 1 },
     periodNote: { fontSize: 12, color: c.textMuted, marginBottom: 10, marginLeft: 2 },
+    gridRow: { gap: 12 },
 
     card: {
       flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, marginBottom: 10,
       backgroundColor: c.card, borderRadius: 14, borderWidth: 1, borderColor: c.cardBorder,
     },
+    cardGrid: { flex: 1 },
     avatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: c.skeleton },
     avatarFallback: { backgroundColor: c.primarySoft, alignItems: 'center', justifyContent: 'center' },
     avatarInitial: { fontSize: 18, fontWeight: '700', color: c.primary },

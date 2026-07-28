@@ -10,6 +10,7 @@ import dayjs from 'dayjs';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { useBreakpoint } from '@/utils/responsive';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { LoadingView, EmptyState } from '@/components/StateViews';
@@ -20,6 +21,8 @@ export default function MehmonlarScreen() {
   const { user } = useAuthStore();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const bp = useBreakpoint();
+  const cols = bp.isTablet ? (bp.isLandscape ? 3 : 2) : 1;
   const [search, setSearch] = useState('');
 
   const orgBranchId =
@@ -80,6 +83,9 @@ export default function MehmonlarScreen() {
       ) : (
         <FlatList
           data={filtered}
+          key={cols}
+          numColumns={cols}
+          columnWrapperStyle={cols > 1 ? styles.gridRow : undefined}
           keyExtractor={(v) => String(v.id)}
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
@@ -88,7 +94,7 @@ export default function MehmonlarScreen() {
             const active = item.is_active !== false;
             return (
               <TouchableOpacity
-                style={styles.card}
+                style={[styles.card, cols > 1 && styles.cardGrid]}
                 activeOpacity={0.8}
                 onPress={() => router.push({ pathname: '/mehmon-detail', params: { id: String(item.id) } })}
               >
@@ -155,6 +161,8 @@ const makeStyles = (c: ThemeColors) =>
       flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, marginBottom: 10,
       backgroundColor: c.card, borderRadius: 14, borderWidth: 1, borderColor: c.cardBorder,
     },
+    gridRow: { gap: 12 },
+    cardGrid: { flex: 1 },
     avatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: c.skeleton },
     avatarFallback: { backgroundColor: c.primarySoft, alignItems: 'center', justifyContent: 'center' },
     avatarInitial: { fontSize: 18, fontWeight: '700', color: c.primary },
