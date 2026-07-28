@@ -217,6 +217,10 @@ export function letterStatusMeta(l: Letter): { label: string; kind: StatusKind }
     case 'report_guvohnoma_review':
       return { label: i18n.t('status.letterTripGuvohnomaReview'), kind: 'pending' };
     case 'report_submitted': return { label: i18n.t('status.letterReportSubmitted'), kind: 'info' };
+    // 'returned' = devonxona (другой филиал) вернул письмо/ариза автору на правку;
+    // автор редактирует и пере-отправляет (submit-trip/send_to_registry принимает
+    // 'returned'). Web-parity helpers.js:741 → 'Qaytarilgan'.
+    case 'returned': return { label: i18n.t('status.letterReturned'), kind: 'error' };
     case 'report_returned': return { label: i18n.t('status.letterReportReturned'), kind: 'error' };
     case 'report_management_review': return { label: i18n.t('status.letterReportReview'), kind: 'pending' };
     case 'report_approved': return { label: i18n.t('status.letterReportApproved'), kind: 'success' };
