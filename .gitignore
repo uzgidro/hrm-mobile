@@ -57,3 +57,6 @@ graphify-out/
 assets/android/
 assets/ios/
 assets/play/
+
+# SDD local scratch (progress ledger — never committed)
+.superpowers/
