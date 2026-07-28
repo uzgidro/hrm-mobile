@@ -2,7 +2,7 @@
   "expo": {
     "name": "HRM Uzgidro",
     "slug": "hrm-mobile",
-    "version": "1.2.0",
+    "version": "1.2.1",
     "runtimeVersion": {
       "policy": "appVersion"
     },
@@ -38,8 +38,8 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/icon.png",
-          "color": "#7B68EE",
+          "icon": "./assets/notification-icon.png",
+          "color": "#0085FF",
           "sounds": []
         }
       ],
