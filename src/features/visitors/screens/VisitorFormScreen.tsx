@@ -15,6 +15,7 @@ import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { LoadingView } from '@/components/StateViews';
 import { DateTimePickerModal } from '@/components/DateTimePicker';
+import { useBreakpoint } from '@/utils/responsive';
 import { getApiErrorMessage } from '@/api/errors';
 import { getVisitor } from '../api/queries';
 import {
@@ -34,6 +35,8 @@ export default function MehmonFormScreen() {
   const styles = useThemedStyles(makeStyles);
   const createMut = useCreateVisitor();
   const updateMut = useUpdateVisitor(visitorId);
+  const bp = useBreakpoint();
+  const twoCol = bp.isTablet;
 
   const [legalName, setLegalName] = useState('');
   const [orgName, setOrgName] = useState('');
@@ -162,11 +165,22 @@ export default function MehmonFormScreen() {
           <FormInput label={t('visitors.labelName')} value={legalName} onChangeText={(text) => { setLegalName(text); setError(''); }} placeholder={t('visitors.placeholderName')} required error={error} />
           <FormInput label={t('visitors.labelOrg')} value={orgName} onChangeText={setOrgName} placeholder={t('visitors.placeholderOrg')} />
           <FormInput label={t('visitors.labelPosition')} value={jobPosition} onChangeText={setJobPosition} placeholder={t('visitors.placeholderPosition')} />
-          <FormInput label={t('visitors.labelTelegram')} value={telegram} onChangeText={setTelegram} placeholder={t('visitors.placeholderTelegram')} />
-          <FormInput label={t('visitors.labelPhone')} value={phone} onChangeText={setPhone} placeholder={t('visitors.placeholderPhone')} keyboardType="phone-pad" />
+
+          {/* telegram + phone: both short single-line fields, adjacent — pair
+              into a 2-column row on tablet (Task 21); stack full-width on phone. */}
+          <View testID="visitor-telegram-phone-row" style={twoCol ? styles.fieldRow : undefined}>
+            <View testID="visitor-field-telegram" style={twoCol ? styles.fieldHalf : undefined}>
+              <FormInput label={t('visitors.labelTelegram')} value={telegram} onChangeText={setTelegram} placeholder={t('visitors.placeholderTelegram')} />
+            </View>
+            <View testID="visitor-field-phone" style={twoCol ? styles.fieldHalf : undefined}>
+              <FormInput label={t('visitors.labelPhone')} value={phone} onChangeText={setPhone} placeholder={t('visitors.placeholderPhone')} keyboardType="phone-pad" />
+            </View>
+          </View>
 
           <Text style={styles.dateGroupLabel}>{t('visitors.dateGroupLabel')}</Text>
-          <View style={styles.dateRow}>
+          {/* validFrom/validUntil: pre-existing intentional 2-up row (predates
+              the tablet adaptive work) — left unconditional on both devices. */}
+          <View testID="visitor-date-row" style={styles.dateRow}>
             <TouchableOpacity style={styles.dateField} onPress={() => setPicker('from')} activeOpacity={0.7}>
               <Text style={styles.dateLabel}>{t('visitors.dateFrom')}</Text>
               <View style={styles.dateValueRow}>
@@ -236,6 +250,10 @@ const makeStyles = (c: ThemeColors) =>
 
     dateGroupLabel: { fontSize: 13, color: c.textSecondary, fontWeight: '600', marginBottom: 8, marginTop: 2 },
     dateRow: { flexDirection: 'row', gap: 12 },
+
+    // Task 21: 2-column pairing for short fields on tablet (bp.isTablet).
+    fieldRow: { flexDirection: 'row', gap: 12 },
+    fieldHalf: { flex: 1 },
     dateField: { flex: 1, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, borderRadius: 12, padding: 12 },
     dateLabel: { fontSize: 11, color: c.textMuted, marginBottom: 6 },
     dateValueRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
