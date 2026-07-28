@@ -6,7 +6,8 @@ const NAMES: IconName[] = [
   'home', 'orders', 'mail', 'grid', 'user', 'users', 'bell', 'clock',
   'checklist', 'wallet', 'news', 'idcard', 'gift', 'calendar', 'sun', 'moon',
   'system', 'chevronRight', 'chevronLeft', 'arrowDown', 'arrowUp', 'plus',
-  'edit', 'building', 'globe', 'logout', 'search', 'close', 'check', 'doc',
+  'edit', 'building', 'globe', 'logout', 'search', 'close', 'check',
+  'checkDouble', 'doc',
   'inbox', 'settings', 'lock', 'phone', 'chart', 'briefcase', 'cake',
   'graduation', 'target', 'eye', 'eyeOff', 'guest', 'board', 'trash',
   'fingerprint', 'backspace',
@@ -25,7 +26,7 @@ describe('Icon', () => {
       unmount();
     }
     // Reaching here means no glyph threw during render.
-    expect(NAMES).toHaveLength(46);
+    expect(NAMES).toHaveLength(47);
   });
 
   it('is wrapped in React.memo', () => {
