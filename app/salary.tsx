@@ -1,17 +1,17 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '../src/theme/ThemeProvider';
 import type { ThemeColors } from '../src/theme/palettes';
 import { Icon } from '../src/components/Icon';
+import { Screen } from '../src/components/Screen';
 
 export default function SalaryScreen() {
   const { colors } = useTheme();
   const s = useThemedStyles(makeStyles);
   const { t } = useTranslation();
   return (
-    <SafeAreaView style={s.safe} edges={['top', 'bottom']}>
+    <Screen edges={['top', 'bottom']}>
       <View style={s.header}>
         <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
           <Icon name="chevronLeft" size={24} color={colors.text} />
@@ -25,13 +25,12 @@ export default function SalaryScreen() {
         <Text style={s.title}>{t('modules.salary.title')}</Text>
         <Text style={s.subtitle}>{t('modules.salary.description')}</Text>
       </View>
-    </SafeAreaView>
+    </Screen>
   );
 }
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    safe: { flex: 1, backgroundColor: c.bg },
     header: {
       flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14,
       borderBottomWidth: 1, borderBottomColor: c.cardBorder,

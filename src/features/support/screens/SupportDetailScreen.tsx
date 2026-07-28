@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, TextInput, Alert, Linking } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
@@ -9,6 +8,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
+import { Screen } from '@/components/Screen';
 import { LoadingView, ErrorState } from '@/components/StateViews';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { confirm } from '@/lib/confirm';
@@ -35,10 +35,10 @@ export default function SupportDetailScreen() {
   const [note, setNote] = useState('');
 
   if (isLoading) {
-    return <SafeAreaView style={styles.safe} edges={['top', 'bottom']}><ScreenHeader title={t('support.detailTitle')} /><LoadingView /></SafeAreaView>;
+    return <Screen edges={['top', 'bottom']}><ScreenHeader title={t('support.detailTitle')} /><LoadingView /></Screen>;
   }
   if (isError || !ticket) {
-    return <SafeAreaView style={styles.safe} edges={['top', 'bottom']}><ScreenHeader title={t('support.detailTitle')} /><ErrorState onRetry={refetch} /></SafeAreaView>;
+    return <Screen edges={['top', 'bottom']}><ScreenHeader title={t('support.detailTitle')} /><ErrorState onRetry={refetch} /></Screen>;
   }
 
   const isCreator = ticket.created_by_id === employeeId;
@@ -70,7 +70,7 @@ export default function SupportDetailScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+    <Screen edges={['top', 'bottom']}>
       <ScreenHeader title={t('support.detailTitle')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.card}>
@@ -150,7 +150,7 @@ export default function SupportDetailScreen() {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </Screen>
   );
 }
 
@@ -166,7 +166,6 @@ function KV({ k, v }: { k: string; v: string }) {
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    safe: { flex: 1, backgroundColor: c.bg },
     content: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 32, gap: 12 },
     card: { backgroundColor: c.card, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: c.cardBorder },
     rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },

@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList,
@@ -10,6 +9,7 @@ import { router } from 'expo-router';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
+import { Screen } from '@/components/Screen';
 import { LoadingView, ErrorState, EmptyState } from '@/components/StateViews';
 import { confirm } from '@/lib/confirm';
 import { toast } from '@/lib/toast';
@@ -180,7 +180,7 @@ export default function AssistantScreen() {
   ), [styles, t]);
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+    <Screen edges={['top', 'bottom']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))} style={styles.backBtn} hitSlop={10}>
           <Icon name="chevronLeft" size={24} color={colors.text} />
@@ -275,13 +275,12 @@ export default function AssistantScreen() {
         </View>
         <Text style={styles.disclaimer}>{t('assistant.disclaimer')}</Text>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </Screen>
   );
 }
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    safe: { flex: 1, backgroundColor: c.bg },
     flex: { flex: 1 },
 
     header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: c.cardBorder },

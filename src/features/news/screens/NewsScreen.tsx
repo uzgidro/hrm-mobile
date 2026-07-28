@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { memo, useCallback } from 'react';
 import {
   View, Text, FlatList, StyleSheet, RefreshControl, Image,
@@ -12,6 +11,7 @@ import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import type { NewsPost } from '@/types';
 import { ScreenHeader, HeaderAction } from '@/components/ScreenHeader';
+import { Screen } from '@/components/Screen';
 import { router } from 'expo-router';
 import { isNewsManager } from '@/utils/roles';
 import { LoadingView, EmptyState } from '@/components/StateViews';
@@ -65,7 +65,7 @@ export default function NewsScreen() {
   const keyExtractor = useCallback((item: NewsPost) => String(item.id), []);
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <Screen edges={['top']}>
       <ScreenHeader
         title={t('news.title')}
         right={canManage ? <HeaderAction icon="plus" onPress={() => router.push('/create-news')} /> : undefined}
@@ -89,13 +89,12 @@ export default function NewsScreen() {
           }
         />
       )}
-    </SafeAreaView>
+    </Screen>
   );
 }
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    safe: { flex: 1, backgroundColor: c.bg },
     content: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 32 },
 
     card: { backgroundColor: c.card, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: c.cardBorder },

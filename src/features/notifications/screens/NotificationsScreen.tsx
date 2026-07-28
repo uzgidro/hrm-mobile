@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   View, Text, StyleSheet, TouchableOpacity,
   FlatList, RefreshControl,
@@ -14,6 +13,7 @@ import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import type { Notification } from '@/types';
 import { Icon } from '@/components/Icon';
+import { Screen } from '@/components/Screen';
 import { LoadingView, EmptyState } from '@/components/StateViews';
 import { notificationKeys, notificationsListQuery } from '../api/queries';
 import { markNotificationRead, markAllNotificationsRead } from '../api/mutations';
@@ -59,7 +59,7 @@ export default function NotificationsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+    <Screen edges={['top', 'bottom']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={10}>
           <Icon name="chevronLeft" size={24} color={colors.text} />
@@ -111,13 +111,12 @@ export default function NotificationsScreen() {
           }
         />
       )}
-    </SafeAreaView>
+    </Screen>
   );
 }
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    safe: { flex: 1, backgroundColor: c.bg },
     header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
     backBtn: { width: 40, height: 40, justifyContent: 'center' },
     backArrow: { fontSize: 22, color: c.text, fontWeight: '300' },

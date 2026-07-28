@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCallback, useMemo, useState } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity, RefreshControl, FlatList, BackHandler,
@@ -9,6 +8,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
+import { Screen } from '@/components/Screen';
 import { LoadingView, EmptyState, ErrorState } from '@/components/StateViews';
 import type { DocumentFolder, HrmFile } from '@/types';
 import { foldersQuery, rootFilesQuery } from '../api/queries';
@@ -90,7 +90,7 @@ export default function DocumentsListScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <Screen edges={['top']}>
       <View style={styles.header}>
         {/* In a folder the chevron goes up to the root list; at the root it
             leaves the screen (back to Modules) — before, the root level had
@@ -149,7 +149,7 @@ export default function DocumentsListScreen() {
           }
         />
       )}
-    </SafeAreaView>
+    </Screen>
   );
 }
 
@@ -220,7 +220,6 @@ type TFunc = ReturnType<typeof useTranslation>['t'];
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    safe: { flex: 1, backgroundColor: c.bg },
     header: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
     backBtn: { width: 32, height: 32, justifyContent: 'center', marginLeft: -6 },
     title: { fontSize: 26, fontWeight: '800', color: c.text, flex: 1 },

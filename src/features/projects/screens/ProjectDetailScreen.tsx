@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useMemo, useState } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, Image, ActivityIndicator,
@@ -13,6 +12,7 @@ import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { ScreenHeader, HeaderAction } from '@/components/ScreenHeader';
 import { Icon } from '@/components/Icon';
+import { Screen } from '@/components/Screen';
 import { LoadingView, EmptyState } from '@/components/StateViews';
 import { isMasterAdmin } from '@/utils/roles';
 import { getApiErrorMessage } from '@/api/errors';
@@ -101,7 +101,7 @@ export default function LoyihaDetailScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <Screen edges={['top']}>
       <ScreenHeader
         title={ws?.name || t('projects.nameFallback')}
         right={
@@ -235,13 +235,12 @@ export default function LoyihaDetailScreen() {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </Screen>
   );
 }
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    safe: { flex: 1, backgroundColor: c.bg },
     content: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 24 },
 
     card: { backgroundColor: c.card, borderRadius: 16, borderWidth: 1, borderColor: c.cardBorder, padding: 16, marginBottom: 12 },

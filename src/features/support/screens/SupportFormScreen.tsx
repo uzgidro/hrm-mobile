@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
@@ -10,6 +9,7 @@ import type { PickedFile } from '@/components/AttachmentField';
 import { AttachmentField } from '@/components/AttachmentField';
 import { FormInput } from '@/components/FormInput';
 import { ScreenHeader } from '@/components/ScreenHeader';
+import { Screen } from '@/components/Screen';
 import { getApiErrorMessage } from '@/api/errors';
 import { ticketPriorityKey } from '@/utils/supportStatus';
 import type { CreateTicketForm } from '../api/mutations';
@@ -62,7 +62,7 @@ export default function SupportFormScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+    <Screen edges={['top', 'bottom']}>
       <ScreenHeader title={t('support.createTitle')} />
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Text style={styles.label}>{t('support.priorityLabel')}</Text>
@@ -106,13 +106,12 @@ export default function SupportFormScreen() {
             : <Text style={styles.submitText}>{t('support.submit')}</Text>}
         </TouchableOpacity>
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 }
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    safe: { flex: 1, backgroundColor: c.bg },
     content: { paddingHorizontal: 16, paddingBottom: 32, gap: 4 },
     label: { fontSize: 13, fontWeight: '600', color: c.textSecondary, marginBottom: 8, marginTop: 4 },
     chips: { flexDirection: 'row', gap: 8, marginBottom: 12 },
