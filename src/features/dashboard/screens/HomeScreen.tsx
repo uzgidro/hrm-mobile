@@ -106,8 +106,22 @@ export default function HomeScreen() {
   const entry = sortedToday[0];
   const exit = sortedToday.length > 1 ? sortedToday[sortedToday.length - 1] : undefined;
 
+  const assistantFab = canAccessPage(user, 'assistant') ? (
+    // LLM assistant FAB — web BotButton parity. Client gate only (the
+    // backend /llm accepts any token); stricter than web: employee-like
+    // and KPP roles never see it (see roles.ts 'assistant').
+    <TouchableOpacity
+      style={styles.assistantFab}
+      onPress={() => router.push('/assistant')}
+      activeOpacity={0.85}
+      testID="assistant-fab"
+    >
+      <Icon name="target" size={24} color={colors.onPrimary} strokeWidth={2.2} />
+    </TouchableOpacity>
+  ) : undefined;
+
   return (
-    <Screen edges={['top']}>
+    <Screen edges={['top']} overlay={assistantFab}>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}
@@ -232,20 +246,6 @@ export default function HomeScreen() {
           )}
         </View>
       </ScrollView>
-
-      {/* LLM assistant FAB — web BotButton parity. Client gate only (the
-          backend /llm accepts any token); stricter than web: employee-like
-          and KPP roles never see it (see roles.ts 'assistant'). */}
-      {canAccessPage(user, 'assistant') && (
-        <TouchableOpacity
-          style={styles.assistantFab}
-          onPress={() => router.push('/assistant')}
-          activeOpacity={0.85}
-          testID="assistant-fab"
-        >
-          <Icon name="target" size={24} color={colors.onPrimary} strokeWidth={2.2} />
-        </TouchableOpacity>
-      )}
     </Screen>
   );
 }

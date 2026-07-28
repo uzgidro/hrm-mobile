@@ -160,8 +160,14 @@ export default function WorkLeavesScreen() {
   const filters = isSupervisor ? INCOMING_FILTERS : MY_FILTERS;
   const activeFilter = isSupervisor ? incomingFilter : myFilter;
 
+  const fab = !isSupervisor ? (
+    <TouchableOpacity style={styles.fab} onPress={() => router.push('/create-leave')} activeOpacity={0.85}>
+      <Icon name="plus" size={24} color={colors.onPrimary} strokeWidth={2.4} />
+    </TouchableOpacity>
+  ) : undefined;
+
   return (
-    <Screen edges={['top', 'bottom']}>
+    <Screen edges={['top', 'bottom']} overlay={fab}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Text style={styles.backArrow}>{'<'}</Text>
@@ -232,12 +238,6 @@ export default function WorkLeavesScreen() {
           </ScrollView>
         )}
       </View>
-
-      {!isSupervisor && (
-        <TouchableOpacity style={styles.fab} onPress={() => router.push('/create-leave')} activeOpacity={0.85}>
-          <Icon name="plus" size={24} color={colors.onPrimary} strokeWidth={2.4} />
-        </TouchableOpacity>
-      )}
     </Screen>
   );
 }

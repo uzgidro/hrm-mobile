@@ -1,5 +1,6 @@
 import React from 'react';
-import { Text } from 'react-native';
+import { Text, View } from 'react-native';
+import { within } from '@testing-library/react-native';
 import { renderWithProviders } from '../../test/renderWithProviders';
 import { Screen } from '../Screen';
 
@@ -24,5 +25,22 @@ describe('Screen', () => {
     );
     // The inner column is testable so list screens can target it if needed.
     expect(getByTestId('screen-root-content')).toBeTruthy();
+  });
+
+  it('renders the overlay slot as a sibling of the centered column, not inside it', async () => {
+    const { getByTestId, queryByTestId } = await renderWithProviders(
+      <Screen testID="screen-root" overlay={<View testID="ov" />}>
+        <Text>x</Text>
+      </Screen>
+    );
+    // The overlay must exist...
+    expect(getByTestId('ov')).toBeTruthy();
+    // ...and must NOT be a descendant of the centered content column, so its
+    // absolute-positioned children anchor to the full screen (SafeAreaView),
+    // not to the tablet-capped column.
+    const content = getByTestId('screen-root-content');
+    expect(within(content).queryByTestId('ov')).toBeNull();
+    // Both should still be present as siblings under the root.
+    expect(queryByTestId('screen-root-content')).toBeTruthy();
   });
 });

@@ -18,6 +18,7 @@ export function Screen({
   center = true,
   style,
   testID,
+  overlay,
 }: {
   children: React.ReactNode;
   edges?: ScreenEdge[];
@@ -26,6 +27,13 @@ export function Screen({
   center?: boolean;
   style?: StyleProp<ViewStyle>;
   testID?: string;
+  /**
+   * Slot for absolute-positioned overlays (FABs, action bars). Rendered as a
+   * sibling of the centered content column, inside the SafeAreaView — so its
+   * `position: absolute` children anchor to the full screen edge, not to the
+   * tablet-capped column. Pass `undefined` to render nothing.
+   */
+  overlay?: React.ReactNode;
 }) {
   const { colors } = useTheme();
   const bp = useBreakpoint();
@@ -53,6 +61,7 @@ export function Screen({
       >
         {children}
       </View>
+      {overlay}
     </SafeAreaView>
   );
 }
