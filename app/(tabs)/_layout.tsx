@@ -7,6 +7,8 @@ import type { ThemeColors } from '../../src/theme/palettes';
 import { Icon, IconName } from '../../src/components/Icon';
 import { useAuthStore } from '../../src/store/authStore';
 import { canAccessPage } from '../../src/utils/roles';
+import { useBreakpoint } from '../../src/utils/responsive';
+import { NavRail } from '../../src/components/NavRail';
 
 function TabIcon({
   focused, name, label, colors,
@@ -39,57 +41,66 @@ export default function TabsLayout() {
   const { colors } = useTheme();
   const { user } = useAuthStore();
   const { t } = useTranslation();
+  const bp = useBreakpoint();
+  const useRail = bp.isTablet;
 
   return (
-    <Tabs
-      // System back / edge-swipe walks BACK THROUGH VISITED TABS (e.g.
-      // Modules → Mehmonlar → back lands on Modules) instead of the default
-      // 'firstRoute' jump to Home, which read as "the path got lost".
-      backBehavior="history"
-      screenOptions={{
-        headerShown: false,
-        sceneStyle: { backgroundColor: colors.bg },
-        tabBarStyle: {
-          backgroundColor: colors.tabBar,
-          borderTopColor: colors.tabBarBorder,
-          borderTopWidth: 1,
-          height: 60 + insets.bottom,
-          paddingBottom: insets.bottom,
-          paddingTop: 8,
-          elevation: 0,
-        },
-        tabBarShowLabel: false,
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{ tabBarButtonTestID: 'tab-home', tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="home" label={t('modules.labels.home')} colors={colors} /> }}
-      />
-      <Tabs.Screen
-        name="orders"
-        options={{
-          href: canAccessPage(user, 'orders') ? undefined : null,
-          tabBarButtonTestID: 'tab-orders',
-          tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="orders" label={t('modules.labels.orders')} colors={colors} />,
-        }}
-      />
-      <Tabs.Screen
-        name="letters"
-        options={{
-          href: canAccessPage(user, 'letters') ? undefined : null,
-          tabBarButtonTestID: 'tab-letters',
-          tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="mail" label={t('modules.labels.letters')} colors={colors} />,
-        }}
-      />
-      <Tabs.Screen
-        name="modules"
-        options={{ tabBarButtonTestID: 'tab-modules', tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="grid" label={t('modules.labels.modules')} colors={colors} /> }}
-      />
-      {/* Mehmonlar va Profil — bottom bardan olib tashlandi; Modullar plitkasi
-          orqali ochiladi (bar-less tab + header chevron + backBehavior history). */}
-      <Tabs.Screen name="mehmonlar" options={{ href: null }} />
-      <Tabs.Screen name="profile" options={{ href: null }} />
-    </Tabs>
+    <View style={{ flex: 1, flexDirection: 'row' }}>
+      {useRail && <NavRail />}
+      <View style={{ flex: 1 }}>
+        <Tabs
+          // System back / edge-swipe walks BACK THROUGH VISITED TABS (e.g.
+          // Modules → Mehmonlar → back lands on Modules) instead of the default
+          // 'firstRoute' jump to Home, which read as "the path got lost".
+          backBehavior="history"
+          screenOptions={{
+            headerShown: false,
+            sceneStyle: { backgroundColor: colors.bg },
+            tabBarStyle: useRail
+              ? { display: 'none' }
+              : {
+                  backgroundColor: colors.tabBar,
+                  borderTopColor: colors.tabBarBorder,
+                  borderTopWidth: 1,
+                  height: 60 + insets.bottom,
+                  paddingBottom: insets.bottom,
+                  paddingTop: 8,
+                  elevation: 0,
+                },
+            tabBarShowLabel: false,
+          }}
+        >
+          <Tabs.Screen
+            name="index"
+            options={{ tabBarButtonTestID: 'tab-home', tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="home" label={t('modules.labels.home')} colors={colors} /> }}
+          />
+          <Tabs.Screen
+            name="orders"
+            options={{
+              href: canAccessPage(user, 'orders') ? undefined : null,
+              tabBarButtonTestID: 'tab-orders',
+              tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="orders" label={t('modules.labels.orders')} colors={colors} />,
+            }}
+          />
+          <Tabs.Screen
+            name="letters"
+            options={{
+              href: canAccessPage(user, 'letters') ? undefined : null,
+              tabBarButtonTestID: 'tab-letters',
+              tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="mail" label={t('modules.labels.letters')} colors={colors} />,
+            }}
+          />
+          <Tabs.Screen
+            name="modules"
+            options={{ tabBarButtonTestID: 'tab-modules', tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="grid" label={t('modules.labels.modules')} colors={colors} /> }}
+          />
+          {/* Mehmonlar va Profil — bottom bardan olib tashlandi; Modullar plitkasi
+              orqali ochiladi (bar-less tab + header chevron + backBehavior history). */}
+          <Tabs.Screen name="mehmonlar" options={{ href: null }} />
+          <Tabs.Screen name="profile" options={{ href: null }} />
+        </Tabs>
+      </View>
+    </View>
   );
 }
 
