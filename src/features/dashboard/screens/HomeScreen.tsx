@@ -14,6 +14,8 @@ import type { ThemeColors } from '@/theme/palettes';
 import { monthName, weekdayName } from '@/i18n/dates';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
+import { useBreakpoint } from '@/utils/responsive';
+import { notificationMeta } from '@/services/notifications';
 import { AttendanceEvent } from '@/types';
 import {
   homeAttendanceQuery,
@@ -36,7 +38,9 @@ export default function HomeScreen() {
   const queryClient = useQueryClient();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const bp = useBreakpoint();
   const isSupervisor = !employee?.supervisor;
+  const canSeeNotificationsTile = canAccessPage(user, 'notifications');
 
   const [refreshing, setRefreshing] = useState(false);
 
@@ -150,99 +154,143 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Bugungi jadval */}
-        <View style={styles.card}>
-          <View style={styles.cardHeaderRow}>
-            <View style={styles.cardTitleRow}>
-              <Icon name="clock" size={17} color={colors.primary} />
-              <Text style={styles.cardTitle}>{t('dashboard.scheduleTitle')}</Text>
-            </View>
-            {employee?.working_hours_start && (
-              <Text style={styles.scheduleTime}>{employee.working_hours_start} – {employee.working_hours_end}</Text>
-            )}
-          </View>
-          <View style={styles.attendanceRow}>
-            <View style={styles.attendanceItem}>
-              <View style={[styles.attIcon, { backgroundColor: colors.successSoft }]}>
-                <Icon name="arrowDown" size={16} color={colors.success} />
+        {/* On tablet the three tiles bento-wrap 2-per-row; on phone this View
+            gets no style (undefined) so the cards stack exactly as before. */}
+        <View style={bp.isTablet ? styles.bento : undefined}>
+          {/* Bugungi jadval */}
+          <View style={[styles.card, bp.isTablet && styles.bentoTile]}>
+            <View style={styles.cardHeaderRow}>
+              <View style={styles.cardTitleRow}>
+                <Icon name="clock" size={17} color={colors.primary} />
+                <Text style={styles.cardTitle}>{t('dashboard.scheduleTitle')}</Text>
               </View>
-              <Text style={styles.attendanceTime}>{entry ? dayjs(entry.happen_time).format('HH:mm') : '--:--'}</Text>
-              <Text style={styles.attendanceLbl}>{t('dashboard.checkIn')}</Text>
-            </View>
-            <View style={styles.attendanceDivider} />
-            <View style={styles.attendanceItem}>
-              <View style={[styles.attIcon, { backgroundColor: colors.errorSoft }]}>
-                <Icon name="arrowUp" size={16} color={colors.error} />
-              </View>
-              <Text style={styles.attendanceTime}>{exit ? dayjs(exit.happen_time).format('HH:mm') : '--:--'}</Text>
-              <Text style={styles.attendanceLbl}>{t('dashboard.checkOut')}</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* So'rovlar */}
-        <View style={styles.card}>
-          <View style={styles.cardHeaderRow}>
-            <View style={styles.cardTitleRow}>
-              <Icon name="checklist" size={17} color={colors.primary} />
-              <Text style={styles.cardTitle}>{isSupervisor ? t('dashboard.incomingRequests') : t('dashboard.requests')}</Text>
-              {isSupervisor && pendingCount > 0 && (
-                <View style={styles.inlineBadge}><Text style={styles.inlineBadgeText}>{pendingCount}</Text></View>
+              {employee?.working_hours_start && (
+                <Text style={styles.scheduleTime}>{employee.working_hours_start} – {employee.working_hours_end}</Text>
               )}
             </View>
-            <TouchableOpacity onPress={() => router.push('/work-leaves')} hitSlop={8}>
-              <Text style={styles.linkText}>{t('common.all')}</Text>
-            </TouchableOpacity>
+            <View style={styles.attendanceRow}>
+              <View style={styles.attendanceItem}>
+                <View style={[styles.attIcon, { backgroundColor: colors.successSoft }]}>
+                  <Icon name="arrowDown" size={16} color={colors.success} />
+                </View>
+                <Text style={styles.attendanceTime}>{entry ? dayjs(entry.happen_time).format('HH:mm') : '--:--'}</Text>
+                <Text style={styles.attendanceLbl}>{t('dashboard.checkIn')}</Text>
+              </View>
+              <View style={styles.attendanceDivider} />
+              <View style={styles.attendanceItem}>
+                <View style={[styles.attIcon, { backgroundColor: colors.errorSoft }]}>
+                  <Icon name="arrowUp" size={16} color={colors.error} />
+                </View>
+                <Text style={styles.attendanceTime}>{exit ? dayjs(exit.happen_time).format('HH:mm') : '--:--'}</Text>
+                <Text style={styles.attendanceLbl}>{t('dashboard.checkOut')}</Text>
+              </View>
+            </View>
           </View>
 
-          {isSupervisor ? (
-            recentAssigned.length === 0 ? (
-              <Text style={styles.emptyText}>{t('dashboard.noIncomingRequests')}</Text>
-            ) : (
-              recentAssigned.map((leave) => {
-                const needsAction = (leave.status === 'pending' || leave.status === 'yuborildi') && !leave.signers?.some((s) => s.id === employee?.id);
-                const st = statusInfo(leave.status, colors, t);
-                return (
-                  <TouchableOpacity key={leave.id} style={styles.leaveRow}
-                    onPress={() => router.push({ pathname: '/leave-detail', params: { id: leave.id } })} activeOpacity={0.75}>
-                    <View style={styles.leaveInfo}>
-                      <Text style={styles.leaveName}>{leave.employee?.legal_name ?? t('dashboard.employeeFallback')}</Text>
-                      <Text style={styles.leaveDate}>{leave.type || t('dashboard.leaveRequestFallback')}</Text>
-                      <Text style={styles.leaveDate}>{dayjs(leave.start_date).format('D MMM, HH:mm')} – {dayjs(leave.end_date).format('HH:mm')}</Text>
-                    </View>
-                    <View style={{ alignItems: 'flex-end', gap: 4 }}>
-                      <Text style={[styles.leaveStatus, { color: st.color }]}>{st.label}</Text>
-                      {needsAction && <Text style={styles.actionHint}>{t('dashboard.actionNeeded')}</Text>}
-                    </View>
-                  </TouchableOpacity>
-                );
-              })
-            )
-          ) : (
-            myLeaves.length === 0 ? (
-              <Text style={styles.emptyText}>{t('dashboard.noRequests')}</Text>
-            ) : (
-              myLeaves.map((leave) => {
-                const st = statusInfo(leave.status, colors, t);
-                return (
-                  <TouchableOpacity key={leave.id} style={styles.leaveRow}
-                    onPress={() => router.push({ pathname: '/leave-detail', params: { id: leave.id } })} activeOpacity={0.75}>
-                    <View style={styles.leaveInfo}>
-                      <Text style={styles.leaveName}>{leave.type || t('dashboard.leaveRequestFallback')}</Text>
-                      <Text style={styles.leaveDate}>{dayjs(leave.start_date).format('D MMM YYYY, HH:mm')}-{dayjs(leave.end_date).format('HH:mm')}</Text>
-                    </View>
-                    <Text style={[styles.leaveStatus, { color: st.color }]}>{st.label}</Text>
-                  </TouchableOpacity>
-                );
-              })
-            )
-          )}
+          {/* So'rovlar */}
+          <View style={[styles.card, bp.isTablet && styles.bentoTile]}>
+            <View style={styles.cardHeaderRow}>
+              <View style={styles.cardTitleRow}>
+                <Icon name="checklist" size={17} color={colors.primary} />
+                <Text style={styles.cardTitle}>{isSupervisor ? t('dashboard.incomingRequests') : t('dashboard.requests')}</Text>
+                {isSupervisor && pendingCount > 0 && (
+                  <View style={styles.inlineBadge}><Text style={styles.inlineBadgeText}>{pendingCount}</Text></View>
+                )}
+              </View>
+              <TouchableOpacity onPress={() => router.push('/work-leaves')} hitSlop={8}>
+                <Text style={styles.linkText}>{t('common.all')}</Text>
+              </TouchableOpacity>
+            </View>
 
-          {!isSupervisor && (
-            <TouchableOpacity style={styles.createBtn} onPress={() => router.push('/create-leave')} activeOpacity={0.85}>
-              <Icon name="plus" size={18} color={colors.onPrimary} />
-              <Text style={styles.createBtnText}>{t('dashboard.createRequest')}</Text>
-            </TouchableOpacity>
+            {isSupervisor ? (
+              recentAssigned.length === 0 ? (
+                <Text style={styles.emptyText}>{t('dashboard.noIncomingRequests')}</Text>
+              ) : (
+                recentAssigned.map((leave) => {
+                  const needsAction = (leave.status === 'pending' || leave.status === 'yuborildi') && !leave.signers?.some((s) => s.id === employee?.id);
+                  const st = statusInfo(leave.status, colors, t);
+                  return (
+                    <TouchableOpacity key={leave.id} style={styles.leaveRow}
+                      onPress={() => router.push({ pathname: '/leave-detail', params: { id: leave.id } })} activeOpacity={0.75}>
+                      <View style={styles.leaveInfo}>
+                        <Text style={styles.leaveName}>{leave.employee?.legal_name ?? t('dashboard.employeeFallback')}</Text>
+                        <Text style={styles.leaveDate}>{leave.type || t('dashboard.leaveRequestFallback')}</Text>
+                        <Text style={styles.leaveDate}>{dayjs(leave.start_date).format('D MMM, HH:mm')} – {dayjs(leave.end_date).format('HH:mm')}</Text>
+                      </View>
+                      <View style={{ alignItems: 'flex-end', gap: 4 }}>
+                        <Text style={[styles.leaveStatus, { color: st.color }]}>{st.label}</Text>
+                        {needsAction && <Text style={styles.actionHint}>{t('dashboard.actionNeeded')}</Text>}
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })
+              )
+            ) : (
+              myLeaves.length === 0 ? (
+                <Text style={styles.emptyText}>{t('dashboard.noRequests')}</Text>
+              ) : (
+                myLeaves.map((leave) => {
+                  const st = statusInfo(leave.status, colors, t);
+                  return (
+                    <TouchableOpacity key={leave.id} style={styles.leaveRow}
+                      onPress={() => router.push({ pathname: '/leave-detail', params: { id: leave.id } })} activeOpacity={0.75}>
+                      <View style={styles.leaveInfo}>
+                        <Text style={styles.leaveName}>{leave.type || t('dashboard.leaveRequestFallback')}</Text>
+                        <Text style={styles.leaveDate}>{dayjs(leave.start_date).format('D MMM YYYY, HH:mm')}-{dayjs(leave.end_date).format('HH:mm')}</Text>
+                      </View>
+                      <Text style={[styles.leaveStatus, { color: st.color }]}>{st.label}</Text>
+                    </TouchableOpacity>
+                  );
+                })
+              )
+            )}
+
+            {!isSupervisor && (
+              <TouchableOpacity style={styles.createBtn} onPress={() => router.push('/create-leave')} activeOpacity={0.85}>
+                <Icon name="plus" size={18} color={colors.onPrimary} />
+                <Text style={styles.createBtnText}>{t('dashboard.createRequest')}</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {/* Bildirishnoma preview — third bento tile, tablet-only (matches
+              web-parity gate: canAccessPage('notifications'), same as the
+              bell icon route above; the page itself is unconditionally
+              visible today, but the gate is kept so a future role change
+              only needs to flip roles.ts, not this screen). Rendered only
+              on tablet — on phone the vertical stack stays exactly as it was. */}
+          {bp.isTablet && canSeeNotificationsTile && (
+            <View style={[styles.card, styles.bentoTile]}>
+              <View style={styles.cardHeaderRow}>
+                <View style={styles.cardTitleRow}>
+                  <Icon name="bell" size={17} color={colors.primary} />
+                  <Text style={styles.cardTitle}>{t('modules.labels.notifications')}</Text>
+                  {unreadCount > 0 && (
+                    <View style={styles.inlineBadge}><Text style={styles.inlineBadgeText}>{unreadCount}</Text></View>
+                  )}
+                </View>
+                <TouchableOpacity onPress={() => router.push('/notifications')} hitSlop={8}>
+                  <Text style={styles.linkText}>{t('common.all')}</Text>
+                </TouchableOpacity>
+              </View>
+
+              {notifications.length === 0 ? (
+                <Text style={styles.emptyText}>{t('dashboard.noRequests')}</Text>
+              ) : (
+                notifications.slice(0, 3).map((n) => {
+                  const meta = notificationMeta(n.notification_type);
+                  return (
+                    <TouchableOpacity key={n.id} style={styles.leaveRow}
+                      onPress={() => router.push('/notifications')} activeOpacity={0.75}>
+                      <View style={styles.leaveInfo}>
+                        <Text style={styles.leaveName} numberOfLines={1}>{meta.title}</Text>
+                        {!!n.description && <Text style={styles.leaveDate} numberOfLines={1}>{n.description}</Text>}
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })
+              )}
+            </View>
           )}
         </View>
       </ScrollView>
@@ -265,6 +313,16 @@ const makeStyles = (c: ThemeColors) =>
     bellBtn: { width: 44, height: 44, borderRadius: 14, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, alignItems: 'center', justifyContent: 'center' },
     bellBadge: { position: 'absolute', top: 7, right: 7, backgroundColor: c.warning, borderRadius: 9, minWidth: 16, height: 16, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3, borderWidth: 1.5, borderColor: c.card },
     bellBadgeText: { fontSize: 9, fontWeight: '800', color: '#fff' },
+
+    // Tablet-only 2-column bento wrapper for the schedule/requests/notifications
+    // tiles (Task 8). On phone this is never applied (`bp.isTablet` gates its
+    // use at the call site) so the cards keep stacking full-width via `card`'s
+    // own marginBottom, byte-identical to the pre-bento layout.
+    bento: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+    // Two tiles per row on tablet: ~half the row minus the gap. flexGrow lets a
+    // lone trailing tile (odd tile count) stretch to fill the row instead of
+    // leaving a half-empty gap.
+    bentoTile: { flexGrow: 1, flexBasis: '48%', marginBottom: 0 },
 
     card: { backgroundColor: c.card, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: c.cardBorder },
     cardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
