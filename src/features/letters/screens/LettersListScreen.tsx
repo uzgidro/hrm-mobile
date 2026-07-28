@@ -50,11 +50,19 @@ export default function LettersListScreen() {
   // Auto-select the first row when entering split with nothing selected yet
   // (so the detail pane isn't blank on first tablet-landscape render); clear
   // the selection when leaving split (rotate back to portrait / phone) so
-  // re-entering split starts fresh instead of resuming a stale id. Mirrors
-  // OrdersListScreen (T15) 1:1.
+  // re-entering split starts fresh instead of resuming a stale id. Also
+  // re-anchors to the first visible row whenever the currently selected id
+  // falls out of `sorted` (tab switch, or the letter left the list after an
+  // action) — otherwise the detail pane would keep showing a stale letter
+  // that no longer matches the current tab. Mirrors OrdersListScreen (T15) 1:1.
   useEffect(() => {
-    if (split && selectedId == null && sorted.length > 0) setSelectedId(sorted[0].id);
-    if (!split) setSelectedId(null);
+    if (!split) {
+      setSelectedId(null);
+      return;
+    }
+    if (selectedId == null || !sorted.some((l) => l.id === selectedId)) {
+      setSelectedId(sorted[0]?.id ?? null);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [split, sorted]);
 

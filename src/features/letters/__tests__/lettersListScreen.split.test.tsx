@@ -2,8 +2,9 @@ import React from 'react';
 import { useWindowDimensions } from 'react-native';
 import MockAdapter from 'axios-mock-adapter';
 import { apiClient } from '@/api/client';
-import { renderWithProviders } from '@/test/renderWithProviders';
+import { renderWithProviders, fireEvent, waitFor } from '@/test/renderWithProviders';
 import { useAuthStore } from '@/store/authStore';
+import { LETTERS_LIST, LETTER_DETAIL } from '@/api/urls';
 import LettersListScreen from '../screens/LettersListScreen';
 
 // The view uses `router.push` from expo-router; mock it so the test doesn't
@@ -71,5 +72,43 @@ describe('LettersListScreen (tablet-landscape split)', () => {
     expect(await findByText("Xatlar")).toBeTruthy();
     // No split → LetterDetailView never mounts embedded in this screen.
     expect(queryByText("Ma'lumot")).toBeNull();
+  }, 15000);
+
+  it('re-anchors selectedId when the selected letter falls out of `sorted` (e.g. switching tabs)', async () => {
+    (useWindowDimensions as jest.Mock).mockReturnValue(TABLET_LANDSCAPE);
+    // "action" tab (assigned_signer=true): a single business_trip letter (id 1)
+    // -> auto-selected, distinguishable from the "mine" tab's letter by type
+    // label ("Xizmat safari" vs "Ariza").
+    mock.onGet(LETTERS_LIST, { params: { assigned_signer: true } }).reply(200, [
+      { id: 1, status: 'draft', letter_type: 'business_trip', created_at: '2026-01-02' },
+    ]);
+    // "mine" tab (signer=true): a different single letter (id 2), so the
+    // previously-selected id 1 is no longer in `sorted` after the switch.
+    mock.onGet(LETTERS_LIST, { params: { signer: true } }).reply(200, [
+      { id: 2, status: 'confirmed', letter_type: 'application', created_at: '2026-01-01' },
+    ]);
+    mock.onGet(new RegExp('letters/1/trip-movements')).reply(200, []);
+    mock.onGet(LETTER_DETAIL(1)).reply(200, { id: 1, status: 'draft', letter_type: 'business_trip' });
+    mock.onGet(LETTER_DETAIL(2)).reply(200, { id: 2, status: 'confirmed', letter_type: 'application' });
+
+    const { findByText, findAllByText, queryByText } = await renderWithProviders(<LettersListScreen />);
+
+    // Auto-selects letter 1 under the default "action" tab: its type label
+    // appears twice (master row + detail pane bigTitle).
+    await waitFor(async () => {
+      const matches = await findAllByText('Xizmat safari');
+      expect(matches.length).toBeGreaterThanOrEqual(2);
+    });
+
+    // Switch to "mine" — letter 1 (still selected) is no longer in the new
+    // `sorted` list; without the stale-guard the detail pane would keep
+    // showing letter 1 ("Xizmat safari") even though only letter 2 is listed.
+    fireEvent.press(await findByText('Mening'));
+
+    await waitFor(async () => {
+      const matches = await findAllByText('Ariza');
+      expect(matches.length).toBeGreaterThanOrEqual(2); // master row + re-anchored detail pane
+    });
+    expect(queryByText('Xizmat safari')).toBeNull();
   }, 15000);
 });

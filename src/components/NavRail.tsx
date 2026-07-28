@@ -1,9 +1,9 @@
 // Tablet left navigation rail — replaces the bottom tab bar on tablets
 // (wired in app/(tabs)/_layout.tsx, Task 18). Renders the four primary
-// destinations (Home/Orders/Letters/Modules) plus the SAME role-filtered
-// sections as the phone Modules grid, both sourced from `buildNavSections`
-// (src/utils/navItems.ts) so web-parity page visibility stays 1:1 — this
-// component does NOT define its own item list.
+// destinations (Home/Orders/Letters/Modules), filtered through canAccessPage
+// same as the phone bottom bar's `href` gating, plus the SAME role-filtered
+// sections as the phone Modules grid, sourced from `buildNavSections`
+// (src/utils/navItems.ts) so web-parity page visibility stays 1:1.
 import { useMemo, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { router, usePathname, type Href } from 'expo-router';
@@ -14,22 +14,26 @@ import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 import type { ThemeColors } from '../theme/palettes';
 import { Icon, type IconName } from './Icon';
 import { buildNavSections, type NavItem } from '../utils/navItems';
+import { canAccessPage, type PageKey } from '../utils/roles';
 import { homeAssignedLeavesQuery, homeNotificationsQuery } from '@/features/dashboard/api/queries';
 
 const RAIL_COLLAPSED_WIDTH = 88;
 const RAIL_EXPANDED_WIDTH = 260;
 
-type PrimaryItem = { key: string; icon: IconName; route: string; labelKey: string };
+type PrimaryItem = { key: string; icon: IconName; route: string; labelKey: string; access?: PageKey };
 
-// The four destinations always reachable from the bottom bar on phone —
-// mirrored here so the rail always offers them regardless of role (same as
-// the phone bottom bar, which shows Home/Orders/Letters/Modules to everyone
-// and gates Orders/Letters visibility via `href` on the tab, not by omission
-// from the bar itself).
+// The four destinations reachable from the bottom bar on phone — mirrored
+// here so the rail offers the same set, filtered the same way: the phone
+// bottom bar gates Orders/Letters visibility via `href: null` on the tab
+// (driven by canAccessPage), so the rail filters PRIMARY through
+// canAccessPage too (below) rather than rendering it unconditionally. Home
+// and Modules have no restrictive PageKey rule (`home` always passes
+// canAccessPage; `modules` is a hub with no PageKey) so they're left
+// unfiltered (`access` omitted).
 const PRIMARY: PrimaryItem[] = [
   { key: 'home', icon: 'home', route: '/(tabs)', labelKey: 'modules.labels.home' },
-  { key: 'orders', icon: 'orders', route: '/(tabs)/orders', labelKey: 'modules.labels.orders' },
-  { key: 'letters', icon: 'mail', route: '/(tabs)/letters', labelKey: 'modules.labels.letters' },
+  { key: 'orders', icon: 'orders', route: '/(tabs)/orders', labelKey: 'modules.labels.orders', access: 'orders' },
+  { key: 'letters', icon: 'mail', route: '/(tabs)/letters', labelKey: 'modules.labels.letters', access: 'letters' },
   { key: 'modules', icon: 'grid', route: '/(tabs)/modules', labelKey: 'modules.labels.modules' },
 ];
 
@@ -68,6 +72,13 @@ export function NavRail() {
     [t, user, employee, pendingCount, unreadCount]
   );
 
+  // Same web-parity filter buildNavSections already applies to the section
+  // items — an item without `access` (home, modules) always shows.
+  const primary = useMemo(
+    () => PRIMARY.filter((item) => !item.access || canAccessPage(user, item.access)),
+    [user]
+  );
+
   const isActive = (route: string) => pathname === route || pathname === route.replace('/(tabs)', '');
 
   return (
@@ -82,7 +93,7 @@ export function NavRail() {
       </TouchableOpacity>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-        {PRIMARY.map((item) => (
+        {primary.map((item) => (
           <Row
             key={item.key}
             icon={item.icon}

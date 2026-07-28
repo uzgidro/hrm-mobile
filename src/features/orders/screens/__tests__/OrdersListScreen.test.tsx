@@ -149,4 +149,62 @@ describe('OrdersListScreen', () => {
       { timeout: 10000 }
     );
   }, 15000);
+
+  it('tablet landscape: re-anchors selectedId when the selected order falls out of `filtered` (e.g. switching tabs)', async () => {
+    mockWindowDimensions = TABLET_LANDSCAPE;
+    // Order 1: pending_approval with the test employee (99) as the assigned
+    // approver signer -> needsMyAction true (shows under "action"), but NOT
+    // created by 99 -> excluded from "mine". Order 2: created by 99 but
+    // already confirmed (no action needed) -> excluded from "action", shows
+    // under "mine".
+    mock.onGet(ORDER_ACTS).reply(200, [
+      {
+        id: 1,
+        status: 'pending_approval',
+        created_by_id: 5,
+        assigned_signers: [{ signer_type: 'approver', employee_id: 99 }],
+        category_rel: { name: 'First decree' },
+        created_at: '2026-01-02T00:00:00Z',
+      },
+      {
+        id: 2,
+        status: 'confirmed',
+        created_by_id: 99,
+        category_rel: { name: 'Second decree' },
+        created_at: '2026-01-01T00:00:00Z',
+      },
+    ]);
+    mock.onGet(ORDER_ACT_DETAIL(1)).reply(200, {
+      id: 1,
+      status: 'pending_approval',
+      category_rel: { name: 'First decree' },
+    });
+    mock.onGet(ORDER_ACT_DETAIL(2)).reply(200, {
+      id: 2,
+      status: 'confirmed',
+      category_rel: { name: 'Second decree' },
+    });
+    mock.onGet(new RegExp('employees')).reply(200, { items: [], total: 0 });
+
+    const { findAllByText, findByText, queryByText } = await renderWithProviders(<OrdersListScreen />);
+
+    // Auto-selects order 1 (only row under the default "action" tab).
+    await waitFor(async () => {
+      const matches = await findAllByText('First decree');
+      expect(matches.length).toBeGreaterThanOrEqual(2);
+    });
+
+    // Switch to the "mine" tab — order 1 (still selected) falls out of
+    // `filtered` because it wasn't created by the test employee; order 2
+    // (created by the test employee) is the only row left. Without the
+    // stale-guard, selectedId would still point at order 1 and the detail
+    // pane would keep rendering it even though its row is no longer visible.
+    fireEvent.press(await findByText('Mening'));
+
+    await waitFor(async () => {
+      const matches = await findAllByText('Second decree');
+      expect(matches.length).toBeGreaterThanOrEqual(2); // master row + re-anchored detail pane
+    });
+    expect(queryByText('First decree')).toBeNull(); // no longer in the list, and no longer the stale detail
+  }, 15000);
 });

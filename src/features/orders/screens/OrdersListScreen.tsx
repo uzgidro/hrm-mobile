@@ -63,10 +63,19 @@ export default function OrdersListScreen() {
   // Auto-select the first row when entering split with nothing selected yet
   // (so the detail pane isn't blank on first tablet-landscape render); clear
   // the selection when leaving split (rotate back to portrait / phone) so
-  // re-entering split starts fresh instead of resuming a stale id.
+  // re-entering split starts fresh instead of resuming a stale id. Also
+  // re-anchors to the first visible row whenever the currently selected id
+  // falls out of `filtered` (tab switch, or the order left the list after an
+  // action) — otherwise the detail pane would keep showing a stale order that
+  // no longer matches the current filter/tab.
   useEffect(() => {
-    if (split && selectedId == null && filtered.length > 0) setSelectedId(filtered[0].id);
-    if (!split) setSelectedId(null);
+    if (!split) {
+      setSelectedId(null);
+      return;
+    }
+    if (selectedId == null || !filtered.some((o) => o.id === selectedId)) {
+      setSelectedId(filtered[0]?.id ?? null);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [split, filtered]);
 
