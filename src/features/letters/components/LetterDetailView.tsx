@@ -129,6 +129,12 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
       <DetailHeader embedded={embedded} />
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        {letter.document_out_of_sync && (
+          <View style={styles.warnCard} testID="letter-out-of-sync-warning">
+            <Text style={styles.warnText}>{t('letters.docOutOfSyncWarning')}</Text>
+          </View>
+        )}
+
         <View style={styles.card}>
           <View style={[styles.badge, { backgroundColor: sc.bg, alignSelf: 'flex-start' }]}>
             <Text style={[styles.badgeText, { color: sc.fg }]}>{meta.label}</Text>
@@ -270,6 +276,8 @@ const makeStyles = (c: ThemeColors) =>
     docBtn: { marginTop: 6, backgroundColor: c.primarySoft, borderRadius: 12, paddingVertical: 13, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
     docBtnText: { color: c.primary, fontSize: 14, fontWeight: '700' },
     bodyText: { fontSize: 14, color: c.text, lineHeight: 21 },
+    warnCard: { backgroundColor: c.warningSoft, borderRadius: 14, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: c.warning },
+    warnText: { fontSize: 13, color: c.text, lineHeight: 19 },
     rejectCard: { backgroundColor: c.errorSoft, borderRadius: 14, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: c.error },
     rejectTitle: { fontSize: 13, fontWeight: '700', color: c.error, marginBottom: 4 },
     rejectText: { fontSize: 13, color: c.text, lineHeight: 19 },
