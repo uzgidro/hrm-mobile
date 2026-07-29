@@ -16,6 +16,8 @@ export default {
 
   // ── Detail screen ───────────────────────────────────────────────────────────
   openDocument: 'Open document',
+  docOutOfSyncWarning:
+    'The form text did not reach the document — it was edited in Word (OnlyOffice) and is in the old (anchorless) format. To apply the changes, open and edit it in Word, or regenerate the document.',
   sectionContent: 'Content',
   sectionInfo: 'Information',
   fieldAuthor: 'Author',

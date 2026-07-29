@@ -202,6 +202,10 @@ export interface Letter {
   destination_branches?: OrganizationBranch[] | null;
   /** action flags computed by the backend — only present on the detail read */
   available_actions?: LetterAvailableActions | null;
+  // True when DB form text could not be patched into the (anchorless / stale)
+  // docx — form edits are missing from the document. Drives a warning banner
+  // in the detail view (web parity: LetterDetailModal document_out_of_sync).
+  document_out_of_sync?: boolean;
 }
 
 // A single kelish/ketish event of a business trip. event_type is a backend

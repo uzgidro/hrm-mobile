@@ -22,6 +22,8 @@ export default {
 
   // ── Detail screen ───────────────────────────────────────────────────────────
   openDocument: 'Hujjatni ochish',
+  docOutOfSyncWarning:
+    "Formadagi matn hujjatga tushmadi — bu hujjat Word (OnlyOffice)'da tahrirlangan va eski (langarsiz) shaklda. O'zgarishlar hujjatga tushishi uchun Word'da oching va tahrirlang, yoki hujjatni qaytadan yarating.",
   sectionContent: 'Mazmuni',
   sectionInfo: "Ma'lumot",
   fieldAuthor: 'Muallif',
