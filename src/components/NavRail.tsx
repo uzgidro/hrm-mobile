@@ -152,7 +152,7 @@ function Row({
 }) {
   return (
     <TouchableOpacity
-      style={[styles.row, active && styles.rowActive]}
+      style={[styles.row, !expanded && styles.rowCollapsed, active && styles.rowActive]}
       activeOpacity={0.75}
       onPress={() => router.push(route as Href)}
     >
@@ -215,6 +215,10 @@ const makeStyles = (c: ThemeColors) =>
       borderRadius: 14,
       marginBottom: 2,
     },
+    // Collapsed rail (88px) stacks the icon over a small centered label — a
+    // horizontal row can't fit a word beside the icon in 88px, so the label got
+    // truncated ("Главна", "Посе"). Mirrors the bottom-tab icon-over-label shape.
+    rowCollapsed: { flexDirection: 'column', gap: 3, paddingHorizontal: 4 },
     rowActive: { backgroundColor: c.tabBarActiveBg },
 
     iconWrap: { width: 24, height: 24, alignItems: 'center', justifyContent: 'center' },
@@ -226,7 +230,7 @@ const makeStyles = (c: ThemeColors) =>
     badgeText: { fontSize: 8, fontWeight: '800', color: '#fff' },
 
     rowLabel: { fontSize: 13, fontWeight: '600', color: c.tabBarInactive, flexShrink: 1 },
-    rowLabelCollapsed: { fontSize: 9.5, fontWeight: '600', color: c.tabBarInactive, textAlign: 'center', flex: 1 },
+    rowLabelCollapsed: { fontSize: 9.5, fontWeight: '600', color: c.tabBarInactive, textAlign: 'center', alignSelf: 'stretch' },
     rowLabelActive: { color: c.tabBarActive, fontWeight: '700' },
 
     divider: { height: 1, backgroundColor: c.tabBarBorder, marginVertical: 12, marginHorizontal: 8 },
