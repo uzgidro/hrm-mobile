@@ -484,6 +484,14 @@ describe('letterStatusMeta', () => {
     expect(meta.label).toBe(i18n.t('status.letterReturned'));
     expect(meta.kind).toBe('error');
   });
+
+  // cancelled is TERMINAL — web renders it red "Bekor qilingan" (helpers.js:761,
+  // LettersTable badge #FF4D4F). Without a case it fell through to the generic
+  // "Kutilmoqda / pending" label, wrongly reading as in-progress. Web parity.
+  it('cancelled → "Bekor qilingan" terminal error, not generic pending', () => {
+    expect(letterStatusMeta(letter({ status: 'cancelled' })))
+      .toEqual({ label: 'Bekor qilingan', kind: 'error' });
+  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

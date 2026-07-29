@@ -24,6 +24,7 @@ export default {
   letterRejected: 'Отклонено',
   letterRegistered: 'Зарегистрировано',
   letterPendingRegistration: 'Ожидает регистрации',
+  letterCancelled: 'Отменено',
   letterSignedStatus: 'Подписано',
   letterInChancellery: 'В канцелярии',
   letterInLeadership: 'У руководства',

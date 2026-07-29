@@ -24,6 +24,7 @@ export default {
   letterRejected: 'Рад этилди',
   letterRegistered: 'Рўйхатга олинган',
   letterPendingRegistration: 'Рўйхатга олиш кутилмоқда',
+  letterCancelled: 'Бекор қилинган',
   letterSignedStatus: 'Имзоланган',
   letterInChancellery: 'Девонхонада',
   letterInLeadership: 'Раҳбариятда',

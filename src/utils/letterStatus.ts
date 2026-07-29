@@ -231,6 +231,11 @@ export function letterStatusMeta(l: Letter): { label: string; kind: StatusKind }
     // parity (backend letter.py:5036 sets it, :5072 keeps is_stamped set).
     case 'pending_registration':
       return { label: i18n.t('status.letterPendingRegistration'), kind: 'pending' };
+    // Terminal — the letter/trip was cancelled. Web renders it red "Bekor
+    // qilingan" (helpers.js:761, LettersTable badge #FF4D4F). Without this case
+    // it fell to the generic pending label and wrongly read as in-progress.
+    case 'cancelled':
+      return { label: i18n.t('status.letterCancelled'), kind: 'error' };
   }
   if (l.is_stamped || l.status === 'registered' || l.status === 'stamped') return { label: i18n.t('status.letterRegistered'), kind: 'success' };
   if (isLetterSigned(l)) return { label: i18n.t('status.letterSignedStatus'), kind: 'success' };

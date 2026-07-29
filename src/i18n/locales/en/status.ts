@@ -24,6 +24,7 @@ export default {
   letterRejected: 'Rejected',
   letterRegistered: 'Registered',
   letterPendingRegistration: 'Awaiting registration',
+  letterCancelled: 'Cancelled',
   letterSignedStatus: 'Signed',
   letterInChancellery: 'In chancellery',
   letterInLeadership: 'With leadership',

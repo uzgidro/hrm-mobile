@@ -31,6 +31,7 @@ export default {
   letterRejected: 'Rad etildi',
   letterRegistered: "Ro'yxatga olingan",
   letterPendingRegistration: "Ro'yxatga olish kutilmoqda",
+  letterCancelled: 'Bekor qilingan',
   letterSignedStatus: 'Imzolangan',
   letterInChancellery: 'Devonxonada',
   letterInLeadership: 'Rahbariyatda',
