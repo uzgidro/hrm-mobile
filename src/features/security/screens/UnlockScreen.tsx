@@ -99,14 +99,16 @@ export default function UnlockScreen() {
         </View>
       </View>
       <View style={styles.padWrap}>
-        <PinPad
-          value={value}
-          onChange={onChange}
-          title={t('security.unlockTitle')}
-          error={error}
-          disabled={busy}
-          onBiometric={biometricsUsable ? tryBiometric : undefined}
-        />
+        <View style={styles.padColumn}>
+          <PinPad
+            value={value}
+            onChange={onChange}
+            title={t('security.unlockTitle')}
+            error={error}
+            disabled={busy}
+            onBiometric={biometricsUsable ? tryBiometric : undefined}
+          />
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -124,5 +126,6 @@ const makeStyles = (c: ThemeColors) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    padWrap: { flex: 1, justifyContent: 'center', paddingHorizontal: 24 },
+    padWrap: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 },
+    padColumn: { width: '100%', maxWidth: 360 },
   });

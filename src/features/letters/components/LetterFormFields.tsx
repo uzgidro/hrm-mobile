@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import type { PickerOption } from '@/components/PickerModal';
+import { useBreakpoint } from '@/utils/responsive';
 import { Field, Selector } from './FormParts';
 import type { PickerKind, DateKind } from './LetterPickers';
 
@@ -44,6 +45,8 @@ export function LetterFormFields(props: {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const bp = useBreakpoint();
+  const twoCol = bp.isTablet;
   const {
     isTrip, typeHint, onOpenPicker, onOpenDate,
     departureDate, arrivalDate, regions, destinationIds, branchesLoading,
@@ -58,25 +61,36 @@ export function LetterFormFields(props: {
 
       {isTrip ? (
         <>
-          <View style={styles.row2}>
-            <View style={{ flex: 1 }}>
+          {/* departure/arrival dates: pre-existing intentional 2-up row
+              (predates the tablet adaptive work, web-parity) — left as-is,
+              unconditional on both phone and tablet. Task 21 only adds NEW
+              pairing for fields that previously stacked full-width. */}
+          <View testID="letter-departure-arrival-row" style={styles.fieldRow}>
+            <View testID="letter-field-departure" style={styles.fieldHalf}>
               <Field label={t('letters.fieldDepartureDate')}>
                 <Selector text={departureDate ? dayjs(departureDate).format('DD.MM.YYYY') : undefined} placeholder={t('letters.placeholderDate')} onPress={() => onOpenDate('departure')} />
               </Field>
             </View>
-            <View style={{ flex: 1 }}>
+            <View testID="letter-field-arrival" style={styles.fieldHalf}>
               <Field label={t('letters.fieldArrivalDate')}>
                 <Selector text={arrivalDate ? dayjs(arrivalDate).format('DD.MM.YYYY') : undefined} placeholder={t('letters.placeholderDate')} onPress={() => onOpenDate('arrival')} />
               </Field>
             </View>
           </View>
 
-          <Field label={t('letters.fieldRegions')}>
-            <Selector loading={branchesLoading} text={regions.length ? t('letters.regionsSelected', { count: regions.length }) : undefined} placeholder={t('letters.placeholderRegions')} onPress={() => onOpenPicker('regions')} />
-          </Field>
-          <Field label={t('letters.fieldDestinations')} required>
-            <Selector loading={branchesLoading} text={destinationIds.length ? t('letters.destinationsSelected', { count: destinationIds.length }) : undefined} placeholder={t('letters.placeholderDestinations')} onPress={() => onOpenPicker('destinations')} />
-          </Field>
+          {/* regions + destinations: both short selectors, adjacent — pair on tablet. */}
+          <View testID="letter-regions-destinations-row" style={twoCol ? styles.fieldRow : undefined}>
+            <View testID="letter-field-regions" style={twoCol ? styles.fieldHalf : undefined}>
+              <Field label={t('letters.fieldRegions')}>
+                <Selector loading={branchesLoading} text={regions.length ? t('letters.regionsSelected', { count: regions.length }) : undefined} placeholder={t('letters.placeholderRegions')} onPress={() => onOpenPicker('regions')} />
+              </Field>
+            </View>
+            <View testID="letter-field-destinations" style={twoCol ? styles.fieldHalf : undefined}>
+              <Field label={t('letters.fieldDestinations')} required>
+                <Selector loading={branchesLoading} text={destinationIds.length ? t('letters.destinationsSelected', { count: destinationIds.length }) : undefined} placeholder={t('letters.placeholderDestinations')} onPress={() => onOpenPicker('destinations')} />
+              </Field>
+            </View>
+          </View>
 
           <Field label={t('letters.fieldTripPurpose')}>
             <TextInput style={[styles.textArea, { minHeight: 100 }]} placeholder={t('letters.placeholderTripPurpose')} placeholderTextColor={colors.textMuted} value={description} onChangeText={onChangeDescription} multiline textAlignVertical="top" />
@@ -86,12 +100,19 @@ export function LetterFormFields(props: {
             <TextInput style={[styles.textArea, { minHeight: 100 }]} placeholder={t('letters.placeholderWorkPlan')} placeholderTextColor={colors.textMuted} value={workPlan} onChangeText={onChangeWorkPlan} multiline textAlignVertical="top" />
           </Field>
 
-          <Field label={t('letters.fieldLeadership')} required>
-            <Selector loading={rahbariyatLoading} text={rahbariyatIds.length ? t('letters.leadershipSelected', { count: rahbariyatIds.length }) : undefined} placeholder={t('letters.placeholderLeadership')} onPress={() => onOpenPicker('rahbariyat')} />
-          </Field>
-          <Field label={t('letters.fieldSubmitter')}>
-            <Selector loading={submittersLoading} text={nameOf(submitterId, submitterOptions)} placeholder={t('letters.placeholderSubmitterOptional')} onPress={() => onOpenPicker('submitter')} />
-          </Field>
+          {/* leadership + submitter: both short selectors, adjacent — pair on tablet. */}
+          <View testID="letter-leadership-submitter-row" style={twoCol ? styles.fieldRow : undefined}>
+            <View testID="letter-field-leadership" style={twoCol ? styles.fieldHalf : undefined}>
+              <Field label={t('letters.fieldLeadership')} required>
+                <Selector loading={rahbariyatLoading} text={rahbariyatIds.length ? t('letters.leadershipSelected', { count: rahbariyatIds.length }) : undefined} placeholder={t('letters.placeholderLeadership')} onPress={() => onOpenPicker('rahbariyat')} />
+              </Field>
+            </View>
+            <View testID="letter-field-tripSubmitter" style={twoCol ? styles.fieldHalf : undefined}>
+              <Field label={t('letters.fieldSubmitter')}>
+                <Selector loading={submittersLoading} text={nameOf(submitterId, submitterOptions)} placeholder={t('letters.placeholderSubmitterOptional')} onPress={() => onOpenPicker('submitter')} />
+              </Field>
+            </View>
+          </View>
         </>
       ) : (
         <>
@@ -101,12 +122,20 @@ export function LetterFormFields(props: {
           <Field label={t('letters.fieldText')}>
             <TextInput style={[styles.textArea, { minHeight: 140 }]} placeholder={t('letters.placeholderText')} placeholderTextColor={colors.textMuted} value={description} onChangeText={onChangeDescription} multiline textAlignVertical="top" />
           </Field>
-          <Field label={t('letters.fieldMainSigner')} required>
-            <Selector loading={signersLoading} text={nameOf(mainSignerId, signerOptions)} placeholder={t('letters.placeholderLeadership')} onPress={() => onOpenPicker('main')} />
-          </Field>
-          <Field label={t('letters.fieldCoordinators')}>
-            <Selector loading={signersLoading} text={ordinarySigners.length ? t('letters.coordinatorsSelected', { count: ordinarySigners.length }) : undefined} placeholder={t('letters.placeholderCoordinators')} onPress={() => onOpenPicker('ordinary')} />
-          </Field>
+
+          {/* main signer + coordinators: both short selectors, adjacent — pair on tablet. */}
+          <View testID="letter-signer-coordinators-row" style={twoCol ? styles.fieldRow : undefined}>
+            <View testID="letter-field-mainSigner" style={twoCol ? styles.fieldHalf : undefined}>
+              <Field label={t('letters.fieldMainSigner')} required>
+                <Selector loading={signersLoading} text={nameOf(mainSignerId, signerOptions)} placeholder={t('letters.placeholderLeadership')} onPress={() => onOpenPicker('main')} />
+              </Field>
+            </View>
+            <View testID="letter-field-coordinators" style={twoCol ? styles.fieldHalf : undefined}>
+              <Field label={t('letters.fieldCoordinators')}>
+                <Selector loading={signersLoading} text={ordinarySigners.length ? t('letters.coordinatorsSelected', { count: ordinarySigners.length }) : undefined} placeholder={t('letters.placeholderCoordinators')} onPress={() => onOpenPicker('ordinary')} />
+              </Field>
+            </View>
+          </View>
         </>
       )}
     </>
@@ -115,9 +144,12 @@ export function LetterFormFields(props: {
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    row2: { flexDirection: 'row', gap: 12 },
     input: { backgroundColor: c.card, borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: c.text },
     textArea: { backgroundColor: c.card, borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: c.text, minHeight: 100 },
     hintBox: { marginTop: 14, backgroundColor: c.primarySoft, borderRadius: 10, padding: 12 },
     hintText: { fontSize: 12, color: c.textSecondary, lineHeight: 17 },
+
+    // Task 21: 2-column pairing for short fields on tablet (bp.isTablet).
+    fieldRow: { flexDirection: 'row', gap: 12 },
+    fieldHalf: { flex: 1 },
   });

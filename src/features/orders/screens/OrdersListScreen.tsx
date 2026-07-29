@@ -1,5 +1,4 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
   TouchableOpacity, RefreshControl,
@@ -11,10 +10,14 @@ import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
+import { Screen } from '@/components/Screen';
+import { SplitLayout } from '@/components/SplitLayout';
 import { LoadingView, EmptyState } from '@/components/StateViews';
+import { useBreakpoint } from '@/utils/responsive';
 import { needsMyAction } from '@/utils/orderStatus';
 import { ordersListQuery } from '../api/queries';
 import { OrderListCard } from '../components/OrderListCard';
+import { OrderDetailView } from '../components/OrderDetailView';
 
 type Tab = 'action' | 'mine' | 'all';
 
@@ -32,6 +35,10 @@ export default function OrdersListScreen() {
   const styles = useThemedStyles(makeStyles);
   const { t } = useTranslation();
   const [tab, setTab] = useState<Tab>('action');
+
+  const bp = useBreakpoint();
+  const split = bp.isTablet && bp.isLandscape;
+  const [selectedId, setSelectedId] = useState<number | null>(null);
 
   const orgBranchId =
     employee?.organization_branches?.[0]?.id ??
@@ -53,8 +60,27 @@ export default function OrdersListScreen() {
     );
   }, [orders, tab, employeeId]);
 
-  return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+  // Auto-select the first row when entering split with nothing selected yet
+  // (so the detail pane isn't blank on first tablet-landscape render); clear
+  // the selection when leaving split (rotate back to portrait / phone) so
+  // re-entering split starts fresh instead of resuming a stale id. Also
+  // re-anchors to the first visible row whenever the currently selected id
+  // falls out of `filtered` (tab switch, or the order left the list after an
+  // action) — otherwise the detail pane would keep showing a stale order that
+  // no longer matches the current filter/tab.
+  useEffect(() => {
+    if (!split) {
+      setSelectedId(null);
+      return;
+    }
+    if (selectedId == null || !filtered.some((o) => o.id === selectedId)) {
+      setSelectedId(filtered[0]?.id ?? null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [split, filtered]);
+
+  const listPane = (
+    <>
       <View style={styles.header}>
         <Text style={styles.title}>{t('orders.title')}</Text>
         <TouchableOpacity
@@ -106,20 +132,38 @@ export default function OrdersListScreen() {
             </View>
           ) : (
             filtered.map((o) => (
-              <OrderListCard key={o.id} order={o} action={needsMyAction(o, employeeId)} />
+              <OrderListCard
+                key={o.id}
+                order={o}
+                action={needsMyAction(o, employeeId)}
+                onPress={split ? () => setSelectedId(o.id) : undefined}
+                selected={split && o.id === selectedId}
+              />
             ))
           )}
           <View style={{ height: 24 }} />
         </ScrollView>
       )}
-    </SafeAreaView>
+    </>
   );
+
+  if (split) {
+    return (
+      <Screen edges={['top']} maxWidth="full">
+        <SplitLayout
+          master={listPane}
+          detail={selectedId != null ? <OrderDetailView id={selectedId} embedded /> : null}
+          placeholder={<EmptyState icon="doc" title={t('orders.emptyAction')} />}
+        />
+      </Screen>
+    );
+  }
+
+  return <Screen edges={['top']}>{listPane}</Screen>;
 }
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    safe: { flex: 1, backgroundColor: c.bg },
-
     header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
     title: { flex: 1, fontSize: 26, fontWeight: '800', color: c.text },
     fab: {

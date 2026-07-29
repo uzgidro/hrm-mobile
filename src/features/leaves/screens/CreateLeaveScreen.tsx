@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useCallback, useMemo } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
@@ -16,7 +15,9 @@ import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Employee } from '@/types';
 import { Icon } from '@/components/Icon';
+import { Screen } from '@/components/Screen';
 import { PickerModal } from '@/components/PickerModal';
+import { useBreakpoint } from '@/utils/responsive';
 import { useCreateLeave, type CreateLeavePayload } from '../api/mutations';
 import { leaveSupervisorsQuery } from '../api/queries';
 import { supervisorOptions } from '../utils';
@@ -30,6 +31,8 @@ export default function CreateLeaveScreen() {
   const s = useThemedStyles(makeS);
   const { t } = useTranslation();
   const createLeaveMut = useCreateLeave();
+  const bp = useBreakpoint();
+  const twoCol = bp.isTablet;
 
   const now = dayjs();
   const [leaveType, setLeaveType] = useState(LEAVE_TYPES[0]);
@@ -109,7 +112,7 @@ export default function CreateLeaveScreen() {
   })();
 
   return (
-    <SafeAreaView style={s.safe}>
+    <Screen edges={['top', 'bottom']} maxWidth={600}>
       <View style={s.header}>
         <TouchableOpacity onPress={() => router.back()} style={s.backBtn}><Icon name="chevronLeft" size={24} color={colors.text} /></TouchableOpacity>
         <Text style={s.headerTitle}>{t('leaves.createTitle')}</Text>
@@ -123,27 +126,35 @@ export default function CreateLeaveScreen() {
           <Icon name="chevronRight" size={20} color={colors.textMuted} />
         </TouchableOpacity>
 
-        <Text style={s.label}>{t('leaves.startLabel')}</Text>
-        <TouchableOpacity style={s.selector} onPress={() => setActivePicker('start')} activeOpacity={0.7}>
-          <View style={s.dateTimeRow}>
-            <Icon name="calendar" size={16} color={colors.textMuted} />
-            <Text style={s.dateTimeText}>{startDate.format('DD.MM.YYYY')}</Text>
-            <Icon name="clock" size={16} color={colors.textMuted} />
-            <Text style={s.dateTimeText}>{startDate.format('HH:mm')}</Text>
+        {/* start/end: the flagship date-from/date-to pair — 2-column row on
+            tablet (Task 21), stacked full-width on phone as before. */}
+        <View testID="leave-start-end-row" style={twoCol ? s.fieldRow : undefined}>
+          <View testID="leave-field-start" style={twoCol ? s.fieldHalf : undefined}>
+            <Text style={s.label}>{t('leaves.startLabel')}</Text>
+            <TouchableOpacity style={s.selector} onPress={() => setActivePicker('start')} activeOpacity={0.7}>
+              <View style={s.dateTimeRow}>
+                <Icon name="calendar" size={16} color={colors.textMuted} />
+                <Text style={s.dateTimeText}>{startDate.format('DD.MM.YYYY')}</Text>
+                <Icon name="clock" size={16} color={colors.textMuted} />
+                <Text style={s.dateTimeText}>{startDate.format('HH:mm')}</Text>
+              </View>
+              <Icon name="chevronRight" size={20} color={colors.textMuted} />
+            </TouchableOpacity>
           </View>
-          <Icon name="chevronRight" size={20} color={colors.textMuted} />
-        </TouchableOpacity>
 
-        <Text style={s.label}>{t('leaves.endLabel')}</Text>
-        <TouchableOpacity style={s.selector} onPress={() => setActivePicker('end')} activeOpacity={0.7}>
-          <View style={s.dateTimeRow}>
-            <Icon name="calendar" size={16} color={colors.textMuted} />
-            <Text style={s.dateTimeText}>{endDate.format('DD.MM.YYYY')}</Text>
-            <Icon name="clock" size={16} color={colors.textMuted} />
-            <Text style={s.dateTimeText}>{endDate.format('HH:mm')}</Text>
+          <View testID="leave-field-end" style={twoCol ? s.fieldHalf : undefined}>
+            <Text style={s.label}>{t('leaves.endLabel')}</Text>
+            <TouchableOpacity style={s.selector} onPress={() => setActivePicker('end')} activeOpacity={0.7}>
+              <View style={s.dateTimeRow}>
+                <Icon name="calendar" size={16} color={colors.textMuted} />
+                <Text style={s.dateTimeText}>{endDate.format('DD.MM.YYYY')}</Text>
+                <Icon name="clock" size={16} color={colors.textMuted} />
+                <Text style={s.dateTimeText}>{endDate.format('HH:mm')}</Text>
+              </View>
+              <Icon name="chevronRight" size={20} color={colors.textMuted} />
+            </TouchableOpacity>
           </View>
-          <Icon name="chevronRight" size={20} color={colors.textMuted} />
-        </TouchableOpacity>
+        </View>
 
         {durationText && (
           <View style={s.durationRow}><Icon name="clock" size={16} color={colors.primaryLight} /><Text style={s.durationText}>{durationText}</Text></View>
@@ -207,13 +218,12 @@ export default function CreateLeaveScreen() {
         onClose={() => setShowSupervisorPicker(false)}
         onSelect={(v) => { setPickedSupervisorId(v); setShowSupervisorPicker(false); }}
       />
-    </SafeAreaView>
+    </Screen>
   );
 }
 
 const makeS = (c: ThemeColors) =>
   StyleSheet.create({
-    safe: { flex: 1, backgroundColor: c.bg },
     header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
     backBtn: { width: 36, height: 36, justifyContent: 'center' },
     headerTitle: { flex: 1, fontSize: 20, fontWeight: '700', color: c.text, paddingLeft: 4 },
@@ -223,6 +233,10 @@ const makeS = (c: ThemeColors) =>
     selectorText: { flex: 1, fontSize: 14, color: c.text, fontWeight: '500' },
     dateTimeRow: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6 },
     dateTimeText: { fontSize: 14, color: c.text, fontWeight: '500' },
+
+    // Task 21: 2-column pairing for short fields on tablet (bp.isTablet).
+    fieldRow: { flexDirection: 'row', gap: 12 },
+    fieldHalf: { flex: 1 },
     durationRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8, paddingHorizontal: 2 },
     durationText: { fontSize: 13, color: c.primaryLight, fontWeight: '600' },
     errorText: { fontSize: 12, color: c.error, marginTop: 6, paddingHorizontal: 2 },

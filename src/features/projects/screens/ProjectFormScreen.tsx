@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEffect, useMemo, useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Image,
@@ -12,6 +11,7 @@ import type { ThemeColors } from '@/theme/palettes';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { FormInput } from '@/components/FormInput';
 import { Icon } from '@/components/Icon';
+import { Screen } from '@/components/Screen';
 import { LoadingView } from '@/components/StateViews';
 import { PickerModal } from '@/components/PickerModal';
 import { fetchAllEmployees, employeesQueryKey } from '@/utils/employees';
@@ -113,7 +113,7 @@ export default function LoyihaFormScreen() {
   const selectedMembers = memberIds.map((mid) => empById.get(mid)).filter(Boolean) as Employee[];
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <Screen edges={['top']} maxWidth={600}>
       <ScreenHeader title={isEdit ? t('projects.editTitle') : t('projects.createTitle')} />
       {hydrating ? (
         <LoadingView />
@@ -180,13 +180,12 @@ export default function LoyihaFormScreen() {
         onSelect={toggleMember}
         onClose={() => setPickerOpen(false)}
       />
-    </SafeAreaView>
+    </Screen>
   );
 }
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    safe: { flex: 1, backgroundColor: c.bg },
     content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 24 },
 
     label: { fontSize: 13, color: c.textSecondary, fontWeight: '600', marginBottom: 6 },

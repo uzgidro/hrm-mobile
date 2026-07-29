@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCallback, useMemo, useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
@@ -19,6 +18,8 @@ import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import type { Employee } from '@/types';
 import { Icon } from '@/components/Icon';
+import { Screen } from '@/components/Screen';
+import { useBreakpoint } from '@/utils/responsive';
 import {
   letterSignersQuery, letterRahbariyatQuery, letterSubmittersQuery, orgBranchesQuery,
 } from '../api/queries';
@@ -49,6 +50,8 @@ export default function CreateLetterScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const createMutation = useCreateLetter();
+  const bp = useBreakpoint();
+  const twoCol = bp.isTablet;
 
   const TYPE_OPTIONS = useMemo<PickerOption[]>(
     () => TYPE_OPTION_KEYS.map((o) => ({ value: o.value, label: t(o.labelKey) })),
@@ -176,7 +179,7 @@ export default function CreateLetterScreen() {
     t('letters.hintNotification');
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+    <Screen edges={['top', 'bottom']} maxWidth={640}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
           <Icon name="chevronLeft" size={24} color={colors.text} />
@@ -188,13 +191,21 @@ export default function CreateLetterScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Field label={t('letters.fieldType')} required>
-          <Selector text={letterType ? TYPE_OPTIONS.find((o) => TYPE_BY_VALUE[o.value] === letterType)?.label : undefined} placeholder={t('letters.placeholderSelect')} onPress={() => setPicker('type')} />
-        </Field>
+        {/* Both short single-selects, adjacent — pair into a 2-column row on
+            tablet (Task 21); stack full-width on phone. */}
+        <View testID="letter-type-date-row" style={twoCol ? styles.fieldRow : undefined}>
+          <View testID="letter-field-type" style={twoCol ? styles.fieldHalf : undefined}>
+            <Field label={t('letters.fieldType')} required>
+              <Selector text={letterType ? TYPE_OPTIONS.find((o) => TYPE_BY_VALUE[o.value] === letterType)?.label : undefined} placeholder={t('letters.placeholderSelect')} onPress={() => setPicker('type')} />
+            </Field>
+          </View>
 
-        <Field label={t('letters.fieldLetterDate')}>
-          <Selector text={letterDate ? dayjs(letterDate).format('DD.MM.YYYY') : undefined} placeholder={t('letters.placeholderSelectDate')} onPress={() => setDatePicker('letter')} />
-        </Field>
+          <View testID="letter-field-letterDate" style={twoCol ? styles.fieldHalf : undefined}>
+            <Field label={t('letters.fieldLetterDate')}>
+              <Selector text={letterDate ? dayjs(letterDate).format('DD.MM.YYYY') : undefined} placeholder={t('letters.placeholderSelectDate')} onPress={() => setDatePicker('letter')} />
+            </Field>
+          </View>
+        </View>
 
         <LetterFormFields
           isTrip={isTrip}
@@ -237,13 +248,12 @@ export default function CreateLetterScreen() {
         letterDate={letterDate} departureDate={departureDate} arrivalDate={arrivalDate}
         onConfirmLetterDate={setLetterDate} onConfirmDepartureDate={setDepartureDate} onConfirmArrivalDate={setArrivalDate}
       />
-    </SafeAreaView>
+    </Screen>
   );
 }
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    safe: { flex: 1, backgroundColor: c.bg },
     header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12, gap: 12 },
     backBtn: { padding: 4 },
     title: { flex: 1, fontSize: 19, fontWeight: '800', color: c.text },
@@ -251,4 +261,8 @@ const makeStyles = (c: ThemeColors) =>
     createBtnDisabled: { opacity: 0.6 },
     createBtnText: { color: c.onPrimary, fontWeight: '700', fontSize: 14 },
     content: { paddingHorizontal: 16, paddingTop: 4 },
+
+    // Task 21: 2-column pairing for short fields on tablet (bp.isTablet).
+    fieldRow: { flexDirection: 'row', gap: 12 },
+    fieldHalf: { flex: 1 },
   });

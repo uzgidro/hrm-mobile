@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useMemo, useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, FlatList, TextInput, Linking,
@@ -9,7 +8,9 @@ import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { useBreakpoint } from '@/utils/responsive';
 import { Icon } from '@/components/Icon';
+import { Screen } from '@/components/Screen';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { LoadingView, EmptyState, ErrorState } from '@/components/StateViews';
 import type { PhoneDirectoryEntry } from '@/types';
@@ -21,6 +22,8 @@ export default function PhoneDirectoryScreen() {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const bp = useBreakpoint();
+  const cols = bp.isTablet ? (bp.isLandscape ? 3 : 2) : 1;
   const [search, setSearch] = useState('');
 
   const { data = [], isLoading, isError, refetch } = useQuery(phoneDirectoryQuery());
@@ -42,7 +45,7 @@ export default function PhoneDirectoryScreen() {
   const dial = (phone: string) => Linking.openURL(`tel:${phone.replace(/\s+/g, '')}`);
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+    <Screen edges={['top', 'bottom']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Icon name="chevronLeft" size={24} color={colors.text} />
@@ -77,32 +80,36 @@ export default function PhoneDirectoryScreen() {
       ) : (
         <FlatList
           data={filtered}
+          key={cols}
+          numColumns={cols}
+          columnWrapperStyle={cols > 1 ? styles.gridRow : undefined}
           keyExtractor={(item) => String(item.id)}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
-          ItemSeparatorComponent={() => <View style={styles.separator} />}
-          renderItem={({ item }) => <DirectoryRow entry={item} styles={styles} colors={colors} onDial={dial} t={t} />}
+          ItemSeparatorComponent={cols > 1 ? undefined : () => <View style={styles.separator} />}
+          renderItem={({ item }) => <DirectoryRow entry={item} styles={styles} colors={colors} onDial={dial} t={t} grid={cols > 1} />}
           ListEmptyComponent={
             <EmptyState icon="users" title={search ? t('directory.notFound') : t('directory.empty')} />
           }
         />
       )}
-    </SafeAreaView>
+    </Screen>
   );
 }
 
 function DirectoryRow({
-  entry, styles, colors, onDial, t,
+  entry, styles, colors, onDial, t, grid,
 }: {
   entry: PhoneDirectoryEntry;
   styles: Styles;
   colors: ThemeColors;
   onDial: (phone: string) => void;
   t: TFunction;
+  grid?: boolean;
 }) {
   const phone = entry.internal_phone_number || entry.phone_number;
   return (
-    <View style={styles.row}>
+    <View style={[styles.row, grid && styles.rowGrid]}>
       <EmployeeAvatar emp={{ photo_path: entry.photo_thumb_path ?? entry.photo_path, legal_name: entry.legal_name }} size={48} />
       <View style={styles.info}>
         <Text style={styles.name} numberOfLines={1}>{entry.legal_name || '—'}</Text>
@@ -126,8 +133,6 @@ type Styles = ReturnType<typeof makeStyles>;
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    safe: { flex: 1, backgroundColor: c.bg },
-
     header: {
       flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14,
       borderBottomWidth: 1, borderBottomColor: c.cardBorder,
@@ -147,8 +152,13 @@ const makeStyles = (c: ThemeColors) =>
 
     list: { paddingTop: 4, paddingBottom: 32 },
     separator: { height: 1, backgroundColor: c.cardBorder, marginLeft: 76 },
+    gridRow: { gap: 12, paddingHorizontal: 16 },
 
     row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 12, backgroundColor: c.bg },
+    rowGrid: {
+      flex: 1, paddingHorizontal: 12, marginHorizontal: 0, marginBottom: 12,
+      borderRadius: 14, borderWidth: 1, borderColor: c.cardBorder,
+    },
     info: { flex: 1 },
     name: { fontSize: 14, fontWeight: '700', color: c.text },
     sub: { fontSize: 12, color: c.textMuted, marginTop: 2 },

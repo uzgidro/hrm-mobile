@@ -1,20 +1,16 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useMemo } from 'react';
-import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, useWindowDimensions,
-} from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { router, type Href } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../src/store/authStore';
 import { useTheme, useThemedStyles } from '../../src/theme/ThemeProvider';
 import type { ThemeColors } from '../../src/theme/palettes';
-import { Icon, IconName } from '../../src/components/Icon';
-import { canAccessPage, type PageKey } from '../../src/utils/roles';
+import { Icon } from '../../src/components/Icon';
+import { Screen } from '../../src/components/Screen';
+import { useBreakpoint } from '../../src/utils/responsive';
+import { buildNavSections } from '../../src/utils/navItems';
 import { homeAssignedLeavesQuery, homeNotificationsQuery } from '@/features/dashboard/api/queries';
-
-type Item = { key: string; icon: IconName; label: string; route: string; access: PageKey; badge?: number };
-type Section = { title: string; items: Item[] };
 
 export default function ModulesScreen() {
   const { user } = useAuthStore();
@@ -22,10 +18,8 @@ export default function ModulesScreen() {
   const isSupervisor = !employee?.supervisor;
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const { width } = useWindowDimensions();
+  const bp = useBreakpoint();
   const { t } = useTranslation();
-
-  const tileWidth = (width - 16 * 2 - 12 * 2) / 3;
 
   // Reuse the dashboard's home factories so this tab shares their cache entries
   // (assigned-leaves keyed under ['work-leaves'] refreshes on any sign/reject;
@@ -48,61 +42,20 @@ export default function ModulesScreen() {
 
   const unreadCount = useMemo(() => notifications.filter((n) => !n.is_read).length, [notifications]);
 
-  const sections: Section[] = useMemo(() => {
-    const raw: Section[] = [
-      {
-        title: t('modules.sections.activity'),
-        items: [
-          { key: 'attendance', icon: 'clock', label: t('modules.labels.attendance'), route: '/attendance-detail', access: 'attendance' },
-          { key: 'timesheet', icon: 'calendar', label: t('modules.labels.timesheet'), route: '/tabel', access: 'timesheet' },
-          // Web parity (navConfig.js): the Navbatchilik nav item is pruned when
-          // the user has neither dept-level duty nor group membership.
-          // Two "дежурства других" variants side by side (list-with-chips vs
-          // member×day grid) — the user will compare and we'll keep one.
-          ...(user?.is_navbatchi || employee?.department?.has_navbatchilik
-            ? [
-                { key: 'navbatchilik', icon: 'clock' as IconName, label: t('modules.labels.navbatchilik'), route: '/navbatchilik', access: 'timesheet' as PageKey },
-                { key: 'navbatchilikGrid', icon: 'calendar' as IconName, label: t('modules.labels.navbatchilikGrid'), route: '/navbatchilik-grid', access: 'timesheet' as PageKey },
-              ]
-            : []),
-          { key: 'holidays', icon: 'sun', label: t('modules.labels.holidays'), route: '/bayramlar', access: 'timesheet' },
-          { key: 'assistant', icon: 'target', label: t('modules.labels.assistant'), route: '/assistant', access: 'assistant' },
-          { key: 'requests', icon: 'checklist', label: t('modules.labels.requests'), route: '/work-leaves', access: 'requests', badge: pendingCount },
-          { key: 'chairman', icon: 'calendar', label: t('modules.labels.chairman'), route: '/chairman-tasks', access: 'chairman' },
-          { key: 'projects', icon: 'board', label: t('modules.labels.projects'), route: '/loyihalar', access: 'projects' },
-          { key: 'kpi', icon: 'target', label: t('modules.labels.kpi'), route: '/kpi', access: 'kpi' },
-          { key: 'salary', icon: 'wallet', label: t('modules.labels.salary'), route: '/salary', access: 'salary' },
-        ],
-      },
-      {
-        title: t('modules.sections.team'),
-        items: [
-          { key: 'team', icon: 'users', label: t('modules.labels.team'), route: '/team', access: 'team' },
-          { key: 'employees', icon: 'idcard', label: t('modules.labels.employees'), route: '/employees-list', access: 'employees' },
-          { key: 'directory', icon: 'phone', label: t('modules.labels.directory'), route: '/phone-directory', access: 'directory' },
-          { key: 'guests', icon: 'guest', label: t('modules.labels.guests'), route: '/(tabs)/mehmonlar', access: 'guests' },
-          { key: 'birthdays', icon: 'gift', label: t('modules.labels.birthdays'), route: '/birthdays', access: 'birthdays' },
-        ],
-      },
-      {
-        title: t('modules.sections.other'),
-        items: [
-          { key: 'documents', icon: 'folder', label: t('modules.labels.documents'), route: '/hujjatlar', access: 'documents' },
-          { key: 'support', icon: 'help', label: t('modules.labels.support'), route: '/texnik-yordam', access: 'support' },
-          { key: 'news', icon: 'news', label: t('modules.labels.news'), route: '/news', access: 'news' },
-          { key: 'notifications', icon: 'bell', label: t('modules.labels.notifications'), route: '/notifications', access: 'notifications', badge: unreadCount },
-          { key: 'profile', icon: 'user', label: t('modules.labels.profile'), route: '/(tabs)/profile', access: 'profile' },
-        ],
-      },
-    ];
-    // Role-based visibility — mirrors the web nav per user type.
-    return raw
-      .map((s) => ({ ...s, items: s.items.filter((it) => canAccessPage(user, it.access)) }))
-      .filter((s) => s.items.length > 0);
-  }, [pendingCount, unreadCount, user, employee?.department?.has_navbatchilik, t]);
+  const sections = useMemo(
+    () => buildNavSections(t, { user, employee, pendingCount, unreadCount }),
+    [t, user, employee, pendingCount, unreadCount]
+  );
+
+  // Adaptive columns from the breakpoint; content capped so tiles don't stretch.
+  const columns = bp.gridColumns;
+  const H_PAD = 16;
+  const GAP = 12;
+  const innerWidth = Math.min(bp.contentMaxWidth, bp.width) - H_PAD * 2;
+  const tileWidth = (innerWidth - GAP * (columns - 1)) / columns;
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <Screen edges={['top']}>
       <View style={styles.header}>
         <Text style={styles.title}>{t('modules.screenTitle')}</Text>
       </View>
@@ -118,8 +71,8 @@ export default function ModulesScreen() {
                   activeOpacity={0.75}
                   onPress={() => router.push(item.route as Href)}
                 >
-                  <View style={styles.iconWrap}>
-                    <Icon name={item.icon} size={24} color={colors.primary} />
+                  <View style={[styles.iconWrap, bp.isTablet && styles.iconWrapTablet]}>
+                    <Icon name={item.icon} size={bp.isTablet ? 28 : 24} color={colors.primary} />
                     {item.badge != null && item.badge > 0 && (
                       <View style={styles.badge}>
                         <Text style={styles.badgeText}>{item.badge > 9 ? '9+' : item.badge}</Text>
@@ -134,13 +87,12 @@ export default function ModulesScreen() {
         ))}
         <View style={{ height: 24 }} />
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 }
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    safe: { flex: 1, backgroundColor: c.bg },
     header: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
     title: { fontSize: 26, fontWeight: '800', color: c.text },
     content: { paddingHorizontal: 16, paddingTop: 4 },
@@ -160,6 +112,7 @@ const makeStyles = (c: ThemeColors) =>
       width: 48, height: 48, borderRadius: 14, backgroundColor: c.primarySoft,
       alignItems: 'center', justifyContent: 'center',
     },
+    iconWrapTablet: { width: 56, height: 56, borderRadius: 16 },
     badge: {
       position: 'absolute', top: -4, right: -4, backgroundColor: c.warning,
       borderRadius: 9, minWidth: 18, height: 18, alignItems: 'center', justifyContent: 'center',

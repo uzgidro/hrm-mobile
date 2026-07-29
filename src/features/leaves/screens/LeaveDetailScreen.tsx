@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useCallback } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
@@ -14,6 +13,7 @@ import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Employee } from '@/types';
 import { Icon } from '@/components/Icon';
+import { Screen } from '@/components/Screen';
 import { LoadingView, EmptyState } from '@/components/StateViews';
 import { getApiErrorMessage } from '@/api/errors';
 import { isHR } from '@/utils/roles';
@@ -163,19 +163,19 @@ export default function LeaveDetailScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={s.safe} edges={['top', 'bottom']}>
+      <Screen edges={['top', 'bottom']}>
         {headerBar}
         <LoadingView />
-      </SafeAreaView>
+      </Screen>
     );
   }
 
   if (!leave) {
     return (
-      <SafeAreaView style={s.safe} edges={['top', 'bottom']}>
+      <Screen edges={['top', 'bottom']}>
         {headerBar}
         <EmptyState title={t('leaves.notFound')} />
-      </SafeAreaView>
+      </Screen>
     );
   }
 
@@ -183,7 +183,7 @@ export default function LeaveDetailScreen() {
   const sameDay = dayjs(leave.start_date).format('DD.MM.YYYY') === dayjs(leave.end_date).format('DD.MM.YYYY');
 
   return (
-    <SafeAreaView style={s.safe} edges={['top', 'bottom']}>
+    <Screen edges={['top', 'bottom']}>
       {headerBar}
 
       <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
@@ -271,14 +271,12 @@ export default function LeaveDetailScreen() {
       </ScrollView>
 
       <RejectModal visible={showRejectModal} onConfirm={handleReject} onClose={() => setShowRejectModal(false)} styles={s} colors={colors} />
-    </SafeAreaView>
+    </Screen>
   );
 }
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    safe: { flex: 1, backgroundColor: c.bg },
-
     header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
     backBtn: { width: 36, height: 36, justifyContent: 'center' },
     backArrow: { fontSize: 22, color: c.text, fontWeight: '300' },

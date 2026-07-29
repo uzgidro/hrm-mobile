@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
@@ -10,6 +9,7 @@ import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import type { ChairmanTask } from '@/types';
 import { Icon } from '@/components/Icon';
+import { Screen } from '@/components/Screen';
 import { FormInput } from '@/components/FormInput';
 import { ScreenHeader, HeaderAction } from '@/components/ScreenHeader';
 import { confirm } from '@/lib/confirm';
@@ -108,7 +108,7 @@ export default function ChairmanTaskFormScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+    <Screen edges={['top', 'bottom']} maxWidth={600}>
       <ScreenHeader
         title={t(editing ? 'chairman.editTitle' : 'chairman.createTitle')}
         right={editing ? <HeaderAction icon="trash" onPress={onDelete} /> : undefined}
@@ -140,13 +140,12 @@ export default function ChairmanTaskFormScreen() {
           {busy ? <ActivityIndicator color={colors.onPrimary} /> : <Text style={styles.submitText}>{t('chairman.save')}</Text>}
         </TouchableOpacity>
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 }
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    safe: { flex: 1, backgroundColor: c.bg },
     content: { paddingHorizontal: 16, paddingBottom: 32 },
     timeRow: { flexDirection: 'row', gap: 12 },
     colors: { flexDirection: 'row', gap: 12, marginTop: 12, marginBottom: 4 },

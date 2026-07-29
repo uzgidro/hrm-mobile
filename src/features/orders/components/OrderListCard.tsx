@@ -9,17 +9,27 @@ import { statusMeta, statusColor } from '@/utils/orderStatus';
 
 // One row of the orders list. `action` = "sizdan amal kutilmoqda" (derived by
 // the list screen via needsMyAction) which highlights the card border + tag.
-export function OrderListCard({ order, action }: { order: OrderAct; action: boolean }) {
+// `onPress`/`selected` are injectable so the tablet-landscape split view (the
+// list screen) can swap the default push-navigation for setting the selected
+// id + highlighting the active row; existing phone/portrait callers pass
+// neither and keep today's push behavior unchanged.
+export function OrderListCard({
+  order, action, onPress, selected,
+}: {
+  order: OrderAct; action: boolean; onPress?: () => void; selected?: boolean;
+}) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { t } = useTranslation();
   const meta = statusMeta(order.status);
   const sc = statusColor(meta.kind, colors);
+  const handlePress =
+    onPress ?? (() => router.push({ pathname: '/order-detail', params: { id: String(order.id) } }));
 
   return (
     <TouchableOpacity
-      style={[styles.card, action && styles.cardAction]}
-      onPress={() => router.push({ pathname: '/order-detail', params: { id: order.id } })}
+      style={[styles.card, action && styles.cardAction, selected && styles.cardSelected]}
+      onPress={handlePress}
       activeOpacity={0.8}
     >
       <View style={styles.cardTop}>
@@ -61,6 +71,7 @@ const makeStyles = (c: ThemeColors) =>
       borderWidth: 1, borderColor: c.cardBorder, gap: 8,
     },
     cardAction: { borderColor: c.warning },
+    cardSelected: { borderColor: c.primary, borderWidth: 1.5 },
     cardTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
     cardCategory: { flex: 1, fontSize: 15, fontWeight: '700', color: c.text },
     badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },

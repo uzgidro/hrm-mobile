@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Alert,
@@ -11,6 +10,7 @@ import dayjs from 'dayjs';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
+import { Screen } from '@/components/Screen';
 import { LoadingView } from '@/components/StateViews';
 import { AttachmentField, type PickedFile } from '@/components/AttachmentField';
 import { DatePickerModal } from '@/components/DatePicker';
@@ -96,15 +96,15 @@ export default function SubmitReportScreen() {
 
   if (isLoading || !letter) {
     return (
-      <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+      <Screen edges={['top', 'bottom']}>
         <Header title={t('letters.reportTitle')} styles={styles} colors={colors} />
         <LoadingView />
-      </SafeAreaView>
+      </Screen>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+    <Screen edges={['top', 'bottom']} maxWidth={640}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
           <Icon name="chevronLeft" size={24} color={colors.text} />
@@ -185,7 +185,7 @@ export default function SubmitReportScreen() {
         onConfirm={setReportDate}
         onClose={() => setDatePicker(false)}
       />
-    </SafeAreaView>
+    </Screen>
   );
 }
 
@@ -205,7 +205,6 @@ type Styles = ReturnType<typeof makeStyles>;
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    safe: { flex: 1, backgroundColor: c.bg },
     header: {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
       paddingHorizontal: 12, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: c.cardBorder,

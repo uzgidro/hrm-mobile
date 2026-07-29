@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Linking, Image, TextInput,
 } from 'react-native';
@@ -11,6 +10,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
+import { Screen } from '@/components/Screen';
 import { LoadingView, ErrorState } from '@/components/StateViews';
 import type { CardAttachment, CardComment } from '@/types';
 import { cardDetailQuery, cardCommentsQuery } from '../api/queries';
@@ -51,8 +51,31 @@ export default function CardDetailScreen() {
     rejected: { label: t('projects.statusRejected'), color: colors.error },
   }[status];
 
+  // Status action bar — only for creator/assignee (backend also enforces).
+  // `card` is undefined while loading/erroring, so canAct is already false in
+  // those states — this stays undefined until the card is loaded and actable.
+  const actionBar = canAct ? (
+    <View style={styles.actionBar}>
+      {status !== 'completed' && (
+        <TouchableOpacity style={[styles.actionBtn, styles.completeBtn]} onPress={complete} disabled={busy} activeOpacity={0.8}>
+          {busy ? <ActivityIndicator color="#fff" /> : <><Icon name="check" size={18} color="#fff" /><Text style={styles.actionBtnText}>{t('projects.complete')}</Text></>}
+        </TouchableOpacity>
+      )}
+      {status === 'completed' && (
+        <TouchableOpacity style={[styles.actionBtn, styles.uncompleteBtn]} onPress={uncomplete} disabled={busy} activeOpacity={0.8}>
+          {busy ? <ActivityIndicator color={colors.text} /> : <Text style={[styles.actionBtnText, { color: colors.text }]}>{t('projects.uncomplete')}</Text>}
+        </TouchableOpacity>
+      )}
+      {status !== 'rejected' && (
+        <TouchableOpacity style={[styles.actionBtn, styles.rejectBtn]} onPress={reject} disabled={busy} activeOpacity={0.8}>
+          <Icon name="close" size={18} color={colors.error} /><Text style={[styles.actionBtnText, { color: colors.error }]}>{t('projects.reject')}</Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  ) : undefined;
+
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+    <Screen edges={['top', 'bottom']} overlay={actionBar}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Icon name="chevronLeft" size={24} color={colors.text} />
@@ -69,8 +92,7 @@ export default function CardDetailScreen() {
       ) : isError || !card ? (
         <ErrorState title={t('projects.cardLoadError')} onRetry={() => refetch()} />
       ) : (
-        <>
-          <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
             {/* Status + title */}
             <View style={styles.card}>
               <View style={[styles.statusPill, { backgroundColor: statusMeta.color }]}>
@@ -185,36 +207,13 @@ export default function CardDetailScreen() {
 
             <View style={{ height: canAct ? 96 : 24 }} />
           </ScrollView>
-
-          {/* Status action bar — only for creator/assignee (backend also enforces). */}
-          {canAct && (
-            <View style={styles.actionBar}>
-              {status !== 'completed' && (
-                <TouchableOpacity style={[styles.actionBtn, styles.completeBtn]} onPress={complete} disabled={busy} activeOpacity={0.8}>
-                  {busy ? <ActivityIndicator color="#fff" /> : <><Icon name="check" size={18} color="#fff" /><Text style={styles.actionBtnText}>{t('projects.complete')}</Text></>}
-                </TouchableOpacity>
-              )}
-              {status === 'completed' && (
-                <TouchableOpacity style={[styles.actionBtn, styles.uncompleteBtn]} onPress={uncomplete} disabled={busy} activeOpacity={0.8}>
-                  {busy ? <ActivityIndicator color={colors.text} /> : <Text style={[styles.actionBtnText, { color: colors.text }]}>{t('projects.uncomplete')}</Text>}
-                </TouchableOpacity>
-              )}
-              {status !== 'rejected' && (
-                <TouchableOpacity style={[styles.actionBtn, styles.rejectBtn]} onPress={reject} disabled={busy} activeOpacity={0.8}>
-                  <Icon name="close" size={18} color={colors.error} /><Text style={[styles.actionBtnText, { color: colors.error }]}>{t('projects.reject')}</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          )}
-        </>
       )}
-    </SafeAreaView>
+    </Screen>
   );
 }
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    safe: { flex: 1, backgroundColor: c.bg },
     content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 24 },
 
     header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: c.cardBorder },

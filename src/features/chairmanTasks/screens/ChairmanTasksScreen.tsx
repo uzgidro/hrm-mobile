@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SectionList, RefreshControl } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
@@ -10,6 +9,7 @@ import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import type { ChairmanTask } from '@/types';
 import { Icon } from '@/components/Icon';
+import { Screen } from '@/components/Screen';
 import { LoadingView, EmptyState, ErrorState } from '@/components/StateViews';
 import { ScreenHeader, HeaderAction } from '@/components/ScreenHeader';
 import { canManageChairmanTasks } from '@/utils/roles';
@@ -56,7 +56,7 @@ export default function ChairmanTasksScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <Screen edges={['top']}>
       <ScreenHeader
         title={t('chairman.title')}
         right={canManage ? <HeaderAction icon="plus" onPress={() => router.push('/chairman-task-form')} /> : undefined}
@@ -108,13 +108,12 @@ export default function ChairmanTasksScreen() {
           ListEmptyComponent={<EmptyState icon="calendar" title={t('chairman.empty')} />}
         />
       )}
-    </SafeAreaView>
+    </Screen>
   );
 }
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    safe: { flex: 1, backgroundColor: c.bg },
     monthBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 8 },
     monthBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
     monthLabel: { fontSize: 16, fontWeight: '700', color: c.text },

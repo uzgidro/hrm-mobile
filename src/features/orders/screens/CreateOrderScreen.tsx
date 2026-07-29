@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useMemo, useState } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
@@ -17,6 +16,8 @@ import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import type { Employee } from '@/types';
 import { Icon } from '@/components/Icon';
+import { Screen } from '@/components/Screen';
+import { useBreakpoint } from '@/utils/responsive';
 import {
   orderCategoriesQuery, orderEmployeesQuery, orderDepartmentsQuery, orderLeadershipQuery,
 } from '../api/queries';
@@ -38,6 +39,8 @@ export default function CreateOrderScreen() {
   const styles = useThemedStyles(makeStyles);
   const { t } = useTranslation();
   const createMutation = useCreateOrder();
+  const bp = useBreakpoint();
+  const twoCol = bp.isTablet;
 
   const [categoryId, setCategoryId] = useState<number | null>(null);
   const [summary, setSummary] = useState('');
@@ -125,7 +128,7 @@ export default function CreateOrderScreen() {
 
   // ── Render ───────────────────────────────────────────────────────────────────
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+    <Screen edges={['top', 'bottom']} maxWidth={640}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
           <Icon name="chevronLeft" size={24} color={colors.text} />
@@ -173,25 +176,36 @@ export default function CreateOrderScreen() {
         {/* Leadership (rahbariyat) is required on EVERY order for every role —
             mirrors the web (AddOrderDrawer renders it unconditionally). Gating it
             behind `hr` hid a mandatory field from employees, so they could never
-            satisfy the `leadershipId` validation and were blocked from creating. */}
-        <Field label={t('orders.leadershipLabel')} required>
-          <Selector
-            loading={leadershipLoading}
-            text={nameOf(leadershipId, leadershipOptions)}
-            placeholder={t('orders.leadershipPlaceholder')}
-            onPress={() => setPicker('leadership')}
-          />
-        </Field>
+            satisfy the `leadershipId` validation and were blocked from creating.
+            Both are short single-select Fields, so on tablet (Task 21) they pair
+            into a 2-column row instead of stacking full-width. */}
+        <View
+          testID="order-leadership-submitter-row"
+          style={twoCol ? styles.fieldRow : undefined}
+        >
+          <View testID="order-field-leadership" style={twoCol ? styles.fieldHalf : undefined}>
+            <Field label={t('orders.leadershipLabel')} required>
+              <Selector
+                loading={leadershipLoading}
+                text={nameOf(leadershipId, leadershipOptions)}
+                placeholder={t('orders.leadershipPlaceholder')}
+                onPress={() => setPicker('leadership')}
+              />
+            </Field>
+          </View>
 
-        <Field label={t('orders.submitterLabel')}>
-          <Selector
-            loading={empsLoading}
-            text={nameOf(submitterId, employeeOptions)}
-            placeholder={t('orders.selectPlaceholder')}
-            onPress={() => setPicker('submitter')}
-            onClear={submitterId ? () => setSubmitterId(null) : undefined}
-          />
-        </Field>
+          <View testID="order-field-submitter" style={twoCol ? styles.fieldHalf : undefined}>
+            <Field label={t('orders.submitterLabel')}>
+              <Selector
+                loading={empsLoading}
+                text={nameOf(submitterId, employeeOptions)}
+                placeholder={t('orders.selectPlaceholder')}
+                onPress={() => setPicker('submitter')}
+                onClear={submitterId ? () => setSubmitterId(null) : undefined}
+              />
+            </Field>
+          </View>
+        </View>
 
         <AttachmentField files={files} onPick={pickFiles} onRemove={(i) => setFiles((p) => p.filter((_, idx) => idx !== i))} />
 
@@ -236,13 +250,12 @@ export default function CreateOrderScreen() {
           setApproverPickerIndex(null);
         }}
       />
-    </SafeAreaView>
+    </Screen>
   );
 }
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    safe: { flex: 1, backgroundColor: c.bg },
     header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12, gap: 12 },
     backBtn: { padding: 4 },
     title: { fontSize: 19, fontWeight: '800', color: c.text },
@@ -254,4 +267,8 @@ const makeStyles = (c: ThemeColors) =>
     content: { paddingHorizontal: 16, paddingTop: 4 },
 
     textArea: { backgroundColor: c.card, borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: c.text, minHeight: 80 },
+
+    // Task 21: 2-column pairing for short fields on tablet (bp.isTablet).
+    fieldRow: { flexDirection: 'row', gap: 12 },
+    fieldHalf: { flex: 1 },
   });

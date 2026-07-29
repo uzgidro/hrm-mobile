@@ -10,8 +10,21 @@ import { letterStatusMeta, letterTypeLabel, statusColor } from '@/utils/letterSt
 // One row of the letters list. `action` = the current user's signature is
 // pending (derived by the list screen via canSignLetter) which highlights the
 // card border + tag. useTranslation() re-renders the util-sourced status/type
-// labels on a language switch.
-export function LetterListCard({ letter, action }: { letter: Letter; action: boolean }) {
+// labels on a language switch. `onPress`/`selected` are injectable so the
+// tablet-landscape split view (LettersListScreen) can swap the default push
+// navigation for `setSelectedId` + a selected-row highlight; phone/portrait
+// callers get the same push-to-detail behavior as before by omitting them.
+export function LetterListCard({
+  letter,
+  action,
+  onPress,
+  selected,
+}: {
+  letter: Letter;
+  action: boolean;
+  onPress?: () => void;
+  selected?: boolean;
+}) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -20,8 +33,8 @@ export function LetterListCard({ letter, action }: { letter: Letter; action: boo
 
   return (
     <TouchableOpacity
-      style={[styles.card, action && styles.cardAction]}
-      onPress={() => router.push({ pathname: '/letter-detail', params: { id: String(letter.id) } })}
+      style={[styles.card, action && styles.cardAction, selected && styles.cardSelected]}
+      onPress={onPress ?? (() => router.push({ pathname: '/letter-detail', params: { id: String(letter.id) } }))}
       activeOpacity={0.8}
     >
       <View style={styles.cardTop}>
@@ -55,6 +68,7 @@ const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     card: { backgroundColor: c.card, borderRadius: 16, padding: 16, marginBottom: 10, borderWidth: 1, borderColor: c.cardBorder, gap: 8 },
     cardAction: { borderColor: c.warning },
+    cardSelected: { borderColor: c.primary, borderWidth: 2 },
     cardTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
     cardType: { flex: 1, fontSize: 15, fontWeight: '700', color: c.text },
     badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },

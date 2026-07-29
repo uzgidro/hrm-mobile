@@ -9,15 +9,19 @@ import { Icon } from '@/components/Icon';
 // Small presentational pieces of the decree detail screen, split out so the
 // screen file stays composition-only. Styles are colocated here.
 
-export function DetailHeader() {
+export function DetailHeader({ embedded = false }: { embedded?: boolean } = {}) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { t } = useTranslation();
   return (
     <View style={styles.header}>
-      <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-        <Icon name="chevronLeft" size={24} color={colors.text} />
-      </TouchableOpacity>
+      {embedded ? (
+        <View style={styles.backBtn} />
+      ) : (
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <Icon name="chevronLeft" size={24} color={colors.text} />
+        </TouchableOpacity>
+      )}
       <Text style={styles.headerTitle}>{t('orders.detailTitle')}</Text>
       <View style={{ width: 40 }} />
     </View>

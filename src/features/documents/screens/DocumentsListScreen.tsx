@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCallback, useMemo, useState } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity, RefreshControl, FlatList, BackHandler,
@@ -8,7 +7,9 @@ import { useTranslation } from 'react-i18next';
 import { router, useFocusEffect } from 'expo-router';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { useBreakpoint } from '@/utils/responsive';
 import { Icon } from '@/components/Icon';
+import { Screen } from '@/components/Screen';
 import { LoadingView, EmptyState, ErrorState } from '@/components/StateViews';
 import type { DocumentFolder, HrmFile } from '@/types';
 import { foldersQuery, rootFilesQuery } from '../api/queries';
@@ -27,6 +28,8 @@ export default function DocumentsListScreen() {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const bp = useBreakpoint();
+  const cols = bp.isTablet ? (bp.isLandscape ? 3 : 2) : 1;
   const [search, setSearch] = useState('');
   const [activeFolder, setActiveFolder] = useState<DocumentFolder | null>(null);
 
@@ -90,7 +93,7 @@ export default function DocumentsListScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <Screen edges={['top']}>
       <View style={styles.header}>
         {/* In a folder the chevron goes up to the root list; at the root it
             leaves the screen (back to Modules) — before, the root level had
@@ -130,6 +133,9 @@ export default function DocumentsListScreen() {
       ) : (
         <FlatList
           data={rows}
+          key={cols}
+          numColumns={cols}
+          columnWrapperStyle={cols > 1 ? styles.gridRow : undefined}
           keyExtractor={(r) => (r.kind === 'folder' ? `d${r.folder.id}` : `f${r.file.id}`)}
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
@@ -138,8 +144,8 @@ export default function DocumentsListScreen() {
           }
           renderItem={({ item }) =>
             item.kind === 'folder'
-              ? <FolderRow folder={item.folder} styles={styles} colors={colors} onPress={enterFolder} t={t} />
-              : <FileRow file={item.file} styles={styles} colors={colors} onPress={openFile} t={t} />
+              ? <FolderRow folder={item.folder} styles={styles} colors={colors} onPress={enterFolder} t={t} grid={cols > 1} />
+              : <FileRow file={item.file} styles={styles} colors={colors} onPress={openFile} t={t} grid={cols > 1} />
           }
           ListEmptyComponent={
             <EmptyState
@@ -149,7 +155,7 @@ export default function DocumentsListScreen() {
           }
         />
       )}
-    </SafeAreaView>
+    </Screen>
   );
 }
 
@@ -165,11 +171,11 @@ function ScopePill({ scope, styles, t }: { scope: HrmFile['scope']; styles: Styl
 }
 
 function FolderRow({
-  folder, styles, colors, onPress, t,
-}: { folder: DocumentFolder; styles: Styles; colors: ThemeColors; onPress: (f: DocumentFolder) => void; t: TFunc }) {
+  folder, styles, colors, onPress, t, grid,
+}: { folder: DocumentFolder; styles: Styles; colors: ThemeColors; onPress: (f: DocumentFolder) => void; t: TFunc; grid?: boolean }) {
   const count = folder.files?.length ?? 0;
   return (
-    <TouchableOpacity style={styles.card} activeOpacity={0.8} onPress={() => onPress(folder)}>
+    <TouchableOpacity style={[styles.card, grid && styles.cardGrid]} activeOpacity={0.8} onPress={() => onPress(folder)}>
       <View style={[styles.iconWrap, { backgroundColor: colors.primarySoft }]}>
         <Icon name="folder" size={22} color={colors.primary} />
       </View>
@@ -184,13 +190,13 @@ function FolderRow({
 }
 
 function FileRow({
-  file, styles, colors, onPress, t,
-}: { file: HrmFile; styles: Styles; colors: ThemeColors; onPress: (f: HrmFile) => void; t: TFunc }) {
+  file, styles, colors, onPress, t, grid,
+}: { file: HrmFile; styles: Styles; colors: ThemeColors; onPress: (f: HrmFile) => void; t: TFunc; grid?: boolean }) {
   const viewable = isViewableInOnlyOffice(file);
   const ext = fileExtension(file);
   return (
     <TouchableOpacity
-      style={styles.card}
+      style={[styles.card, grid && styles.cardGrid]}
       activeOpacity={viewable ? 0.8 : 1}
       onPress={() => onPress(file)}
       disabled={!viewable}
@@ -220,7 +226,6 @@ type TFunc = ReturnType<typeof useTranslation>['t'];
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    safe: { flex: 1, backgroundColor: c.bg },
     header: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
     backBtn: { width: 32, height: 32, justifyContent: 'center', marginLeft: -6 },
     title: { fontSize: 26, fontWeight: '800', color: c.text, flex: 1 },
@@ -233,10 +238,12 @@ const makeStyles = (c: ThemeColors) =>
     searchInput: { flex: 1, fontSize: 14, color: c.text, paddingVertical: 0 },
 
     content: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 24, flexGrow: 1 },
+    gridRow: { gap: 12 },
     card: {
       flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, marginBottom: 10,
       backgroundColor: c.card, borderRadius: 14, borderWidth: 1, borderColor: c.cardBorder,
     },
+    cardGrid: { flex: 1 },
     iconWrap: {
       width: 44, height: 44, borderRadius: 12,
       alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: c.cardBorder,

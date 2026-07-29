@@ -1,5 +1,4 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
   RefreshControl, Image, FlatList,
@@ -11,16 +10,30 @@ import dayjs from 'dayjs';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { useBreakpoint } from '@/utils/responsive';
 import { Icon } from '@/components/Icon';
+import { Screen } from '@/components/Screen';
+import { SplitLayout } from '@/components/SplitLayout';
 import { LoadingView, EmptyState } from '@/components/StateViews';
 import { visitorsListQuery } from '../api/queries';
+import { VisitorDetailView } from '../components/VisitorDetailView';
 
 export default function MehmonlarScreen() {
   const { t } = useTranslation();
   const { user } = useAuthStore();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const bp = useBreakpoint();
+  const split = bp.isTablet && bp.isLandscape;
+  // Task 10's multi-column grid (2 cols portrait tablet, 3 cols landscape
+  // tablet) only applies when the master list has the full screen width to
+  // itself. In split mode the master pane is a narrow ~36% column (SplitLayout)
+  // — a grid there would squeeze cards unreadably, so split always forces a
+  // single column, same as phones. Tablet-portrait (not split) keeps the
+  // Task 10 2-column grid unchanged.
+  const cols = split ? 1 : bp.isTablet ? (bp.isLandscape ? 3 : 2) : 1;
   const [search, setSearch] = useState('');
+  const [selectedId, setSelectedId] = useState<number | null>(null);
 
   const orgBranchId =
     user?.employee?.organization_branches?.[0]?.id ??
@@ -38,8 +51,27 @@ export default function MehmonlarScreen() {
     );
   }, [visitors, search]);
 
-  return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+  // Auto-select the first row when entering split with nothing selected yet
+  // (so the detail pane isn't blank on first tablet-landscape render); clear
+  // the selection when leaving split (rotate back to portrait / phone) so
+  // re-entering split starts fresh instead of resuming a stale id. Also
+  // re-anchors to the first visible row whenever the currently selected id
+  // falls out of `filtered` (search narrows the list) — otherwise the detail
+  // pane would keep showing a stale visitor that's no longer listed. Mirrors
+  // OrdersListScreen (T15) / LettersListScreen 1:1.
+  useEffect(() => {
+    if (!split) {
+      setSelectedId(null);
+      return;
+    }
+    if (selectedId == null || !filtered.some((v) => v.id === selectedId)) {
+      setSelectedId(filtered[0]?.id ?? null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [split, filtered]);
+
+  const listPane = (
+    <>
       <View style={styles.header}>
         {/* Guests is a bottom-bar tab, but it's also opened from the Modules
             grid — the chevron walks the visited-tab history back (Modules →
@@ -80,6 +112,9 @@ export default function MehmonlarScreen() {
       ) : (
         <FlatList
           data={filtered}
+          key={cols}
+          numColumns={cols}
+          columnWrapperStyle={cols > 1 ? styles.gridRow : undefined}
           keyExtractor={(v) => String(v.id)}
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
@@ -88,9 +123,13 @@ export default function MehmonlarScreen() {
             const active = item.is_active !== false;
             return (
               <TouchableOpacity
-                style={styles.card}
+                style={[styles.card, cols > 1 && styles.cardGrid, split && item.id === selectedId && styles.cardSelected]}
                 activeOpacity={0.8}
-                onPress={() => router.push({ pathname: '/mehmon-detail', params: { id: String(item.id) } })}
+                onPress={
+                  split
+                    ? () => setSelectedId(item.id)
+                    : () => router.push({ pathname: '/mehmon-detail', params: { id: String(item.id) } })
+                }
               >
                 {item.photo_path ? (
                   <Image source={{ uri: item.photo_path }} style={styles.avatar} />
@@ -131,13 +170,26 @@ export default function MehmonlarScreen() {
           }
         />
       )}
-    </SafeAreaView>
+    </>
   );
+
+  if (split) {
+    return (
+      <Screen edges={['top']} maxWidth="full">
+        <SplitLayout
+          master={listPane}
+          detail={selectedId != null ? <VisitorDetailView id={selectedId} embedded /> : null}
+          placeholder={<EmptyState icon="guest" title={t('visitors.emptyList')} />}
+        />
+      </Screen>
+    );
+  }
+
+  return <Screen edges={['top']}>{listPane}</Screen>;
 }
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    safe: { flex: 1, backgroundColor: c.bg },
     header: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
     backBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', marginLeft: -8, marginRight: -4 },
     title: { fontSize: 26, fontWeight: '800', color: c.text },
@@ -156,6 +208,9 @@ const makeStyles = (c: ThemeColors) =>
       flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, marginBottom: 10,
       backgroundColor: c.card, borderRadius: 14, borderWidth: 1, borderColor: c.cardBorder,
     },
+    gridRow: { gap: 12 },
+    cardGrid: { flex: 1 },
+    cardSelected: { borderColor: c.primary, borderWidth: 1.5 },
     avatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: c.skeleton },
     avatarFallback: { backgroundColor: c.primarySoft, alignItems: 'center', justifyContent: 'center' },
     avatarInitial: { fontSize: 18, fontWeight: '700', color: c.primary },

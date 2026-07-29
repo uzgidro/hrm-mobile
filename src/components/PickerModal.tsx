@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 import type { ThemeColors } from '../theme/palettes';
 import { Icon } from './Icon';
+import { useBreakpoint } from '../utils/responsive';
 
 export interface PickerOption {
   value: number;
@@ -33,6 +34,7 @@ export function PickerModal({
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { t } = useTranslation();
+  const bp = useBreakpoint();
   const [search, setSearch] = useState('');
 
   const filtered = useMemo(() => {
@@ -48,8 +50,8 @@ export function PickerModal({
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <View style={styles.overlay}>
-        <View style={styles.sheet}>
+      <View style={[styles.overlay, bp.isTablet && styles.overlayCentered]}>
+        <View style={[styles.sheet, bp.isTablet && styles.sheetTablet]}>
           <View style={styles.header}>
             <Text style={styles.title} numberOfLines={1}>{title}</Text>
             <TouchableOpacity onPress={onClose} hitSlop={10}>
@@ -120,7 +122,12 @@ export function PickerModal({
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     overlay: { flex: 1, backgroundColor: c.overlay, justifyContent: 'flex-end' },
+    overlayCentered: { justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 },
     sheet: { backgroundColor: c.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '82%', paddingBottom: 20 },
+    sheetTablet: {
+      width: '100%', maxWidth: 520, borderRadius: 24,
+      borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '80%',
+    },
     header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
     title: { fontSize: 16, fontWeight: '700', color: c.text, flex: 1, marginRight: 8 },
     close: { fontSize: 18, color: c.textMuted },

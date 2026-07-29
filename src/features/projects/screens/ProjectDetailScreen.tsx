@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useMemo, useState } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, Image, ActivityIndicator,
@@ -11,8 +10,10 @@ import dayjs from 'dayjs';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { useBreakpoint } from '@/utils/responsive';
 import { ScreenHeader, HeaderAction } from '@/components/ScreenHeader';
 import { Icon } from '@/components/Icon';
+import { Screen } from '@/components/Screen';
 import { LoadingView, EmptyState } from '@/components/StateViews';
 import { isMasterAdmin } from '@/utils/roles';
 import { getApiErrorMessage } from '@/api/errors';
@@ -30,6 +31,11 @@ export default function LoyihaDetailScreen() {
   const { user } = useAuthStore();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const bp = useBreakpoint();
+  // Tablet-landscape only: lay the board out as a horizontally-scrolling row
+  // of wider tracks (several columns visible at once) instead of the phone's
+  // single-track vertical stack. Portrait tablet and phone are unchanged.
+  const isBoardLandscape = bp.isTablet && bp.isLandscape;
 
   const [modal, setModal] = useState<null | { type: 'column' } | { type: 'card'; columnId: number }>(null);
   const [field1, setField1] = useState('');
@@ -100,8 +106,57 @@ export default function LoyihaDetailScreen() {
     });
   };
 
+  // Renders a single column's header/cards/add-card-button. Shared by the
+  // phone vertical stack and the tablet-landscape horizontal row so the
+  // kanban logic (drag-free reorder isn't a thing here, but statuses/cards/
+  // completion toggling) has exactly one render path regardless of layout.
+  const renderColumn = (col: (typeof columns)[number], idx: number) => {
+    const cards = (cardQueries[idx]?.data ?? []) as WorkspaceCard[];
+    const loading = cardQueries[idx]?.isLoading;
+    return (
+      <View key={col.id} style={[styles.column, isBoardLandscape && styles.columnLandscape]}>
+        <View style={styles.columnHeader}>
+          <View style={[styles.colDot, { backgroundColor: col.color || colors.primary }]} />
+          <Text style={styles.columnName} numberOfLines={1}>{col.name || t('projects.columnFallback')}</Text>
+          <Text style={styles.columnCount}>{cards.length}</Text>
+        </View>
+        {loading ? (
+          <ActivityIndicator style={{ marginVertical: 12 }} color={colors.primary} />
+        ) : (
+          cards.map((cd) => (
+            <View key={cd.id} style={[styles.taskCard, cd.is_completed && styles.taskDone]}>
+              <TouchableOpacity onPress={() => toggleComplete(cd, col.id)} hitSlop={8} style={[styles.checkbox, cd.is_completed && styles.checkboxOn]}>
+                {cd.is_completed && <Icon name="check" size={13} color={colors.onPrimary} />}
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={{ flex: 1 }}
+                activeOpacity={0.7}
+                onPress={() => router.push({ pathname: '/loyiha-card-detail', params: { id: String(cd.id) } })}
+              >
+                <Text style={[styles.taskTitle, cd.is_completed && styles.taskTitleDone]} numberOfLines={2}>
+                  {cd.title || t('projects.taskFallback')}
+                </Text>
+                {!!cd.description && <Text style={styles.taskDesc} numberOfLines={2}>{cd.description}</Text>}
+                {!!cd.end_date && (
+                  <View style={styles.taskMeta}>
+                    <Icon name="calendar" size={12} color={colors.textMuted} />
+                    <Text style={styles.taskDate}>{dayjs(cd.end_date).format('DD.MM.YYYY')}</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            </View>
+          ))
+        )}
+        <TouchableOpacity style={styles.addCardBtn} onPress={() => openCard(col.id)} activeOpacity={0.8}>
+          <Icon name="plus" size={15} color={colors.textSecondary} />
+          <Text style={styles.addCardText}>{t('projects.taskAdd')}</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <Screen edges={['top']} maxWidth={isBoardLandscape ? 'full' : undefined}>
       <ScreenHeader
         title={ws?.name || t('projects.nameFallback')}
         right={
@@ -151,51 +206,20 @@ export default function LoyihaDetailScreen() {
 
           {columns.length === 0 ? (
             <EmptyState icon="board" title={t('projects.columnsEmpty')} />
+          ) : isBoardLandscape ? (
+            // Tablet landscape: a horizontally-scrolling row of wider tracks so
+            // several columns are visible at once instead of one cramped
+            // full-width column per screen.
+            <ScrollView
+              testID="projects-board-scroll"
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.boardRow}
+            >
+              {columns.map((col, idx) => renderColumn(col, idx))}
+            </ScrollView>
           ) : (
-            columns.map((col, idx) => {
-              const cards = (cardQueries[idx]?.data ?? []) as WorkspaceCard[];
-              const loading = cardQueries[idx]?.isLoading;
-              return (
-                <View key={col.id} style={styles.column}>
-                  <View style={styles.columnHeader}>
-                    <View style={[styles.colDot, { backgroundColor: col.color || colors.primary }]} />
-                    <Text style={styles.columnName} numberOfLines={1}>{col.name || t('projects.columnFallback')}</Text>
-                    <Text style={styles.columnCount}>{cards.length}</Text>
-                  </View>
-                  {loading ? (
-                    <ActivityIndicator style={{ marginVertical: 12 }} color={colors.primary} />
-                  ) : (
-                    cards.map((cd) => (
-                      <View key={cd.id} style={[styles.taskCard, cd.is_completed && styles.taskDone]}>
-                        <TouchableOpacity onPress={() => toggleComplete(cd, col.id)} hitSlop={8} style={[styles.checkbox, cd.is_completed && styles.checkboxOn]}>
-                          {cd.is_completed && <Icon name="check" size={13} color={colors.onPrimary} />}
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={{ flex: 1 }}
-                          activeOpacity={0.7}
-                          onPress={() => router.push({ pathname: '/loyiha-card-detail', params: { id: String(cd.id) } })}
-                        >
-                          <Text style={[styles.taskTitle, cd.is_completed && styles.taskTitleDone]} numberOfLines={2}>
-                            {cd.title || t('projects.taskFallback')}
-                          </Text>
-                          {!!cd.description && <Text style={styles.taskDesc} numberOfLines={2}>{cd.description}</Text>}
-                          {!!cd.end_date && (
-                            <View style={styles.taskMeta}>
-                              <Icon name="calendar" size={12} color={colors.textMuted} />
-                              <Text style={styles.taskDate}>{dayjs(cd.end_date).format('DD.MM.YYYY')}</Text>
-                            </View>
-                          )}
-                        </TouchableOpacity>
-                      </View>
-                    ))
-                  )}
-                  <TouchableOpacity style={styles.addCardBtn} onPress={() => openCard(col.id)} activeOpacity={0.8}>
-                    <Icon name="plus" size={15} color={colors.textSecondary} />
-                    <Text style={styles.addCardText}>{t('projects.taskAdd')}</Text>
-                  </TouchableOpacity>
-                </View>
-              );
-            })
+            columns.map((col, idx) => renderColumn(col, idx))
           )}
           <View style={{ height: 24 }} />
         </ScrollView>
@@ -235,13 +259,12 @@ export default function LoyihaDetailScreen() {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </Screen>
   );
 }
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    safe: { flex: 1, backgroundColor: c.bg },
     content: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 24 },
 
     card: { backgroundColor: c.card, borderRadius: 16, borderWidth: 1, borderColor: c.cardBorder, padding: 16, marginBottom: 12 },
@@ -259,7 +282,14 @@ const makeStyles = (c: ThemeColors) =>
     memberAvText: { fontSize: 11, fontWeight: '700', color: c.primary },
     memberName: { fontSize: 12, color: c.text, fontWeight: '600', maxWidth: 130 },
 
+    // Tablet-landscape board row: tracks sit side by side and scroll
+    // horizontally instead of stacking full-width down the screen.
+    boardRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingBottom: 12 },
+
     column: { backgroundColor: c.card, borderRadius: 16, borderWidth: 1, borderColor: c.cardBorder, padding: 12, marginBottom: 12 },
+    // Fixed, wider track width so 2-3+ columns are visible at once on a
+    // landscape tablet without shrinking to fit the whole board.
+    columnLandscape: { width: 320, marginBottom: 0 },
     columnHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
     colDot: { width: 10, height: 10, borderRadius: 5 },
     columnName: { flex: 1, fontSize: 15, fontWeight: '700', color: c.text },

@@ -1,5 +1,4 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity, RefreshControl,
 } from 'react-native';
@@ -10,10 +9,14 @@ import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
+import { Screen } from '@/components/Screen';
+import { SplitLayout } from '@/components/SplitLayout';
 import { LoadingView, EmptyState } from '@/components/StateViews';
+import { useBreakpoint } from '@/utils/responsive';
 import { canSignLetter } from '@/utils/letterStatus';
 import { lettersListQuery, type LettersTab } from '../api/queries';
 import { LetterListCard } from '../components/LetterListCard';
+import { LetterDetailView } from '../components/LetterDetailView';
 
 const TABS: { key: LettersTab; labelKey: string }[] = [
   { key: 'action', labelKey: 'letters.tabAction' },
@@ -28,6 +31,9 @@ export default function LettersListScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const [tab, setTab] = useState<LettersTab>('action');
+  const bp = useBreakpoint();
+  const split = bp.isTablet && bp.isLandscape;
+  const [selectedId, setSelectedId] = useState<number | null>(null);
 
   const { data: letters = [], isLoading, refetch, isFetching } = useQuery(lettersListQuery(tab));
 
@@ -41,8 +47,27 @@ export default function LettersListScreen() {
     [letters]
   );
 
-  return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+  // Auto-select the first row when entering split with nothing selected yet
+  // (so the detail pane isn't blank on first tablet-landscape render); clear
+  // the selection when leaving split (rotate back to portrait / phone) so
+  // re-entering split starts fresh instead of resuming a stale id. Also
+  // re-anchors to the first visible row whenever the currently selected id
+  // falls out of `sorted` (tab switch, or the letter left the list after an
+  // action) — otherwise the detail pane would keep showing a stale letter
+  // that no longer matches the current tab. Mirrors OrdersListScreen (T15) 1:1.
+  useEffect(() => {
+    if (!split) {
+      setSelectedId(null);
+      return;
+    }
+    if (selectedId == null || !sorted.some((l) => l.id === selectedId)) {
+      setSelectedId(sorted[0]?.id ?? null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [split, sorted]);
+
+  const listPane = (
+    <>
       <View style={styles.header}>
         <Text style={styles.title}>{t('letters.listTitle')}</Text>
         <TouchableOpacity style={styles.fab} onPress={() => router.push('/create-letter')} activeOpacity={0.8}>
@@ -86,19 +111,38 @@ export default function LettersListScreen() {
             </View>
           ) : (
             sorted.map((l) => (
-              <LetterListCard key={l.id} letter={l} action={canSignLetter(l, employeeId)} />
+              <LetterListCard
+                key={l.id}
+                letter={l}
+                action={canSignLetter(l, employeeId)}
+                onPress={split ? () => setSelectedId(l.id) : undefined}
+                selected={split ? selectedId === l.id : undefined}
+              />
             ))
           )}
           <View style={{ height: 24 }} />
         </ScrollView>
       )}
-    </SafeAreaView>
+    </>
   );
+
+  if (split) {
+    return (
+      <Screen edges={['top']} maxWidth="full">
+        <SplitLayout
+          master={listPane}
+          detail={selectedId != null ? <LetterDetailView id={selectedId} embedded /> : null}
+          placeholder={<EmptyState icon="mail" title={t('letters.emptyAction')} />}
+        />
+      </Screen>
+    );
+  }
+
+  return <Screen edges={['top']}>{listPane}</Screen>;
 }
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    safe: { flex: 1, backgroundColor: c.bg },
     header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
     title: { flex: 1, fontSize: 26, fontWeight: '800', color: c.text },
     fab: { width: 42, height: 42, borderRadius: 14, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' },

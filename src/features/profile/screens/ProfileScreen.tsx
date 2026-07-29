@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, Image, Switch, Platform,
 } from 'react-native';
@@ -13,6 +12,7 @@ import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import type { ThemeMode } from '@/theme/ThemeProvider';
 import { Icon, IconName } from '@/components/Icon';
+import { Screen } from '@/components/Screen';
 import { confirm } from '@/lib/confirm';
 import { Flag } from '@/components/Flag';
 import { useLangStore } from '@/store/langStore';
@@ -68,7 +68,7 @@ export default function ProfileScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <Screen edges={['top']}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* Profile is a bar-less tab (href:null) opened from Modules/the avatar,
             so it needs its own back affordance; back() walks the tab history. */}
@@ -252,13 +252,12 @@ export default function ProfileScreen() {
 
         <Text style={styles.version}>{t('profile.version', { version: Constants.expoConfig?.version ?? '1.0.0' })}</Text>
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 }
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    safe: { flex: 1, backgroundColor: c.bg },
     content: { paddingHorizontal: 16, paddingBottom: 40 },
     titleRow: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingTop: 16, marginBottom: 16 },
     backBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', marginLeft: -8 },
