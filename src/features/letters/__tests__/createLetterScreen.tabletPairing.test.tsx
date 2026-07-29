@@ -25,6 +25,12 @@ const TABLET_LANDSCAPE = { width: 1194, height: 834, scale: 2, fontScale: 1 };
 const PHONE_PORTRAIT = { width: 390, height: 844, scale: 3, fontScale: 1 };
 
 describe('CreateLetterScreen (tablet two-column pairing)', () => {
+  // Every test here renders the heavy CreateLetterScreen; under full parallel
+  // jest load a cold first render can exceed the default 5s (flaked in CI while
+  // passing in isolation, blocking the release build). The assertions are
+  // instant — this is headroom for the render, not a slow test. 15s.
+  jest.setTimeout(15000);
+
   const mock = new MockAdapter(apiClient);
 
   beforeEach(() => {
