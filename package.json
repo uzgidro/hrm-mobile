@@ -62,7 +62,8 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "audit:gate": "node scripts/audit-gate.mjs"
   },
   "engines": {
     "node": ">=20"

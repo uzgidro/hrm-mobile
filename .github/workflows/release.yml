@@ -29,8 +29,9 @@ jobs:
       - uses: ./.github/actions/setup
       - run: npm run typecheck
       - run: npx jest --ci
-      # Same high/critical dependency gate as CI — don't ship a vulnerable build.
-      - run: npm audit --audit-level=high
+      # Same dependency gate as CI — fail on non-allowlisted high/critical
+      # advisories (see scripts/audit-gate.mjs). Don't ship a vulnerable build.
+      - run: npm run audit:gate
 
   build-and-submit:
     needs: [verify, checks]

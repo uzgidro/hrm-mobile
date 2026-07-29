@@ -37,8 +37,8 @@ jobs:
         run: |
           npm run typecheck
           npx jest --ci
-      - name: Audit (fail on high/critical)
-        run: npm audit --audit-level=high
+      - name: Audit (fail on non-allowlisted high/critical)
+        run: npm run audit:gate
 
       - uses: expo/expo-github-action@v8
         with:

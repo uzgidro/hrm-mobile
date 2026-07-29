@@ -31,11 +31,12 @@ jobs:
       - uses: ./.github/actions/setup
       - run: npx jest --ci
 
-  # Dependency vulnerability gate. Fails the build on a high/critical advisory
-  # (moderate is reported but tolerated — the remaining ones are transitive
-  # Expo/RN deps with no fix short of a breaking SDK downgrade). Pin a fixed
-  # transitive version via `overrides` in package.json rather than lowering
-  # this threshold.
+  # Dependency vulnerability gate. Fails on any high/critical advisory EXCEPT a
+  # small allowlist of build/dev-time-only advisories that have no fix short of a
+  # breaking toolchain downgrade (see scripts/audit-gate.mjs — each entry names
+  # the package and why). A new advisory outside that list, or a runtime-dep
+  # advisory, still fails the build; when a real fix ships the entry is removed.
+  # Prefer pinning a fixed transitive version via `overrides` over allowlisting.
   audit:
     runs-on: ubuntu-latest
     steps:
@@ -43,5 +44,5 @@ jobs:
       - uses: ./.github/actions/setup
       - name: Report all advisories
         run: npm audit || true
-      - name: Fail on high or critical
-        run: npm audit --audit-level=high
+      - name: Fail on non-allowlisted high/critical
+        run: npm run audit:gate
