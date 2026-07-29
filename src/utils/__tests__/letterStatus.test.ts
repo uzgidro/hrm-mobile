@@ -469,6 +469,16 @@ describe('letterStatusMeta', () => {
       .toEqual({ label: "Rahbar tasdig'i kutilmoqda", kind: 'pending' });
   });
 
+  // pending_registration = send_to_registry AUTO-assigned raqam/sana/muhr
+  // (is_stamped becomes true) but devonxona has NOT yet confirmed registration
+  // (pending_registration → registered). It must win over the is_stamped→
+  // registered fallthrough, else a stamped-but-unconfirmed letter falsely reads
+  // "Ro'yxatga olingan / success". Web parity (backend letter.py:5036,5072).
+  it('pending_registration is awaiting-devonxona, not a false "registered"', () => {
+    expect(letterStatusMeta(letter({ status: 'pending_registration', is_stamped: true })))
+      .toEqual({ label: "Ro'yxatga olish kutilmoqda", kind: 'pending' });
+  });
+
   it('letter status "returned" (devonxona qaytardi) → letterReturned label, error kind', () => {
     const meta = letterStatusMeta({ status: 'returned' } as Letter);
     expect(meta.label).toBe(i18n.t('status.letterReturned'));

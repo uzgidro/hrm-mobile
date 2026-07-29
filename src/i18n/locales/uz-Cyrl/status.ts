@@ -23,6 +23,7 @@ export default {
   // ── Letter statuses ─────────────────────────────────────────────────────────
   letterRejected: 'Рад этилди',
   letterRegistered: 'Рўйхатга олинган',
+  letterPendingRegistration: 'Рўйхатга олиш кутилмоқда',
   letterSignedStatus: 'Имзоланган',
   letterInChancellery: 'Девонхонада',
   letterInLeadership: 'Раҳбариятда',

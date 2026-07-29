@@ -23,6 +23,7 @@ export default {
   // ── Letter statuses ─────────────────────────────────────────────────────────
   letterRejected: 'Rejected',
   letterRegistered: 'Registered',
+  letterPendingRegistration: 'Awaiting registration',
   letterSignedStatus: 'Signed',
   letterInChancellery: 'In chancellery',
   letterInLeadership: 'With leadership',

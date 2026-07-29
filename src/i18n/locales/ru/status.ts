@@ -23,6 +23,7 @@ export default {
   // ── Letter statuses ─────────────────────────────────────────────────────────
   letterRejected: 'Отклонено',
   letterRegistered: 'Зарегистрировано',
+  letterPendingRegistration: 'Ожидает регистрации',
   letterSignedStatus: 'Подписано',
   letterInChancellery: 'В канцелярии',
   letterInLeadership: 'У руководства',
