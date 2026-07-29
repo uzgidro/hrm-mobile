@@ -20,6 +20,8 @@ export default {
   dutyTitle: 'Duty roster',
   dutySubtitle: 'My duty schedule',
   dutyGridTitle: 'Duty grid',
+  dutyTabList: 'List',
+  dutyTabGrid: 'Grid',
   dutyGridSubtitle: 'Group members — by day',
   dutyLoadError: 'Failed to load the duty roster',
   dutyEmpty: 'No duty schedule available',

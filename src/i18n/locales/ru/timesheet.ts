@@ -20,6 +20,8 @@ export default {
   dutyTitle: 'Дежурства',
   dutySubtitle: 'Мой график дежурств',
   dutyGridTitle: 'График дежурств',
+  dutyTabList: 'Список',
+  dutyTabGrid: 'График',
   dutyGridSubtitle: 'Сотрудники группы — по дням',
   dutyLoadError: 'Ошибка загрузки дежурств',
   dutyEmpty: 'График дежурств отсутствует',

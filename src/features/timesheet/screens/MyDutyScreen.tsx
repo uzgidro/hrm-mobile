@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl,
 } from 'react-native';
@@ -23,7 +23,10 @@ import { dutyDayMeta, sortScheduleDays, shiftColor, shiftIndexIn, timeRange, bac
 // the group roster). The web employee page renders editable cells and relies
 // on the backend to reject writes; mobile deliberately ships no mutations —
 // editing/approve stays on the desktop WorkSchedulePage (see the plan note).
-export default function MyDutyScreen() {
+// When `embedded`, the parent (NavbatchilikScreen) owns the <Screen> shell,
+// header and tab switcher, so this renders body-only. Standalone (deep-link
+// /navbatchilik direct) keeps its own <Screen> + header.
+export default function MyDutyScreen({ embedded = false }: { embedded?: boolean } = {}) {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const employeeId = user?.employee?.id;
@@ -66,19 +69,29 @@ export default function MyDutyScreen() {
   const showGlobalEmpty =
     !hasStructuralDuty && days.length === 0 && monthKey === dayjs().format('YYYY-MM');
 
-  return (
-    <Screen edges={['top', 'bottom']}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Icon name="chevronLeft" size={24} color={colors.text} />
-        </TouchableOpacity>
-        <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>{t('timesheet.dutyTitle')}</Text>
-          <Text style={styles.headerSub}>{t('timesheet.dutySubtitle')}</Text>
+  // Body-only when embedded (parent owns Screen + header); a function (not a
+  // component) so children keep their state across re-renders.
+  const renderRoot = (children: ReactNode) =>
+    embedded ? (
+      <View style={{ flex: 1 }}>{children}</View>
+    ) : (
+      <Screen edges={['top', 'bottom']}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+            <Icon name="chevronLeft" size={24} color={colors.text} />
+          </TouchableOpacity>
+          <View style={styles.headerCenter}>
+            <Text style={styles.headerTitle}>{t('timesheet.dutyTitle')}</Text>
+            <Text style={styles.headerSub}>{t('timesheet.dutySubtitle')}</Text>
+          </View>
+          <View style={{ width: 40 }} />
         </View>
-        <View style={{ width: 40 }} />
-      </View>
+        {children}
+      </Screen>
+    );
 
+  return renderRoot(
+    <>
       {isLoading ? (
         <LoadingView />
       ) : isError ? (
@@ -221,7 +234,7 @@ export default function MyDutyScreen() {
           <View style={{ height: 32 }} />
         </ScrollView>
       )}
-    </Screen>
+    </>,
   );
 }
 

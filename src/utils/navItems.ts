@@ -33,12 +33,12 @@ export function buildNavSections(t: TFunction, ctx: NavContext): NavSection[] {
       items: [
         { key: 'attendance', icon: 'clock', label: t('modules.labels.attendance'), route: '/attendance-detail', access: 'attendance' },
         { key: 'timesheet', icon: 'calendar', label: t('modules.labels.timesheet'), route: '/tabel', access: 'timesheet' },
-        // Web parity (navConfig.js): Navbatchilik pruned unless dept-level duty
-        // or group membership.
+        // Web parity (navConfig.js): a single Navbatchilik entry (its screen
+        // hosts both the list and the grid via tabs). Pruned unless dept-level
+        // duty or group membership.
         ...(user?.is_navbatchi || employee?.department?.has_navbatchilik
           ? [
               { key: 'navbatchilik', icon: 'clock' as IconName, label: t('modules.labels.navbatchilik'), route: '/navbatchilik', access: 'timesheet' as PageKey },
-              { key: 'navbatchilikGrid', icon: 'calendar' as IconName, label: t('modules.labels.navbatchilikGrid'), route: '/navbatchilik-grid', access: 'timesheet' as PageKey },
             ]
           : []),
         { key: 'holidays', icon: 'sun', label: t('modules.labels.holidays'), route: '/bayramlar', access: 'timesheet' },

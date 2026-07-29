@@ -1,1 +1,1 @@
-export { default } from '@/features/timesheet/screens/MyDutyScreen';
+export { default } from '@/features/timesheet/screens/NavbatchilikScreen';

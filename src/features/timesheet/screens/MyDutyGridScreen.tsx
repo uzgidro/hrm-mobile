@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl,
 } from 'react-native';
@@ -22,7 +22,8 @@ import { dutyDayMeta, shiftColor, shiftIndexIn, scheduleDayMap } from '../duty';
 const NAME_COL_WIDTH = 128;
 const CELL_WIDTH = 40;
 
-export default function MyDutyGridScreen() {
+// See MyDutyScreen: `embedded` renders body-only under NavbatchilikScreen.
+export default function MyDutyGridScreen({ embedded = false }: { embedded?: boolean } = {}) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -57,19 +58,27 @@ export default function MyDutyGridScreen() {
   const isError = groupsQ.isError;
   const showEmpty = !isLoading && groups.length === 0;
 
-  return (
-    <Screen edges={['top', 'bottom']}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Icon name="chevronLeft" size={24} color={colors.text} />
-        </TouchableOpacity>
-        <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>{t('timesheet.dutyGridTitle')}</Text>
-          <Text style={styles.headerSub}>{t('timesheet.dutyGridSubtitle')}</Text>
+  const renderRoot = (children: ReactNode) =>
+    embedded ? (
+      <View style={{ flex: 1 }}>{children}</View>
+    ) : (
+      <Screen edges={['top', 'bottom']}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+            <Icon name="chevronLeft" size={24} color={colors.text} />
+          </TouchableOpacity>
+          <View style={styles.headerCenter}>
+            <Text style={styles.headerTitle}>{t('timesheet.dutyGridTitle')}</Text>
+            <Text style={styles.headerSub}>{t('timesheet.dutyGridSubtitle')}</Text>
+          </View>
+          <View style={{ width: 40 }} />
         </View>
-        <View style={{ width: 40 }} />
-      </View>
+        {children}
+      </Screen>
+    );
 
+  return renderRoot(
+    <>
       {isLoading ? (
         <LoadingView />
       ) : isError ? (
@@ -158,7 +167,7 @@ export default function MyDutyGridScreen() {
           <View style={{ height: 32 }} />
         </ScrollView>
       )}
-    </Screen>
+    </>,
   );
 }
 

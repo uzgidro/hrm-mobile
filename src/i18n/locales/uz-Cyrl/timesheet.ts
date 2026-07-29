@@ -20,6 +20,8 @@ export default {
   dutyTitle: 'Навбатчилик',
   dutySubtitle: 'Менинг навбатчилик жадвалим',
   dutyGridTitle: 'Навбатчилик жадвали',
+  dutyTabList: 'Рўйхат',
+  dutyTabGrid: 'Жадвал',
   dutyGridSubtitle: 'Гуруҳ аъзолари — кун бўйича',
   dutyLoadError: 'Навбатчиликни юклашда хатолик',
   dutyEmpty: 'Навбатчилик жадвали мавжуд эмас',
