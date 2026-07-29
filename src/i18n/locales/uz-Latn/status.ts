@@ -30,6 +30,7 @@ export default {
   // ── Letter statuses — letterStatusMeta ──────────────────────────────────────
   letterRejected: 'Rad etildi',
   letterRegistered: "Ro'yxatga olingan",
+  letterPendingRegistration: "Ro'yxatga olish kutilmoqda",
   letterSignedStatus: 'Imzolangan',
   letterInChancellery: 'Devonxonada',
   letterInLeadership: 'Rahbariyatda',

@@ -224,6 +224,13 @@ export function letterStatusMeta(l: Letter): { label: string; kind: StatusKind }
     case 'report_returned': return { label: i18n.t('status.letterReportReturned'), kind: 'error' };
     case 'report_management_review': return { label: i18n.t('status.letterReportReview'), kind: 'pending' };
     case 'report_approved': return { label: i18n.t('status.letterReportApproved'), kind: 'success' };
+    // send_to_registry AUTO-assigns raqam/sana/muhr (is_stamped=true) but the
+    // devonxona has NOT yet confirmed registration (pending_registration →
+    // registered). Must precede the is_stamped→registered fallthrough below, or a
+    // stamped-but-unconfirmed letter falsely reads "registered/success". Web
+    // parity (backend letter.py:5036 sets it, :5072 keeps is_stamped set).
+    case 'pending_registration':
+      return { label: i18n.t('status.letterPendingRegistration'), kind: 'pending' };
   }
   if (l.is_stamped || l.status === 'registered' || l.status === 'stamped') return { label: i18n.t('status.letterRegistered'), kind: 'success' };
   if (isLetterSigned(l)) return { label: i18n.t('status.letterSignedStatus'), kind: 'success' };
