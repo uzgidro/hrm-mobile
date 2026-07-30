@@ -164,4 +164,16 @@ export default {
   reportSubmitError: 'Ҳисоботни юборишда хато',
   reportResetConfirmTitle: 'Ҳисоботни ўчириш',
   reportResetConfirmMessage: 'Ҳисобот ўчирилади ва қайта таҳрирлаш мумкин бўлади. Давом этилсинми?',
+
+  // ── Девонхона «Тасдиқлаш» (confirm-registration) ──
+  confirmRegistrationAction: 'Рўйхатга олишни тасдиқлаш',
+  confirmRegistrationTitle: 'Рўйхатга олишни тасдиқлаш',
+  confirmRegistrationHint: 'Рўйхат рақамини текширинг ва тасдиқланг. Керак бўлса таҳрирлашингиз мумкин.',
+  confirmRegistrationNumberLabel: 'Рўйхат рақами',
+  confirmRegistrationDateLabel: 'Сана',
+  confirmRegistrationSubmit: 'Тасдиқлаш',
+  confirmRegistrationDone: 'Рўйхатга олинди',
+  numberChecking: 'Текширилмоқда…',
+  numberFree: 'Бўш',
+  numberTaken: 'Банд',
 } as const;

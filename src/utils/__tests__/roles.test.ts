@@ -15,6 +15,10 @@ import {
   isLeadership,
   isKPP,
   isChancellery,
+  isAnyChancellery,
+  isBranchDevonxona,
+  canActAsChancellery,
+  getChancelleryBranchIds,
   isMinister,
   isSecretariat,
   canAccessChairmanTasks,
@@ -454,6 +458,39 @@ describe('isChancellery', () => {
     expect(isChancellery(regularUser)).toBe(false);
     expect(isChancellery(kppUser)).toBe(false);
     expect(isChancellery(null)).toBe(false);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Branch-leader devonxona (chancellery_branch_ids) — isAnyChancellery /
+// isBranchDevonxona / canActAsChancellery
+// ─────────────────────────────────────────────────────────────────────────────
+describe('branch-leader devonxona helpers', () => {
+  const branchDevonxona: User = { ...regularUser, chancellery_branch_ids: [5, 9] };
+
+  it('getChancelleryBranchIds reads /me field (empty when absent)', () => {
+    expect(getChancelleryBranchIds(branchDevonxona)).toEqual([5, 9]);
+    expect(getChancelleryBranchIds(regularUser)).toEqual([]);
+  });
+
+  it('isAnyChancellery is true for the multi-org role OR a branch-leader devonxona', () => {
+    expect(isAnyChancellery(chancelleryUser)).toBe(true);
+    expect(isAnyChancellery(branchDevonxona)).toBe(true);
+    expect(isAnyChancellery(regularUser)).toBe(false);
+  });
+
+  it('isBranchDevonxona matches only the assigned branches', () => {
+    expect(isBranchDevonxona(branchDevonxona, 5)).toBe(true);
+    expect(isBranchDevonxona(branchDevonxona, 7)).toBe(false);
+    expect(isBranchDevonxona(branchDevonxona, null)).toBe(false);
+    expect(isBranchDevonxona(regularUser, 5)).toBe(false);
+  });
+
+  it('canActAsChancellery: global role acts anywhere; branch devonxona only on its branches', () => {
+    expect(canActAsChancellery(chancelleryUser, 123)).toBe(true);
+    expect(canActAsChancellery(branchDevonxona, 5)).toBe(true);
+    expect(canActAsChancellery(branchDevonxona, 8)).toBe(false);
+    expect(canActAsChancellery(regularUser, 5)).toBe(false);
   });
 });
 

@@ -127,6 +127,15 @@ export const LETTER_APPROVE_GUVOHNOMA = (id: number) => `letters/${id}/approve-g
 export const LETTER_TRIP_MOVEMENTS = (id: number) => `letters/${id}/trip-movements`;
 export const LETTER_CONFIRM_RETURN = (id: number) => `letters/${id}/confirm-return`;
 
+// Devonxona "Tasdiqlash": a stamped bildirgi/ariza/xizmat safari sits at
+// pending_registration (auto number+seal) until the chancellery confirms it.
+// confirm-registration finalizes it (agreement → registered, trip →
+// management_approved); the devonxona may edit the auto number/date. The
+// availability endpoint (declared BEFORE /{pk} server-side) live-checks whether a
+// registration number is free in the branch. exclude_id = the letter's own id.
+export const LETTER_CONFIRM_REGISTRATION = (id: number) => `letters/${id}/confirm-registration`;
+export const LETTER_REGISTERED_NUMBER_AVAILABILITY = 'letters/registered-number/availability';
+
 // Organization branches
 export const ORGANIZATION_BRANCHES = 'organization-branches';
 export const ORGANIZATION_BRANCH_LEADERS = (id: number) => `organization-branches/${id}/leaders`;

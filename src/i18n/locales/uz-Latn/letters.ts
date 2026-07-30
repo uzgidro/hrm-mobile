@@ -173,4 +173,16 @@ export default {
   reportSubmitError: 'Hisobotni yuborishda xato',
   reportResetConfirmTitle: "Hisobotni o'chirish",
   reportResetConfirmMessage: "Hisobot o'chiriladi va qayta tahrirlash mumkin bo'ladi. Davom etilsinmi?",
+
+  // ── Devonxona "Tasdiqlash" (confirm-registration) ──
+  confirmRegistrationAction: "Ro'yxatga olishni tasdiqlash",
+  confirmRegistrationTitle: "Ro'yxatga olishni tasdiqlash",
+  confirmRegistrationHint: 'Ro’yxat raqamini tekshiring va tasdiqlang. Kerak bo’lsa tahrirlashingiz mumkin.',
+  confirmRegistrationNumberLabel: "Ro'yxat raqami",
+  confirmRegistrationDateLabel: 'Sana',
+  confirmRegistrationSubmit: 'Tasdiqlash',
+  confirmRegistrationDone: "Ro'yxatga olindi",
+  numberChecking: 'Tekshirilmoqda…',
+  numberFree: "Bo'sh",
+  numberTaken: 'Band',
 } as const;

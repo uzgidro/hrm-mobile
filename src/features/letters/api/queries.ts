@@ -4,6 +4,7 @@ import {
   LETTERS_LIST,
   LETTER_DETAIL,
   LETTER_TRIP_MOVEMENTS,
+  LETTER_REGISTERED_NUMBER_AVAILABILITY,
   EMPLOYEES_LIST,
   ORGANIZATION_BRANCHES,
   ORGANIZATION_BRANCH_LEADERS,
@@ -63,6 +64,33 @@ export function letterDetailQuery(id: number) {
     // Sign state must reflect the server on every open — another signer may have
     // acted. Override the global staleTime so it always revalidates.
     refetchOnMount: 'always',
+  });
+}
+
+// Real-time availability of a registration number in a branch — used by the
+// devonxona confirm-registration dialog while the number is being edited.
+// `available` is false when the number is already taken; `suggested` is the next
+// free number. exclude_id lets the letter keep its own auto-assigned number.
+export interface RegisteredNumberAvailability {
+  available: boolean;
+  suggested?: string | null;
+}
+export function registeredNumberAvailabilityQuery(
+  branchId: number | undefined,
+  numberValue: string,
+  excludeId: number,
+  enabled: boolean,
+) {
+  return queryOptions({
+    queryKey: ['letter-registered-number-availability', branchId, numberValue, excludeId] as const,
+    enabled: enabled && branchId != null && numberValue.trim() !== '',
+    queryFn: () =>
+      apiClient
+        .get<RegisteredNumberAvailability>(LETTER_REGISTERED_NUMBER_AVAILABILITY, {
+          params: { organization_branch_id: branchId, number: numberValue, exclude_id: excludeId },
+        })
+        .then((r) => r.data),
+    staleTime: 0,
   });
 }
 

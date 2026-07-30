@@ -1,7 +1,8 @@
 import i18n from '../i18n';
-import type { Letter, LetterSigner } from '../types';
+import type { Letter, LetterSigner, User } from '../types';
 import type { StatusKind } from './orderStatus';
 import { statusColor } from './orderStatus';
+import { canActAsChancellery, isSiteMasterAdmin } from './roles';
 
 export { statusColor };
 
@@ -196,6 +197,19 @@ export function getSigningTimeline(l: Letter): TimelineItem[] {
 // i18n note: labels resolved via i18n.t() at call time; the letter status
 // CODES compared against ('registered', 'review', 'management_review', …) are
 // backend contract identifiers and are NOT translated.
+// Devonxona "Tasdiqlash" — a stamped bildirgi / ariza / xizmat safari waits at
+// pending_registration (auto number+seal already applied) until the chancellery
+// confirms it. Mirrors the web canChancelleryConfirmRegistration: any of the
+// three types at pending_registration, and the user may act as devonxona on the
+// letter's branch (branch-leader devonxona included) or is the site master-admin.
+export function canChancelleryConfirmRegistration(l: Letter, user?: User | null): boolean {
+  if (l.status !== 'pending_registration') return false;
+  const type = normalizeLetterType(l.letter_type);
+  const isAgreementOrTrip = type === 'explanatory' || type === 'application' || type === 'business_trip';
+  if (!isAgreementOrTrip) return false;
+  return isSiteMasterAdmin(user) || canActAsChancellery(user, l.organization_branch_id);
+}
+
 export function letterStatusMeta(l: Letter): { label: string; kind: StatusKind } {
   if (isLetterRejected(l)) return { label: i18n.t('status.letterRejected'), kind: 'error' };
   // Report-stage statuses (business_trip, OLD flow) come AFTER registration, so a

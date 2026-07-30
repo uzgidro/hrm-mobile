@@ -5,6 +5,7 @@ import {
   LETTER_SUBMIT_REPORT, LETTER_RESET_REPORT, LETTER_UPLOAD_REPORT,
   LETTER_CONFIRM_RETURN, LETTER_SUBMIT_TRIP,
   LETTER_APPROVE_TRIP, LETTER_APPROVE_REPORT, LETTER_APPROVE_GUVOHNOMA,
+  LETTER_CONFIRM_REGISTRATION,
 } from '@/api/urls';
 import type { PickedFile } from '@/components/AttachmentField';
 import { letterKeys } from './queries';
@@ -165,6 +166,31 @@ export function useConfirmReturn(id: number) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (form: ConfirmReturnForm) => confirmReturn(id, form),
+    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+  });
+}
+
+// ── Devonxona confirm-registration (Tasdiqlash) ───────────────────────────────
+// A stamped bildirgi/ariza/xizmat safari waits at pending_registration until the
+// chancellery confirms it. Both fields are optional — an empty value keeps the
+// auto-assigned number/date; a changed number re-draws the stamp and is
+// duplicate-checked server-side. Agreement → registered; trip → management_approved.
+export interface ConfirmRegistrationForm {
+  registered_number?: string | null;
+  registered_date?: string | null;
+}
+
+export function confirmRegistration(id: number, form: ConfirmRegistrationForm): Promise<unknown> {
+  const body: Record<string, unknown> = {};
+  if (form.registered_number != null && form.registered_number !== '') body.registered_number = form.registered_number;
+  if (form.registered_date) body.registered_date = form.registered_date;
+  return apiClient.post(LETTER_CONFIRM_REGISTRATION(id), body).then((r) => r.data);
+}
+
+export function useConfirmRegistration(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (form: ConfirmRegistrationForm) => confirmRegistration(id, form),
     onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
   });
 }

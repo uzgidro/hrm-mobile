@@ -18,10 +18,11 @@ import {
   canSubmitReport,
   canResetReport,
   isReportReturned,
+  canChancelleryConfirmRegistration,
 } from '../letterStatus';
 import { statusColor as orderStatusColor } from '../orderStatus';
 import i18n from '../../i18n';
-import type { Letter } from '../../types';
+import type { Letter, User } from '../../types';
 
 const letter = (l: Partial<Letter>): Letter => ({ id: 1, ...l }) as Letter;
 
@@ -567,5 +568,32 @@ describe('isReportReturned', () => {
   it('true only for report_returned', () => {
     expect(isReportReturned(trip({ status: 'report_returned' }))).toBe(true);
     expect(isReportReturned(trip({ status: 'report_submitted' }))).toBe(false);
+  });
+});
+
+describe('canChancelleryConfirmRegistration', () => {
+  const chancellery: User = {
+    id: 2, type: 'employee',
+    employee: { id: 20, legal_name: 'Dev', is_multi_org_user: true, multi_org_employee_role: 'chancellery' } as User['employee'],
+  };
+  const branchDevonxona: User = { id: 3, type: 'employee', chancellery_branch_ids: [7], employee: { id: 30, legal_name: 'BL' } as User['employee'] };
+  const regular: User = { id: 4, type: 'employee', employee: { id: 40, legal_name: 'Reg' } as User['employee'] };
+  const masterAdmin: User = { id: 5, type: 'master-admin' };
+
+  it('true for a bildirgi/ariza/trip at pending_registration when the user may act as devonxona', () => {
+    expect(canChancelleryConfirmRegistration({ id: 1, letter_type: 'bildirgi', status: 'pending_registration', organization_branch_id: 7 } as Letter, chancellery)).toBe(true);
+    expect(canChancelleryConfirmRegistration({ id: 1, letter_type: 'application', status: 'pending_registration', organization_branch_id: 7 } as Letter, chancellery)).toBe(true);
+    expect(canChancelleryConfirmRegistration({ id: 1, letter_type: 'business_trip', status: 'pending_registration', organization_branch_id: 7 } as Letter, branchDevonxona)).toBe(true);
+    expect(canChancelleryConfirmRegistration({ id: 1, letter_type: 'bildirgi', status: 'pending_registration', organization_branch_id: 99 } as Letter, masterAdmin)).toBe(true);
+  });
+
+  it('false when not pending_registration', () => {
+    expect(canChancelleryConfirmRegistration({ id: 1, letter_type: 'bildirgi', status: 'registered', organization_branch_id: 7 } as Letter, chancellery)).toBe(false);
+    expect(canChancelleryConfirmRegistration({ id: 1, letter_type: 'bildirgi', status: 'review', organization_branch_id: 7 } as Letter, chancellery)).toBe(false);
+  });
+
+  it('false for a regular employee or a devonxona of another branch', () => {
+    expect(canChancelleryConfirmRegistration({ id: 1, letter_type: 'bildirgi', status: 'pending_registration', organization_branch_id: 7 } as Letter, regular)).toBe(false);
+    expect(canChancelleryConfirmRegistration({ id: 1, letter_type: 'bildirgi', status: 'pending_registration', organization_branch_id: 8 } as Letter, branchDevonxona)).toBe(false);
   });
 });

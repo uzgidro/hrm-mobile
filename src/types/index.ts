@@ -167,6 +167,10 @@ export interface Letter {
   rejection_reason?: string | null;
   rejected_by?: Employee | null;
   is_stamped?: boolean;
+  // Registration stamp (devonxona). Auto-assigned when the letter reaches
+  // pending_registration; the confirm-registration dialog pre-fills from these.
+  registered_number?: string | null;
+  registered_date?: string | null;
   generated_document_path?: string | null;
   attachment_path?: string | null;
   departure_date?: string | null;

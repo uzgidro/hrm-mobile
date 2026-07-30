@@ -5,10 +5,12 @@ import {
   LETTER_SUBMIT_REPORT, LETTER_RESET_REPORT, LETTER_UPLOAD_REPORT,
   LETTER_CONFIRM_RETURN, LETTER_SUBMIT_TRIP,
   LETTER_APPROVE_TRIP, LETTER_APPROVE_REPORT, LETTER_APPROVE_GUVOHNOMA,
+  LETTER_CONFIRM_REGISTRATION,
 } from '@/api/urls';
 import {
   signLetter, rejectLetter, createLetter, submitReport, resetReport, uploadReport,
   confirmReturn, submitTrip, approveTrip, approveReport, approveGuvohnoma,
+  confirmRegistration,
 } from '../mutations';
 
 let mock: MockAdapter;
@@ -128,6 +130,22 @@ describe('confirmReturn request function', () => {
     mock.onPost(LETTER_CONFIRM_RETURN(5)).reply(200, {});
     await confirmReturn(5, { return_date: '2026-07-20' });
     expect(JSON.parse(mock.history.post[0].data)).toEqual({ return_date: '2026-07-20', note: null });
+  });
+});
+
+describe('confirmRegistration request function', () => {
+  it('POSTs the edited number + date to the confirm-registration endpoint', async () => {
+    mock.onPost(LETTER_CONFIRM_REGISTRATION(8)).reply(200, { id: 8, status: 'registered' });
+    const data = await confirmRegistration(8, { registered_number: '17-1', registered_date: '2026-07-20' });
+    expect(data).toEqual({ id: 8, status: 'registered' });
+    expect(mock.history.post[0].url).toBe(LETTER_CONFIRM_REGISTRATION(8));
+    expect(JSON.parse(mock.history.post[0].data)).toEqual({ registered_number: '17-1', registered_date: '2026-07-20' });
+  });
+
+  it('omits an empty number so the backend keeps the auto-assigned value', async () => {
+    mock.onPost(LETTER_CONFIRM_REGISTRATION(8)).reply(200, {});
+    await confirmRegistration(8, { registered_number: '', registered_date: null });
+    expect(JSON.parse(mock.history.post[0].data)).toEqual({});
   });
 });
 
