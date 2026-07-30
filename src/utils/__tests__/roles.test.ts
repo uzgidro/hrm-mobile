@@ -607,7 +607,7 @@ describe('canAccessPage', () => {
       user: chancelleryUser,
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
-        employees: false, attendance: false, requests: false, documents: false, kpi: false, assistant: true, timesheet: false,
+        employees: false, attendance: false, requests: false, documents: false, kpi: false, assistant: false, timesheet: false,
         salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
         chairman: false, directory: true,
       },
@@ -616,7 +616,7 @@ describe('canAccessPage', () => {
       user: kanselariyaUser,
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
-        employees: false, attendance: false, requests: false, documents: false, kpi: false, assistant: true, timesheet: false,
+        employees: false, attendance: false, requests: false, documents: false, kpi: false, assistant: false, timesheet: false,
         salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
         chairman: false, directory: true,
       },
@@ -683,7 +683,7 @@ describe('canAccessPage', () => {
       user: null,
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
-        employees: false, attendance: true, requests: true, documents: true, kpi: false, assistant: true, timesheet: true,
+        employees: false, attendance: true, requests: true, documents: true, kpi: false, assistant: false, timesheet: true,
         salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
         chairman: false, directory: true,
       },
@@ -692,7 +692,7 @@ describe('canAccessPage', () => {
       user: undefined,
       row: {
         home: true, orders: true, letters: true, guests: true, projects: true,
-        employees: false, attendance: true, requests: true, documents: true, kpi: false, assistant: true, timesheet: true,
+        employees: false, attendance: true, requests: true, documents: true, kpi: false, assistant: false, timesheet: true,
         salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
         chairman: false, directory: true,
       },

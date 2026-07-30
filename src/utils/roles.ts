@@ -231,15 +231,17 @@ export function canAccessPage(user: User | null | undefined, key: PageKey): bool
     case 'documents':
     case 'timesheet':
       return !kpp && !chancellery;
-    // LLM assistant. STRICTER than the web on purpose (product decision
-    // 2026-07-16): the web hides the bot only from plain employees / KPP /
-    // monitoring (DashboardLayout.jsx:837), which lets accounting and the
-    // Kuzatuvchi (dashboard) roles see it merely because they're multi-org.
-    // Mobile closes those too via isEmployeeLike. NOTE: this is a UX gate —
-    // the backend /llm/* routes accept ANY authenticated user (no role gate
-    // server-side), so this mirrors intent, not a server rule.
+    // LLM assistant. The backend now GATES /llm/* server-side
+    // (AuthenticationService.require_llm_access, pentest 2026-07-30) to
+    // admin / master-admin / HR / deputy / ministr only. The old
+    // `!isEmployeeLike && !kpp` was broader — it still showed the FAB to
+    // chancellery (devonxona) and any other non-employee-like special role,
+    // who then hit a 403 on tap. Mirror the backend + web (canUseAiAssistant)
+    // EXACTLY: isMasterAdmin covers master-admin + ministr; add admin (akt),
+    // HR and deputy. Everyone else (plain employee, accounting, Kuzatuvchi,
+    // KPP, chancellery, monitoring) is excluded.
     case 'assistant':
-      return !isEmployeeLike(user) && !kpp;
+      return isMasterAdmin(user) || user?.type === 'admin' || isHR(user) || isDeputy(user);
     // Chairman agenda (kun tartibi): secretariat / minister / site master-admin.
     case 'chairman':
       return canAccessChairmanTasks(user);
