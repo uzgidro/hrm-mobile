@@ -36,7 +36,8 @@ export const timesheetKeys = {
   groupScheduleDays: (month: string, groupId?: number) =>
     [...timesheetKeys.all, 'group-schedule-days', month, groupId ?? null] as const,
   holidays: (orgBranchId?: number) => [...timesheetKeys.all, 'holidays', orgBranchId ?? null] as const,
-  offDayDuty: () => [...timesheetKeys.all, 'off-day-duty'] as const,
+  offDayDuty: (orgBranchId?: number) =>
+    [...timesheetKeys.all, 'off-day-duty', orgBranchId ?? null] as const,
 };
 
 // Fetch my monthly tabel row. `month` is 'YYYY-MM'; we expand it to the full
@@ -164,13 +165,21 @@ export function holidaysQuery(orgBranchId?: number) {
   });
 }
 
-// Duty-day ranges (who works through the off-days). The endpoint has no
-// filters — the backend returns the org's paginated list.
-export function offDayDutyQuery() {
+// Duty-day ranges (who works through the off-days). Branch-scoped like the web
+// HolidaysPage tab: the desktop client injects `organization_branch_id` into
+// every request via an axios interceptor, mobile has no such interceptor — so
+// the param is passed explicitly here. The backend now also enforces the
+// caller's branch scope server-side, but a multi-branch (HR) account would
+// still get every branch's rows without this param.
+export function offDayDutyQuery(orgBranchId?: number) {
   return queryOptions({
-    queryKey: timesheetKeys.offDayDuty(),
+    queryKey: timesheetKeys.offDayDuty(orgBranchId),
     queryFn: () =>
-      apiClient.get(DUTY_DAYS_LIST, { params: { size: 100 } }).then((r) => unwrap<DutyDay>(r.data)),
+      apiClient
+        .get(DUTY_DAYS_LIST, {
+          params: { size: 100, ...(orgBranchId ? { organization_branch_id: orgBranchId } : {}) },
+        })
+        .then((r) => unwrap<DutyDay>(r.data)),
     staleTime: 60 * 60 * 1000,
   });
 }

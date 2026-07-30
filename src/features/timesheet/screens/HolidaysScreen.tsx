@@ -13,7 +13,7 @@ import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { LoadingView, ErrorState, EmptyState } from '@/components/StateViews';
-import type { Employee } from '@/types';
+import type { DutyEmployee } from '@/types';
 import { holidaysQuery, offDayDutyQuery } from '../api/queries';
 import { dateRangeLabel, sortByDateFrom, isOngoing } from '../holidays';
 
@@ -32,7 +32,7 @@ export default function HolidaysScreen() {
   const today = dayjs().format('YYYY-MM-DD');
 
   const holidaysQ = useQuery(holidaysQuery(orgBranchId));
-  const offDutyQ = useQuery(offDayDutyQuery());
+  const offDutyQ = useQuery(offDayDutyQuery(orgBranchId));
   const activeQ = tab === 'holidays' ? holidaysQ : offDutyQ;
 
   const holidays = useMemo(() => sortByDateFrom(holidaysQ.data ?? []), [holidaysQ.data]);
@@ -117,7 +117,7 @@ export default function HolidaysScreen() {
                     </View>
                   )}
                 </View>
-                {(d.employees ?? []).map((emp: Employee, idx: number) => (
+                {(d.employees ?? []).map((emp: DutyEmployee, idx: number) => (
                   <View key={emp.id} style={[styles.memberRow, idx < (d.employees?.length ?? 0) - 1 && styles.memberRowBorder]}>
                     <EmployeeAvatar emp={emp} size={36} />
                     <Text style={styles.memberName} numberOfLines={1}>{emp.legal_name}</Text>

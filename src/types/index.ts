@@ -674,11 +674,22 @@ export interface Holiday {
 
 // A duty-day range with the employees who work through those off-days
 // (GET /duty-days — separate from both holidays and navbatchilik).
+/** Duty-day member row. The backend narrowed `DutyDayRead.employees` from the
+ *  full EmployeeRead (which carried passport/JShShIR/address) to this list-safe
+ *  shape on 2026-07-30 — the duty list never rendered those fields anyway. */
+export interface DutyEmployee {
+  id: number;
+  legal_name: string;
+  photo_path?: string;
+  photo_thumb_path?: string;
+  job_position?: { id: number; name: string };
+}
+
 export interface DutyDay {
   id: number;
   date_from: string; // 'YYYY-MM-DD'
   date_to: string;
-  employees?: Employee[] | null;
+  employees?: DutyEmployee[] | null;
 }
 
 

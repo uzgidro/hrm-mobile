@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import { useAuthStore, isMasterAdmin, isHR } from '@/store/authStore';
+import { isDeputy } from '@/utils/roles';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { WorkExperience, Education } from '@/types';
@@ -24,8 +25,15 @@ export default function EmployeeDetailScreen() {
   const { colors } = useTheme();
 
   const isOwnProfile = employeeId === user?.employee?.id;
-  // Own profile → see everything. Other employees → only HR/admin see sensitive data.
-  const canViewSensitive = isOwnProfile || isMasterAdmin(user) || isHR(user) || user?.type === 'admin';
+  // Own profile → see everything. Other employees → only the roles the BACKEND
+  // also lets through: master-admin / admin / kadr (HR) / ministr / deputy
+  // (EmployeeService._can_view_employee_pii). Until 2026-07-30 this gate lived
+  // ONLY here — `GET /employees/{id}` returned passport/JShShIR/address to any
+  // same-branch colleague, so the client was the only thing hiding it. The
+  // server now masks those fields; keeping the two lists in sync means deputy
+  // sees the section that is actually populated instead of a block of dashes.
+  const canViewSensitive =
+    isOwnProfile || isMasterAdmin(user) || isHR(user) || isDeputy(user) || user?.type === 'admin';
 
   const { data: employee = null, isLoading, refetch } = useQuery(employeeDetailQuery(employeeId ?? 0));
   // Preserve the original imperative semantics: with no id the fetch never ran
