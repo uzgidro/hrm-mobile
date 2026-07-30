@@ -406,6 +406,44 @@ describe('getSigningTimeline', () => {
       { key: 'main-1', name: 'Boss', role: "Boshlig'i", status: 'pending', statusText: 'Kutilmoqda' },
     ]);
   });
+
+  // Web parity (helpers.js:294 mgmtApproved): on an OLD-flow trip the management
+  // signer's approval is NOT recorded in `signers` — it's derived from the letter
+  // reaching a post-registration stage (is_stamped / management_approved …). Mark
+  // management "Tasdiqladi" from that signal, not from hasSigned, but NOT while
+  // pending_registration (stamped, yet the chancellery hasn't registered it).
+  const tripMgmt = (extra: Partial<Letter> = {}): Letter =>
+    letter({
+      letter_type: 'business_trip',
+      assigned_signers: [{ signer_type: 'management', employee_id: 3, employee: { legal_name: 'Mgr' } as any }],
+      ...extra,
+    });
+
+  it('marks trip management as approved once the trip is registered (management_approved)', () => {
+    expect(getSigningTimeline(tripMgmt({ status: 'management_approved' }))[0]).toMatchObject({
+      status: 'signed',
+      statusText: 'Tasdiqladi',
+    });
+  });
+
+  it('marks trip management as approved when is_stamped, past pending_registration', () => {
+    expect(getSigningTimeline(tripMgmt({ is_stamped: true, status: 'report_submitted' }))[0]).toMatchObject({
+      status: 'signed',
+    });
+  });
+
+  it('does NOT mark trip management approved while pending_registration even if is_stamped', () => {
+    expect(getSigningTimeline(tripMgmt({ is_stamped: true, status: 'pending_registration' }))[0]).toMatchObject({
+      status: 'pending',
+      statusText: 'Kutilmoqda',
+    });
+  });
+
+  it('marks trip management rejected when that signer rejected (and not yet approved)', () => {
+    expect(getSigningTimeline(tripMgmt({ status: 'signed', reject_by_id: 3 }))[0]).toMatchObject({
+      status: 'rejected',
+    });
+  });
 });
 
 describe('letterStatusMeta', () => {
