@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
-  TouchableOpacity, RefreshControl,
+  TouchableOpacity, RefreshControl, TextInput,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -14,7 +14,7 @@ import { Screen } from '@/components/Screen';
 import { SplitLayout } from '@/components/SplitLayout';
 import { LoadingView, EmptyState } from '@/components/StateViews';
 import { useBreakpoint } from '@/utils/responsive';
-import { needsMyAction } from '@/utils/orderStatus';
+import { needsMyAction, statusMeta } from '@/utils/orderStatus';
 import { ordersListQuery } from '../api/queries';
 import { OrderListCard } from '../components/OrderListCard';
 import { OrderDetailView } from '../components/OrderDetailView';
@@ -35,6 +35,9 @@ export default function OrdersListScreen() {
   const styles = useThemedStyles(makeStyles);
   const { t } = useTranslation();
   const [tab, setTab] = useState<Tab>('action');
+  const [search, setSearch] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
 
   const bp = useBreakpoint();
   const split = bp.isTablet && bp.isLandscape;
@@ -51,7 +54,7 @@ export default function OrdersListScreen() {
     [orders, employeeId]
   );
 
-  const filtered = useMemo(() => {
+  const tabList = useMemo(() => {
     let list = orders;
     if (tab === 'action') list = orders.filter((o) => needsMyAction(o, employeeId));
     else if (tab === 'mine') list = orders.filter((o) => o.created_by_id === employeeId || o.submitter_id === employeeId || o.employee_id === employeeId);
@@ -59,6 +62,35 @@ export default function OrdersListScreen() {
       (b.created_at ?? String(b.id)).localeCompare(a.created_at ?? String(a.id))
     );
   }, [orders, tab, employeeId]);
+
+  // Category + status chip options derived from the tab list so they stay
+  // relevant. Category value = the category name (stable, human-readable).
+  const categoryOptions = useMemo(() => {
+    const set = new Set<string>();
+    for (const o of tabList) { const n = o.category_rel?.name; if (n) set.add(n); }
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'uz'));
+  }, [tabList]);
+  const statusOptions = useMemo(() => {
+    const seen = new Map<string, string>();
+    for (const o of tabList) { const s = o.status ?? ''; if (s && !seen.has(s)) seen.set(s, statusMeta(o.status).label); }
+    return Array.from(seen, ([value, label]) => ({ value, label }));
+  }, [tabList]);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return tabList.filter((o) => {
+      if (categoryFilter !== 'all' && o.category_rel?.name !== categoryFilter) return false;
+      if (statusFilter !== 'all' && (o.status ?? '') !== statusFilter) return false;
+      if (!q) return true;
+      return (
+        (String(o.act_number ?? '').toLowerCase().includes(q)) ||
+        (o.category_rel?.name?.toLowerCase().includes(q) ?? false) ||
+        (o.summary?.toLowerCase().includes(q) ?? false) ||
+        (o.description?.toLowerCase().includes(q) ?? false) ||
+        (o.created_by?.legal_name?.toLowerCase().includes(q) ?? false)
+      );
+    });
+  }, [tabList, search, categoryFilter, statusFilter]);
 
   // Auto-select the first row when entering split with nothing selected yet
   // (so the detail pane isn't blank on first tablet-landscape render); clear
@@ -113,6 +145,43 @@ export default function OrdersListScreen() {
         })}
       </View>
 
+      <View style={styles.searchWrap}>
+        <View style={styles.searchBox}>
+          <Icon name="search" size={18} color={colors.textMuted} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder={t('orders.searchPlaceholder')}
+            placeholderTextColor={colors.textMuted}
+            value={search}
+            onChangeText={setSearch}
+            returnKeyType="search"
+          />
+          {search.length > 0 && (
+            <TouchableOpacity onPress={() => setSearch('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <Icon name="close" size={18} color={colors.textMuted} />
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+
+      {categoryOptions.length > 0 && (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+          <OrderChip label={t('orders.filterAllCategories')} active={categoryFilter === 'all'} onPress={() => setCategoryFilter('all')} styles={styles} />
+          {categoryOptions.map((c) => (
+            <OrderChip key={c} label={c} active={categoryFilter === c} onPress={() => setCategoryFilter(c)} styles={styles} />
+          ))}
+        </ScrollView>
+      )}
+
+      {statusOptions.length > 1 && (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+          <OrderChip label={t('orders.filterAllStatuses')} active={statusFilter === 'all'} onPress={() => setStatusFilter('all')} styles={styles} subtle />
+          {statusOptions.map((s) => (
+            <OrderChip key={s.value} label={s.label} active={statusFilter === s.value} onPress={() => setStatusFilter(s.value)} styles={styles} subtle />
+          ))}
+        </ScrollView>
+      )}
+
       {isLoading ? (
         <LoadingView />
       ) : (
@@ -162,6 +231,22 @@ export default function OrdersListScreen() {
   return <Screen edges={['top']}>{listPane}</Screen>;
 }
 
+function OrderChip({ label, active, onPress, styles, subtle }: {
+  label: string; active: boolean; onPress: () => void; styles: ReturnType<typeof makeStyles>; subtle?: boolean;
+}) {
+  return (
+    <TouchableOpacity
+      style={[subtle ? styles.chipSubtle : styles.chip, active && (subtle ? styles.chipSubtleActive : styles.chipActive)]}
+      onPress={onPress}
+      activeOpacity={0.75}
+    >
+      <Text style={[subtle ? styles.chipSubtleText : styles.chipText, active && (subtle ? styles.chipSubtleTextActive : styles.chipTextActive)]} numberOfLines={1}>
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
+}
+
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
@@ -186,4 +271,20 @@ const makeStyles = (c: ThemeColors) =>
     content: { paddingHorizontal: 16, paddingTop: 4 },
 
     emptyWrap: { paddingTop: 60 },
+
+    searchWrap: { paddingHorizontal: 16, paddingBottom: 10 },
+    searchBox: {
+      flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: c.card,
+      borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 12, height: 44,
+    },
+    searchInput: { flex: 1, color: c.text, fontSize: 14 },
+    chipRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingBottom: 10, alignItems: 'center' },
+    chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 18, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder },
+    chipActive: { backgroundColor: c.primary, borderColor: c.primary },
+    chipText: { fontSize: 13, fontWeight: '700', color: c.textSecondary },
+    chipTextActive: { color: c.onPrimary },
+    chipSubtle: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 14, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder },
+    chipSubtleActive: { backgroundColor: c.primarySoft, borderColor: c.primary },
+    chipSubtleText: { fontSize: 12, fontWeight: '600', color: c.textSecondary },
+    chipSubtleTextActive: { color: c.primary },
   });
