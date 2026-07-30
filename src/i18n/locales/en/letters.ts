@@ -12,6 +12,9 @@ export default {
   tabMine: 'Mine',
   emptyAction: 'No letters awaiting signature',
   empty: 'No letters',
+  searchPlaceholder: 'Number, type or author...',
+  filterAllTypes: 'All types',
+  filterAllStatuses: 'All statuses',
   actionPending: 'Your signature is pending',
 
   // ── Detail screen ───────────────────────────────────────────────────────────

@@ -12,6 +12,9 @@ export default {
   tabMine: 'Менинг',
   emptyAction: 'Имзолаш кутилаётган хатлар йўқ',
   empty: 'Хатлар йўқ',
+  searchPlaceholder: 'Рақам, тур ёки муаллиф...',
+  filterAllTypes: 'Барча турлар',
+  filterAllStatuses: 'Барча ҳолатлар',
   actionPending: 'Сизнинг имзойингиз кутилмоқда',
 
   // ── Detail screen ───────────────────────────────────────────────────────────

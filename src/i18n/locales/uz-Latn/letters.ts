@@ -18,6 +18,9 @@ export default {
   tabMine: 'Mening',
   emptyAction: "Imzolash kutilayotgan xatlar yo'q",
   empty: "Xatlar yo'q",
+  searchPlaceholder: 'Raqam, tur yoki muallif...',
+  filterAllTypes: 'Barcha turlar',
+  filterAllStatuses: 'Barcha holatlar',
   actionPending: 'Sizning imzoyingiz kutilmoqda',
 
   // ── Detail screen ───────────────────────────────────────────────────────────

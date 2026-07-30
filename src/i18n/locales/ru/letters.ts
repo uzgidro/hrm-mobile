@@ -13,6 +13,9 @@ export default {
   tabMine: 'Мои',
   emptyAction: 'Нет писем, ожидающих подписи',
   empty: 'Писем нет',
+  searchPlaceholder: 'Номер, тип или автор...',
+  filterAllTypes: 'Все типы',
+  filterAllStatuses: 'Все статусы',
   actionPending: 'Ожидается ваша подпись',
 
   // ── Detail screen ───────────────────────────────────────────────────────────
