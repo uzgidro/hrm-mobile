@@ -6,6 +6,8 @@ export default {
   teamTitle: 'Team requests',
   incomingTitle: 'Incoming requests',
   myTitle: 'Requests',
+  searchPlaceholder: 'Name, type or note...',
+  filterAll: 'All',
 
   typeLabel: 'Request type *',
   startLabel: 'Start *',

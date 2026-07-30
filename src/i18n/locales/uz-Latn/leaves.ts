@@ -12,6 +12,8 @@ export default {
   teamTitle: "Jamoa so'rovlari",
   incomingTitle: "Kiruvchi so'rovlar",
   myTitle: "So'rovlar",
+  searchPlaceholder: 'Ism, tur yoki izoh...',
+  filterAll: 'Barcha',
 
   // ── Create form field labels ────────────────────────────────────────────────
   typeLabel: "So'rov turi *",

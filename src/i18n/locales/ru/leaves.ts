@@ -6,6 +6,8 @@ export default {
   teamTitle: 'Заявки команды',
   incomingTitle: 'Входящие заявки',
   myTitle: 'Заявки',
+  searchPlaceholder: 'Имя, тип или примечание...',
+  filterAll: 'Все',
 
   typeLabel: 'Тип заявки *',
   startLabel: 'Начало *',

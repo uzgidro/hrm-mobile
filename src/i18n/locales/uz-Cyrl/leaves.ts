@@ -6,6 +6,8 @@ export default {
   teamTitle: 'Жамоа сўровлари',
   incomingTitle: 'Кирувчи сўровлар',
   myTitle: 'Сўровлар',
+  searchPlaceholder: 'Исм, тур ёки изоҳ...',
+  filterAll: 'Барча',
 
   typeLabel: 'Сўров тури *',
   startLabel: 'Бошланиш *',

@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
-  TouchableOpacity, RefreshControl, Image,
+  TouchableOpacity, RefreshControl, Image, TextInput,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -113,6 +113,15 @@ export default function WorkLeavesScreen() {
 
   const [myFilter, setMyFilter] = useState<StatusFilter>('all');
   const [incomingFilter, setIncomingFilter] = useState<'all' | 'action' | 'approved' | 'rejected'>('action');
+  const [search, setSearch] = useState('');
+  const matchesSearch = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return (l: { employee?: { legal_name?: string }; type?: string | null; description?: string | null }) =>
+      !q ||
+      (l.employee?.legal_name?.toLowerCase().includes(q) ?? false) ||
+      (l.type?.toLowerCase().includes(q) ?? false) ||
+      (l.description?.toLowerCase().includes(q) ?? false);
+  }, [search]);
 
   const { data: myLeaves = [], isLoading: myLoading, refetch: myRefetch, isFetching: myFetching } =
     useQuery({
@@ -134,14 +143,14 @@ export default function WorkLeavesScreen() {
   const refetch = isSupervisor ? allRefetch : myRefetch;
 
   const filteredMyLeaves = useMemo(() => {
-    const base = myFilter === 'all' ? myLeaves : myLeaves.filter((l) => {
+    const base = (myFilter === 'all' ? myLeaves : myLeaves.filter((l) => {
       if (myFilter === 'pending') return isPendingStatus(l.status);
       if (myFilter === 'approved') return isApprovedStatus(l.status);
       if (myFilter === 'rejected') return isRejectedStatus(l.status);
       return true;
-    });
+    })).filter(matchesSearch);
     return [...base].sort((a, b) => (b.created_at ?? String(b.id)).localeCompare(a.created_at ?? String(a.id)));
-  }, [myLeaves, myFilter]);
+  }, [myLeaves, myFilter, matchesSearch]);
 
   const filteredIncoming = useMemo(() => {
     const base = allLeaves.filter((l) => {
@@ -151,9 +160,9 @@ export default function WorkLeavesScreen() {
       if (incomingFilter === 'approved') return isApprovedStatus(l.status) || alreadySigned;
       if (incomingFilter === 'rejected') return isRejectedStatus(l.status);
       return true;
-    });
+    }).filter(matchesSearch);
     return [...base].sort((a, b) => (b.created_at ?? String(b.id)).localeCompare(a.created_at ?? String(a.id)));
-  }, [allLeaves, incomingFilter, employeeId]);
+  }, [allLeaves, incomingFilter, employeeId, matchesSearch]);
 
   const pendingCount = useMemo(
     () => allLeaves.filter((l) => isPendingStatus(l.status) && !l.signers?.some((s) => s.id === employeeId)).length,
@@ -206,6 +215,25 @@ export default function WorkLeavesScreen() {
             );
           })}
         </ScrollView>
+      </View>
+
+      <View style={styles.searchWrap}>
+        <View style={styles.searchBox}>
+          <Icon name="search" size={18} color={colors.textMuted} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder={t('leaves.searchPlaceholder')}
+            placeholderTextColor={colors.textMuted}
+            value={search}
+            onChangeText={setSearch}
+            returnKeyType="search"
+          />
+          {search.length > 0 && (
+            <TouchableOpacity onPress={() => setSearch('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <Icon name="close" size={18} color={colors.textMuted} />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       <View style={{ flex: 1 }}>
@@ -273,6 +301,12 @@ const makeStyles = (c: ThemeColors) =>
     addBtnText: { fontSize: 24, color: c.primaryLight, fontWeight: '400' },
 
     filterWrapper: { flexShrink: 0, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
+    searchWrap: { paddingHorizontal: 16, paddingVertical: 10, flexShrink: 0 },
+    searchBox: {
+      flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: c.card,
+      borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 12, height: 44,
+    },
+    searchInput: { flex: 1, color: c.text, fontSize: 14 },
     filterRow: { paddingHorizontal: 16, paddingVertical: 10, gap: 8, flexDirection: 'row', alignItems: 'center' },
     filterTab: { paddingHorizontal: 16, paddingVertical: 7, borderRadius: 20, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder },
     filterTabActive: { backgroundColor: c.primary, borderColor: c.primary },
