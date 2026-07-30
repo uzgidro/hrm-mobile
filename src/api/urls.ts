@@ -20,7 +20,8 @@ export const TURNSTILE_ATTENDANCE_EVENTS = 'turnstile-attendance-events';
 export const TURNSTILE_ATTENDANCE_NORMALIZED = 'turnstile-attendance-events/normalized';
 // Navbatchilik (duty roster), read-only on mobile. /my is truly self-scoped;
 // {pk}/members is the effective (dept-expanded) roster; work-schedule-days are
-// the actual day/shift rows (NOT self-scoped — always pass our employee_id).
+// the actual day/shift rows — branch-scoped server-side since backend `f9c79f0`
+// but NOT self-scoped, so always pass our employee_id for a personal view.
 export const NAVBATCHILIK_GROUPS_MY = 'navbatchilik-groups/my';
 export const NAVBATCHILIK_GROUP_MEMBERS = (id: number) => `navbatchilik-groups/${id}/members`;
 export const WORK_SCHEDULE_DAYS = 'work-schedule-days';

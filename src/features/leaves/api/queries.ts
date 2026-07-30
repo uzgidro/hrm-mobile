@@ -44,10 +44,11 @@ export function assignedLeavesQuery(employeeId?: number) {
   });
 }
 
-// Team / "all" leaves — ROLE-SCOPED. Never fetch unscoped: the backend returns
-// every branch's requests otherwise (PII leak). `workLeaveAllScopeParams` adds the
-// same narrowing the web sends (assigned_signer / department_ids / branch), so a
-// regular employee only ever gets requests assigned to them to sign.
+// Team / "all" leaves — ROLE-SCOPED. `workLeaveAllScopeParams` sends the same
+// narrowing the web does (assigned_signer / department_ids / branch), so a
+// regular employee only sees requests assigned to them to sign. The backend
+// enforces the same bound server-side since `6cd1fe3`, so this is now about
+// showing the right queue rather than being the only thing preventing a leak.
 export function teamLeavesQuery(user?: User | null, branchId?: number | null) {
   const scope = workLeaveAllScopeParams(user, branchId);
   return queryOptions({

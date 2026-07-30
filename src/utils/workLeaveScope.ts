@@ -2,10 +2,15 @@ import type { User } from '@/types';
 import { isHR, isDeputy } from './roles';
 
 // Role-based scoping params for the work-leaves "all"/team list, mirroring the
-// web RequestPermissionPage `queryParams` (all tab). The backend `GET /work-leaves`
-// does NOT auto-scope by the caller — it returns whatever the params ask for, so
-// an unscoped fetch leaks every branch's / every employee's requests (PII). Every
-// non-HR caller MUST pass a narrowing param:
+// web RequestPermissionPage `queryParams` (all tab).
+//
+// The backend used to be fail-OPEN here (params-only filtering, so an unscoped
+// fetch returned every branch's requests). Since backend `6cd1fe3` it applies a
+// MANDATORY predicate for every caller that is not master-admin / HR / ministr:
+// own request ∨ assigned signer ∨ headed department. These params therefore no
+// longer carry the whole security boundary — but they stay, because they decide
+// what the screen SHOWS (a deputy wants the sign queue, not their own leave) and
+// they keep the server's result set small. Rule per role:
 //   HR        → no role filter (sees all — caller still adds the branch filter)
 //   Deputy    → assigned_signer=true (only requests routed to them to sign)
 //   Dept head → department_ids = headed departments

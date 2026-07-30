@@ -21,8 +21,13 @@ function unwrap<T>(d: any): T[] {
 // Per-feature queryOptions factories for "Мой табель" (Учёт времени, Wave 1).
 // The normalized endpoint returns one row per employee with an
 // attendance.calendar {date -> code} map; for a personal tabel we request our
-// OWN employee_id and read items[0]. The endpoint is NOT self-restricting, so
-// the screen must pass the current user's employee id (never a foreign one).
+// OWN employee_id and read items[0].
+//
+// The endpoint is not self-scoped by default — it is a whole-branch tabel for
+// the roles that are allowed one. Since backend `f9c79f0` a plain employee only
+// ever gets their own row + subordinates + headed departments, so a foreign id
+// yields nothing; we still always pass our own id, both for the correct row and
+// because supervisors/dept heads WOULD otherwise get several rows back.
 export const timesheetKeys = {
   all: ['timesheet'] as const,
   my: (month: string, employeeId?: number) =>
