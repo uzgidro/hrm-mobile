@@ -70,21 +70,49 @@ describe('assignedLeavesQuery', () => {
   });
 });
 
-describe('teamLeavesQuery', () => {
-  it('carries the team list key and sends only size', async () => {
-    const opts = teamLeavesQuery();
-    expect(opts.queryKey).toEqual(['work-leaves', 'list', 'team', null]);
+describe('teamLeavesQuery (role-scoped — no unscoped fetch)', () => {
+  const hrUser = { id: 1, type: 'employee', employee: { id: 10, is_multi_org_user: true, multi_org_employee_role: 'hr' } } as any;
+  const plainUser = { id: 2, type: 'employee', employee: { id: 20 } } as any;
+
+  it('a regular employee only fetches requests assigned to them (assigned_signer=true)', async () => {
+    const opts = teamLeavesQuery(plainUser);
     mock.onGet(WORK_LEAVES).reply(200, []);
     await (opts.queryFn as () => Promise<unknown[]>)();
-    expect(mock.history.get[0].params).toEqual({ size: 200 });
+    expect(mock.history.get[0].params).toEqual({ assigned_signer: true, size: 200 });
+  });
+
+  it('no user still scopes to assigned_signer (never an unscoped all-branch fetch)', async () => {
+    mock.onGet(WORK_LEAVES).reply(200, []);
+    await (teamLeavesQuery().queryFn as () => Promise<unknown[]>)();
+    expect(mock.history.get[0].params).toEqual({ assigned_signer: true, size: 200 });
+  });
+
+  it('HR gets no row-level filter (branch is the boundary)', async () => {
+    const opts = teamLeavesQuery(hrUser, 5);
+    mock.onGet(WORK_LEAVES).reply(200, []);
+    await (opts.queryFn as () => Promise<unknown[]>)();
+    expect(mock.history.get[0].params).toEqual({ organization_branch_id: 5, size: 200 });
+  });
+
+  it('scopes to a branch when one is passed', async () => {
+    const opts = teamLeavesQuery(plainUser, 5);
+    mock.onGet(WORK_LEAVES).reply(200, []);
+    await (opts.queryFn as () => Promise<unknown[]>)();
+    expect(mock.history.get[0].params).toEqual({ organization_branch_id: 5, assigned_signer: true, size: 200 });
+  });
+
+  it('the query key varies by branch + scope so caches never collide', () => {
+    expect(teamLeavesQuery(plainUser).queryKey).not.toEqual(teamLeavesQuery(hrUser).queryKey);
+    expect(teamLeavesQuery(plainUser, 5).queryKey).not.toEqual(teamLeavesQuery(plainUser, 6).queryKey);
+    expect(teamLeavesQuery(plainUser).queryKey.slice(0, 1)).toEqual(leaveKeys.all);
   });
 
   it('returns a bare array and unwraps an { items } envelope', async () => {
     mock.onGet(WORK_LEAVES).reply(200, [{ id: 1 }, { id: 2 }]);
-    expect(await (teamLeavesQuery().queryFn as () => Promise<unknown[]>)()).toHaveLength(2);
+    expect(await (teamLeavesQuery(plainUser).queryFn as () => Promise<unknown[]>)()).toHaveLength(2);
     mock.resetHistory();
     mock.onGet(WORK_LEAVES).reply(200, { items: [{ id: 1 }] });
-    expect(await (teamLeavesQuery().queryFn as () => Promise<unknown[]>)()).toEqual([{ id: 1 }]);
+    expect(await (teamLeavesQuery(plainUser).queryFn as () => Promise<unknown[]>)()).toEqual([{ id: 1 }]);
   });
 });
 

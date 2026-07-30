@@ -37,19 +37,18 @@ export default function TeamLeavesScreen() {
   const [selectedYear] = useState(now.year());
 
   const { data: allLeaves = [], isLoading, refetch, isFetching } = useQuery({
-    ...teamLeavesQuery(),
+    ...teamLeavesQuery(user, orgBranchId),
     staleTime: 2 * 60 * 1000,
   });
 
   const filtered = useMemo(() => {
     return allLeaves
       .filter((l) => {
-        if (orgBranchId && l.employee?.department?.organization_branch_id !== orgBranchId) return false;
         const d = dayjs(l.created_at ?? l.start_date);
         return d.month() === selectedMonth && d.year() === selectedYear;
       })
       .sort((a, b) => (b.created_at ?? String(b.id)).localeCompare(a.created_at ?? String(a.id)));
-  }, [allLeaves, selectedMonth, selectedYear, orgBranchId]);
+  }, [allLeaves, selectedMonth, selectedYear]);
 
   const monthOptions = useMemo(() => {
     const result = [];

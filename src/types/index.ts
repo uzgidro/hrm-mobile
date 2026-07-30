@@ -7,6 +7,10 @@ export interface User {
   is_navbatchi?: boolean;
   /** branches where this user is an HR branch-leader (leadership_role='hr'), from /me */
   hr_branch_ids?: number[];
+  /** branches where this user is a chancellery/devonxona branch-leader (leadership_role='chancellery'), from /me */
+  chancellery_branch_ids?: number[];
+  /** departments this user heads (department head), from /me — scopes work-leave "all" view like the web */
+  headed_department_ids?: number[];
   /** may create/edit news posts (auth/me flag = can_manage_news on the backend) */
   is_news_manager?: boolean;
   /** may access the KPI module — auth/me flag (backend scoping.kpi_enabled); gates the KPI tile like the web nav */

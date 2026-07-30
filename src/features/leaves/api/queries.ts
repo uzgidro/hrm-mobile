@@ -2,7 +2,8 @@ import { queryOptions } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
 import { WORK_LEAVES, WORK_LEAVE_DETAIL } from '@/api/urls';
 import { fetchAllEmployees, employeesQueryKey } from '@/utils/employees';
-import type { WorkLeave } from '@/types';
+import { workLeaveAllScopeParams } from '@/utils/workLeaveScope';
+import type { User, WorkLeave } from '@/types';
 
 // Hierarchical query keys — `all` is a strict prefix of every list and detail
 // key, so invalidating `leaveKeys.all` refreshes all three lists (mine /
@@ -43,13 +44,17 @@ export function assignedLeavesQuery(employeeId?: number) {
   });
 }
 
-// All team leaves.
-export function teamLeavesQuery() {
+// Team / "all" leaves — ROLE-SCOPED. Never fetch unscoped: the backend returns
+// every branch's requests otherwise (PII leak). `workLeaveAllScopeParams` adds the
+// same narrowing the web sends (assigned_signer / department_ids / branch), so a
+// regular employee only ever gets requests assigned to them to sign.
+export function teamLeavesQuery(user?: User | null, branchId?: number | null) {
+  const scope = workLeaveAllScopeParams(user, branchId);
   return queryOptions({
-    queryKey: leaveKeys.list('team'),
+    queryKey: [...leaveKeys.list('team'), branchId ?? null, scope] as const,
     queryFn: () =>
       apiClient
-        .get(WORK_LEAVES, { params: { size: 200 } })
+        .get(WORK_LEAVES, { params: { ...scope, size: 200 } })
         .then((r) => unwrapList(r.data)),
   });
 }
