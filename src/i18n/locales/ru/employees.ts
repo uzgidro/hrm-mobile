@@ -4,6 +4,8 @@ export default {
   listTitle: 'Сотрудники',
   subordinatesTitle: 'Подчинённые',
   searchPlaceholder: 'Имя, должность, отдел...',
+  filterAllDepartments: 'Все отделы',
+  filterAllPositions: 'Все должности',
   notFound: 'Не найдено',
   empty: 'Сотрудников нет',
   accessTitle: 'Сотрудники',

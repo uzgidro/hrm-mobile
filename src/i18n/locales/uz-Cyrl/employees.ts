@@ -4,6 +4,8 @@ export default {
   listTitle: 'Ходимлар',
   subordinatesTitle: 'Бўйсунувчилар',
   searchPlaceholder: 'Исм, лавозим, бўлим...',
+  filterAllDepartments: 'Барча бўлимлар',
+  filterAllPositions: 'Барча лавозимлар',
   notFound: 'Топилмади',
   empty: 'Ходимлар йўқ',
   accessTitle: 'Ходимлар',
