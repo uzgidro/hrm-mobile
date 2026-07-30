@@ -62,6 +62,10 @@ export default {
 
   // ── Team / bonuses ─────────────────────────────────────────────────────────
   teamTitle: 'Xodimlarim samaradorligi',
+  teamSearchPlaceholder: 'Xodim, lavozim yoki bo\'lim...',
+  teamFilterAll: 'Barcha',
+  teamFilterPending: 'Topshiriq kutilmoqda',
+  teamFilterDone: 'Yakunlangan',
   teamEntries: "Ko'rsatkichlar",
   teamPending: 'Tasdiq kutmoqda',
   teamAllDone: 'Yakunlangan',
