@@ -15,6 +15,7 @@ import {
   letterStatusMeta,
   statusColor,
   isNewTripFlow,
+  canConfirmTripReturn,
   canSubmitReport,
   canResetReport,
   isReportReturned,
@@ -511,6 +512,38 @@ describe('isNewTripFlow', () => {
   });
   it('false for a non-trip letter even with flow_version 2 (backend guards on type)', () => {
     expect(isNewTripFlow(letter({ letter_type: 'application', flow_version: 2 }))).toBe(false);
+  });
+});
+
+// ── KADR "Keldi" stage gate (web canConfirmTripReturn parity, helpers.js:504) ──
+// OLD-flow trip only; confirm-return is blocked by the backend (400
+// trip_not_registered) until the chancellery registers the trip, i.e. while the
+// status is still in the pre-registration set. The button must not show then.
+describe('canConfirmTripReturn', () => {
+  const oldTrip = (status: string, extra: Partial<Letter> = {}): Letter =>
+    letter({ letter_type: 'business_trip', flow_version: 1, status, ...extra });
+
+  it('false in every pre-registration / terminal status', () => {
+    for (const s of ['draft', 'pending', 'signed', 'pending_registration',
+                     'report_approved', 'rejected', 'cancelled']) {
+      expect(canConfirmTripReturn(oldTrip(s))).toBe(false);
+    }
+  });
+
+  it('true once the trip is registered (management_approved) and not yet confirmed', () => {
+    expect(canConfirmTripReturn(oldTrip('management_approved'))).toBe(true);
+  });
+
+  it('false when the return is already confirmed', () => {
+    expect(canConfirmTripReturn(oldTrip('management_approved', { is_trip_confirmed: true }))).toBe(false);
+  });
+
+  it('false for a NEW-flow trip (arrival goes through hr-arrive, not confirm-return)', () => {
+    expect(canConfirmTripReturn(letter({ letter_type: 'business_trip', flow_version: 2, status: 'management_approved' }))).toBe(false);
+  });
+
+  it('false for a non-trip letter', () => {
+    expect(canConfirmTripReturn(letter({ letter_type: 'application', status: 'registered' }))).toBe(false);
   });
 });
 

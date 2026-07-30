@@ -96,6 +96,26 @@ export function canResetReport(l: Letter, employeeId?: number | null): boolean {
   return isTripAuthor(l, employeeId);
 }
 
+// Statuses in which the backend still refuses KADR "Keldi" (confirm-return) with
+// 400 trip_not_registered — the trip isn't registered by the chancellery yet, or
+// it's already finished/terminal. Mirrors the web canConfirmTripReturn exclusion
+// list (helpers.js:511).
+const TRIP_RETURN_BLOCKED_STATUSES = [
+  'draft', 'pending', 'signed', 'pending_registration',
+  'report_approved', 'rejected', 'cancelled',
+];
+
+// KADR "Keldi" (confirm-return) stage gate — OLD-flow trip only, not yet
+// confirmed, and past the chancellery's registration. This is the STAGE half of
+// the gate; the caller ANDs it with the manage-right (branch HR) and lets a site
+// master-admin bypass the stage, matching the backend (confirm-return allows
+// master-admin regardless of status). Mirrors web canConfirmTripReturn.
+export function canConfirmTripReturn(l: Letter): boolean {
+  if (!isBusinessTrip(l) || isNewTripFlow(l)) return false;
+  if (l.is_trip_confirmed) return false;
+  return !TRIP_RETURN_BLOCKED_STATUSES.includes(l.status ?? '');
+}
+
 export function hasSigned(l: Letter, employeeId?: number | null) {
   if (!employeeId) return false;
   return (l.signers ?? []).some((s) => eq(sid(s), employeeId));
