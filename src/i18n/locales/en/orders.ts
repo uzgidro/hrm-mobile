@@ -7,6 +7,9 @@ export default {
   tabMine: 'Mine',
   emptyAction: 'No orders awaiting your action',
   emptyAll: 'No orders',
+  searchPlaceholder: 'Number, category or author...',
+  filterAllCategories: 'All categories',
+  filterAllStatuses: 'All statuses',
   actionExpected: 'Your action is required',
 
   // ── Create screen ───────────────────────────────────────────────────────────

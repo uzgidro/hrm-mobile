@@ -104,6 +104,10 @@ export function orderLeadershipQuery(branchId?: number) {
           .get(ORGANIZATION_BRANCH_LEADERS(branchId))
           .then((r) =>
             (Array.isArray(r.data) ? r.data : [])
+              // Only director/deputy count as rahbariyat — devonxona/buxgalter/yurist/
+              // texnik yordam (akt) are branch leaders too but are NOT leadership.
+              .filter((l: { employee?: Employee; leadership_role?: string }) =>
+                l.employee && ['director', 'deputy'].includes(l.leadership_role ?? ''))
               .map((l: { employee?: Employee }) => l.employee)
               .filter(Boolean) as Employee[]
           )

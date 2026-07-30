@@ -6,4 +6,7 @@ export default {
   notFound: 'Nothing found',
   noPhone: 'No phone',
   loadError: 'Failed to load the directory',
+  scopeExec: 'Executive office',
+  scopeSystem: 'System organizations',
+  allBranches: 'All branches',
 } as const;

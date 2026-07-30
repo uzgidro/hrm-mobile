@@ -7,6 +7,9 @@ export default {
   tabMine: 'Мои',
   emptyAction: 'Нет приказов, требующих вашего действия',
   emptyAll: 'Приказов нет',
+  searchPlaceholder: 'Номер, категория или автор...',
+  filterAllCategories: 'Все категории',
+  filterAllStatuses: 'Все статусы',
   actionExpected: 'Требуется ваше действие',
 
   // ── Create screen ───────────────────────────────────────────────────────────

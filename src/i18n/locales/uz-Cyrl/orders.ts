@@ -7,6 +7,9 @@ export default {
   tabMine: 'Менинг',
   emptyAction: 'Сиздан амал кутилаётган буйруқлар йўқ',
   emptyAll: 'Буйруқлар йўқ',
+  searchPlaceholder: 'Рақам, категория ёки муаллиф...',
+  filterAllCategories: 'Барча категориялар',
+  filterAllStatuses: 'Барча ҳолатлар',
   actionExpected: 'Сиздан амал кутилмоқда',
 
   // ── Create screen ───────────────────────────────────────────────────────────

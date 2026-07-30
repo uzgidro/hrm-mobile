@@ -1,5 +1,6 @@
+import { useMemo, useState } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, RefreshControl, Image, FlatList,
+  View, Text, StyleSheet, TouchableOpacity, RefreshControl, Image, FlatList, TextInput, ScrollView,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -25,9 +26,32 @@ export default function KpiTeamScreen() {
   const bp = useBreakpoint();
   const cols = bp.isTablet ? (bp.isLandscape ? 3 : 2) : 1;
 
+  const [search, setSearch] = useState('');
+  const [statusF, setStatusF] = useState<'all' | 'pending' | 'done'>('all');
+
   // Current month; historical periods live on the member's card.
   const { data, isLoading, isError, refetch, isFetching } = useQuery(myTeamQuery());
-  const members = data?.employees ?? [];
+  const allMembers = data?.employees ?? [];
+
+  const members = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return allMembers.filter((m) => {
+      if (statusF === 'pending' && !(Number(m.pending_tasks || 0) > 0)) return false;
+      if (statusF === 'done' && !m.all_done) return false;
+      if (!q) return true;
+      return (
+        (m.legal_name?.toLowerCase().includes(q) ?? false) ||
+        (m.job_position_name?.toLowerCase().includes(q) ?? false) ||
+        (m.department_name?.toLowerCase().includes(q) ?? false)
+      );
+    });
+  }, [allMembers, search, statusF]);
+
+  const STATUS_CHIPS: { key: 'all' | 'pending' | 'done'; labelKey: string }[] = [
+    { key: 'all', labelKey: 'kpi.teamFilterAll' },
+    { key: 'pending', labelKey: 'kpi.teamFilterPending' },
+    { key: 'done', labelKey: 'kpi.teamFilterDone' },
+  ];
 
   const resultColor = (v: number | null | undefined) => {
     const key = resultColorKey(v);
@@ -37,6 +61,39 @@ export default function KpiTeamScreen() {
   return (
     <Screen edges={['top']}>
       <ScreenHeader title={t('kpi.teamTitle')} />
+
+      {!isLoading && !isError && (
+        <>
+          <View style={styles.searchWrap}>
+            <View style={styles.searchBox}>
+              <Icon name="search" size={18} color={colors.textMuted} />
+              <TextInput
+                style={styles.searchInput}
+                placeholder={t('kpi.teamSearchPlaceholder')}
+                placeholderTextColor={colors.textMuted}
+                value={search}
+                onChangeText={setSearch}
+                returnKeyType="search"
+              />
+              {search.length > 0 && (
+                <TouchableOpacity onPress={() => setSearch('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                  <Icon name="close" size={18} color={colors.textMuted} />
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+            {STATUS_CHIPS.map((s) => {
+              const active = statusF === s.key;
+              return (
+                <TouchableOpacity key={s.key} style={[styles.chip, active && styles.chipActive]} onPress={() => setStatusF(s.key)} activeOpacity={0.75}>
+                  <Text style={[styles.chipText, active && styles.chipTextActive]}>{t(s.labelKey)}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </>
+      )}
 
       {isLoading ? (
         <LoadingView />
@@ -127,6 +184,18 @@ const makeStyles = (c: ThemeColors) =>
     content: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 24, flexGrow: 1 },
     periodNote: { fontSize: 12, color: c.textMuted, marginBottom: 10, marginLeft: 2 },
     gridRow: { gap: 12 },
+
+    searchWrap: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4 },
+    searchBox: {
+      flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: c.card,
+      borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 12, height: 44,
+    },
+    searchInput: { flex: 1, color: c.text, fontSize: 14 },
+    chipRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingVertical: 8, alignItems: 'center' },
+    chip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 16, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder },
+    chipActive: { backgroundColor: c.primary, borderColor: c.primary },
+    chipText: { fontSize: 12, fontWeight: '700', color: c.textSecondary },
+    chipTextActive: { color: c.onPrimary },
 
     card: {
       flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, marginBottom: 10,

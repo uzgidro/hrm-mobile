@@ -4,6 +4,7 @@ import {
   LETTERS_LIST,
   LETTER_DETAIL,
   LETTER_TRIP_MOVEMENTS,
+  LETTER_REGISTERED_NUMBER_AVAILABILITY,
   EMPLOYEES_LIST,
   ORGANIZATION_BRANCHES,
   ORGANIZATION_BRANCH_LEADERS,
@@ -66,6 +67,33 @@ export function letterDetailQuery(id: number) {
   });
 }
 
+// Real-time availability of a registration number in a branch — used by the
+// devonxona confirm-registration dialog while the number is being edited.
+// `available` is false when the number is already taken; `suggested` is the next
+// free number. exclude_id lets the letter keep its own auto-assigned number.
+export interface RegisteredNumberAvailability {
+  available: boolean;
+  suggested?: string | null;
+}
+export function registeredNumberAvailabilityQuery(
+  branchId: number | undefined,
+  numberValue: string,
+  excludeId: number,
+  enabled: boolean,
+) {
+  return queryOptions({
+    queryKey: ['letter-registered-number-availability', branchId, numberValue, excludeId] as const,
+    enabled: enabled && branchId != null && numberValue.trim() !== '',
+    queryFn: () =>
+      apiClient
+        .get<RegisteredNumberAvailability>(LETTER_REGISTERED_NUMBER_AVAILABILITY, {
+          params: { organization_branch_id: branchId, number: numberValue, exclude_id: excludeId },
+        })
+        .then((r) => r.data),
+    staleTime: 0,
+  });
+}
+
 // Business-trip movements (kelish/ketish) of a letter. A flat list from the
 // backend. Kept fresh on every open since another branch's HR may add movements.
 export function tripMovementsQuery(id: number) {
@@ -114,6 +142,11 @@ export function letterRahbariyatQuery(branchId: number | undefined, enabled: boo
           .then(
             (r) =>
               (Array.isArray(r.data) ? r.data : [])
+                // Only ACTUAL leadership (director/deputy) is rahbariyat — devonxona,
+                // buxgalter, yurist, texnik yordam (akt) etc. are branch leaders too
+                // but must NOT appear as a management signer. Web AddLetterDrawer parity.
+                .filter((l: { employee?: Employee; leadership_role?: string }) =>
+                  l.employee && ['director', 'deputy'].includes(l.leadership_role ?? ''))
                 .map((l: { employee?: Employee }) => l.employee)
                 .filter(Boolean) as Employee[]
           )

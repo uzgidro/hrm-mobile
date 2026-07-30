@@ -130,7 +130,7 @@ export default function TeamScreen() {
     queries: [
       { queryKey: employeesQueryKey(orgBranchId), queryFn: () => fetchAllEmployees(orgBranchId), staleTime: 5 * 60 * 1000 },
       dayAttendanceQuery(today, orgBranchId),
-      teamLeavesQuery(today, 20),
+      teamLeavesQuery(today, 20, orgBranchId),
       {
         queryKey: birthdaysListKey(orgBranchId),
         queryFn: () =>

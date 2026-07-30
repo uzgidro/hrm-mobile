@@ -70,10 +70,12 @@ describe('OrdersListScreen', () => {
   it('phone/portrait: renders the plain list (no split, both cards visible)', async () => {
     mock.onGet(ORDER_ACTS).reply(200, ORDERS);
 
-    const { findByText, queryByText } = await renderWithProviders(<OrdersListScreen />);
+    const { findAllByText, queryByText } = await renderWithProviders(<OrdersListScreen />);
 
-    expect(await findByText('First decree')).toBeTruthy();
-    expect(await findByText('Second decree')).toBeTruthy();
+    // Each category name appears twice: as a filter chip AND as the card title,
+    // so the card is present iff there are >= 2 matches (chip alone would be 1).
+    expect((await findAllByText('First decree')).length).toBeGreaterThanOrEqual(2);
+    expect((await findAllByText('Second decree')).length).toBeGreaterThanOrEqual(2);
     // No detail pane / placeholder text rendered outside split mode.
     expect(queryByText('First decree, №')).toBeNull();
   });

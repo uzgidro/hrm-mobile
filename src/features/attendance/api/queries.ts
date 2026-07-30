@@ -44,11 +44,18 @@ export function dayAttendanceQuery(date: string, orgBranchId?: number) {
 // so approving a request on the leave-detail screen refreshes the team /
 // attendance-detail feeds too. The `dateKey` segment preserves the original
 // per-date cache separation the screens used (`['team-leaves', date]`).
-export function teamLeavesQuery(dateKey: string, size: number) {
+export function teamLeavesQuery(dateKey: string, size: number, branchId?: number | null) {
+  // BRANCH-SCOPED. `GET /work-leaves` is not auto-scoped by the caller, so without
+  // organization_branch_id this dashboard feed returns every branch's requests
+  // (cross-branch PII leak). The attendance dashboards are already branch-wide
+  // (branch employees + branch attendance), so constraining leaves to the same
+  // branch is both the security boundary and the correct data set.
+  const params: Record<string, unknown> = { size };
+  if (branchId != null) params.organization_branch_id = branchId;
   return queryOptions({
-    queryKey: ['work-leaves', 'team', dateKey] as const,
+    queryKey: ['work-leaves', 'team', dateKey, branchId ?? null] as const,
     queryFn: () =>
-      apiClient.get(WORK_LEAVES, { params: { size } }).then((r) => {
+      apiClient.get(WORK_LEAVES, { params }).then((r) => {
         const d = r.data as any;
         // The list endpoint returns either a bare array or an { items } envelope.
         return (Array.isArray(d) ? d : (d?.items ?? [])) as WorkLeave[];

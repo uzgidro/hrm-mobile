@@ -11,6 +11,9 @@ export default {
   tabMine: 'Mening',
   emptyAction: "Sizdan amal kutilayotgan buyruqlar yo'q",
   emptyAll: "Buyruqlar yo'q",
+  searchPlaceholder: 'Raqam, kategoriya yoki muallif...',
+  filterAllCategories: 'Barcha kategoriyalar',
+  filterAllStatuses: 'Barcha holatlar',
   actionExpected: 'Sizdan amal kutilmoqda',
 
   // ── Create screen (CreateOrderScreen) ───────────────────────────────────────

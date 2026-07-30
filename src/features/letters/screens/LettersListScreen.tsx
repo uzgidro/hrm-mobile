@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  View, Text, ScrollView, StyleSheet, TouchableOpacity, RefreshControl,
+  View, Text, ScrollView, StyleSheet, TouchableOpacity, RefreshControl, TextInput,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -13,10 +13,13 @@ import { Screen } from '@/components/Screen';
 import { SplitLayout } from '@/components/SplitLayout';
 import { LoadingView, EmptyState } from '@/components/StateViews';
 import { useBreakpoint } from '@/utils/responsive';
-import { canSignLetter } from '@/utils/letterStatus';
+import { canSignLetter, letterTypeLabel, letterStatusMeta, normalizeLetterType } from '@/utils/letterStatus';
 import { lettersListQuery, type LettersTab } from '../api/queries';
 import { LetterListCard } from '../components/LetterListCard';
 import { LetterDetailView } from '../components/LetterDetailView';
+
+const TYPE_FILTERS = ['all', 'explanatory', 'application', 'business_trip'] as const;
+type TypeFilter = (typeof TYPE_FILTERS)[number];
 
 const TABS: { key: LettersTab; labelKey: string }[] = [
   { key: 'action', labelKey: 'letters.tabAction' },
@@ -35,6 +38,10 @@ export default function LettersListScreen() {
   const split = bp.isTablet && bp.isLandscape;
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
+  const [search, setSearch] = useState('');
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+
   const { data: letters = [], isLoading, refetch, isFetching } = useQuery(lettersListQuery(tab));
 
   const actionCount = useMemo(
@@ -46,6 +53,34 @@ export default function LettersListScreen() {
     () => [...letters].sort((a, b) => (b.created_at ?? String(b.id)).localeCompare(a.created_at ?? String(a.id))),
     [letters]
   );
+
+  // Status filter options are derived from what's actually loaded so the chips
+  // are always relevant to the current tab (the full status set is large and
+  // type-dependent). Label via letterStatusMeta so it matches the badges.
+  const statusOptions = useMemo(() => {
+    const seen = new Map<string, string>();
+    for (const l of sorted) {
+      const key = l.status ?? '';
+      if (key && !seen.has(key)) seen.set(key, letterStatusMeta(l).label);
+    }
+    return Array.from(seen, ([value, label]) => ({ value, label }));
+  }, [sorted]);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return sorted.filter((l) => {
+      if (typeFilter !== 'all' && normalizeLetterType(l.letter_type) !== typeFilter) return false;
+      if (statusFilter !== 'all' && (l.status ?? '') !== statusFilter) return false;
+      if (!q) return true;
+      return (
+        (l.letter_number?.toLowerCase().includes(q) ?? false) ||
+        letterTypeLabel(l.letter_type).toLowerCase().includes(q) ||
+        (l.employee?.legal_name?.toLowerCase().includes(q) ?? false) ||
+        (l.submitter?.legal_name?.toLowerCase().includes(q) ?? false) ||
+        (l.description?.toLowerCase().includes(q) ?? false)
+      );
+    });
+  }, [sorted, search, typeFilter, statusFilter]);
 
   // Auto-select the first row when entering split with nothing selected yet
   // (so the detail pane isn't blank on first tablet-landscape render); clear
@@ -60,11 +95,11 @@ export default function LettersListScreen() {
       setSelectedId(null);
       return;
     }
-    if (selectedId == null || !sorted.some((l) => l.id === selectedId)) {
-      setSelectedId(sorted[0]?.id ?? null);
+    if (selectedId == null || !filtered.some((l) => l.id === selectedId)) {
+      setSelectedId(filtered[0]?.id ?? null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [split, sorted]);
+  }, [split, filtered]);
 
   const listPane = (
     <>
@@ -94,6 +129,46 @@ export default function LettersListScreen() {
         })}
       </View>
 
+      <View style={styles.searchWrap}>
+        <View style={styles.searchBox}>
+          <Icon name="search" size={18} color={colors.textMuted} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder={t('letters.searchPlaceholder')}
+            placeholderTextColor={colors.textMuted}
+            value={search}
+            onChangeText={setSearch}
+            returnKeyType="search"
+          />
+          {search.length > 0 && (
+            <TouchableOpacity onPress={() => setSearch('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <Icon name="close" size={18} color={colors.textMuted} />
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+        {TYPE_FILTERS.map((tf) => (
+          <FilterChip
+            key={tf}
+            label={tf === 'all' ? t('letters.filterAllTypes') : letterTypeLabel(tf)}
+            active={typeFilter === tf}
+            onPress={() => setTypeFilter(tf)}
+            styles={styles}
+          />
+        ))}
+      </ScrollView>
+
+      {statusOptions.length > 1 && (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+          <FilterChip label={t('letters.filterAllStatuses')} active={statusFilter === 'all'} onPress={() => setStatusFilter('all')} styles={styles} subtle />
+          {statusOptions.map((s) => (
+            <FilterChip key={s.value} label={s.label} active={statusFilter === s.value} onPress={() => setStatusFilter(s.value)} styles={styles} subtle />
+          ))}
+        </ScrollView>
+      )}
+
       {isLoading ? (
         <LoadingView />
       ) : (
@@ -102,7 +177,7 @@ export default function LettersListScreen() {
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={isFetching && !isLoading} onRefresh={refetch} tintColor={colors.primaryLight} />}
         >
-          {sorted.length === 0 ? (
+          {filtered.length === 0 ? (
             <View style={styles.emptyWrap}>
               <EmptyState
                 icon="mail"
@@ -110,7 +185,7 @@ export default function LettersListScreen() {
               />
             </View>
           ) : (
-            sorted.map((l) => (
+            filtered.map((l) => (
               <LetterListCard
                 key={l.id}
                 letter={l}
@@ -141,6 +216,22 @@ export default function LettersListScreen() {
   return <Screen edges={['top']}>{listPane}</Screen>;
 }
 
+function FilterChip({ label, active, onPress, styles, subtle }: {
+  label: string; active: boolean; onPress: () => void; styles: ReturnType<typeof makeStyles>; subtle?: boolean;
+}) {
+  return (
+    <TouchableOpacity
+      style={[subtle ? styles.chipSubtle : styles.chip, active && (subtle ? styles.chipSubtleActive : styles.chipActive)]}
+      onPress={onPress}
+      activeOpacity={0.75}
+    >
+      <Text style={[subtle ? styles.chipSubtleText : styles.chipText, active && (subtle ? styles.chipSubtleTextActive : styles.chipTextActive)]} numberOfLines={1}>
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
+}
+
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
@@ -155,4 +246,20 @@ const makeStyles = (c: ThemeColors) =>
     tabBadgeText: { fontSize: 10, fontWeight: '800', color: '#fff' },
     content: { paddingHorizontal: 16, paddingTop: 4 },
     emptyWrap: { paddingTop: 60 },
+
+    searchWrap: { paddingHorizontal: 16, paddingBottom: 10 },
+    searchBox: {
+      flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: c.card,
+      borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 12, height: 44,
+    },
+    searchInput: { flex: 1, color: c.text, fontSize: 14 },
+    chipRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingBottom: 10, alignItems: 'center' },
+    chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 18, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder },
+    chipActive: { backgroundColor: c.primary, borderColor: c.primary },
+    chipText: { fontSize: 13, fontWeight: '700', color: c.textSecondary },
+    chipTextActive: { color: c.onPrimary },
+    chipSubtle: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 14, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder },
+    chipSubtleActive: { backgroundColor: c.primarySoft, borderColor: c.primary },
+    chipSubtleText: { fontSize: 12, fontWeight: '600', color: c.textSecondary },
+    chipSubtleTextActive: { color: c.primary },
   });

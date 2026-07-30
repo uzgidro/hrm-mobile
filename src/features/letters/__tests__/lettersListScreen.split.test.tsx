@@ -91,7 +91,7 @@ describe('LettersListScreen (tablet-landscape split)', () => {
     mock.onGet(LETTER_DETAIL(1)).reply(200, { id: 1, status: 'draft', letter_type: 'business_trip' });
     mock.onGet(LETTER_DETAIL(2)).reply(200, { id: 2, status: 'confirmed', letter_type: 'application' });
 
-    const { findByText, findAllByText, queryByText } = await renderWithProviders(<LettersListScreen />);
+    const { findByText, findAllByText, queryAllByText } = await renderWithProviders(<LettersListScreen />);
 
     // Auto-selects letter 1 under the default "action" tab: its type label
     // appears twice (master row + detail pane bigTitle).
@@ -107,8 +107,10 @@ describe('LettersListScreen (tablet-landscape split)', () => {
 
     await waitFor(async () => {
       const matches = await findAllByText('Ariza');
-      expect(matches.length).toBeGreaterThanOrEqual(2); // master row + re-anchored detail pane
+      expect(matches.length).toBeGreaterThanOrEqual(3); // type-filter chip + master row + re-anchored detail pane
     });
-    expect(queryByText('Xizmat safari')).toBeNull();
+    // Letter 1 (card + detail pane) is gone — only the persistent type-filter
+    // chip labelled "Xizmat safari" remains.
+    expect(queryAllByText('Xizmat safari')).toHaveLength(1);
   }, 15000);
 });

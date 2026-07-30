@@ -13,6 +13,9 @@ export default {
   tabMine: 'Мои',
   emptyAction: 'Нет писем, ожидающих подписи',
   empty: 'Писем нет',
+  searchPlaceholder: 'Номер, тип или автор...',
+  filterAllTypes: 'Все типы',
+  filterAllStatuses: 'Все статусы',
   actionPending: 'Ожидается ваша подпись',
 
   // ── Detail screen ───────────────────────────────────────────────────────────
@@ -169,4 +172,16 @@ export default {
   reportSubmitError: 'Ошибка при отправке отчёта',
   reportResetConfirmTitle: 'Удалить отчёт',
   reportResetConfirmMessage: 'Отчёт будет удалён и станет доступен для повторного редактирования. Продолжить?',
+
+  // ── Канцелярия «Подтвердить» (confirm-registration) ──
+  confirmRegistrationAction: 'Подтвердить регистрацию',
+  confirmRegistrationTitle: 'Подтвердить регистрацию',
+  confirmRegistrationHint: 'Проверьте регистрационный номер и подтвердите. При необходимости можно изменить.',
+  confirmRegistrationNumberLabel: 'Регистрационный номер',
+  confirmRegistrationDateLabel: 'Дата',
+  confirmRegistrationSubmit: 'Подтвердить',
+  confirmRegistrationDone: 'Зарегистрировано',
+  numberChecking: 'Проверка…',
+  numberFree: 'Свободен',
+  numberTaken: 'Занят',
 } as const;

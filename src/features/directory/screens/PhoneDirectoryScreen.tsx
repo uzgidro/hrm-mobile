@@ -1,20 +1,24 @@
 import { useMemo, useState } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, FlatList, TextInput, Linking,
+  View, Text, StyleSheet, TouchableOpacity, FlatList, TextInput, Linking, ScrollView,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
+import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { useBreakpoint } from '@/utils/responsive';
+import { findExecutiveBranchId } from '@/utils/branch';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { LoadingView, EmptyState, ErrorState } from '@/components/StateViews';
 import type { PhoneDirectoryEntry } from '@/types';
-import { phoneDirectoryQuery } from '../api/queries';
+import { phoneDirectoryQuery, directoryBranchesQuery } from '../api/queries';
+
+type Scope = 'exec' | 'system';
 
 // Company phone book: one flat list, client-side search by name / position /
 // department. Open to every role (no PII). Tapping a phone dials it.
@@ -24,23 +28,54 @@ export default function PhoneDirectoryScreen() {
   const styles = useThemedStyles(makeStyles);
   const bp = useBreakpoint();
   const cols = bp.isTablet ? (bp.isLandscape ? 3 : 2) : 1;
+  const { user } = useAuthStore();
   const [search, setSearch] = useState('');
 
   const { data = [], isLoading, isError, refetch } = useQuery(phoneDirectoryQuery());
+  const { data: branches = [] } = useQuery(directoryBranchesQuery());
+
+  const executiveBranchId = useMemo(() => findExecutiveBranchId(branches), [branches]);
+  const systemBranches = useMemo(
+    () => branches
+      .filter((b) => b.id !== executiveBranchId)
+      .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'uz')),
+    [branches, executiveBranchId],
+  );
+
+  // Scope defaults to the user's own world: a filial employee opens on "Tizim
+  // tashkilotlari" with their own branch pre-selected; everyone else on "Ijro
+  // apparati" (web TabelPage autoScope parity).
+  const ownBranchId =
+    user?.employee?.department?.organization_branch_id ??
+    user?.employee?.organization_branches?.[0]?.id ??
+    null;
+  const autoScope: Scope = ownBranchId != null && ownBranchId !== executiveBranchId ? 'system' : 'exec';
+  const [scopeChoice, setScopeChoice] = useState<Scope | null>(null);
+  const [branchChoice, setBranchChoice] = useState<number | null | undefined>(undefined);
+  const scope = scopeChoice ?? autoScope;
+  const systemBranchId =
+    branchChoice !== undefined
+      ? branchChoice
+      : scopeChoice == null && autoScope === 'system' ? ownBranchId : null;
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return data;
-    // Match name / position / department AND phone numbers — looking someone up
-    // by their internal extension is a primary phone-book use (web parity).
-    return data.filter((e) =>
+    // Scope first (Ijro apparati vs Tizim tashkilotlari + optional single branch),
+    // then the free-text search — web TabelPage visibleEmployees parity.
+    const inScope = scope === 'exec'
+      ? data.filter((e) => e.branch_id === executiveBranchId)
+      : data.filter((e) =>
+          e.branch_id !== executiveBranchId &&
+          (systemBranchId == null || e.branch_id === systemBranchId));
+    if (!q) return inScope;
+    return inScope.filter((e) =>
       (e.legal_name?.toLowerCase().includes(q) ?? false) ||
       (e.job_position_name?.toLowerCase().includes(q) ?? false) ||
       (e.department_name?.toLowerCase().includes(q) ?? false) ||
       (e.internal_phone_number?.toLowerCase().includes(q) ?? false) ||
       (e.phone_number?.toLowerCase().includes(q) ?? false),
     );
-  }, [data, search]);
+  }, [data, search, scope, systemBranchId, executiveBranchId]);
 
   const dial = (phone: string) => Linking.openURL(`tel:${phone.replace(/\s+/g, '')}`);
 
@@ -72,6 +107,27 @@ export default function PhoneDirectoryScreen() {
           )}
         </View>
       </View>
+
+      {branches.length > 0 && (
+        <View style={styles.filterWrapper}>
+          <View style={styles.scopeRow}>
+            <ScopeChip label={t('directory.scopeExec')} active={scope === 'exec'}
+              onPress={() => { setScopeChoice('exec'); setBranchChoice(undefined); }} styles={styles} />
+            <ScopeChip label={t('directory.scopeSystem')} active={scope === 'system'}
+              onPress={() => { setScopeChoice('system'); setBranchChoice(null); }} styles={styles} />
+          </View>
+          {scope === 'system' && systemBranches.length > 0 && (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.branchRow}>
+              <BranchChip label={t('directory.allBranches')} active={systemBranchId == null}
+                onPress={() => setBranchChoice(null)} styles={styles} />
+              {systemBranches.map((b) => (
+                <BranchChip key={b.id} label={b.name} active={systemBranchId === b.id}
+                  onPress={() => setBranchChoice(b.id)} styles={styles} />
+              ))}
+            </ScrollView>
+          )}
+        </View>
+      )}
 
       {isLoading ? (
         <LoadingView />
@@ -129,6 +185,22 @@ function DirectoryRow({
   );
 }
 
+function ScopeChip({ label, active, onPress, styles }: { label: string; active: boolean; onPress: () => void; styles: Styles }) {
+  return (
+    <TouchableOpacity style={[styles.scopeChip, active && styles.scopeChipActive]} onPress={onPress} activeOpacity={0.7}>
+      <Text style={[styles.scopeChipText, active && styles.scopeChipTextActive]} numberOfLines={1}>{label}</Text>
+    </TouchableOpacity>
+  );
+}
+
+function BranchChip({ label, active, onPress, styles }: { label?: string | null; active: boolean; onPress: () => void; styles: Styles }) {
+  return (
+    <TouchableOpacity style={[styles.branchChip, active && styles.branchChipActive]} onPress={onPress} activeOpacity={0.7}>
+      <Text style={[styles.branchChipText, active && styles.branchChipTextActive]} numberOfLines={1}>{label || '—'}</Text>
+    </TouchableOpacity>
+  );
+}
+
 type Styles = ReturnType<typeof makeStyles>;
 
 const makeStyles = (c: ThemeColors) =>
@@ -149,6 +221,24 @@ const makeStyles = (c: ThemeColors) =>
       borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 12, height: 46,
     },
     searchInput: { flex: 1, color: c.text, fontSize: 14 },
+
+    filterWrapper: { paddingBottom: 4, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
+    scopeRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingBottom: 8 },
+    scopeChip: {
+      flex: 1, paddingVertical: 9, borderRadius: 12, alignItems: 'center',
+      backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder,
+    },
+    scopeChipActive: { backgroundColor: c.primary, borderColor: c.primary },
+    scopeChipText: { fontSize: 13, fontWeight: '700', color: c.textSecondary },
+    scopeChipTextActive: { color: c.onPrimary },
+    branchRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingBottom: 8, alignItems: 'center' },
+    branchChip: {
+      paddingHorizontal: 12, paddingVertical: 7, borderRadius: 16,
+      backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, maxWidth: 220,
+    },
+    branchChipActive: { backgroundColor: c.primarySoft, borderColor: c.primary },
+    branchChipText: { fontSize: 12, fontWeight: '600', color: c.textSecondary },
+    branchChipTextActive: { color: c.primary },
 
     list: { paddingTop: 4, paddingBottom: 32 },
     separator: { height: 1, backgroundColor: c.cardBorder, marginLeft: 76 },

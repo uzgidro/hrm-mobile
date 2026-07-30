@@ -94,6 +94,34 @@ export function isChancellery(user?: User | null): boolean {
   return role === 'chancellery' || role === 'kanselariya';
 }
 
+/** Branches where the user is a chancellery/devonxona branch-leader
+ *  (leadership_role='chancellery'), from /me. */
+export function getChancelleryBranchIds(user?: User | null): number[] {
+  return user?.chancellery_branch_ids ?? [];
+}
+
+/** Is the user the assigned devonxona of `branchId` (a branch-leader devonxona)? */
+export function isBranchDevonxona(user: User | null | undefined, branchId?: number | null): boolean {
+  if (branchId == null) return false;
+  return getChancelleryBranchIds(user).map(Number).includes(Number(branchId));
+}
+
+/** Devonxona in ANY sense — the multi-org 'chancellery'/'kanselariya' role OR a
+ *  branch-leader devonxona (chancellery_branch_ids). Mirrors the web
+ *  roleHelpers.isAnyChancellery: use this to switch the UI into the devonxona
+ *  view; a plain isChancellery would hide devonxona actions from branch leaders. */
+export function isAnyChancellery(user?: User | null): boolean {
+  return isChancellery(user) || getChancelleryBranchIds(user).length > 0;
+}
+
+/** May the user act as devonxona ON a specific branch's record — the global
+ *  'chancellery' role OR that branch's assigned devonxona. Mirrors the web
+ *  roleHelpers.canActAsChancellery; every devonxona ACTION button checks this
+ *  (OR'd with master-admin), so a devonxona of one branch cannot act on another. */
+export function canActAsChancellery(user: User | null | undefined, branchId?: number | null): boolean {
+  return isChancellery(user) || isBranchDevonxona(user, branchId);
+}
+
 /** true for Buxgalteriya (accounting) multi-org employees */
 export function isAccounting(user?: User | null): boolean {
   return getMultiOrgRole(user) === 'accounting';

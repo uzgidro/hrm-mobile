@@ -185,7 +185,7 @@ export default function AttendanceDetailScreen() {
     queries: [
       { queryKey: employeesQueryKey(orgBranchId), queryFn: () => fetchAllEmployees(orgBranchId), staleTime: 5 * 60 * 1000 },
       dayAttendanceQuery(selectedDate, orgBranchId),
-      teamLeavesQuery(selectedDate, 100),
+      teamLeavesQuery(selectedDate, 100, orgBranchId),
     ],
   });
 

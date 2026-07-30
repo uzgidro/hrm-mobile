@@ -4,6 +4,8 @@ export default {
   listTitle: 'Employees',
   subordinatesTitle: 'Subordinates',
   searchPlaceholder: 'Name, position, department...',
+  filterAllDepartments: 'All departments',
+  filterAllPositions: 'All positions',
   notFound: 'Not found',
   empty: 'No employees',
   accessTitle: 'Employees',

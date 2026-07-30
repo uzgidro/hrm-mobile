@@ -7,6 +7,10 @@ export interface User {
   is_navbatchi?: boolean;
   /** branches where this user is an HR branch-leader (leadership_role='hr'), from /me */
   hr_branch_ids?: number[];
+  /** branches where this user is a chancellery/devonxona branch-leader (leadership_role='chancellery'), from /me */
+  chancellery_branch_ids?: number[];
+  /** departments this user heads (department head), from /me — scopes work-leave "all" view like the web */
+  headed_department_ids?: number[];
   /** may create/edit news posts (auth/me flag = can_manage_news on the backend) */
   is_news_manager?: boolean;
   /** may access the KPI module — auth/me flag (backend scoping.kpi_enabled); gates the KPI tile like the web nav */
@@ -163,6 +167,10 @@ export interface Letter {
   rejection_reason?: string | null;
   rejected_by?: Employee | null;
   is_stamped?: boolean;
+  // Registration stamp (devonxona). Auto-assigned when the letter reaches
+  // pending_registration; the confirm-registration dialog pre-fills from these.
+  registered_number?: string | null;
+  registered_date?: string | null;
   generated_document_path?: string | null;
   attachment_path?: string | null;
   departure_date?: string | null;
@@ -666,11 +674,22 @@ export interface Holiday {
 
 // A duty-day range with the employees who work through those off-days
 // (GET /duty-days — separate from both holidays and navbatchilik).
+/** Duty-day member row. The backend narrowed `DutyDayRead.employees` from the
+ *  full EmployeeRead (which carried passport/JShShIR/address) to this list-safe
+ *  shape on 2026-07-30 — the duty list never rendered those fields anyway. */
+export interface DutyEmployee {
+  id: number;
+  legal_name: string;
+  photo_path?: string;
+  photo_thumb_path?: string;
+  job_position?: { id: number; name: string };
+}
+
 export interface DutyDay {
   id: number;
   date_from: string; // 'YYYY-MM-DD'
   date_to: string;
-  employees?: Employee[] | null;
+  employees?: DutyEmployee[] | null;
 }
 
 

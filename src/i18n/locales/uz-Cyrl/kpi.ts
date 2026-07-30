@@ -51,6 +51,10 @@ export default {
   deleteAction: 'Ўчириш',
 
   teamTitle: 'Ходимларим самарадорлиги',
+  teamSearchPlaceholder: 'Ходим, лавозим ёки бўлим...',
+  teamFilterAll: 'Барча',
+  teamFilterPending: 'Топшириқ кутилмоқда',
+  teamFilterDone: 'Якунланган',
   teamEntries: 'Кўрсаткичлар',
   teamPending: 'Тасдиқ кутмоқда',
   teamAllDone: 'Якунланган',

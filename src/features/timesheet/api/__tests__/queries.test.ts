@@ -174,7 +174,8 @@ describe('holidaysQuery', () => {
 
 describe('offDayDutyQuery', () => {
   it('keys under the timesheet root, distinct from navbatchilik keys', () => {
-    expect(offDayDutyQuery().queryKey).toEqual(['timesheet', 'off-day-duty']);
+    expect(offDayDutyQuery().queryKey).toEqual(['timesheet', 'off-day-duty', null]);
+    expect(offDayDutyQuery(7).queryKey).toEqual(['timesheet', 'off-day-duty', 7]);
   });
 
   it('fetches the paginated duty-days list', async () => {
@@ -183,5 +184,14 @@ describe('offDayDutyQuery', () => {
     const data = await (offDayDutyQuery().queryFn as () => Promise<unknown[]>)();
     expect(data).toEqual(rows);
     expect(mock.history.get[0].params).toEqual({ size: 100 });
+  });
+
+  // Web'da filial parametrini axios interceptor'i qo'shadi; mobilda interceptor
+  // yo'q, shuning uchun so'rov uni O'ZI yuborishi shart (aks holda ko'p filialli
+  // kadr hisobida butun tashkilotning navbatchiligi chiqadi).
+  it('sends organization_branch_id when a branch is known', async () => {
+    mock.onGet(DUTY_DAYS_LIST).reply(200, { items: [], total: 0 });
+    await (offDayDutyQuery(7).queryFn as () => Promise<unknown[]>)();
+    expect(mock.history.get[0].params).toEqual({ size: 100, organization_branch_id: 7 });
   });
 });

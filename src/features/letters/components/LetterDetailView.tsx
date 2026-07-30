@@ -1,5 +1,5 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -14,7 +14,7 @@ import { confirm } from '@/lib/confirm';
 import { getApiErrorMessage } from '@/api/errors';
 import {
   letterStatusMeta, letterTypeLabel, canSignLetter, getSigningTimeline, statusColor,
-  canSubmitReport, canResetReport,
+  canSubmitReport, canResetReport, canChancelleryConfirmRegistration,
 } from '@/utils/letterStatus';
 import {
   canSubmitTrip, canApproveTrip, canApproveReport, canApproveGuvohnoma, canRejectLetter,
@@ -25,6 +25,7 @@ import { useResetReport, useSubmitTrip } from '../api/mutations';
 import { DetailHeader, Section, KV, SignerRow } from './DetailParts';
 import { LetterActionBar } from './LetterActionBar';
 import { TripMovementsSection } from './TripMovementsSection';
+import { ConfirmRegistrationModal } from './ConfirmRegistrationModal';
 
 // The body of the letter detail — extracted so it can render either as the
 // pushed route's content (phone / push-notification deep links, `embedded`
@@ -45,6 +46,7 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
   const { busy, sign, reject, approve } = useLetterActions(letterId, refetch);
   const resetReportM = useResetReport(letterId);
   const submitTripM = useSubmitTrip(letterId);
+  const [confirmRegOpen, setConfirmRegOpen] = useState(false);
 
   // Embedded (split-view pane): no safe-area root — the outer list screen's
   // Screen/SafeAreaView already owns the insets. Routed (pushed screen): the
@@ -92,6 +94,9 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
   const canReset = canResetReport(letter, employeeId);
   // The employee sends a trip draft into the flow (server flag, detail-only).
   const canSend = canSubmitTrip(letter);
+  // Devonxona "Tasdiqlash": a stamped bildirgi/ariza/trip at pending_registration
+  // awaits the chancellery's confirmation (auto number editable).
+  const canConfirmReg = canChancelleryConfirmRegistration(letter, user);
   const onSubmitTrip = async () => {
     const ok = await confirm({
       title: t('letters.tripSubmitConfirmTitle'),
@@ -221,6 +226,17 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
           </TouchableOpacity>
         )}
 
+        {canConfirmReg && (
+          <TouchableOpacity
+            style={styles.approveBtn}
+            activeOpacity={0.85}
+            onPress={() => setConfirmRegOpen(true)}
+          >
+            <Icon name="check" size={16} color={colors.onPrimary} />
+            <Text style={styles.approveText}>{t('letters.confirmRegistrationAction')}</Text>
+          </TouchableOpacity>
+        )}
+
         {(canReport || canReset) && (
           <View style={styles.reportActions}>
             {canReport && (
@@ -257,6 +273,15 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
           busy={busy}
           onSign={canSign ? sign : undefined}
           onReject={canReject ? reject : undefined}
+        />
+      )}
+
+      {canConfirmReg && (
+        <ConfirmRegistrationModal
+          letter={letter}
+          visible={confirmRegOpen}
+          onClose={() => setConfirmRegOpen(false)}
+          onConfirmed={refetch}
         />
       )}
     </>,

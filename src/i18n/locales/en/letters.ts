@@ -12,6 +12,9 @@ export default {
   tabMine: 'Mine',
   emptyAction: 'No letters awaiting signature',
   empty: 'No letters',
+  searchPlaceholder: 'Number, type or author...',
+  filterAllTypes: 'All types',
+  filterAllStatuses: 'All statuses',
   actionPending: 'Your signature is pending',
 
   // ── Detail screen ───────────────────────────────────────────────────────────
@@ -164,4 +167,16 @@ export default {
   reportSubmitError: 'Failed to submit the report',
   reportResetConfirmTitle: 'Delete report',
   reportResetConfirmMessage: 'The report will be deleted and reopened for editing. Continue?',
+
+  // ── Chancellery "Confirm" (confirm-registration) ──
+  confirmRegistrationAction: 'Confirm registration',
+  confirmRegistrationTitle: 'Confirm registration',
+  confirmRegistrationHint: 'Check the registration number and confirm. You may edit it if needed.',
+  confirmRegistrationNumberLabel: 'Registration number',
+  confirmRegistrationDateLabel: 'Date',
+  confirmRegistrationSubmit: 'Confirm',
+  confirmRegistrationDone: 'Registered',
+  numberChecking: 'Checking…',
+  numberFree: 'Available',
+  numberTaken: 'Taken',
 } as const;

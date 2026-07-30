@@ -51,6 +51,10 @@ export default {
   deleteAction: 'Удалить',
 
   teamTitle: 'Эффективность моих сотрудников',
+  teamSearchPlaceholder: 'Сотрудник, должность или отдел...',
+  teamFilterAll: 'Все',
+  teamFilterPending: 'Есть задачи',
+  teamFilterDone: 'Завершено',
   teamEntries: 'Показатели',
   teamPending: 'Ждут подтверждения',
   teamAllDone: 'Завершено',

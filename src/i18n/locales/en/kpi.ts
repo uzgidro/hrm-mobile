@@ -51,6 +51,10 @@ export default {
   deleteAction: 'Delete',
 
   teamTitle: 'My team performance',
+  teamSearchPlaceholder: 'Employee, position or department...',
+  teamFilterAll: 'All',
+  teamFilterPending: 'Tasks pending',
+  teamFilterDone: 'Completed',
   teamEntries: 'Indicators',
   teamPending: 'Awaiting review',
   teamAllDone: 'Finalized',

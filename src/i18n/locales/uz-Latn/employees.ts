@@ -11,6 +11,8 @@ export default {
   listTitle: 'Xodimlar',
   subordinatesTitle: "Bo'ysunuvchilar",
   searchPlaceholder: "Ism, lavozim, bo'lim...",
+  filterAllDepartments: 'Barcha bo\'limlar',
+  filterAllPositions: 'Barcha lavozimlar',
   notFound: 'Topilmadi',
   empty: "Xodimlar yo'q",
   accessTitle: 'Xodimlar',

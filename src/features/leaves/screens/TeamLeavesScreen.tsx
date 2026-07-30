@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
-  TouchableOpacity, RefreshControl, Image,
+  TouchableOpacity, RefreshControl, Image, TextInput,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -24,6 +24,19 @@ function statusMeta(status: string, c: ThemeColors, t: TFunction) {
   return { label: t('leaves.statusPending'), fg: c.warning, bg: c.warningSoft };
 }
 
+type StatusGroup = 'all' | 'pending' | 'approved' | 'rejected';
+function statusGroup(s?: string | null): Exclude<StatusGroup, 'all'> {
+  if (s === 'approved' || s === 'tasdiqlangan' || s === 'signed') return 'approved';
+  if (s === 'rejected' || s === 'rad_etilgan') return 'rejected';
+  return 'pending';
+}
+const STATUS_CHIPS: { key: StatusGroup; labelKey: string }[] = [
+  { key: 'all', labelKey: 'leaves.filterAll' },
+  { key: 'pending', labelKey: 'leaves.statusPending' },
+  { key: 'approved', labelKey: 'leaves.statusApproved' },
+  { key: 'rejected', labelKey: 'leaves.statusRejected' },
+];
+
 export default function TeamLeavesScreen() {
   const { user } = useAuthStore();
   const { colors } = useTheme();
@@ -35,21 +48,30 @@ export default function TeamLeavesScreen() {
   const now = dayjs();
   const [selectedMonth, setSelectedMonth] = useState(now.month());
   const [selectedYear] = useState(now.year());
+  const [search, setSearch] = useState('');
+  const [statusF, setStatusF] = useState<StatusGroup>('all');
 
   const { data: allLeaves = [], isLoading, refetch, isFetching } = useQuery({
-    ...teamLeavesQuery(),
+    ...teamLeavesQuery(user, orgBranchId),
     staleTime: 2 * 60 * 1000,
   });
 
   const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
     return allLeaves
       .filter((l) => {
-        if (orgBranchId && l.employee?.department?.organization_branch_id !== orgBranchId) return false;
         const d = dayjs(l.created_at ?? l.start_date);
-        return d.month() === selectedMonth && d.year() === selectedYear;
+        if (d.month() !== selectedMonth || d.year() !== selectedYear) return false;
+        if (statusF !== 'all' && statusGroup(l.status) !== statusF) return false;
+        if (!q) return true;
+        return (
+          (l.employee?.legal_name?.toLowerCase().includes(q) ?? false) ||
+          (l.type?.toLowerCase().includes(q) ?? false) ||
+          (l.description?.toLowerCase().includes(q) ?? false)
+        );
       })
       .sort((a, b) => (b.created_at ?? String(b.id)).localeCompare(a.created_at ?? String(a.id)));
-  }, [allLeaves, selectedMonth, selectedYear, orgBranchId]);
+  }, [allLeaves, selectedMonth, selectedYear, search, statusF]);
 
   const monthOptions = useMemo(() => {
     const result = [];
@@ -80,6 +102,38 @@ export default function TeamLeavesScreen() {
             return (
               <TouchableOpacity key={`${m.year}-${m.month}`} style={[styles.monthChip, active && styles.monthChipActive]} onPress={() => setSelectedMonth(m.month)} activeOpacity={0.7}>
                 <Text style={[styles.monthChipText, active && styles.monthChipTextActive]}>{m.label}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
+
+      <View style={styles.searchWrap}>
+        <View style={styles.searchBox}>
+          <Icon name="search" size={18} color={colors.textMuted} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder={t('leaves.searchPlaceholder')}
+            placeholderTextColor={colors.textMuted}
+            value={search}
+            onChangeText={setSearch}
+            returnKeyType="search"
+          />
+          {search.length > 0 && (
+            <TouchableOpacity onPress={() => setSearch('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <Icon name="close" size={18} color={colors.textMuted} />
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+
+      <View style={styles.statusFilterWrapper}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.statusRow}>
+          {STATUS_CHIPS.map((s) => {
+            const active = statusF === s.key;
+            return (
+              <TouchableOpacity key={s.key} style={[styles.statusChip, active && styles.statusChipActive]} onPress={() => setStatusF(s.key)} activeOpacity={0.7}>
+                <Text style={[styles.statusChipText, active && styles.statusChipTextActive]}>{t(s.labelKey)}</Text>
               </TouchableOpacity>
             );
           })}
@@ -158,6 +212,18 @@ const makeStyles = (c: ThemeColors) =>
     addBtnText: { fontSize: 24, color: c.primaryLight, fontWeight: '400' },
 
     monthFilterWrapper: { flexShrink: 0, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
+    searchWrap: { paddingHorizontal: 16, paddingTop: 10, flexShrink: 0 },
+    searchBox: {
+      flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: c.card,
+      borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 12, height: 44,
+    },
+    searchInput: { flex: 1, color: c.text, fontSize: 14 },
+    statusFilterWrapper: { flexShrink: 0 },
+    statusRow: { paddingHorizontal: 16, paddingVertical: 10, gap: 8, flexDirection: 'row', alignItems: 'center' },
+    statusChip: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 16, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder },
+    statusChipActive: { backgroundColor: c.primary, borderColor: c.primary },
+    statusChipText: { fontSize: 12, fontWeight: '700', color: c.textSecondary },
+    statusChipTextActive: { color: c.onPrimary },
     monthRow: { paddingHorizontal: 16, paddingVertical: 10, gap: 8, flexDirection: 'row', alignItems: 'center' },
     monthChip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder },
     monthChipActive: { backgroundColor: c.primary, borderColor: c.primary },

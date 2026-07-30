@@ -57,7 +57,15 @@ describe('teamLeavesQuery', () => {
     const key = teamLeavesQuery('2026-07-06', 20).queryKey;
     // invalidateQueries(['work-leaves']) (what sign/reject calls) prefix-matches this.
     expect(key[0]).toBe('work-leaves');
-    expect(key).toEqual(['work-leaves', 'team', '2026-07-06']);
+    expect(key).toEqual(['work-leaves', 'team', '2026-07-06', null]);
+  });
+
+  it('branch-scopes the fetch when a branchId is passed (no cross-branch leak)', async () => {
+    const opts = teamLeavesQuery('2026-07-06', 20, 5);
+    expect(opts.queryKey).toEqual(['work-leaves', 'team', '2026-07-06', 5]);
+    mock.onGet(WORK_LEAVES).reply(200, []);
+    await (opts.queryFn as () => Promise<unknown[]>)();
+    expect(mock.history.get[0].params).toEqual({ size: 20, organization_branch_id: 5 });
   });
 
   it('separates the per-date caches by the dateKey segment', () => {

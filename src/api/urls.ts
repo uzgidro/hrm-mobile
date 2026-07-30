@@ -20,7 +20,8 @@ export const TURNSTILE_ATTENDANCE_EVENTS = 'turnstile-attendance-events';
 export const TURNSTILE_ATTENDANCE_NORMALIZED = 'turnstile-attendance-events/normalized';
 // Navbatchilik (duty roster), read-only on mobile. /my is truly self-scoped;
 // {pk}/members is the effective (dept-expanded) roster; work-schedule-days are
-// the actual day/shift rows (NOT self-scoped — always pass our employee_id).
+// the actual day/shift rows — branch-scoped server-side since backend `f9c79f0`
+// but NOT self-scoped, so always pass our employee_id for a personal view.
 export const NAVBATCHILIK_GROUPS_MY = 'navbatchilik-groups/my';
 export const NAVBATCHILIK_GROUP_MEMBERS = (id: number) => `navbatchilik-groups/${id}/members`;
 export const WORK_SCHEDULE_DAYS = 'work-schedule-days';
@@ -126,6 +127,15 @@ export const LETTER_APPROVE_GUVOHNOMA = (id: number) => `letters/${id}/approve-g
 // manage rights are branch-scoped (see isBranchHr).
 export const LETTER_TRIP_MOVEMENTS = (id: number) => `letters/${id}/trip-movements`;
 export const LETTER_CONFIRM_RETURN = (id: number) => `letters/${id}/confirm-return`;
+
+// Devonxona "Tasdiqlash": a stamped bildirgi/ariza/xizmat safari sits at
+// pending_registration (auto number+seal) until the chancellery confirms it.
+// confirm-registration finalizes it (agreement → registered, trip →
+// management_approved); the devonxona may edit the auto number/date. The
+// availability endpoint (declared BEFORE /{pk} server-side) live-checks whether a
+// registration number is free in the branch. exclude_id = the letter's own id.
+export const LETTER_CONFIRM_REGISTRATION = (id: number) => `letters/${id}/confirm-registration`;
+export const LETTER_REGISTERED_NUMBER_AVAILABILITY = 'letters/registered-number/availability';
 
 // Organization branches
 export const ORGANIZATION_BRANCHES = 'organization-branches';
