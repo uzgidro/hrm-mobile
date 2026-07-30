@@ -142,6 +142,11 @@ export function letterRahbariyatQuery(branchId: number | undefined, enabled: boo
           .then(
             (r) =>
               (Array.isArray(r.data) ? r.data : [])
+                // Only ACTUAL leadership (director/deputy) is rahbariyat — devonxona,
+                // buxgalter, yurist, texnik yordam (akt) etc. are branch leaders too
+                // but must NOT appear as a management signer. Web AddLetterDrawer parity.
+                .filter((l: { employee?: Employee; leadership_role?: string }) =>
+                  l.employee && ['director', 'deputy'].includes(l.leadership_role ?? ''))
                 .map((l: { employee?: Employee }) => l.employee)
                 .filter(Boolean) as Employee[]
           )
