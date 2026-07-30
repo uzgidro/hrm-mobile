@@ -6,4 +6,7 @@ export default {
   notFound: 'Ҳеч нарса топилмади',
   noPhone: 'Телефон йўқ',
   loadError: 'Маълумотномани юклашда хатолик',
+  scopeExec: 'Ижро аппарати',
+  scopeSystem: 'Тизим ташкилотлари',
+  allBranches: 'Барча филиаллар',
 } as const;

@@ -6,4 +6,7 @@ export default {
   notFound: 'Ничего не найдено',
   noPhone: 'Нет телефона',
   loadError: 'Ошибка загрузки справочника',
+  scopeExec: 'Исполнительный аппарат',
+  scopeSystem: 'Организации системы',
+  allBranches: 'Все филиалы',
 } as const;

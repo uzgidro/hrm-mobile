@@ -6,4 +6,7 @@ export default {
   notFound: 'Hech narsa topilmadi',
   noPhone: "Telefon yo'q",
   loadError: "Ma'lumotnomani yuklashda xatolik",
+  scopeExec: 'Ijro apparati',
+  scopeSystem: 'Tizim tashkilotlari',
+  allBranches: 'Barcha filiallar',
 } as const;
