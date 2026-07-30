@@ -15,6 +15,7 @@ import {
   letterStatusMeta,
   statusColor,
   isNewTripFlow,
+  canConfirmTripReturn,
   canSubmitReport,
   canResetReport,
   isReportReturned,
@@ -405,6 +406,44 @@ describe('getSigningTimeline', () => {
       { key: 'main-1', name: 'Boss', role: "Boshlig'i", status: 'pending', statusText: 'Kutilmoqda' },
     ]);
   });
+
+  // Web parity (helpers.js:294 mgmtApproved): on an OLD-flow trip the management
+  // signer's approval is NOT recorded in `signers` — it's derived from the letter
+  // reaching a post-registration stage (is_stamped / management_approved …). Mark
+  // management "Tasdiqladi" from that signal, not from hasSigned, but NOT while
+  // pending_registration (stamped, yet the chancellery hasn't registered it).
+  const tripMgmt = (extra: Partial<Letter> = {}): Letter =>
+    letter({
+      letter_type: 'business_trip',
+      assigned_signers: [{ signer_type: 'management', employee_id: 3, employee: { legal_name: 'Mgr' } as any }],
+      ...extra,
+    });
+
+  it('marks trip management as approved once the trip is registered (management_approved)', () => {
+    expect(getSigningTimeline(tripMgmt({ status: 'management_approved' }))[0]).toMatchObject({
+      status: 'signed',
+      statusText: 'Tasdiqladi',
+    });
+  });
+
+  it('marks trip management as approved when is_stamped, past pending_registration', () => {
+    expect(getSigningTimeline(tripMgmt({ is_stamped: true, status: 'report_submitted' }))[0]).toMatchObject({
+      status: 'signed',
+    });
+  });
+
+  it('does NOT mark trip management approved while pending_registration even if is_stamped', () => {
+    expect(getSigningTimeline(tripMgmt({ is_stamped: true, status: 'pending_registration' }))[0]).toMatchObject({
+      status: 'pending',
+      statusText: 'Kutilmoqda',
+    });
+  });
+
+  it('marks trip management rejected when that signer rejected (and not yet approved)', () => {
+    expect(getSigningTimeline(tripMgmt({ status: 'signed', reject_by_id: 3 }))[0]).toMatchObject({
+      status: 'rejected',
+    });
+  });
 });
 
 describe('letterStatusMeta', () => {
@@ -511,6 +550,38 @@ describe('isNewTripFlow', () => {
   });
   it('false for a non-trip letter even with flow_version 2 (backend guards on type)', () => {
     expect(isNewTripFlow(letter({ letter_type: 'application', flow_version: 2 }))).toBe(false);
+  });
+});
+
+// ── KADR "Keldi" stage gate (web canConfirmTripReturn parity, helpers.js:504) ──
+// OLD-flow trip only; confirm-return is blocked by the backend (400
+// trip_not_registered) until the chancellery registers the trip, i.e. while the
+// status is still in the pre-registration set. The button must not show then.
+describe('canConfirmTripReturn', () => {
+  const oldTrip = (status: string, extra: Partial<Letter> = {}): Letter =>
+    letter({ letter_type: 'business_trip', flow_version: 1, status, ...extra });
+
+  it('false in every pre-registration / terminal status', () => {
+    for (const s of ['draft', 'pending', 'signed', 'pending_registration',
+                     'report_approved', 'rejected', 'cancelled']) {
+      expect(canConfirmTripReturn(oldTrip(s))).toBe(false);
+    }
+  });
+
+  it('true once the trip is registered (management_approved) and not yet confirmed', () => {
+    expect(canConfirmTripReturn(oldTrip('management_approved'))).toBe(true);
+  });
+
+  it('false when the return is already confirmed', () => {
+    expect(canConfirmTripReturn(oldTrip('management_approved', { is_trip_confirmed: true }))).toBe(false);
+  });
+
+  it('false for a NEW-flow trip (arrival goes through hr-arrive, not confirm-return)', () => {
+    expect(canConfirmTripReturn(letter({ letter_type: 'business_trip', flow_version: 2, status: 'management_approved' }))).toBe(false);
+  });
+
+  it('false for a non-trip letter', () => {
+    expect(canConfirmTripReturn(letter({ letter_type: 'application', status: 'registered' }))).toBe(false);
   });
 });
 

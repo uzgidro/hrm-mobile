@@ -9,7 +9,7 @@ import type { Letter, BusinessTripMovement, User } from '@/types';
 import { Icon } from '@/components/Icon';
 import { getApiErrorMessage } from '@/api/errors';
 import { isSiteMasterAdmin, isBranchHr } from '@/utils/roles';
-import { normalizeLetterType } from '@/utils/letterStatus';
+import { normalizeLetterType, canConfirmTripReturn } from '@/utils/letterStatus';
 import { Section } from './DetailParts';
 import { tripMovementsQuery } from '../api/queries';
 import { useConfirmReturn } from '../api/mutations';
@@ -46,7 +46,12 @@ export function TripMovementsSection({
   );
   const canManage =
     isSiteMasterAdmin(user) || tripBranchIds.some((bid) => isBranchHr(user, bid));
-  const canConfirmReturn = canManage && !letter.is_trip_confirmed;
+  // Stage gate: the backend blocks confirm-return with 400 trip_not_registered
+  // until the chancellery registers the trip (it's in the pre-registration set).
+  // A site master-admin bypasses the stage, matching the backend. Without this a
+  // branch HR would see "Keldi" on a pending_registration trip and hit the 400.
+  const stageAllowsReturn = isSiteMasterAdmin(user) || canConfirmTripReturn(letter);
+  const canConfirmReturn = canManage && !letter.is_trip_confirmed && stageAllowsReturn;
 
   const { data: movements = [], isLoading } = useQuery({
     ...tripMovementsQuery(letter.id),

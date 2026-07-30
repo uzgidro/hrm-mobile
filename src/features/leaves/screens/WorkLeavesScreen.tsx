@@ -181,8 +181,8 @@ export default function WorkLeavesScreen() {
   return (
     <Screen edges={['top', 'bottom']} overlay={fab}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backArrow}>{'<'}</Text>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.7} hitSlop={8}>
+          <Icon name="chevronLeft" size={24} color={colors.text} />
         </TouchableOpacity>
         <View style={styles.headerTitleRow}>
           <Text style={styles.headerTitle}>{isSupervisor ? t('leaves.incomingTitle') : t('leaves.myTitle')}</Text>
@@ -291,8 +291,7 @@ const makeStyles = (c: ThemeColors) =>
       flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14,
       borderBottomWidth: 1, borderBottomColor: c.cardBorder,
     },
-    backBtn: { width: 36, height: 36, justifyContent: 'center' },
-    backArrow: { fontSize: 22, color: c.text, fontWeight: '300' },
+    backBtn: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center' },
     headerTitleRow: { flex: 1, flexDirection: 'row', alignItems: 'center', paddingLeft: 4, gap: 8 },
     headerTitle: { fontSize: 20, fontWeight: '700', color: c.text },
     countBadge: { backgroundColor: c.warning, borderRadius: 10, paddingHorizontal: 7, paddingVertical: 2, minWidth: 20, alignItems: 'center' },

@@ -67,6 +67,15 @@ export function isNewTripFlow(l: Letter): boolean {
 // Statuses a trip is in while the employee may submit/edit a report.
 const REPORT_SUBMITTABLE_STATUSES = ['management_approved', 'report_submitted', 'report_returned'];
 
+// OLD-flow trip statuses from which the management (rahbariyat) approval is
+// considered done in the timeline — the approval isn't recorded in `signers`, so
+// it's derived from the trip having advanced past registration. Mirrors the web
+// getLetterSigningTimeline mgmtApproved list (helpers.js:300).
+const TRIP_MGMT_APPROVED_STATUSES = [
+  'management_approved', 'report_submitted', 'report_management_review',
+  'report_approved', 'extension_review',
+];
+
 function isTripAuthor(l: Letter, employeeId?: number | null): boolean {
   if (!employeeId) return false;
   return eq(l.creator_employee_id, employeeId) || eq(l.submitter_id, employeeId);
@@ -94,6 +103,26 @@ export function canResetReport(l: Letter, employeeId?: number | null): boolean {
   if (!isBusinessTrip(l) || isNewTripFlow(l)) return false;
   if (l.status !== 'report_submitted') return false;
   return isTripAuthor(l, employeeId);
+}
+
+// Statuses in which the backend still refuses KADR "Keldi" (confirm-return) with
+// 400 trip_not_registered — the trip isn't registered by the chancellery yet, or
+// it's already finished/terminal. Mirrors the web canConfirmTripReturn exclusion
+// list (helpers.js:511).
+const TRIP_RETURN_BLOCKED_STATUSES = [
+  'draft', 'pending', 'signed', 'pending_registration',
+  'report_approved', 'rejected', 'cancelled',
+];
+
+// KADR "Keldi" (confirm-return) stage gate — OLD-flow trip only, not yet
+// confirmed, and past the chancellery's registration. This is the STAGE half of
+// the gate; the caller ANDs it with the manage-right (branch HR) and lets a site
+// master-admin bypass the stage, matching the backend (confirm-return allows
+// master-admin regardless of status). Mirrors web canConfirmTripReturn.
+export function canConfirmTripReturn(l: Letter): boolean {
+  if (!isBusinessTrip(l) || isNewTripFlow(l)) return false;
+  if (l.is_trip_confirmed) return false;
+  return !TRIP_RETURN_BLOCKED_STATUSES.includes(l.status ?? '');
 }
 
 export function hasSigned(l: Letter, employeeId?: number | null) {
@@ -180,7 +209,29 @@ export function getSigningTimeline(l: Letter): TimelineItem[] {
   };
 
   if (isTrip) {
-    getManagementSigners(l).forEach((s) => push(s, 'status.roleLeadership', 'status.timelineApproved'));
+    // Web parity (helpers.js:294): a trip's management approval is NOT in
+    // `signers` (OLD flow doesn't record it there) — it's implied once the letter
+    // reaches a post-registration stage. is_stamped alone is not enough while
+    // pending_registration (auto number+seal applied, but the chancellery hasn't
+    // registered it yet), so that status is explicitly excluded.
+    const mgmtApproved =
+      l.status !== 'pending_registration' &&
+      (l.is_stamped === true || TRIP_MGMT_APPROVED_STATUSES.includes(l.status ?? ''));
+    getManagementSigners(l).forEach((s) => {
+      const id = sid(s);
+      const rejected = hasRejected(l, id);
+      const status = mgmtApproved ? 'signed' : rejected ? 'rejected' : 'pending';
+      items.push({
+        key: `${s.signer_type}-${s.employee_id}`,
+        name: s.employee?.legal_name || i18n.t('status.unknown'),
+        role: (typeof s.employee?.job_position === 'object' ? s.employee?.job_position?.name : '') || i18n.t('status.roleLeadership'),
+        status,
+        statusText:
+          status === 'signed' ? i18n.t('status.timelineApproved')
+          : status === 'rejected' ? i18n.t('status.timelineRejected')
+          : i18n.t('status.timelinePending'),
+      });
+    });
     const main = getMainSigner(l);
     if (main) push(main, 'status.roleChief', 'status.timelineSigned');
     return items;
