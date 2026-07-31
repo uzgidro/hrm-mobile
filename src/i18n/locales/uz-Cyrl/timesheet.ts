@@ -26,6 +26,7 @@ export default {
   dutyLoadError: 'Навбатчиликни юклашда хатолик',
   dutyEmpty: 'Навбатчилик жадвали мавжуд эмас',
   dutyMonthEmpty: 'Бу ойда навбатчилик белгиланмаган',
+  dutySaveError: 'Навбатчилик кунини сақлаб бўлмади',
   myDaysTitle: 'Менинг кунларим',
   dutyDayOff: 'Дам олиш',
   shiftsLabel: 'Сменалар',

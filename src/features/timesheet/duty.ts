@@ -2,12 +2,13 @@ import type { NavbatchilikShift, WorkScheduleDay } from '@/types';
 import type { ThemeColors } from '@/theme/palettes';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// "Мои дежурства" (navbatchilik, read-only) — pure helpers for the duty screen.
+// "Мои дежурства" (navbatchilik) — pure helpers for the duty screen.
 //
 // The shift NAME codes (dept mode 'K'/'T'/'D', group mode custom names) are
-// backend contract values and are NOT translated. On the web the employee page
-// passes readOnly={false} and relies on the backend to reject writes — mobile
-// deliberately ships NO mutations at all (see the module plan note).
+// backend contract values and are NOT translated. Duty days are editable: a
+// group member may assign/clear their group's days by tapping a grid cell
+// (see api/mutations.ts + nextDutyCellState below), mirroring the web
+// NavbatchilikGrid — the backend authorizes writes per group membership.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type DutyColorKey = 'primaryLight' | 'warning' | 'success' | 'error' | 'textMuted';
@@ -95,4 +96,41 @@ export function scheduleDayMap(days: WorkScheduleDay[]): Record<string, WorkSche
 /** One employee's duty days out of a group's flat list, deduped + date-sorted. */
 export function daysForEmployee(days: WorkScheduleDay[], employeeId: number): WorkScheduleDay[] {
   return sortScheduleDays(days.filter((d) => d.employee_id === employeeId));
+}
+
+// ── Shift-cycle cell interaction ────────────────────────────────────────────────
+
+export interface DutyCellAction {
+  kind: 'assign' | 'clear' | 'noop';
+  shiftName?: string | null;
+  isDayOff?: boolean;
+  start?: string | null;
+  end?: string | null;
+}
+
+// The tap cycle for a duty-grid cell, mirroring the web handleGroupCellClick:
+// empty → shift[0] → … → shift[N-1] → (Dam, when groupHasDam) → clear. The web
+// includes the Dam (day-off) step unconditionally for any group with shifts, so
+// the caller passes groupHasDam = shifts.length >= 1. `current.is_day_off` is
+// the Dam state (index === shifts.length).
+export function nextDutyCellState(
+  current: WorkScheduleDay | undefined,
+  shifts: NavbatchilikShift[] | null | undefined,
+  groupHasDam: boolean,
+): DutyCellAction {
+  if (!shifts || shifts.length === 0) return { kind: 'noop' };
+  const damState = shifts.length; // index reserved for Dam
+  const curState = current
+    ? current.is_day_off
+      ? damState
+      : shiftIndexIn(shifts, current.schedule_type)
+    : -1;
+  const lastState = groupHasDam ? damState : shifts.length - 1;
+  const next = curState + 1;
+  if (next > lastState) return { kind: 'clear' };
+  if (groupHasDam && next === damState) {
+    return { kind: 'assign', shiftName: null, isDayOff: true, start: null, end: null };
+  }
+  const sh = shifts[next];
+  return { kind: 'assign', shiftName: sh.name ?? 'navbat', isDayOff: false, start: sh.start ?? null, end: sh.end ?? null };
 }

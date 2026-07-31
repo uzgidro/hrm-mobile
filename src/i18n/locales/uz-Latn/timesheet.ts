@@ -33,6 +33,7 @@ export default {
   dutyLoadError: 'Navbatchilikni yuklashda xatolik',
   dutyEmpty: 'Navbatchilik jadvali mavjud emas',
   dutyMonthEmpty: 'Bu oyda navbatchilik belgilanmagan',
+  dutySaveError: "Navbatchilik kunini saqlab bo'lmadi",
   myDaysTitle: 'Mening kunlarim',
   dutyDayOff: 'Dam olish',
   shiftsLabel: 'Smenalar',

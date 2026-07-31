@@ -26,6 +26,7 @@ export default {
   dutyLoadError: 'Failed to load the duty roster',
   dutyEmpty: 'No duty schedule available',
   dutyMonthEmpty: 'No duty assigned this month',
+  dutySaveError: 'Could not save the duty day',
   myDaysTitle: 'My days',
   dutyDayOff: 'Day off',
   shiftsLabel: 'Shifts',
