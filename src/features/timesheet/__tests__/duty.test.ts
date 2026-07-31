@@ -7,6 +7,7 @@ import {
   sortScheduleDays,
   backendWeekdayToDayjs,
   shiftIndexIn,
+  nextDutyCellState,
 } from '../duty';
 import type { ThemeColors } from '@/theme/palettes';
 import type { WorkScheduleDay } from '@/types';
@@ -106,5 +107,37 @@ describe('shiftIndexIn', () => {
     expect(shiftIndexIn(shifts, null)).toBe(-1);
     expect(shiftIndexIn(null, 'Tungi')).toBe(-1);
     expect(shiftIndexIn(undefined, undefined)).toBe(-1);
+  });
+});
+
+describe('nextDutyCellState', () => {
+  const shifts = [{ name: 'A', start: '08:00', end: '20:00' }, { name: 'B', start: '20:00', end: '08:00' }];
+
+  it('empty → first shift (assign)', () => {
+    expect(nextDutyCellState(undefined, shifts, false)).toEqual(
+      { kind: 'assign', shiftName: 'A', isDayOff: false, start: '08:00', end: '20:00' },
+    );
+  });
+  it('first shift → second shift', () => {
+    const cur = { id: 1, employee_id: 5, schedule_date: '2026-07-10', schedule_type: 'A' };
+    expect(nextDutyCellState(cur, shifts, false)).toMatchObject({ kind: 'assign', shiftName: 'B' });
+  });
+  it('last shift → clear when the group has no Dam', () => {
+    const cur = { id: 1, employee_id: 5, schedule_date: '2026-07-10', schedule_type: 'B' };
+    expect(nextDutyCellState(cur, shifts, false)).toEqual({ kind: 'clear' });
+  });
+  it('last shift → Dam when the group has Dam', () => {
+    const cur = { id: 1, employee_id: 5, schedule_date: '2026-07-10', schedule_type: 'B' };
+    expect(nextDutyCellState(cur, shifts, true)).toEqual(
+      { kind: 'assign', shiftName: null, isDayOff: true, start: null, end: null },
+    );
+  });
+  it('Dam → clear', () => {
+    const cur = { id: 1, employee_id: 5, schedule_date: '2026-07-10', is_day_off: true };
+    expect(nextDutyCellState(cur, shifts, true)).toEqual({ kind: 'clear' });
+  });
+  it('no shifts → noop', () => {
+    expect(nextDutyCellState(undefined, [], false)).toEqual({ kind: 'noop' });
+    expect(nextDutyCellState(undefined, null, false)).toEqual({ kind: 'noop' });
   });
 });

@@ -96,3 +96,38 @@ export function scheduleDayMap(days: WorkScheduleDay[]): Record<string, WorkSche
 export function daysForEmployee(days: WorkScheduleDay[], employeeId: number): WorkScheduleDay[] {
   return sortScheduleDays(days.filter((d) => d.employee_id === employeeId));
 }
+
+// ── Shift-cycle cell interaction ────────────────────────────────────────────────
+
+export interface DutyCellAction {
+  kind: 'assign' | 'clear' | 'noop';
+  shiftName?: string | null;
+  isDayOff?: boolean;
+  start?: string | null;
+  end?: string | null;
+}
+
+// The tap cycle for a duty-grid cell, mirroring the web handleGroupCellClick:
+// empty → shift[0] → … → shift[N-1] → (Dam, if the group defines rest days) →
+// clear. `current.is_day_off` is the Dam state (index === shifts.length).
+export function nextDutyCellState(
+  current: WorkScheduleDay | undefined,
+  shifts: NavbatchilikShift[] | null | undefined,
+  groupHasDam: boolean,
+): DutyCellAction {
+  if (!shifts || shifts.length === 0) return { kind: 'noop' };
+  const damState = shifts.length; // index reserved for Dam
+  const curState = current
+    ? current.is_day_off
+      ? damState
+      : shiftIndexIn(shifts, current.schedule_type)
+    : -1;
+  const lastState = groupHasDam ? damState : shifts.length - 1;
+  const next = curState + 1;
+  if (next > lastState) return { kind: 'clear' };
+  if (groupHasDam && next === damState) {
+    return { kind: 'assign', shiftName: null, isDayOff: true, start: null, end: null };
+  }
+  const sh = shifts[next];
+  return { kind: 'assign', shiftName: sh.name ?? 'navbat', isDayOff: false, start: sh.start ?? null, end: sh.end ?? null };
+}
