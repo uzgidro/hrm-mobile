@@ -2,12 +2,13 @@ import type { NavbatchilikShift, WorkScheduleDay } from '@/types';
 import type { ThemeColors } from '@/theme/palettes';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// "Мои дежурства" (navbatchilik, read-only) — pure helpers for the duty screen.
+// "Мои дежурства" (navbatchilik) — pure helpers for the duty screen.
 //
 // The shift NAME codes (dept mode 'K'/'T'/'D', group mode custom names) are
-// backend contract values and are NOT translated. On the web the employee page
-// passes readOnly={false} and relies on the backend to reject writes — mobile
-// deliberately ships NO mutations at all (see the module plan note).
+// backend contract values and are NOT translated. Duty days are editable: a
+// group member may assign/clear their group's days by tapping a grid cell
+// (see api/mutations.ts + nextDutyCellState below), mirroring the web
+// NavbatchilikGrid — the backend authorizes writes per group membership.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type DutyColorKey = 'primaryLight' | 'warning' | 'success' | 'error' | 'textMuted';
