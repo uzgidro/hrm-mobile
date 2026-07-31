@@ -109,8 +109,10 @@ export interface DutyCellAction {
 }
 
 // The tap cycle for a duty-grid cell, mirroring the web handleGroupCellClick:
-// empty → shift[0] → … → shift[N-1] → (Dam, if the group defines rest days) →
-// clear. `current.is_day_off` is the Dam state (index === shifts.length).
+// empty → shift[0] → … → shift[N-1] → (Dam, when groupHasDam) → clear. The web
+// includes the Dam (day-off) step unconditionally for any group with shifts, so
+// the caller passes groupHasDam = shifts.length >= 1. `current.is_day_off` is
+// the Dam state (index === shifts.length).
 export function nextDutyCellState(
   current: WorkScheduleDay | undefined,
   shifts: NavbatchilikShift[] | null | undefined,
