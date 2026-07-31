@@ -26,6 +26,7 @@ export default {
   dutyLoadError: 'Ошибка загрузки дежурств',
   dutyEmpty: 'График дежурств отсутствует',
   dutyMonthEmpty: 'В этом месяце дежурств не назначено',
+  dutySaveError: 'Не удалось сохранить день дежурства',
   myDaysTitle: 'Мои дни',
   dutyDayOff: 'Выходной',
   shiftsLabel: 'Смены',
