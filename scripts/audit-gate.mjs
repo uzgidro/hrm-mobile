@@ -21,16 +21,13 @@
 import { execSync } from 'node:child_process';
 
 /** GHSA id -> why it's tolerated. Keep the reason honest and specific. */
-const ALLOW = {
-  'GHSA-3jxr-9vmj-r5cp':
-    'brace-expansion (eslint/jest via minimatch) — fix is v4, whose changed export shape breaks minimatch@3; build-time only, not in the app bundle',
-  'GHSA-mh99-v99m-4gvg':
-    'brace-expansion OOM — npm\'s only "fix available" is jest@25 (breaking major downgrade); build-time only',
-  'GHSA-52cp-r559-cp3m':
-    'js-yaml merge-key DoS (eslint / @expo/cli xcpretty / babel-istanbul) — build-time config/log parsing, not in the app bundle',
-  'GHSA-395f-4hp3-45gv':
-    'shell-quote parse() DoS (react-native -> react-devtools-core) — dev tooling, not in the app bundle',
-};
+// Empty: the former brace-expansion / js-yaml / shell-quote entries were all
+// resolved 2026-08-04 — `npm audit fix` bumped brace-expansion 1.1.15->1.1.18
+// (closes the v1 chain) and an `overrides: minimatch@10 -> brace-expansion 5.0.9`
+// pins the v5 chain (expo-updates -> glob@13 -> minimatch@10), which also cleared
+// the js-yaml/shell-quote transitive advisories. Add entries back only for a
+// genuinely-unfixable, build-time-only advisory, with an honest reason.
+const ALLOW = {};
 
 const BLOCKING = new Set(['high', 'critical']);
 
