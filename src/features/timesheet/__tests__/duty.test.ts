@@ -8,6 +8,11 @@ import {
   backendWeekdayToDayjs,
   shiftIndexIn,
   nextDutyCellState,
+  DEPT_CELL_TYPES,
+  deptCellCode,
+  deptCellLabel,
+  deptCellColorKey,
+  nextDeptCellState,
 } from '../duty';
 import type { ThemeColors } from '@/theme/palettes';
 import type { WorkScheduleDay } from '@/types';
@@ -139,5 +144,73 @@ describe('nextDutyCellState', () => {
   it('no shifts → noop', () => {
     expect(nextDutyCellState(undefined, [], false)).toEqual({ kind: 'noop' });
     expect(nextDutyCellState(undefined, null, false)).toEqual({ kind: 'noop' });
+  });
+});
+
+// ── Bo'lim rejimi (department.has_navbatchilik) ──────────────────────────────
+// Web NavbatchilikGrid CELL_TYPES / entryToCode / nextType bilan 1:1.
+
+describe('dept-mode cells', () => {
+  const row = (over: Partial<WorkScheduleDay>): WorkScheduleDay =>
+    ({ id: 1, employee_id: 7, schedule_date: '2026-07-01', ...over }) as WorkScheduleDay;
+
+  it('carries the web times — attendance is computed from them', () => {
+    const day = DEPT_CELL_TYPES.find((t) => t.code === 'day')!;
+    const night = DEPT_CELL_TYPES.find((t) => t.code === 'night')!;
+    expect([day.start, day.end]).toEqual(['09:00', '21:00']);
+    expect([night.start, night.end]).toEqual(['21:00', '09:00']);
+  });
+
+  describe('deptCellCode', () => {
+    it('reads the stored contract code', () => {
+      expect(deptCellCode(row({ schedule_type: 'day' }))).toBe('day');
+      expect(deptCellCode(row({ schedule_type: 'night' }))).toBe('night');
+    });
+    it('is_day_off wins over schedule_type', () => {
+      expect(deptCellCode(row({ is_day_off: true, schedule_type: 'day' }))).toBe('dam');
+    });
+    it('null for an empty cell or a row with no type', () => {
+      expect(deptCellCode(undefined)).toBeNull();
+      expect(deptCellCode(row({}))).toBeNull();
+    });
+  });
+
+  describe('deptCellLabel', () => {
+    it('maps the contract codes to the web letters', () => {
+      expect(deptCellLabel(row({ schedule_type: 'day' }))).toBe('K');
+      expect(deptCellLabel(row({ schedule_type: 'night' }))).toBe('T');
+      expect(deptCellLabel(row({ is_day_off: true }))).toBe('D');
+    });
+    it('keeps an unknown/leftover type instead of blanking the cell', () => {
+      expect(deptCellLabel(row({ schedule_type: 'Navbatchi' }))).toBe('Navbatchi');
+      expect(deptCellLabel(row({}))).toBe('•');
+    });
+  });
+
+  describe('deptCellColorKey', () => {
+    it('gives each cell type a stable slot', () => {
+      expect(deptCellColorKey(row({ schedule_type: 'day' }))).toBe('warning');
+      expect(deptCellColorKey(row({ schedule_type: 'night' }))).toBe('primaryLight');
+      expect(deptCellColorKey(row({ is_day_off: true }))).toBe('textMuted');
+    });
+  });
+
+  describe('nextDeptCellState', () => {
+    it('cycles empty → K → T → D → empty', () => {
+      expect(nextDeptCellState(undefined)).toEqual(
+        { kind: 'assign', shiftName: 'day', isDayOff: false, start: '09:00', end: '21:00' },
+      );
+      expect(nextDeptCellState(row({ schedule_type: 'day' }))).toEqual(
+        { kind: 'assign', shiftName: 'night', isDayOff: false, start: '21:00', end: '09:00' },
+      );
+      expect(nextDeptCellState(row({ schedule_type: 'night' }))).toEqual(
+        { kind: 'assign', shiftName: null, isDayOff: true, start: null, end: null },
+      );
+      expect(nextDeptCellState(row({ is_day_off: true }))).toEqual({ kind: 'clear' });
+    });
+
+    it('one tap clears an unknown leftover code (web nextType findIndex -1)', () => {
+      expect(nextDeptCellState(row({ schedule_type: 'navbat' }))).toEqual({ kind: 'clear' });
+    });
   });
 });

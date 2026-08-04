@@ -134,3 +134,72 @@ export function nextDutyCellState(
   const sh = shifts[next];
   return { kind: 'assign', shiftName: sh.name ?? 'navbat', isDayOff: false, start: sh.start ?? null, end: sh.end ?? null };
 }
+
+// ── Bo'lim rejimi (department.has_navbatchilik — guruhsiz K/T/D jadval) ───────
+//
+// The second navbatchilik mode. Mirrors the web NavbatchilikGrid's CELL_TYPES +
+// handleDeptCellClick 1:1. `code` values are the backend contract stored in
+// schedule_type; `label` is the web's display letter — a shared CONSTANT, never
+// translated (same rule as shift names).
+//
+// The times matter beyond display: attendance is computed against
+// working_hours_*, so a dept cell written from mobile MUST carry the same
+// 09:00–21:00 / 21:00–09:00 the web writes, or the same duty would count as
+// lateness differently depending on which client set it.
+export interface DeptCellType {
+  code: 'day' | 'night' | 'dam' | null;
+  label: string;
+  isDayOff: boolean;
+  /** 'HH:MM' — the caller appends seconds, as it does for group shifts. */
+  start: string | null;
+  end: string | null;
+}
+
+export const DEPT_CELL_TYPES: DeptCellType[] = [
+  { code: null, label: '', isDayOff: false, start: null, end: null },
+  { code: 'day', label: 'K', isDayOff: false, start: '09:00', end: '21:00' },
+  { code: 'night', label: 'T', isDayOff: false, start: '21:00', end: '09:00' },
+  { code: 'dam', label: 'D', isDayOff: true, start: null, end: null },
+];
+
+/** Which dept cell type a stored row represents (web `entryToCode`). */
+export function deptCellCode(d: WorkScheduleDay | undefined): DeptCellType['code'] {
+  if (!d) return null;
+  if (d.is_day_off) return 'dam';
+  return (d.schedule_type as DeptCellType['code']) || null;
+}
+
+/** The letter shown in a dept-mode cell. A row whose schedule_type is not a
+ *  known dept code (hand-written / left over from group mode) keeps its own
+ *  value rather than being blanked out. */
+export function deptCellLabel(d: WorkScheduleDay): string {
+  const code = deptCellCode(d);
+  const known = DEPT_CELL_TYPES.find((t) => t.code === code && t.code !== null);
+  if (known) return known.label;
+  return d.schedule_type || '•';
+}
+
+export function deptCellColorKey(d: WorkScheduleDay): DutyColorKey {
+  switch (deptCellCode(d)) {
+    case 'day': return 'warning';
+    case 'night': return 'primaryLight';
+    case 'dam': return 'textMuted';
+    default: return 'success';
+  }
+}
+
+// The dept tap cycle (web `nextType`): empty → K → T → D → empty. An unknown
+// stored code has no index, so it falls to position 0 (clear) — same as the web,
+// which lets one tap wipe a stale value instead of getting stuck on it.
+export function nextDeptCellState(current: WorkScheduleDay | undefined): DutyCellAction {
+  const idx = DEPT_CELL_TYPES.findIndex((t) => t.code === deptCellCode(current));
+  const next = DEPT_CELL_TYPES[(idx + 1) % DEPT_CELL_TYPES.length];
+  if (next.code === null) return { kind: 'clear' };
+  return {
+    kind: 'assign',
+    shiftName: next.isDayOff ? null : next.code,
+    isDayOff: next.isDayOff,
+    start: next.start,
+    end: next.end,
+  };
+}

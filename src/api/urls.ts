@@ -28,6 +28,10 @@ export const WORK_SCHEDULE_DAYS = 'work-schedule-days';
 export const WORK_SCHEDULE_DAY_DETAIL = (id: number) => `work-schedule-days/${id}`;
 // All group members' duty days in one request (backend feat/work-schedule-by-group).
 export const WORK_SCHEDULE_DAYS_BY_GROUP = (groupId: number) => `work-schedule-days/group/${groupId}`;
+// Same, for the OTHER navbatchilik mode: a whole department (department.has_navbatchilik).
+// The department roster itself comes from EMPLOYEES_LIST?department_id=, mirroring
+// the web NavbatchilikPage.
+export const WORK_SCHEDULE_DAYS_BY_DEPARTMENT = (deptId: number) => `work-schedule-days/department/${deptId}`;
 // Holidays (Bayramlar) + duty-days (who works through the off-days) — two
 // SEPARATE backend resources; both read-only on mobile (CRUD stays on web).
 export const HOLIDAYS_LIST = 'holidays';

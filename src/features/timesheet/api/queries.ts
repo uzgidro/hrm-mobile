@@ -8,6 +8,8 @@ import {
   NAVBATCHILIK_GROUP_MEMBERS,
   WORK_SCHEDULE_DAYS,
   WORK_SCHEDULE_DAYS_BY_GROUP,
+  WORK_SCHEDULE_DAYS_BY_DEPARTMENT,
+  EMPLOYEES_LIST,
   HOLIDAYS_LIST,
   DUTY_DAYS_LIST,
 } from '@/api/urls';
@@ -40,6 +42,9 @@ export const timesheetKeys = {
     [...timesheetKeys.all, 'schedule-days', month, employeeId ?? null] as const,
   groupScheduleDays: (month: string, groupId?: number) =>
     [...timesheetKeys.all, 'group-schedule-days', month, groupId ?? null] as const,
+  departmentMembers: (deptId?: number) => [...timesheetKeys.all, 'dept-members', deptId ?? null] as const,
+  departmentScheduleDays: (month: string, deptId?: number) =>
+    [...timesheetKeys.all, 'dept-schedule-days', month, deptId ?? null] as const,
   holidays: (orgBranchId?: number) => [...timesheetKeys.all, 'holidays', orgBranchId ?? null] as const,
   offDayDuty: (orgBranchId?: number) =>
     [...timesheetKeys.all, 'off-day-duty', orgBranchId ?? null] as const,
@@ -144,6 +149,49 @@ export function groupScheduleDaysQuery(month: string, groupId?: number) {
     queryFn: () =>
       apiClient
         .get(WORK_SCHEDULE_DAYS_BY_GROUP(groupId as number), {
+          params: {
+            date_from: start.format('YYYY-MM-DD'),
+            date_to: start.endOf('month').format('YYYY-MM-DD'),
+          },
+        })
+        .then((r) => unwrap<WorkScheduleDay>(r.data)),
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+// ── Bo'lim navbatchiligi (department.has_navbatchilik) ───────────────────────
+//
+// The OTHER navbatchilik mode. It has no group, so the whole group chain above
+// resolves to nothing and the grid used to render an empty state for these
+// employees — the duty roster simply never appeared on mobile. Web parity: the
+// NavbatchilikPage dept branch loads the department's employees + their schedule
+// days; here the days come from ONE batch endpoint instead of the web's N+1.
+
+// The department's roster = the grid's rows. Departments are far below the 100
+// page cap (largest is ~42), so a single page is the whole roster.
+export function departmentMembersQuery(deptId?: number) {
+  return queryOptions({
+    queryKey: timesheetKeys.departmentMembers(deptId),
+    enabled: !!deptId,
+    queryFn: () =>
+      apiClient
+        .get(EMPLOYEES_LIST, { params: { department_id: deptId, size: 100 } })
+        .then((r) => unwrap<Employee>(r.data)),
+    staleTime: 10 * 60 * 1000,
+  });
+}
+
+// ALL department members' duty days for a month, in one request. Flat
+// WorkScheduleDay[] with each row's employee_id, exactly like the group variant,
+// so the screen keys them with the same `${employee_id}_${date}` map.
+export function departmentScheduleDaysQuery(month: string, deptId?: number) {
+  const start = dayjs(`${month}-01`);
+  return queryOptions({
+    queryKey: timesheetKeys.departmentScheduleDays(month, deptId),
+    enabled: !!deptId,
+    queryFn: () =>
+      apiClient
+        .get(WORK_SCHEDULE_DAYS_BY_DEPARTMENT(deptId as number), {
           params: {
             date_from: start.format('YYYY-MM-DD'),
             date_to: start.endOf('month').format('YYYY-MM-DD'),

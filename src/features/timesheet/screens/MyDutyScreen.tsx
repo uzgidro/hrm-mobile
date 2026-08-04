@@ -17,7 +17,7 @@ import { monthName, weekdayNameShort } from '@/i18n/dates';
 import { employeeSubLabel } from '@/utils/roles';
 import type { Employee } from '@/types';
 import { myNavbatchilikGroupsQuery, groupMembersQuery, myScheduleDaysQuery, groupScheduleDaysQuery } from '../api/queries';
-import { dutyDayMeta, sortScheduleDays, shiftColor, shiftIndexIn, timeRange, backendWeekdayToDayjs, daysForEmployee } from '../duty';
+import { dutyDayMeta, sortScheduleDays, shiftColor, shiftIndexIn, timeRange, backendWeekdayToDayjs, daysForEmployee, deptCellLabel, deptCellColorKey } from '../duty';
 
 // "Мои дежурства" — READ-ONLY navbatchilik view (my duty days + my groups +
 // the group roster). The web employee page renders editable cells and relies
@@ -65,7 +65,11 @@ export default function MyDutyScreen({ embedded = false }: { embedded?: boolean 
   // Web parity (NavbatchilikPage empty state): no dept duty, no groups → empty.
   // The month's day rows only count on the CURRENT month — otherwise paging to
   // an unassigned month would swallow the month nav into the global empty state.
-  const hasStructuralDuty = groups.length > 0 || !!user?.employee?.department?.has_navbatchilik;
+  // Department duty (the other navbatchilik mode) stores 'day'/'night' in
+  // schedule_type — raw contract codes. They are displayed as the web's K/T/D
+  // letters, the same mapping the grid tab uses.
+  const deptMode = !!user?.employee?.department?.has_navbatchilik;
+  const hasStructuralDuty = groups.length > 0 || deptMode;
   const showGlobalEmpty =
     !hasStructuralDuty && days.length === 0 && monthKey === dayjs().format('YYYY-MM');
 
@@ -122,9 +126,14 @@ export default function MyDutyScreen({ embedded = false }: { embedded?: boolean 
               days.map((d) => {
                 const meta = dutyDayMeta(d);
                 const idx = shiftIndexIn(selectedGroup?.shifts, meta.label);
-                const chipColor = meta.isDayOff
-                  ? colors.textMuted
-                  : idx >= 0 ? shiftColor(idx, colors) : colors.primaryLight;
+                const chipColor = deptMode
+                  ? colors[deptCellColorKey(d)]
+                  : meta.isDayOff
+                    ? colors.textMuted
+                    : idx >= 0 ? shiftColor(idx, colors) : colors.primaryLight;
+                const chipLabel = deptMode
+                  ? deptCellLabel(d)
+                  : meta.isDayOff ? t('timesheet.dutyDayOff') : (meta.label ?? '—');
                 return (
                   <View key={d.id} style={styles.dayRow}>
                     <View style={styles.dayDateCol}>
@@ -132,7 +141,7 @@ export default function MyDutyScreen({ embedded = false }: { embedded?: boolean 
                       <Text style={styles.dayWeekday}>{weekdayNameShort(dayjs(d.schedule_date).day())}</Text>
                     </View>
                     <View style={[styles.chip, { backgroundColor: chipColor }]}>
-                      <Text style={styles.chipText}>{meta.isDayOff ? t('timesheet.dutyDayOff') : (meta.label ?? '—')}</Text>
+                      <Text style={styles.chipText}>{chipLabel}</Text>
                     </View>
                     <Text style={styles.dayTime}>{meta.time}</Text>
                   </View>
