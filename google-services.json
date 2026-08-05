@@ -1,0 +1,49 @@
+{
+  "project_info": {
+    "project_number": "827024134448",
+    "firebase_url": "https://uzgidro-open-data-default-rtdb.firebaseio.com",
+    "project_id": "uzgidro-open-data",
+    "storage_bucket": "uzgidro-open-data.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:827024134448:android:54b9285ebec643f14db8f5",
+        "android_client_info": {
+          "package_name": "uz.uzgidro.hrm"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDJUxHUFN9nktHDNl1GybBKbn4JPjROp4I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:827024134448:android:dd184bc64b8bb8734db8f5",
+        "android_client_info": {
+          "package_name": "uz.uzgidro.uzgidro_open_data"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDJUxHUFN9nktHDNl1GybBKbn4JPjROp4I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
