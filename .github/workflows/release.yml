@@ -51,9 +51,11 @@ jobs:
           GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
         run: printf '%s' "$GOOGLE_SERVICE_ACCOUNT_KEY" > ./playstore-service-account.json
 
-      # Build the production app-bundle and hand it to EAS Submit on completion.
-      # --no-wait keeps the CI job short; build + submit finish on Expo's servers
-      # (watch progress on expo.dev). If a future run shows the submit not
-      # starting, drop --no-wait so the job waits for the build.
+      # Build the production app-bundle and submit it to Play internal.
+      # NOTE: --no-wait was removed (2026-08-05). With it, the CI job ended in
+      # ~1 min right after enqueueing the build, and the follow-up auto-submit
+      # never landed in Play (build 27146cf3 finished but 1.5.0 was absent from
+      # the internal track). Waiting keeps the service-account key present for
+      # the whole build+submit and makes the job's success reflect the submit.
       - name: Build & auto-submit to Play internal track
-        run: eas build --platform android --profile production --non-interactive --auto-submit --no-wait
+        run: eas build --platform android --profile production --non-interactive --auto-submit
