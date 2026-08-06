@@ -10,6 +10,7 @@ import {
   nextDutyCellState,
   DEPT_CELL_TYPES,
   deptCellCode,
+  isKnownDeptCode,
   deptCellLabel,
   deptCellColorKey,
   nextDeptCellState,
@@ -173,6 +174,22 @@ describe('dept-mode cells', () => {
       expect(deptCellCode(undefined)).toBeNull();
       expect(deptCellCode(row({}))).toBeNull();
     });
+    // The stored schedule_type is NOT necessarily a dept code: a row may be
+    // hand-written or left over from group mode. deptCellCode returns it raw,
+    // so its type must stay wider than KnownDeptCode (Copilot, PR #38).
+    it('returns an unknown stored code as-is instead of pretending it is a dept code', () => {
+      expect(deptCellCode(row({ schedule_type: 'Navbatchi' }))).toBe('Navbatchi');
+      expect(isKnownDeptCode(deptCellCode(row({ schedule_type: 'Navbatchi' })))).toBe(false);
+    });
+  });
+
+  describe('isKnownDeptCode', () => {
+    it('accepts only the codes dept mode writes', () => {
+      expect(['day', 'night', 'dam'].every((c) => isKnownDeptCode(c))).toBe(true);
+      expect(isKnownDeptCode(null)).toBe(false);
+      expect(isKnownDeptCode('Navbatchi')).toBe(false);
+      expect(isKnownDeptCode('')).toBe(false);
+    });
   });
 
   describe('deptCellLabel', () => {
@@ -192,6 +209,13 @@ describe('dept-mode cells', () => {
       expect(deptCellColorKey(row({ schedule_type: 'day' }))).toBe('warning');
       expect(deptCellColorKey(row({ schedule_type: 'night' }))).toBe('primaryLight');
       expect(deptCellColorKey(row({ is_day_off: true }))).toBe('textMuted');
+    });
+  });
+
+  describe('deptCellLabel — unknown code', () => {
+    it('keeps the raw value rather than blanking it', () => {
+      expect(deptCellLabel(row({ schedule_type: 'Navbatchi' }))).toBe('Navbatchi');
+      expect(deptCellLabel(row({}))).toBe('•');
     });
   });
 

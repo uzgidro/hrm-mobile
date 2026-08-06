@@ -146,8 +146,24 @@ export function nextDutyCellState(
 // working_hours_*, so a dept cell written from mobile MUST carry the same
 // 09:00–21:00 / 21:00–09:00 the web writes, or the same duty would count as
 // lateness differently depending on which client set it.
+/** The codes dept mode itself writes (web `CELL_TYPES`). */
+export type KnownDeptCode = 'day' | 'night' | 'dam';
+
+/** What a STORED row's dept code actually is. A `work_schedule_days` row can
+ *  hold any `schedule_type` — hand-written, or left over from group mode
+ *  ("Navbatchi") — so this is deliberately wider than `KnownDeptCode` and
+ *  callers must handle the unknown case (`deptCellLabel` falls back to the raw
+ *  value, `nextDeptCellState` clears it in one tap, like the web). The
+ *  `string & {}` keeps literal autocomplete while accepting any string. */
+export type DeptCellCode = KnownDeptCode | (string & {}) | null;
+
+/** Narrows a stored code to one dept mode understands. */
+export function isKnownDeptCode(code: DeptCellCode): code is KnownDeptCode {
+  return code === 'day' || code === 'night' || code === 'dam';
+}
+
 export interface DeptCellType {
-  code: 'day' | 'night' | 'dam' | null;
+  code: KnownDeptCode | null;
   label: string;
   isDayOff: boolean;
   /** 'HH:MM' — the caller appends seconds, as it does for group shifts. */
@@ -162,11 +178,13 @@ export const DEPT_CELL_TYPES: DeptCellType[] = [
   { code: 'dam', label: 'D', isDayOff: true, start: null, end: null },
 ];
 
-/** Which dept cell type a stored row represents (web `entryToCode`). */
-export function deptCellCode(d: WorkScheduleDay | undefined): DeptCellType['code'] {
+/** Which dept cell type a stored row represents (web `entryToCode`).
+ *  Returns the RAW stored code — see `DeptCellCode`: it is not necessarily one
+ *  dept mode knows, so don't assume the narrow union (use `isKnownDeptCode`). */
+export function deptCellCode(d: WorkScheduleDay | undefined): DeptCellCode {
   if (!d) return null;
   if (d.is_day_off) return 'dam';
-  return (d.schedule_type as DeptCellType['code']) || null;
+  return d.schedule_type || null;
 }
 
 /** The letter shown in a dept-mode cell. A row whose schedule_type is not a
@@ -174,8 +192,9 @@ export function deptCellCode(d: WorkScheduleDay | undefined): DeptCellType['code
  *  value rather than being blanked out. */
 export function deptCellLabel(d: WorkScheduleDay): string {
   const code = deptCellCode(d);
-  const known = DEPT_CELL_TYPES.find((t) => t.code === code && t.code !== null);
-  if (known) return known.label;
+  if (isKnownDeptCode(code)) {
+    return DEPT_CELL_TYPES.find((t) => t.code === code)!.label;
+  }
   return d.schedule_type || '•';
 }
 
