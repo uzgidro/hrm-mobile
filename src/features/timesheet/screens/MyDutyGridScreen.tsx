@@ -6,6 +6,7 @@ import dayjs from 'dayjs';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';
+import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
@@ -13,14 +14,29 @@ import { Screen } from '@/components/Screen';
 import { LoadingView, ErrorState, EmptyState } from '@/components/StateViews';
 import { monthName } from '@/i18n/dates';
 import type { Employee } from '@/types';
-import { myNavbatchilikGroupsQuery, groupMembersQuery, groupScheduleDaysQuery } from '../api/queries';
+import {
+  myNavbatchilikGroupsQuery, groupMembersQuery, groupScheduleDaysQuery,
+  departmentMembersQuery, departmentScheduleDaysQuery,
+} from '../api/queries';
 import { useScheduleDayMutations } from '../api/mutations';
-import { dutyDayMeta, shiftColor, shiftIndexIn, scheduleDayMap, nextDutyCellState, backendWeekdayToDayjs } from '../duty';
+import {
+  dutyDayMeta, shiftColor, shiftIndexIn, scheduleDayMap, nextDutyCellState, backendWeekdayToDayjs,
+  deptCellLabel, deptCellColorKey, nextDeptCellState,
+} from '../duty';
 
 // Variant 1 of "дежурства других": a member × day-of-month grid, mirroring the
-// web NavbatchilikGrid. Rows = group roster, columns = month days, cell = shift
+// web NavbatchilikGrid. Rows = the roster, columns = month days, cell = shift
 // chip / day-off / empty, tappable to cycle the duty state. Sticky name column
 // with a horizontally scrolling day area (both halves share ROW_HEIGHT).
+//
+// Two navbatchilik modes, exactly as on the web NavbatchilikPage:
+//   * DEPARTMENT (department.has_navbatchilik) — rows are the department's
+//     employees, cells cycle K → T → D. Takes precedence when both apply, same
+//     as the web (`groupMember = !deptNavbatchilik && is_navbatchi`).
+//   * GROUP (navbatchilik group membership) — rows are the group roster, cells
+//     cycle through the group's shifts.
+// Dept mode used to be missing entirely: the screen keyed off `groups` alone, so
+// a department duty roster rendered as an empty state and never appeared.
 const NAME_COL_WIDTH = 128;
 const CELL_WIDTH = 40;
 const ROW_HEIGHT = 44;
@@ -36,34 +52,49 @@ export default function MyDutyGridScreen({ embedded = false }: { embedded?: bool
   const [refreshing, setRefreshing] = useState(false);
 
   const monthKey = currentMonth.format('YYYY-MM');
-  const groupsQ = useQuery(myNavbatchilikGroupsQuery());
+  const user = useAuthStore((s) => s.user);
+  const department = user?.employee?.department;
+  // Dept mode wins when the employee is both in a duty department and a group.
+  const deptId = department?.has_navbatchilik ? department.id : undefined;
+  const deptMode = !!deptId;
+
+  const groupsQ = useQuery({ ...myNavbatchilikGroupsQuery(), enabled: !deptMode });
   const groups = useMemo(() => groupsQ.data ?? [], [groupsQ.data]);
   const selectedGroup = groups[Math.min(selectedGroupIdx, Math.max(0, groups.length - 1))];
 
-  const membersQ = useQuery({ ...groupMembersQuery(selectedGroup?.id ?? 0), enabled: !!selectedGroup });
-  const groupDaysQ = useQuery({ ...groupScheduleDaysQuery(monthKey, selectedGroup?.id), enabled: !!selectedGroup });
+  const membersQ = useQuery({ ...groupMembersQuery(selectedGroup?.id ?? 0), enabled: !deptMode && !!selectedGroup });
+  const groupDaysQ = useQuery({ ...groupScheduleDaysQuery(monthKey, selectedGroup?.id), enabled: !deptMode && !!selectedGroup });
+  const deptMembersQ = useQuery(departmentMembersQuery(deptId));
+  const deptDaysQ = useQuery(departmentScheduleDaysQuery(monthKey, deptId));
 
-  const members: Employee[] = membersQ.data ?? [];
-  const dayMap = useMemo(() => scheduleDayMap(groupDaysQ.data ?? []), [groupDaysQ.data]);
+  const rosterQ = deptMode ? deptMembersQ : membersQ;
+  const daysQ = deptMode ? deptDaysQ : groupDaysQ;
+  const members: Employee[] = rosterQ.data ?? [];
+  const dayMap = useMemo(() => scheduleDayMap(daysQ.data ?? []), [daysQ.data]);
 
   const monthDays = useMemo(() => {
     const n = currentMonth.daysInMonth();
     return Array.from({ length: n }, (_, i) => currentMonth.date(i + 1).format('YYYY-MM-DD'));
   }, [currentMonth]);
 
+  // Group mode restricts taps to the group's weekdays; a department is on duty
+  // every day, so dept mode has no weekday restriction (web parity: isGroupDay
+  // returns true whenever weekdays is null).
   const groupWeekdays = useMemo(
-    () => new Set((selectedGroup?.weekdays ?? []).map(backendWeekdayToDayjs)),
-    [selectedGroup],
+    () => new Set(deptMode ? [] : (selectedGroup?.weekdays ?? []).map(backendWeekdayToDayjs)),
+    [deptMode, selectedGroup],
   );
   const groupHasDam = (selectedGroup?.shifts?.length ?? 0) >= 1;
-  const { assign, clear, isPending } = useScheduleDayMutations(monthKey, selectedGroup?.id);
+  const { assign, clear, isPending } = useScheduleDayMutations(monthKey, selectedGroup?.id, deptId);
 
   const onCellPress = useCallback(
     async (emp: Employee, dateStr: string) => {
       if (isPending) return;
       if (groupWeekdays.size > 0 && !groupWeekdays.has(dayjs(dateStr).day())) return; // non-group day
       const entry = dayMap[`${emp.id}_${dateStr}`];
-      const action = nextDutyCellState(entry, selectedGroup?.shifts, groupHasDam);
+      const action = deptMode
+        ? nextDeptCellState(entry)
+        : nextDutyCellState(entry, selectedGroup?.shifts, groupHasDam);
       try {
         if (action.kind === 'noop') return;
         if (action.kind === 'clear') { if (entry?.id != null) await clear(entry.id); return; }
@@ -82,18 +113,27 @@ export default function MyDutyGridScreen({ embedded = false }: { embedded?: bool
         Alert.alert(t('timesheet.dutySaveError'));
       }
     },
-    [assign, clear, dayMap, groupHasDam, groupWeekdays, isPending, selectedGroup, t],
+    [assign, clear, dayMap, deptMode, groupHasDam, groupWeekdays, isPending, selectedGroup, t],
   );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([groupsQ.refetch(), selectedGroup ? membersQ.refetch() : Promise.resolve(), selectedGroup ? groupDaysQ.refetch() : Promise.resolve()]);
+    await Promise.all(
+      deptMode
+        ? [deptMembersQ.refetch(), deptDaysQ.refetch()]
+        : [
+            groupsQ.refetch(),
+            selectedGroup ? membersQ.refetch() : Promise.resolve(),
+            selectedGroup ? groupDaysQ.refetch() : Promise.resolve(),
+          ],
+    );
     setRefreshing(false);
-  }, [groupsQ, membersQ, groupDaysQ, selectedGroup]);
+  }, [deptMode, deptMembersQ, deptDaysQ, groupsQ, membersQ, groupDaysQ, selectedGroup]);
 
-  const isLoading = groupsQ.isLoading;
-  const isError = groupsQ.isError;
-  const showEmpty = !isLoading && groups.length === 0;
+  // In dept mode the roster IS the screen — there are no groups to wait on.
+  const isLoading = deptMode ? deptMembersQ.isLoading : groupsQ.isLoading;
+  const isError = deptMode ? deptMembersQ.isError || deptDaysQ.isError : groupsQ.isError;
+  const showEmpty = !isLoading && !isError && (deptMode ? members.length === 0 : groups.length === 0);
 
   const renderRoot = (children: ReactNode) =>
     embedded ? (
@@ -119,7 +159,7 @@ export default function MyDutyGridScreen({ embedded = false }: { embedded?: bool
       {isLoading ? (
         <LoadingView />
       ) : isError ? (
-        <ErrorState title={t('timesheet.dutyLoadError')} onRetry={() => { void groupsQ.refetch(); }} />
+        <ErrorState title={t('timesheet.dutyLoadError')} onRetry={() => { void onRefresh(); }} />
       ) : showEmpty ? (
         <EmptyState icon="calendar" title={t('timesheet.dutyEmpty')} />
       ) : (
@@ -138,7 +178,7 @@ export default function MyDutyGridScreen({ embedded = false }: { embedded?: bool
             </TouchableOpacity>
           </View>
 
-          {groups.length > 1 && (
+          {!deptMode && groups.length > 1 && (
             <View style={styles.tabsRow}>
               {groups.map((g, i) => (
                 <TouchableOpacity key={g.id} style={[styles.tab, i === selectedGroupIdx && styles.tabActive]} onPress={() => setSelectedGroupIdx(i)}>
@@ -148,7 +188,7 @@ export default function MyDutyGridScreen({ embedded = false }: { embedded?: bool
             </View>
           )}
 
-          {membersQ.isLoading ? (
+          {rosterQ.isLoading ? (
             <Text style={styles.hint}>…</Text>
           ) : members.length === 0 ? (
             <Text style={styles.hint}>{t('timesheet.dutyMonthEmpty')}</Text>
@@ -185,18 +225,26 @@ export default function MyDutyGridScreen({ embedded = false }: { embedded?: bool
                     <View key={emp.id} style={styles.gridRow}>
                       {monthDays.map((d) => {
                         const entry = dayMap[`${emp.id}_${d}`];
-                        const meta = entry ? dutyDayMeta(entry) : null;
-                        const sIdx = meta ? shiftIndexIn(selectedGroup?.shifts, meta.label) : -1;
-                        const bg = meta?.isDayOff
-                          ? colors.textMuted
-                          : sIdx >= 0 ? shiftColor(sIdx, colors) : colors.primaryLight;
+                        // Dept mode has its own K/T/D letters + colors; group
+                        // mode colors by the shift's index in the group.
+                        let label: string | null = null;
+                        let bg = colors.primaryLight;
+                        if (entry && deptMode) {
+                          label = deptCellLabel(entry);
+                          bg = colors[deptCellColorKey(entry)];
+                        } else if (entry) {
+                          const meta = dutyDayMeta(entry);
+                          const sIdx = shiftIndexIn(selectedGroup?.shifts, meta.label);
+                          label = meta.isDayOff ? t('timesheet.dutyDayOff') : (meta.label ?? '•');
+                          bg = meta.isDayOff
+                            ? colors.textMuted
+                            : sIdx >= 0 ? shiftColor(sIdx, colors) : colors.primaryLight;
+                        }
                         return (
                           <TouchableOpacity key={d} style={styles.dayCell} activeOpacity={0.7} onPress={() => onCellPress(emp, d)}>
-                            {meta ? (
+                            {label !== null ? (
                               <View style={[styles.cellChip, { backgroundColor: bg }]}>
-                                <Text style={styles.cellChipText} numberOfLines={1}>
-                                  {meta.isDayOff ? t('timesheet.dutyDayOff') : (meta.label ?? '•')}
-                                </Text>
+                                <Text style={styles.cellChipText} numberOfLines={1}>{label}</Text>
                               </View>
                             ) : null}
                           </TouchableOpacity>
