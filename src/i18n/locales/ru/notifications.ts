@@ -28,12 +28,17 @@ export default {
   kpiTaskSubmitted: 'Задача отправлена',
   kpiTaskConfirmed: 'Задача подтверждена',
   kpiTaskRejected: 'Задача отклонена',
+  workLeaveRequested: 'Новый запрос на отгул',
+  workLeaveSigned: 'Запрос одобрен',
+  workLeaveRejected: 'Запрос отклонён',
+  workLeaveFallback: 'Отгул',
   kpiFallback: 'KPI',
   orderFallback: 'Приказ',
   businessTripFallback: 'Командировка',
   newsFallback: 'Новость',
   workspaceFallback: 'Проект',
   cardFallback: 'Задача',
+  channelName: 'Уведомления',
   generic: 'Уведомление',
 
   // Notifications SCREEN chrome — see uz-Latn/notifications.ts.

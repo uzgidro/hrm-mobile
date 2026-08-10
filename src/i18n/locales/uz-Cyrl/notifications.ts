@@ -28,12 +28,17 @@ export default {
   kpiTaskSubmitted: 'Вазифа топширилди',
   kpiTaskConfirmed: 'Вазифа тасдиқланди',
   kpiTaskRejected: 'Вазифа рад этилди',
+  workLeaveRequested: 'Янги рухсат сўрови',
+  workLeaveSigned: 'Сўров тасдиқланди',
+  workLeaveRejected: 'Сўров рад этилди',
+  workLeaveFallback: 'Рухсат',
   kpiFallback: 'KPI',
   orderFallback: 'Буйруқ',
   businessTripFallback: 'Хизмат сафари',
   newsFallback: 'Янгилик',
   workspaceFallback: 'Лойиҳа',
   cardFallback: 'Вазифа',
+  channelName: 'Билдиришномалар',
   generic: 'Билдиришнома',
 
   // Notifications SCREEN chrome — see uz-Latn/notifications.ts.
