@@ -25,6 +25,24 @@ function getNotifications(): NotificationsModule | null {
   return cachedModule;
 }
 
+// Push failures used to be swallowed by bare `catch {}` blocks with no trace at
+// all — which is how the Android build shipped for a month without a single
+// device ever registering a token (no Firebase config in the binary, so
+// getExpoPushTokenAsync threw and everything below it silently no-oped). Every
+// failure now leaves a tagged line, and `lastPushError` records the most recent
+// one so a support call can ask "what does the log say".
+let lastPushError: string | null = null;
+
+function pushWarn(step: string, err?: unknown): void {
+  lastPushError = `${step}: ${err instanceof Error ? err.message : String(err ?? '')}`;
+  console.warn(`[push] ${lastPushError}`);
+}
+
+/** Diagnostics: the last push setup failure, or null if the last run was clean. */
+export function getLastPushError(): string | null {
+  return lastPushError;
+}
+
 // Foreground notifications: show banner + play sound. Guarded — a missing/limited
 // native module must not throw at import.
 try {
@@ -39,15 +57,44 @@ try {
   });
 } catch {}
 
+// The channel id the backend stamps on every Expo message (`channelId: 'default'`
+// in worker/tasks.send_expo_push). Android 8+ takes importance/sound from the
+// CHANNEL, not the message: with no channel of our own, pushes landed in an
+// implicit low-importance one — tray-only, no heads-up banner, no sound.
+export const ANDROID_CHANNEL_ID = 'default';
+
+export async function ensureAndroidChannel(): Promise<void> {
+  if (Platform.OS !== 'android') return;
+  const N = getNotifications();
+  if (!N) return;
+  try {
+    await N.setNotificationChannelAsync(ANDROID_CHANNEL_ID, {
+      name: i18n.t('notifications.channelName'),
+      importance: N.AndroidImportance.MAX,
+      sound: 'default',
+      vibrationPattern: [0, 250, 250, 250],
+      lockscreenVisibility: N.AndroidNotificationVisibility.PUBLIC,
+    });
+  } catch (e) {
+    pushWarn('android channel', e);
+  }
+}
+
 export async function requestNotificationPermissions(): Promise<boolean> {
   const N = getNotifications();
-  if (!N || !Device.isDevice) return false;
+  if (!N) {
+    pushWarn('native module', 'expo-notifications mavjud emas (Expo Go?)');
+    return false;
+  }
+  if (!Device.isDevice) return false;
   try {
     const { status: existing } = await N.getPermissionsAsync();
     if (existing === 'granted') return true;
     const { status } = await N.requestPermissionsAsync();
+    if (status !== 'granted') pushWarn('permission', `status=${status}`);
     return status === 'granted';
-  } catch {
+  } catch (e) {
+    pushWarn('permission', e);
     return false;
   }
 }
@@ -62,15 +109,44 @@ export async function getExpoPushToken(): Promise<string | null> {
       undefined;
     const tokenData = await N.getExpoPushTokenAsync(projectId ? { projectId } : undefined);
     return tokenData.data;
-  } catch {
+  } catch (e) {
+    // The failure that mattered: on a build without google-services.json the
+    // native FCM registration fails here, so no token ever reaches the backend.
+    pushWarn('getExpoPushToken', e);
     return null;
   }
 }
 
-export async function registerTokenWithBackend(token: string): Promise<void> {
+// The token this device last registered, so logout can unregister exactly it
+// without depending on the native module still being reachable.
+let registeredToken: string | null = null;
+
+export async function registerTokenWithBackend(token: string): Promise<boolean> {
   try {
     await apiClient.post(PUSH_TOKENS, { token, platform: Platform.OS });
-  } catch {}
+    registeredToken = token;
+    lastPushError = null;
+    return true;
+  } catch (e) {
+    // The backend now answers 403 when the account has no employee record
+    // (it used to answer `201 {"ok": false}`, which read as success here).
+    pushWarn('register', e);
+    return false;
+  }
+}
+
+/** Unbind this device from the current account. Called on logout so the next
+ *  person to sign in on this phone never receives the previous user's pushes. */
+export async function unregisterTokenWithBackend(): Promise<void> {
+  const token = registeredToken ?? (await getExpoPushToken());
+  if (!token) return;
+  try {
+    await apiClient.delete(PUSH_TOKENS, { data: { token, platform: Platform.OS } });
+  } catch (e) {
+    pushWarn('unregister', e);
+  } finally {
+    registeredToken = null;
+  }
 }
 
 // Subscribe to foreground receipt + tap events. Returns an unsubscribe function.
@@ -106,16 +182,19 @@ export function routeForNotification(data: any): string | null {
   const letterId = data.letter_id; // only present on push payloads
   const newsId = data.news_post_id;
   const kpiEntryId = data.kpi_entry_id; // kpi_task_submitted/confirmed/rejected
+  const workLeaveId = data.work_leave_id; // work_leave_* — push payloads only
 
   if (orderId) return `/order-detail?id=${orderId}`;
   if (letterId) return `/letter-detail?id=${letterId}`;
   if (kpiEntryId) return `/kpi-entry?id=${kpiEntryId}`;
+  if (workLeaveId) return `/leave-detail?id=${workLeaveId}`;
   if (newsId != null) return '/news';
 
   if (type.startsWith('order_act')) return '/(tabs)/orders';
   if (type.startsWith('business_trip')) return '/(tabs)/letters';
   if (type.startsWith('news')) return '/news';
   if (type.startsWith('kpi')) return '/kpi';
+  if (type.startsWith('work_leave')) return '/work-leaves';
   // card_* / workspace_* (Loyihalar) have no mobile screen yet — stay put.
   return null;
 }
@@ -170,6 +249,9 @@ const NOTIF_META: Record<string, { titleKey: string; icon: IconName }> = {
   kpi_task_submitted: { titleKey: 'notifications.kpiTaskSubmitted', icon: 'checklist' },
   kpi_task_confirmed: { titleKey: 'notifications.kpiTaskConfirmed', icon: 'check' },
   kpi_task_rejected: { titleKey: 'notifications.kpiTaskRejected', icon: 'close' },
+  work_leave_requested: { titleKey: 'notifications.workLeaveRequested', icon: 'calendar' },
+  work_leave_signed: { titleKey: 'notifications.workLeaveSigned', icon: 'check' },
+  work_leave_rejected: { titleKey: 'notifications.workLeaveRejected', icon: 'close' },
 };
 
 // Human-readable title + icon for an in-app notification, derived from its
@@ -192,5 +274,7 @@ export function notificationMeta(type: string): { title: string; icon: IconName 
     return { title: i18n.t('notifications.workspaceFallback'), icon: 'grid' };
   if (t.startsWith('card')) return { title: i18n.t('notifications.cardFallback'), icon: 'checklist' };
   if (t.startsWith('kpi')) return { title: i18n.t('notifications.kpiFallback'), icon: 'target' };
+  if (t.startsWith('work_leave'))
+    return { title: i18n.t('notifications.workLeaveFallback'), icon: 'calendar' };
   return { title: i18n.t('notifications.generic'), icon: 'bell' };
 }

@@ -36,6 +36,9 @@ const CONTRACT: { type: string; icon: string }[] = [
   { type: 'kpi_task_submitted', icon: 'checklist' },
   { type: 'kpi_task_confirmed', icon: 'check' },
   { type: 'kpi_task_rejected', icon: 'close' },
+  { type: 'work_leave_requested', icon: 'calendar' },
+  { type: 'work_leave_signed', icon: 'check' },
+  { type: 'work_leave_rejected', icon: 'close' },
 ];
 
 describe('notificationMeta', () => {
@@ -116,5 +119,31 @@ describe('routeForNotification — kpi', () => {
   it('does not affect non-kpi routes', () => {
     expect(routeForNotification({ type: 'order_act_created', order_act_id: 3 })).toBe('/order-detail?id=3');
     expect(routeForNotification({ type: 'totally_unknown' })).toBeNull();
+  });
+});
+
+
+// Ruxsat/otgul (work_leave) deep-links. The backend used to send
+// {type: 'new_leave' | 'leave_signed' | 'leave_rejected', work_leave_id} — codes
+// this router had never heard of, so tapping the push did nothing. Both sides
+// now speak `work_leave_*` and the id opens the request card.
+describe('routeForNotification — work_leave', () => {
+  it('opens the leave detail when work_leave_id is present', () => {
+    expect(routeForNotification({ type: 'work_leave_signed', work_leave_id: 42 })).toBe(
+      '/leave-detail?id=42'
+    );
+    expect(
+      routeForNotification({ notification_type: 'work_leave_requested', work_leave_id: 7 })
+    ).toBe('/leave-detail?id=7');
+  });
+
+  it('falls back to the leave list for a work_leave type without an id', () => {
+    expect(routeForNotification({ type: 'work_leave_rejected' })).toBe('/work-leaves');
+  });
+
+  it('does not shadow other deep-links', () => {
+    expect(
+      routeForNotification({ type: 'order_act_created', order_act_id: 3, work_leave_id: 9 })
+    ).toBe('/order-detail?id=3');
   });
 });

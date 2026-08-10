@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { storage } from '../api/storage';
 import { setAccessToken, setRefreshToken, clearTokens } from '../api/authToken';
 import { useLockStore } from './lockStore';
+import { teardownPushNotifications } from '../auth/push';
 import { User } from '../types';
 
 const USER_CACHE_KEY = 'cached_user';
@@ -38,6 +39,11 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   logout: async () => {
+    // Unbind the push token FIRST — the DELETE call needs the bearer token that
+    // clearTokens() is about to wipe. Without this the row stayed bound to the
+    // employee who logged out, so the next notification for them woke up a
+    // phone that now belongs to someone else. Never blocks logout.
+    await teardownPushNotifications();
     await clearTokens();
     await storage.deleteItem(USER_CACHE_KEY);
     // Wipe the PIN/biometrics footprint so the next user can't inherit a lock.

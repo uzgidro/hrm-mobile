@@ -39,6 +39,10 @@ export default {
   kpiTaskSubmitted: 'Vazifa topshirildi',
   kpiTaskConfirmed: 'Vazifa tasdiqlandi',
   kpiTaskRejected: 'Vazifa rad etildi',
+  workLeaveRequested: "Yangi ruxsat so'rovi",
+  workLeaveSigned: "So'rov tasdiqlandi",
+  workLeaveRejected: "So'rov rad etildi",
+  workLeaveFallback: 'Ruxsat',
   kpiFallback: 'KPI',
   // prefix fallbacks for unmapped variants of a known family
   orderFallback: 'Buyruq',
@@ -46,6 +50,8 @@ export default {
   newsFallback: 'Yangilik',
   workspaceFallback: 'Loyiha',
   cardFallback: 'Vazifa',
+  // Android bildirishnoma kanali nomi (tizim sozlamalarida ko'rinadi)
+  channelName: 'Bildirishnomalar',
   // last-resort title for a completely unknown type
   generic: 'Bildirishnoma',
 
