@@ -21,13 +21,28 @@
 import { execSync } from 'node:child_process';
 
 /** GHSA id -> why it's tolerated. Keep the reason honest and specific. */
-// Empty: the former brace-expansion / js-yaml / shell-quote entries were all
-// resolved 2026-08-04 — `npm audit fix` bumped brace-expansion 1.1.15->1.1.18
-// (closes the v1 chain) and an `overrides: minimatch@10 -> brace-expansion 5.0.9`
-// pins the v5 chain (expo-updates -> glob@13 -> minimatch@10), which also cleared
-// the js-yaml/shell-quote transitive advisories. Add entries back only for a
-// genuinely-unfixable, build-time-only advisory, with an honest reason.
-const ALLOW = {};
+// 2026-08-11: nanoid was FIXED, not allowlisted — `overrides: nanoid ^3.3.17`
+// bumped it to 3.3.18 on both paths (expo-router runtime + postcss/metro-config),
+// closing GHSA-2v37-7h3g-55p8. The three below are all build/dev-time ONLY (never
+// in the shipped APK/IPA bundle) and have no fix reachable without a breaking
+// major bump of the toolchain — DoS on a parser/loader that only runs on the
+// developer's/CI machine, not on a user's device.
+const ALLOW = {
+  // image-size 1.2.1 via expo -> @expo/metro -> metro (the BUNDLER). The fix is
+  // image-size 2.x, but metro pins `image-size@^1.0.2`, so forcing 2.x breaks the
+  // bundler. Build-time only: metro parses image dimensions while bundling; it is
+  // never part of the app bundle. DoS needs a malicious ICNS/JXL/HEIF asset fed to
+  // our own build. Revisit when metro widens its range to image-size 2.x.
+  'GHSA-w3rx-r6r6-pgpr': 'image-size (metro bundler, build-time only) — ICNS infinite loop; fix is 2.x, metro pins ^1',
+  'GHSA-5p2g-fcmc-qvqq': 'image-size (metro bundler, build-time only) — JXL/HEIF infinite loop; fix is 2.x, metro pins ^1',
+  // js-yaml via eslint (@eslint/eslintrc, 4.3.1), @expo/cli (@expo/xcpretty, 4.3.1)
+  // and jest coverage (@istanbuljs/load-nyc-config, 3.15.0). All lint/CLI/test —
+  // never in the bundle. 4.3.1 is the newest 4.x and is STILL flagged: the omap
+  // quadratic-CPU fix (CVE-2026-59870) was only shipped in js-yaml 5.x and NOT
+  // backported to 3.x/4.x, which these consumers require. Revisit when eslint /
+  // @expo/cli / istanbul move to js-yaml 5.
+  'GHSA-5p4m-2wfm-xmqj': 'js-yaml (eslint/@expo-cli/jest-coverage, build-time only) — omap quadratic CPU; fix only in 5.x, consumers pin 3.x/4.x',
+};
 
 const BLOCKING = new Set(['high', 'critical']);
 
