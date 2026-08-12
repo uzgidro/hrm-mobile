@@ -1,4 +1,7 @@
 // Auth
+// OnlyOffice document server (public host that serves the editor api.js)
+import { Env } from '../config/env';
+
 export const AUTH_LOGIN = 'auth/login';
 export const AUTH_REFRESH = 'auth/refresh';
 export const USER_INFO = 'auth/me';
@@ -191,7 +194,4 @@ export const SUPPORT_TICKET_TAKE = (id: number) => `support-tickets/${id}/take`;
 export const SUPPORT_TICKET_DONE = (id: number) => `support-tickets/${id}/done`;
 export const SUPPORT_TICKET_RATE = (id: number) => `support-tickets/${id}/rate`;
 export const SUPPORT_TICKET_REOPEN = (id: number) => `support-tickets/${id}/reopen`;
-
-// OnlyOffice document server (public host that serves the editor api.js)
-import { Env } from '../config/env';
 export const ONLYOFFICE_SERVER_URL = Env.onlyOfficeUrl;

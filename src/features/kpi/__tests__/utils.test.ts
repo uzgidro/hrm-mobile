@@ -1,4 +1,4 @@
-import type { KpiEntry, KpiTask, KpiEntryAccess } from '@/types';
+import type { KpiEntry, KpiTask, KpiEntryAccess, KpiTeamMember } from '@/types';
 import {
   bandFor,
   KPI_BANDS,
@@ -14,6 +14,7 @@ import {
   isEntryLocked,
   factSum,
   parseScore,
+  filterTeamMembers,
 } from '../utils';
 
 const entry = (o: Partial<KpiEntry>): KpiEntry => ({ id: 1, ...o });
@@ -250,5 +251,64 @@ describe('factSum', () => {
   it('empty/undefined → 0', () => {
     expect(factSum([])).toBe(0);
     expect(factSum(undefined)).toBe(0);
+  });
+});
+
+// ── filterTeamMembers (KpiTeamScreen search + status chips) ──────────────────
+const member = (o: Partial<KpiTeamMember>): KpiTeamMember => ({ employee_id: 1, ...o });
+
+describe('filterTeamMembers', () => {
+  const alice = member({
+    employee_id: 1,
+    legal_name: 'Alice Karimova',
+    job_position_name: 'Muhandis',
+    department_name: 'IT',
+    pending_tasks: 2,
+    all_done: false,
+  });
+  const bob = member({
+    employee_id: 2,
+    legal_name: 'Bob Aliyev',
+    job_position_name: 'Buxgalter',
+    department_name: 'Moliya',
+    pending_tasks: 0,
+    all_done: true,
+  });
+  const all = [alice, bob];
+
+  it('undefined/empty list → []', () => {
+    expect(filterTeamMembers(undefined, '', 'all')).toEqual([]);
+    expect(filterTeamMembers([], 'x', 'pending')).toEqual([]);
+  });
+
+  it("status 'all' + no query → everyone", () => {
+    expect(filterTeamMembers(all, '', 'all')).toEqual(all);
+    expect(filterTeamMembers(all, '   ', 'all')).toEqual(all); // whitespace-only query
+  });
+
+  it("status 'pending' keeps only members with pending_tasks > 0", () => {
+    expect(filterTeamMembers(all, '', 'pending')).toEqual([alice]);
+  });
+
+  it("status 'done' keeps only members with all_done", () => {
+    expect(filterTeamMembers(all, '', 'done')).toEqual([bob]);
+  });
+
+  it('search matches name, position OR department, case-insensitively', () => {
+    expect(filterTeamMembers(all, 'alice', 'all')).toEqual([alice]);
+    expect(filterTeamMembers(all, 'buxgalter', 'all')).toEqual([bob]); // position
+    expect(filterTeamMembers(all, 'moliya', 'all')).toEqual([bob]); // department
+    expect(filterTeamMembers(all, 'ali', 'all')).toEqual(all); // Alice + Aliyev
+  });
+
+  it('search AND status combine', () => {
+    // 'ali' matches both, but only alice is pending.
+    expect(filterTeamMembers(all, 'ali', 'pending')).toEqual([alice]);
+  });
+
+  it('null name fields do not throw and simply do not match', () => {
+    const ghost = member({ employee_id: 3, legal_name: null, pending_tasks: 5, all_done: false });
+    expect(filterTeamMembers([ghost], 'anything', 'all')).toEqual([]);
+    expect(filterTeamMembers([ghost], '', 'pending')).toEqual([ghost]);
   });
 });

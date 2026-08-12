@@ -1,4 +1,4 @@
-import type { KpiEntry, KpiTask, KpiEntryAccess } from '@/types';
+import type { KpiEntry, KpiTask, KpiEntryAccess, KpiTeamMember } from '@/types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Pure presentation/permission logic for the KPI feature. Mirrors the web
@@ -147,4 +147,28 @@ export function factSum(tasks: KpiTask[] | undefined): number {
   return (tasks ?? [])
     .filter((t) => t.task_status?.counts_for_fact)
     .reduce((s, t) => s + Number(t.score || 0), 0);
+}
+
+// ── Team roster filtering (KpiTeamScreen search + status chips) ──────────────
+export type TeamStatusFilter = 'all' | 'pending' | 'done';
+
+// Filter the my-team roster by the status chip and a free-text query (name /
+// position / department, case-insensitive). Pure so the screen's useMemo depends
+// on the raw data array instead of a per-render `?? []` fallback.
+export function filterTeamMembers(
+  members: KpiTeamMember[] | null | undefined,
+  search: string,
+  status: TeamStatusFilter,
+): KpiTeamMember[] {
+  const q = search.trim().toLowerCase();
+  return (members ?? []).filter((m) => {
+    if (status === 'pending' && !(Number(m.pending_tasks || 0) > 0)) return false;
+    if (status === 'done' && !m.all_done) return false;
+    if (!q) return true;
+    return (
+      (m.legal_name?.toLowerCase().includes(q) ?? false) ||
+      (m.job_position_name?.toLowerCase().includes(q) ?? false) ||
+      (m.department_name?.toLowerCase().includes(q) ?? false)
+    );
+  });
 }

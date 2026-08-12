@@ -14,7 +14,7 @@ import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { LoadingView, EmptyState, ErrorState } from '@/components/StateViews';
 import { myTeamQuery } from '../api/queries';
-import { resultColorKey } from '../utils';
+import { resultColorKey, filterTeamMembers } from '../utils';
 
 // «Xodimlarim samaradorligi» — the supervisor's direct reports with per-member
 // aggregates (web KpiPage team tab). Tapping a member opens their scorecard
@@ -31,21 +31,11 @@ export default function KpiTeamScreen() {
 
   // Current month; historical periods live on the member's card.
   const { data, isLoading, isError, refetch, isFetching } = useQuery(myTeamQuery());
-  const allMembers = data?.employees ?? [];
 
-  const members = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return allMembers.filter((m) => {
-      if (statusF === 'pending' && !(Number(m.pending_tasks || 0) > 0)) return false;
-      if (statusF === 'done' && !m.all_done) return false;
-      if (!q) return true;
-      return (
-        (m.legal_name?.toLowerCase().includes(q) ?? false) ||
-        (m.job_position_name?.toLowerCase().includes(q) ?? false) ||
-        (m.department_name?.toLowerCase().includes(q) ?? false)
-      );
-    });
-  }, [allMembers, search, statusF]);
+  const members = useMemo(
+    () => filterTeamMembers(data?.employees, search, statusF),
+    [data?.employees, search, statusF],
+  );
 
   const STATUS_CHIPS: { key: 'all' | 'pending' | 'done'; labelKey: string }[] = [
     { key: 'all', labelKey: 'kpi.teamFilterAll' },
