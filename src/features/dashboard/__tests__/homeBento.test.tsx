@@ -33,4 +33,11 @@ describe('HomeScreen (bento tiles present)', () => {
     // isSupervisor is true here (employee.supervisor is null) → incomingRequests title.
     expect(getByText("Kiruvchi so'rovlar")).toBeTruthy();
   });
+
+  it('renders the Davomat (attendance) module tile before the requests card', async () => {
+    const { getByText } = await renderWithProviders(<HomeScreen />);
+    // Same label as the Modules grid (modules.labels.attendance, uz-Latn "Davomat").
+    // A plain employee is not KPP/chancellery, so canAccessPage('attendance') is true.
+    expect(getByText('Davomat')).toBeTruthy();
+  });
 });

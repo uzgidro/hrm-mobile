@@ -187,6 +187,25 @@ export default function HomeScreen() {
             </View>
           </View>
 
+          {/* Davomat (attendance) module tile — same entry as the Modules grid
+              (navItems 'attendance': clock icon + label → /attendance-detail),
+              placed after the schedule and before So'rovlar. Role-gated exactly
+              like the module (canAccessPage('attendance')) so KPP/chancellery
+              don't see it. */}
+          {canAccessPage(user, 'attendance') && (
+            <TouchableOpacity
+              style={[styles.moduleTile, bp.isTablet && styles.bentoTile]}
+              activeOpacity={0.75}
+              onPress={() => router.push('/attendance-detail')}
+            >
+              <View style={styles.moduleIconWrap}>
+                <Icon name="clock" size={22} color={colors.primary} />
+              </View>
+              <Text style={styles.moduleLabel}>{t('modules.labels.attendance')}</Text>
+              <Icon name="chevronRight" size={20} color={colors.textMuted} />
+            </TouchableOpacity>
+          )}
+
           {/* So'rovlar */}
           <View style={[styles.card, bp.isTablet && styles.bentoTile]}>
             <View style={styles.cardHeaderRow}>
@@ -325,6 +344,19 @@ const makeStyles = (c: ThemeColors) =>
     bentoTile: { flexGrow: 1, flexBasis: '48%', marginBottom: 0 },
 
     card: { backgroundColor: c.card, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: c.cardBorder },
+
+    // Attendance module tile — full-width row: icon square (as in the Modules
+    // grid) + label + chevron. Same card chrome as the other home cards.
+    moduleTile: {
+      flexDirection: 'row', alignItems: 'center', gap: 14,
+      backgroundColor: c.card, borderRadius: 16, padding: 16, marginBottom: 12,
+      borderWidth: 1, borderColor: c.cardBorder,
+    },
+    moduleIconWrap: {
+      width: 44, height: 44, borderRadius: 14, backgroundColor: c.primarySoft,
+      alignItems: 'center', justifyContent: 'center',
+    },
+    moduleLabel: { flex: 1, fontSize: 15, fontWeight: '700', color: c.text },
     cardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
     cardTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     cardTitle: { fontSize: 15, fontWeight: '700', color: c.text },
