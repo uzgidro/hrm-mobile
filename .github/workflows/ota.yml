@@ -47,4 +47,16 @@ jobs:
 
       - name: Publish OTA update
         # push -> commit message; manual dispatch -> the input (default below).
-        run: eas update --channel production --message "${{ github.event.head_commit.message || github.event.inputs.message }}" --non-interactive
+        #
+        # The message is passed through an ENV var, never interpolated directly
+        # into the run script: a commit body can contain backticks, $(...) or
+        # newlines (e.g. "3*ceil(tile)+2*gap"), which — pasted straight into the
+        # shell via ${{ }} — bash re-parses as command substitution and the step
+        # dies with "syntax error near unexpected token" before eas even runs.
+        # In an env var the value is literal. We also take only the SUBJECT
+        # (first line) of the commit so a long body can't derail the command.
+        env:
+          RAW_MESSAGE: ${{ github.event.head_commit.message || github.event.inputs.message }}
+        run: |
+          MSG="$(printf '%s' "$RAW_MESSAGE" | head -n1)"
+          eas update --channel production --message "$MSG" --non-interactive
