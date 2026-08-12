@@ -64,7 +64,7 @@ export default function LoginScreen() {
       // never blocks or breaks the login flow.
       void setupPushNotifications();
     } catch (e: unknown) {
-      const err = e as { response?: { data?: { detail?: string | Array<{ msg: string }> } } };
+      const err = e as { response?: { data?: { detail?: string | { msg: string }[] } } };
       const detail = err?.response?.data?.detail;
       const msg = Array.isArray(detail) ? detail[0]?.msg : (detail || t('auth.invalidCredentials'));
       Alert.alert(t('auth.loginError'), typeof msg === 'string' ? msg : t('errors.generic'));

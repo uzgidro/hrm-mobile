@@ -5,7 +5,7 @@ import { mapWithConcurrency } from '../concurrency';
 function makeTracker() {
   let active = 0;
   let maxActive = 0;
-  const releases: Array<() => void> = [];
+  const releases: (() => void)[] = [];
   const fn = (x: number) => {
     active += 1;
     maxActive = Math.max(maxActive, active);
