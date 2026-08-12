@@ -8,7 +8,7 @@ import { useTheme, useThemedStyles } from '../../src/theme/ThemeProvider';
 import type { ThemeColors } from '../../src/theme/palettes';
 import { Icon } from '../../src/components/Icon';
 import { Screen } from '../../src/components/Screen';
-import { useBreakpoint } from '../../src/utils/responsive';
+import { useBreakpoint, gridTileWidth, GRID_GAP, GRID_H_PAD } from '../../src/utils/responsive';
 import { buildNavSections } from '../../src/utils/navItems';
 import { homeAssignedLeavesQuery, homeNotificationsQuery } from '@/features/dashboard/api/queries';
 
@@ -48,11 +48,10 @@ export default function ModulesScreen() {
   );
 
   // Adaptive columns from the breakpoint; content capped so tiles don't stretch.
-  const columns = bp.gridColumns;
-  const H_PAD = 16;
-  const GAP = 12;
-  const innerWidth = Math.min(bp.contentMaxWidth, bp.width) - H_PAD * 2;
-  const tileWidth = (innerWidth - GAP * (columns - 1)) / columns;
+  // gridTileWidth FLOORS the width so 3 tiles + gaps always fit one row — a
+  // fractional width rounds up on real devices and wraps the 3rd tile (the
+  // "3 columns show as 2" bug on phones). See responsive.ts.
+  const tileWidth = gridTileWidth(bp.contentMaxWidth, bp.width, bp.gridColumns);
 
   return (
     <Screen edges={['top']}>
@@ -95,14 +94,14 @@ const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     header: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
     title: { fontSize: 26, fontWeight: '800', color: c.text },
-    content: { paddingHorizontal: 16, paddingTop: 4 },
+    content: { paddingHorizontal: GRID_H_PAD, paddingTop: 4 },
 
     section: { marginBottom: 20 },
     sectionLabel: {
       fontSize: 12, fontWeight: '700', color: c.textMuted,
       textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 10, marginLeft: 2,
     },
-    grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+    grid: { flexDirection: 'row', flexWrap: 'wrap', gap: GRID_GAP },
 
     tile: {
       backgroundColor: c.card, borderRadius: 16, paddingVertical: 18,

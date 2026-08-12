@@ -47,3 +47,25 @@ export function useBreakpoint(): Breakpoint {
   const { width, height } = useWindowDimensions();
   return resolveBreakpoint(width, height);
 }
+
+// Horizontal screen padding and inter-tile gap for tile/card grids (modules,
+// employees, …). Exported so the width math and its tests share one source.
+export const GRID_H_PAD = 16;
+export const GRID_GAP = 12;
+
+/** Pixel width of one tile in a `columns`-wide grid.
+ *
+ *  FLOORED on purpose. A fractional width (e.g. 112.333) gets rounded UP by the
+ *  native renderer, so `columns*ceil(tile) + (columns-1)*gap` overflows the row
+ *  by 1–2px and flex-wrap bumps the last tile onto a new row — the "3 columns
+ *  render as 2" bug seen on real phones (Galaxy S25 Ultra). Flooring leaves the
+ *  spare 1–2px as harmless right-edge slack and guarantees the row always fits.
+ */
+export function gridTileWidth(
+  contentMaxWidth: number,
+  width: number,
+  columns: number,
+): number {
+  const innerWidth = Math.min(contentMaxWidth, width) - GRID_H_PAD * 2;
+  return Math.floor((innerWidth - GRID_GAP * (columns - 1)) / columns);
+}
