@@ -25,6 +25,7 @@ export default {
   },
   clearFilter: 'tap to clear',
   showAll: 'Show all',
+  allEmployees: 'All employees',
   collapse: 'Collapse',
 
   leaveFallback: 'Leave',

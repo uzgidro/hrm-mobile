@@ -20,13 +20,9 @@ import { Screen } from '@/components/Screen';
 import { LoadingView } from '@/components/StateViews';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { dayAttendanceQuery, teamLeavesQuery } from '../api/queries';
+import { buildAttendanceRoster, type AttendanceStatus } from '../roster';
 
-type StatusGroup = 'present' | 'late' | 'onLeave' | 'absent';
-
-interface GroupedEmployee { employee: Employee; entryTime?: string; exitTime?: string; leaveName?: string; }
-interface Section { key: StatusGroup; items: GroupedEmployee[]; }
-
-const SECTION_ORDER: StatusGroup[] = ['present', 'late', 'onLeave', 'absent'];
+type StatusGroup = AttendanceStatus;
 
 function sectionColor(key: StatusGroup, c: ThemeColors) {
   if (key === 'present') return c.present;
@@ -113,54 +109,6 @@ const DonutChart = React.memo(function DonutChart({ total, present, late, onLeav
   );
 });
 
-const StatusSection = React.memo(function StatusSection({ section, styles, c }: { section: Section; styles: any; c: ThemeColors }) {
-  const { t } = useTranslation();
-  const [expanded, setExpanded] = useState(false);
-  const PREVIEW = 5;
-  const shown = expanded ? section.items : section.items.slice(0, PREVIEW);
-  const hasMore = section.items.length > PREVIEW;
-  const emptyLabel = section.key === 'absent' ? '' : t(`attendance.sectionEmpty.${section.key}`);
-
-  return (
-    <View style={styles.statusCard}>
-      <View style={styles.statusHeader}>
-        <View style={styles.statusTitleRow}>
-          <View style={[styles.statusDot, { backgroundColor: sectionColor(section.key, c) }]} />
-          <Text style={styles.statusTitle}>{t(`attendance.section.${section.key}`)} ({section.items.length})</Text>
-        </View>
-        {hasMore && (
-          <TouchableOpacity onPress={() => setExpanded((v) => !v)}>
-            <Text style={styles.linkText}>{expanded ? t('attendance.collapse') : t('attendance.showAll')}</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {section.items.length === 0 ? (
-        <Text style={styles.emptySection}>{emptyLabel}</Text>
-      ) : (
-        shown.map((row, idx) => (
-          <TouchableOpacity key={row.employee.id}
-            style={[styles.empRow, idx < shown.length - 1 && styles.empRowBorder]}
-            onPress={() => router.push({ pathname: '/profile-detail', params: { id: row.employee.id } })} activeOpacity={0.7}>
-            <EmployeeAvatar emp={row.employee} size={48} />
-            <View style={styles.empInfo}>
-              <Text style={styles.empName} numberOfLines={1}>{row.employee.legal_name}</Text>
-              <Text style={styles.empPosition} numberOfLines={1}>{row.employee.job_position?.name ?? row.employee.department?.name ?? '—'}</Text>
-            </View>
-            {row.entryTime && (
-              <View style={styles.timeTag}>
-                <Icon name="clock" size={14} color={c.textMuted} />
-                <Text style={styles.timeTagText}>{dayjs(row.entryTime).format('HH:mm')}</Text>
-              </View>
-            )}
-            {row.leaveName && <Text style={styles.leaveTag} numberOfLines={1}>{row.leaveName}</Text>}
-          </TouchableOpacity>
-        ))
-      )}
-    </View>
-  );
-});
-
 export default function AttendanceDetailScreen() {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
@@ -192,59 +140,19 @@ export default function AttendanceDetailScreen() {
   const [empQ, attQ, leavesQ] = results;
   const isLoading = results.some((r) => r.isLoading);
 
-  const { sections, totalEmp } = useMemo(() => {
+  const { rows, counts } = useMemo(() => {
     let employees: Employee[] = empQ.data?.items ?? [];
     if (onlySubordinates && myId) employees = employees.filter((e) => e.supervisor_id === myId);
     const events: AttendanceEvent[] = attQ.data?.items ?? [];
     const workLeaves: WorkLeave[] = leavesQ.data ?? [];
-
-    const empIdSet = new Set(employees.map((e) => e.id));
-    const firstEntry = new Map<number, string>();
-    const lastExit = new Map<number, string>();
-
-    for (const ev of events) {
-      const eid = ev.employee_id;
-      if (!eid || !empIdSet.has(eid)) continue;
-      const exEntry = firstEntry.get(eid);
-      if (!exEntry || ev.happen_time < exEntry) firstEntry.set(eid, ev.happen_time);
-      const exExit = lastExit.get(eid);
-      if (!exExit || ev.happen_time > exExit) lastExit.set(eid, ev.happen_time);
-    }
-
-    const dayStart = dayjs(selectedDate).startOf('day');
-    const dayEnd = dayjs(selectedDate).endOf('day');
-    const leaveMap = new Map<number, string>();
-    for (const l of workLeaves) {
-      if (!l.employee?.id) continue;
-      const s = dayjs(l.start_date);
-      const e = dayjs(l.end_date);
-      if (s.isBefore(dayEnd) && e.isAfter(dayStart)) leaveMap.set(l.employee.id, l.type ?? t('attendance.leaveFallback'));
-    }
-
-    const buckets: Record<StatusGroup, GroupedEmployee[]> = { present: [], late: [], onLeave: [], absent: [] };
-
-    for (const emp of employees) {
-      const entry = firstEntry.get(emp.id);
-      const exit = lastExit.get(emp.id);
-      const leaveName = leaveMap.get(emp.id);
-      if (leaveName && !entry) { buckets.onLeave.push({ employee: emp, leaveName }); continue; }
-      if (!entry) { buckets.absent.push({ employee: emp }); continue; }
-      if (emp.working_hours_start) {
-        const expected = dayjs(`${selectedDate}T${emp.working_hours_start}`);
-        if (dayjs(entry).diff(expected, 'minute') > 5) { buckets.late.push({ employee: emp, entryTime: entry, exitTime: exit }); continue; }
-      }
-      buckets.present.push({ employee: emp, entryTime: entry, exitTime: exit });
-    }
-
-    return {
-      sections: SECTION_ORDER.map((key) => ({ key, items: buckets[key] })),
-      totalEmp: employees.length,
-    };
+    return buildAttendanceRoster(employees, events, workLeaves, selectedDate, t('attendance.leaveFallback'));
   }, [empQ.data, attQ.data, leavesQ.data, selectedDate, onlySubordinates, myId, t]);
 
-  const presentCount = sections.find((s) => s.key === 'present')?.items.length ?? 0;
-  const lateCount = sections.find((s) => s.key === 'late')?.items.length ?? 0;
-  const onLeaveCount = sections.find((s) => s.key === 'onLeave')?.items.length ?? 0;
+  // One alphabetical list; the donut zone (sectionFilter) narrows it.
+  const visibleRows = useMemo(
+    () => (sectionFilter ? rows.filter((r) => r.status === sectionFilter) : rows),
+    [rows, sectionFilter],
+  );
 
   return (
     <Screen edges={['top', 'bottom']}>
@@ -275,13 +183,47 @@ export default function AttendanceDetailScreen() {
             </View>
           )}
           <View style={styles.chartCard}>
-            <DonutChart total={totalEmp} present={presentCount} late={lateCount} onLeave={onLeaveCount}
+            <DonutChart total={counts.total} present={counts.present} late={counts.late} onLeave={counts.onLeave}
               activeFilter={sectionFilter} onFilter={setSectionFilter} styles={styles} c={colors} />
           </View>
 
-          {sections
-            .filter((sec) => sectionFilter ? sec.key === sectionFilter : sec.key !== 'absent' || sec.items.length > 0)
-            .map((sec) => <StatusSection key={sec.key} section={sec} styles={styles} c={colors} />)}
+          {/* One roster under the donut: all employees A→Z, each with a left
+              status stripe; tapping a donut zone filters this single list. */}
+          <View style={styles.rosterCard}>
+            <View style={styles.rosterHeader}>
+              <Text style={styles.rosterTitle}>
+                {sectionFilter ? t(`attendance.section.${sectionFilter}`) : t('attendance.allEmployees')} ({visibleRows.length})
+              </Text>
+              {sectionFilter && (
+                <TouchableOpacity onPress={() => setSectionFilter(null)}>
+                  <Text style={styles.linkText}>{t('attendance.showAll')}</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+            {visibleRows.length === 0 ? (
+              <Text style={styles.emptySection}>{t('attendance.sectionEmpty.present')}</Text>
+            ) : (
+              visibleRows.map((row, idx) => (
+                <TouchableOpacity key={row.employee.id}
+                  style={[styles.empRow, idx < visibleRows.length - 1 && styles.empRowBorder]}
+                  onPress={() => router.push({ pathname: '/profile-detail', params: { id: row.employee.id } })} activeOpacity={0.7}>
+                  <View style={[styles.statusStripe, { backgroundColor: sectionColor(row.status, colors) }]} />
+                  <EmployeeAvatar emp={row.employee} size={48} />
+                  <View style={styles.empInfo}>
+                    <Text style={styles.empName} numberOfLines={1}>{row.employee.legal_name}</Text>
+                    <Text style={styles.empPosition} numberOfLines={1}>{row.employee.job_position?.name ?? row.employee.department?.name ?? '—'}</Text>
+                  </View>
+                  {row.entryTime && (
+                    <View style={styles.timeTag}>
+                      <Icon name="clock" size={14} color={colors.textMuted} />
+                      <Text style={styles.timeTagText}>{dayjs(row.entryTime).format('HH:mm')}</Text>
+                    </View>
+                  )}
+                  {row.leaveName && <Text style={styles.leaveTag} numberOfLines={1}>{row.leaveName}</Text>}
+                </TouchableOpacity>
+              ))
+            )}
+          </View>
 
           <View style={{ height: 32 }} />
         </ScrollView>
@@ -320,16 +262,17 @@ const makeStyles = (c: ThemeColors) =>
     legendCount: { fontSize: 20, fontWeight: '700', color: c.text },
     legendLabel: { fontSize: 12, color: c.textSecondary, marginTop: 1 },
 
-    statusCard: { backgroundColor: c.card, borderRadius: 16, borderWidth: 1, borderColor: c.cardBorder, marginBottom: 14, overflow: 'hidden' },
-    statusHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
-    statusTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    statusDot: { width: 12, height: 12, borderRadius: 6 },
-    statusTitle: { fontSize: 15, fontWeight: '700', color: c.text },
+    // Single roster card (replaces the three status sections).
+    rosterCard: { backgroundColor: c.card, borderRadius: 16, borderWidth: 1, borderColor: c.cardBorder, marginBottom: 14, overflow: 'hidden' },
+    rosterHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
+    rosterTitle: { fontSize: 15, fontWeight: '700', color: c.text },
     linkText: { fontSize: 13, color: c.primaryLight, fontWeight: '600' },
     emptySection: { color: c.textMuted, fontSize: 13, paddingHorizontal: 16, paddingVertical: 12 },
 
     empRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 12 },
     empRowBorder: { borderBottomWidth: 1, borderBottomColor: c.cardBorder },
+    // Left status accent for each roster row (green/amber/blue/red).
+    statusStripe: { width: 4, alignSelf: 'stretch', borderRadius: 2, marginRight: -2 },
     empInfo: { flex: 1 },
     empName: { fontSize: 14, fontWeight: '600', color: c.text },
     empPosition: { fontSize: 12, color: c.textMuted, marginTop: 2 },

@@ -25,6 +25,7 @@ export default {
   },
   clearFilter: 'тозалаш учун босинг',
   showAll: 'Барчасини кўрсатиш',
+  allEmployees: 'Барча ходимлар',
   collapse: 'Йиғиш',
 
   leaveFallback: 'Рухсат',

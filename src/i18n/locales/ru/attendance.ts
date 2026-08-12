@@ -25,6 +25,7 @@ export default {
   },
   clearFilter: 'нажмите, чтобы сбросить',
   showAll: 'Показать все',
+  allEmployees: 'Все сотрудники',
   collapse: 'Свернуть',
 
   leaveFallback: 'Отсутствие',

@@ -34,6 +34,7 @@ export default {
   },
   clearFilter: 'tozalash uchun bosing',
   showAll: "Barchasini ko'rsatish",
+  allEmployees: 'Barcha xodimlar',
   collapse: "Yig'ish",
 
   // Leave-type fallbacks (when the record has no explicit type)
