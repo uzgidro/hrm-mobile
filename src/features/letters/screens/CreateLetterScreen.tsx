@@ -17,8 +17,8 @@ import { AttachmentField, type PickedFile } from '@/components/AttachmentField';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import type { Employee } from '@/types';
-import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { useBreakpoint } from '@/utils/responsive';
 import {
   letterSignersQuery, letterRahbariyatQuery, letterSubmittersQuery, orgBranchesQuery,
@@ -180,15 +180,19 @@ export default function CreateLetterScreen() {
 
   return (
     <Screen edges={['top', 'bottom']} maxWidth={640}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
-          <Icon name="chevronLeft" size={24} color={colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.title}>{t('letters.createTitle')}</Text>
-        <TouchableOpacity style={[styles.createBtn, saving && styles.createBtnDisabled]} onPress={handleCreate} disabled={saving} activeOpacity={0.8}>
-          {saving ? <ActivityIndicator size="small" color={colors.onPrimary} /> : <Text style={styles.createBtnText}>{t('common.create')}</Text>}
-        </TouchableOpacity>
-      </View>
+      <ScreenHeader
+        title={t('letters.createTitle')}
+        right={
+          <TouchableOpacity
+            style={[styles.createBtn, saving && styles.createBtnDisabled]}
+            onPress={handleCreate}
+            disabled={saving}
+            activeOpacity={0.8}
+          >
+            {saving ? <ActivityIndicator size="small" color={colors.onPrimary} /> : <Text style={styles.createBtnText}>{t('common.create')}</Text>}
+          </TouchableOpacity>
+        }
+      />
 
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         {/* Both short single-selects, adjacent — pair into a 2-column row on
@@ -254,9 +258,6 @@ export default function CreateLetterScreen() {
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12, gap: 12 },
-    backBtn: { padding: 4 },
-    title: { flex: 1, fontSize: 19, fontWeight: '800', color: c.text },
     createBtn: { backgroundColor: c.primary, paddingHorizontal: 18, paddingVertical: 9, borderRadius: 20, minWidth: 84, alignItems: 'center' },
     createBtnDisabled: { opacity: 0.6 },
     createBtnText: { color: c.onPrimary, fontWeight: '700', fontSize: 14 },
