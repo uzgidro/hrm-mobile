@@ -1,5 +1,6 @@
 import { queryOptions } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
+import { unwrapList } from '@/api/response';
 import { LLM_SESSIONS, LLM_SESSION_MESSAGES } from '@/api/urls';
 import type { LlmMessage, LlmSession } from '@/types';
 
@@ -13,10 +14,6 @@ export const assistantKeys = {
   messages: (sessionId: number) => [...assistantKeys.all, 'messages', sessionId] as const,
 };
 
-function unwrap<T>(d: any): T[] {
-  return (Array.isArray(d) ? d : (d?.items ?? [])) as T[];
-}
-
 // My chat sessions, newest first (server orders by id desc already; re-sort
 // defensively since SessionRead has no timestamps to sort by client-side).
 export function assistantSessionsQuery() {
@@ -24,7 +21,7 @@ export function assistantSessionsQuery() {
     queryKey: assistantKeys.sessions(),
     queryFn: () =>
       apiClient.get(LLM_SESSIONS).then((r) => {
-        const items = unwrap<LlmSession>(r.data);
+        const items = unwrapList<LlmSession>(r.data);
         return [...items].sort((a, b) => b.id - a.id);
       }),
     staleTime: 60 * 1000,
@@ -41,7 +38,7 @@ export function assistantMessagesQuery(sessionId: number) {
       apiClient
         .get(LLM_SESSION_MESSAGES(sessionId), { params: { visible_only: true } })
         .then((r) => {
-          const items = unwrap<LlmMessage>(r.data);
+          const items = unwrapList<LlmMessage>(r.data);
           return [...items].sort((a, b) => (a.sequence ?? a.id) - (b.sequence ?? b.id));
         }),
     staleTime: 0,

@@ -1,5 +1,6 @@
 import { queryOptions } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
+import { unwrapList } from '@/api/response';
 import {
   ORDER_ACTS,
   ORDER_ACT_DETAIL,
@@ -27,11 +28,6 @@ export const orderKeys = {
   list: (orgBranchId?: number) => [...orderKeys.all, orgBranchId ?? null] as const,
   detail: (id: number) => [...orderKeys.all, 'detail', id] as const,
 };
-
-// The list endpoint returns either a bare array or a { items } envelope.
-function unwrapList<T>(data: unknown): T[] {
-  return (Array.isArray(data) ? data : ((data as { items?: T[] })?.items ?? [])) as T[];
-}
 
 // The list tab. Key/params mirror the old tab query exactly.
 export function ordersListQuery(orgBranchId?: number) {

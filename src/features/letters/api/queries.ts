@@ -1,5 +1,6 @@
 import { queryOptions } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
+import { unwrapList } from '@/api/response';
 import {
   LETTERS_LIST,
   LETTER_DETAIL,
@@ -33,11 +34,6 @@ export const letterKeys = {
   detail: (id: number) => [...letterKeys.all, 'detail', id] as const,
   tripMovements: (id: number) => [...letterKeys.all, 'trip-movements', id] as const,
 };
-
-// The list endpoint returns either a bare array or a { items } envelope.
-function unwrapList<T>(data: unknown): T[] {
-  return (Array.isArray(data) ? data : ((data as { items?: T[] })?.items ?? [])) as T[];
-}
 
 function paramsForTab(tab: LettersTab): Record<string, unknown> {
   if (tab === 'action') return { assigned_signer: true };

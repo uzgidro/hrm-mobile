@@ -1,5 +1,6 @@
 import { queryOptions } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
+import { unwrapList } from '@/api/response';
 import { WORK_LEAVES, WORK_LEAVE_DETAIL } from '@/api/urls';
 import { fetchAllEmployees, employeesQueryKey } from '@/utils/employees';
 import { workLeaveAllScopeParams } from '@/utils/workLeaveScope';
@@ -17,11 +18,6 @@ export const leaveKeys = {
   detail: (id: number) => [...leaveKeys.all, 'detail', id] as const,
 };
 
-// The list endpoint returns either a bare array or a { items } envelope.
-function unwrapList(data: unknown): WorkLeave[] {
-  return (Array.isArray(data) ? data : ((data as { items?: WorkLeave[] })?.items ?? [])) as WorkLeave[];
-}
-
 // My own leave requests.
 export function myLeavesQuery(employeeId?: number) {
   return queryOptions({
@@ -29,7 +25,7 @@ export function myLeavesQuery(employeeId?: number) {
     queryFn: () =>
       apiClient
         .get(WORK_LEAVES, { params: { employee_id: employeeId, size: 100 } })
-        .then((r) => unwrapList(r.data)),
+        .then((r) => unwrapList<WorkLeave>(r.data)),
   });
 }
 
@@ -40,7 +36,7 @@ export function assignedLeavesQuery(employeeId?: number) {
     queryFn: () =>
       apiClient
         .get(WORK_LEAVES, { params: { assigned_signer: true, size: 200 } })
-        .then((r) => unwrapList(r.data)),
+        .then((r) => unwrapList<WorkLeave>(r.data)),
   });
 }
 
@@ -56,7 +52,7 @@ export function teamLeavesQuery(user?: User | null, branchId?: number | null) {
     queryFn: () =>
       apiClient
         .get(WORK_LEAVES, { params: { ...scope, size: 200 } })
-        .then((r) => unwrapList(r.data)),
+        .then((r) => unwrapList<WorkLeave>(r.data)),
   });
 }
 

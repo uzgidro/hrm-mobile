@@ -1,5 +1,6 @@
 import { queryOptions } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
+import { unwrapList } from '@/api/response';
 import { FOLDERS_LIST, FILES_LIST } from '@/api/urls';
 import type { DocumentFolder, HrmFile } from '@/types';
 
@@ -11,11 +12,6 @@ export const documentKeys = {
   folders: () => [...documentKeys.all, 'folders'] as const,
   root: () => [...documentKeys.all, 'root'] as const,
 };
-
-// The list endpoints return either a bare array or an { items } envelope.
-function unwrapList<T>(data: unknown): T[] {
-  return (Array.isArray(data) ? data : ((data as { items?: T[] })?.items ?? [])) as T[];
-}
 
 // Flat folders, each embedding its own files[] inline (no per-folder fetch).
 // The backend scopes the list by branch/visibility, so this returns only what

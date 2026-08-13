@@ -1,5 +1,6 @@
 import { queryOptions, type QueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
+import { unwrapList } from '@/api/response';
 import {
   WORK_LEAVES,
   NOTIFICATIONS_LIST,
@@ -18,11 +19,6 @@ import type { AttendanceEvent, WorkLeave, Notification, EmployeeBirthday } from 
 // reuse the SAME shared/feature keys the destination screens (team,
 // attendance-detail, birthdays) read, so the warmed entries are shared instead
 // of forked — see `prefetchHomeData`.
-
-// The list endpoint returns either a bare array or an { items } envelope.
-function unwrapList<T>(data: unknown): T[] {
-  return (Array.isArray(data) ? data : ((data as { items?: T[] })?.items ?? [])) as T[];
-}
 
 // The signed-in user's own month of turnstile events, powering the "Bugungi
 // jadval" schedule card (the screen filters to today client-side).
