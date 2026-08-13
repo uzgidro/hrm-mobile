@@ -7,6 +7,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Constants from 'expo-constants';
 import { useTranslation } from 'react-i18next';
+import { getRunningOtaInfo } from '@/services/otaUpdates';
 import { apiClient } from '../../src/api/client';
 import { useAuthStore } from '../../src/store/authStore';
 import { useLangStore } from '../../src/store/langStore';
@@ -197,6 +198,14 @@ export default function LoginScreen() {
         </View>
 
         <Text style={styles.version}>v{Constants.expoConfig?.version ?? '1.0.0'}</Text>
+        {(() => {
+          const ota = getRunningOtaInfo();
+          const label =
+            ota.kind === 'ota'
+              ? t('ota.otaBuild', { date: ota.date ?? '', id: ota.shortId ?? '' })
+              : t('ota.embeddedBuild');
+          return <Text style={styles.otaBuild}>{label}</Text>;
+        })()}
       </View>
     </KeyboardAvoidingView>
   );
@@ -258,4 +267,5 @@ const makeStyles = (c: ThemeColors) =>
     oneIdBtnText: { color: c.primary, fontSize: 15, fontWeight: '700' },
 
     version: { textAlign: 'center', color: c.textMuted, fontSize: 12, marginTop: 32 },
+    otaBuild: { textAlign: 'center', color: c.textMuted, fontSize: 11, marginTop: 2 },
   });

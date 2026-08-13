@@ -14,6 +14,7 @@ import { useLockStore } from '../store/lockStore';
 import { useLangStore } from '../store/langStore';
 import { resolveBootstrap, readCachedUser } from './bootstrap';
 import { setupPushNotifications } from './push';
+import { applyPendingUpdateOnLaunch } from '../services/otaUpdates';
 
 // Keep the native splash up until we've decided the initial auth state. Errors
 // (already hidden, etc.) are non-fatal.
@@ -33,6 +34,14 @@ export function useAuthBootstrap() {
     };
 
     (async () => {
+      // Synchronous OTA gate: behind the splash (still up via
+      // preventAutoHideAsync), pull+apply any pending EAS Update before we do
+      // anything else. On a production build with a pending update this never
+      // resolves — it reloadAsync()es into the new bundle. Otherwise it's a
+      // fast no-op (dev/web) or falls through in ≤10s (slow network), and
+      // bootstrap continues exactly as before.
+      await applyPendingUpdateOnLaunch();
+
       usePrefsStore.getState().hydrate();
 
       // Resolve the language BEFORE any hideSplash() below, same flash invariant

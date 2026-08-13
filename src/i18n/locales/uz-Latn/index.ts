@@ -24,6 +24,7 @@ import auth from './auth';
 import modules from './modules';
 import components from './components';
 import update from './update';
+import ota from './ota';
 import support from './support';
 import chairman from './chairman';
 import directory from './directory';
@@ -53,6 +54,7 @@ export default {
   modules,
   components,
   update,
+  ota,
   support,
   chairman,
   directory,
