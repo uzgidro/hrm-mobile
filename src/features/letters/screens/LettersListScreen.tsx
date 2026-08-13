@@ -15,6 +15,7 @@ import { LoadingView, EmptyState } from '@/components/StateViews';
 import { FilterChip } from '@/components/FilterChip';
 import { SearchBox } from '@/components/SearchBox';
 import { useBreakpoint } from '@/utils/responsive';
+import { selectSplitId } from '@/utils/splitView';
 import { canSignLetter, letterTypeLabel, letterStatusMeta, normalizeLetterType } from '@/utils/letterStatus';
 import { lettersListQuery, type LettersTab } from '../api/queries';
 import { LetterListCard } from '../components/LetterListCard';
@@ -89,18 +90,11 @@ export default function LettersListScreen() {
   // the selection when leaving split (rotate back to portrait / phone) so
   // re-entering split starts fresh instead of resuming a stale id. Also
   // re-anchors to the first visible row whenever the currently selected id
-  // falls out of `sorted` (tab switch, or the letter left the list after an
+  // falls out of `filtered` (tab switch, or the letter left the list after an
   // action) — otherwise the detail pane would keep showing a stale letter
-  // that no longer matches the current tab. Mirrors OrdersListScreen (T15) 1:1.
+  // that no longer matches the current tab.
   useEffect(() => {
-    if (!split) {
-      setSelectedId(null);
-      return;
-    }
-    if (selectedId == null || !filtered.some((l) => l.id === selectedId)) {
-      setSelectedId(filtered[0]?.id ?? null);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    setSelectedId((current) => selectSplitId(filtered, current, split));
   }, [split, filtered]);
 
   const listPane = (

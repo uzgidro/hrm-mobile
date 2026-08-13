@@ -16,6 +16,7 @@ import { LoadingView, EmptyState } from '@/components/StateViews';
 import { FilterChip } from '@/components/FilterChip';
 import { SearchBox } from '@/components/SearchBox';
 import { useBreakpoint } from '@/utils/responsive';
+import { selectSplitId } from '@/utils/splitView';
 import { needsMyAction, statusMeta } from '@/utils/orderStatus';
 import { ordersListQuery } from '../api/queries';
 import { OrderListCard } from '../components/OrderListCard';
@@ -103,14 +104,7 @@ export default function OrdersListScreen() {
   // action) — otherwise the detail pane would keep showing a stale order that
   // no longer matches the current filter/tab.
   useEffect(() => {
-    if (!split) {
-      setSelectedId(null);
-      return;
-    }
-    if (selectedId == null || !filtered.some((o) => o.id === selectedId)) {
-      setSelectedId(filtered[0]?.id ?? null);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    setSelectedId((current) => selectSplitId(filtered, current, split));
   }, [split, filtered]);
 
   const listPane = (
