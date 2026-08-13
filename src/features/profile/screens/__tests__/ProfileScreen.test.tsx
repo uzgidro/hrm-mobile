@@ -12,6 +12,15 @@ import ProfileScreen from '../ProfileScreen';
 // (jest.mock is hoisted above the imports by the Jest transform.)
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 
+// expo-updates is native — default to an embedded (non-OTA) launch so
+// getRunningOtaInfo() resolves without hitting the native module.
+jest.mock('expo-updates', () => ({
+  isEnabled: false,
+  isEmbeddedLaunch: true,
+  updateId: null,
+  createdAt: null,
+}));
+
 describe('ProfileScreen', () => {
   // The catalog-parity suite switches i18n's language; reset to the default so
   // these assertions resolve against the uz-Latn source of truth regardless of
@@ -35,6 +44,13 @@ describe('ProfileScreen', () => {
 
     const version = Constants.expoConfig?.version ?? '1.0.0';
     expect(getByText(i18n.t('profile.version', { version }))).toBeTruthy();
+  });
+
+  it('renders the running OTA build line under the app version', async () => {
+    const { getByText } = await renderWithProviders(<ProfileScreen />);
+
+    // Embedded build in the jest env (expo-updates mock defaults to embedded).
+    expect(getByText(i18n.t('ota.embeddedBuild'))).toBeTruthy();
   });
 
   it('requests a logout confirmation via the global confirm store and logs out on confirm', async () => {

@@ -17,6 +17,7 @@ import { confirm } from '@/lib/confirm';
 import { Flag } from '@/components/Flag';
 import { useLangStore } from '@/store/langStore';
 import { LANGUAGES, LANGUAGE_NATIVE_NAME, LANGUAGE_FLAG } from '@/i18n/locales';
+import { getRunningOtaInfo } from '@/services/otaUpdates';
 
 // `labelKey` is a profile.* catalog key; the label is resolved via t() at render
 // so it follows the active language. `key` stays the ThemeMode enum value.
@@ -251,6 +252,14 @@ export default function ProfileScreen() {
         </TouchableOpacity>
 
         <Text style={styles.version}>{t('profile.version', { version: Constants.expoConfig?.version ?? '1.0.0' })}</Text>
+        {(() => {
+          const ota = getRunningOtaInfo();
+          const label =
+            ota.kind === 'ota'
+              ? t('ota.otaBuild', { date: ota.date ?? '', id: ota.shortId ?? '' })
+              : t('ota.embeddedBuild');
+          return <Text style={styles.otaBuild}>{label}</Text>;
+        })()}
       </ScrollView>
     </Screen>
   );
@@ -333,4 +342,5 @@ const makeStyles = (c: ThemeColors) =>
     logoutText: { color: c.error, fontSize: 16, fontWeight: '700' },
 
     version: { textAlign: 'center', color: c.textMuted, fontSize: 12, marginTop: 16 },
+    otaBuild: { textAlign: 'center', color: c.textMuted, fontSize: 11, marginTop: 2 },
   });
