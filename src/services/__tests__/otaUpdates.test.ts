@@ -2,6 +2,7 @@
 // mocked here. Each test sets the mock's return values, then drives the wrapper
 // and asserts on reloadAsync / the info read.
 import { applyPendingUpdateOnLaunch, getRunningOtaInfo, __resetOtaGate } from '../otaUpdates';
+import { useOtaGateStore } from '@/store/otaGateStore';
 
 const mockCheck = jest.fn();
 const mockFetch = jest.fn();
@@ -98,5 +99,61 @@ describe('applyPendingUpdateOnLaunch', () => {
 
     expect(mockReload).not.toHaveBeenCalled();
     jest.useRealTimers();
+  });
+
+  describe('otaGateStore phase reporting', () => {
+    it('reports idle before and after a no-update run', async () => {
+      expect(useOtaGateStore.getState().phase).toBe('idle');
+      mockCheck.mockResolvedValue({ isAvailable: false });
+      await applyPendingUpdateOnLaunch();
+      expect(useOtaGateStore.getState().phase).toBe('idle');
+    });
+
+    it('moves through checking -> downloading -> reloading when an update applies', async () => {
+      const seen: string[] = [];
+      const unsub = useOtaGateStore.subscribe((s) => seen.push(s.phase));
+      mockCheck.mockResolvedValue({ isAvailable: true });
+      mockFetch.mockResolvedValue({ isNew: true });
+      await applyPendingUpdateOnLaunch();
+      unsub();
+      expect(seen).toEqual(['checking', 'downloading', 'reloading']);
+      expect(useOtaGateStore.getState().phase).toBe('reloading');
+    });
+
+    it('returns to idle when the fetch reports nothing new', async () => {
+      mockCheck.mockResolvedValue({ isAvailable: true });
+      mockFetch.mockResolvedValue({ isNew: false });
+      await applyPendingUpdateOnLaunch();
+      expect(useOtaGateStore.getState().phase).toBe('idle');
+    });
+
+    it('returns to idle when the check errors', async () => {
+      mockCheck.mockRejectedValue(new Error('network'));
+      await applyPendingUpdateOnLaunch();
+      expect(useOtaGateStore.getState().phase).toBe('idle');
+    });
+
+    it('does not get stuck on a late phase update after the gate elapsed', async () => {
+      jest.useFakeTimers();
+      mockCheck.mockResolvedValue({ isAvailable: true });
+      let resolveFetch: (v: { isNew: boolean }) => void = () => {};
+      mockFetch.mockReturnValue(new Promise((r) => { resolveFetch = r; }));
+
+      const p = applyPendingUpdateOnLaunch();
+      await Promise.resolve();
+      jest.advanceTimersByTime(11000);
+      // Let withTimeout's fallback resolution propagate through the pending
+      // `await withTimeout(...)` into applyPendingUpdateOnLaunch's `finally`.
+      await Promise.resolve();
+      await Promise.resolve();
+      // Gate has elapsed and the overlay should already be back to idle.
+      expect(useOtaGateStore.getState().phase).toBe('idle');
+      resolveFetch({ isNew: true });
+      await p;
+
+      // A late-settling fetch must not resurrect a stale phase.
+      expect(useOtaGateStore.getState().phase).toBe('idle');
+      jest.useRealTimers();
+    });
   });
 });

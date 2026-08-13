@@ -3,4 +3,6 @@
 export default {
   otaBuild: 'OTA {{date}} · {{id}}',
   embeddedBuild: 'Base build',
+  checking: 'Checking for update…',
+  downloading: 'Downloading update…',
 } as const;

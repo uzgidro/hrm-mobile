@@ -3,4 +3,6 @@
 export default {
   otaBuild: 'OTA {{date}} · {{id}}',
   embeddedBuild: 'Базавий йиғилма',
+  checking: 'Янгиланиш текширилмоқда…',
+  downloading: 'Янгиланиш юкланмоқда…',
 } as const;

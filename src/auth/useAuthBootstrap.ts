@@ -6,6 +6,13 @@
 // splash immediately, then let resolveBootstrap refresh auth/me in the
 // background. With no cache we wait for resolveBootstrap before hiding the
 // splash (there's nothing to show yet).
+//
+// NOTE: app.json has no `splash` key, so there is no native splash image/
+// background configured for preventAutoHideAsync to actually hold — it only
+// suppresses Expo's default blank screen a little longer, it can't show
+// progress. That's why the OTA gate below is covered by an in-app
+// UpdatingOverlay (see src/components/UpdatingOverlay.tsx + otaGateStore)
+// instead of relying on the native splash.
 import { useEffect } from 'react';
 import * as SplashScreen from 'expo-splash-screen';
 import { useAuthStore } from '../store/authStore';
@@ -16,8 +23,8 @@ import { resolveBootstrap, readCachedUser } from './bootstrap';
 import { setupPushNotifications } from './push';
 import { applyPendingUpdateOnLaunch } from '../services/otaUpdates';
 
-// Keep the native splash up until we've decided the initial auth state. Errors
-// (already hidden, etc.) are non-fatal.
+// Keep the (default, unconfigured) splash up until we've decided the initial
+// auth state. Errors (already hidden, etc.) are non-fatal.
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export function useAuthBootstrap() {
@@ -34,9 +41,11 @@ export function useAuthBootstrap() {
     };
 
     (async () => {
-      // Synchronous OTA gate: behind the splash (still up via
-      // preventAutoHideAsync), pull+apply any pending EAS Update before we do
-      // anything else. On a production build with a pending update this never
+      // Synchronous OTA gate: pull+apply any pending EAS Update before we do
+      // anything else. There is no `splash` key in app.json — preventAutoHideAsync
+      // below has nothing native to hold — so UpdatingOverlay (rendered in
+      // _layout, driven by otaGateStore) is what actually covers the screen
+      // while this runs. On a production build with a pending update this never
       // resolves — it reloadAsync()es into the new bundle. Otherwise it's a
       // fast no-op (dev/web) or falls through in ≤10s (slow network), and
       // bootstrap continues exactly as before.
