@@ -1,7 +1,7 @@
 // Test suite for OTA update service wrapper. expo-updates is native — fully
 // mocked here. Each test sets the mock's return values, then drives the wrapper
 // and asserts on reloadAsync / the info read.
-import { applyPendingUpdateOnLaunch, getRunningOtaInfo } from '../otaUpdates';
+import { applyPendingUpdateOnLaunch, getRunningOtaInfo, __resetOtaGate } from '../otaUpdates';
 
 const mockCheck = jest.fn();
 const mockFetch = jest.fn();
@@ -51,6 +51,7 @@ describe('applyPendingUpdateOnLaunch', () => {
     mockFetch.mockReset();
     mockReload.mockReset();
     mockReload.mockResolvedValue(undefined);
+    __resetOtaGate();
   });
 
   it('reloads when an update is available and fetched-new', async () => {
@@ -79,5 +80,23 @@ describe('applyPendingUpdateOnLaunch', () => {
     mockCheck.mockRejectedValue(new Error('network'));
     await expect(applyPendingUpdateOnLaunch()).resolves.toBeUndefined();
     expect(mockReload).not.toHaveBeenCalled();
+  });
+
+  it('does not reload when the launch gate elapsed before the fetch resolved', async () => {
+    jest.useFakeTimers();
+    mockCheck.mockResolvedValue({ isAvailable: true });
+    let resolveFetch: (v: { isNew: boolean }) => void = () => {};
+    mockFetch.mockReturnValue(new Promise((r) => { resolveFetch = r; }));
+
+    const p = applyPendingUpdateOnLaunch();
+    // Let the check microtask settle, then blow past the 10s gate.
+    await Promise.resolve();
+    jest.advanceTimersByTime(11000);
+    // Now the fetch finally completes with a new bundle.
+    resolveFetch({ isNew: true });
+    await p;
+
+    expect(mockReload).not.toHaveBeenCalled();
+    jest.useRealTimers();
   });
 });
