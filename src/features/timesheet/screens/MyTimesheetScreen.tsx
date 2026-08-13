@@ -5,12 +5,12 @@ import {
 import dayjs from 'dayjs';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { router } from 'expo-router';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { LoadingView, ErrorState, EmptyState } from '@/components/StateViews';
 import { monthName, weekdayNameShort } from '@/i18n/dates';
 import { myTimesheetQuery, myTimesheetEventsQuery } from '../api/queries';
@@ -88,16 +88,7 @@ export default function MyTimesheetScreen() {
 
   return (
     <Screen edges={['top', 'bottom']}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Icon name="chevronLeft" size={24} color={colors.text} />
-        </TouchableOpacity>
-        <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>{t('timesheet.myTitle')}</Text>
-          <Text style={styles.headerSub}>{t('timesheet.mySubtitle')}</Text>
-        </View>
-        <View style={{ width: 40 }} />
-      </View>
+      <ScreenHeader title={t('timesheet.myTitle')} subtitle={t('timesheet.mySubtitle')} />
 
       {isLoading ? (
         <LoadingView />
@@ -271,12 +262,6 @@ export default function MyTimesheetScreen() {
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     content: { paddingHorizontal: 16, paddingBottom: 32 },
-
-    header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
-    backBtn: { width: 40, height: 40, justifyContent: 'center' },
-    headerCenter: { flex: 1, paddingHorizontal: 8 },
-    headerTitle: { fontSize: 16, fontWeight: '700', color: c.text },
-    headerSub: { fontSize: 12, color: c.textSecondary, marginTop: 2 },
 
     card: { backgroundColor: c.card, borderRadius: 16, padding: 16, marginTop: 12, borderWidth: 1, borderColor: c.cardBorder },
     cardTitle: { fontSize: 15, fontWeight: '700', color: c.text, marginBottom: 12 },

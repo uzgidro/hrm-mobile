@@ -12,11 +12,13 @@ import { Icon, IconName } from './Icon';
 
 export function ScreenHeader({
   title,
+  subtitle,
   count,
   right,
   onBack,
 }: {
   title: string;
+  subtitle?: string;
   count?: number;
   right?: React.ReactNode;
   onBack?: () => void;
@@ -34,12 +36,17 @@ export function ScreenHeader({
       >
         <Icon name="chevronLeft" size={24} color={colors.text} />
       </TouchableOpacity>
-      <View style={styles.titleRow}>
-        <Text style={styles.title} numberOfLines={1}>{title}</Text>
-        {count != null && count > 0 && (
-          <View style={styles.countBadge}>
-            <Text style={styles.countBadgeText}>{count > 99 ? '99+' : count}</Text>
-          </View>
+      <View style={styles.titleCol}>
+        <View style={styles.titleRow}>
+          <Text style={styles.title} numberOfLines={1}>{title}</Text>
+          {count != null && count > 0 && (
+            <View style={styles.countBadge}>
+              <Text style={styles.countBadgeText}>{count > 99 ? '99+' : count}</Text>
+            </View>
+          )}
+        </View>
+        {subtitle != null && (
+          <Text style={styles.subtitle} numberOfLines={1}>{subtitle}</Text>
         )}
       </View>
       <View style={styles.rightSlot}>{right ?? null}</View>
@@ -86,8 +93,10 @@ const makeStyles = (c: ThemeColors) =>
       gap: 4,
     },
     backBtn: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center' },
-    titleRow: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, paddingLeft: 2 },
+    titleCol: { flex: 1, justifyContent: 'center', paddingLeft: 2 },
+    titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     title: { fontSize: 19, fontWeight: '800', color: c.text, flexShrink: 1 },
+    subtitle: { fontSize: 12, color: c.textSecondary, marginTop: 2 },
     countBadge: {
       backgroundColor: c.warning, borderRadius: 10, paddingHorizontal: 7,
       paddingVertical: 1, minWidth: 20, alignItems: 'center',
