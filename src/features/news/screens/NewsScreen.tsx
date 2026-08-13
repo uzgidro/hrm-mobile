@@ -1,6 +1,6 @@
 import { memo, useCallback } from 'react';
 import {
-  View, Text, FlatList, StyleSheet, RefreshControl, Image,
+  View, Text, FlatList, StyleSheet, RefreshControl,
   type ListRenderItem,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
@@ -16,6 +16,7 @@ import { Screen } from '@/components/Screen';
 import { router } from 'expo-router';
 import { isNewsManager } from '@/utils/roles';
 import { LoadingView, EmptyState } from '@/components/StateViews';
+import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { newsListQuery } from '../api/queries';
 
 type Styles = ReturnType<typeof makeStyles>;
@@ -25,13 +26,7 @@ const NewsCard = memo(function NewsCard({ item, styles, grid }: { item: NewsPost
   return (
     <View style={[styles.card, grid && styles.cardGrid]}>
       <View style={styles.cardHeader}>
-        {item.author?.photo_path ? (
-          <Image source={{ uri: item.author.photo_path }} style={styles.avatar} />
-        ) : (
-          <View style={[styles.avatar, styles.avatarFallback]}>
-            <Text style={styles.avatarInitial}>{(item.author?.legal_name || 'A').charAt(0).toUpperCase()}</Text>
-          </View>
-        )}
+        <EmployeeAvatar emp={item.author ?? {}} size={42} />
         <View style={styles.authorInfo}>
           <Text style={styles.authorName}>{item.author?.legal_name || t('news.authorFallback')}</Text>
           <Text style={styles.newsDate}>{dayjs(item.created_at).format('DD.MM.YYYY HH:mm')}</Text>
@@ -107,9 +102,6 @@ const makeStyles = (c: ThemeColors) =>
     card: { backgroundColor: c.card, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: c.cardBorder },
     cardGrid: { flex: 1 },
     cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
-    avatar: { width: 42, height: 42, borderRadius: 21 },
-    avatarFallback: { backgroundColor: c.primarySoft, alignItems: 'center', justifyContent: 'center' },
-    avatarInitial: { fontSize: 17, fontWeight: '700', color: c.primary },
     authorInfo: { flex: 1 },
     authorName: { fontSize: 14, fontWeight: '700', color: c.text },
     newsDate: { fontSize: 12, color: c.textMuted, marginTop: 2 },

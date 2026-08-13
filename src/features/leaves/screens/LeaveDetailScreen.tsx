@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
-  TouchableOpacity, ActivityIndicator, Alert, TextInput, Modal, Image,
+  TouchableOpacity, ActivityIndicator, Alert, TextInput, Modal,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -11,10 +11,10 @@ import type { TFunction } from 'i18next';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
-import { Employee } from '@/types';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { LoadingView, EmptyState } from '@/components/StateViews';
+import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { getApiErrorMessage } from '@/api/errors';
 import { isHR } from '@/utils/roles';
 import { leaveDetailQuery } from '../api/queries';
@@ -29,17 +29,6 @@ function getStatusMeta(status: string, c: ThemeColors, t: TFunction) {
   if (isApproved(status)) return { label: t('leaves.statusApproved'), fg: c.success, bg: c.successSoft };
   if (isRejected(status)) return { label: t('leaves.statusRejected'), fg: c.error, bg: c.errorSoft };
   return { label: t('leaves.statusPending'), fg: c.warning, bg: c.warningSoft };
-}
-
-function EmpAvatar({ emp, size = 40, c }: { emp: Employee; size?: number; c: ThemeColors }) {
-  if (emp.photo_path) {
-    return <Image source={{ uri: emp.photo_path }} style={{ width: size, height: size, borderRadius: size / 2 }} />;
-  }
-  return (
-    <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: c.primarySoft, alignItems: 'center', justifyContent: 'center' }}>
-      <Text style={{ fontSize: size * 0.38, fontWeight: '700', color: c.primaryLight }}>{(emp.legal_name || '?').charAt(0).toUpperCase()}</Text>
-    </View>
-  );
 }
 
 function RejectModal({ visible, onConfirm, onClose, styles, colors }: {
@@ -189,7 +178,7 @@ export default function LeaveDetailScreen() {
       <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
         {leave.employee && (
           <View style={s.empCard}>
-            <EmpAvatar emp={leave.employee} size={56} c={colors} />
+            <EmployeeAvatar emp={leave.employee} size={56} />
             <View style={s.empInfo}>
               <Text style={s.empName}>{leave.employee.legal_name}</Text>
               <Text style={s.empSub} numberOfLines={1}>{leave.employee.job_position?.name ?? leave.employee.department?.name ?? '—'}</Text>
@@ -234,7 +223,7 @@ export default function LeaveDetailScreen() {
               const hasSigned = leave.signers?.some((sg) => sg.id === signer.id);
               return (
                 <View key={signer.id} style={s.signerRow}>
-                  <EmpAvatar emp={signer} size={40} c={colors} />
+                  <EmployeeAvatar emp={signer} size={40} />
                   <View style={s.signerInfo}>
                     <Text style={s.signerName}>{signer.legal_name}</Text>
                     <Text style={s.signerSub} numberOfLines={1}>{signer.job_position?.name ?? signer.department?.name ?? '—'}</Text>

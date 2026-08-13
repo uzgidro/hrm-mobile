@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
-  TouchableOpacity, RefreshControl, Image, TextInput,
+  TouchableOpacity, RefreshControl, TextInput,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -15,6 +15,7 @@ import { useBreakpoint } from '@/utils/responsive';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { LoadingView, EmptyState } from '@/components/StateViews';
+import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { WorkLeave } from '@/types';
 import { myLeavesQuery, assignedLeavesQuery } from '../api/queries';
 import { leaveTypeLabel } from '../components/LeaveTypeSheet';
@@ -66,13 +67,7 @@ function LeaveCard({ leave, showEmployee, actionNeeded, styles, colors }: {
       )}
       {showEmployee && leave.employee && (
         <View style={styles.empRow}>
-          {leave.employee.photo_path ? (
-            <Image source={{ uri: leave.employee.photo_path }} style={styles.avatar} />
-          ) : (
-            <View style={[styles.avatar, styles.avatarPlaceholder]}>
-              <Text style={styles.avatarInitial}>{(leave.employee.legal_name || '?').charAt(0).toUpperCase()}</Text>
-            </View>
-          )}
+          <EmployeeAvatar emp={leave.employee} size={30} />
           <Text style={styles.empName} numberOfLines={1}>{leave.employee.legal_name}</Text>
         </View>
       )}
@@ -322,9 +317,6 @@ const makeStyles = (c: ThemeColors) =>
     actionBadgeText: { fontSize: 11, fontWeight: '700', color: c.warning },
 
     empRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    avatar: { width: 30, height: 30, borderRadius: 15 },
-    avatarPlaceholder: { backgroundColor: c.primarySoft, alignItems: 'center', justifyContent: 'center' },
-    avatarInitial: { fontSize: 12, fontWeight: '700', color: c.primaryLight },
     empName: { flex: 1, fontSize: 13, color: c.textSecondary, fontWeight: '600' },
 
     cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },

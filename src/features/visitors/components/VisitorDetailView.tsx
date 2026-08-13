@@ -12,6 +12,7 @@ import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon, IconName } from '@/components/Icon';
 import { LoadingView } from '@/components/StateViews';
+import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { getApiErrorMessage } from '@/api/errors';
 import { confirm } from '@/lib/confirm';
 import { visitorDetailQuery } from '../api/queries';
@@ -120,13 +121,7 @@ export function VisitorDetailView({ id, embedded = false }: { id: number; embedd
       ) : (
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           <View style={styles.hero}>
-            {v.photo_path ? (
-              <Image source={{ uri: v.photo_path }} style={styles.photo} />
-            ) : (
-              <View style={[styles.photo, styles.photoFallback]}>
-                <Text style={styles.photoInitial}>{(v.legal_name || '?').charAt(0).toUpperCase()}</Text>
-              </View>
-            )}
+            <EmployeeAvatar emp={v} size={96} />
             <Text style={styles.name}>{v.legal_name || t('visitors.nameFallback')}</Text>
             {!!(v.organization_name || v.job_position) && (
               <Text style={styles.sub}>{[v.organization_name, v.job_position].filter(Boolean).join(' · ')}</Text>
@@ -203,9 +198,6 @@ const makeStyles = (c: ThemeColors) =>
     content: { paddingHorizontal: 16, paddingBottom: 24 },
 
     hero: { alignItems: 'center', paddingVertical: 8, marginBottom: 12 },
-    photo: { width: 96, height: 96, borderRadius: 48, backgroundColor: c.skeleton },
-    photoFallback: { backgroundColor: c.primarySoft, alignItems: 'center', justifyContent: 'center' },
-    photoInitial: { fontSize: 38, fontWeight: '800', color: c.primary },
     name: { fontSize: 20, fontWeight: '800', color: c.text, marginTop: 12, textAlign: 'center' },
     sub: { fontSize: 13, color: c.textSecondary, marginTop: 4, textAlign: 'center' },
     badge: { marginTop: 10, paddingHorizontal: 12, paddingVertical: 5, borderRadius: 10 },
