@@ -14,6 +14,7 @@ import { AttendanceEvent } from '@/types';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
+import { MonthNavigator } from '@/components/MonthNavigator';
 import { monthName, weekdayNameShort } from '@/i18n/dates';
 import { employeeDetailQuery, employeeAttendanceQuery } from '../api/queries';
 
@@ -123,11 +124,7 @@ export default function EmployeeCalendarScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primaryLight} />}
       >
         <View style={styles.card}>
-          <View style={styles.monthNav}>
-            <TouchableOpacity style={styles.navBtn} onPress={() => setCurrentMonth(currentMonth.subtract(1, 'month'))}><Icon name="chevronLeft" size={20} color={colors.text} /></TouchableOpacity>
-            <Text style={styles.monthTitle}>{monthName(currentMonth.month())} {currentMonth.year()}</Text>
-            <TouchableOpacity style={styles.navBtn} onPress={() => setCurrentMonth(currentMonth.add(1, 'month'))}><Icon name="chevronRight" size={20} color={colors.text} /></TouchableOpacity>
-          </View>
+          <MonthNavigator month={currentMonth} onChange={setCurrentMonth} />
 
           <View style={styles.weekRow}>{WEEKDAY_INDICES.map((d) => <Text key={d} style={styles.weekDayLabel}>{weekdayNameShort(d)}</Text>)}</View>
 
@@ -236,11 +233,6 @@ const makeStyles = (c: ThemeColors) =>
     cardTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 },
     cardIcon: { fontSize: 16 },
     cardTitle: { fontSize: 15, fontWeight: '700', color: c.text, flex: 1 },
-
-    monthNav: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-    navBtn: { width: 40, height: 40, backgroundColor: c.bg, borderRadius: 10, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: c.cardBorder },
-    navBtnText: { color: c.text, fontSize: 16, fontWeight: '700' },
-    monthTitle: { fontSize: 16, fontWeight: '700', color: c.text },
 
     weekRow: { flexDirection: 'row', marginBottom: 8 },
     weekDayLabel: { flex: 1, textAlign: 'center', fontSize: 12, color: c.textMuted, fontWeight: '600' },
