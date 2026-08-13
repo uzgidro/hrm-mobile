@@ -6,8 +6,8 @@ import dayjs from 'dayjs';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import type { SupportTicket } from '@/types';
-import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
+import { ScreenHeader, HeaderAction } from '@/components/ScreenHeader';
 import { LoadingView, EmptyState, ErrorState } from '@/components/StateViews';
 import { ticketStatusKey, ticketStatusKind, ticketPriorityKey, type StatusKind } from '@/utils/supportStatus';
 import { myTicketsQuery } from '../api/queries';
@@ -30,20 +30,11 @@ export default function SupportListScreen() {
 
   return (
     <Screen edges={['top']}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
-          style={styles.backBtn}
-          hitSlop={10}
-        >
-          <Icon name="chevronLeft" size={26} color={colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.title}>{t('support.title')}</Text>
-        <View style={{ flex: 1 }} />
-        <TouchableOpacity style={styles.addBtn} onPress={() => router.push('/texnik-yordam-form')} activeOpacity={0.85}>
-          <Icon name="plus" size={22} color={colors.onPrimary} strokeWidth={2.4} />
-        </TouchableOpacity>
-      </View>
+      <ScreenHeader
+        title={t('support.title')}
+        onBack={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
+        right={<HeaderAction icon="plus" onPress={() => router.push('/texnik-yordam-form')} />}
+      />
       <Text style={styles.subtitle}>{t('support.subtitle')}</Text>
 
       {isLoading ? (
@@ -88,11 +79,7 @@ export default function SupportListScreen() {
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    header: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingTop: 16, paddingBottom: 4 },
-    backBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', marginLeft: -8, marginRight: -4 },
-    title: { fontSize: 26, fontWeight: '800', color: c.text },
     subtitle: { fontSize: 13, color: c.textMuted, paddingHorizontal: 16, marginBottom: 8 },
-    addBtn: { width: 42, height: 42, borderRadius: 14, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' },
     content: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 24 },
     card: { padding: 14, marginBottom: 10, backgroundColor: c.card, borderRadius: 14, borderWidth: 1, borderColor: c.cardBorder },
     cardTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },

@@ -16,6 +16,7 @@ import type { ThemeColors } from '@/theme/palettes';
 import { Employee } from '@/types';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { PickerModal } from '@/components/PickerModal';
 import { useBreakpoint } from '@/utils/responsive';
 import { useCreateLeave, type CreateLeavePayload } from '../api/mutations';
@@ -113,11 +114,7 @@ export default function CreateLeaveScreen() {
 
   return (
     <Screen edges={['top', 'bottom']} maxWidth={600}>
-      <View style={s.header}>
-        <TouchableOpacity onPress={() => router.back()} style={s.backBtn}><Icon name="chevronLeft" size={24} color={colors.text} /></TouchableOpacity>
-        <Text style={s.headerTitle}>{t('leaves.createTitle')}</Text>
-        <View style={{ width: 36 }} />
-      </View>
+      <ScreenHeader title={t('leaves.createTitle')} />
 
       <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
         <Text style={s.label}>{t('leaves.typeLabel')}</Text>
@@ -224,9 +221,6 @@ export default function CreateLeaveScreen() {
 
 const makeS = (c: ThemeColors) =>
   StyleSheet.create({
-    header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
-    backBtn: { width: 36, height: 36, justifyContent: 'center' },
-    headerTitle: { flex: 1, fontSize: 20, fontWeight: '700', color: c.text, paddingLeft: 4 },
     content: { paddingHorizontal: 16, paddingTop: 20 },
     label: { fontSize: 13, fontWeight: '600', color: c.textSecondary, marginBottom: 6, marginTop: 18 },
     selector: { flexDirection: 'row', alignItems: 'center', backgroundColor: c.card, borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 14, paddingVertical: 14 },

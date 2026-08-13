@@ -3,7 +3,7 @@ import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Linking, Image, TextInput,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
@@ -11,6 +11,7 @@ import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { LoadingView, ErrorState } from '@/components/StateViews';
 import type { CardAttachment, CardComment } from '@/types';
 import { cardDetailQuery, cardCommentsQuery } from '../api/queries';
@@ -76,16 +77,10 @@ export default function CardDetailScreen() {
 
   return (
     <Screen edges={['top', 'bottom']} overlay={actionBar}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Icon name="chevronLeft" size={24} color={colors.text} />
-        </TouchableOpacity>
-        <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle} numberOfLines={1}>{card?.title || t('projects.taskFallback')}</Text>
-          <Text style={styles.headerSub}>{t('projects.cardDetailSubtitle')}</Text>
-        </View>
-        <View style={{ width: 40 }} />
-      </View>
+      <ScreenHeader
+        title={card?.title || t('projects.taskFallback')}
+        subtitle={t('projects.cardDetailSubtitle')}
+      />
 
       {isLoading ? (
         <LoadingView />
@@ -215,12 +210,6 @@ export default function CardDetailScreen() {
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 24 },
-
-    header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
-    backBtn: { width: 40, height: 40, justifyContent: 'center' },
-    headerCenter: { flex: 1, paddingHorizontal: 8 },
-    headerTitle: { fontSize: 16, fontWeight: '700', color: c.text },
-    headerSub: { fontSize: 12, color: c.textSecondary, marginTop: 2 },
 
     card: { backgroundColor: c.card, borderRadius: 16, padding: 16, marginTop: 12, borderWidth: 1, borderColor: c.cardBorder },
     statusPill: { alignSelf: 'flex-start', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, marginBottom: 10 },

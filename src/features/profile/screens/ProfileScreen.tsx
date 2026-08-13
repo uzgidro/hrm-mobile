@@ -13,6 +13,7 @@ import type { ThemeColors } from '@/theme/palettes';
 import type { ThemeMode } from '@/theme/ThemeProvider';
 import { Icon, IconName } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { confirm } from '@/lib/confirm';
 import { Flag } from '@/components/Flag';
@@ -71,20 +72,13 @@ export default function ProfileScreen() {
 
   return (
     <Screen edges={['top']}>
+      {/* Profile is a bar-less tab (href:null) opened from Modules/the avatar,
+          so it needs its own back affordance; back() walks the tab history. */}
+      <ScreenHeader
+        title={t('profile.title')}
+        onBack={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
+      />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Profile is a bar-less tab (href:null) opened from Modules/the avatar,
-            so it needs its own back affordance; back() walks the tab history. */}
-        <View style={styles.titleRow}>
-          <TouchableOpacity
-            onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
-            style={styles.backBtn}
-            hitSlop={10}
-          >
-            <Icon name="chevronLeft" size={26} color={colors.text} />
-          </TouchableOpacity>
-          <Text style={styles.pageTitle}>{t('profile.title')}</Text>
-        </View>
-
         {/* User card */}
         <View style={styles.card}>
           <View style={styles.userRow}>
@@ -260,10 +254,7 @@ export default function ProfileScreen() {
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    content: { paddingHorizontal: 16, paddingBottom: 40 },
-    titleRow: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingTop: 16, marginBottom: 16 },
-    backBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', marginLeft: -8 },
-    pageTitle: { fontSize: 26, fontWeight: '800', color: c.text },
+    content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 40 },
 
     sectionLabel: {
       fontSize: 12, fontWeight: '700', color: c.textMuted,

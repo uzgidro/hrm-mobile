@@ -13,6 +13,7 @@ import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { LoadingView, EmptyState } from '@/components/StateViews';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { getApiErrorMessage } from '@/api/errors';
@@ -140,15 +141,7 @@ export default function LeaveDetailScreen() {
     );
   }, [deleteMutation, t]);
 
-  const headerBar = (
-    <View style={s.header}>
-      <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
-        <Icon name="chevronLeft" size={24} color={colors.text} />
-      </TouchableOpacity>
-      <Text style={s.headerTitle}>{t('leaves.detailTitle')}</Text>
-      <View style={{ width: 36 }} />
-    </View>
-  );
+  const headerBar = <ScreenHeader title={t('leaves.detailTitle')} />;
 
   if (isLoading) {
     return (
@@ -266,11 +259,6 @@ export default function LeaveDetailScreen() {
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
-    backBtn: { width: 36, height: 36, justifyContent: 'center' },
-    backArrow: { fontSize: 22, color: c.text, fontWeight: '300' },
-    headerTitle: { flex: 1, fontSize: 20, fontWeight: '700', color: c.text, paddingLeft: 4 },
-
     content: { paddingHorizontal: 16, paddingTop: 16 },
 
     empCard: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: c.card, borderRadius: 16, borderWidth: 1, borderColor: c.cardBorder, padding: 14, marginBottom: 10 },

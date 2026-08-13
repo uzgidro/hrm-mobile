@@ -9,8 +9,8 @@ import * as DocumentPicker from 'expo-document-picker';
 import dayjs from 'dayjs';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
-import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { LoadingView } from '@/components/StateViews';
 import { AttachmentField, type PickedFile } from '@/components/AttachmentField';
 import { DatePickerModal } from '@/components/DatePicker';
@@ -97,7 +97,7 @@ export default function SubmitReportScreen() {
   if (isLoading || !letter) {
     return (
       <Screen edges={['top', 'bottom']}>
-        <Header title={t('letters.reportTitle')} styles={styles} colors={colors} />
+        <ScreenHeader title={t('letters.reportTitle')} />
         <LoadingView />
       </Screen>
     );
@@ -105,20 +105,19 @@ export default function SubmitReportScreen() {
 
   return (
     <Screen edges={['top', 'bottom']} maxWidth={640}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
-          <Icon name="chevronLeft" size={24} color={colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.title}>{isEditing ? t('letters.reportEditTitle') : t('letters.reportTitle')}</Text>
-        <TouchableOpacity
-          style={[styles.submitBtn, !canSubmit && styles.submitBtnDisabled]}
-          onPress={handleSubmit}
-          disabled={!canSubmit}
-          activeOpacity={0.8}
-        >
-          {busy ? <ActivityIndicator size="small" color={colors.onPrimary} /> : <Text style={styles.submitBtnText}>{t('letters.reportSend')}</Text>}
-        </TouchableOpacity>
-      </View>
+      <ScreenHeader
+        title={isEditing ? t('letters.reportEditTitle') : t('letters.reportTitle')}
+        right={
+          <TouchableOpacity
+            style={[styles.submitBtn, !canSubmit && styles.submitBtnDisabled]}
+            onPress={handleSubmit}
+            disabled={!canSubmit}
+            activeOpacity={0.8}
+          >
+            {busy ? <ActivityIndicator size="small" color={colors.onPrimary} /> : <Text style={styles.submitBtnText}>{t('letters.reportSend')}</Text>}
+          </TouchableOpacity>
+        }
+      />
 
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         {letter.status === 'report_returned' && !!letter.return_reason && (
@@ -189,28 +188,8 @@ export default function SubmitReportScreen() {
   );
 }
 
-function Header({ title, styles, colors }: { title: string; styles: Styles; colors: ThemeColors }) {
-  return (
-    <View style={styles.header}>
-      <TouchableOpacity onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
-        <Icon name="chevronLeft" size={24} color={colors.text} />
-      </TouchableOpacity>
-      <Text style={styles.title}>{title}</Text>
-      <View style={{ width: 40 }} />
-    </View>
-  );
-}
-
-type Styles = ReturnType<typeof makeStyles>;
-
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    header: {
-      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-      paddingHorizontal: 12, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: c.cardBorder,
-    },
-    backBtn: { width: 40, height: 40, justifyContent: 'center' },
-    title: { flex: 1, fontSize: 17, fontWeight: '800', color: c.text, textAlign: 'center' },
     submitBtn: { minWidth: 80, height: 38, borderRadius: 10, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14 },
     submitBtnDisabled: { opacity: 0.5 },
     submitBtnText: { color: c.onPrimary, fontWeight: '700', fontSize: 14 },
