@@ -92,7 +92,6 @@ export default {
   notFound: "Ma'lumot topilmadi",
 
   // ── Alerts ──────────────────────────────────────────────────────────────────
-  errorTitle: 'Xato',
   endMustBeAfterStart: "Tugash vaqti boshlanish vaqtidan keyin bo'lishi kerak",
   createdSuccess: "So'rov yuborildi",
   approvedSuccess: "So'rov tasdiqlandi",

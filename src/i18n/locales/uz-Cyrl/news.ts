@@ -19,5 +19,4 @@ export default {
   save: 'Сақлаш',
   created: 'Янгилик жойланди',
   titleRequired: 'Сарлавҳа киритилиши шарт',
-  errorTitle: 'Хатолик',
 } as const;

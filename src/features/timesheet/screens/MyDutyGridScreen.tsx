@@ -7,11 +7,10 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
-import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
+import { MonthNavigator } from '@/components/MonthNavigator';
 import { LoadingView, ErrorState, EmptyState } from '@/components/StateViews';
-import { monthName } from '@/i18n/dates';
 import type { Employee } from '@/types';
 import { myNavbatchilikGroupsQuery, groupMembersQuery, groupScheduleDaysQuery } from '../api/queries';
 import { useScheduleDayMutations } from '../api/mutations';
@@ -119,15 +118,7 @@ export default function MyDutyGridScreen({ embedded = false }: { embedded?: bool
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primaryLight} />}
         >
-          <View style={styles.monthNav}>
-            <TouchableOpacity style={styles.navBtn} onPress={() => setCurrentMonth(currentMonth.subtract(1, 'month'))}>
-              <Icon name="chevronLeft" size={20} color={colors.text} />
-            </TouchableOpacity>
-            <Text style={styles.monthTitle}>{monthName(currentMonth.month())} {currentMonth.year()}</Text>
-            <TouchableOpacity style={styles.navBtn} onPress={() => setCurrentMonth(currentMonth.add(1, 'month'))}>
-              <Icon name="chevronRight" size={20} color={colors.text} />
-            </TouchableOpacity>
-          </View>
+          <MonthNavigator month={currentMonth} onChange={setCurrentMonth} />
 
           {groups.length > 1 && (
             <View style={styles.tabsRow}>
@@ -210,10 +201,6 @@ export default function MyDutyGridScreen({ embedded = false }: { embedded?: bool
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 32 },
-
-    monthNav: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
-    navBtn: { width: 40, height: 40, backgroundColor: c.card, borderRadius: 10, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: c.cardBorder },
-    monthTitle: { fontSize: 16, fontWeight: '700', color: c.text },
 
     tabsRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
     tab: { flex: 1, paddingVertical: 10, borderRadius: 10, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, alignItems: 'center' },

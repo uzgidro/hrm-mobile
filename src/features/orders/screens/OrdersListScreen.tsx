@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
-  TouchableOpacity, RefreshControl, TextInput,
+  TouchableOpacity, RefreshControl,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -13,6 +13,8 @@ import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { SplitLayout } from '@/components/SplitLayout';
 import { LoadingView, EmptyState } from '@/components/StateViews';
+import { FilterChip } from '@/components/FilterChip';
+import { SearchBox } from '@/components/SearchBox';
 import { useBreakpoint } from '@/utils/responsive';
 import { needsMyAction, statusMeta } from '@/utils/orderStatus';
 import { ordersListQuery } from '../api/queries';
@@ -146,38 +148,23 @@ export default function OrdersListScreen() {
       </View>
 
       <View style={styles.searchWrap}>
-        <View style={styles.searchBox}>
-          <Icon name="search" size={18} color={colors.textMuted} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder={t('orders.searchPlaceholder')}
-            placeholderTextColor={colors.textMuted}
-            value={search}
-            onChangeText={setSearch}
-            returnKeyType="search"
-          />
-          {search.length > 0 && (
-            <TouchableOpacity onPress={() => setSearch('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <Icon name="close" size={18} color={colors.textMuted} />
-            </TouchableOpacity>
-          )}
-        </View>
+        <SearchBox value={search} onChangeText={setSearch} placeholder={t('orders.searchPlaceholder')} />
       </View>
 
       {categoryOptions.length > 0 && (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
-          <OrderChip label={t('orders.filterAllCategories')} active={categoryFilter === 'all'} onPress={() => setCategoryFilter('all')} styles={styles} />
+          <FilterChip label={t('orders.filterAllCategories')} active={categoryFilter === 'all'} onPress={() => setCategoryFilter('all')} styles={styles} />
           {categoryOptions.map((c) => (
-            <OrderChip key={c} label={c} active={categoryFilter === c} onPress={() => setCategoryFilter(c)} styles={styles} />
+            <FilterChip key={c} label={c} active={categoryFilter === c} onPress={() => setCategoryFilter(c)} styles={styles} />
           ))}
         </ScrollView>
       )}
 
       {statusOptions.length > 1 && (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
-          <OrderChip label={t('orders.filterAllStatuses')} active={statusFilter === 'all'} onPress={() => setStatusFilter('all')} styles={styles} subtle />
+          <FilterChip label={t('orders.filterAllStatuses')} active={statusFilter === 'all'} onPress={() => setStatusFilter('all')} styles={styles} subtle />
           {statusOptions.map((s) => (
-            <OrderChip key={s.value} label={s.label} active={statusFilter === s.value} onPress={() => setStatusFilter(s.value)} styles={styles} subtle />
+            <FilterChip key={s.value} label={s.label} active={statusFilter === s.value} onPress={() => setStatusFilter(s.value)} styles={styles} subtle />
           ))}
         </ScrollView>
       )}
@@ -231,22 +218,6 @@ export default function OrdersListScreen() {
   return <Screen edges={['top']}>{listPane}</Screen>;
 }
 
-function OrderChip({ label, active, onPress, styles, subtle }: {
-  label: string; active: boolean; onPress: () => void; styles: ReturnType<typeof makeStyles>; subtle?: boolean;
-}) {
-  return (
-    <TouchableOpacity
-      style={[subtle ? styles.chipSubtle : styles.chip, active && (subtle ? styles.chipSubtleActive : styles.chipActive)]}
-      onPress={onPress}
-      activeOpacity={0.75}
-    >
-      <Text style={[subtle ? styles.chipSubtleText : styles.chipText, active && (subtle ? styles.chipSubtleTextActive : styles.chipTextActive)]} numberOfLines={1}>
-        {label}
-      </Text>
-    </TouchableOpacity>
-  );
-}
-
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
@@ -273,11 +244,6 @@ const makeStyles = (c: ThemeColors) =>
     emptyWrap: { paddingTop: 60 },
 
     searchWrap: { paddingHorizontal: 16, paddingBottom: 10 },
-    searchBox: {
-      flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: c.card,
-      borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 12, height: 44,
-    },
-    searchInput: { flex: 1, color: c.text, fontSize: 14 },
     chipRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingBottom: 10, alignItems: 'center' },
     chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 18, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder },
     chipActive: { backgroundColor: c.primary, borderColor: c.primary },

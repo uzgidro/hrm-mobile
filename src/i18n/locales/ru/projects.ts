@@ -40,7 +40,6 @@ export default {
   membersHint: 'Участники могут видеть задачи проекта и участвовать в них.',
   nameRequired: 'Необходимо указать название проекта',
 
-  errorTitle: 'Ошибка',
 
   // ── Card detail (view + status actions) ─────────────────────────────────────
   cardDetailSubtitle: 'Детали задачи',

@@ -54,7 +54,6 @@ export default {
     widowed: 'Бева',
   },
 
-  errorTitle: 'Хато',
   nameRequired: 'Ф.И.О. киритилиши шарт',
   savedTitle: 'Сақланди',
   savedMessage: 'Маълумотлар янгиланди',

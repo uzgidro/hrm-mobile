@@ -75,7 +75,6 @@ export default {
   emptyPending: 'Ожидающих заявок нет',
   notFound: 'Данные не найдены',
 
-  errorTitle: 'Ошибка',
   endMustBeAfterStart: 'Время окончания должно быть позже времени начала',
   createdSuccess: 'Заявка отправлена',
   approvedSuccess: 'Заявка утверждена',

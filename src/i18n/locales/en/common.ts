@@ -20,4 +20,5 @@ export default {
   all: 'All',
   retry: 'Retry',
   success: 'Success',
+  errorTitle: 'Error',
 } as const;

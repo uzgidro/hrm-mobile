@@ -44,7 +44,6 @@ export default {
   pickApprover: 'Approver',
 
   // ── Create validation / result alerts ───────────────────────────────────────
-  validationTitle: 'Error',
   categoryRequired: 'Order type must be selected',
   descriptionRequired: 'Order text must be entered',
   approverRequired: 'At least one approver is required',

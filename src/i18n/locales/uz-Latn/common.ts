@@ -22,4 +22,5 @@ export default {
   all: 'Barchasi',
   retry: 'Qayta urinish',
   success: 'Muvaffaqiyat',
+  errorTitle: 'Xatolik',
 } as const;

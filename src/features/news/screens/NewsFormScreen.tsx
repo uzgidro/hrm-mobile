@@ -34,14 +34,14 @@ export default function NewsFormScreen() {
 
   const submit = () => {
     if (!title.trim()) {
-      Alert.alert(t('news.errorTitle'), t('news.titleRequired'));
+      Alert.alert(t('common.errorTitle'), t('news.titleRequired'));
       return;
     }
     createM.mutate(
       { title, description, organization_branch_id: branchId },
       {
         onSuccess: () => { Alert.alert(t('news.created'), ''); router.back(); },
-        onError: (e) => Alert.alert(t('news.errorTitle'), getApiErrorMessage(e, t('news.errorTitle'))),
+        onError: (e) => Alert.alert(t('common.errorTitle'), getApiErrorMessage(e, t('common.errorTitle'))),
       },
     );
   };

@@ -139,14 +139,14 @@ export default function CreateLetterScreen() {
 
   // ── Submit ───────────────────────────────────────────────────────────────────
   async function handleCreate() {
-    if (!letterType) { Alert.alert(t('letters.validationTitle'), t('letters.typeRequired')); return; }
-    if (!branchId) { Alert.alert(t('letters.validationTitle'), t('letters.branchNotFound')); return; }
-    if (!isTrip && !mainSignerId) { Alert.alert(t('letters.validationTitle'), t('letters.mainSignerRequired')); return; }
+    if (!letterType) { Alert.alert(t('common.errorTitle'), t('letters.typeRequired')); return; }
+    if (!branchId) { Alert.alert(t('common.errorTitle'), t('letters.branchNotFound')); return; }
+    if (!isTrip && !mainSignerId) { Alert.alert(t('common.errorTitle'), t('letters.mainSignerRequired')); return; }
     if (isTrip) {
       // submitter is optional (web parity): an empty submitter means the author
       // submits and signs their own trip — the backend handles it.
-      if (destinationIds.length === 0) { Alert.alert(t('letters.validationTitle'), t('letters.destinationRequired')); return; }
-      if (rahbariyatIds.length === 0) { Alert.alert(t('letters.validationTitle'), t('letters.leadershipRequired')); return; }
+      if (destinationIds.length === 0) { Alert.alert(t('common.errorTitle'), t('letters.destinationRequired')); return; }
+      if (rahbariyatIds.length === 0) { Alert.alert(t('common.errorTitle'), t('letters.leadershipRequired')); return; }
     }
 
     const payload = buildLetterCreatePayload({
@@ -167,7 +167,7 @@ export default function CreateLetterScreen() {
       });
       router.replace({ pathname: '/letter-detail', params: { id: String(letterId) } });
     } catch (err) {
-      Alert.alert(t('letters.validationTitle'), getApiErrorMessage(err, t('letters.createError')));
+      Alert.alert(t('common.errorTitle'), getApiErrorMessage(err, t('letters.createError')));
     } finally {
       setSaving(false);
     }

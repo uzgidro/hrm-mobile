@@ -19,5 +19,4 @@ export default {
   save: 'Save',
   created: 'Post published',
   titleRequired: 'A title is required',
-  errorTitle: 'Error',
 } as const;

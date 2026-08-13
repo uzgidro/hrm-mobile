@@ -32,6 +32,5 @@ export default {
   deleteConfirmMessage: 'Подтверждаете удаление задачи?',
   titleRequired: 'Необходимо указать заголовок',
   dateRequired: 'Необходимо указать дату',
-  errorTitle: 'Ошибка',
   actionError: 'Не удалось выполнить действие',
 } as const;

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, RefreshControl, FlatList, TextInput, ScrollView,
+  View, Text, StyleSheet, TouchableOpacity, RefreshControl, FlatList, ScrollView,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -14,6 +14,7 @@ import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { LoadingView, EmptyState, ErrorState } from '@/components/StateViews';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
+import { SearchBox } from '@/components/SearchBox';
 import { myTeamQuery } from '../api/queries';
 import { resultColorKey, filterTeamMembers } from '../utils';
 
@@ -56,22 +57,7 @@ export default function KpiTeamScreen() {
       {!isLoading && !isError && (
         <>
           <View style={styles.searchWrap}>
-            <View style={styles.searchBox}>
-              <Icon name="search" size={18} color={colors.textMuted} />
-              <TextInput
-                style={styles.searchInput}
-                placeholder={t('kpi.teamSearchPlaceholder')}
-                placeholderTextColor={colors.textMuted}
-                value={search}
-                onChangeText={setSearch}
-                returnKeyType="search"
-              />
-              {search.length > 0 && (
-                <TouchableOpacity onPress={() => setSearch('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                  <Icon name="close" size={18} color={colors.textMuted} />
-                </TouchableOpacity>
-              )}
-            </View>
+            <SearchBox value={search} onChangeText={setSearch} placeholder={t('kpi.teamSearchPlaceholder')} />
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
             {STATUS_CHIPS.map((s) => {
@@ -171,11 +157,6 @@ const makeStyles = (c: ThemeColors) =>
     gridRow: { gap: 12 },
 
     searchWrap: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4 },
-    searchBox: {
-      flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: c.card,
-      borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 12, height: 44,
-    },
-    searchInput: { flex: 1, color: c.text, fontSize: 14 },
     chipRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingVertical: 8, alignItems: 'center' },
     chip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 16, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder },
     chipActive: { backgroundColor: c.primary, borderColor: c.primary },

@@ -63,7 +63,6 @@ export default {
   fromPickerTitle: 'Arrival time',
   untilPickerTitle: 'Departure time',
 
-  errorTitle: 'Error',
   nameRequired: 'Full name is required',
   untilBeforeFrom: 'Departure time must be after arrival time',
 } as const;

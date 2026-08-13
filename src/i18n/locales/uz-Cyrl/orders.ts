@@ -44,7 +44,6 @@ export default {
   pickApprover: 'Келишувчи',
 
   // ── Create validation / result alerts ───────────────────────────────────────
-  validationTitle: 'Хато',
   categoryRequired: 'Буйруқ тури танланиши шарт',
   descriptionRequired: 'Буйруқ матни киритилиши шарт',
   approverRequired: 'Камида битта келишувчи танланиши шарт',

@@ -63,7 +63,7 @@ export function VisitorDetailView({ id, embedded = false }: { id: number; embedd
     if (!ok) return;
     del.mutate(visitorId, {
       onSuccess: () => router.back(),
-      onError: (e) => Alert.alert(t('visitors.errorTitle'), getApiErrorMessage(e, t('visitors.deleteError'))),
+      onError: (e) => Alert.alert(t('common.errorTitle'), getApiErrorMessage(e, t('visitors.deleteError'))),
     });
   };
 

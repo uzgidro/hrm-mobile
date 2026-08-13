@@ -48,7 +48,6 @@ export default {
   pickApprover: 'Kelishuvchi',
 
   // ── Create validation / result alerts ───────────────────────────────────────
-  validationTitle: 'Xato',
   categoryRequired: 'Buyruq turi tanlanishi shart',
   descriptionRequired: 'Buyruq matni kiritilishi shart',
   approverRequired: 'Kamida bitta kelishuvchi tanlanishi shart',

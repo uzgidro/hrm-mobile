@@ -74,7 +74,6 @@ export default {
   untilPickerTitle: 'Ketish vaqti',
 
   // Validation / errors
-  errorTitle: 'Xatolik',
   nameRequired: 'Ism-sharif kiritilishi shart',
   untilBeforeFrom: "Ketish vaqti kelish vaqtidan keyin bo'lishi kerak",
 } as const;

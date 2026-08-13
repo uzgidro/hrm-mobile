@@ -20,4 +20,5 @@ export default {
   all: 'Все',
   retry: 'Повторить',
   success: 'Успешно',
+  errorTitle: 'Ошибка',
 } as const;

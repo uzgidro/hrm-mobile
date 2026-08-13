@@ -38,6 +38,5 @@ export default {
   deleteConfirmMessage: "Ushbu vazifani o'chirishni tasdiqlaysizmi?",
   titleRequired: 'Sarlavha kiritilishi shart',
   dateRequired: 'Sana kiritilishi shart',
-  errorTitle: 'Xatolik',
   actionError: "Amalni bajarib bo'lmadi",
 } as const;

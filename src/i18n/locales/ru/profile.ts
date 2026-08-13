@@ -54,7 +54,6 @@ export default {
     widowed: 'Вдовец / вдова',
   },
 
-  errorTitle: 'Ошибка',
   nameRequired: 'Необходимо указать Ф.И.О.',
   savedTitle: 'Сохранено',
   savedMessage: 'Данные обновлены',

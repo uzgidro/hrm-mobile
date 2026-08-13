@@ -9,7 +9,6 @@ export default {
   loginButton: 'Войти',
   oneIdButton: 'Войти через OneID',
 
-  errorTitle: 'Ошибка',
   credentialsRequired: 'Введите логин и пароль',
   loginError: 'Ошибка входа',
   invalidCredentials: 'Неверный логин или пароль',

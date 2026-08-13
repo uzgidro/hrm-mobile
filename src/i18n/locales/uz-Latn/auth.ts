@@ -11,7 +11,6 @@ export default {
   oneIdButton: 'OneID orqali kirish',
 
   // Validation + login error alerts
-  errorTitle: 'Xato',
   credentialsRequired: 'Login va parol kiritilishi shart',
   loginError: 'Kirish xatosi',
   invalidCredentials: "Login yoki parol noto'g'ri",

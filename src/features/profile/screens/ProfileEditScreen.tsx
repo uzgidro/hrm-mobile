@@ -86,7 +86,7 @@ export default function ProfileEditScreen() {
 
   const handleSave = async () => {
     if (!form.legal_name.trim()) {
-      Alert.alert(t('profile.errorTitle'), t('profile.nameRequired'));
+      Alert.alert(t('common.errorTitle'), t('profile.nameRequired'));
       return;
     }
     setSaving(true);

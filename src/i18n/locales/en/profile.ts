@@ -54,7 +54,6 @@ export default {
     widowed: 'Widowed',
   },
 
-  errorTitle: 'Error',
   nameRequired: 'Full name is required',
   savedTitle: 'Saved',
   savedMessage: 'Details updated',

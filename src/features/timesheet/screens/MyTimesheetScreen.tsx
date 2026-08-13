@@ -11,8 +11,9 @@ import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
+import { MonthNavigator } from '@/components/MonthNavigator';
 import { LoadingView, ErrorState, EmptyState } from '@/components/StateViews';
-import { monthName, weekdayNameShort } from '@/i18n/dates';
+import { weekdayNameShort } from '@/i18n/dates';
 import { myTimesheetQuery, myTimesheetEventsQuery } from '../api/queries';
 import { tabelCodeMeta, tabelCodeColor, legendCodesFor, tabelSummary, dayAttendanceDetail } from '../utils';
 
@@ -101,15 +102,7 @@ export default function MyTimesheetScreen() {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primaryLight} />}
         >
           <View style={styles.card}>
-            <View style={styles.monthNav}>
-              <TouchableOpacity style={styles.navBtn} onPress={() => goToMonth(currentMonth.subtract(1, 'month'))}>
-                <Icon name="chevronLeft" size={20} color={colors.text} />
-              </TouchableOpacity>
-              <Text style={styles.monthTitle}>{monthName(currentMonth.month())} {currentMonth.year()}</Text>
-              <TouchableOpacity style={styles.navBtn} onPress={() => goToMonth(currentMonth.add(1, 'month'))}>
-                <Icon name="chevronRight" size={20} color={colors.text} />
-              </TouchableOpacity>
-            </View>
+            <MonthNavigator month={currentMonth} onChange={goToMonth} />
 
             <View style={styles.weekRow}>
               {WEEKDAY_INDICES.map((d) => <Text key={d} style={styles.weekDayLabel}>{weekdayNameShort(d)}</Text>)}
@@ -280,10 +273,6 @@ const makeStyles = (c: ThemeColors) =>
     eventRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
     eventTime: { fontSize: 14, fontWeight: '700', color: c.text, width: 44 },
     eventDir: { fontSize: 13, color: c.textSecondary },
-
-    monthNav: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-    navBtn: { width: 40, height: 40, backgroundColor: c.bg, borderRadius: 10, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: c.cardBorder },
-    monthTitle: { fontSize: 16, fontWeight: '700', color: c.text },
 
     weekRow: { flexDirection: 'row', marginBottom: 8 },
     weekDayLabel: { flex: 1, textAlign: 'center', fontSize: 12, color: c.textMuted, fontWeight: '600' },

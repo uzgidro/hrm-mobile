@@ -39,7 +39,6 @@ export default {
   membersHint: 'Аъзолар лойиҳа вазифаларини кўришлари ва уларда иштирок этишлари мумкин.',
   nameRequired: 'Лойиҳа номи киритилиши шарт',
 
-  errorTitle: 'Хатолик',
 
   // ── Card detail (view + status actions) ─────────────────────────────────────
   cardDetailSubtitle: 'Вазифа тафсилоти',

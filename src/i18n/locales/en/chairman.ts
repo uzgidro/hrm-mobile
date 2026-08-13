@@ -32,6 +32,5 @@ export default {
   deleteConfirmMessage: 'Confirm deleting this task?',
   titleRequired: 'A title is required',
   dateRequired: 'A date is required',
-  errorTitle: 'Error',
   actionError: 'Could not perform the action',
 } as const;

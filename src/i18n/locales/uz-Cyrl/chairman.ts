@@ -32,6 +32,5 @@ export default {
   deleteConfirmMessage: 'Ушбу вазифани ўчиришни тасдиқлайсизми?',
   titleRequired: 'Сарлавҳа киритилиши шарт',
   dateRequired: 'Сана киритилиши шарт',
-  errorTitle: 'Хатолик',
   actionError: 'Амални бажариб бўлмади',
 } as const;

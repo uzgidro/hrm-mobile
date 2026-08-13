@@ -9,7 +9,6 @@ export default {
   loginButton: 'Sign in',
   oneIdButton: 'Sign in with OneID',
 
-  errorTitle: 'Error',
   credentialsRequired: 'Username and password are required',
   loginError: 'Sign-in error',
   invalidCredentials: 'Invalid username or password',

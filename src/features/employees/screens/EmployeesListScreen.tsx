@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  FlatList, TextInput, ScrollView,
+  FlatList, ScrollView,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
@@ -17,6 +17,8 @@ import { ScreenHeader } from '@/components/ScreenHeader';
 import { LoadingView, EmptyState } from '@/components/StateViews';
 import { AccessDenied } from '@/components/AccessDenied';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
+import { FilterChip } from '@/components/FilterChip';
+import { SearchBox } from '@/components/SearchBox';
 import { canAccessPage } from '@/utils/roles';
 import { employeesListQuery } from '../api/queries';
 
@@ -82,39 +84,24 @@ export default function EmployeesListScreen() {
       />
 
       <View style={styles.searchWrapper}>
-        <View style={styles.searchBox}>
-          <Icon name="search" size={18} color={colors.textMuted} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder={t('employees.searchPlaceholder')}
-            placeholderTextColor={colors.textMuted}
-            value={search}
-            onChangeText={setSearch}
-            returnKeyType="search"
-          />
-          {search.length > 0 && (
-            <TouchableOpacity onPress={() => setSearch('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <Icon name="close" size={18} color={colors.textMuted} />
-            </TouchableOpacity>
-          )}
-        </View>
+        <SearchBox value={search} onChangeText={setSearch} placeholder={t('employees.searchPlaceholder')} />
       </View>
 
       {(deptOptions.length > 1 || posOptions.length > 1) && (
         <View style={styles.filtersWrap}>
           {deptOptions.length > 1 && (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
-              <EmpChip label={t('employees.filterAllDepartments')} active={deptFilter === 'all'} onPress={() => setDeptFilter('all')} styles={styles} />
+              <FilterChip label={t('employees.filterAllDepartments')} active={deptFilter === 'all'} onPress={() => setDeptFilter('all')} styles={styles} />
               {deptOptions.map((d) => (
-                <EmpChip key={d} label={d} active={deptFilter === d} onPress={() => setDeptFilter(d)} styles={styles} />
+                <FilterChip key={d} label={d} active={deptFilter === d} onPress={() => setDeptFilter(d)} styles={styles} />
               ))}
             </ScrollView>
           )}
           {posOptions.length > 1 && (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
-              <EmpChip label={t('employees.filterAllPositions')} active={posFilter === 'all'} onPress={() => setPosFilter('all')} styles={styles} subtle />
+              <FilterChip label={t('employees.filterAllPositions')} active={posFilter === 'all'} onPress={() => setPosFilter('all')} styles={styles} subtle />
               {posOptions.map((p) => (
-                <EmpChip key={p} label={p} active={posFilter === p} onPress={() => setPosFilter(p)} styles={styles} subtle />
+                <FilterChip key={p} label={p} active={posFilter === p} onPress={() => setPosFilter(p)} styles={styles} subtle />
               ))}
             </ScrollView>
           )}
@@ -156,35 +143,12 @@ export default function EmployeesListScreen() {
   );
 }
 
-function EmpChip({ label, active, onPress, styles, subtle }: {
-  label: string; active: boolean; onPress: () => void; styles: ReturnType<typeof makeStyles>; subtle?: boolean;
-}) {
-  return (
-    <TouchableOpacity
-      style={[subtle ? styles.chipSubtle : styles.chip, active && (subtle ? styles.chipSubtleActive : styles.chipActive)]}
-      onPress={onPress}
-      activeOpacity={0.75}
-    >
-      <Text style={[subtle ? styles.chipSubtleText : styles.chipText, active && (subtle ? styles.chipSubtleTextActive : styles.chipTextActive)]} numberOfLines={1}>
-        {label}
-      </Text>
-    </TouchableOpacity>
-  );
-}
-
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     searchWrapper: {
       paddingHorizontal: 16, paddingVertical: 10, flexShrink: 0,
       borderBottomWidth: 1, borderBottomColor: c.cardBorder,
     },
-    searchBox: {
-      flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: c.card,
-      borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 12, height: 46,
-    },
-    searchIcon: { fontSize: 15 },
-    searchInput: { flex: 1, color: c.text, fontSize: 14 },
-    clearIcon: { fontSize: 14, color: c.textMuted },
 
     filtersWrap: { paddingTop: 8, flexShrink: 0, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
     chipRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingBottom: 8, alignItems: 'center' },

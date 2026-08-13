@@ -26,5 +26,4 @@ export default {
   save: 'Saqlash',
   created: 'Yangilik joylandi',
   titleRequired: 'Sarlavha kiritilishi shart',
-  errorTitle: 'Xatolik',
 } as const;

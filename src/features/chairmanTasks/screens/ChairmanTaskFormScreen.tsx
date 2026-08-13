@@ -74,8 +74,8 @@ export default function ChairmanTaskFormScreen() {
   const busy = createM.isPending || updateM.isPending || deleteM.isPending;
 
   const submit = () => {
-    if (!title.trim()) { Alert.alert(t('chairman.errorTitle'), t('chairman.titleRequired')); return; }
-    if (!taskDate.trim()) { Alert.alert(t('chairman.errorTitle'), t('chairman.dateRequired')); return; }
+    if (!title.trim()) { Alert.alert(t('common.errorTitle'), t('chairman.titleRequired')); return; }
+    if (!taskDate.trim()) { Alert.alert(t('common.errorTitle'), t('chairman.dateRequired')); return; }
     const payload = {
       title: title.trim(),
       task_date: taskDate.trim(),
@@ -86,7 +86,7 @@ export default function ChairmanTaskFormScreen() {
       color,
     };
     const onSuccess = () => { Alert.alert(t(editing ? 'chairman.updated' : 'chairman.created'), ''); router.back(); };
-    const onError = (e: unknown) => Alert.alert(t('chairman.errorTitle'), getApiErrorMessage(e, t('chairman.actionError')));
+    const onError = (e: unknown) => Alert.alert(t('common.errorTitle'), getApiErrorMessage(e, t('chairman.actionError')));
     if (editing) updateM.mutate(payload, { onSuccess, onError });
     else createM.mutate(payload, { onSuccess, onError });
   };
@@ -103,7 +103,7 @@ export default function ChairmanTaskFormScreen() {
     if (!ok) return;
     deleteM.mutate(taskId!, {
       onSuccess: () => { Alert.alert(t('chairman.deleted'), ''); router.back(); },
-      onError: (e) => Alert.alert(t('chairman.errorTitle'), getApiErrorMessage(e, t('chairman.actionError'))),
+      onError: (e) => Alert.alert(t('common.errorTitle'), getApiErrorMessage(e, t('chairman.actionError'))),
     });
   };
 

@@ -101,7 +101,7 @@ export default function LoyihaFormScreen() {
       qc.invalidateQueries({ queryKey: projectKeys.all });
       router.back();
     } catch (e) {
-      Alert.alert(t('projects.errorTitle'), getApiErrorMessage(e, t('errors.saveFailed')));
+      Alert.alert(t('common.errorTitle'), getApiErrorMessage(e, t('errors.saveFailed')));
     } finally {
       setLoading(false);
     }

@@ -9,7 +9,6 @@ export default {
   loginButton: 'Кириш',
   oneIdButton: 'OneID орқали кириш',
 
-  errorTitle: 'Хато',
   credentialsRequired: 'Логин ва парол киритилиши шарт',
   loginError: 'Кириш хатоси',
   invalidCredentials: "Логин ёки парол нотўғри",

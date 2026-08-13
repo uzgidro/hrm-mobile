@@ -116,7 +116,6 @@ export default {
   coordinatorsSelected_other: '{{count}} ta kelishuvchi',
 
   // ── Validation alerts ───────────────────────────────────────────────────────
-  validationTitle: 'Xato',
   typeRequired: 'Hujjat turi tanlanishi shart',
   branchNotFound: 'Filial aniqlanmadi',
   mainSignerRequired: 'Rahbariyat (imzolovchi) tanlanishi shart',

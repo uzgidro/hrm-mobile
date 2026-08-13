@@ -57,7 +57,7 @@ export function useDecreeActions(orderId: number, refetch: () => void) {
     (reason: string) => {
       const trimmed = reason.trim();
       if (!trimmed) {
-        Alert.alert(i18n.t('orders.validationTitle'), i18n.t('orders.reasonRequired'));
+        Alert.alert(i18n.t('common.errorTitle'), i18n.t('orders.reasonRequired'));
         return Promise.resolve();
       }
       return runAction(() => rejectDecree(orderId, trimmed), i18n.t('orders.rejectSuccess'));
