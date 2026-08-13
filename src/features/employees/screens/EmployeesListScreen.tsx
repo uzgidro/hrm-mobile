@@ -17,6 +17,7 @@ import { ScreenHeader } from '@/components/ScreenHeader';
 import { LoadingView, EmptyState } from '@/components/StateViews';
 import { AccessDenied } from '@/components/AccessDenied';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
+import { FilterChip } from '@/components/FilterChip';
 import { canAccessPage } from '@/utils/roles';
 import { employeesListQuery } from '../api/queries';
 
@@ -104,17 +105,17 @@ export default function EmployeesListScreen() {
         <View style={styles.filtersWrap}>
           {deptOptions.length > 1 && (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
-              <EmpChip label={t('employees.filterAllDepartments')} active={deptFilter === 'all'} onPress={() => setDeptFilter('all')} styles={styles} />
+              <FilterChip label={t('employees.filterAllDepartments')} active={deptFilter === 'all'} onPress={() => setDeptFilter('all')} styles={styles} />
               {deptOptions.map((d) => (
-                <EmpChip key={d} label={d} active={deptFilter === d} onPress={() => setDeptFilter(d)} styles={styles} />
+                <FilterChip key={d} label={d} active={deptFilter === d} onPress={() => setDeptFilter(d)} styles={styles} />
               ))}
             </ScrollView>
           )}
           {posOptions.length > 1 && (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
-              <EmpChip label={t('employees.filterAllPositions')} active={posFilter === 'all'} onPress={() => setPosFilter('all')} styles={styles} subtle />
+              <FilterChip label={t('employees.filterAllPositions')} active={posFilter === 'all'} onPress={() => setPosFilter('all')} styles={styles} subtle />
               {posOptions.map((p) => (
-                <EmpChip key={p} label={p} active={posFilter === p} onPress={() => setPosFilter(p)} styles={styles} subtle />
+                <FilterChip key={p} label={p} active={posFilter === p} onPress={() => setPosFilter(p)} styles={styles} subtle />
               ))}
             </ScrollView>
           )}
@@ -153,22 +154,6 @@ export default function EmployeesListScreen() {
         />
       )}
     </Screen>
-  );
-}
-
-function EmpChip({ label, active, onPress, styles, subtle }: {
-  label: string; active: boolean; onPress: () => void; styles: ReturnType<typeof makeStyles>; subtle?: boolean;
-}) {
-  return (
-    <TouchableOpacity
-      style={[subtle ? styles.chipSubtle : styles.chip, active && (subtle ? styles.chipSubtleActive : styles.chipActive)]}
-      onPress={onPress}
-      activeOpacity={0.75}
-    >
-      <Text style={[subtle ? styles.chipSubtleText : styles.chipText, active && (subtle ? styles.chipSubtleTextActive : styles.chipTextActive)]} numberOfLines={1}>
-        {label}
-      </Text>
-    </TouchableOpacity>
   );
 }
 

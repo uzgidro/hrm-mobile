@@ -12,6 +12,7 @@ import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { SplitLayout } from '@/components/SplitLayout';
 import { LoadingView, EmptyState } from '@/components/StateViews';
+import { FilterChip } from '@/components/FilterChip';
 import { useBreakpoint } from '@/utils/responsive';
 import { canSignLetter, letterTypeLabel, letterStatusMeta, normalizeLetterType } from '@/utils/letterStatus';
 import { lettersListQuery, type LettersTab } from '../api/queries';
@@ -214,22 +215,6 @@ export default function LettersListScreen() {
   }
 
   return <Screen edges={['top']}>{listPane}</Screen>;
-}
-
-function FilterChip({ label, active, onPress, styles, subtle }: {
-  label: string; active: boolean; onPress: () => void; styles: ReturnType<typeof makeStyles>; subtle?: boolean;
-}) {
-  return (
-    <TouchableOpacity
-      style={[subtle ? styles.chipSubtle : styles.chip, active && (subtle ? styles.chipSubtleActive : styles.chipActive)]}
-      onPress={onPress}
-      activeOpacity={0.75}
-    >
-      <Text style={[subtle ? styles.chipSubtleText : styles.chipText, active && (subtle ? styles.chipSubtleTextActive : styles.chipTextActive)]} numberOfLines={1}>
-        {label}
-      </Text>
-    </TouchableOpacity>
-  );
 }
 
 const makeStyles = (c: ThemeColors) =>
