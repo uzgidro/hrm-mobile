@@ -18,20 +18,22 @@ import { LoadingView, EmptyState } from '@/components/StateViews';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { SearchBox } from '@/components/SearchBox';
 import { monthName } from '@/i18n/dates';
+import { leaveStatusGroup, leaveStatusKind } from '@/utils/leaveStatus';
+import { statusColor } from '@/utils/orderStatus';
 import { teamLeavesQuery } from '../api/queries';
 import { leaveTypeLabel } from '../components/LeaveTypeSheet';
 
 function statusMeta(status: string, c: ThemeColors, t: TFunction) {
-  if (status === 'approved' || status === 'tasdiqlangan' || status === 'signed') return { label: t('leaves.statusApproved'), fg: c.success, bg: c.successSoft };
-  if (status === 'rejected' || status === 'rad_etilgan') return { label: t('leaves.statusRejected'), fg: c.error, bg: c.errorSoft };
-  return { label: t('leaves.statusPending'), fg: c.warning, bg: c.warningSoft };
+  const group = leaveStatusGroup(status);
+  const { fg, bg } = statusColor(leaveStatusKind(status), c);
+  if (group === 'approved') return { label: t('leaves.statusApproved'), fg, bg };
+  if (group === 'rejected') return { label: t('leaves.statusRejected'), fg, bg };
+  return { label: t('leaves.statusPending'), fg, bg };
 }
 
 type StatusGroup = 'all' | 'pending' | 'approved' | 'rejected';
 function statusGroup(s?: string | null): Exclude<StatusGroup, 'all'> {
-  if (s === 'approved' || s === 'tasdiqlangan' || s === 'signed') return 'approved';
-  if (s === 'rejected' || s === 'rad_etilgan') return 'rejected';
-  return 'pending';
+  return leaveStatusGroup(s ?? undefined);
 }
 const STATUS_CHIPS: { key: StatusGroup; labelKey: string }[] = [
   { key: 'all', labelKey: 'leaves.filterAll' },

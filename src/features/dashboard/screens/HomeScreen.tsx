@@ -17,6 +17,8 @@ import { Screen } from '@/components/Screen';
 import { useBreakpoint } from '@/utils/responsive';
 import { notificationMeta } from '@/services/notifications';
 import { AttendanceEvent } from '@/types';
+import { leaveStatusGroup, leaveStatusKind } from '@/utils/leaveStatus';
+import { statusColor } from '@/utils/orderStatus';
 import {
   homeAttendanceQuery,
   homeMyLeavesQuery,
@@ -26,9 +28,11 @@ import {
 } from '../api/queries';
 
 function statusInfo(status: string, c: ThemeColors, t: TFunction) {
-  if (status === 'approved' || status === 'tasdiqlangan' || status === 'signed') return { label: t('dashboard.status.approved'), color: c.success };
-  if (status === 'rejected' || status === 'rad_etilgan') return { label: t('dashboard.status.rejected'), color: c.error };
-  return { label: t('dashboard.status.pending'), color: c.warning };
+  const group = leaveStatusGroup(status);
+  const { fg } = statusColor(leaveStatusKind(status), c);
+  if (group === 'approved') return { label: t('dashboard.status.approved'), color: fg };
+  if (group === 'rejected') return { label: t('dashboard.status.rejected'), color: fg };
+  return { label: t('dashboard.status.pending'), color: fg };
 }
 
 export default function HomeScreen() {

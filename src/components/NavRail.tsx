@@ -15,6 +15,7 @@ import type { ThemeColors } from '../theme/palettes';
 import { Icon, type IconName } from './Icon';
 import { buildNavSections, type NavItem } from '../utils/navItems';
 import { canAccessPage, type PageKey } from '../utils/roles';
+import { leaveStatusGroup } from '../utils/leaveStatus';
 import { homeAssignedLeavesQuery, homeNotificationsQuery } from '@/features/dashboard/api/queries';
 
 const RAIL_COLLAPSED_WIDTH = 88;
@@ -61,7 +62,7 @@ export function NavRail() {
   const pendingCount = useMemo(() => {
     if (!isSupervisor) return 0;
     return assignedLeaves.filter(
-      (l) => (l.status === 'pending' || l.status === 'yuborildi') && !l.signers?.some((s) => s.id === employee?.id)
+      (l) => leaveStatusGroup(l.status) === 'pending' && !l.signers?.some((s) => s.id === employee?.id)
     ).length;
   }, [assignedLeaves, isSupervisor, employee?.id]);
 
