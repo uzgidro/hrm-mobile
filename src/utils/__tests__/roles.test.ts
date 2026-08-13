@@ -847,3 +847,30 @@ describe('translateCategory', () => {
     expect(translateCategory('promotion')).toBe('promotion');
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// The backend returns multi_org_employee_role as a string on some endpoints and
+// as an array on others (types/index.ts: `string | string[]`). Both shapes must
+// resolve identically — this is what the deleted authStore copies got wrong.
+// ─────────────────────────────────────────────────────────────────────────────
+describe('role helpers accept both the string and array role shapes', () => {
+  it('resolves HR from a bare string role', () => {
+    expect(isHR(multiOrgUser('hr'))).toBe(true);
+  });
+
+  it('resolves HR when the role arrives inside an array', () => {
+    expect(isHR(multiOrgUser(['hr']))).toBe(true);
+  });
+
+  it('resolves HR when the array carries several roles', () => {
+    expect(isHR(multiOrgUser(['chancellery', 'hr']))).toBe(true);
+  });
+
+  it('resolves ministr as master-admin from an array', () => {
+    expect(isMasterAdmin(multiOrgUser(['ministr']))).toBe(true);
+  });
+
+  it('does not grant HR to an unrelated role', () => {
+    expect(isHR(multiOrgUser(['kpp']))).toBe(false);
+  });
+});
