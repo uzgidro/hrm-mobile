@@ -179,6 +179,7 @@ export default function WorkLeavesScreen() {
       <ScreenHeader
         title={isSupervisor ? t('leaves.incomingTitle') : t('leaves.myTitle')}
         count={isSupervisor ? pendingCount : undefined}
+        countTone="attention"
         right={!isSupervisor ? <HeaderAction icon="plus" onPress={() => router.push('/create-leave')} /> : undefined}
       />
 

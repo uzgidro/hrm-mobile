@@ -14,12 +14,16 @@ export function ScreenHeader({
   title,
   subtitle,
   count,
+  countTone = 'neutral',
   right,
   onBack,
 }: {
   title: string;
   subtitle?: string;
   count?: number;
+  /** 'neutral' (default) is a plain grey "how many" indicator; 'attention' is
+   *  today's orange "needs attention" badge (e.g. pending approvals). */
+  countTone?: 'neutral' | 'attention';
   right?: React.ReactNode;
   onBack?: () => void;
 }) {
@@ -40,8 +44,10 @@ export function ScreenHeader({
         <View style={styles.titleRow}>
           <Text style={styles.title} numberOfLines={1}>{title}</Text>
           {count != null && count > 0 && (
-            <View style={styles.countBadge}>
-              <Text style={styles.countBadgeText}>{count > 99 ? '99+' : count}</Text>
+            <View style={[styles.countBadge, countTone === 'attention' && styles.countBadgeAttention]}>
+              <Text style={[styles.countBadgeText, countTone === 'attention' && styles.countBadgeTextAttention]}>
+                {count > 99 ? '99+' : count}
+              </Text>
             </View>
           )}
         </View>
@@ -98,9 +104,11 @@ const makeStyles = (c: ThemeColors) =>
     title: { fontSize: 19, fontWeight: '800', color: c.text, flexShrink: 1 },
     subtitle: { fontSize: 12, color: c.textSecondary, marginTop: 2 },
     countBadge: {
-      backgroundColor: c.warning, borderRadius: 10, paddingHorizontal: 7,
-      paddingVertical: 1, minWidth: 20, alignItems: 'center',
+      backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, borderRadius: 10,
+      paddingHorizontal: 7, paddingVertical: 1, minWidth: 20, alignItems: 'center',
     },
-    countBadgeText: { fontSize: 12, fontWeight: '800', color: '#fff' },
+    countBadgeAttention: { backgroundColor: c.warning, borderWidth: 0 },
+    countBadgeText: { fontSize: 12, fontWeight: '800', color: c.textMuted },
+    countBadgeTextAttention: { color: '#fff' },
     rightSlot: { minWidth: 38, alignItems: 'flex-end', justifyContent: 'center' },
   });
