@@ -1,12 +1,12 @@
 name: CI
 
-# Static checks on every PR and on pushes to the long-lived branches.
-# Keeps refactoring (dev) and master (release) green before anything ships.
+# Static checks on every PR and on pushes to master.
+# Keeps master (the release branch) green before anything ships.
 # Split into independent jobs so a failure points straight at what broke
 # (typecheck vs lint vs test vs vulnerable deps) and they run in parallel.
 on:
   push:
-    branches: [refactoring, master]
+    branches: [master]
   pull_request:
 
 jobs:
