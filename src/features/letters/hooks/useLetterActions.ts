@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { Alert } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
+import { getApiErrorMessage } from '@/api/errors';
 import { confirm } from '@/lib/confirm';
 import {
   signLetter, rejectLetter, approveTrip, approveReport, approveGuvohnoma,
@@ -36,9 +37,7 @@ export function useLetterActions(letterId: number, refetch: () => void) {
         refetch();
         Alert.alert(t('letters.actionDoneTitle'), msg);
       } catch (e) {
-        const detail = (e as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail;
-        const m = Array.isArray(detail) ? (detail[0] as { msg?: unknown })?.msg : (detail ?? t('letters.actionError'));
-        Alert.alert(t('letters.actionError'), typeof m === 'string' ? m : t('letters.actionError'));
+        Alert.alert(t('letters.actionError'), getApiErrorMessage(e, t('letters.actionError')));
       } finally {
         setBusy(false);
       }
