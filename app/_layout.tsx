@@ -18,7 +18,9 @@ import { checkAppUpdateOnLaunch } from '../src/services/appUpdates';
 import { RootErrorBoundary } from '../src/components/RootErrorBoundary';
 import { ToastHost } from '../src/components/ToastHost';
 import { ConfirmHost } from '../src/components/ConfirmHost';
+import UpdatingOverlay from '../src/components/UpdatingOverlay';
 import LockOverlay from '../src/features/security/components/LockOverlay';
+import { useOtaGateStore } from '../src/store/otaGateStore';
 
 const queryClient = createAppQueryClient();
 
@@ -28,6 +30,7 @@ function ThemedNavigation() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const isLoading = useAuthStore((s) => s.isLoading);
   const lockStatus = useLockStore((s) => s.status);
+  const otaGatePhase = useOtaGateStore((s) => s.phase);
 
   // Resolve the session at launch (seeds the store, drives the native splash).
   // Routing is declarative below via Stack.Protected on isAuthenticated.
@@ -139,6 +142,11 @@ function ThemedNavigation() {
       <ConfirmHost />
       {/* Above everything (incl. toasts): the PIN gate covers the whole app. */}
       {lockVisible && <LockOverlay />}
+      {/* Above the PIN gate too: there is no native splash configured (no
+          `splash` key in app.json), so while useAuthBootstrap's OTA gate is
+          checking/fetching/reloading, this covers the login screen that would
+          otherwise render underneath it. Self-hides on 'idle'. */}
+      {otaGatePhase !== 'idle' && <UpdatingOverlay />}
     </>
   );
 }

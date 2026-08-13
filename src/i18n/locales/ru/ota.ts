@@ -3,4 +3,6 @@
 export default {
   otaBuild: 'OTA {{date}} · {{id}}',
   embeddedBuild: 'Базовая сборка',
+  checking: 'Проверка обновления…',
+  downloading: 'Загрузка обновления…',
 } as const;
