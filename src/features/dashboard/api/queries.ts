@@ -95,6 +95,45 @@ export function homeNotificationsQuery(employeeId: number | undefined) {
   });
 }
 
+// Today's turnstile events for the WHOLE branch, powering the roster in the
+// Home attendance content block. REUSES the shared `attendanceQueryKey` +
+// `fetchAllAttendanceEvents` helper (same ones `prefetchHomeData` below and
+// the attendance feature's `dayAttendanceQuery` use) so the cache is shared,
+// not forked — this is the identical factory shape as
+// `src/features/attendance/api/queries.ts#dayAttendanceQuery`, just kept here
+// so dashboard doesn't cross-import the attendance feature (see
+// `src/features/README.md`).
+export function homeTodayAttendanceQuery(dateKey: string, orgBranchId?: number) {
+  return queryOptions({
+    queryKey: attendanceQueryKey(dateKey, orgBranchId),
+    queryFn: () => fetchAllAttendanceEvents(dateKey, orgBranchId),
+    staleTime: 3 * 60 * 1000,
+  });
+}
+
+// Today's team leaves, powering the roster's onLeave status in the Home
+// attendance content block. Cross-feature imports are disallowed (see
+// `src/features/README.md`), so this can't import the attendance feature's
+// `teamLeavesQuery` — instead it reproduces the IDENTICAL key shape
+// (`['work-leaves', 'team', dateKey, branchId]`) and fetcher that
+// `src/features/attendance/api/queries.ts#teamLeavesQuery` uses, so TanStack
+// Query treats it as the SAME cache entry (dedup, not a fork) when the user
+// also opens Team / Attendance-detail for today. Do NOT change this key
+// shape without updating the attendance feature's copy in lockstep.
+export function homeTeamLeavesQuery(dateKey: string, size: number, branchId?: number | null) {
+  const params: Record<string, unknown> = { size };
+  if (branchId != null) params.organization_branch_id = branchId;
+  return queryOptions({
+    queryKey: ['work-leaves', 'team', dateKey, branchId ?? null] as const,
+    queryFn: () =>
+      apiClient.get(WORK_LEAVES, { params }).then((r) => {
+        const d = r.data as any;
+        return (Array.isArray(d) ? d : (d?.items ?? [])) as WorkLeave[];
+      }),
+    staleTime: 2 * 60 * 1000,
+  });
+}
+
 // Warm the caches the OTHER screens read so navigating to team /
 // attendance-detail / birthdays is instant. Each entry reuses the EXACT shared
 // key + staleTime the destination screen uses (employeesListQuery,

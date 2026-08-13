@@ -1,5 +1,5 @@
 import type { Employee, AttendanceEvent, WorkLeave } from '@/types';
-import { buildAttendanceRoster, LATE_THRESHOLD_MIN } from '../roster';
+import { buildAttendanceRoster, LATE_THRESHOLD_MIN } from '../attendanceRoster';
 
 const DATE = '2026-08-12';
 const emp = (id: number, name: string, start = '09:00'): Employee =>

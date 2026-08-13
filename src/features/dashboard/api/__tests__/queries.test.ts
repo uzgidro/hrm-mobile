@@ -6,6 +6,7 @@ import {
   homeMyLeavesQuery,
   homeAssignedLeavesQuery,
   homeNotificationsQuery,
+  homeTeamLeavesQuery,
 } from '../queries';
 
 let mock: MockAdapter;
@@ -128,5 +129,41 @@ describe('homeNotificationsQuery', () => {
     mock.onGet(NOTIFICATIONS_LIST).reply(200, [{ id: 1 }, { id: 2 }]);
     const data = await (homeNotificationsQuery(7).queryFn as () => Promise<unknown[]>)();
     expect(data).toHaveLength(2);
+  });
+});
+
+describe('homeTeamLeavesQuery', () => {
+  it('reproduces the IDENTICAL key shape as the attendance feature\'s teamLeavesQuery, so the cache is shared (not forked)', () => {
+    // Mirrors src/features/attendance/api/queries.ts#teamLeavesQuery exactly —
+    // cross-feature imports are disallowed, so the key shape is duplicated
+    // deliberately and must be kept in lockstep.
+    const key = homeTeamLeavesQuery('2026-08-12', 100, 5).queryKey;
+    expect(key).toEqual(['work-leaves', 'team', '2026-08-12', 5]);
+  });
+
+  it('null-pads a missing branchId', () => {
+    expect(homeTeamLeavesQuery('2026-08-12', 100).queryKey).toEqual(['work-leaves', 'team', '2026-08-12', null]);
+  });
+
+  it('keeps the dashboards 2-minute staleTime', () => {
+    expect(homeTeamLeavesQuery('2026-08-12', 100).staleTime).toBe(2 * 60 * 1000);
+  });
+
+  it('branch-scopes the fetch when a branchId is passed', async () => {
+    mock.onGet(WORK_LEAVES).reply(200, []);
+    await (homeTeamLeavesQuery('2026-08-12', 100, 5).queryFn as () => Promise<unknown[]>)();
+    expect(mock.history.get[0].params).toEqual({ size: 100, organization_branch_id: 5 });
+  });
+
+  it('sends the requested size and unwraps an { items } envelope', async () => {
+    mock.onGet(WORK_LEAVES).reply(200, { items: [{ id: 1 }] });
+    const data = await (homeTeamLeavesQuery('2026-08-12', 100).queryFn as () => Promise<unknown[]>)();
+    expect(data).toEqual([{ id: 1 }]);
+  });
+
+  it('returns a bare-array response as-is', async () => {
+    mock.onGet(WORK_LEAVES).reply(200, [{ id: 1 }, { id: 2 }]);
+    const data = await (homeTeamLeavesQuery('2026-08-12', 100).queryFn as () => Promise<unknown[]>)();
+    expect(data).toEqual([{ id: 1 }, { id: 2 }]);
   });
 });

@@ -1,6 +1,10 @@
-// Pure attendance-roster logic for AttendanceDetailScreen (and its preview on
-// Home). Extracted from the screen's useMemo so the bucketing + alphabetical
-// ordering is unit-testable (RNTL 14 rule: test pure functions, not components).
+// Pure attendance-roster logic shared by AttendanceDetailScreen (attendance
+// feature) and its content preview on HomeScreen (dashboard feature).
+// Extracted from the screen's useMemo so the bucketing + alphabetical
+// ordering is unit-testable (RNTL 14 rule: test pure functions, not
+// components). Lives in `src/utils` (not the attendance feature) so both
+// features can import it without a cross-feature import — see
+// `src/features/README.md`.
 //
 // A single flat roster is returned — every employee tagged with a status — plus
 // the counts the donut needs. The screen renders ONE alphabetical list and

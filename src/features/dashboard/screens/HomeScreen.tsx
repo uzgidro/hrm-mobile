@@ -4,28 +4,39 @@ import {
 } from 'react-native';
 import dayjs from 'dayjs';
 import { router } from 'expo-router';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueries, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { useAuthStore } from '@/store/authStore';
+import { usePrefsStore } from '@/store/prefsStore';
 import { canAccessPage } from '@/utils/roles';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { monthName, weekdayName } from '@/i18n/dates';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
+import { AttendanceDonut } from '@/components/AttendanceDonut';
+import { RosterRow } from '@/components/RosterRow';
 import { useBreakpoint } from '@/utils/responsive';
 import { notificationMeta } from '@/services/notifications';
-import { AttendanceEvent } from '@/types';
+import { AttendanceEvent, Employee, WorkLeave } from '@/types';
 import { leaveStatusGroup, leaveStatusKind } from '@/utils/leaveStatus';
 import { statusColor } from '@/utils/orderStatus';
+import { employeesListQuery } from '@/utils/employees';
+import { buildAttendanceRoster, type AttendanceStatus } from '@/utils/attendanceRoster';
 import {
   homeAttendanceQuery,
   homeMyLeavesQuery,
   homeAssignedLeavesQuery,
   homeNotificationsQuery,
+  homeTodayAttendanceQuery,
+  homeTeamLeavesQuery,
   prefetchHomeData,
 } from '../api/queries';
+
+// Fixed height for the roster block so the home page itself doesn't grow
+// unbounded — the list scrolls internally instead. ~4.5 rows on a phone.
+const ROSTER_MAX_HEIGHT = 280;
 
 function statusInfo(status: string, c: ThemeColors, t: TFunction) {
   const group = leaveStatusGroup(status);
@@ -45,8 +56,13 @@ export default function HomeScreen() {
   const bp = useBreakpoint();
   const isSupervisor = !employee?.supervisor;
   const canSeeNotificationsTile = canAccessPage(user, 'notifications');
+  const canSeeAttendanceContent = canAccessPage(user, 'attendance');
+  const onlySubordinates = usePrefsStore((s) => s.onlySubordinates);
+  const myId = employee?.id;
+  const orgBranchId = employee?.organization_branches?.[0]?.id ?? employee?.department?.organization_branch_id;
 
   const [refreshing, setRefreshing] = useState(false);
+  const [rosterFilter, setRosterFilter] = useState<AttendanceStatus | null>(null);
 
   const now = dayjs();
   const dateStr = `${weekdayName(now.day())}, ${now.date()} ${monthName(now.month())}`;
@@ -75,6 +91,40 @@ export default function HomeScreen() {
 
   const { data: notifications = [] } = useQuery(homeNotificationsQuery(employee?.id));
 
+  // Attendance content block (donut + roster) — reuses the SAME queries
+  // `prefetchHomeData` below already warms (employeesListQuery,
+  // attendanceQueryKey for today) plus a leaves query keyed identically to
+  // the attendance feature's teamLeavesQuery, so this never double-fetches:
+  // it's the same cache entries TanStack Query already has (or is about to
+  // populate) for Team / Attendance-detail. Gated by the same role check as
+  // the tile it replaces, and skipped entirely off that role.
+  const rosterQueries = useMemo(
+    () => [
+      { ...employeesListQuery(orgBranchId), enabled: canSeeAttendanceContent },
+      { ...homeTodayAttendanceQuery(todayStr, orgBranchId), enabled: canSeeAttendanceContent },
+      { ...homeTeamLeavesQuery(todayStr, 100, orgBranchId), enabled: canSeeAttendanceContent },
+    ],
+    [orgBranchId, todayStr, canSeeAttendanceContent]
+  );
+  const rosterResults = useQueries({ queries: rosterQueries });
+  const [rosterEmpQ, rosterAttQ, rosterLeavesQ] = rosterResults;
+  const isRosterLoading = canSeeAttendanceContent && rosterResults.some((r) => r.isLoading);
+
+  const { rows: rosterRows, counts: rosterCounts } = useMemo(() => {
+    let employees: Employee[] = (rosterEmpQ.data as { items: Employee[] } | undefined)?.items ?? [];
+    if (onlySubordinates && myId) employees = employees.filter((e) => e.supervisor_id === myId);
+    const events: AttendanceEvent[] = (rosterAttQ.data as { items: AttendanceEvent[] } | undefined)?.items ?? [];
+    const workLeaves: WorkLeave[] = (rosterLeavesQ.data as WorkLeave[]) ?? [];
+    return buildAttendanceRoster(employees, events, workLeaves, todayStr, t('attendance.leaveFallback'));
+  }, [rosterEmpQ.data, rosterAttQ.data, rosterLeavesQ.data, todayStr, onlySubordinates, myId, t]);
+
+  // One alphabetical list; the donut zone (rosterFilter) narrows it — same
+  // behavior as AttendanceDetailScreen.
+  const visibleRosterRows = useMemo(
+    () => (rosterFilter ? rosterRows.filter((r) => r.status === rosterFilter) : rosterRows),
+    [rosterRows, rosterFilter]
+  );
+
   const unreadCount = useMemo(
     () => notifications.filter((n) => !n.is_read).length,
     [notifications]
@@ -93,9 +143,7 @@ export default function HomeScreen() {
   );
 
   useEffect(() => {
-    const orgBranchId = employee?.organization_branches?.[0]?.id ?? employee?.department?.organization_branch_id;
-    const today = dayjs().format('YYYY-MM-DD');
-    prefetchHomeData(queryClient, orgBranchId, today);
+    prefetchHomeData(queryClient, orgBranchId, todayStr);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [employee?.id]);
 
@@ -191,23 +239,61 @@ export default function HomeScreen() {
             </View>
           </View>
 
-          {/* Davomat (attendance) module tile — same entry as the Modules grid
-              (navItems 'attendance': clock icon + label → /attendance-detail),
-              placed after the schedule and before So'rovlar. Role-gated exactly
-              like the module (canAccessPage('attendance')) so KPP/chancellery
-              don't see it. */}
-          {canAccessPage(user, 'attendance') && (
-            <TouchableOpacity
-              style={[styles.moduleTile, bp.isTablet && styles.bentoTile]}
-              activeOpacity={0.75}
-              onPress={() => router.push('/attendance-detail')}
-            >
-              <View style={styles.moduleIconWrap}>
-                <Icon name="clock" size={22} color={colors.primary} />
-              </View>
-              <Text style={styles.moduleLabel}>{t('modules.labels.attendance')}</Text>
-              <Icon name="chevronRight" size={20} color={colors.textMuted} />
-            </TouchableOpacity>
+          {/* Davomat (attendance) content block — the module's own donut +
+              alphabetical roster (not just a nav tile), placed after the
+              schedule and before So'rovlar. Role-gated exactly like the
+              module (canAccessPage('attendance')) so KPP/chancellery don't
+              see it. The header is tappable to open the full module; the
+              roster list gets a fixed max height and scrolls internally so
+              this card never grows the page unbounded. */}
+          {canSeeAttendanceContent && (
+            <View style={[styles.card, styles.attendanceCard, bp.isTablet && styles.bentoTile]}>
+              <TouchableOpacity
+                style={styles.attendanceHeaderRow}
+                activeOpacity={0.75}
+                onPress={() => router.push('/attendance-detail')}
+              >
+                <View style={styles.cardTitleRow}>
+                  <Icon name="clock" size={17} color={colors.primary} />
+                  <Text style={styles.cardTitle}>{t('modules.labels.attendance')}</Text>
+                </View>
+                <Icon name="chevronRight" size={20} color={colors.textMuted} />
+              </TouchableOpacity>
+
+              {isRosterLoading ? (
+                <View style={styles.rosterLoading}><Icon name="clock" size={20} color={colors.textMuted} /></View>
+              ) : (
+                <>
+                  <AttendanceDonut
+                    total={rosterCounts.total} present={rosterCounts.present}
+                    late={rosterCounts.late} onLeave={rosterCounts.onLeave}
+                    activeFilter={rosterFilter} onFilter={setRosterFilter}
+                    colors={colors} size={140}
+                  />
+
+                  <View style={styles.rosterHeader}>
+                    <Text style={styles.rosterTitle}>
+                      {rosterFilter ? t(`attendance.section.${rosterFilter}`) : t('attendance.allEmployees')} ({visibleRosterRows.length})
+                    </Text>
+                    {rosterFilter && (
+                      <TouchableOpacity onPress={() => setRosterFilter(null)}>
+                        <Text style={styles.linkText}>{t('attendance.showAll')}</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+
+                  {visibleRosterRows.length === 0 ? (
+                    <Text style={styles.emptyText}>{t('attendance.sectionEmpty.present')}</Text>
+                  ) : (
+                    <ScrollView style={styles.rosterScroll} nestedScrollEnabled showsVerticalScrollIndicator={false}>
+                      {visibleRosterRows.map((row, idx) => (
+                        <RosterRow key={row.employee.id} row={row} colors={colors} showBorder={idx < visibleRosterRows.length - 1} />
+                      ))}
+                    </ScrollView>
+                  )}
+                </>
+              )}
+            </View>
           )}
 
           {/* So'rovlar */}
@@ -349,18 +435,23 @@ const makeStyles = (c: ThemeColors) =>
 
     card: { backgroundColor: c.card, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: c.cardBorder },
 
-    // Attendance module tile — full-width row: icon square (as in the Modules
-    // grid) + label + chevron. Same card chrome as the other home cards.
-    moduleTile: {
-      flexDirection: 'row', alignItems: 'center', gap: 14,
-      backgroundColor: c.card, borderRadius: 16, padding: 16, marginBottom: 12,
-      borderWidth: 1, borderColor: c.cardBorder,
+    // Attendance content block (donut + roster). Reuses `card` chrome but
+    // drops its own padding (`attendanceCard`) so the tappable header row and
+    // the internally-scrolling roster can each control their own padding.
+    attendanceCard: { padding: 0, overflow: 'hidden' },
+    attendanceHeaderRow: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+      paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: c.cardBorder,
     },
-    moduleIconWrap: {
-      width: 44, height: 44, borderRadius: 14, backgroundColor: c.primarySoft,
-      alignItems: 'center', justifyContent: 'center',
+    rosterLoading: { paddingVertical: 40, alignItems: 'center' },
+    rosterHeader: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+      paddingHorizontal: 16, paddingVertical: 12, borderTopWidth: 1, borderTopColor: c.cardBorder,
     },
-    moduleLabel: { flex: 1, fontSize: 15, fontWeight: '700', color: c.text },
+    rosterTitle: { fontSize: 14, fontWeight: '700', color: c.text },
+    // Fixed max height + its own scroll (ROSTER_MAX_HEIGHT) so the roster
+    // never grows the home page unbounded — it scrolls inside this block.
+    rosterScroll: { maxHeight: ROSTER_MAX_HEIGHT },
     cardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
     cardTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     cardTitle: { fontSize: 15, fontWeight: '700', color: c.text },
