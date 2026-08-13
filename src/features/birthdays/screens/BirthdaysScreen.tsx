@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  Image, FlatList, TextInput,
+  FlatList, TextInput,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -17,6 +17,7 @@ import { useBreakpoint } from '@/utils/responsive';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { LoadingView, EmptyState } from '@/components/StateViews';
+import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { birthdaysListQuery } from '../api/queries';
 
 export default function BirthdaysScreen() {
@@ -101,13 +102,7 @@ export default function BirthdaysScreen() {
             const birthDay = emp.birth_date ? dayjs(emp.birth_date) : null;
             return (
               <TouchableOpacity style={[styles.empRow, cols > 1 && styles.empRowGrid]} onPress={() => router.push({ pathname: '/profile-detail', params: { id: emp.id } })} activeOpacity={0.7}>
-                {emp.photo_path ? (
-                  <Image source={{ uri: emp.photo_path }} style={styles.avatar} />
-                ) : (
-                  <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                    <Text style={styles.avatarInitial}>{(emp.legal_name || '?').charAt(0).toUpperCase()}</Text>
-                  </View>
-                )}
+                <EmployeeAvatar emp={emp} size={48} />
                 <View style={styles.empInfo}>
                   <View style={styles.nameRow}>
                     <Text style={styles.empName} numberOfLines={1}>{emp.legal_name}</Text>
@@ -165,9 +160,6 @@ const makeStyles = (c: ThemeColors) =>
       flex: 1, marginHorizontal: 0, marginBottom: 12,
       borderRadius: 14, borderWidth: 1, borderColor: c.cardBorder,
     },
-    avatar: { width: 48, height: 48, borderRadius: 24 },
-    avatarPlaceholder: { backgroundColor: c.primarySoft, alignItems: 'center', justifyContent: 'center' },
-    avatarInitial: { fontSize: 18, fontWeight: '700', color: c.primaryLight },
     empInfo: { flex: 1, gap: 2 },
     nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
     empName: { fontSize: 14, fontWeight: '700', color: c.text, flexShrink: 1 },

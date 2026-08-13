@@ -1,6 +1,6 @@
 import {
   View, Text, ScrollView, StyleSheet,
-  TouchableOpacity, Image,
+  TouchableOpacity,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
@@ -14,6 +14,7 @@ import { WorkExperience, Education } from '@/types';
 import { Icon, type IconName } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { LoadingView, ErrorState } from '@/components/StateViews';
+import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { employeeDetailQuery } from '../api/queries';
 
 export default function EmployeeDetailScreen() {
@@ -73,15 +74,9 @@ export default function EmployeeDetailScreen() {
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.avatarCard}>
-          {employee.photo_path ? (
-            <Image source={{ uri: employee.photo_path }} style={styles.avatar} />
-          ) : (
-            <View style={[styles.avatar, styles.avatarFallback]}>
-              <Text style={styles.avatarInitial}>
-                {(employee.legal_name || 'X').charAt(0).toUpperCase()}
-              </Text>
-            </View>
-          )}
+          <View style={styles.avatarWrap}>
+            <EmployeeAvatar emp={employee} size={84} />
+          </View>
           <Text style={styles.fullName}>{employee.legal_name}</Text>
           {employee.job_position?.name && <Text style={styles.position}>{employee.job_position.name}</Text>}
           {employee.department?.name && <Text style={styles.department}>{employee.department.name}</Text>}
@@ -254,9 +249,7 @@ const makeStyles = (c: ThemeColors) =>
       alignItems: 'center', paddingVertical: 24, backgroundColor: c.card,
       borderRadius: 18, borderWidth: 1, borderColor: c.cardBorder, marginBottom: 12,
     },
-    avatar: { width: 84, height: 84, borderRadius: 42, marginBottom: 12 },
-    avatarFallback: { backgroundColor: c.primarySoft, alignItems: 'center', justifyContent: 'center' },
-    avatarInitial: { fontSize: 34, fontWeight: '700', color: c.primaryLight },
+    avatarWrap: { marginBottom: 12 },
     fullName: { fontSize: 19, fontWeight: '800', color: c.text, marginBottom: 4, textAlign: 'center' },
     position: { fontSize: 13, color: c.primaryLight, fontWeight: '600', marginBottom: 2 },
     department: { fontSize: 12, color: c.textMuted },

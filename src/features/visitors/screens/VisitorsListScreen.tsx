@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
-  RefreshControl, Image, FlatList,
+  RefreshControl, FlatList,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -15,6 +15,7 @@ import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { SplitLayout } from '@/components/SplitLayout';
 import { LoadingView, EmptyState } from '@/components/StateViews';
+import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { visitorsListQuery } from '../api/queries';
 import { VisitorDetailView } from '../components/VisitorDetailView';
 
@@ -131,13 +132,7 @@ export default function MehmonlarScreen() {
                     : () => router.push({ pathname: '/mehmon-detail', params: { id: String(item.id) } })
                 }
               >
-                {item.photo_path ? (
-                  <Image source={{ uri: item.photo_path }} style={styles.avatar} />
-                ) : (
-                  <View style={[styles.avatar, styles.avatarFallback]}>
-                    <Text style={styles.avatarInitial}>{(item.legal_name || '?').charAt(0).toUpperCase()}</Text>
-                  </View>
-                )}
+                <EmployeeAvatar emp={item} size={48} />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.name} numberOfLines={1}>{item.legal_name || t('visitors.nameFallback')}</Text>
                   {!!(item.organization_name || item.job_position) && (
@@ -211,9 +206,6 @@ const makeStyles = (c: ThemeColors) =>
     gridRow: { gap: 12 },
     cardGrid: { flex: 1 },
     cardSelected: { borderColor: c.primary, borderWidth: 1.5 },
-    avatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: c.skeleton },
-    avatarFallback: { backgroundColor: c.primarySoft, alignItems: 'center', justifyContent: 'center' },
-    avatarInitial: { fontSize: 18, fontWeight: '700', color: c.primary },
     name: { fontSize: 15, fontWeight: '700', color: c.text },
     sub: { fontSize: 12, color: c.textSecondary, marginTop: 2 },
     hostRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 },
