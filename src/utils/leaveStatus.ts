@@ -23,17 +23,47 @@ import type { StatusKind } from './orderStatus';
 
 export type LeaveStatusGroup = 'pending' | 'approved' | 'rejected';
 
-const APPROVED_CODES = new Set(['approved', 'tasdiqlangan', 'signed']);
-const REJECTED_CODES = new Set(['rejected', 'rad_etilgan']);
+/**
+ * Exact-match code sets, exported so callers that need allowlist semantics
+ * (not a "defaults to pending" fallback) can check membership directly.
+ * leaves/utils.ts's canActOnLeave/canDeleteLeave are exactly that case: they
+ * must keep returning false for an undefined/unrecognized status, whereas
+ * leaveStatusGroup() below deliberately defaults unknown codes to 'pending'
+ * for display. Do NOT swap those permission checks to
+ * `leaveStatusGroup(s) === 'pending'` — it would silently widen permissions
+ * for an unrecognized status code from false to true. Use PENDING_CODES.has/
+ * REJECTED_CODES.has (or the equivalent isPendingCode/isRejectedCode below)
+ * there instead.
+ */
+export const PENDING_CODES = new Set(['pending', 'yuborildi']);
+export const APPROVED_CODES = new Set(['approved', 'tasdiqlangan', 'signed']);
+export const REJECTED_CODES = new Set(['rejected', 'rad_etilgan']);
+
+/** Exact membership check — false for undefined/unknown, unlike leaveStatusGroup(). */
+export function isPendingCode(status?: string): boolean {
+  return status != null && PENDING_CODES.has(status);
+}
+
+/** Exact membership check — false for undefined/unknown, unlike leaveStatusGroup(). */
+export function isApprovedCode(status?: string): boolean {
+  return status != null && APPROVED_CODES.has(status);
+}
+
+/** Exact membership check — false for undefined/unknown, unlike leaveStatusGroup(). */
+export function isRejectedCode(status?: string): boolean {
+  return status != null && REJECTED_CODES.has(status);
+}
 
 /**
- * Classify a work-leave status code into one of three groups. Unknown or
- * missing codes fall through to 'pending' — this matches every existing
- * display copy, which all defaulted to the pending branch.
+ * Classify a work-leave status code into one of three groups for DISPLAY.
+ * Unknown or missing codes fall through to 'pending' — this matches every
+ * existing display copy, which all defaulted to the pending branch. Do NOT
+ * use this for permission checks (see the note above) — use the exact
+ * isPendingCode/isApprovedCode/isRejectedCode instead.
  */
 export function leaveStatusGroup(status?: string): LeaveStatusGroup {
-  if (status && APPROVED_CODES.has(status)) return 'approved';
-  if (status && REJECTED_CODES.has(status)) return 'rejected';
+  if (isApprovedCode(status)) return 'approved';
+  if (isRejectedCode(status)) return 'rejected';
   return 'pending';
 }
 

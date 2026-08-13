@@ -5,14 +5,21 @@
 // the rules inline.
 import type { WorkLeave, Employee } from '@/types';
 import { getMultiOrgRoles, employeeSubLabel } from '@/utils/roles';
+import { isPendingCode, isApprovedCode, isRejectedCode } from '@/utils/leaveStatus';
 import type { PickerOption } from '@/components/PickerModal';
 
+// Permission gating uses the exact-membership checks from leaveStatus.ts, NOT
+// leaveStatusGroup() — leaveStatusGroup() deliberately defaults an
+// undefined/unrecognized status to 'pending' for display purposes, which
+// would widen permissions here (an unknown status must stay non-actionable,
+// non-deletable). isPending/isRejected below are thin local aliases kept so
+// the call sites in this file read the same as before.
 function isPending(status?: string): boolean {
-  return status === 'pending' || status === 'yuborildi';
+  return isPendingCode(status);
 }
 
 function isRejected(status?: string): boolean {
-  return status === 'rejected' || status === 'rad_etilgan';
+  return isRejectedCode(status);
 }
 
 /** Whether a signer (assigned_signers / signers entry) carries a given role. */
@@ -94,10 +101,7 @@ export function canDeleteLeave(
   if (!isOwnLeave(leave, employeeId)) return false;
 
   const status = leave.status;
-  if (
-    status === 'approved' || status === 'tasdiqlangan' || status === 'signed' ||
-    status === 'rejected' || status === 'rad_etilgan'
-  ) {
+  if (isApprovedCode(status) || isRejectedCode(status)) {
     return false;
   }
 

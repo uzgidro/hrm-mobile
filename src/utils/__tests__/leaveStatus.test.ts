@@ -1,4 +1,10 @@
-import { leaveStatusGroup, leaveStatusKind } from '../leaveStatus';
+import {
+  leaveStatusGroup,
+  leaveStatusKind,
+  isPendingCode,
+  isApprovedCode,
+  isRejectedCode,
+} from '../leaveStatus';
 
 describe('leaveStatusGroup', () => {
   it('groups the English and legacy Uzbek pending codes', () => {
@@ -23,6 +29,32 @@ describe('leaveStatusGroup', () => {
 
   it('treats an unknown status as pending (matches current screens, which fall through to the pending branch)', () => {
     expect(leaveStatusGroup('something_new')).toBe('pending');
+  });
+});
+
+describe('isPendingCode / isApprovedCode / isRejectedCode (exact membership, not the display fallback)', () => {
+  it('isPendingCode is true only for pending/yuborildi, false for undefined and unknown', () => {
+    expect(isPendingCode('pending')).toBe(true);
+    expect(isPendingCode('yuborildi')).toBe(true);
+    expect(isPendingCode('approved')).toBe(false);
+    expect(isPendingCode('rejected')).toBe(false);
+    expect(isPendingCode(undefined)).toBe(false);
+    expect(isPendingCode('something_new')).toBe(false);
+  });
+
+  it('isApprovedCode is true only for approved/tasdiqlangan/signed', () => {
+    expect(isApprovedCode('approved')).toBe(true);
+    expect(isApprovedCode('tasdiqlangan')).toBe(true);
+    expect(isApprovedCode('signed')).toBe(true);
+    expect(isApprovedCode('pending')).toBe(false);
+    expect(isApprovedCode(undefined)).toBe(false);
+  });
+
+  it('isRejectedCode is true only for rejected/rad_etilgan', () => {
+    expect(isRejectedCode('rejected')).toBe(true);
+    expect(isRejectedCode('rad_etilgan')).toBe(true);
+    expect(isRejectedCode('pending')).toBe(false);
+    expect(isRejectedCode(undefined)).toBe(false);
   });
 });
 
