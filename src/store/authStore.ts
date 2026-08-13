@@ -56,15 +56,3 @@ export const useAuthStore = create<AuthState>((set) => ({
 }));
 
 export { USER_CACHE_KEY };
-
-export function isMasterAdmin(user: User | null) {
-  return user?.type === 'master-admin' || user?.employee?.multi_org_employee_role === 'ministr';
-}
-
-export function isEmployee(user: User | null) {
-  return user?.type === 'employee' && !user?.employee?.is_multi_org_user;
-}
-
-export function isHR(user: User | null) {
-  return user?.employee?.multi_org_employee_role === 'hr';
-}
