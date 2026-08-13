@@ -16,6 +16,7 @@ import { useBreakpoint } from '@/utils/responsive';
 import type { Notification } from '@/types';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { SplitLayout } from '@/components/SplitLayout';
 import { LoadingView, EmptyState } from '@/components/StateViews';
 import { OrderDetailView } from '@/features/orders/components/OrderDetailView';
@@ -112,19 +113,16 @@ export default function NotificationsScreen() {
 
   const listPane = (
     <>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={10}>
-          <Icon name="chevronLeft" size={24} color={colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('notifications.screenTitle')}</Text>
-        {unread > 0 ? (
-          <TouchableOpacity onPress={markAllRead} hitSlop={8} accessibilityLabel={t('notifications.markAllRead')}>
-            <Icon name="checkDouble" size={24} color={colors.primary} />
-          </TouchableOpacity>
-        ) : (
-          <View style={{ width: 56 }} />
-        )}
-      </View>
+      <ScreenHeader
+        title={t('notifications.screenTitle')}
+        right={
+          unread > 0 ? (
+            <TouchableOpacity onPress={markAllRead} hitSlop={8} accessibilityLabel={t('notifications.markAllRead')}>
+              <Icon name="checkDouble" size={24} color={colors.primary} />
+            </TouchableOpacity>
+          ) : undefined
+        }
+      />
 
       {isLoading ? (
         <LoadingView />
@@ -197,11 +195,6 @@ function targetEquals(a: Target, b: Target): boolean {
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
-    backBtn: { width: 40, height: 40, justifyContent: 'center' },
-    backArrow: { fontSize: 22, color: c.text, fontWeight: '300' },
-    headerTitle: { fontSize: 17, fontWeight: '700', color: c.text },
-
     content: { padding: 16, gap: 10 },
     gridRow: { gap: 12 },
     card: { flexDirection: 'row', gap: 12, backgroundColor: c.card, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: c.cardBorder },

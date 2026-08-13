@@ -19,6 +19,7 @@ import { canAccessPage } from '@/utils/roles';
 import { employeesListQuery } from '@/utils/employees';
 import { Icon, IconName } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { dayAttendanceQuery, teamLeavesQuery } from '../api/queries';
 
@@ -228,13 +229,7 @@ export default function TeamScreen() {
 
   return (
     <Screen edges={['top', 'bottom']}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Icon name="chevronLeft" size={24} color={colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('attendance.teamTitle')}</Text>
-        <View style={{ width: 36 }} />
-      </View>
+      <ScreenHeader title={t('attendance.teamTitle')} />
 
       <ScrollView
         contentContainerStyle={styles.content}
@@ -365,14 +360,6 @@ export default function TeamScreen() {
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    header: {
-      flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14,
-      borderBottomWidth: 1, borderBottomColor: c.cardBorder,
-    },
-    backBtn: { width: 36, height: 36, justifyContent: 'center', marginRight: 4 },
-    backArrow: { fontSize: 22, color: c.text, fontWeight: '300' },
-    headerTitle: { flex: 1, fontSize: 20, fontWeight: '700', color: c.text },
-
     content: { paddingHorizontal: 16, paddingTop: 16 },
 
     filterNotice: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: c.primarySoft, borderRadius: 12, paddingVertical: 10, paddingHorizontal: 14, marginBottom: 12 },

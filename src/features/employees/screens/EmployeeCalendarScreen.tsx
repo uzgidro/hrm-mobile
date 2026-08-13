@@ -7,12 +7,13 @@ import Svg, { Circle } from 'react-native-svg';
 import dayjs from 'dayjs';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { AttendanceEvent } from '@/types';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { monthName, weekdayNameShort } from '@/i18n/dates';
 import { employeeDetailQuery, employeeAttendanceQuery } from '../api/queries';
 
@@ -114,16 +115,7 @@ export default function EmployeeCalendarScreen() {
 
   return (
     <Screen edges={['top', 'bottom']}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Icon name="chevronLeft" size={24} color={colors.text} />
-        </TouchableOpacity>
-        <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle} numberOfLines={1}>{displayName}</Text>
-          <Text style={styles.headerSub}>{t('employees.attendance')}</Text>
-        </View>
-        <View style={{ width: 40 }} />
-      </View>
+      <ScreenHeader title={displayName} subtitle={t('employees.attendance')} />
 
       <ScrollView
         contentContainerStyle={styles.content}
@@ -239,13 +231,6 @@ export default function EmployeeCalendarScreen() {
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     content: { paddingHorizontal: 16, paddingBottom: 32 },
-
-    header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
-    backBtn: { width: 40, height: 40, justifyContent: 'center' },
-    backArrow: { fontSize: 20, color: c.primaryLight, fontWeight: '700' },
-    headerCenter: { flex: 1, paddingHorizontal: 8 },
-    headerTitle: { fontSize: 16, fontWeight: '700', color: c.text },
-    headerSub: { fontSize: 12, color: c.textSecondary, marginTop: 2 },
 
     card: { backgroundColor: c.card, borderRadius: 16, padding: 16, marginTop: 12, borderWidth: 1, borderColor: c.cardBorder },
     cardTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 },

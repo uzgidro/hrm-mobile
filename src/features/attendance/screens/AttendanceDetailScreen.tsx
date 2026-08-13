@@ -17,6 +17,7 @@ import { employeesListQuery } from '@/utils/employees';
 import { monthName, weekdayName } from '@/i18n/dates';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { LoadingView } from '@/components/StateViews';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { dayAttendanceQuery, teamLeavesQuery } from '../api/queries';
@@ -156,21 +157,18 @@ export default function AttendanceDetailScreen() {
 
   return (
     <Screen edges={['top', 'bottom']}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Icon name="chevronLeft" size={24} color={colors.text} />
-        </TouchableOpacity>
-        <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>{t('attendance.title')}</Text>
-          <Text style={styles.headerDate}>{dateLabel}</Text>
-        </View>
-        <View style={styles.navBtns}>
-          <TouchableOpacity onPress={prevDay} style={styles.navBtn}><Icon name="chevronLeft" size={20} color={colors.text} /></TouchableOpacity>
-          <TouchableOpacity onPress={nextDay} style={[styles.navBtn, isToday && styles.navBtnDisabled]} disabled={isToday}>
-            <Icon name="chevronRight" size={20} color={isToday ? colors.textMuted : colors.text} />
-          </TouchableOpacity>
-        </View>
-      </View>
+      <ScreenHeader
+        title={t('attendance.title')}
+        subtitle={dateLabel}
+        right={
+          <View style={styles.navBtns}>
+            <TouchableOpacity onPress={prevDay} style={styles.navBtn}><Icon name="chevronLeft" size={20} color={colors.text} /></TouchableOpacity>
+            <TouchableOpacity onPress={nextDay} style={[styles.navBtn, isToday && styles.navBtnDisabled]} disabled={isToday}>
+              <Icon name="chevronRight" size={20} color={isToday ? colors.textMuted : colors.text} />
+            </TouchableOpacity>
+          </View>
+        }
+      />
 
       {isLoading ? (
         <LoadingView />
@@ -234,12 +232,6 @@ export default function AttendanceDetailScreen() {
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
-    backBtn: { width: 36, height: 36, justifyContent: 'center' },
-    backArrow: { fontSize: 22, color: c.text, fontWeight: '300' },
-    headerCenter: { flex: 1, paddingLeft: 4 },
-    headerTitle: { fontSize: 20, fontWeight: '700', color: c.text },
-    headerDate: { fontSize: 13, color: c.textSecondary, marginTop: 1 },
     navBtns: { flexDirection: 'row', gap: 6 },
     navBtn: { width: 34, height: 34, borderRadius: 8, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, alignItems: 'center', justifyContent: 'center' },
     navBtnDisabled: { opacity: 0.35 },

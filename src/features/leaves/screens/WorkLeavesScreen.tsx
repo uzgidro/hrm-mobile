@@ -14,6 +14,7 @@ import type { ThemeColors } from '@/theme/palettes';
 import { useBreakpoint } from '@/utils/responsive';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
+import { ScreenHeader, HeaderAction } from '@/components/ScreenHeader';
 import { LoadingView, EmptyState } from '@/components/StateViews';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { WorkLeave } from '@/types';
@@ -175,22 +176,11 @@ export default function WorkLeavesScreen() {
 
   return (
     <Screen edges={['top', 'bottom']} overlay={fab}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.7} hitSlop={8}>
-          <Icon name="chevronLeft" size={24} color={colors.text} />
-        </TouchableOpacity>
-        <View style={styles.headerTitleRow}>
-          <Text style={styles.headerTitle}>{isSupervisor ? t('leaves.incomingTitle') : t('leaves.myTitle')}</Text>
-          {isSupervisor && pendingCount > 0 && (
-            <View style={styles.countBadge}><Text style={styles.countBadgeText}>{pendingCount}</Text></View>
-          )}
-        </View>
-        {!isSupervisor ? (
-          <TouchableOpacity style={styles.addBtn} onPress={() => router.push('/create-leave')} activeOpacity={0.7}>
-            <Icon name="plus" size={22} color={colors.primary} strokeWidth={2.4} />
-          </TouchableOpacity>
-        ) : <View style={{ width: 36 }} />}
-      </View>
+      <ScreenHeader
+        title={isSupervisor ? t('leaves.incomingTitle') : t('leaves.myTitle')}
+        count={isSupervisor ? pendingCount : undefined}
+        right={!isSupervisor ? <HeaderAction icon="plus" onPress={() => router.push('/create-leave')} /> : undefined}
+      />
 
       <View style={styles.filterWrapper}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
@@ -282,18 +272,6 @@ export default function WorkLeavesScreen() {
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    header: {
-      flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14,
-      borderBottomWidth: 1, borderBottomColor: c.cardBorder,
-    },
-    backBtn: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center' },
-    headerTitleRow: { flex: 1, flexDirection: 'row', alignItems: 'center', paddingLeft: 4, gap: 8 },
-    headerTitle: { fontSize: 20, fontWeight: '700', color: c.text },
-    countBadge: { backgroundColor: c.warning, borderRadius: 10, paddingHorizontal: 7, paddingVertical: 2, minWidth: 20, alignItems: 'center' },
-    countBadgeText: { fontSize: 12, fontWeight: '700', color: '#fff' },
-    addBtn: { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
-    addBtnText: { fontSize: 24, color: c.primaryLight, fontWeight: '400' },
-
     filterWrapper: { flexShrink: 0, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
     searchWrap: { paddingHorizontal: 16, paddingVertical: 10, flexShrink: 0 },
     searchBox: {

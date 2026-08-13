@@ -13,6 +13,7 @@ import type { ThemeColors } from '@/theme/palettes';
 import { WorkExperience, Education } from '@/types';
 import { Icon, type IconName } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
+import { ScreenHeader, HeaderAction } from '@/components/ScreenHeader';
 import { LoadingView, ErrorState } from '@/components/StateViews';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { employeeDetailQuery } from '../api/queries';
@@ -53,7 +54,7 @@ export default function EmployeeDetailScreen() {
   if (!employee) {
     return (
       <Screen edges={['top', 'bottom']}>
-        <Header styles={styles} title={t('employees.detailTitle')} />
+        <ScreenHeader title={t('employees.detailTitle')} />
         <ErrorState title={t('employees.detailNotFound')} onRetry={() => refetch()} />
       </Screen>
     );
@@ -66,10 +67,9 @@ export default function EmployeeDetailScreen() {
 
   return (
     <Screen edges={['top', 'bottom']}>
-      <Header
-        styles={styles}
+      <ScreenHeader
         title={t('employees.detailTitle')}
-        onEdit={isOwnProfile ? () => router.push('/profile-edit') : undefined}
+        right={isOwnProfile ? <HeaderAction icon="edit" onPress={() => router.push('/profile-edit')} /> : undefined}
       />
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -185,25 +185,6 @@ export default function EmployeeDetailScreen() {
   );
 }
 
-function Header({ styles, title, onEdit }: { styles: any; title: string; onEdit?: () => void }) {
-  const { colors } = useTheme();
-  return (
-    <View style={styles.header}>
-      <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-        <Icon name="chevronLeft" size={24} color={colors.text} />
-      </TouchableOpacity>
-      <Text style={styles.headerTitle}>{title}</Text>
-      {onEdit ? (
-        <TouchableOpacity onPress={onEdit} style={styles.editBtn}>
-          <Icon name="edit" size={18} color={colors.text} />
-        </TouchableOpacity>
-      ) : (
-        <View style={{ width: 40 }} />
-      )}
-    </View>
-  );
-}
-
 function Section({ styles, title, icon, children }: { styles: any; title: string; icon: IconName; children: React.ReactNode }) {
   const { colors } = useTheme();
   return (
@@ -233,16 +214,6 @@ function Divider({ styles }: { styles: any }) {
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    header: {
-      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-      paddingHorizontal: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: c.cardBorder,
-    },
-    backBtn: { width: 40, height: 40, justifyContent: 'center' },
-    backArrow: { fontSize: 22, color: c.text, fontWeight: '300' },
-    headerTitle: { fontSize: 17, fontWeight: '700', color: c.text },
-    editBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-    editBtnText: { fontSize: 18 },
-
     content: { paddingHorizontal: 16, paddingTop: 16 },
 
     avatarCard: {
