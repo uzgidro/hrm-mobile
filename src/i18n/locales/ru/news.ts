@@ -19,5 +19,4 @@ export default {
   save: 'Сохранить',
   created: 'Новость опубликована',
   titleRequired: 'Необходимо указать заголовок',
-  errorTitle: 'Ошибка',
 } as const;

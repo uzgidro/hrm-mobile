@@ -98,7 +98,7 @@ export default function MehmonFormScreen() {
   const save = async () => {
     if (!legalName.trim()) { setError(t('visitors.nameRequired')); return; }
     if (dayjs(validFrom).isAfter(dayjs(validUntil))) {
-      Alert.alert(t('visitors.errorTitle'), t('visitors.untilBeforeFrom'));
+      Alert.alert(t('common.errorTitle'), t('visitors.untilBeforeFrom'));
       return;
     }
     setLoading(true);
@@ -128,7 +128,7 @@ export default function MehmonFormScreen() {
         else router.back();
       }
     } catch (e) {
-      Alert.alert(t('visitors.errorTitle'), getApiErrorMessage(e, t('errors.saveFailed')));
+      Alert.alert(t('common.errorTitle'), getApiErrorMessage(e, t('errors.saveFailed')));
     } finally {
       setLoading(false);
     }

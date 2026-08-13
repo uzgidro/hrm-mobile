@@ -20,4 +20,5 @@ export default {
   all: 'Барчаси',
   retry: 'Қайта уриниш',
   success: 'Муваффақият',
+  errorTitle: 'Хатолик',
 } as const;

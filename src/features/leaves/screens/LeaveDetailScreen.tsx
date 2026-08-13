@@ -101,7 +101,7 @@ export default function LeaveDetailScreen() {
       await signMutation.mutateAsync();
       Alert.alert(t('common.success'), t('leaves.approvedSuccess'));
     } catch (e) {
-      Alert.alert(t('leaves.errorTitle'), getApiErrorMessage(e, t('leaves.approveError')));
+      Alert.alert(t('common.errorTitle'), getApiErrorMessage(e, t('leaves.approveError')));
     } finally { setActing(false); }
   }, [signMutation, t]);
 
@@ -112,7 +112,7 @@ export default function LeaveDetailScreen() {
       await rejectMutation.mutateAsync(reason);
       Alert.alert(t('common.success'), t('leaves.rejectedSuccess'));
     } catch (e) {
-      Alert.alert(t('leaves.errorTitle'), getApiErrorMessage(e, t('leaves.rejectError')));
+      Alert.alert(t('common.errorTitle'), getApiErrorMessage(e, t('leaves.rejectError')));
     } finally { setActing(false); }
   }, [rejectMutation, t]);
 
@@ -133,7 +133,7 @@ export default function LeaveDetailScreen() {
                 { text: t('common.ok'), onPress: () => router.back() },
               ]);
             } catch (e) {
-              Alert.alert(t('leaves.errorTitle'), getApiErrorMessage(e, t('leaves.deleteError')));
+              Alert.alert(t('common.errorTitle'), getApiErrorMessage(e, t('leaves.deleteError')));
             } finally { setActing(false); }
           },
         },

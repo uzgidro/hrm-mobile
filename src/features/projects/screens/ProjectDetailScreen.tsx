@@ -77,7 +77,7 @@ export default function LoyihaDetailScreen() {
       }
       setModal(null);
     } catch (e) {
-      Alert.alert(t('projects.errorTitle'), getApiErrorMessage(e, t('errors.saveFailed')));
+      Alert.alert(t('common.errorTitle'), getApiErrorMessage(e, t('errors.saveFailed')));
     } finally {
       setBusy(false);
     }
@@ -87,7 +87,7 @@ export default function LoyihaDetailScreen() {
     try {
       await toggleCard.mutateAsync({ card, columnId });
     } catch (e) {
-      Alert.alert(t('projects.errorTitle'), getApiErrorMessage(e, t('projects.toggleError')));
+      Alert.alert(t('common.errorTitle'), getApiErrorMessage(e, t('projects.toggleError')));
     }
   };
 
@@ -103,7 +103,7 @@ export default function LoyihaDetailScreen() {
     if (!ok) return;
     deleteWs.mutate(workspaceId, {
       onSuccess: () => router.back(),
-      onError: (e) => Alert.alert(t('projects.errorTitle'), getApiErrorMessage(e, t('projects.deleteError'))),
+      onError: (e) => Alert.alert(t('common.errorTitle'), getApiErrorMessage(e, t('projects.deleteError'))),
     });
   };
 

@@ -50,7 +50,6 @@ export default {
   nameRequired: 'Loyiha nomi kiritilishi shart',
 
   // ── Alerts ──────────────────────────────────────────────────────────────────
-  errorTitle: 'Xatolik',
 
   // ── Card detail (view + status actions) ─────────────────────────────────────
   cardDetailSubtitle: 'Vazifa tafsiloti',

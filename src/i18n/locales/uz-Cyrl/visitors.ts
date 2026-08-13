@@ -61,7 +61,6 @@ export default {
   fromPickerTitle: 'Келиш вақти',
   untilPickerTitle: 'Кетиш вақти',
 
-  errorTitle: 'Хатолик',
   nameRequired: 'Исм-шариф киритилиши шарт',
   untilBeforeFrom: 'Кетиш вақти келиш вақтидан кейин бўлиши керак',
 } as const;

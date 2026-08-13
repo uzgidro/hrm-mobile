@@ -115,7 +115,6 @@ export default {
   coordinatorsSelected_many: '{{count}} согласующих',
 
   // ── Validation alerts ───────────────────────────────────────────────────────
-  validationTitle: 'Ошибка',
   typeRequired: 'Необходимо выбрать тип документа',
   branchNotFound: 'Филиал не определён',
   mainSignerRequired: 'Необходимо выбрать руководство (подписанта)',

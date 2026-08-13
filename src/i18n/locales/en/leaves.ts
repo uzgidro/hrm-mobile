@@ -72,7 +72,6 @@ export default {
   emptyPending: 'No pending requests',
   notFound: 'Not found',
 
-  errorTitle: 'Error',
   endMustBeAfterStart: 'End time must be after the start time',
   createdSuccess: 'Request sent',
   approvedSuccess: 'Request approved',

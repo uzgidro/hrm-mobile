@@ -74,11 +74,11 @@ export default function CreateLeaveScreen() {
 
   const handleSubmit = useCallback(async () => {
     if (endDate.isBefore(startDate) || endDate.isSame(startDate)) {
-      Alert.alert(t('leaves.errorTitle'), t('leaves.endMustBeAfterStart'));
+      Alert.alert(t('common.errorTitle'), t('leaves.endMustBeAfterStart'));
       return;
     }
     if (!effectiveSupervisorId) {
-      Alert.alert(t('leaves.errorTitle'), t('leaves.supervisorRequired'));
+      Alert.alert(t('common.errorTitle'), t('leaves.supervisorRequired'));
       return;
     }
     setSubmitting(true);
@@ -93,7 +93,7 @@ export default function CreateLeaveScreen() {
       await createLeaveMut.mutateAsync(payload);
       Alert.alert(t('common.success'), t('leaves.createdSuccess'), [{ text: t('common.ok'), onPress: () => router.back() }]);
     } catch (e) {
-      Alert.alert(t('leaves.errorTitle'), getApiErrorMessage(e, t('errors.sendFailed')));
+      Alert.alert(t('common.errorTitle'), getApiErrorMessage(e, t('errors.sendFailed')));
     } finally {
       setSubmitting(false);
     }

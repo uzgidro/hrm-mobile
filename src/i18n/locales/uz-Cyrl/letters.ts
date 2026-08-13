@@ -110,7 +110,6 @@ export default {
   coordinatorsSelected_other: '{{count}} та келишувчи',
 
   // ── Validation alerts ───────────────────────────────────────────────────────
-  validationTitle: 'Хато',
   typeRequired: 'Ҳужжат тури танланиши шарт',
   branchNotFound: 'Филиал аниқланмади',
   mainSignerRequired: 'Раҳбарият (имзоловчи) танланиши шарт',

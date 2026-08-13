@@ -36,7 +36,7 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     if (!username.trim() || !password.trim()) {
-      Alert.alert(t('auth.errorTitle'), t('auth.credentialsRequired'));
+      Alert.alert(t('common.errorTitle'), t('auth.credentialsRequired'));
       return;
     }
     setLoading(true);

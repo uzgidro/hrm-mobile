@@ -66,7 +66,7 @@ export default function SubmitReportScreen() {
 
   const handleSubmit = async () => {
     if (!content.trim()) {
-      Alert.alert(t('letters.validationTitle'), t('letters.reportContentRequired'));
+      Alert.alert(t('common.errorTitle'), t('letters.reportContentRequired'));
       return;
     }
     setBusy(true);

@@ -63,7 +63,6 @@ export default {
   fromPickerTitle: 'Время прихода',
   untilPickerTitle: 'Время ухода',
 
-  errorTitle: 'Ошибка',
   nameRequired: 'Необходимо указать Ф.И.О',
   untilBeforeFrom: 'Время ухода должно быть позже времени прихода',
 } as const;

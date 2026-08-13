@@ -70,7 +70,6 @@ export default {
   },
 
   // Save flow alerts
-  errorTitle: 'Xato',
   nameRequired: 'F.I.O. kiritilishi shart',
   savedTitle: 'Saqlandi',
   savedMessage: "Ma'lumotlar yangilandi",

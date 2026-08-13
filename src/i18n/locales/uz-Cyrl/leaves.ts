@@ -72,7 +72,6 @@ export default {
   emptyPending: 'Кутилаётган сўровлар йўқ',
   notFound: 'Маълумот топилмади',
 
-  errorTitle: 'Хато',
   endMustBeAfterStart: 'Тугаш вақти бошланиш вақтидан кейин бўлиши керак',
   createdSuccess: 'Сўров юборилди',
   approvedSuccess: 'Сўров тасдиқланди',

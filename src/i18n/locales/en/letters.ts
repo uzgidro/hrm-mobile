@@ -110,7 +110,6 @@ export default {
   coordinatorsSelected_other: '{{count}} coordinators',
 
   // ── Validation alerts ───────────────────────────────────────────────────────
-  validationTitle: 'Error',
   typeRequired: 'A document type must be selected',
   branchNotFound: 'Branch could not be determined',
   mainSignerRequired: 'Leadership (signer) must be selected',

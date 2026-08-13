@@ -45,7 +45,6 @@ export default {
   pickApprover: 'Согласующий',
 
   // ── Create validation / result alerts ───────────────────────────────────────
-  validationTitle: 'Ошибка',
   categoryRequired: 'Необходимо выбрать тип приказа',
   descriptionRequired: 'Необходимо ввести текст приказа',
   approverRequired: 'Выберите хотя бы одного согласующего',

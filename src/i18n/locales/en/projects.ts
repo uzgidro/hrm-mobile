@@ -39,7 +39,6 @@ export default {
   membersHint: 'Members can see and take part in the project tasks.',
   nameRequired: 'Project name is required',
 
-  errorTitle: 'Error',
 
   // ── Card detail (view + status actions) ─────────────────────────────────────
   cardDetailSubtitle: 'Task details',
