@@ -10,10 +10,7 @@ import type { ThemeColors } from '../theme/palettes';
 import { Icon } from './Icon';
 import { monthName, weekdayNameShort } from '@/i18n/dates';
 import { useBreakpoint } from '../utils/responsive';
-
-// Monday-first weekday header. dayjs day() indexes Sunday=0..Saturday=6, and the
-// calendar grid below is Monday-first, so order the localized short names to match.
-const WEEK_DAY_INDEXES = [1, 2, 3, 4, 5, 6, 0];
+import { buildMonthCells, stepHour, stepMinute, WEEK_DAY_INDEXES } from '../utils/calendarGrid';
 
 export function DateTimePickerModal({
   visible, value, title, onConfirm, onClose,
@@ -37,12 +34,10 @@ export function DateTimePickerModal({
     }
   }, [visible, value]);
 
-  const daysInMonth = month.daysInMonth();
-  const firstDow = (month.day() + 6) % 7;
-  const cells: (number | null)[] = [...Array(firstDow).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)];
+  const cells = buildMonthCells(month);
 
-  const changeHour = (d: number) => setSelected((s) => s.hour((s.hour() + d + 24) % 24));
-  const changeMinute = (d: number) => setSelected((s) => s.minute((s.minute() + d + 60) % 60));
+  const changeHour = (d: number) => setSelected((s) => s.hour(stepHour(s.hour(), d)));
+  const changeMinute = (d: number) => setSelected((s) => s.minute(stepMinute(s.minute(), d)));
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
