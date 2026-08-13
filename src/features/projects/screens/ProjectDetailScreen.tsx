@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
-  View, Text, ScrollView, StyleSheet, Image, ActivityIndicator,
+  View, Text, ScrollView, StyleSheet, ActivityIndicator,
   TouchableOpacity, Modal, TextInput, Alert,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -15,6 +15,7 @@ import { ScreenHeader, HeaderAction } from '@/components/ScreenHeader';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { LoadingView, EmptyState } from '@/components/StateViews';
+import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { isMasterAdmin } from '@/utils/roles';
 import { getApiErrorMessage } from '@/api/errors';
 import { confirm } from '@/lib/confirm';
@@ -181,13 +182,7 @@ export default function LoyihaDetailScreen() {
                 <View style={styles.memberWrap}>
                   {members.map((m, i) => (
                     <View key={m.id ?? i} style={styles.memberChip}>
-                      {m.member?.photo_path ? (
-                        <Image source={{ uri: m.member.photo_path }} style={styles.memberAv} />
-                      ) : (
-                        <View style={[styles.memberAv, styles.memberAvFallback]}>
-                          <Text style={styles.memberAvText}>{(m.member?.legal_name || '?').charAt(0).toUpperCase()}</Text>
-                        </View>
-                      )}
+                      <EmployeeAvatar emp={m.member ?? {}} size={26} />
                       <Text style={styles.memberName} numberOfLines={1}>{m.member?.legal_name || t('projects.memberFallback')}</Text>
                     </View>
                   ))}
@@ -277,9 +272,6 @@ const makeStyles = (c: ThemeColors) =>
 
     memberWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
     memberChip: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: c.bg, borderRadius: 20, paddingVertical: 4, paddingHorizontal: 4, paddingRight: 12, borderWidth: 1, borderColor: c.cardBorder },
-    memberAv: { width: 26, height: 26, borderRadius: 13, backgroundColor: c.skeleton },
-    memberAvFallback: { backgroundColor: c.primarySoft, alignItems: 'center', justifyContent: 'center' },
-    memberAvText: { fontSize: 11, fontWeight: '700', color: c.primary },
     memberName: { fontSize: 12, color: c.text, fontWeight: '600', maxWidth: 130 },
 
     // Tablet-landscape board row: tracks sit side by side and scroll

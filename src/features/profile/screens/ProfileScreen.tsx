@@ -1,5 +1,5 @@
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, Image, Switch, Platform,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, Switch, Platform,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -13,6 +13,7 @@ import type { ThemeColors } from '@/theme/palettes';
 import type { ThemeMode } from '@/theme/ThemeProvider';
 import { Icon, IconName } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
+import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { confirm } from '@/lib/confirm';
 import { Flag } from '@/components/Flag';
 import { useLangStore } from '@/store/langStore';
@@ -87,15 +88,7 @@ export default function ProfileScreen() {
         {/* User card */}
         <View style={styles.card}>
           <View style={styles.userRow}>
-            {employee?.photo_path ? (
-              <Image source={{ uri: employee.photo_path }} style={styles.avatar} />
-            ) : (
-              <View style={[styles.avatar, styles.avatarFallback]}>
-                <Text style={styles.avatarInitial}>
-                  {(employee?.legal_name || 'U').charAt(0).toUpperCase()}
-                </Text>
-              </View>
-            )}
+            <EmployeeAvatar emp={employee ?? {}} size={60} />
             <View style={{ flex: 1 }}>
               <Text style={styles.userName} numberOfLines={1}>
                 {employee?.legal_name || t('profile.userFallback')}
@@ -284,9 +277,6 @@ const makeStyles = (c: ThemeColors) =>
     },
 
     userRow: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 16 },
-    avatar: { width: 60, height: 60, borderRadius: 30 },
-    avatarFallback: { backgroundColor: c.primarySoft, alignItems: 'center', justifyContent: 'center' },
-    avatarInitial: { fontSize: 24, fontWeight: '700', color: c.primary },
     userName: { fontSize: 18, fontWeight: '800', color: c.text },
     userRole: { fontSize: 13, color: c.textSecondary, marginTop: 2 },
 
