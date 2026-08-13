@@ -19,19 +19,23 @@ import { LoadingView, EmptyState } from '@/components/StateViews';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { SearchBox } from '@/components/SearchBox';
 import { WorkLeave } from '@/types';
+import { leaveStatusGroup, leaveStatusKind } from '@/utils/leaveStatus';
+import { statusColor } from '@/utils/orderStatus';
 import { myLeavesQuery, assignedLeavesQuery } from '../api/queries';
 import { leaveTypeLabel } from '../components/LeaveTypeSheet';
 
 type StatusFilter = 'all' | 'pending' | 'approved' | 'rejected';
 
-function isPendingStatus(s: string) { return s === 'pending' || s === 'yuborildi'; }
-function isApprovedStatus(s: string) { return s === 'approved' || s === 'tasdiqlangan' || s === 'signed'; }
-function isRejectedStatus(s: string) { return s === 'rejected' || s === 'rad_etilgan'; }
+function isPendingStatus(s: string) { return leaveStatusGroup(s) === 'pending'; }
+function isApprovedStatus(s: string) { return leaveStatusGroup(s) === 'approved'; }
+function isRejectedStatus(s: string) { return leaveStatusGroup(s) === 'rejected'; }
 
 function statusMeta(status: string, c: ThemeColors, t: TFunction) {
-  if (isApprovedStatus(status)) return { label: t('leaves.statusApproved'), fg: c.success, bg: c.successSoft };
-  if (isRejectedStatus(status)) return { label: t('leaves.statusRejected'), fg: c.error, bg: c.errorSoft };
-  return { label: t('leaves.statusPending'), fg: c.warning, bg: c.warningSoft };
+  const group = leaveStatusGroup(status);
+  const { fg, bg } = statusColor(leaveStatusKind(status), c);
+  if (group === 'approved') return { label: t('leaves.statusApproved'), fg, bg };
+  if (group === 'rejected') return { label: t('leaves.statusRejected'), fg, bg };
+  return { label: t('leaves.statusPending'), fg, bg };
 }
 
 // Filter tabs carry a translation key; the label text is resolved at render so

@@ -17,6 +17,7 @@ import type { ThemeColors } from '@/theme/palettes';
 import { Employee, AttendanceEvent, WorkLeave, EmployeeBirthday } from '@/types';
 import { canAccessPage } from '@/utils/roles';
 import { employeesListQuery } from '@/utils/employees';
+import { leaveStatusGroup } from '@/utils/leaveStatus';
 import { Icon, IconName } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
@@ -214,15 +215,13 @@ export default function TeamScreen() {
   const topEmployees = useMemo(() => employees.slice(0, 3), [employees]);
   const upcomingBirthdays = useMemo(() => birthdays.slice(0, 3), [birthdays]);
 
-  const STATUS_MAP: Record<string, { label: string; color: string }> = useMemo(
+  // Keyed by group (not raw code) — leaveStatusGroup absorbs the pending/
+  // approved/rejected code aliases so this map no longer lists all seven.
+  const STATUS_BY_GROUP: Record<'pending' | 'approved' | 'rejected', { label: string; color: string }> = useMemo(
     () => ({
       pending: { label: t('attendance.status.pending'), color: colors.warning },
-      yuborildi: { label: t('attendance.status.pending'), color: colors.warning },
       approved: { label: t('attendance.status.approved'), color: colors.present },
-      tasdiqlangan: { label: t('attendance.status.approved'), color: colors.present },
-      signed: { label: t('attendance.status.approved'), color: colors.present },
       rejected: { label: t('attendance.status.rejected'), color: colors.error },
-      rad_etilgan: { label: t('attendance.status.rejected'), color: colors.error },
     }),
     [colors, t]
   );
@@ -288,7 +287,7 @@ export default function TeamScreen() {
             <Text style={styles.emptyText}>{t('attendance.noRequests')}</Text>
           ) : (
             recentLeaves.map((leave) => {
-              const st = STATUS_MAP[leave.status] ?? STATUS_MAP.pending;
+              const st = STATUS_BY_GROUP[leaveStatusGroup(leave.status)];
               return (
                 <TouchableOpacity key={leave.id} style={styles.leaveRow}
                   onPress={() => router.push({ pathname: '/leave-detail', params: { id: leave.id } })} activeOpacity={0.7}>

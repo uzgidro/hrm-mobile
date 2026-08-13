@@ -18,18 +18,21 @@ import { LoadingView, EmptyState } from '@/components/StateViews';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { getApiErrorMessage } from '@/api/errors';
 import { isHR } from '@/utils/roles';
+import { leaveStatusGroup, leaveStatusKind } from '@/utils/leaveStatus';
+import { statusColor } from '@/utils/orderStatus';
 import { leaveDetailQuery } from '../api/queries';
 import { useSignLeave, useRejectLeave, useDeleteLeave } from '../api/mutations';
 import { canActOnLeave, canDeleteLeave } from '../utils';
 import { leaveTypeLabel } from '../components/LeaveTypeSheet';
 
-function isApproved(status: string) { return status === 'approved' || status === 'tasdiqlangan' || status === 'signed'; }
-function isRejected(status: string) { return status === 'rejected' || status === 'rad_etilgan'; }
+function isApproved(status: string) { return leaveStatusGroup(status) === 'approved'; }
+function isRejected(status: string) { return leaveStatusGroup(status) === 'rejected'; }
 
 function getStatusMeta(status: string, c: ThemeColors, t: TFunction) {
-  if (isApproved(status)) return { label: t('leaves.statusApproved'), fg: c.success, bg: c.successSoft };
-  if (isRejected(status)) return { label: t('leaves.statusRejected'), fg: c.error, bg: c.errorSoft };
-  return { label: t('leaves.statusPending'), fg: c.warning, bg: c.warningSoft };
+  const { fg, bg } = statusColor(leaveStatusKind(status), c);
+  if (isApproved(status)) return { label: t('leaves.statusApproved'), fg, bg };
+  if (isRejected(status)) return { label: t('leaves.statusRejected'), fg, bg };
+  return { label: t('leaves.statusPending'), fg, bg };
 }
 
 function RejectModal({ visible, onConfirm, onClose, styles, colors }: {
