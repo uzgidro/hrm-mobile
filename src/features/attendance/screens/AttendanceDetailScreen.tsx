@@ -13,7 +13,7 @@ import { usePrefsStore } from '@/store/prefsStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Employee, AttendanceEvent, WorkLeave } from '@/types';
-import { fetchAllEmployees, employeesQueryKey } from '@/utils/employees';
+import { employeesListQuery } from '@/utils/employees';
 import { monthName, weekdayName } from '@/i18n/dates';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
@@ -131,7 +131,7 @@ export default function AttendanceDetailScreen() {
 
   const results = useQueries({
     queries: [
-      { queryKey: employeesQueryKey(orgBranchId), queryFn: () => fetchAllEmployees(orgBranchId), staleTime: 5 * 60 * 1000 },
+      employeesListQuery(orgBranchId),
       dayAttendanceQuery(selectedDate, orgBranchId),
       teamLeavesQuery(selectedDate, 100, orgBranchId),
     ],

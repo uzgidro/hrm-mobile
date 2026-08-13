@@ -16,21 +16,21 @@ import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Employee, AttendanceEvent, WorkLeave, EmployeeBirthday } from '@/types';
 import { canAccessPage } from '@/utils/roles';
-import { fetchAllEmployees, employeesQueryKey } from '@/utils/employees';
+import { employeesListQuery } from '@/utils/employees';
 import { Icon, IconName } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { dayAttendanceQuery, teamLeavesQuery } from '../api/queries';
 
 // This dashboard composes four domains. Attendance + leaves come from this
-// feature's own factories. Employees uses the shared roster util
-// (`employeesQueryKey` + `fetchAllEmployees` from `@/utils/employees`) inline —
-// same key/cache/staleTime the employees feature's `employeesListQuery` produces,
-// so the roster cache stays shared without a cross-feature import (the
-// `src/features/README.md` boundary rule forbids importing another feature's
-// api/). Birthdays is keyed under the `['birthdays', 'list', orgBranchId]` shape
-// the birthdays feature's `birthdayKeys.list` produces, so the BirthdaysScreen
-// and this card share one cached feed, again without a cross-feature import.
+// feature's own factories. Employees uses the shared `employeesListQuery`
+// factory from `@/utils/employees` — the same one the employees feature
+// re-exports — so the roster cache stays shared, without a cross-feature
+// import (the `src/features/README.md` boundary rule forbids importing another
+// feature's api/). Birthdays is keyed under the `['birthdays', 'list', orgBranchId]`
+// shape the birthdays feature's `birthdayKeys.list` produces, so the
+// BirthdaysScreen and this card share one cached feed, again without a
+// cross-feature import.
 const birthdaysListKey = (orgBranchId?: number) =>
   ['birthdays', 'list', orgBranchId ?? null] as const;
 
@@ -128,7 +128,7 @@ export default function TeamScreen() {
 
   const results = useQueries({
     queries: [
-      { queryKey: employeesQueryKey(orgBranchId), queryFn: () => fetchAllEmployees(orgBranchId), staleTime: 5 * 60 * 1000 },
+      employeesListQuery(orgBranchId),
       dayAttendanceQuery(today, orgBranchId),
       teamLeavesQuery(today, 20, orgBranchId),
       {

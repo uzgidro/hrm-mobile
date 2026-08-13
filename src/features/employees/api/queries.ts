@@ -1,8 +1,14 @@
 import { queryOptions } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
 import { EMPLOYEE_DETAIL, TURNSTILE_ATTENDANCE_EVENTS } from '@/api/urls';
-import { fetchAllEmployees, employeesQueryKey } from '@/utils/employees';
 import type { AttendanceEvent, EmployeeFull } from '@/types';
+
+// Re-exported so existing importers (`EmployeesListScreen.tsx`) keep working.
+// The factory itself now lives in `@/utils/employees` (beside the
+// `fetchAllEmployees` / `employeesQueryKey` it's built from) so every feature
+// can import it without a cross-feature import
+// (`src/features/README.md` forbids importing another feature's `api/`).
+export { employeesListQuery } from '@/utils/employees';
 
 // Hierarchical query keys — `all` is a strict prefix of every detail/attendance
 // key, so invalidating `employeeKeys.all` refreshes an open profile AND its
@@ -14,9 +20,10 @@ import type { AttendanceEvent, EmployeeFull } from '@/types';
 // `employeesQueryKey(orgBranchId)` from `@/utils/employees`, NOT by
 // `employeeKeys.list(...)`. Several other screens (team, attendance-detail,
 // birthdays, the home-tab prefetch, project form) read/prefetch that same key
-// to share one cached roster across the app. `employeesListQuery` below reuses
-// `employeesQueryKey` verbatim so that cross-screen cache stays shared;
-// `employeeKeys.list` is provided only for parity/invalidation convenience.
+// to share one cached roster across the app. The shared `employeesListQuery`
+// (re-exported above from `@/utils/employees`) reuses `employeesQueryKey`
+// verbatim so that cross-screen cache stays shared; `employeeKeys.list` is
+// provided only for parity/invalidation convenience.
 export const employeeKeys = {
   all: ['employees'] as const,
   list: (orgBranchId?: number) => [...employeeKeys.all, 'list', orgBranchId ?? null] as const,
@@ -24,18 +31,6 @@ export const employeeKeys = {
   attendance: (id: number, monthKey: string) =>
     [...employeeKeys.all, 'attendance', id, monthKey] as const,
 };
-
-// The employees LIST — wraps the shared, parallel-paginated `fetchAllEmployees`
-// helper and reuses the shared `employeesQueryKey` so the roster cache is shared
-// with every other screen that reads it. Do NOT swap this key for
-// `employeeKeys.list(...)`: that would fork the cache and break sharing.
-export function employeesListQuery(orgBranchId?: number) {
-  return queryOptions({
-    queryKey: employeesQueryKey(orgBranchId),
-    queryFn: () => fetchAllEmployees(orgBranchId),
-    staleTime: 5 * 60 * 1000,
-  });
-}
 
 export function employeeDetailQuery(id: number) {
   return queryOptions({

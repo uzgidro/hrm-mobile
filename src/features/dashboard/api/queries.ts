@@ -8,7 +8,7 @@ import {
   EMPLOYEES_BIRTHDAYS,
 } from '@/api/urls';
 import { fetchAllAttendanceEvents, attendanceQueryKey } from '@/utils/attendance';
-import { fetchAllEmployees, employeesQueryKey } from '@/utils/employees';
+import { employeesListQuery } from '@/utils/employees';
 import type { AttendanceEvent, WorkLeave, Notification, EmployeeBirthday } from '@/types';
 
 // Per-feature queryOptions factories for the home dashboard. The home tab is a
@@ -97,7 +97,7 @@ export function homeNotificationsQuery(employeeId: number | undefined) {
 
 // Warm the caches the OTHER screens read so navigating to team /
 // attendance-detail / birthdays is instant. Each entry reuses the EXACT shared
-// key + staleTime the destination screen uses (employeesQueryKey,
+// key + staleTime the destination screen uses (employeesListQuery,
 // attendanceQueryKey, birthdayKeys.list shape) so nothing is forked — the
 // prefetched entry is the one those screens consume.
 export function prefetchHomeData(
@@ -105,11 +105,7 @@ export function prefetchHomeData(
   orgBranchId: number | undefined,
   today: string,
 ) {
-  qc.prefetchQuery({
-    queryKey: employeesQueryKey(orgBranchId),
-    queryFn: () => fetchAllEmployees(orgBranchId),
-    staleTime: 5 * 60 * 1000,
-  });
+  qc.prefetchQuery(employeesListQuery(orgBranchId));
   qc.prefetchQuery({
     queryKey: attendanceQueryKey(today, orgBranchId),
     queryFn: () => fetchAllAttendanceEvents(today, orgBranchId),

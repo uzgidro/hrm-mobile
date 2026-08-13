@@ -14,7 +14,7 @@ import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { LoadingView } from '@/components/StateViews';
 import { PickerModal } from '@/components/PickerModal';
-import { fetchAllEmployees, employeesQueryKey } from '@/utils/employees';
+import { employeesListQuery } from '@/utils/employees';
 import { employeeSubLabel } from '@/utils/roles';
 import { getApiErrorMessage } from '@/api/errors';
 import type { Employee } from '@/types';
@@ -48,11 +48,7 @@ export default function LoyihaFormScreen() {
   const [loading, setLoading] = useState(false);
   const [hydrating, setHydrating] = useState(isEdit);
 
-  const { data: empData } = useQuery({
-    queryKey: employeesQueryKey(orgBranchId),
-    queryFn: () => fetchAllEmployees(orgBranchId),
-    staleTime: 5 * 60 * 1000,
-  });
+  const { data: empData } = useQuery(employeesListQuery(orgBranchId));
   const employees: Employee[] = empData?.items ?? [];
   const empById = useMemo(() => {
     const m = new Map<number, Employee>();

@@ -2,7 +2,7 @@ import { queryOptions } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
 import { unwrapList } from '@/api/response';
 import { WORK_LEAVES, WORK_LEAVE_DETAIL } from '@/api/urls';
-import { fetchAllEmployees, employeesQueryKey } from '@/utils/employees';
+import { employeesListQuery } from '@/utils/employees';
 import { workLeaveAllScopeParams } from '@/utils/workLeaveScope';
 import type { User, WorkLeave } from '@/types';
 
@@ -74,9 +74,7 @@ export function leaveDetailQuery(id: number) {
 // screen load it only when a pick is actually needed.
 export function leaveSupervisorsQuery(orgBranchId?: number, enabled = true) {
   return queryOptions({
-    queryKey: employeesQueryKey(orgBranchId),
-    queryFn: () => fetchAllEmployees(orgBranchId),
-    staleTime: 5 * 60 * 1000,
+    ...employeesListQuery(orgBranchId),
     enabled,
   });
 }

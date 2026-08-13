@@ -11,7 +11,7 @@ import { useAuthStore } from '@/store/authStore';
 import { usePrefsStore } from '@/store/prefsStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
-import { fetchAllEmployees, employeesQueryKey } from '@/utils/employees';
+import { employeesListQuery } from '@/utils/employees';
 import { monthName } from '@/i18n/dates';
 import { useBreakpoint } from '@/utils/responsive';
 import { Icon } from '@/components/Icon';
@@ -39,10 +39,8 @@ export default function BirthdaysScreen() {
   // when "Faqat bo'ysunuvchilar" is on we intersect with the user's subordinates
   // (resolved from the employees list, which carries supervisor_id).
   const { data: empData } = useQuery({
-    queryKey: employeesQueryKey(orgBranchId),
-    queryFn: () => fetchAllEmployees(orgBranchId),
+    ...employeesListQuery(orgBranchId),
     enabled: onlySubordinates && !!myId,
-    staleTime: 5 * 60 * 1000,
   });
 
   const subordinateIds = useMemo(() => {
