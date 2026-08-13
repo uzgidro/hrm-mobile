@@ -61,3 +61,7 @@ assets/play/
 # SDD local scratch (progress ledger — never committed)
 .superpowers/
 docs/superpowers/
+
+# Test/build output accidentally produced by tooling runs
+test-output.txt
+*.log
