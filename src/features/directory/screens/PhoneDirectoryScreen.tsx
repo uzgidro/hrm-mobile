@@ -5,7 +5,6 @@ import {
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { useQuery } from '@tanstack/react-query';
-import { router } from 'expo-router';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
@@ -13,6 +12,7 @@ import { useBreakpoint } from '@/utils/responsive';
 import { findExecutiveBranchId } from '@/utils/branch';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { LoadingView, EmptyState, ErrorState } from '@/components/StateViews';
 import type { PhoneDirectoryEntry } from '@/types';
@@ -81,13 +81,7 @@ export default function PhoneDirectoryScreen() {
 
   return (
     <Screen edges={['top', 'bottom']}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Icon name="chevronLeft" size={24} color={colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('directory.title')}</Text>
-        <View style={{ width: 36 }} />
-      </View>
+      <ScreenHeader title={t('directory.title')} />
 
       <View style={styles.searchWrapper}>
         <View style={styles.searchBox}>
@@ -205,13 +199,6 @@ type Styles = ReturnType<typeof makeStyles>;
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    header: {
-      flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14,
-      borderBottomWidth: 1, borderBottomColor: c.cardBorder,
-    },
-    backBtn: { width: 36, height: 36, justifyContent: 'center' },
-    headerTitle: { flex: 1, fontSize: 20, fontWeight: '700', color: c.text, paddingLeft: 4 },
-
     searchWrapper: {
       paddingHorizontal: 16, paddingVertical: 10, flexShrink: 0,
       borderBottomWidth: 1, borderBottomColor: c.cardBorder,

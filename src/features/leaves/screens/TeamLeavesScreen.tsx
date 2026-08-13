@@ -13,6 +13,7 @@ import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
+import { ScreenHeader, HeaderAction } from '@/components/ScreenHeader';
 import { LoadingView, EmptyState } from '@/components/StateViews';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { monthName } from '@/i18n/dates';
@@ -86,15 +87,10 @@ export default function TeamLeavesScreen() {
 
   return (
     <Screen edges={['top', 'bottom']}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Icon name="chevronLeft" size={24} color={colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('leaves.teamTitle')}</Text>
-        <TouchableOpacity style={styles.addBtn} onPress={() => router.push('/create-leave')}>
-          <Icon name="plus" size={24} color={colors.primaryLight} />
-        </TouchableOpacity>
-      </View>
+      <ScreenHeader
+        title={t('leaves.teamTitle')}
+        right={<HeaderAction icon="plus" onPress={() => router.push('/create-leave')} color={colors.primaryLight} />}
+      />
 
       <View style={styles.monthFilterWrapper}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.monthRow}>
@@ -199,13 +195,6 @@ export default function TeamLeavesScreen() {
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
-    backBtn: { width: 36, height: 36, justifyContent: 'center' },
-    backArrow: { fontSize: 22, color: c.text, fontWeight: '300' },
-    headerTitle: { flex: 1, fontSize: 20, fontWeight: '700', color: c.text, paddingLeft: 4 },
-    addBtn: { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
-    addBtnText: { fontSize: 24, color: c.primaryLight, fontWeight: '400' },
-
     monthFilterWrapper: { flexShrink: 0, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
     searchWrap: { paddingHorizontal: 16, paddingTop: 10, flexShrink: 0 },
     searchBox: {

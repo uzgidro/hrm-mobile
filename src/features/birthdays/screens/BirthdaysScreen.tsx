@@ -16,6 +16,7 @@ import { monthName } from '@/i18n/dates';
 import { useBreakpoint } from '@/utils/responsive';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { LoadingView, EmptyState } from '@/components/StateViews';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { birthdaysListQuery } from '../api/queries';
@@ -64,13 +65,7 @@ export default function BirthdaysScreen() {
 
   return (
     <Screen edges={['top', 'bottom']}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Icon name="chevronLeft" size={24} color={colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('birthdays.title')}{base.length ? ` (${base.length})` : ''}</Text>
-        <View style={{ width: 36 }} />
-      </View>
+      <ScreenHeader title={t('birthdays.title')} count={base.length} />
 
       <View style={styles.searchWrapper}>
         <View style={styles.searchBox}>
@@ -140,11 +135,6 @@ export default function BirthdaysScreen() {
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
-    backBtn: { width: 36, height: 36, justifyContent: 'center' },
-    backArrow: { fontSize: 22, color: c.text, fontWeight: '300' },
-    headerTitle: { flex: 1, fontSize: 20, fontWeight: '700', color: c.text, paddingLeft: 4 },
-
     searchWrapper: { paddingHorizontal: 16, paddingVertical: 10, flexShrink: 0, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
     searchBox: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: c.card, borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 12, height: 46 },
     searchIcon: { fontSize: 15 },
