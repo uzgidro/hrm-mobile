@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  FlatList, TextInput,
+  FlatList,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -19,6 +19,7 @@ import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { LoadingView, EmptyState } from '@/components/StateViews';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
+import { SearchBox } from '@/components/SearchBox';
 import { birthdaysListQuery } from '../api/queries';
 
 export default function BirthdaysScreen() {
@@ -68,15 +69,7 @@ export default function BirthdaysScreen() {
       <ScreenHeader title={t('birthdays.title')} count={base.length} />
 
       <View style={styles.searchWrapper}>
-        <View style={styles.searchBox}>
-          <Icon name="search" size={18} color={colors.textMuted} />
-          <TextInput style={styles.searchInput} placeholder={t('common.search')} placeholderTextColor={colors.textMuted} value={search} onChangeText={setSearch} returnKeyType="search" />
-          {search.length > 0 && (
-            <TouchableOpacity onPress={() => setSearch('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <Icon name="close" size={18} color={colors.textMuted} />
-            </TouchableOpacity>
-          )}
-        </View>
+        <SearchBox value={search} onChangeText={setSearch} placeholder={t('common.search')} />
       </View>
 
       {isLoading ? (
@@ -136,10 +129,6 @@ export default function BirthdaysScreen() {
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     searchWrapper: { paddingHorizontal: 16, paddingVertical: 10, flexShrink: 0, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
-    searchBox: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: c.card, borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 12, height: 46 },
-    searchIcon: { fontSize: 15 },
-    searchInput: { flex: 1, color: c.text, fontSize: 14 },
-    clearIcon: { fontSize: 14, color: c.textMuted },
 
     list: { paddingTop: 4, paddingBottom: 32 },
     separator: { height: 1, backgroundColor: c.cardBorder, marginLeft: 76 },

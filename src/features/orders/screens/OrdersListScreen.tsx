@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
-  TouchableOpacity, RefreshControl, TextInput,
+  TouchableOpacity, RefreshControl,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -14,6 +14,7 @@ import { Screen } from '@/components/Screen';
 import { SplitLayout } from '@/components/SplitLayout';
 import { LoadingView, EmptyState } from '@/components/StateViews';
 import { FilterChip } from '@/components/FilterChip';
+import { SearchBox } from '@/components/SearchBox';
 import { useBreakpoint } from '@/utils/responsive';
 import { needsMyAction, statusMeta } from '@/utils/orderStatus';
 import { ordersListQuery } from '../api/queries';
@@ -147,22 +148,7 @@ export default function OrdersListScreen() {
       </View>
 
       <View style={styles.searchWrap}>
-        <View style={styles.searchBox}>
-          <Icon name="search" size={18} color={colors.textMuted} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder={t('orders.searchPlaceholder')}
-            placeholderTextColor={colors.textMuted}
-            value={search}
-            onChangeText={setSearch}
-            returnKeyType="search"
-          />
-          {search.length > 0 && (
-            <TouchableOpacity onPress={() => setSearch('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <Icon name="close" size={18} color={colors.textMuted} />
-            </TouchableOpacity>
-          )}
-        </View>
+        <SearchBox value={search} onChangeText={setSearch} placeholder={t('orders.searchPlaceholder')} />
       </View>
 
       {categoryOptions.length > 0 && (
@@ -258,11 +244,6 @@ const makeStyles = (c: ThemeColors) =>
     emptyWrap: { paddingTop: 60 },
 
     searchWrap: { paddingHorizontal: 16, paddingBottom: 10 },
-    searchBox: {
-      flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: c.card,
-      borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 12, height: 44,
-    },
-    searchInput: { flex: 1, color: c.text, fontSize: 14 },
     chipRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingBottom: 10, alignItems: 'center' },
     chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 18, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder },
     chipActive: { backgroundColor: c.primary, borderColor: c.primary },

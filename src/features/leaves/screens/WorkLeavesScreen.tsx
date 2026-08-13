@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
-  TouchableOpacity, RefreshControl, TextInput,
+  TouchableOpacity, RefreshControl,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -17,6 +17,7 @@ import { Screen } from '@/components/Screen';
 import { ScreenHeader, HeaderAction } from '@/components/ScreenHeader';
 import { LoadingView, EmptyState } from '@/components/StateViews';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
+import { SearchBox } from '@/components/SearchBox';
 import { WorkLeave } from '@/types';
 import { myLeavesQuery, assignedLeavesQuery } from '../api/queries';
 import { leaveTypeLabel } from '../components/LeaveTypeSheet';
@@ -204,22 +205,7 @@ export default function WorkLeavesScreen() {
       </View>
 
       <View style={styles.searchWrap}>
-        <View style={styles.searchBox}>
-          <Icon name="search" size={18} color={colors.textMuted} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder={t('leaves.searchPlaceholder')}
-            placeholderTextColor={colors.textMuted}
-            value={search}
-            onChangeText={setSearch}
-            returnKeyType="search"
-          />
-          {search.length > 0 && (
-            <TouchableOpacity onPress={() => setSearch('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <Icon name="close" size={18} color={colors.textMuted} />
-            </TouchableOpacity>
-          )}
-        </View>
+        <SearchBox value={search} onChangeText={setSearch} placeholder={t('leaves.searchPlaceholder')} />
       </View>
 
       <View style={{ flex: 1 }}>
@@ -275,11 +261,6 @@ const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     filterWrapper: { flexShrink: 0, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
     searchWrap: { paddingHorizontal: 16, paddingVertical: 10, flexShrink: 0 },
-    searchBox: {
-      flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: c.card,
-      borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 12, height: 44,
-    },
-    searchInput: { flex: 1, color: c.text, fontSize: 14 },
     filterRow: { paddingHorizontal: 16, paddingVertical: 10, gap: 8, flexDirection: 'row', alignItems: 'center' },
     filterTab: { paddingHorizontal: 16, paddingVertical: 7, borderRadius: 20, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder },
     filterTabActive: { backgroundColor: c.primary, borderColor: c.primary },
