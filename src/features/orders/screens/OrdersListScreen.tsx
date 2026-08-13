@@ -105,7 +105,6 @@ export default function OrdersListScreen() {
   // no longer matches the current filter/tab.
   useEffect(() => {
     setSelectedId((current) => selectSplitId(filtered, current, split));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [split, filtered]);
 
   const listPane = (

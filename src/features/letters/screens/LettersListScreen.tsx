@@ -95,7 +95,6 @@ export default function LettersListScreen() {
   // that no longer matches the current tab.
   useEffect(() => {
     setSelectedId((current) => selectSplitId(filtered, current, split));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [split, filtered]);
 
   const listPane = (
