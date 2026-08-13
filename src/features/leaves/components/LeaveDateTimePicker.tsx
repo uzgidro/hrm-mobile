@@ -9,10 +9,7 @@ import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
 import { monthName, weekdayNameShort } from '@/i18n/dates';
-
-// Monday-first weekday header (dayjs day(): Sunday=0..Saturday=6). The calendar
-// grid below is Monday-first, so we order the localized short names to match.
-const WEEK_DAY_INDEXES = [1, 2, 3, 4, 5, 6, 0];
+import { buildMonthCells, stepHour, stepMinute, WEEK_DAY_INDEXES } from '@/utils/calendarGrid';
 
 export function LeaveDateTimePicker({ value, visible, title, minDate, onConfirm, onClose }: {
   value: Dayjs; visible: boolean; title: string; minDate?: Dayjs; onConfirm: (v: Dayjs) => void; onClose: () => void;
@@ -24,9 +21,7 @@ export function LeaveDateTimePicker({ value, visible, title, minDate, onConfirm,
   const [month, setMonth] = useState(value.startOf('month'));
   const [selected, setSelected] = useState(value);
 
-  const daysInMonth = month.daysInMonth();
-  const firstDow = (month.day() + 6) % 7;
-  const cells: (number | null)[] = [...Array(firstDow).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)];
+  const cells = buildMonthCells(month);
 
   const handleDayPress = (day: number) => {
     const nd = month.date(day).hour(selected.hour()).minute(selected.minute()).second(0);
@@ -34,8 +29,8 @@ export function LeaveDateTimePicker({ value, visible, title, minDate, onConfirm,
     setSelected(nd);
     setTab('time');
   };
-  const changeHour = (d: number) => setSelected((s) => s.hour((s.hour() + d + 24) % 24));
-  const changeMinute = (d: number) => setSelected((s) => s.minute((s.minute() + d + 60) % 60));
+  const changeHour = (d: number) => setSelected((s) => s.hour(stepHour(s.hour(), d)));
+  const changeMinute = (d: number) => setSelected((s) => s.minute(stepMinute(s.minute(), d)));
 
   return (
     <Modal visible={visible} transparent animationType="slide">
@@ -49,11 +44,11 @@ export function LeaveDateTimePicker({ value, visible, title, minDate, onConfirm,
 
           <View style={dp.tabs}>
             <TouchableOpacity style={[dp.tab, tab === 'date' && dp.tabActive, dp.tabRow]} onPress={() => setTab('date')}>
-              <Icon name="calendar" size={16} color={tab === 'date' ? '#fff' : colors.textMuted} />
+              <Icon name="calendar" size={16} color={tab === 'date' ? colors.onPrimary : colors.textMuted} />
               <Text style={[dp.tabText, tab === 'date' && dp.tabTextActive]}>{selected.format('DD.MM.YYYY')}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[dp.tab, tab === 'time' && dp.tabActive, dp.tabRow]} onPress={() => setTab('time')}>
-              <Icon name="clock" size={16} color={tab === 'time' ? '#fff' : colors.textMuted} />
+              <Icon name="clock" size={16} color={tab === 'time' ? colors.onPrimary : colors.textMuted} />
               <Text style={[dp.tabText, tab === 'time' && dp.tabTextActive]}>{selected.format('HH:mm')}</Text>
             </TouchableOpacity>
           </View>

@@ -6,10 +6,7 @@ import { useThemedStyles } from '../theme/ThemeProvider';
 import type { ThemeColors } from '../theme/palettes';
 import { monthName, weekdayNameShort } from '@/i18n/dates';
 import { useBreakpoint } from '../utils/responsive';
-
-// Monday-first weekday header. dayjs day() indexes Sunday=0..Saturday=6, and the
-// calendar grid below is Monday-first, so order the localized short names to match.
-const WEEK_DAY_INDEXES = [1, 2, 3, 4, 5, 6, 0];
+import { buildMonthCells, WEEK_DAY_INDEXES } from '../utils/calendarGrid';
 
 export function DatePickerModal({
   visible, value, title, onConfirm, onClose,
@@ -21,9 +18,7 @@ export function DatePickerModal({
   const [month, setMonth] = useState<Dayjs>(init.startOf('month'));
   const [selected, setSelected] = useState<Dayjs>(init);
 
-  const daysInMonth = month.daysInMonth();
-  const firstDow = (month.day() + 6) % 7;
-  const cells: (number | null)[] = [...Array(firstDow).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)];
+  const cells = buildMonthCells(month);
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
