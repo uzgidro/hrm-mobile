@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Image,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -12,6 +12,7 @@ import { Icon, type IconName } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader, HeaderAction } from '@/components/ScreenHeader';
 import { LoadingView, EmptyState, ErrorState } from '@/components/StateViews';
+import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { monthName } from '@/i18n/dates';
 import type { KpiEntry } from '@/types';
 import { myScorecardQuery, myTeamQuery } from '../api/queries';
@@ -108,15 +109,7 @@ export default function MyKpiScreen() {
           {/* ── Profile + gauge card ── */}
           <View style={styles.card}>
             <View style={styles.profileRow}>
-              {profile?.photo_path ? (
-                <Image source={{ uri: profile.photo_path }} style={styles.avatar} />
-              ) : (
-                <View style={[styles.avatar, styles.avatarFallback]}>
-                  <Text style={styles.avatarInitial}>
-                    {(profile?.legal_name || '?').charAt(0).toUpperCase()}
-                  </Text>
-                </View>
-              )}
+              <EmployeeAvatar emp={profile ?? {}} size={56} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.name} numberOfLines={2}>{profile?.legal_name || '—'}</Text>
                 {!!(profile?.job_position_name || profile?.department_name) && (
@@ -287,9 +280,6 @@ const makeStyles = (c: ThemeColors) =>
       padding: 16, marginBottom: 18,
     },
     profileRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-    avatar: { width: 56, height: 56, borderRadius: 28, backgroundColor: c.skeleton },
-    avatarFallback: { backgroundColor: c.primarySoft, alignItems: 'center', justifyContent: 'center' },
-    avatarInitial: { fontSize: 22, fontWeight: '800', color: c.primary },
     name: { fontSize: 16, fontWeight: '800', color: c.text },
     sub: { fontSize: 12, color: c.textSecondary, marginTop: 2 },
 

@@ -5,12 +5,12 @@ import {
 import dayjs from 'dayjs';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { router } from 'expo-router';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { LoadingView, ErrorState, EmptyState } from '@/components/StateViews';
 import type { DutyEmployee } from '@/types';
@@ -40,16 +40,7 @@ export default function HolidaysScreen() {
 
   return (
     <Screen edges={['top', 'bottom']}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Icon name="chevronLeft" size={24} color={colors.text} />
-        </TouchableOpacity>
-        <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>{t('timesheet.holidaysTitle')}</Text>
-          <Text style={styles.headerSub}>{t('timesheet.holidaysSubtitle')}</Text>
-        </View>
-        <View style={{ width: 40 }} />
-      </View>
+      <ScreenHeader title={t('timesheet.holidaysTitle')} subtitle={t('timesheet.holidaysSubtitle')} />
 
       <View style={styles.tabsRow}>
         {([['holidays', t('timesheet.holidaysTab')], ['offduty', t('timesheet.offDutyTab')]] as const).map(([key, label]) => (
@@ -136,12 +127,6 @@ export default function HolidaysScreen() {
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     content: { paddingHorizontal: 16, paddingBottom: 32 },
-
-    header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
-    backBtn: { width: 40, height: 40, justifyContent: 'center' },
-    headerCenter: { flex: 1, paddingHorizontal: 8 },
-    headerTitle: { fontSize: 16, fontWeight: '700', color: c.text },
-    headerSub: { fontSize: 12, color: c.textSecondary, marginTop: 2 },
 
     tabsRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingTop: 12 },
     tab: { flex: 1, paddingVertical: 10, borderRadius: 10, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, alignItems: 'center' },

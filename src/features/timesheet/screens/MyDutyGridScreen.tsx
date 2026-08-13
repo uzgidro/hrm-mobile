@@ -5,11 +5,11 @@ import {
 import dayjs from 'dayjs';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { router } from 'expo-router';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { LoadingView, ErrorState, EmptyState } from '@/components/StateViews';
 import { monthName } from '@/i18n/dates';
 import type { Employee } from '@/types';
@@ -100,16 +100,7 @@ export default function MyDutyGridScreen({ embedded = false }: { embedded?: bool
       <View style={{ flex: 1 }}>{children}</View>
     ) : (
       <Screen edges={['top', 'bottom']}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <Icon name="chevronLeft" size={24} color={colors.text} />
-          </TouchableOpacity>
-          <View style={styles.headerCenter}>
-            <Text style={styles.headerTitle}>{t('timesheet.dutyGridTitle')}</Text>
-            <Text style={styles.headerSub}>{t('timesheet.dutyGridSubtitle')}</Text>
-          </View>
-          <View style={{ width: 40 }} />
-        </View>
+        <ScreenHeader title={t('timesheet.dutyGridTitle')} subtitle={t('timesheet.dutyGridSubtitle')} />
         {children}
       </Screen>
     );
@@ -219,12 +210,6 @@ export default function MyDutyGridScreen({ embedded = false }: { embedded?: bool
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 32 },
-
-    header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
-    backBtn: { width: 40, height: 40, justifyContent: 'center' },
-    headerCenter: { flex: 1, paddingHorizontal: 8 },
-    headerTitle: { fontSize: 16, fontWeight: '700', color: c.text },
-    headerSub: { fontSize: 12, color: c.textSecondary, marginTop: 2 },
 
     monthNav: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
     navBtn: { width: 40, height: 40, backgroundColor: c.card, borderRadius: 10, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: c.cardBorder },

@@ -1,18 +1,18 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useMemo } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, ActivityIndicator,
+  View, Text, StyleSheet, ActivityIndicator,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { useQuery } from '@tanstack/react-query';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { apiClient } from '@/api/client';
 import { FILE_EDITOR_CONFIG, ONLYOFFICE_SERVER_URL } from '@/api/urls';
 import { toApiError } from '@/api/errors';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
-import { Icon } from '@/components/Icon';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { ErrorState } from '@/components/StateViews';
 import { documentKeys } from '../api/queries';
 
@@ -71,13 +71,7 @@ export default function DocumentViewerScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={10}>
-          <Icon name="chevronLeft" size={24} color={colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle} numberOfLines={1}>{name || t('documents.viewerTitle')}</Text>
-        <View style={{ width: 40 }} />
-      </View>
+      <ScreenHeader title={name || t('documents.viewerTitle')} />
 
       {isLoading ? (
         <View style={styles.center}>
@@ -113,12 +107,6 @@ export default function DocumentViewerScreen() {
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     safe: { flex: 1, backgroundColor: c.bg },
-    header: {
-      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-      paddingHorizontal: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: c.cardBorder,
-    },
-    backBtn: { width: 40, height: 40, justifyContent: 'center' },
-    headerTitle: { flex: 1, fontSize: 17, fontWeight: '700', color: c.text, textAlign: 'center' },
 
     center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, backgroundColor: c.bg },
     hint: { fontSize: 14, color: c.textMuted },

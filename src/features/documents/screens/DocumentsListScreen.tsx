@@ -10,6 +10,7 @@ import type { ThemeColors } from '@/theme/palettes';
 import { useBreakpoint } from '@/utils/responsive';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { LoadingView, EmptyState, ErrorState } from '@/components/StateViews';
 import type { DocumentFolder, HrmFile } from '@/types';
 import { foldersQuery, rootFilesQuery } from '../api/queries';
@@ -94,21 +95,13 @@ export default function DocumentsListScreen() {
 
   return (
     <Screen edges={['top']}>
-      <View style={styles.header}>
-        {/* In a folder the chevron goes up to the root list; at the root it
-            leaves the screen (back to Modules) — before, the root level had
-            no back affordance at all. */}
-        <TouchableOpacity
-          onPress={() => (openFolder ? goRoot() : router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
-          style={styles.backBtn}
-          hitSlop={10}
-        >
-          <Icon name="chevronLeft" size={24} color={colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.title} numberOfLines={1}>
-          {openFolder ? (openFolder.name || t('documents.folderFallback')) : t('documents.title')}
-        </Text>
-      </View>
+      {/* In a folder the chevron goes up to the root list; at the root it
+          leaves the screen (back to Modules) — before, the root level had
+          no back affordance at all. */}
+      <ScreenHeader
+        title={openFolder ? (openFolder.name || t('documents.folderFallback')) : t('documents.title')}
+        onBack={() => (openFolder ? goRoot() : router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
+      />
 
       <View style={styles.searchWrap}>
         <Icon name="search" size={18} color={colors.textMuted} />
@@ -226,10 +219,6 @@ type TFunc = ReturnType<typeof useTranslation>['t'];
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    header: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
-    backBtn: { width: 32, height: 32, justifyContent: 'center', marginLeft: -6 },
-    title: { fontSize: 26, fontWeight: '800', color: c.text, flex: 1 },
-
     searchWrap: {
       flexDirection: 'row', alignItems: 'center', gap: 8,
       marginHorizontal: 16, marginBottom: 8, paddingHorizontal: 12, height: 44,

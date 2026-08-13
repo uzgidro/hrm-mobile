@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  Image, FlatList, TextInput, ScrollView,
+  FlatList, TextInput, ScrollView,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
@@ -13,8 +13,10 @@ import type { ThemeColors } from '@/theme/palettes';
 import { useBreakpoint } from '@/utils/responsive';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { LoadingView, EmptyState } from '@/components/StateViews';
 import { AccessDenied } from '@/components/AccessDenied';
+import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { canAccessPage } from '@/utils/roles';
 import { employeesListQuery } from '../api/queries';
 
@@ -74,15 +76,10 @@ export default function EmployeesListScreen() {
 
   return (
     <Screen edges={['top', 'bottom']}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Icon name="chevronLeft" size={24} color={colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>
-          {onlySubordinates ? t('employees.subordinatesTitle') : t('employees.listTitle')} {totalLabel ? `(${totalLabel})` : ''}
-        </Text>
-        <View style={{ width: 36 }} />
-      </View>
+      <ScreenHeader
+        title={onlySubordinates ? t('employees.subordinatesTitle') : t('employees.listTitle')}
+        count={totalLabel}
+      />
 
       <View style={styles.searchWrapper}>
         <View style={styles.searchBox}>
@@ -142,13 +139,7 @@ export default function EmployeesListScreen() {
               onPress={() => router.push({ pathname: '/profile-detail', params: { id: emp.id } })}
               activeOpacity={0.7}
             >
-              {emp.photo_path ? (
-                <Image source={{ uri: emp.photo_path }} style={styles.avatar} />
-              ) : (
-                <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                  <Text style={styles.avatarInitial}>{(emp.legal_name || '?').charAt(0).toUpperCase()}</Text>
-                </View>
-              )}
+              <EmployeeAvatar emp={emp} size={48} />
               <View style={styles.empInfo}>
                 <Text style={styles.empName} numberOfLines={1}>{emp.legal_name}</Text>
                 <Text style={styles.empSub} numberOfLines={1}>{emp.job_position?.name ?? emp.department?.name ?? '—'}</Text>
@@ -183,14 +174,6 @@ function EmpChip({ label, active, onPress, styles, subtle }: {
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    header: {
-      flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14,
-      borderBottomWidth: 1, borderBottomColor: c.cardBorder,
-    },
-    backBtn: { width: 36, height: 36, justifyContent: 'center' },
-    backArrow: { fontSize: 22, color: c.text, fontWeight: '300' },
-    headerTitle: { flex: 1, fontSize: 20, fontWeight: '700', color: c.text, paddingLeft: 4 },
-
     searchWrapper: {
       paddingHorizontal: 16, paddingVertical: 10, flexShrink: 0,
       borderBottomWidth: 1, borderBottomColor: c.cardBorder,
@@ -220,9 +203,6 @@ const makeStyles = (c: ThemeColors) =>
     empRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 12, backgroundColor: c.bg },
     gridRow: { gap: 12, paddingHorizontal: 16 },
     empRowGrid: { flex: 1, marginHorizontal: 0, borderRadius: 14, borderWidth: 1, borderColor: c.cardBorder },
-    avatar: { width: 48, height: 48, borderRadius: 24 },
-    avatarPlaceholder: { backgroundColor: c.primarySoft, alignItems: 'center', justifyContent: 'center' },
-    avatarInitial: { fontSize: 18, fontWeight: '700', color: c.primaryLight },
     empInfo: { flex: 1 },
     empName: { fontSize: 14, fontWeight: '700', color: c.text },
     empSub: { fontSize: 12, color: c.textMuted, marginTop: 2 },

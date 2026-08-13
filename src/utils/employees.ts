@@ -1,3 +1,4 @@
+import { queryOptions } from '@tanstack/react-query';
 import { apiClient } from '../api/client';
 import { EMPLOYEES_LIST } from '../api/urls';
 import { Employee } from '../types';
@@ -39,4 +40,19 @@ export async function fetchAllEmployees(orgBranchId?: number): Promise<EmployeeP
 
 export function employeesQueryKey(orgBranchId?: number) {
   return ['team-employees-all', orgBranchId] as const;
+}
+
+// The employees LIST — wraps the shared, parallel-paginated `fetchAllEmployees`
+// helper above and reuses `employeesQueryKey` so the roster cache is shared
+// with every other screen that reads it. Do NOT swap this key for a
+// feature-local key (e.g. `employeeKeys.list(...)`): that would fork the cache
+// and break sharing. Lives here (not in the employees feature) so every
+// feature can import it without a cross-feature import
+// (`src/features/README.md` forbids importing another feature's `api/`).
+export function employeesListQuery(orgBranchId?: number) {
+  return queryOptions({
+    queryKey: employeesQueryKey(orgBranchId),
+    queryFn: () => fetchAllEmployees(orgBranchId),
+    staleTime: 5 * 60 * 1000,
+  });
 }

@@ -1,5 +1,5 @@
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, Image, Switch, Platform,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, Switch, Platform,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -13,6 +13,8 @@ import type { ThemeColors } from '@/theme/palettes';
 import type { ThemeMode } from '@/theme/ThemeProvider';
 import { Icon, IconName } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
+import { ScreenHeader } from '@/components/ScreenHeader';
+import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { confirm } from '@/lib/confirm';
 import { Flag } from '@/components/Flag';
 import { useLangStore } from '@/store/langStore';
@@ -70,32 +72,17 @@ export default function ProfileScreen() {
 
   return (
     <Screen edges={['top']}>
+      {/* Profile is a bar-less tab (href:null) opened from Modules/the avatar,
+          so it needs its own back affordance; back() walks the tab history. */}
+      <ScreenHeader
+        title={t('profile.title')}
+        onBack={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
+      />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Profile is a bar-less tab (href:null) opened from Modules/the avatar,
-            so it needs its own back affordance; back() walks the tab history. */}
-        <View style={styles.titleRow}>
-          <TouchableOpacity
-            onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
-            style={styles.backBtn}
-            hitSlop={10}
-          >
-            <Icon name="chevronLeft" size={26} color={colors.text} />
-          </TouchableOpacity>
-          <Text style={styles.pageTitle}>{t('profile.title')}</Text>
-        </View>
-
         {/* User card */}
         <View style={styles.card}>
           <View style={styles.userRow}>
-            {employee?.photo_path ? (
-              <Image source={{ uri: employee.photo_path }} style={styles.avatar} />
-            ) : (
-              <View style={[styles.avatar, styles.avatarFallback]}>
-                <Text style={styles.avatarInitial}>
-                  {(employee?.legal_name || 'U').charAt(0).toUpperCase()}
-                </Text>
-              </View>
-            )}
+            <EmployeeAvatar emp={employee ?? {}} size={60} />
             <View style={{ flex: 1 }}>
               <Text style={styles.userName} numberOfLines={1}>
                 {employee?.legal_name || t('profile.userFallback')}
@@ -267,10 +254,7 @@ export default function ProfileScreen() {
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    content: { paddingHorizontal: 16, paddingBottom: 40 },
-    titleRow: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingTop: 16, marginBottom: 16 },
-    backBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', marginLeft: -8 },
-    pageTitle: { fontSize: 26, fontWeight: '800', color: c.text },
+    content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 40 },
 
     sectionLabel: {
       fontSize: 12, fontWeight: '700', color: c.textMuted,
@@ -284,9 +268,6 @@ const makeStyles = (c: ThemeColors) =>
     },
 
     userRow: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 16 },
-    avatar: { width: 60, height: 60, borderRadius: 30 },
-    avatarFallback: { backgroundColor: c.primarySoft, alignItems: 'center', justifyContent: 'center' },
-    avatarInitial: { fontSize: 24, fontWeight: '700', color: c.primary },
     userName: { fontSize: 18, fontWeight: '800', color: c.text },
     userRole: { fontSize: 13, color: c.textSecondary, marginTop: 2 },
 

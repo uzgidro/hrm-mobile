@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { Alert } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
+import { getApiErrorMessage } from '@/api/errors';
 import i18n from '@/i18n';
 import {
   approveDecree,
@@ -37,11 +38,7 @@ export function useDecreeActions(orderId: number, refetch: () => void) {
         refetch();
         Alert.alert(i18n.t('orders.actionDoneTitle'), successMsg);
       } catch (e) {
-        const detail = (e as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail;
-        const msg = Array.isArray(detail)
-          ? (detail[0] as { msg?: unknown })?.msg
-          : (detail ?? i18n.t('orders.actionError'));
-        Alert.alert(i18n.t('errors.generic'), typeof msg === 'string' ? msg : i18n.t('orders.actionError'));
+        Alert.alert(i18n.t('errors.generic'), getApiErrorMessage(e, i18n.t('orders.actionError')));
       } finally {
         setBusy(false);
       }

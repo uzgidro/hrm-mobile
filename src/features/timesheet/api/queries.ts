@@ -1,6 +1,7 @@
 import { queryOptions } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { apiClient } from '@/api/client';
+import { unwrapList } from '@/api/response';
 import {
   TURNSTILE_ATTENDANCE_NORMALIZED,
   TURNSTILE_ATTENDANCE_EVENTS,
@@ -12,11 +13,6 @@ import {
   DUTY_DAYS_LIST,
 } from '@/api/urls';
 import type { AttendanceEvent, DutyDay, Employee, EmployeeAttendance, Holiday, NavbatchilikGroup, WorkScheduleDay } from '@/types';
-
-// List endpoints return either a bare array or an { items } envelope.
-function unwrap<T>(d: any): T[] {
-  return (Array.isArray(d) ? d : (d?.items ?? [])) as T[];
-}
 
 // Per-feature queryOptions factories for "Мой табель" (Учёт времени, Wave 1).
 // The normalized endpoint returns one row per employee with an
@@ -60,7 +56,7 @@ export function myTimesheetQuery(month: string, employeeId?: number) {
         .get(TURNSTILE_ATTENDANCE_NORMALIZED, {
           params: { employee_id: employeeId, date_from: dateFrom, date_to: dateTo, size: 1 },
         })
-        .then((r) => unwrap<EmployeeAttendance>(r.data)[0] ?? null),
+        .then((r) => unwrapList<EmployeeAttendance>(r.data)[0] ?? null),
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -81,7 +77,7 @@ export function myTimesheetEventsQuery(month: string, employeeId?: number) {
         .get(TURNSTILE_ATTENDANCE_EVENTS, {
           params: { employee_id: employeeId, date_from: dateFrom, date_to: dateTo },
         })
-        .then((r) => unwrap<AttendanceEvent>(r.data)),
+        .then((r) => unwrapList<AttendanceEvent>(r.data)),
     staleTime: 2 * 60 * 1000,
   });
 }
@@ -93,7 +89,7 @@ export function myNavbatchilikGroupsQuery() {
   return queryOptions({
     queryKey: timesheetKeys.myGroups(),
     queryFn: () =>
-      apiClient.get(NAVBATCHILIK_GROUPS_MY).then((r) => unwrap<NavbatchilikGroup>(r.data)),
+      apiClient.get(NAVBATCHILIK_GROUPS_MY).then((r) => unwrapList<NavbatchilikGroup>(r.data)),
     staleTime: 10 * 60 * 1000,
   });
 }
@@ -104,7 +100,7 @@ export function groupMembersQuery(groupId: number) {
   return queryOptions({
     queryKey: timesheetKeys.groupMembers(groupId),
     queryFn: () =>
-      apiClient.get(NAVBATCHILIK_GROUP_MEMBERS(groupId)).then((r) => unwrap<Employee>(r.data)),
+      apiClient.get(NAVBATCHILIK_GROUP_MEMBERS(groupId)).then((r) => unwrapList<Employee>(r.data)),
     staleTime: 10 * 60 * 1000,
   });
 }
@@ -127,7 +123,7 @@ export function myScheduleDaysQuery(month: string, employeeId?: number) {
             size: 100,
           },
         })
-        .then((r) => unwrap<WorkScheduleDay>(r.data)),
+        .then((r) => unwrapList<WorkScheduleDay>(r.data)),
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -149,7 +145,7 @@ export function groupScheduleDaysQuery(month: string, groupId?: number) {
             date_to: start.endOf('month').format('YYYY-MM-DD'),
           },
         })
-        .then((r) => unwrap<WorkScheduleDay>(r.data)),
+        .then((r) => unwrapList<WorkScheduleDay>(r.data)),
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -165,7 +161,7 @@ export function holidaysQuery(orgBranchId?: number) {
         .get(HOLIDAYS_LIST, {
           params: { size: 100, ...(orgBranchId ? { organization_branch_id: orgBranchId } : {}) },
         })
-        .then((r) => unwrap<Holiday>(r.data)),
+        .then((r) => unwrapList<Holiday>(r.data)),
     staleTime: 60 * 60 * 1000,
   });
 }
@@ -184,7 +180,7 @@ export function offDayDutyQuery(orgBranchId?: number) {
         .get(DUTY_DAYS_LIST, {
           params: { size: 100, ...(orgBranchId ? { organization_branch_id: orgBranchId } : {}) },
         })
-        .then((r) => unwrap<DutyDay>(r.data)),
+        .then((r) => unwrapList<DutyDay>(r.data)),
     staleTime: 60 * 60 * 1000,
   });
 }

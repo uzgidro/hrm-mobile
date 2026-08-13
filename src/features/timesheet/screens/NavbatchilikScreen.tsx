@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { router } from 'expo-router';
-import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
+import { useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
-import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import MyDutyScreen from './MyDutyScreen';
 import MyDutyGridScreen from './MyDutyGridScreen';
 
@@ -17,24 +16,15 @@ type DutyTab = 'list' | 'grid';
 // The old separate /navbatchilik-grid route still resolves for deep links.
 export default function NavbatchilikScreen() {
   const { t } = useTranslation();
-  const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const [tab, setTab] = useState<DutyTab>('list');
 
   return (
     <Screen edges={['top', 'bottom']}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Icon name="chevronLeft" size={24} color={colors.text} />
-        </TouchableOpacity>
-        <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>{t('timesheet.dutyTitle')}</Text>
-          <Text style={styles.headerSub}>
-            {tab === 'list' ? t('timesheet.dutySubtitle') : t('timesheet.dutyGridSubtitle')}
-          </Text>
-        </View>
-        <View style={{ width: 40 }} />
-      </View>
+      <ScreenHeader
+        title={t('timesheet.dutyTitle')}
+        subtitle={tab === 'list' ? t('timesheet.dutySubtitle') : t('timesheet.dutyGridSubtitle')}
+      />
 
       <View style={styles.tabsRow}>
         <TouchableOpacity
@@ -65,12 +55,6 @@ export default function NavbatchilikScreen() {
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
-    backBtn: { width: 40, height: 40, justifyContent: 'center' },
-    headerCenter: { flex: 1, paddingHorizontal: 8 },
-    headerTitle: { fontSize: 16, fontWeight: '700', color: c.text },
-    headerSub: { fontSize: 12, color: c.textSecondary, marginTop: 2 },
-
     tabsRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingTop: 12 },
     tab: { flex: 1, paddingVertical: 10, borderRadius: 10, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, alignItems: 'center' },
     tabActive: { backgroundColor: c.primarySoft, borderColor: c.primaryLight },

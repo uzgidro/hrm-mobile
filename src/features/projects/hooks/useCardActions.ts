@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { Alert } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
+import { getApiErrorMessage } from '@/api/errors';
 import { confirm } from '@/lib/confirm';
 import { completeCard, uncompleteCard, rejectCard } from '../api/mutations';
 import { projectKeys } from '../api/queries';
@@ -30,9 +31,7 @@ export function useCardActions(cardId: number, refetch: () => void) {
         refetch();
         Alert.alert(t('projects.actionDoneTitle'), msg);
       } catch (e) {
-        const detail = (e as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail;
-        const m = Array.isArray(detail) ? (detail[0] as { msg?: unknown })?.msg : (detail ?? t('projects.actionError'));
-        Alert.alert(t('projects.actionError'), typeof m === 'string' ? m : t('projects.actionError'));
+        Alert.alert(t('projects.actionError'), getApiErrorMessage(e, t('projects.actionError')));
       } finally {
         setBusy(false);
       }

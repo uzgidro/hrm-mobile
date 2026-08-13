@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  Image, FlatList, TextInput,
+  FlatList, TextInput,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -11,12 +11,14 @@ import { useAuthStore } from '@/store/authStore';
 import { usePrefsStore } from '@/store/prefsStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
-import { fetchAllEmployees, employeesQueryKey } from '@/utils/employees';
+import { employeesListQuery } from '@/utils/employees';
 import { monthName } from '@/i18n/dates';
 import { useBreakpoint } from '@/utils/responsive';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { LoadingView, EmptyState } from '@/components/StateViews';
+import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { birthdaysListQuery } from '../api/queries';
 
 export default function BirthdaysScreen() {
@@ -39,10 +41,8 @@ export default function BirthdaysScreen() {
   // when "Faqat bo'ysunuvchilar" is on we intersect with the user's subordinates
   // (resolved from the employees list, which carries supervisor_id).
   const { data: empData } = useQuery({
-    queryKey: employeesQueryKey(orgBranchId),
-    queryFn: () => fetchAllEmployees(orgBranchId),
+    ...employeesListQuery(orgBranchId),
     enabled: onlySubordinates && !!myId,
-    staleTime: 5 * 60 * 1000,
   });
 
   const subordinateIds = useMemo(() => {
@@ -65,13 +65,7 @@ export default function BirthdaysScreen() {
 
   return (
     <Screen edges={['top', 'bottom']}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Icon name="chevronLeft" size={24} color={colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('birthdays.title')}{base.length ? ` (${base.length})` : ''}</Text>
-        <View style={{ width: 36 }} />
-      </View>
+      <ScreenHeader title={t('birthdays.title')} count={base.length} />
 
       <View style={styles.searchWrapper}>
         <View style={styles.searchBox}>
@@ -103,13 +97,7 @@ export default function BirthdaysScreen() {
             const birthDay = emp.birth_date ? dayjs(emp.birth_date) : null;
             return (
               <TouchableOpacity style={[styles.empRow, cols > 1 && styles.empRowGrid]} onPress={() => router.push({ pathname: '/profile-detail', params: { id: emp.id } })} activeOpacity={0.7}>
-                {emp.photo_path ? (
-                  <Image source={{ uri: emp.photo_path }} style={styles.avatar} />
-                ) : (
-                  <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                    <Text style={styles.avatarInitial}>{(emp.legal_name || '?').charAt(0).toUpperCase()}</Text>
-                  </View>
-                )}
+                <EmployeeAvatar emp={emp} size={48} />
                 <View style={styles.empInfo}>
                   <View style={styles.nameRow}>
                     <Text style={styles.empName} numberOfLines={1}>{emp.legal_name}</Text>
@@ -147,11 +135,6 @@ export default function BirthdaysScreen() {
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
-    backBtn: { width: 36, height: 36, justifyContent: 'center' },
-    backArrow: { fontSize: 22, color: c.text, fontWeight: '300' },
-    headerTitle: { flex: 1, fontSize: 20, fontWeight: '700', color: c.text, paddingLeft: 4 },
-
     searchWrapper: { paddingHorizontal: 16, paddingVertical: 10, flexShrink: 0, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
     searchBox: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: c.card, borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 12, height: 46 },
     searchIcon: { fontSize: 15 },
@@ -167,9 +150,6 @@ const makeStyles = (c: ThemeColors) =>
       flex: 1, marginHorizontal: 0, marginBottom: 12,
       borderRadius: 14, borderWidth: 1, borderColor: c.cardBorder,
     },
-    avatar: { width: 48, height: 48, borderRadius: 24 },
-    avatarPlaceholder: { backgroundColor: c.primarySoft, alignItems: 'center', justifyContent: 'center' },
-    avatarInitial: { fontSize: 18, fontWeight: '700', color: c.primaryLight },
     empInfo: { flex: 1, gap: 2 },
     nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
     empName: { fontSize: 14, fontWeight: '700', color: c.text, flexShrink: 1 },

@@ -10,6 +10,7 @@ import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
+import { ScreenHeader, HeaderAction } from '@/components/ScreenHeader';
 import { LoadingView, ErrorState, EmptyState } from '@/components/StateViews';
 import { confirm } from '@/lib/confirm';
 import { toast } from '@/lib/toast';
@@ -181,21 +182,23 @@ export default function AssistantScreen() {
 
   return (
     <Screen edges={['top', 'bottom']}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))} style={styles.backBtn} hitSlop={10}>
-          <Icon name="chevronLeft" size={24} color={colors.text} />
-        </TouchableOpacity>
-        <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>{t('assistant.title')}</Text>
-          <Text style={styles.headerSub}>{isSending ? t('assistant.thinking') : t('assistant.subtitle')}</Text>
-        </View>
-        <TouchableOpacity onPress={() => setShowSessions((v) => !v)} style={styles.headerBtn} hitSlop={10}>
-          <Icon name="checklist" size={20} color={showSessions ? colors.primaryLight : colors.textSecondary} />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={newChat} style={styles.headerBtn} hitSlop={10} disabled={isSending}>
-          <Icon name="plus" size={22} color={colors.primaryLight} />
-        </TouchableOpacity>
-      </View>
+      <ScreenHeader
+        title={t('assistant.title')}
+        subtitle={isSending ? t('assistant.thinking') : t('assistant.subtitle')}
+        onBack={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
+        right={
+          <View style={{ flexDirection: 'row', gap: 4 }}>
+            <HeaderAction
+              icon="checklist"
+              onPress={() => setShowSessions((v) => !v)}
+              color={showSessions ? colors.primaryLight : colors.textSecondary}
+            />
+            <TouchableOpacity onPress={newChat} style={styles.headerBtn} hitSlop={10} disabled={isSending}>
+              <Icon name="plus" size={22} color={colors.primaryLight} />
+            </TouchableOpacity>
+          </View>
+        }
+      />
 
       {showSessions && (
         <View style={styles.sessionsPanel}>
@@ -283,11 +286,6 @@ const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     flex: { flex: 1 },
 
-    header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
-    backBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-    headerCenter: { flex: 1, paddingHorizontal: 6 },
-    headerTitle: { fontSize: 16, fontWeight: '700', color: c.text },
-    headerSub: { fontSize: 12, color: c.textSecondary, marginTop: 1 },
     headerBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
 
     sessionsPanel: { borderBottomWidth: 1, borderBottomColor: c.cardBorder, backgroundColor: c.card, paddingVertical: 8, maxHeight: 260 },

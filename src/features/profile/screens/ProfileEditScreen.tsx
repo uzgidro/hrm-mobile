@@ -10,6 +10,7 @@ import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { LoadingView } from '@/components/StateViews';
 import { getApiErrorMessage } from '@/api/errors';
 import { getMyProfile, useUpdateMyProfile } from '../api/mutations';
@@ -121,13 +122,7 @@ export default function ProfileEditScreen() {
 
   return (
     <Screen edges={['top', 'bottom']} maxWidth={600}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Icon name="chevronLeft" size={24} color={colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('profile.editTitle')}</Text>
-        <View style={{ width: 40 }} />
-      </View>
+      <ScreenHeader title={t('profile.editTitle')} />
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -237,14 +232,6 @@ const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     _placeholder: { color: c.textMuted },
     _onPrimary: { color: c.onPrimary },
-
-    header: {
-      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-      paddingHorizontal: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: c.cardBorder,
-    },
-    backBtn: { width: 40, height: 40, justifyContent: 'center' },
-    backArrow: { fontSize: 22, color: c.text, fontWeight: '300' },
-    headerTitle: { fontSize: 16, fontWeight: '700', color: c.text },
 
     content: { paddingHorizontal: 16, paddingTop: 16 },
     noteRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginBottom: 14 },

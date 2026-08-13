@@ -1,5 +1,6 @@
 import { queryOptions, type QueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
+import { unwrapList } from '@/api/response';
 import {
   WORK_LEAVES,
   NOTIFICATIONS_LIST,
@@ -7,7 +8,7 @@ import {
   EMPLOYEES_BIRTHDAYS,
 } from '@/api/urls';
 import { fetchAllAttendanceEvents, attendanceQueryKey } from '@/utils/attendance';
-import { fetchAllEmployees, employeesQueryKey } from '@/utils/employees';
+import { employeesListQuery } from '@/utils/employees';
 import type { AttendanceEvent, WorkLeave, Notification, EmployeeBirthday } from '@/types';
 
 // Per-feature queryOptions factories for the home dashboard. The home tab is a
@@ -18,11 +19,6 @@ import type { AttendanceEvent, WorkLeave, Notification, EmployeeBirthday } from 
 // reuse the SAME shared/feature keys the destination screens (team,
 // attendance-detail, birthdays) read, so the warmed entries are shared instead
 // of forked — see `prefetchHomeData`.
-
-// The list endpoint returns either a bare array or an { items } envelope.
-function unwrapList<T>(data: unknown): T[] {
-  return (Array.isArray(data) ? data : ((data as { items?: T[] })?.items ?? [])) as T[];
-}
 
 // The signed-in user's own month of turnstile events, powering the "Bugungi
 // jadval" schedule card (the screen filters to today client-side).
@@ -101,7 +97,7 @@ export function homeNotificationsQuery(employeeId: number | undefined) {
 
 // Warm the caches the OTHER screens read so navigating to team /
 // attendance-detail / birthdays is instant. Each entry reuses the EXACT shared
-// key + staleTime the destination screen uses (employeesQueryKey,
+// key + staleTime the destination screen uses (employeesListQuery,
 // attendanceQueryKey, birthdayKeys.list shape) so nothing is forked — the
 // prefetched entry is the one those screens consume.
 export function prefetchHomeData(
@@ -109,11 +105,7 @@ export function prefetchHomeData(
   orgBranchId: number | undefined,
   today: string,
 ) {
-  qc.prefetchQuery({
-    queryKey: employeesQueryKey(orgBranchId),
-    queryFn: () => fetchAllEmployees(orgBranchId),
-    staleTime: 5 * 60 * 1000,
-  });
+  qc.prefetchQuery(employeesListQuery(orgBranchId));
   qc.prefetchQuery({
     queryKey: attendanceQueryKey(today, orgBranchId),
     queryFn: () => fetchAllAttendanceEvents(today, orgBranchId),

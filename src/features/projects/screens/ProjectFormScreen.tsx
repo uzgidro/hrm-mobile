@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Image,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Alert,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -13,8 +13,9 @@ import { FormInput } from '@/components/FormInput';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { LoadingView } from '@/components/StateViews';
+import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { PickerModal } from '@/components/PickerModal';
-import { fetchAllEmployees, employeesQueryKey } from '@/utils/employees';
+import { employeesListQuery } from '@/utils/employees';
 import { employeeSubLabel } from '@/utils/roles';
 import { getApiErrorMessage } from '@/api/errors';
 import type { Employee } from '@/types';
@@ -48,11 +49,7 @@ export default function LoyihaFormScreen() {
   const [loading, setLoading] = useState(false);
   const [hydrating, setHydrating] = useState(isEdit);
 
-  const { data: empData } = useQuery({
-    queryKey: employeesQueryKey(orgBranchId),
-    queryFn: () => fetchAllEmployees(orgBranchId),
-    staleTime: 5 * 60 * 1000,
-  });
+  const { data: empData } = useQuery(employeesListQuery(orgBranchId));
   const employees: Employee[] = empData?.items ?? [];
   const empById = useMemo(() => {
     const m = new Map<number, Employee>();
@@ -136,13 +133,7 @@ export default function LoyihaFormScreen() {
             <View style={styles.chips}>
               {selectedMembers.map((m) => (
                 <View key={m.id} style={styles.chip}>
-                  {m.photo_path ? (
-                    <Image source={{ uri: m.photo_path }} style={styles.chipAv} />
-                  ) : (
-                    <View style={[styles.chipAv, styles.chipAvFallback]}>
-                      <Text style={styles.chipAvText}>{(m.legal_name || '?').charAt(0).toUpperCase()}</Text>
-                    </View>
-                  )}
+                  <EmployeeAvatar emp={m} size={24} />
                   <Text style={styles.chipName} numberOfLines={1}>{m.legal_name}</Text>
                   <TouchableOpacity onPress={() => toggleMember(m.id)} hitSlop={6}>
                     <Icon name="close" size={14} color={colors.textMuted} />
@@ -197,9 +188,6 @@ const makeStyles = (c: ThemeColors) =>
 
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 },
     chip: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, borderRadius: 20, paddingVertical: 4, paddingLeft: 4, paddingRight: 10 },
-    chipAv: { width: 24, height: 24, borderRadius: 12, backgroundColor: c.skeleton },
-    chipAvFallback: { backgroundColor: c.primarySoft, alignItems: 'center', justifyContent: 'center' },
-    chipAvText: { fontSize: 10, fontWeight: '700', color: c.primary },
     chipName: { fontSize: 12, color: c.text, fontWeight: '600', maxWidth: 130 },
 
     hint: { fontSize: 11, color: c.textMuted, marginTop: 10 },

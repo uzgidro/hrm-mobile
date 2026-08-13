@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, RefreshControl, Image, FlatList, TextInput, ScrollView,
+  View, Text, StyleSheet, TouchableOpacity, RefreshControl, FlatList, TextInput, ScrollView,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -13,6 +13,7 @@ import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { LoadingView, EmptyState, ErrorState } from '@/components/StateViews';
+import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { myTeamQuery } from '../api/queries';
 import { resultColorKey, filterTeamMembers } from '../utils';
 
@@ -118,13 +119,7 @@ export default function KpiTeamScreen() {
                   router.push({ pathname: '/kpi', params: { employeeId: String(m.employee_id) } })
                 }
               >
-                {m.photo_path ? (
-                  <Image source={{ uri: m.photo_path }} style={styles.avatar} />
-                ) : (
-                  <View style={[styles.avatar, styles.avatarFallback]}>
-                    <Text style={styles.avatarInitial}>{(m.legal_name || '?').charAt(0).toUpperCase()}</Text>
-                  </View>
-                )}
+                <EmployeeAvatar emp={m} size={48} />
 
                 <View style={{ flex: 1 }}>
                   <Text style={styles.name} numberOfLines={1}>{m.legal_name || '—'}</Text>
@@ -192,9 +187,6 @@ const makeStyles = (c: ThemeColors) =>
       backgroundColor: c.card, borderRadius: 14, borderWidth: 1, borderColor: c.cardBorder,
     },
     cardGrid: { flex: 1 },
-    avatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: c.skeleton },
-    avatarFallback: { backgroundColor: c.primarySoft, alignItems: 'center', justifyContent: 'center' },
-    avatarInitial: { fontSize: 18, fontWeight: '700', color: c.primary },
     name: { fontSize: 15, fontWeight: '700', color: c.text },
     sub: { fontSize: 12, color: c.textSecondary, marginTop: 2 },
     metaRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 5, flexWrap: 'wrap' },

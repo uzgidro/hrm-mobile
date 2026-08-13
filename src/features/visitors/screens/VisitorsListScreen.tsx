@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
-  RefreshControl, Image, FlatList,
+  RefreshControl, FlatList,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -13,8 +13,10 @@ import type { ThemeColors } from '@/theme/palettes';
 import { useBreakpoint } from '@/utils/responsive';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
+import { ScreenHeader, HeaderAction } from '@/components/ScreenHeader';
 import { SplitLayout } from '@/components/SplitLayout';
 import { LoadingView, EmptyState } from '@/components/StateViews';
+import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { visitorsListQuery } from '../api/queries';
 import { VisitorDetailView } from '../components/VisitorDetailView';
 
@@ -72,24 +74,15 @@ export default function MehmonlarScreen() {
 
   const listPane = (
     <>
-      <View style={styles.header}>
-        {/* Guests is a bottom-bar tab, but it's also opened from the Modules
-            grid — the chevron walks the visited-tab history back (Modules →
-            Guests → back = Modules; as a cold tab it lands on Home). */}
-        <TouchableOpacity
-          onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
-          style={styles.backBtn}
-          hitSlop={10}
-        >
-          <Icon name="chevronLeft" size={26} color={colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.title}>{t('visitors.listTitle')}</Text>
-        {visitors.length > 0 && <Text style={styles.count}>{visitors.length}</Text>}
-        <View style={{ flex: 1 }} />
-        <TouchableOpacity style={styles.addBtn} onPress={() => router.push('/mehmon-form')} activeOpacity={0.85}>
-          <Icon name="plus" size={22} color={colors.onPrimary} strokeWidth={2.4} />
-        </TouchableOpacity>
-      </View>
+      {/* Guests is a bottom-bar tab, but it's also opened from the Modules
+          grid — the chevron walks the visited-tab history back (Modules →
+          Guests → back = Modules; as a cold tab it lands on Home). */}
+      <ScreenHeader
+        title={t('visitors.listTitle')}
+        count={visitors.length}
+        onBack={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
+        right={<HeaderAction icon="plus" onPress={() => router.push('/mehmon-form')} />}
+      />
 
       <View style={styles.searchWrap}>
         <Icon name="search" size={18} color={colors.textMuted} />
@@ -131,13 +124,7 @@ export default function MehmonlarScreen() {
                     : () => router.push({ pathname: '/mehmon-detail', params: { id: String(item.id) } })
                 }
               >
-                {item.photo_path ? (
-                  <Image source={{ uri: item.photo_path }} style={styles.avatar} />
-                ) : (
-                  <View style={[styles.avatar, styles.avatarFallback]}>
-                    <Text style={styles.avatarInitial}>{(item.legal_name || '?').charAt(0).toUpperCase()}</Text>
-                  </View>
-                )}
+                <EmployeeAvatar emp={item} size={48} />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.name} numberOfLines={1}>{item.legal_name || t('visitors.nameFallback')}</Text>
                   {!!(item.organization_name || item.job_position) && (
@@ -190,12 +177,6 @@ export default function MehmonlarScreen() {
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    header: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
-    backBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', marginLeft: -8, marginRight: -4 },
-    title: { fontSize: 26, fontWeight: '800', color: c.text },
-    count: { fontSize: 14, fontWeight: '700', color: c.textMuted, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2 },
-    addBtn: { width: 42, height: 42, borderRadius: 14, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' },
-
     searchWrap: {
       flexDirection: 'row', alignItems: 'center', gap: 8,
       marginHorizontal: 16, marginBottom: 8, paddingHorizontal: 12, height: 44,
@@ -211,9 +192,6 @@ const makeStyles = (c: ThemeColors) =>
     gridRow: { gap: 12 },
     cardGrid: { flex: 1 },
     cardSelected: { borderColor: c.primary, borderWidth: 1.5 },
-    avatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: c.skeleton },
-    avatarFallback: { backgroundColor: c.primarySoft, alignItems: 'center', justifyContent: 'center' },
-    avatarInitial: { fontSize: 18, fontWeight: '700', color: c.primary },
     name: { fontSize: 15, fontWeight: '700', color: c.text },
     sub: { fontSize: 12, color: c.textSecondary, marginTop: 2 },
     hostRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 },

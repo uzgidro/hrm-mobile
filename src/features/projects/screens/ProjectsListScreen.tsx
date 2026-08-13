@@ -1,5 +1,5 @@
 import {
-  View, Text, StyleSheet, TouchableOpacity, RefreshControl, Image, FlatList,
+  View, Text, StyleSheet, TouchableOpacity, RefreshControl, FlatList,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -11,6 +11,7 @@ import { ScreenHeader, HeaderAction } from '@/components/ScreenHeader';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { LoadingView, EmptyState } from '@/components/StateViews';
+import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { myWorkspacesQuery } from '../api/queries';
 
 function Stat({ icon, value, styles, colors }: { icon: any; value: number; styles: any; colors: ThemeColors }) {
@@ -67,13 +68,9 @@ export default function LoyihalarScreen() {
                   </View>
                   <View style={styles.avatars}>
                     {members.slice(0, 3).map((m, i) => (
-                      m.member?.photo_path ? (
-                        <Image key={m.id ?? i} source={{ uri: m.member.photo_path }} style={[styles.av, { marginLeft: i ? -8 : 0 }]} />
-                      ) : (
-                        <View key={m.id ?? i} style={[styles.av, styles.avFallback, { marginLeft: i ? -8 : 0 }]}>
-                          <Text style={styles.avText}>{(m.member?.legal_name || '?').charAt(0).toUpperCase()}</Text>
-                        </View>
-                      )
+                      <View key={m.id ?? i} style={{ marginLeft: i ? -8 : 0 }}>
+                        <EmployeeAvatar emp={m.member ?? {}} size={26} />
+                      </View>
                     ))}
                     {members.length > 3 && (
                       <View style={[styles.av, styles.avMore, { marginLeft: -8 }]}>
@@ -113,8 +110,6 @@ const makeStyles = (c: ThemeColors) =>
 
     avatars: { flexDirection: 'row', alignItems: 'center' },
     av: { width: 26, height: 26, borderRadius: 13, backgroundColor: c.skeleton, borderWidth: 2, borderColor: c.card },
-    avFallback: { backgroundColor: c.primarySoft, alignItems: 'center', justifyContent: 'center' },
-    avText: { fontSize: 10, fontWeight: '700', color: c.primary },
     avMore: { backgroundColor: c.cardBorder, alignItems: 'center', justifyContent: 'center' },
     avMoreText: { fontSize: 9, fontWeight: '700', color: c.textSecondary },
   });
