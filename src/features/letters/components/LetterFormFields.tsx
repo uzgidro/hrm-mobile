@@ -1,4 +1,4 @@
-import { View, Text, TextInput, StyleSheet } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
@@ -26,6 +26,12 @@ export function LetterFormFields(props: {
   description: string;
   onChangeDescription: (v: string) => void;
   workPlan: string;
+  // Avtopark: mashina kerakmi + izoh. Aynan qaysi mashina berilishini BFD
+  // hal qiladi — bu yerda mashina TANLANMAYDI.
+  vehicleNeeded: boolean;
+  onToggleVehicle: (v: boolean) => void;
+  vehicleNote: string;
+  onChangeVehicleNote: (v: string) => void;
   onChangeWorkPlan: (v: string) => void;
   shortSummary: string;
   onChangeShortSummary: (v: string) => void;
@@ -51,6 +57,7 @@ export function LetterFormFields(props: {
     isTrip, typeHint, onOpenPicker, onOpenDate,
     departureDate, arrivalDate, regions, destinationIds, branchesLoading,
     description, onChangeDescription, workPlan, onChangeWorkPlan, shortSummary, onChangeShortSummary,
+    vehicleNeeded, onToggleVehicle, vehicleNote, onChangeVehicleNote,
     rahbariyatIds, rahbariyatLoading, submitterId, submitterOptions, submittersLoading,
     mainSignerId, signerOptions, ordinarySigners, signersLoading, nameOf,
   } = props;
@@ -100,6 +107,36 @@ export function LetterFormFields(props: {
             <TextInput style={[styles.textArea, { minHeight: 100 }]} placeholder={t('letters.placeholderWorkPlan')} placeholderTextColor={colors.textMuted} value={workPlan} onChangeText={onChangeWorkPlan} multiline textAlignVertical="top" />
           </Field>
 
+          {/* Avtopark: faqat "kerak/kerak emas" — mashinani BFD biriktiradi. */}
+          <Field label={t('letters.vehicleSection')}>
+            <View style={styles.vehicleRow}>
+              {[false, true].map((val) => (
+                <TouchableOpacity
+                  key={String(val)}
+                  testID={`letter-vehicle-${val ? 'needed' : 'none'}`}
+                  style={[styles.vehicleChip, vehicleNeeded === val && styles.vehicleChipActive]}
+                  onPress={() => onToggleVehicle(val)}
+                >
+                  <Text style={[styles.vehicleChipText, vehicleNeeded === val && styles.vehicleChipTextActive]}>
+                    {t(val ? 'letters.vehicleNeeded' : 'letters.vehicleWithout')}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            {vehicleNeeded && (
+              <>
+                <TextInput
+                  style={[styles.input, { marginTop: 8 }]}
+                  placeholder={t('letters.vehicleNotePlaceholder')}
+                  placeholderTextColor={colors.textMuted}
+                  value={vehicleNote}
+                  onChangeText={onChangeVehicleNote}
+                />
+                <Text style={styles.vehicleHint}>{t('letters.vehicleAssignedByBfd')}</Text>
+              </>
+            )}
+          </Field>
+
           {/* leadership + submitter: both short selectors, adjacent — pair on tablet. */}
           <View testID="letter-leadership-submitter-row" style={twoCol ? styles.fieldRow : undefined}>
             <View testID="letter-field-leadership" style={twoCol ? styles.fieldHalf : undefined}>
@@ -144,6 +181,15 @@ export function LetterFormFields(props: {
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
+    vehicleRow: { flexDirection: 'row', gap: 8 },
+    vehicleChip: {
+      borderWidth: 1, borderColor: c.cardBorder, borderRadius: 10,
+      paddingHorizontal: 14, paddingVertical: 9, backgroundColor: c.card,
+    },
+    vehicleChipActive: { borderColor: c.primary, backgroundColor: c.primarySoft },
+    vehicleChipText: { fontSize: 13, color: c.textSecondary },
+    vehicleChipTextActive: { color: c.primary, fontWeight: '600' },
+    vehicleHint: { fontSize: 12, color: c.textMuted, marginTop: 6 },
     input: { backgroundColor: c.card, borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: c.text },
     textArea: { backgroundColor: c.card, borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: c.text, minHeight: 100 },
     hintBox: { marginTop: 14, backgroundColor: c.primarySoft, borderRadius: 10, padding: 12 },

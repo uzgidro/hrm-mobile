@@ -192,6 +192,7 @@ export function routeForNotification(data: any): string | null {
 
   if (type.startsWith('order_act')) return '/(tabs)/orders';
   if (type.startsWith('business_trip')) return '/(tabs)/letters';
+  if (type.startsWith('vehicle_') || type === 'driver_trip_created') return '/(tabs)/letters';
   if (type.startsWith('news')) return '/news';
   if (type.startsWith('kpi')) return '/kpi';
   if (type.startsWith('work_leave')) return '/work-leaves';
@@ -235,6 +236,11 @@ const NOTIF_META: Record<string, { titleKey: string; icon: IconName }> = {
     titleKey: 'notifications.businessTripExtensionRejected',
     icon: 'close',
   },
+  // Avtopark (mashina). Uchalasi ham `letter_id` bilan keladi — deep-link
+  // routeForNotification'даги umumiy `letter_id` tarmog'i orqali ishlaydi.
+  vehicle_requested: { titleKey: 'notifications.vehicleRequested', icon: 'briefcase' },
+  vehicle_request_answered: { titleKey: 'notifications.vehicleRequestAnswered', icon: 'check' },
+  driver_trip_created: { titleKey: 'notifications.driverTripCreated', icon: 'briefcase' },
   news_post_created: { titleKey: 'notifications.newsPostCreated', icon: 'news' },
   workspace_created: { titleKey: 'notifications.workspaceCreated', icon: 'grid' },
   workspace_updated: { titleKey: 'notifications.workspaceUpdated', icon: 'grid' },

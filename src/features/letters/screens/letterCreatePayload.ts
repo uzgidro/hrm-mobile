@@ -22,6 +22,10 @@ export interface LetterCreateInput {
   destinationIds: number[];
   departureDate: string | null;
   arrivalDate: string | null;
+  // Avtopark: xodim MASHINANI TANLAMAYDI — faqat kerakligini bildiradi.
+  // Mashinani BFD transport mas'uli biriktiradi (web parity).
+  vehicleNeeded?: boolean;
+  vehicleNote?: string;
 }
 
 export function buildLetterCreatePayload(input: LetterCreateInput): Record<string, unknown> {
@@ -46,6 +50,12 @@ export function buildLetterCreatePayload(input: LetterCreateInput): Record<strin
     payload.departure_date = input.departureDate || null;
     payload.arrival_date = input.arrivalDate || null;
     payload.work_plan = input.workPlan.trim() || null;
+    // FAQAT kerak bo'lganda yuboriladi: `false`/yuborilmagan — mashinasiz safar
+    // (backend so'rov yaratmaydi).
+    if (input.vehicleNeeded) {
+      payload.vehicle_needed = true;
+      payload.vehicle_note = input.vehicleNote?.trim() || null;
+    }
   } else {
     payload.assigned_signers = [
       ...(input.mainSignerId ? [{ employee_id: input.mainSignerId, signer_type: 'main' }] : []),

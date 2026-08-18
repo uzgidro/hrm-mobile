@@ -195,3 +195,13 @@ export const SUPPORT_TICKET_DONE = (id: number) => `support-tickets/${id}/done`;
 export const SUPPORT_TICKET_RATE = (id: number) => `support-tickets/${id}/rate`;
 export const SUPPORT_TICKET_REOPEN = (id: number) => `support-tickets/${id}/reopen`;
 export const ONLYOFFICE_SERVER_URL = Env.onlyOfficeUrl;
+
+// Avtopark (xizmat safariga mashina — BFD ↔ bosh apparat). Xodim mashinani
+// TANLAMAYDI: u faqat "mashina kerak" deydi (LETTER_SET_VEHICLE), mashinani va
+// haydovchini BFD transport mas'uli biriktiradi (VEHICLE_REQUEST_RESPOND) va
+// shu payt haydovchiga xizmat safari avtomatik ochilib ro'yxatga olinadi.
+export const VEHICLE_ACCESS = 'vehicles/access';
+export const VEHICLES_LIST = 'vehicles';
+export const VEHICLE_REQUEST_RESPOND = (id: number) => `vehicles/requests/${id}/respond`;
+export const VEHICLE_REQUEST_FINALIZE = (id: number) => `vehicles/requests/${id}/finalize`;
+export const LETTER_SET_VEHICLE = (id: number) => `letters/${id}/vehicle`;

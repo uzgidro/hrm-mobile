@@ -156,6 +156,68 @@ export interface LetterAvailableActions {
   can_approve_guvohnoma?: boolean;
 }
 
+export interface Vehicle {
+  id: number;
+  organization_branch_id?: number;
+  vehicle_type?: string;
+  vehicle_type_label?: string | null;
+  model_name?: string;
+  plate_number?: string;
+  seats?: number | null;
+  fuel_consumption?: number | null;
+  fuel_price?: number | null;
+  photo_path?: string | null;
+  driver_employee_id?: number | null;
+  driver?: Employee | null;
+  is_active?: boolean;
+  /** Only when the list is queried with a date range (bandlik). */
+  is_busy?: boolean;
+  has_pending?: boolean;
+}
+
+/**
+ * Bitta xizmat safariga mashina so'rovi.
+ *
+ * `vehicle` NULL bo'lishi mumkin: xodim faqat "mashina kerak" deydi, aynan
+ * qaysi mashina berilishini BFD transport mas'uli hal qiladi. Tasdiqlanganda
+ * haydovchiga alohida xizmat safari ochiladi (`driver_letter_id`).
+ */
+export interface VehicleRequest {
+  id: number;
+  letter_id?: number;
+  vehicle_id?: number | null;
+  vehicle?: Vehicle | null;
+  status?: 'pending' | 'approved' | 'rejected' | 'cancelled' | string;
+  start_date?: string | null;
+  end_date?: string | null;
+  request_note?: string | null;
+  response_text?: string | null;
+  responded_by?: Employee | null;
+  assigned_driver_employee_id?: number | null;
+  assigned_driver?: Employee | null;
+  // Taxminiy (safar boshida) va aniq (safar tugagach) xarajat.
+  distance_km?: number | null;
+  fuel_liters?: number | null;
+  fuel_cost?: number | null;
+  actual_distance_km?: number | null;
+  actual_fuel_liters?: number | null;
+  actual_fuel_cost?: number | null;
+  distance_source?: 'gps' | 'manual' | null;
+  // Haydovchiga avtomatik ochilgan safar.
+  driver_letter_id?: number | null;
+  driver_letter_number?: string | null;
+  /** Server-computed UI gates (ruxsat baribir serverda tekshiriladi). */
+  can_respond?: boolean;
+  can_finalize?: boolean;
+}
+
+export interface VehicleAccess {
+  can_manage?: boolean;
+  can_request?: boolean;
+  provider_branch_id?: number;
+  requester_branch_ids?: number[];
+}
+
 export interface Letter {
   id: number;
   letter_type?: string;
@@ -210,6 +272,8 @@ export interface Letter {
   destination_branches?: OrganizationBranch[] | null;
   /** action flags computed by the backend — only present on the detail read */
   available_actions?: LetterAvailableActions | null;
+  // Avtopark: mashina so'rovi va BFD javobi (faqat xizmat safarida, detail read).
+  vehicle_request?: VehicleRequest | null;
   // True when DB form text could not be patched into the (anchorless / stale)
   // docx — form edits are missing from the document. Drives a warning banner
   // in the detail view (web parity: LetterDetailModal document_out_of_sync).

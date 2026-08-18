@@ -45,4 +45,7 @@ export default {
   screenTitle: 'Notifications',
   markAllRead: 'Read',
   empty: 'No notifications',
+  vehicleRequested: 'Vehicle request',
+  vehicleRequestAnswered: 'Vehicle response',
+  driverTripCreated: 'A business trip for you',
 } as const;

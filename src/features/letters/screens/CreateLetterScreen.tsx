@@ -72,6 +72,9 @@ export default function CreateLetterScreen() {
   const [destinationIds, setDestinationIds] = useState<number[]>([]);
   const [submitterId, setSubmitterId] = useState<number | null>(null);
   const [rahbariyatIds, setRahbariyatIds] = useState<number[]>([]);
+  // Avtopark: "mashina kerak" + izoh (aynan qaysi mashina — BFD hal qiladi).
+  const [vehicleNeeded, setVehicleNeeded] = useState(false);
+  const [vehicleNote, setVehicleNote] = useState('');
 
   const [picker, setPicker] = useState<PickerKind>(null);
   const [datePicker, setDatePicker] = useState<DateKind>(null);
@@ -156,6 +159,7 @@ export default function CreateLetterScreen() {
       mainSignerId, ordinarySigners,
       submitterId, rahbariyatIds, destinationIds,
       departureDate, arrivalDate,
+      vehicleNeeded, vehicleNote,
     });
 
     setSaving(true);
@@ -219,6 +223,8 @@ export default function CreateLetterScreen() {
           departureDate={departureDate} arrivalDate={arrivalDate} regions={regions} destinationIds={destinationIds} branchesLoading={branchesLoading}
           description={description} onChangeDescription={setDescription}
           workPlan={workPlan} onChangeWorkPlan={setWorkPlan}
+          vehicleNeeded={vehicleNeeded} onToggleVehicle={setVehicleNeeded}
+          vehicleNote={vehicleNote} onChangeVehicleNote={setVehicleNote}
           shortSummary={shortSummary} onChangeShortSummary={setShortSummary}
           rahbariyatIds={rahbariyatIds} rahbariyatLoading={rahbariyatLoading}
           submitterId={submitterId} submitterOptions={submitterOptions} submittersLoading={submittersLoading}

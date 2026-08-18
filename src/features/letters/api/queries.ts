@@ -9,10 +9,14 @@ import {
   EMPLOYEES_LIST,
   ORGANIZATION_BRANCHES,
   ORGANIZATION_BRANCH_LEADERS,
+  VEHICLE_ACCESS,
+  VEHICLES_LIST,
 } from '@/api/urls';
 import { fetchAllEmployees } from '@/utils/employees';
 import type { BranchLite } from '@/utils/tripRegions';
-import type { Employee, Letter, BusinessTripMovement } from '@/types';
+import type {
+  Employee, Letter, BusinessTripMovement, Vehicle, VehicleAccess,
+} from '@/types';
 
 // Hierarchical query keys.
 //
@@ -182,3 +186,50 @@ export function orgBranchesQuery(enabled: boolean) {
     staleTime: 10 * 60 * 1000,
   });
 }
+
+// ── Avtopark (mashina) ────────────────────────────────────────────────────────
+// Kim mashina so'ray oladi / kim biriktira oladi — qoidani SERVER aytadi
+// (filial id'lari mobil kodda qattiq yozilmaydi).
+export const vehicleKeys = {
+  all: ['vehicles'] as const,
+  access: () => [...vehicleKeys.all, 'access'] as const,
+  available: (from?: string | null, to?: string | null, letterId?: number) =>
+    [...vehicleKeys.all, 'available', from ?? '', to ?? '', letterId ?? 0] as const,
+};
+
+export const vehicleAccessQuery = () =>
+  queryOptions({
+    queryKey: vehicleKeys.access(),
+    queryFn: async (): Promise<VehicleAccess> => {
+      const res = await apiClient.get(VEHICLE_ACCESS);
+      return (res.data ?? {}) as VehicleAccess;
+    },
+    staleTime: 5 * 60_000,
+  });
+
+/**
+ * Biriktirish uchun mashinalar — safar sanalari bo'yicha bandlik bayrog'i bilan
+ * (`is_busy`). `exclude_letter_id` shu safarning O'Z so'rovi band bo'lib
+ * ko'rinmasligi uchun. Faqat BFD javob berayotganda so'raladi (`enabled`).
+ */
+export const availableVehiclesQuery = (
+  dateFrom?: string | null,
+  dateTo?: string | null,
+  excludeLetterId?: number,
+  enabled = true,
+) =>
+  queryOptions({
+    queryKey: vehicleKeys.available(dateFrom, dateTo, excludeLetterId),
+    queryFn: async (): Promise<Vehicle[]> => {
+      const res = await apiClient.get(VEHICLES_LIST, {
+        params: {
+          only_active: true,
+          date_from: dateFrom || undefined,
+          date_to: dateTo || undefined,
+          exclude_letter_id: excludeLetterId || undefined,
+        },
+      });
+      return unwrapList<Vehicle>(res.data);
+    },
+    enabled,
+  });

@@ -6,6 +6,8 @@ import {
   LETTER_CONFIRM_RETURN, LETTER_SUBMIT_TRIP,
   LETTER_APPROVE_TRIP, LETTER_APPROVE_REPORT, LETTER_APPROVE_GUVOHNOMA,
   LETTER_CONFIRM_REGISTRATION,
+  LETTER_SET_VEHICLE,
+  VEHICLE_REQUEST_RESPOND,
 } from '@/api/urls';
 import type { PickedFile } from '@/components/AttachmentField';
 import { letterKeys } from './queries';
@@ -243,6 +245,53 @@ export function useApproveGuvohnoma(id: number) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: () => approveGuvohnoma(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+  });
+}
+
+// ── Avtopark: mashina so'rovi va BFD javobi ───────────────────────────────────
+// Xodim MASHINANI TANLAMAYDI — u faqat "kerak/kerak emas" deydi. Mashinani va
+// haydovchini BFD transport mas'uli biriktiradi; tasdiq bilan HAYDOVCHIGA
+// xizmat safari avtomatik ochiladi va ro'yxatga olinadi (server bajaradi).
+
+export interface SetTripVehicleForm {
+  needed: boolean;
+  note?: string | null;
+}
+
+export function setTripVehicle(id: number, form: SetTripVehicleForm): Promise<unknown> {
+  return apiClient.post(LETTER_SET_VEHICLE(id), form).then((r) => r.data);
+}
+
+export function useSetTripVehicle(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (form: SetTripVehicleForm) => setTripVehicle(id, form),
+    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+  });
+}
+
+export interface RespondVehicleForm {
+  approved: boolean;
+  /** Tasdiqlashda MAJBURIY — aynan qaysi mashina berilyapti. */
+  vehicle_id?: number | null;
+  /** Bo'sh bo'lsa mashinaning doimiy haydovchisi olinadi. */
+  assigned_driver_employee_id?: number | null;
+  /** Rad etishda MAJBURIY (server 400 qaytaradi). */
+  response_text?: string | null;
+}
+
+export function respondVehicleRequest(
+  requestId: number,
+  form: RespondVehicleForm,
+): Promise<unknown> {
+  return apiClient.post(VEHICLE_REQUEST_RESPOND(requestId), form).then((r) => r.data);
+}
+
+export function useRespondVehicleRequest(requestId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (form: RespondVehicleForm) => respondVehicleRequest(requestId, form),
     onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
   });
 }

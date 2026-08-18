@@ -62,4 +62,7 @@ export default {
   screenTitle: 'Bildirishnomalar',
   markAllRead: "O'qildi",
   empty: "Bildirishnomalar yo'q",
+  vehicleRequested: "Mashina so'rovi",
+  vehicleRequestAnswered: "Mashina bo'yicha javob",
+  driverTripCreated: 'Sizga xizmat safari',
 } as const;

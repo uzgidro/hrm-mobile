@@ -87,3 +87,37 @@ describe('buildLetterCreatePayload — non-trip (application/bildirgi)', () => {
     expect(p.assigned_signers).toEqual([{ employee_id: 6, signer_type: 'ordinary' }]);
   });
 });
+
+describe('buildLetterCreatePayload — avtopark (mashina)', () => {
+  it('omits vehicle keys entirely when no vehicle is needed (mashinasiz safar)', () => {
+    const p = buildLetterCreatePayload({ ...baseTrip, vehicleNeeded: false, vehicleNote: 'x' });
+    expect('vehicle_needed' in p).toBe(false);
+    expect('vehicle_note' in p).toBe(false);
+  });
+
+  it('sends vehicle_needed + note when a vehicle is requested', () => {
+    const p = buildLetterCreatePayload({
+      ...baseTrip, vehicleNeeded: true, vehicleNote: '  4 kishimiz  ',
+    });
+    expect(p.vehicle_needed).toBe(true);
+    expect(p.vehicle_note).toBe('4 kishimiz');
+  });
+
+  it('sends a null note when the employee left it empty', () => {
+    const p = buildLetterCreatePayload({ ...baseTrip, vehicleNeeded: true, vehicleNote: '   ' });
+    expect(p.vehicle_needed).toBe(true);
+    expect(p.vehicle_note).toBeNull();
+  });
+
+  it('NEVER sends a vehicle id — the car is assigned by BFD, not picked by the employee', () => {
+    const p = buildLetterCreatePayload({ ...baseTrip, vehicleNeeded: true });
+    expect('vehicle_id' in p).toBe(false);
+  });
+
+  it('does not add vehicle keys to a bildirgi/ariza (non-trip)', () => {
+    const p = buildLetterCreatePayload({
+      ...baseTrip, isTrip: false, letterType: 'explanatory', vehicleNeeded: true,
+    });
+    expect('vehicle_needed' in p).toBe(false);
+  });
+});

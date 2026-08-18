@@ -25,6 +25,7 @@ import { useResetReport, useSubmitTrip } from '../api/mutations';
 import { DetailHeader, Section, KV, SignerRow } from './DetailParts';
 import { LetterActionBar } from './LetterActionBar';
 import { TripMovementsSection } from './TripMovementsSection';
+import { VehicleSection } from './VehicleSection';
 import { ConfirmRegistrationModal } from './ConfirmRegistrationModal';
 
 // The body of the letter detail — extracted so it can render either as the
@@ -170,6 +171,10 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
           {!!letter.departure_date && <KV k={t('letters.fieldDeparture')} v={dayjs(letter.departure_date).format('DD.MM.YYYY')} />}
           {!!letter.arrival_date && <KV k={t('letters.fieldReturn')} v={dayjs(letter.arrival_date).format('DD.MM.YYYY')} />}
         </Section>
+
+        {/* Avtopark: mashina so'rovi, BFD biriktirgan mashina/haydovchi va
+            xarajat. Mashinasiz safarda egasiga "Mashina so'rash" tugmasi. */}
+        <VehicleSection letter={letter} user={user} onChanged={refetch} />
 
         <TripMovementsSection letter={letter} user={user} onChanged={refetch} />
 

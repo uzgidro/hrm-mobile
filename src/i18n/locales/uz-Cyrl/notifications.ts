@@ -45,4 +45,7 @@ export default {
   screenTitle: 'Билдиришномалар',
   markAllRead: "Ўқилди",
   empty: "Билдиришномалар йўқ",
+  vehicleRequested: 'Машина сўрови',
+  vehicleRequestAnswered: 'Машина бўйича жавоб',
+  driverTripCreated: 'Сизга хизмат сафари',
 } as const;

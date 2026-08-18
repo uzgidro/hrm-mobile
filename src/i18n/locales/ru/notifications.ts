@@ -45,4 +45,7 @@ export default {
   screenTitle: 'Уведомления',
   markAllRead: 'Прочитано',
   empty: 'Уведомлений нет',
+  vehicleRequested: 'Запрос автомобиля',
+  vehicleRequestAnswered: 'Ответ по автомобилю',
+  driverTripCreated: 'Вам открыта командировка',
 } as const;
