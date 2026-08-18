@@ -11,6 +11,11 @@ import type { PickerKind, DateKind } from './LetterPickers';
 // The type-dependent field group of the create-letter form (business-trip vs
 // bildirgi/ariza). Selection state + option sources stay in the screen; this is
 // pure composition wired through the two openers and the text setters.
+/* Safar yaratish formasidagi transport tanlovi VAQTINCHA yashirilgan
+ * (2026-08-18). Web'dagi AddLetterDrawer.SHOW_VEHICLE_IN_CREATE_FORM bilan bir
+ * xil bayroq — ikkalasini birga yoqing. */
+const SHOW_VEHICLE_IN_CREATE_FORM = false;
+
 export function LetterFormFields(props: {
   isTrip: boolean;
   typeHint: string;
@@ -107,7 +112,12 @@ export function LetterFormFields(props: {
             <TextInput style={[styles.textArea, { minHeight: 100 }]} placeholder={t('letters.placeholderWorkPlan')} placeholderTextColor={colors.textMuted} value={workPlan} onChangeText={onChangeWorkPlan} multiline textAlignVertical="top" />
           </Field>
 
-          {/* Avtopark: faqat "kerak/kerak emas" — mashinani BFD biriktiradi. */}
+          {/* Avtopark: faqat "kerak/kerak emas" — mashinani BFD biriktiradi.
+              VAQTINCHA YASHIRILGAN (foydalanuvchi so'rovi 2026-08-18, web bilan
+              bir xil): safar YARATISHDA tanlov ko'rsatilmaydi. Modulning qolgan
+              qismi ishlaydi — kartochkadagi "Mashina so'rash" va BFD javobi.
+              QAYTARISH: SHOW_VEHICLE_IN_CREATE_FORM = true. */}
+          {SHOW_VEHICLE_IN_CREATE_FORM && (
           <Field label={t('letters.vehicleSection')}>
             <View style={styles.vehicleRow}>
               {[false, true].map((val) => (
@@ -136,6 +146,7 @@ export function LetterFormFields(props: {
               </>
             )}
           </Field>
+          )}
 
           {/* leadership + submitter: both short selectors, adjacent — pair on tablet. */}
           <View testID="letter-leadership-submitter-row" style={twoCol ? styles.fieldRow : undefined}>
