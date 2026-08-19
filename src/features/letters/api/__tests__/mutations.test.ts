@@ -3,13 +3,13 @@ import { apiClient } from '@/api/client';
 import {
   LETTER_CREATE, LETTER_SIGN, LETTER_REJECT, LETTER_UPLOAD_ATTACHMENT,
   LETTER_SUBMIT_REPORT, LETTER_RESET_REPORT, LETTER_UPLOAD_REPORT,
-  LETTER_CONFIRM_RETURN, LETTER_SELF_CONFIRM_RETURN, LETTER_SUBMIT_TRIP,
+  LETTER_CONFIRM_RETURN, LETTER_SELF_CONFIRM_RETURN, LETTER_RETURN_DATE, LETTER_SUBMIT_TRIP,
   LETTER_APPROVE_TRIP, LETTER_APPROVE_REPORT, LETTER_APPROVE_GUVOHNOMA,
   LETTER_CONFIRM_REGISTRATION,
 } from '@/api/urls';
 import {
   signLetter, rejectLetter, createLetter, submitReport, resetReport, uploadReport,
-  confirmReturn, selfConfirmReturn, submitTrip, approveTrip, approveReport, approveGuvohnoma,
+  confirmReturn, selfConfirmReturn, updateReturnDate, submitTrip, approveTrip, approveReport, approveGuvohnoma,
   confirmRegistration,
 } from '../mutations';
 
@@ -36,6 +36,16 @@ describe('selfConfirmReturn (xodim safarni O\'ZI yakunlaydi)', () => {
       message: "Safarni yakunlash uchun avval o'z filialingiz turniketidan (Face ID) o'ting",
     });
     await expect(selfConfirmReturn(8)).rejects.toBeDefined();
+  });
+});
+
+describe('updateReturnDate (KADR kelgan sanani tuzatadi)', () => {
+  it('PATCH bilan faqat return_date yuboradi', async () => {
+    mock.onPatch(LETTER_RETURN_DATE(9)).reply(200, { id: 9, actual_return_date: '2026-08-17' });
+    const data = await updateReturnDate(9, '2026-08-17');
+    expect(data).toEqual({ id: 9, actual_return_date: '2026-08-17' });
+    expect(mock.history.patch[0].url).toBe(LETTER_RETURN_DATE(9));
+    expect(JSON.parse(mock.history.patch[0].data)).toEqual({ return_date: '2026-08-17' });
   });
 });
 

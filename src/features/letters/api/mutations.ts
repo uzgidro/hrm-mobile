@@ -3,7 +3,7 @@ import { apiClient } from '@/api/client';
 import {
   LETTER_CREATE, LETTER_SIGN, LETTER_REJECT, LETTER_UPLOAD_ATTACHMENT,
   LETTER_SUBMIT_REPORT, LETTER_RESET_REPORT, LETTER_UPLOAD_REPORT,
-  LETTER_CONFIRM_RETURN, LETTER_SELF_CONFIRM_RETURN, LETTER_SUBMIT_TRIP,
+  LETTER_CONFIRM_RETURN, LETTER_SELF_CONFIRM_RETURN, LETTER_RETURN_DATE, LETTER_SUBMIT_TRIP,
   LETTER_APPROVE_TRIP, LETTER_APPROVE_REPORT, LETTER_APPROVE_GUVOHNOMA,
   LETTER_CONFIRM_REGISTRATION,
 } from '@/api/urls';
@@ -184,6 +184,23 @@ export function useSelfConfirmReturn(id: number) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: () => selfConfirmReturn(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+  });
+}
+
+// ── KADR kelgan sanani TUZATADI (backend 2026-08-19) ─────────────────────────
+// "Keldi" sanani BIR MARTA qo'yadi; bu esa keyingi tuzatish uchun — guvohnoma va
+// tabel xato sana bilan qolib ketmasin. Har qanday bosqichda ishlaydi (yakunlangan
+// safarda ham). Server tekshiradi: kelajakdagi va safar boshlanishidan oldingi
+// sana 400 beradi.
+export function updateReturnDate(id: number, returnDate: string): Promise<unknown> {
+  return apiClient.patch(LETTER_RETURN_DATE(id), { return_date: returnDate }).then((r) => r.data);
+}
+
+export function useUpdateReturnDate(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (returnDate: string) => updateReturnDate(id, returnDate),
     onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
   });
 }

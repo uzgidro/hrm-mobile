@@ -133,6 +133,8 @@ export const LETTER_TRIP_MOVEMENTS = (id: number) => `letters/${id}/trip-movemen
 export const LETTER_CONFIRM_RETURN = (id: number) => `letters/${id}/confirm-return`;
 // XODIMNING O'ZI safarni yakunlashi (Face ID sharti serverda tekshiriladi).
 export const LETTER_SELF_CONFIRM_RETURN = (id: number) => `letters/${id}/self-confirm-return`;
+// KADR tasdiqlangan safarning KELGAN SANASINI tuzatadi (har qanday bosqichda).
+export const LETTER_RETURN_DATE = (id: number) => `letters/${id}/return-date`;
 
 // Devonxona "Tasdiqlash": a stamped bildirgi/ariza/xizmat safari sits at
 // pending_registration (auto number+seal) until the chancellery confirms it.
