@@ -192,6 +192,13 @@ export function routeForNotification(data: any): string | null {
 
   if (type.startsWith('order_act')) return '/(tabs)/orders';
   if (type.startsWith('business_trip')) return '/(tabs)/letters';
+  // Safar bilan bog'liq YANGI turlar (2026-08-19). Ular `letter_id` bilan
+  // keladi va yuqoridagi umumiy tarmoqdan o'tadi; id kelmagan (in-app) qatorda
+  // xatlar ro'yxatiga tushamiz — 'business_trip' prefiksi ularga to'g'ri kelmaydi.
+  if (type.startsWith('trip_')) return '/(tabs)/letters';
+  if (type.startsWith('hr_order')) return '/work-leaves';
+  if (type.startsWith('visitor')) return '/(tabs)/mehmonlar';
+  if (type.startsWith('support_ticket')) return '/texnik-yordam';
   if (type.startsWith('news')) return '/news';
   if (type.startsWith('kpi')) return '/kpi';
   if (type.startsWith('work_leave')) return '/work-leaves';
@@ -249,6 +256,25 @@ const NOTIF_META: Record<string, { titleKey: string; icon: IconName }> = {
   kpi_task_submitted: { titleKey: 'notifications.kpiTaskSubmitted', icon: 'checklist' },
   kpi_task_confirmed: { titleKey: 'notifications.kpiTaskConfirmed', icon: 'check' },
   kpi_task_rejected: { titleKey: 'notifications.kpiTaskRejected', icon: 'close' },
+  // ── 2026-08-19 da backendga qo'shilgan turlar ────────────────────────────
+  // Xodim uy filiali turniketidan o'tganda keladi: "Safar yakunlandimi?" —
+  // xat tafsilotidagi "Safarni yakunlash" tugmasiga olib boradi.
+  trip_return_confirm_prompt: { titleKey: 'notifications.tripReturnPrompt', icon: 'briefcase' },
+  // Xodim safarni O'ZI yakunladi — KADR shu xabar bilan biladi.
+  trip_self_finished: { titleKey: 'notifications.tripSelfFinished', icon: 'check' },
+  // Tibbiy ko'rik moduli.
+  medical_checkup_due: { titleKey: 'notifications.medicalCheckupDue', icon: 'clock' },
+  medical_checkup_due_hr: { titleKey: 'notifications.medicalCheckupDueHr', icon: 'clock' },
+  medical_result_recorded: { titleKey: 'notifications.medicalResultRecorded', icon: 'checklist' },
+  // Vaqtinchalik buyruq (ta'til/ruxsat) muddati tugamoqda / tugadi.
+  hr_order_soon: { titleKey: 'notifications.hrOrderSoon', icon: 'calendar' },
+  hr_order_expired: { titleKey: 'notifications.hrOrderExpired', icon: 'calendar' },
+  // Mehmon turniketdan o'tdi (taklif qilgan xodimga).
+  visitor_arrived: { titleKey: 'notifications.visitorArrived', icon: 'guest' },
+  // Zoom yig'ilishi so'roviga javob.
+  zoom_decision: { titleKey: 'notifications.zoomDecision', icon: 'phone' },
+  // Navbatchilikka biriktirildi.
+  navbatchilik_assigned: { titleKey: 'notifications.navbatchilikAssigned', icon: 'calendar' },
   work_leave_requested: { titleKey: 'notifications.workLeaveRequested', icon: 'calendar' },
   work_leave_signed: { titleKey: 'notifications.workLeaveSigned', icon: 'check' },
   work_leave_rejected: { titleKey: 'notifications.workLeaveRejected', icon: 'close' },

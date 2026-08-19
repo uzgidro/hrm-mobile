@@ -44,6 +44,11 @@ export default {
   confirmReturn: 'Kelganini tasdiqlash',
   confirmReturnDateLabel: 'Xodim o\'z filialiga kelgan sana',
   returnConfirmedBadge: 'Qaytish tasdiqlangan: {{date}}',
+  selfFinish: 'Safarni yakunlash',
+  selfFinishTitle: 'Safarni yakunlash',
+  selfFinishConfirm: 'Rostdan ham xizmat safarini yakunlamoqchimisiz? Qaytish sanasi sifatida turniketdan (Face ID) o\'tgan sanangiz — {{date}} yoziladi. Keyin hisobot yozish ochiladi va kadrga xabar boradi.',
+  selfFinishYes: 'Ha, yakunlayman',
+  selfFinishHint: 'Turniketdan (Face ID) o\'tganingiz aniqlandi — safarni yakunlasangiz qaytish sanasi {{date}} bo\'ladi.',
   rejectionReason: 'Rad etish sababi',
 
   // ── Action bar ──────────────────────────────────────────────────────────────

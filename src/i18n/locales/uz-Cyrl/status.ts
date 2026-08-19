@@ -30,13 +30,14 @@ export default {
   letterInLeadership: 'Раҳбариятда',
   letterPending: 'Кутилмоқда',
   letterTripArrived: 'Ҳисобот кутилмоқда',
+  letterTripOngoing: 'Сафар давом этмоқда',
   letterTripLeadershipPending: 'Раҳбар тасдиғи кутилмоқда',
   letterTripGuvohnomaReview: 'Гувоҳнома тасдиғида',
   letterReportSubmitted: 'Ҳисобот юборилди',
   letterReturned: 'Қайтарилган',
   letterReportReturned: 'Ҳисобот қайтарилди',
   letterReportReview: 'Ҳисобот раҳбариятда',
-  letterReportApproved: 'Ҳисобот тасдиқланди',
+  letterReportApproved: 'Якунланди',
 
   // ── Signing-timeline status texts ───────────────────────────────────────────
   timelineApproved: 'Тасдиқлади',

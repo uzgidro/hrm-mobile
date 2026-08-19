@@ -271,9 +271,15 @@ export function letterStatusMeta(l: Letter): { label: string; kind: StatusKind }
     // NEW flow = awaiting the leadership approve-trip. Show the right label so a
     // leader doesn't see "awaiting report" on a trip they must approve.
     case 'management_approved':
-      return isNewTripFlow(l)
-        ? { label: i18n.t('status.letterTripLeadershipPending'), kind: 'pending' }
-        : { label: i18n.t('status.letterTripArrived'), kind: 'pending' };
+      if (isNewTripFlow(l)) {
+        return { label: i18n.t('status.letterTripLeadershipPending'), kind: 'pending' };
+      }
+      // ESKI oqim: rahbariyat tasdig'idan keyin xodim hali YO'LDA bo'lishi
+      // mumkin — "hisobot kutilmoqda" faqat KADR/xodim qaytishni tasdiqlagach
+      // to'g'ri bo'ladi (web parity 2026-08-19: "Safar davom etmoqda").
+      return l.is_trip_confirmed
+        ? { label: i18n.t('status.letterTripArrived'), kind: 'pending' }
+        : { label: i18n.t('status.letterTripOngoing'), kind: 'info' };
     // registered_pending_rahbar waits on the leader; report_guvohnoma_review is a
     // distinct stage (guvohnoma approval by the trip_approver) — keep them apart
     // (web parity: the backend labels them differently).

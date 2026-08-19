@@ -44,15 +44,40 @@ export interface OrganizationBranch {
   name: string;
 }
 
+// Turniket joylashuvi (GES / obyekt). `locations` M2M bo'lgani uchun massiv
+// keladi; amalda bitta joylashuv bo'ladi — `eventPlace()` (utils/attendance)
+// birinchisini oladi va nomni shundan yasaydi.
+export interface TurnstileLocation {
+  id?: number;
+  name?: string | null;
+  address?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  organization_branch_id?: number | null;
+  organization_branch?: { id?: number; name?: string | null } | null;
+}
+
 export interface AttendanceEvent {
   id: number;
   happen_time: string;
   direction_type?: string | null;
   check_in_out_type?: number | null;
   employee_id?: number | null;
-  turnstile?: { acs_dev_name?: string; name?: string };
+  turnstile?: {
+    acs_dev_name?: string;
+    name?: string;
+    display_name?: string | null;
+    locations?: TurnstileLocation[] | null;
+  };
   is_granted?: boolean;
   user_type?: string | null;
+  // Face ID suratining (MinIO) to'liq manzili — backend `photo_path` computed
+  // maydonida beradi (imzolangan URL, brauzer/RN <Image> uchun tayyor).
+  photo_path?: string | null;
+  // Turniket joylashgan filial (backend computed) — GES nomini topib bo'lmasa
+  // filial nomiga tayanamiz.
+  terminal_branch_id?: number | null;
+  employee_branch_id?: number | null;
 }
 
 export interface WorkLeave {
@@ -154,6 +179,13 @@ export interface LetterAvailableActions {
   can_approve_trip?: boolean;
   can_approve_report?: boolean;
   can_approve_guvohnoma?: boolean;
+  // Xodim safarni O'ZI yakunlaydi (backend 2026-08-19). Tugma FAQAT xodim o'z
+  // filiali turniketidan (Face ID) o'tgach ochiladi va yakunlash sanasi ham
+  // o'sha o'tish sanasi (`self_finish_date`) — shartni SERVER hisoblaydi,
+  // mijoz uni qayta talqin qilmaydi (aks holda tugma ko'rinib, bosganda
+  // `face_id_required` 400 bo'lardi).
+  can_self_finish_trip?: boolean;
+  self_finish_date?: string | null;
 }
 
 export interface Letter {

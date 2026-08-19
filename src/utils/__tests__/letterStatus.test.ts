@@ -482,7 +482,10 @@ describe('letterStatusMeta', () => {
   // (is_stamped becomes true), so they must be checked BEFORE the is_stamped→
   // registered fallthrough — otherwise a report_submitted trip reads "registered".
   it('report statuses win over is_stamped and resolve to distinct kinds', () => {
-    expect(letterStatusMeta(letter({ status: 'management_approved', is_stamped: true })).kind).toBe('pending');
+    // management_approved + TASDIQLANMAGAN qaytish = safar davom etmoqda ('info');
+    // KADR/xodim qaytishni tasdiqlagach "hisobot kutilmoqda" ('pending') bo'ladi.
+    expect(letterStatusMeta(letter({ status: 'management_approved', is_stamped: true })).kind).toBe('info');
+    expect(letterStatusMeta(letter({ status: 'management_approved', is_stamped: true, is_trip_confirmed: true })).kind).toBe('pending');
     expect(letterStatusMeta(letter({ status: 'report_submitted', is_stamped: true })).kind).toBe('info');
     expect(letterStatusMeta(letter({ status: 'report_returned', is_stamped: true })).kind).toBe('error');
     expect(letterStatusMeta(letter({ status: 'report_management_review', is_stamped: true })).kind).toBe('pending');
@@ -492,8 +495,12 @@ describe('letterStatusMeta', () => {
   // management_approved means two different things: OLD flow = arrived / awaiting
   // report; NEW flow = awaiting the leadership approve-trip. The badge must not
   // say "awaiting report" on a NEW-flow trip the leader has to approve.
-  it('management_approved reads by flow: OLD = arrived, NEW = awaiting leadership', () => {
+  it('management_approved reads by flow: OLD = ongoing/arrived, NEW = awaiting leadership', () => {
+    // ESKI oqim, qaytish TASDIQLANMAGAN — xodim hali yo'lda (web parity
+    // 2026-08-19: "Safar davom etmoqda"), tasdiqlangach hisobot kutiladi.
     expect(letterStatusMeta(letter({ letter_type: 'business_trip', status: 'management_approved' })).label)
+      .toBe('Safar davom etmoqda');
+    expect(letterStatusMeta(letter({ letter_type: 'business_trip', status: 'management_approved', is_trip_confirmed: true })).label)
       .toBe('Hisobot kutilmoqda');
     expect(letterStatusMeta(letter({ letter_type: 'business_trip', status: 'management_approved', flow_version: 2 })).label)
       .toBe("Rahbar tasdig'i kutilmoqda");

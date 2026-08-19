@@ -76,4 +76,9 @@ export default {
   break: 'break',
   logTitle: 'Log',
   logEmpty: 'List is empty',
+  placeLabel: 'Location',
+  placeUnknown: 'Unknown location',
+  photoMissing: 'No snapshot',
+  mapMissing: 'This location has no coordinates',
+  openInMaps: 'Open in maps',
 } as const;

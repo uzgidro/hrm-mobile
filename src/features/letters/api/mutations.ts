@@ -3,7 +3,7 @@ import { apiClient } from '@/api/client';
 import {
   LETTER_CREATE, LETTER_SIGN, LETTER_REJECT, LETTER_UPLOAD_ATTACHMENT,
   LETTER_SUBMIT_REPORT, LETTER_RESET_REPORT, LETTER_UPLOAD_REPORT,
-  LETTER_CONFIRM_RETURN, LETTER_SUBMIT_TRIP,
+  LETTER_CONFIRM_RETURN, LETTER_SELF_CONFIRM_RETURN, LETTER_SUBMIT_TRIP,
   LETTER_APPROVE_TRIP, LETTER_APPROVE_REPORT, LETTER_APPROVE_GUVOHNOMA,
   LETTER_CONFIRM_REGISTRATION,
 } from '@/api/urls';
@@ -166,6 +166,24 @@ export function useConfirmReturn(id: number) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (form: ConfirmReturnForm) => confirmReturn(id, form),
+    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+  });
+}
+
+// ── Xodimning O'ZI safarni yakunlashi (Face ID) ───────────────────────────────
+// KADR "Keldi" tugmasining xodim tomonidagi juftligi (backend 2026-08-19).
+// TANASIZ POST: qaytish sanasini SERVER o'zi qo'yadi — u xodim o'z filiali
+// turniketidan (Face ID) o'tgan sana. Mijoz sana yubormaydi (yuborsa ham
+// e'tiborga olinmaydi), shu bois "hali qaytmasdan yakunlash" mumkin emas.
+// Server sharti bajarilmasa 400 `face_id_required` qaytadi.
+export function selfConfirmReturn(id: number): Promise<unknown> {
+  return apiClient.post(LETTER_SELF_CONFIRM_RETURN(id), {}).then((r) => r.data);
+}
+
+export function useSelfConfirmReturn(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => selfConfirmReturn(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
   });
 }

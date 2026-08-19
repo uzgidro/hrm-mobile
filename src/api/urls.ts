@@ -131,6 +131,8 @@ export const LETTER_APPROVE_GUVOHNOMA = (id: number) => `letters/${id}/approve-g
 // manage rights are branch-scoped (see isBranchHr).
 export const LETTER_TRIP_MOVEMENTS = (id: number) => `letters/${id}/trip-movements`;
 export const LETTER_CONFIRM_RETURN = (id: number) => `letters/${id}/confirm-return`;
+// XODIMNING O'ZI safarni yakunlashi (Face ID sharti serverda tekshiriladi).
+export const LETTER_SELF_CONFIRM_RETURN = (id: number) => `letters/${id}/self-confirm-return`;
 
 // Devonxona "Tasdiqlash": a stamped bildirgi/ariza/xizmat safari sits at
 // pending_registration (auto number+seal) until the chancellery confirms it.

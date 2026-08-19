@@ -37,13 +37,14 @@ export default {
   letterInLeadership: 'Rahbariyatda',
   letterPending: 'Kutilmoqda',
   letterTripArrived: 'Hisobot kutilmoqda',
+  letterTripOngoing: 'Safar davom etmoqda',
   letterTripLeadershipPending: "Rahbar tasdig'i kutilmoqda",
   letterTripGuvohnomaReview: "Guvohnoma tasdig'ida",
   letterReportSubmitted: 'Hisobot yuborildi',
   letterReturned: 'Qaytarilgan',
   letterReportReturned: 'Hisobot qaytarildi',
   letterReportReview: 'Hisobot rahbariyatda',
-  letterReportApproved: 'Hisobot tasdiqlandi',
+  letterReportApproved: 'Yakunlandi',
 
   // ── Signing-timeline status texts — getSigningTimeline ──────────────────────
   timelineApproved: 'Tasdiqladi',

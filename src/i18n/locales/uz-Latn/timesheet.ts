@@ -84,4 +84,9 @@ export default {
   break: 'tanaffus',
   logTitle: 'Qaydnoma',
   logEmpty: "Ro'yxat bo'sh",
+  placeLabel: 'Joylashuv',
+  placeUnknown: 'Joylashuv noma\'lum',
+  photoMissing: 'Surat yo\'q',
+  mapMissing: 'Bu joylashuvning koordinatasi kiritilmagan',
+  openInMaps: 'Xaritada ochish',
 } as const;

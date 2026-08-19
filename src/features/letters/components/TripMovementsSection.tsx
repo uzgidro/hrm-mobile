@@ -12,7 +12,7 @@ import { isSiteMasterAdmin, isBranchHr } from '@/utils/roles';
 import { normalizeLetterType, canConfirmTripReturn } from '@/utils/letterStatus';
 import { Section } from './DetailParts';
 import { tripMovementsQuery } from '../api/queries';
-import { useConfirmReturn } from '../api/mutations';
+import { useConfirmReturn, useSelfConfirmReturn } from '../api/mutations';
 
 // The kelish/ketish movements of a business trip + the "confirm return" action.
 // Renders only for business_trip letters. Confirming the return sets
@@ -58,6 +58,36 @@ export function TripMovementsSection({
     enabled: isTrip && !!letter.id,
   });
   const confirmM = useConfirmReturn(letter.id);
+  const selfFinishM = useSelfConfirmReturn(letter.id);
+
+  // XODIMNING O'ZI safarni yakunlashi (backend 2026-08-19). Shartni SERVER
+  // hisoblaydi: xodim o'z filiali turniketidan (Face ID) o'tgan bo'lishi va
+  // undan keyin boshqa filialga ketmagan bo'lishi kerak; yakunlash sanasi ham
+  // o'sha o'tish sanasi. Shu bois bu yerda status/rol qaytadan tekshirilmaydi —
+  // aks holda tugma ko'rinib, bosganda `face_id_required` 400 bo'lardi.
+  const canSelfFinish = !!letter.available_actions?.can_self_finish_trip;
+  const selfFinishDate = letter.available_actions?.self_finish_date;
+
+  const askSelfFinish = () => {
+    Alert.alert(
+      t('letters.selfFinishTitle'),
+      t('letters.selfFinishConfirm', {
+        date: selfFinishDate ? dayjs(selfFinishDate).format('DD.MM.YYYY') : '—',
+      }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('letters.selfFinishYes'),
+          onPress: () =>
+            selfFinishM.mutate(undefined, {
+              onSuccess: () => onChanged(),
+              onError: (e) =>
+                Alert.alert(t('letters.actionError'), getApiErrorMessage(e, t('letters.actionError'))),
+            }),
+        },
+      ],
+    );
+  };
 
   const [modalOpen, setModalOpen] = useState(false);
   const [returnDate, setReturnDate] = useState(dayjs().format('YYYY-MM-DD'));
@@ -115,6 +145,26 @@ export function TripMovementsSection({
         ))
       )}
 
+      {canSelfFinish && (
+        <>
+          <Text style={styles.selfFinishHint}>
+            {t('letters.selfFinishHint', {
+              date: selfFinishDate ? dayjs(selfFinishDate).format('DD.MM.YYYY') : '—',
+            })}
+          </Text>
+          <TouchableOpacity
+            style={styles.selfFinishBtn}
+            activeOpacity={0.85}
+            onPress={askSelfFinish}
+            disabled={selfFinishM.isPending}
+          >
+            {selfFinishM.isPending
+              ? <ActivityIndicator size="small" color={colors.onPrimary} />
+              : <><Icon name="check" size={16} color={colors.onPrimary} /><Text style={styles.confirmBtnText}>{t('letters.selfFinish')}</Text></>}
+          </TouchableOpacity>
+        </>
+      )}
+
       {canConfirmReturn && (
         <TouchableOpacity
           style={styles.confirmBtn}
@@ -167,6 +217,8 @@ export function TripMovementsSection({
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     confirmedBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
+    selfFinishHint: { fontSize: 12, color: c.textMuted, marginTop: 10, lineHeight: 17 },
+    selfFinishBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: c.success, borderRadius: 12, paddingVertical: 12, marginTop: 8 },
     confirmedText: { fontSize: 13, color: c.success, fontWeight: '600' },
     empty: { color: c.textMuted, fontSize: 14, paddingVertical: 4 },
     row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, borderTopWidth: 1, borderTopColor: c.cardBorder },

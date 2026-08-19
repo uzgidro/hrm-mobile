@@ -30,13 +30,14 @@ export default {
   letterInLeadership: 'У руководства',
   letterPending: 'Ожидается',
   letterTripArrived: 'Ожидается отчёт',
+  letterTripOngoing: 'Командировка продолжается',
   letterTripLeadershipPending: 'Ожидает утверждения руководителя',
   letterTripGuvohnomaReview: 'На утверждении гувохномы',
   letterReportSubmitted: 'Отчёт отправлен',
   letterReturned: 'Возвращён',
   letterReportReturned: 'Отчёт возвращён',
   letterReportReview: 'Отчёт у руководства',
-  letterReportApproved: 'Отчёт утверждён',
+  letterReportApproved: 'Завершено',
 
   // ── Signing-timeline status texts ───────────────────────────────────────────
   timelineApproved: 'Утвердил',

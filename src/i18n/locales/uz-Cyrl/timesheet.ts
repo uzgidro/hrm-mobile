@@ -76,4 +76,9 @@ export default {
   break: 'танаффус',
   logTitle: 'Қайднома',
   logEmpty: 'Рўйхат бўш',
+  placeLabel: 'Жойлашув',
+  placeUnknown: 'Жойлашув номаълум',
+  photoMissing: 'Сурат йўқ',
+  mapMissing: 'Бу жойлашувнинг координатаси киритилмаган',
+  openInMaps: 'Харитада очиш',
 } as const;

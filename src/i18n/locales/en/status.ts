@@ -30,13 +30,14 @@ export default {
   letterInLeadership: 'With leadership',
   letterPending: 'Pending',
   letterTripArrived: 'Report pending',
+  letterTripOngoing: 'Trip in progress',
   letterTripLeadershipPending: 'Awaiting leadership approval',
   letterTripGuvohnomaReview: 'Awaiting guvohnoma approval',
   letterReportSubmitted: 'Report submitted',
   letterReturned: 'Returned',
   letterReportReturned: 'Report returned',
   letterReportReview: 'Report in leadership',
-  letterReportApproved: 'Report approved',
+  letterReportApproved: 'Completed',
 
   // ── Signing-timeline status texts ───────────────────────────────────────────
   timelineApproved: 'Approved',

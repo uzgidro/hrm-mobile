@@ -3,13 +3,13 @@ import { apiClient } from '@/api/client';
 import {
   LETTER_CREATE, LETTER_SIGN, LETTER_REJECT, LETTER_UPLOAD_ATTACHMENT,
   LETTER_SUBMIT_REPORT, LETTER_RESET_REPORT, LETTER_UPLOAD_REPORT,
-  LETTER_CONFIRM_RETURN, LETTER_SUBMIT_TRIP,
+  LETTER_CONFIRM_RETURN, LETTER_SELF_CONFIRM_RETURN, LETTER_SUBMIT_TRIP,
   LETTER_APPROVE_TRIP, LETTER_APPROVE_REPORT, LETTER_APPROVE_GUVOHNOMA,
   LETTER_CONFIRM_REGISTRATION,
 } from '@/api/urls';
 import {
   signLetter, rejectLetter, createLetter, submitReport, resetReport, uploadReport,
-  confirmReturn, submitTrip, approveTrip, approveReport, approveGuvohnoma,
+  confirmReturn, selfConfirmReturn, submitTrip, approveTrip, approveReport, approveGuvohnoma,
   confirmRegistration,
 } from '../mutations';
 
@@ -18,6 +18,26 @@ beforeEach(() => {
   mock = new MockAdapter(apiClient);
 });
 afterEach(() => mock.restore());
+
+describe('selfConfirmReturn (xodim safarni O\'ZI yakunlaydi)', () => {
+  it('TANASIZ POST yuboradi — qaytish sanasini SERVER (Face ID) qo\'yadi', async () => {
+    mock.onPost(LETTER_SELF_CONFIRM_RETURN(7)).reply(200, { id: 7, is_trip_confirmed: true });
+    const data = await selfConfirmReturn(7);
+    expect(data).toEqual({ id: 7, is_trip_confirmed: true });
+    expect(mock.history.post[0].url).toBe(LETTER_SELF_CONFIRM_RETURN(7));
+    // Sana YUBORILMAYDI: mijoz uni tanlay olsa "hali qaytmasdan" yakunlash
+    // mumkin bo'lardi — server turniket sanasini o'zi qo'yadi.
+    expect(mock.history.post[0].data).toBe('{}');
+  });
+
+  it('server Face ID shartini bajarmasa 400 ni yuqoriga uzatadi', async () => {
+    mock.onPost(LETTER_SELF_CONFIRM_RETURN(8)).reply(400, {
+      code: 'face_id_required',
+      message: "Safarni yakunlash uchun avval o'z filialingiz turniketidan (Face ID) o'ting",
+    });
+    await expect(selfConfirmReturn(8)).rejects.toBeDefined();
+  });
+});
 
 describe('letter sign/reject request functions', () => {
   it('signLetter POSTs the sign endpoint with an empty body', async () => {

@@ -147,3 +147,39 @@ describe('routeForNotification — work_leave', () => {
     ).toBe('/order-detail?id=3');
   });
 });
+
+// 2026-08-19 da backendga qo'shilgan turlar. Ular xaritada bo'lmasa, xabar
+// "Bildirishnoma" degan umumiy sarlavha bilan chiqardi va bosilganda hech
+// qayerga olib bormasdi.
+describe('yangi bildirishnoma turlari (2026-08-19)', () => {
+  it('safar turlari o\'z sarlavhasini oladi', () => {
+    expect(notificationMeta('trip_return_confirm_prompt').title).toBe('Safar yakunlandimi?');
+    expect(notificationMeta('trip_self_finished').title).toBe('Xodim safarni yakunladi');
+    expect(notificationMeta('trip_return_confirm_prompt').icon).toBe('briefcase');
+  });
+
+  it('tibbiy ko\'rik / buyruq muddati / mehmon / zoom turlari xaritada bor', () => {
+    for (const type of [
+      'medical_checkup_due', 'medical_checkup_due_hr', 'medical_result_recorded',
+      'hr_order_soon', 'hr_order_expired', 'visitor_arrived', 'zoom_decision',
+      'navbatchilik_assigned',
+    ]) {
+      expect(notificationMeta(type).title).not.toBe('Bildirishnoma');
+    }
+  });
+
+  it('safar so\'rovi letter_id bilan xat tafsilotiga, idsiz ro\'yxatga boradi', () => {
+    expect(routeForNotification({ type: 'trip_return_confirm_prompt', letter_id: 12 })).toBe(
+      '/letter-detail?id=12'
+    );
+    // In-app qatorda letter_id bo'lmasligi mumkin — xatlar ro'yxatiga tushamiz
+    // ('business_trip' prefiksi bu turlarga to'g'ri kelmaydi).
+    expect(routeForNotification({ notification_type: 'trip_self_finished' })).toBe('/(tabs)/letters');
+  });
+
+  it('mehmon / texnik yordam / buyruq muddati turlari o\'z ekraniga boradi', () => {
+    expect(routeForNotification({ type: 'visitor_arrived' })).toBe('/(tabs)/mehmonlar');
+    expect(routeForNotification({ type: 'support_ticket_message' })).toBe('/texnik-yordam');
+    expect(routeForNotification({ type: 'hr_order_soon' })).toBe('/work-leaves');
+  });
+});

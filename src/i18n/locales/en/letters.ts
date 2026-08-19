@@ -38,6 +38,11 @@ export default {
   confirmReturn: 'Confirm return',
   confirmReturnDateLabel: 'Date the employee returned to their branch',
   returnConfirmedBadge: 'Return confirmed: {{date}}',
+  selfFinish: 'Finish the trip',
+  selfFinishTitle: 'Finish the trip',
+  selfFinishConfirm: 'Finish this business trip? The return date will be the date of your turnstile (Face ID) pass — {{date}}. The report step then opens and HR is notified.',
+  selfFinishYes: 'Yes, finish',
+  selfFinishHint: 'Your turnstile (Face ID) pass was detected — finishing sets {{date}} as the return date.',
   rejectionReason: 'Rejection reason',
 
   // ── Action bar ──────────────────────────────────────────────────────────────

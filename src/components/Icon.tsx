@@ -59,7 +59,8 @@ export type IconName =
   | 'trash'
   | 'fingerprint'
   | 'help'
-  | 'backspace';
+  | 'backspace'
+  | 'mapPin';
 
 type Props = {
   name: IconName;
@@ -271,6 +272,14 @@ function render(name: IconName, p: any) {
         <>
           <Path d="M5 19h3l9-9-3-3-9 9Z" {...p} />
           <Path d="m14 7 3 3" {...p} />
+        </>
+      );
+    case 'mapPin':
+      // Joylashuv belgisi — turniket hodisasining xaritadagi nuqtasi.
+      return (
+        <>
+          <Path d="M12 21s7-5.686 7-11a7 7 0 1 0-14 0c0 5.314 7 11 7 11z" {...p} />
+          <Circle cx="12" cy="10" r="2.5" {...p} />
         </>
       );
     case 'building':

@@ -77,4 +77,9 @@ export default {
   break: 'перерыв',
   logTitle: 'Журнал',
   logEmpty: 'Список пуст',
+  placeLabel: 'Место',
+  placeUnknown: 'Место неизвестно',
+  photoMissing: 'Снимка нет',
+  mapMissing: 'Координаты этого места не заданы',
+  openInMaps: 'Открыть на карте',
 } as const;
