@@ -65,6 +65,9 @@ export function buildNavSections(t: TFunction, ctx: NavContext): NavSection[] {
       items: [
         { key: 'documents', icon: 'folder', label: t('modules.labels.documents'), route: '/hujjatlar', access: 'documents' },
         { key: 'support', icon: 'help', label: t('modules.labels.support'), route: '/texnik-yordam', access: 'support' },
+        // TERMINALLAR (turniket/HikCentral) — AKT xodimi, admin va master-admin
+        // uchun; `canAccessPage('terminals')` boshqalarda uni tozalab tashlaydi.
+        { key: 'terminals', icon: 'fingerprint', label: t('modules.labels.terminals'), route: '/terminallar', access: 'terminals' },
         { key: 'news', icon: 'news', label: t('modules.labels.news'), route: '/news', access: 'news' },
         { key: 'notifications', icon: 'bell', label: t('modules.labels.notifications'), route: '/notifications', access: 'notifications', badge: unreadCount },
         { key: 'profile', icon: 'user', label: t('modules.labels.profile'), route: '/(tabs)/profile', access: 'profile' },

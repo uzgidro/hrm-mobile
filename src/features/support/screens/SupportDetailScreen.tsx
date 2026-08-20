@@ -15,6 +15,7 @@ import { confirm } from '@/lib/confirm';
 import { getApiErrorMessage } from '@/api/errors';
 import { ticketStatusKey, ticketPriorityKey, canRateTicket } from '@/utils/supportStatus';
 import { ticketDetailQuery } from '../api/queries';
+import { TicketChat } from '../components/TicketChat';
 import { useRateTicket, useReopenTicket } from '../api/mutations';
 
 export default function SupportDetailScreen() {
@@ -88,6 +89,9 @@ export default function SupportDetailScreen() {
           {!!ticket.created_at && <KV k={t('support.fieldCreated')} v={dayjs(ticket.created_at).format('DD.MM.YYYY HH:mm')} />}
           {ticket.rating != null && <KV k={t('support.ratingLabel')} v={`${ticket.rating} / 5`} />}
         </View>
+
+        {/* AKT ↔ murojaatchi yozishmasi (backendда bor edi, mobilда yo'q edi). */}
+        <TicketChat ticketId={ticket.id} />
 
         {!!ticket.attachments?.length && (
           <View style={styles.card}>

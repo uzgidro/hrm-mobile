@@ -9,6 +9,10 @@ export interface User {
   hr_branch_ids?: number[];
   /** branches where this user is a chancellery/devonxona branch-leader (leadership_role='chancellery'), from /me */
   chancellery_branch_ids?: number[];
+  // Tabel sozlamalarida "Texnik yordam (AKT)" roli berilgan filiallar —
+  // backend `require_system_admin` shu roldagi XODIMni ham kiritadi
+  // (turniket/HikCentral monitoringi).
+  akt_branch_ids?: number[];
   /** departments this user heads (department head), from /me — scopes work-leave "all" view like the web */
   headed_department_ids?: number[];
   /** may create/edit news posts (auth/me flag = can_manage_news on the backend) */
@@ -785,4 +789,52 @@ export interface SupportTicket {
   creator?: Employee | null;
   assignee?: Employee | null;
   attachments?: SupportTicketAttachment[];
+  participants?: SupportTicketParticipant[];
+  // Shu foydalanuvchi uchun O'QILMAGAN xabarlar soni (ro'yxatdagi qizil nuqta).
+  // Xabarlarning O'ZI ro'yxatga tushmaydi — ular alohida endpointda.
+  unread_count?: number | null;
+}
+
+// Ticket ichidagi yozishma (AKT ↔ murojaatchi). `is_system` — tizim xabari
+// ("X yozishmaga qo'shildi"), u markazda kulrang ko'rsatiladi.
+// ── Turniket (HikCentral) monitoringi ───────────────────────────────────────
+export interface HikSummary {
+  devices_online?: number;
+  devices_offline?: number;
+  devices_total?: number;
+  enrollment_verified?: number;
+  enrollment_failed?: number;
+  enrollment_pending?: number;
+}
+
+export interface HikDevice {
+  id: number;
+  acs_dev_name?: string | null;
+  display_name?: string | null;
+  /** display_name || acs_dev_name — serverda hisoblanadi. */
+  effective_name?: string | null;
+  acs_dev_ip?: string | null;
+  status?: string | null;
+  online?: boolean | null;
+  last_online_at?: string | null;
+  last_offline_at?: string | null;
+  doors?: { id?: number; name?: string | null; direction_type?: string | null }[] | null;
+  locations?: { id?: number; name?: string | null; organization_branch_id?: number | null }[] | null;
+}
+
+export interface SupportTicketMessage {
+  id: number;
+  ticket_id?: number;
+  author_id?: number | null;
+  author?: Employee | null;
+  body?: string | null;
+  is_system?: boolean | null;
+  created_at?: string | null;
+}
+
+export interface SupportTicketParticipant {
+  id?: number;
+  employee_id?: number | null;
+  employee?: Employee | null;
+  added_by_id?: number | null;
 }

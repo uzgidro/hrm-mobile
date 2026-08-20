@@ -24,6 +24,7 @@ import components from './components';
 import update from './update';
 import ota from './ota';
 import support from './support';
+import terminals from './terminals';
 import chairman from './chairman';
 import directory from './directory';
 
@@ -54,6 +55,7 @@ export default {
   update,
   ota,
   support,
+  terminals,
   chairman,
   directory,
 } as const;
