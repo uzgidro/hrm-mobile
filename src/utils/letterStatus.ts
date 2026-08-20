@@ -220,6 +220,21 @@ export function canAgreeLetter(l: Letter, employeeId?: number): boolean {
 }
 
 /**
+ * "Mening hujjatim" — muallif / kirituvchi / biriktirilgan imzolovchi yoki
+ * kelishuvchi / allaqachon imzolagan. Web'da "Mening" tabi `employee_id`
+ * yuboradi, lekin backend `GET /letters` bunday parametrni QABUL QILMAYDI
+ * (route imzosida yo'q) — u jimgina e'tiborsiz qoldiriladi. Mobilда esa
+ * `signer=true` yuborilardi, ya'ni "men IMZOLAGANLARIM": o'z bildirgisini
+ * yozgan xodim uni imzolamagani uchun O'Z hujjatini bu tabda ko'rmasdi.
+ */
+export function isMyLetter(l: Letter, employeeId?: number): boolean {
+  if (!employeeId) return false;
+  if (isLetterAuthor(l, employeeId)) return true;
+  if (getAssignedRecord(l, employeeId)) return true;
+  return hasSigned(l, employeeId);
+}
+
+/**
  * Hujjat AYNAN shu foydalanuvchining amalini kutyaptimi (ro'yxatdagi sariq
  * ajratish + "Amal talab qiladi" tabining hisobi).
  *

@@ -16,7 +16,7 @@ import { FilterChip } from '@/components/FilterChip';
 import { SearchBox } from '@/components/SearchBox';
 import { useBreakpoint } from '@/utils/responsive';
 import { selectSplitId } from '@/utils/splitView';
-import { letterNeedsMyAction, letterTypeLabel, letterStatusMeta, normalizeLetterType } from '@/utils/letterStatus';
+import { letterNeedsMyAction, isMyLetter, letterTypeLabel, letterStatusMeta, normalizeLetterType } from '@/utils/letterStatus';
 import { lettersListQuery, type LettersTab } from '../api/queries';
 import { LetterListCard } from '../components/LetterListCard';
 import { LetterDetailView } from '../components/LetterDetailView';
@@ -45,7 +45,7 @@ export default function LettersListScreen() {
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
-  const { data: letters = [], isLoading, refetch, isFetching } = useQuery(lettersListQuery(tab));
+  const { data: letters = [], isLoading, refetch, isFetching } = useQuery(lettersListQuery());
 
   const actionCount = useMemo(
     () => letters.filter((l) => letterNeedsMyAction(l, employeeId)).length,
@@ -72,9 +72,11 @@ export default function LettersListScreen() {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return sorted.filter((l) => {
-      // "Amal" tabi endi mijozda ajratiladi (server `assigned_signer` filtri
-      // devonxona/KADR/kelishuv amallarini tashlab ketardi) — web bilan bir xil.
+      // Tablar mijozda ajratiladi (serverdagi `assigned_signer`/`signer`
+      // filtrlari amal va "mening" ma'nolarini noto'g'ri torайtirardi —
+      // `lettersListQuery` izohiga qarang).
       if (tab === 'action' && !letterNeedsMyAction(l, employeeId)) return false;
+      if (tab === 'mine' && !isMyLetter(l, employeeId)) return false;
       if (typeFilter !== 'all' && normalizeLetterType(l.letter_type) !== typeFilter) return false;
       if (statusFilter !== 'all' && (l.status ?? '') !== statusFilter) return false;
       if (!q) return true;

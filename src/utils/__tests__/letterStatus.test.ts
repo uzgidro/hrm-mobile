@@ -24,6 +24,7 @@ import {
   canSubmitAgreementDraft,
   canSendAgreementLetter,
   letterNeedsMyAction,
+  isMyLetter,
 } from '../letterStatus';
 import { statusColor as orderStatusColor } from '../orderStatus';
 import i18n from '../../i18n';
@@ -757,5 +758,25 @@ describe("letterNeedsMyAction (ro'yxatdagi \"amal talab qiladi\")", () => {
     } as Letter;
     expect(letterNeedsMyAction(agreed, 7)).toBe(false);
     expect(letterNeedsMyAction({ id: 4, letter_type: 'business_trip', status: 'pending' } as Letter, 7)).toBe(false);
+  });
+});
+
+
+// "Mening" tabi — avval `signer=true` (men IMZOLAGANLARIM) bo'lgani uchun
+// o'z bildirgisini yozgan xodim uni ro'yxatda ko'rmasdi.
+describe('isMyLetter', () => {
+  it('muallif va kirituvchi uchun TRUE (imzolamagan bo\'lsa ham)', () => {
+    expect(isMyLetter({ id: 1, letter_type: 'bildirgi', creator_employee_id: 7 } as Letter, 7)).toBe(true);
+    expect(isMyLetter({ id: 2, letter_type: 'application', submitter_id: 7 } as Letter, 7)).toBe(true);
+  });
+
+  it('biriktirilgan imzolovchi/kelishuvchi va imzolagan uchun ham TRUE', () => {
+    expect(isMyLetter({ id: 3, letter_type: 'bildirgi', assigned_signers: [{ employee_id: 7, signer_type: 'agreement' }] } as Letter, 7)).toBe(true);
+    expect(isMyLetter({ id: 4, letter_type: 'business_trip', signers: [{ employee_id: 7 }] } as Letter, 7)).toBe(true);
+  });
+
+  it('begona hujjatda va xodim id\'siz FALSE', () => {
+    expect(isMyLetter({ id: 5, letter_type: 'bildirgi', creator_employee_id: 9 } as Letter, 7)).toBe(false);
+    expect(isMyLetter({ id: 6, letter_type: 'bildirgi', creator_employee_id: 7 } as Letter, undefined)).toBe(false);
   });
 });
