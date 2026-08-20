@@ -10,6 +10,10 @@
  * Ma'lumotli holat har bir feature'ning O'Z testlarida tekshiriladi — bu yerda
  * jonli payload ATAYLAB ishlatilmaydi (PII repoga tushmasin).
  */
+// Ekranlar RO'YXAT bo'ylab yuklanadi (har biri o'z testida alohida
+// render qilinsin, biri yiqilsa boshqasi to'xtamasin) — shu bois import
+// emas, lazy `require`.
+/* eslint-disable @typescript-eslint/no-require-imports */
 import React from 'react';
 import MockAdapter from 'axios-mock-adapter';
 import { apiClient } from '@/api/client';
@@ -43,7 +47,7 @@ const EMPLOYEE = {
   },
 } as User;
 
-const SCREENS: Array<[string, () => any]> = [
+const SCREENS: [string, () => any][] = [
   ['assistant/AssistantScreen', () => require('@/features/assistant/screens/AssistantScreen')],
   ['attendance/AttendanceDetailScreen', () => require('@/features/attendance/screens/AttendanceDetailScreen')],
   ['attendance/TeamScreen', () => require('@/features/attendance/screens/TeamScreen')],
