@@ -164,6 +164,12 @@ export default {
   approve_trip_confirmTitle: 'Утвердить командировку',
   approve_trip_confirmMessage: 'Командировка будет утверждена.',
   approve_trip_done: 'Командировка утверждена',
+  // Devonxona ro'yxatidan keyingi RAHBAR tasdig'i
+  // (registered_pending_rahbar -> management_approved).
+  approve_registration_action: 'Утвердить',
+  approve_registration_confirmTitle: 'Утверждение командировки',
+  approve_registration_confirmMessage: 'Канцелярия зарегистрировала — командировка утверждается руководителем.',
+  approve_registration_done: 'Командировка утверждена',
   approve_report_confirmTitle: 'Утвердить отчёт',
   approve_report_confirmMessage: 'Отчёт по командировке будет утверждён.',
   approve_report_done: 'Отчёт утверждён',

@@ -99,6 +99,51 @@ export function isLeadership(user?: User | null): boolean {
   return hasMultiOrgRole(user, 'ministr') || hasMultiOrgRole(user, 'deputy');
 }
 
+/** Tabel sozlamalarida shu filialga DIREKTOR qilib biriktirilgan filiallar. */
+export function getDirectorBranchIds(user?: User | null): number[] {
+  return user?.director_branch_ids ?? [];
+}
+
+/** Tabel sozlamalarida shu filialga O'RINBOSAR qilib biriktirilgan filiallar. */
+export function getDeputyBranchIds(user?: User | null): number[] {
+  return user?.deputy_branch_ids ?? [];
+}
+
+/**
+ * ASOSIY filial (id=1) safarini tasdiqlaydigan rahbar — FAQAT "Boshqaruv raisi
+ * o'rinbosari" lavozimidagi deputy ("Birinchi o'rinbosari" KIRMAYDI).
+ * Web roleHelpers.isTripApprover bilan 1:1.
+ */
+export function isTripApprover(user?: User | null): boolean {
+  if (!isDeputy(user)) return false;
+  const jp = user?.employee?.job_position;
+  const name = (typeof jp === 'object' ? jp?.name : (jp as unknown as string)) || '';
+  const norm = name.toLowerCase().replace(/[’`ʼ]/g, "'").trim();
+  return norm.includes("boshqaruv raisi o'rinbosari") && !norm.includes('birinchi');
+}
+
+/** Filialning biriktirilgan rahbari (direktor yoki o'rinbosar)mi. */
+export function isBranchTripApprover(user: User | null | undefined, branchId?: number | null): boolean {
+  if (branchId == null) return false;
+  const bid = Number(branchId);
+  return (
+    getDirectorBranchIds(user).map(Number).includes(bid) ||
+    getDeputyBranchIds(user).map(Number).includes(bid)
+  );
+}
+
+/**
+ * Berilgan filial safarini tasdiqlash huquqi (web canApproveTripForBranch):
+ * asosiy filial (id=1) → qat'iy lavozim, boshqa filial → biriktirilgan rahbar.
+ * Backend `_is_trip_approver` shu qoidani takrorlaydi — tugma ko'rinsa-yu
+ * server rad etsa, foydalanuvchi 403 olardi.
+ */
+export function canApproveTripForBranch(user: User | null | undefined, branchId?: number | null): boolean {
+  if (isSiteMasterAdmin(user)) return true;
+  if (branchId == null || Number(branchId) === 1) return isTripApprover(user);
+  return isBranchTripApprover(user, branchId);
+}
+
 export function isKPP(user?: User | null): boolean {
   return getMultiOrgRole(user) === 'kpp';
 }

@@ -127,6 +127,11 @@ export const LETTER_SUBMIT_TRIP = (id: number) => `letters/${id}/submit-trip`;
 // (OLD flow). Gated on the server available_actions flags (the client cannot
 // compute the trip_approver rights).
 export const LETTER_APPROVE_TRIP = (id: number) => `letters/${id}/approve-trip`;
+// DEVONXONA ro'yxatga olgach RAHBAR tasdig'i: registered_pending_rahbar →
+// management_approved (boshqa filial safari). Web'da bu tugma bor edi, mobilda
+// yo'q — ya'ni rahbar safarni telefondan tasdiqlay olmasdi.
+export const LETTER_APPROVE_TRIP_REGISTRATION = (id: number) =>
+  `letters/${id}/approve-trip-registration`;
 export const LETTER_APPROVE_REPORT = (id: number) => `letters/${id}/approve-report`;
 export const LETTER_APPROVE_GUVOHNOMA = (id: number) => `letters/${id}/approve-guvohnoma`;
 

@@ -159,6 +159,12 @@ export default {
   approve_trip_confirmTitle: 'Approve trip',
   approve_trip_confirmMessage: 'The business trip will be approved.',
   approve_trip_done: 'Trip approved',
+  // Devonxona ro'yxatidan keyingi RAHBAR tasdig'i
+  // (registered_pending_rahbar -> management_approved).
+  approve_registration_action: 'Approve',
+  approve_registration_confirmTitle: 'Approve the trip',
+  approve_registration_confirmMessage: 'The registry has recorded it — approve the trip as the leader.',
+  approve_registration_done: 'Trip approved',
   approve_report_confirmTitle: 'Approve report',
   approve_report_confirmMessage: 'The trip report will be approved.',
   approve_report_done: 'Report approved',
