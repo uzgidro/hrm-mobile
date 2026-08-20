@@ -189,7 +189,7 @@ export type PageKey =
   | 'home' | 'orders' | 'letters' | 'guests' | 'projects'
   | 'employees' | 'attendance' | 'requests' | 'documents' | 'kpi'
   | 'timesheet' | 'assistant' | 'salary' | 'team' | 'birthdays' | 'news'
-  | 'notifications' | 'profile' | 'support' | 'chairman' | 'directory';
+  | 'notifications' | 'profile' | 'support' | 'chairman' | 'directory' | 'terminals';
 
 /** Whether the given user may see a page. Mirrors which web NAV the role gets. */
 export function canAccessPage(user: User | null | undefined, key: PageKey): boolean {
@@ -242,6 +242,12 @@ export function canAccessPage(user: User | null | undefined, key: PageKey): bool
     // KPP, chancellery, monitoring) is excluded.
     case 'assistant':
       return isMasterAdmin(user) || user?.type === 'admin' || isHR(user) || isDeputy(user);
+    // TERMINALLAR (turniket / HikCentral monitoringi). Backend darvozasi
+    // `require_system_admin`: admin hisobi, master-admin YOKI tabel
+    // sozlamalarida "Texnik yordam (AKT)" roli berilgan xodim (o'z filiali
+    // doirasida). Shu uchtasini aynan takrorlaymiz — boshqasi 403 oladi.
+    case 'terminals':
+      return canMonitorTerminals(user);
     // Chairman agenda (kun tartibi): secretariat / minister / site master-admin.
     case 'chairman':
       return canAccessChairmanTasks(user);
@@ -261,6 +267,20 @@ export function canAccessPage(user: User | null | undefined, key: PageKey): bool
     default:
       return true;
   }
+}
+
+/**
+ * Turniket/HikCentral monitoringiga kira oladimi (backend `require_system_admin`
+ * bilan 1:1): `admin` hisobi, master-admin yoki AKT roli berilgan xodim.
+ * Ministr bu yerga KIRMAYDI — `isMasterAdmin` uni ham qamrab olgani uchun
+ * `isSiteMasterAdmin` ishlatiladi.
+ */
+export function canMonitorTerminals(user?: User | null): boolean {
+  return (
+    user?.type === 'admin' ||
+    isSiteMasterAdmin(user) ||
+    (user?.akt_branch_ids?.length ?? 0) > 0
+  );
 }
 
 // Subtitle for employee pickers: job position (+ head-of-department prefix).

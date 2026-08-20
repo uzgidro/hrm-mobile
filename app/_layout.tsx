@@ -117,6 +117,7 @@ function ThemedNavigation() {
           <Stack.Screen name="texnik-yordam" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="texnik-yordam-detail" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="texnik-yordam-form" options={{ animation: 'slide_from_bottom' }} />
+          <Stack.Screen name="terminallar" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="chairman-tasks" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="chairman-task-form" options={{ animation: 'slide_from_bottom' }} />
           <Stack.Screen name="loyihalar" options={{ animation: 'slide_from_right' }} />

@@ -24,6 +24,7 @@ export default {
     guests: 'Меҳмонлар',
     documents: 'Ҳужжатлар',
     support: 'Техник ёрдам',
+    terminals: 'Терминаллар',
     chairman: 'Кун тартиби',
     kpi: 'KPI',
     timesheet: 'Табель',

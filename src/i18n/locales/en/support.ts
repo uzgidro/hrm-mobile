@@ -2,6 +2,9 @@
 // See uz-Latn/support.ts for the meaning of each key.
 export default {
   title: 'Support',
+  chatPlaceholder: 'Write a message...',
+  chatEmpty: 'No messages yet — write the first one',
+  chatTitle: 'Chat',
   subtitle: 'My tickets',
   empty: 'No tickets',
   loadError: 'Failed to load tickets',

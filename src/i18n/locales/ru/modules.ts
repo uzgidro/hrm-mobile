@@ -24,6 +24,7 @@ export default {
     guests: 'Гости',
     documents: 'Документы',
     support: 'Техподдержка',
+    terminals: 'Терминалы',
     chairman: 'Повестка дня',
     kpi: 'KPI',
     timesheet: 'Табель',

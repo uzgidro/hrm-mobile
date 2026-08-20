@@ -214,4 +214,11 @@ export const SUPPORT_TICKET_TAKE = (id: number) => `support-tickets/${id}/take`;
 export const SUPPORT_TICKET_DONE = (id: number) => `support-tickets/${id}/done`;
 export const SUPPORT_TICKET_RATE = (id: number) => `support-tickets/${id}/rate`;
 export const SUPPORT_TICKET_REOPEN = (id: number) => `support-tickets/${id}/reopen`;
+// Ticket ichidagi YOZISHMA (AKT ↔ murojaatchi) va o'qilgan belgisi.
+export const SUPPORT_TICKET_MESSAGES = (id: number) => `support-tickets/${id}/messages`;
+export const SUPPORT_TICKET_READ = (id: number) => `support-tickets/${id}/read`;
+
+// ── Turniket / HikCentral monitoringi (AKT, admin, master-admin) ────────────
+export const HIK_MONITORING_SUMMARY = 'hik-monitoring/summary';
+export const HIK_MONITORING_DEVICES = 'hik-monitoring/devices';
 export const ONLYOFFICE_SERVER_URL = Env.onlyOfficeUrl;
