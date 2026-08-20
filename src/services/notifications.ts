@@ -179,15 +179,26 @@ export function routeForNotification(data: any): string | null {
   if (!data) return null;
   const type: string = String(data.notification_type || data.type || '');
   const orderId = data.order_act_id;
-  const letterId = data.letter_id; // only present on push payloads
+  // Bularning HAMMASI in-app ro'yxatda ham keladi (NotificationRead sxemasi),
+  // faqat push payloadida emas — shu bois tafsilotga to'g'ridan-to'g'ri o'tamiz.
+  const letterId = data.letter_id;
   const newsId = data.news_post_id;
   const kpiEntryId = data.kpi_entry_id; // kpi_task_submitted/confirmed/rejected
-  const workLeaveId = data.work_leave_id; // work_leave_* — push payloads only
+  const workLeaveId = data.work_leave_id; // vaqtinchalik buyruq (ta'til/ruxsat)
+  const ticketId = data.support_ticket_id; // texnik yordam murojaati
+  const cardId = data.card_id; // loyiha vazifasi
+  const workspaceId = data.workspace_id; // loyiha
 
   if (orderId) return `/order-detail?id=${orderId}`;
   if (letterId) return `/letter-detail?id=${letterId}`;
   if (kpiEntryId) return `/kpi-entry?id=${kpiEntryId}`;
   if (workLeaveId) return `/leave-detail?id=${workLeaveId}`;
+  if (ticketId) return `/texnik-yordam-detail?id=${ticketId}`;
+  // Loyiha ekranlari mobilда BOR (loyihalar / loyiha-detail / karta tafsiloti) —
+  // ilgari bu yerda "hali ekran yo'q" deb null qaytarilardi va loyiha
+  // bildirishnomasini bosish hech qayerga olib bormasdi.
+  if (cardId) return `/loyiha-card-detail?id=${cardId}`;
+  if (workspaceId) return `/loyiha-detail?id=${workspaceId}`;
   if (newsId != null) return '/news';
 
   if (type.startsWith('order_act')) return '/(tabs)/orders';
@@ -202,7 +213,9 @@ export function routeForNotification(data: any): string | null {
   if (type.startsWith('news')) return '/news';
   if (type.startsWith('kpi')) return '/kpi';
   if (type.startsWith('work_leave')) return '/work-leaves';
-  // card_* / workspace_* (Loyihalar) have no mobile screen yet — stay put.
+  if (type.startsWith('letter')) return '/(tabs)/letters';
+  if (type.startsWith('card') || type.startsWith('workspace')) return '/loyihalar';
+  // Avtopark / tibbiy ko'rik / zoom modullari mobilда hali yo'q — joyida qolamiz.
   return null;
 }
 
@@ -275,6 +288,40 @@ const NOTIF_META: Record<string, { titleKey: string; icon: IconName }> = {
   zoom_decision: { titleKey: 'notifications.zoomDecision', icon: 'phone' },
   // Navbatchilikka biriktirildi.
   navbatchilik_assigned: { titleKey: 'notifications.navbatchilikAssigned', icon: 'calendar' },
+  // ── 2026-08-20 auditi: backend yuboradigan, lekin xaritada yo'q edi ───────
+  // Bular bazadagi eng ko'p uchraydigan turlar orasida edi (masalan
+  // letter_agreement_requested 135 ta) va "Bildirishnoma" degan umumiy sarlavha
+  // bilan chiqardi — foydalanuvchi nima haqda ekanini faqat matndan bilardi.
+  letter_agreement_requested: { titleKey: 'notifications.letterAgreementRequested', icon: 'checklist' },
+  letter_agreement_acted: { titleKey: 'notifications.letterAgreementActed', icon: 'check' },
+  letter_registered: { titleKey: 'notifications.letterRegistered', icon: 'check' },
+  letter_sent_to_registry: { titleKey: 'notifications.letterSentToRegistry', icon: 'mail' },
+  letter_returned: { titleKey: 'notifications.letterReturned', icon: 'edit' },
+  letter_deleted: { titleKey: 'notifications.letterDeleted', icon: 'close' },
+  order_act_confirmed: { titleKey: 'notifications.orderActConfirmed', icon: 'check' },
+  order_act_reapproval: { titleKey: 'notifications.orderActReapproval', icon: 'edit' },
+  order_act_returned: { titleKey: 'notifications.orderActReturned', icon: 'edit' },
+  order_act_deleted: { titleKey: 'notifications.orderActDeleted', icon: 'close' },
+  business_trip_approved: { titleKey: 'notifications.businessTripApproved', icon: 'check' },
+  business_trip_registered: { titleKey: 'notifications.businessTripRegistered', icon: 'check' },
+  business_trip_arrival_due: { titleKey: 'notifications.businessTripArrivalDue', icon: 'calendar' },
+  business_trip_arrived: { titleKey: 'notifications.businessTripArrived', icon: 'check' },
+  business_trip_cancelled: { titleKey: 'notifications.businessTripCancelled', icon: 'close' },
+  business_trip_pending_rahbar: { titleKey: 'notifications.businessTripPendingRahbar', icon: 'clock' },
+  business_trip_guvohnoma_pending: { titleKey: 'notifications.businessTripGuvohnomaPending', icon: 'clock' },
+  support_ticket_created: { titleKey: 'notifications.supportTicketCreated', icon: 'help' },
+  support_ticket_taken: { titleKey: 'notifications.supportTicketTaken', icon: 'help' },
+  support_ticket_done: { titleKey: 'notifications.supportTicketDone', icon: 'check' },
+  support_ticket_invited: { titleKey: 'notifications.supportTicketInvited', icon: 'users' },
+  support_ticket_rated: { titleKey: 'notifications.supportTicketRated', icon: 'check' },
+  support_ticket_message: { titleKey: 'notifications.supportTicketMessage', icon: 'mail' },
+  vehicle_requested: { titleKey: 'notifications.vehicleRequested', icon: 'briefcase' },
+  vehicle_request_answered: { titleKey: 'notifications.vehicleRequestAnswered', icon: 'check' },
+  driver_trip_created: { titleKey: 'notifications.driverTripCreated', icon: 'briefcase' },
+  workspace_deleted: { titleKey: 'notifications.workspaceDeleted', icon: 'close' },
+  zoom_organizer_changed: { titleKey: 'notifications.zoomOrganizerChanged', icon: 'phone' },
+  // Kunlik yig'ma: "sizni N ta hujjat kutmoqda".
+  pending_action_digest: { titleKey: 'notifications.pendingActionDigest', icon: 'bell' },
   work_leave_requested: { titleKey: 'notifications.workLeaveRequested', icon: 'calendar' },
   work_leave_signed: { titleKey: 'notifications.workLeaveSigned', icon: 'check' },
   work_leave_rejected: { titleKey: 'notifications.workLeaveRejected', icon: 'close' },
@@ -302,5 +349,15 @@ export function notificationMeta(type: string): { title: string; icon: IconName 
   if (t.startsWith('kpi')) return { title: i18n.t('notifications.kpiFallback'), icon: 'target' };
   if (t.startsWith('work_leave'))
     return { title: i18n.t('notifications.workLeaveFallback'), icon: 'calendar' };
+  // Quyidagi oilalarda umumiy zaxira sarlavha YO'Q edi — xaritada bo'lmagan
+  // har qanday yangi tur "Bildirishnoma" bo'lib chiqardi.
+  if (t.startsWith('letter'))
+    return { title: i18n.t('notifications.letterFallback'), icon: 'mail' };
+  if (t.startsWith('support_ticket'))
+    return { title: i18n.t('notifications.supportFallback'), icon: 'help' };
+  if (t.startsWith('vehicle') || t.startsWith('driver'))
+    return { title: i18n.t('notifications.fleetFallback'), icon: 'briefcase' };
+  if (t.startsWith('medical'))
+    return { title: i18n.t('notifications.medicalFallback'), icon: 'clock' };
   return { title: i18n.t('notifications.generic'), icon: 'bell' };
 }

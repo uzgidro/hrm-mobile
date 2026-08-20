@@ -219,6 +219,25 @@ export function canAgreeLetter(l: Letter, employeeId?: number): boolean {
   return !!row && row.agreed !== true;
 }
 
+/**
+ * Hujjat AYNAN shu foydalanuvchining amalini kutyaptimi (ro'yxatdagi sariq
+ * ajratish + "Amal talab qiladi" tabining hisobi).
+ *
+ * BIRINCHI MANBA — backendning `action_required` bayrog'i: u har bir rol uchun
+ * (kelishuvchi, devonxona, rahbar tasdig'i, KADR "Keldi", hisobot bosqichlari)
+ * bir joyda hisoblanadi va web ham AYNAN shundan foydalanadi
+ * (LettersTable `rowNeedsAction`). Ilgari mobil faqat `canSignLetter` ga
+ * qarardi — u esa bildirgi/arizada DOIM false (ular imzolanmaydi, kelishiladi),
+ * shu bois kelishuv kutayotgan hujjat mobilda umuman ajralib turmasdi.
+ *
+ * Mijoz tomonidagi ikki tekshiruv (imzo va kelishuv) OR bilan qoladi: eski
+ * javoblar (bayroqsiz) va offline keshda ham tugma bilan mos kelsin.
+ */
+export function letterNeedsMyAction(l: Letter, employeeId?: number): boolean {
+  if (l.action_required === true) return true;
+  return canSignLetter(l, employeeId) || canAgreeLetter(l, employeeId);
+}
+
 /** Muallif QORALAMANI kelishuvchilarga yuboradi (draft → pending_agreement). */
 export function canSubmitAgreementDraft(l: Letter, employeeId?: number): boolean {
   if (!isAgreementLetter(l)) return false;

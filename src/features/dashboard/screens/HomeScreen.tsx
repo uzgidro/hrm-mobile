@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { useAuthStore } from '@/store/authStore';
 import { usePrefsStore } from '@/store/prefsStore';
-import { canAccessPage } from '@/utils/roles';
+import { canAccessPage, hasSupervisor } from '@/utils/roles';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { monthName, weekdayName } from '@/i18n/dates';
@@ -54,7 +54,7 @@ export default function HomeScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const bp = useBreakpoint();
-  const isSupervisor = !employee?.supervisor;
+  const isSupervisor = !hasSupervisor(user);
   const canSeeNotificationsTile = canAccessPage(user, 'notifications');
   const canSeeAttendanceContent = canAccessPage(user, 'attendance');
   const onlySubordinates = usePrefsStore((s) => s.onlySubordinates);

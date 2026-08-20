@@ -14,39 +14,35 @@ describe('orderKeys', () => {
     expect(orderKeys.all).toEqual(['order-acts']);
   });
 
-  it('builds the list key identical to the old tab key ["order-acts", orgBranchId]', () => {
-    expect(orderKeys.list(9)).toEqual(['order-acts', 9]);
-    expect(orderKeys.list()).toEqual(['order-acts', null]);
+  it("ro'yxat kaliti bitta — ro'yxat endi filialga qisilmaydi", () => {
+    expect(orderKeys.list()).toEqual(['order-acts', 'list']);
   });
 
   it('places the detail under `all` so a single invalidate refreshes list + detail', () => {
     expect(orderKeys.detail(42)).toEqual(['order-acts', 'detail', 42]);
     expect(orderKeys.detail(42).slice(0, 1)).toEqual(orderKeys.all);
-    expect(orderKeys.list(9).slice(0, 1)).toEqual(orderKeys.all);
+    expect(orderKeys.list().slice(0, 1)).toEqual(orderKeys.all);
   });
 });
 
 describe('ordersListQuery', () => {
-  it('carries the list key and sends organization_branch_id when present', async () => {
-    const opts = ordersListQuery(9);
-    expect(opts.queryKey).toEqual(['order-acts', 9]);
+  it("FILIAL parametrini YUBORMAYDI — boshqa filial buyrug'i ham ko'rinsin", async () => {
+    // Web leadership tabi ham `organization_branch_id: null` yuboradi: rahbar
+    // boshqa filial buyrug'iga imzolovchi bo'lishi mumkin. Ko'lamni backend
+    // (`_apply_visibility`) belgilaydi, filtr esa uni noto'g'ri qisardi.
+    const opts = ordersListQuery();
+    expect(opts.queryKey).toEqual(['order-acts', 'list']);
     mock.onGet(ORDER_ACTS).reply(200, []);
     await (opts.queryFn as () => Promise<unknown[]>)();
-    expect(mock.history.get[0].params).toEqual({ organization_branch_id: 9 });
-  });
-
-  it('sends no params when there is no branch', async () => {
-    mock.onGet(ORDER_ACTS).reply(200, []);
-    await (ordersListQuery().queryFn as () => Promise<unknown[]>)();
-    expect(mock.history.get[0].params).toEqual({});
+    expect(mock.history.get[0].params).toBeUndefined();
   });
 
   it('returns a bare array and unwraps an { items } envelope', async () => {
     mock.onGet(ORDER_ACTS).reply(200, [{ id: 1 }, { id: 2 }]);
-    expect(await (ordersListQuery(9).queryFn as () => Promise<unknown[]>)()).toHaveLength(2);
+    expect(await (ordersListQuery().queryFn as () => Promise<unknown[]>)()).toHaveLength(2);
     mock.resetHistory();
     mock.onGet(ORDER_ACTS).reply(200, { items: [{ id: 3 }] });
-    expect(await (ordersListQuery(9).queryFn as () => Promise<unknown[]>)()).toEqual([{ id: 3 }]);
+    expect(await (ordersListQuery().queryFn as () => Promise<unknown[]>)()).toEqual([{ id: 3 }]);
   });
 });
 

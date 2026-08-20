@@ -1,5 +1,6 @@
 import type { User, Employee } from '../../types';
 import {
+  hasSupervisor,
   getMultiOrgRoles,
   getMultiOrgRole,
   hasMultiOrgRole,
@@ -872,5 +873,22 @@ describe('role helpers accept both the string and array role shapes', () => {
 
   it('does not grant HR to an unrelated role', () => {
     expect(isHR(multiOrgUser(['kpp']))).toBe(false);
+  });
+});
+
+
+// Web roleHelpers.hasSupervisor bilan 1:1. Bosh sahifa va "Ruxsat" ekrani
+// shunga qarab "mening so'rovlarim" yoki "kiruvchi so'rovlar"ni ko'rsatadi.
+describe('hasSupervisor', () => {
+  it("ichma-ich obyekt YOKI faqat supervisor_id kelganda ham TRUE", () => {
+    expect(hasSupervisor({ id: 1, type: 'employee', employee: { id: 5, legal_name: 'A', supervisor: { id: 9, legal_name: 'B' } } } as User)).toBe(true);
+    // Payload yengillashtirilib nested obyekt olib tashlansa ham ishlashi shart.
+    expect(hasSupervisor({ id: 1, type: 'employee', employee: { id: 5, legal_name: 'A', supervisor_id: 9 } } as User)).toBe(true);
+  });
+
+  it("rahbari yo'q xodimda va foydalanuvchisiz FALSE", () => {
+    expect(hasSupervisor({ id: 1, type: 'employee', employee: { id: 5, legal_name: 'A' } } as User)).toBe(false);
+    expect(hasSupervisor(null)).toBe(false);
+    expect(hasSupervisor(undefined)).toBe(false);
   });
 });

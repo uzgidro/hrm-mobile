@@ -37,8 +37,10 @@ describe('LettersListScreen (tablet-landscape split)', () => {
     mock.onGet(new RegExp('letters/1$')).reply(200, {
       id: 1, status: 'draft', letter_type: 'business_trip',
     });
+    // `action_required` — backend bayrog'i: standart "Amal" tabi endi shunga
+    // qarab mijozda ajratadi (server `assigned_signer` filtri olib tashlandi).
     mock.onGet(new RegExp('letters/?(\\?|$)')).reply(200, [
-      { id: 1, status: 'draft', letter_type: 'business_trip', created_at: '2026-01-01' },
+      { id: 1, status: 'draft', letter_type: 'business_trip', created_at: '2026-01-01', action_required: true },
     ]);
 
     const { findByText } = await renderWithProviders(<LettersListScreen />);
@@ -64,7 +66,7 @@ describe('LettersListScreen (tablet-landscape split)', () => {
   it('phone/portrait renders the plain list (no split, unaffected by injectable onPress)', async () => {
     (useWindowDimensions as jest.Mock).mockReturnValue(PHONE_PORTRAIT);
     mock.onGet(new RegExp('letters/?(\\?|$)')).reply(200, [
-      { id: 1, status: 'draft', letter_type: 'business_trip', created_at: '2026-01-01' },
+      { id: 1, status: 'draft', letter_type: 'business_trip', created_at: '2026-01-01', action_required: true },
     ]);
 
     const { findByText, queryByText } = await renderWithProviders(<LettersListScreen />);
@@ -76,11 +78,12 @@ describe('LettersListScreen (tablet-landscape split)', () => {
 
   it('re-anchors selectedId when the selected letter falls out of `sorted` (e.g. switching tabs)', async () => {
     (useWindowDimensions as jest.Mock).mockReturnValue(TABLET_LANDSCAPE);
-    // "action" tab (assigned_signer=true): a single business_trip letter (id 1)
+    // "action" tab (serverга filtrsiz, mijozda `action_required`): bitta
+    // business_trip xat (id 1)
     // -> auto-selected, distinguishable from the "mine" tab's letter by type
     // label ("Xizmat safari" vs "Ariza").
-    mock.onGet(LETTERS_LIST, { params: { assigned_signer: true } }).reply(200, [
-      { id: 1, status: 'draft', letter_type: 'business_trip', created_at: '2026-01-02' },
+    mock.onGet(LETTERS_LIST, { params: {} }).reply(200, [
+      { id: 1, status: 'draft', letter_type: 'business_trip', created_at: '2026-01-02', action_required: true },
     ]);
     // "mine" tab (signer=true): a different single letter (id 2), so the
     // previously-selected id 1 is no longer in `sorted` after the switch.

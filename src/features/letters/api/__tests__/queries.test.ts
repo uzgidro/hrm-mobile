@@ -27,12 +27,16 @@ describe('letterKeys', () => {
 });
 
 describe('lettersListQuery', () => {
-  it('sends assigned_signer for the action tab', async () => {
+  it('AMAL tabida server filtri YO\'Q — amal faqat imzolovchida emas', async () => {
+    // `assigned_signer=true` faqat imzolovchi qatorlarini qaytarardi: devonxona
+    // ro'yxatga olishi, KADR "Keldi" tasdig'i, qaytarilgan hisobot va KELISHUV
+    // (bildirgi/ariza imzolanmaydi) tabga umuman tushmasdi. Endi to'liq ro'yxat
+    // olinadi va mijoz `action_required` bo'yicha ajratadi (web bilan bir xil).
     const opts = lettersListQuery('action');
     expect(opts.queryKey).toEqual(['letters', 'action']);
     mock.onGet(LETTERS_LIST).reply(200, []);
     await (opts.queryFn as () => Promise<unknown[]>)();
-    expect(mock.history.get[0].params).toEqual({ assigned_signer: true });
+    expect(mock.history.get[0].params).toEqual({});
   });
 
   it('sends signer for the mine tab and no params for the all tab', async () => {

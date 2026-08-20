@@ -65,6 +65,10 @@ export const CHAIRMAN_TASK_DETAIL = (id: number) => `chairman-tasks/${id}`;
 export const NOTIFICATIONS_LIST = 'notifications';
 export const NOTIFICATION_READ = (id: number) => `notifications/${id}/read`;
 export const NOTIFICATIONS_READ_ALL = 'notifications/read-all';
+// Menyudagi QIZIL raqamlar: foydalanuvchining AMALINI kutayotgan hujjatlar soni
+// bo'limlar kesimida ({letters, orders, support, projects, fleet, documents}).
+// Backend 60s keshlaydi; web chap menyuda AYNAN shu manbadan foydalanadi.
+export const MENU_BADGES = 'notifications/menu-badges';
 
 // Employees list
 export const EMPLOYEES_LIST = 'employees';

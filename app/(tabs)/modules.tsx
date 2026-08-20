@@ -11,6 +11,7 @@ import { Screen } from '../../src/components/Screen';
 import { useBreakpoint, gridTileWidth, GRID_GAP, GRID_H_PAD } from '../../src/utils/responsive';
 import { buildNavSections } from '../../src/utils/navItems';
 import { homeAssignedLeavesQuery, homeNotificationsQuery } from '@/features/dashboard/api/queries';
+import { menuBadgesQuery } from '@/features/notifications/api/queries';
 
 export default function ModulesScreen() {
   const { user } = useAuthStore();
@@ -42,9 +43,13 @@ export default function ModulesScreen() {
 
   const unreadCount = useMemo(() => notifications.filter((n) => !n.is_read).length, [notifications]);
 
+  // Web menyusidagi QIZIL raqamlarning aynan o'zi (loyiha/hujjat/texnik yordam).
+  // Bildirgi va Buyruqlar pastki tab bar'da — ular badge'ni o'sha yerda oladi.
+  const { data: menuBadges } = useQuery(menuBadgesQuery());
+
   const sections = useMemo(
-    () => buildNavSections(t, { user, employee, pendingCount, unreadCount }),
-    [t, user, employee, pendingCount, unreadCount]
+    () => buildNavSections(t, { user, employee, pendingCount, unreadCount, menuBadges }),
+    [t, user, employee, pendingCount, unreadCount, menuBadges]
   );
 
   // Adaptive columns from the breakpoint; content capped so tiles don't stretch.

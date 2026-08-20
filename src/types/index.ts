@@ -162,6 +162,10 @@ export interface OrderAct {
   rejection_reason?: string | null;
   comments?: OrderActComment[];
   document?: { id: number; document_objectname?: string } | null;
+  // Backend joriy foydalanuvchi uchun hisoblaydigan bayroqlar (web BuyruqlarTable
+  // ularni sariq ajratish uchun ishlatadi).
+  action_required?: boolean;
+  is_unseen?: boolean;
 }
 
 export interface LetterSigner {
@@ -255,6 +259,13 @@ export interface Letter {
   // docx — form edits are missing from the document. Drives a warning banner
   // in the detail view (web parity: LetterDetailModal document_out_of_sync).
   document_out_of_sync?: boolean;
+  // Backend HAR BIR foydalanuvchi uchun hisoblaydigan bayroqlar (ro'yxatda ham,
+  // tafsilotda ham keladi). `action_required` — "hozir bosiladigan tugmasi bor"
+  // (kelishuv, devonxona ro'yxatga olishi, rahbar tasdig'i, hisobot...). Web
+  // undan sariq ajratish uchun foydalanadi (LettersTable rowNeedsAction).
+  action_required?: boolean;
+  // Hech ochilmagan yoki oxirgi ochilishdan keyin O'ZGARGAN hujjat.
+  is_unseen?: boolean;
 }
 
 // A single kelish/ketish event of a business trip. event_type is a backend
@@ -293,6 +304,13 @@ export interface Notification {
   news_post_id?: number | null;
   workspace_id?: number | null;
   card_id?: number | null;
+  // Backend NotificationRead bularni RO'YXATDA ham qaytaradi (faqat push'da
+  // emas) — deep-link shu id'lar orqali tafsilotga o'tadi.
+  letter_id?: number | null;
+  kpi_entry_id?: number | null;
+  support_ticket_id?: number | null;
+  work_leave_id?: number | null;
+  medical_checkup_id?: number | null;
   is_read: boolean;
   read_at?: string | null;
   created_at: string;

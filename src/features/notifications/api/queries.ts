@@ -1,6 +1,6 @@
 import { queryOptions } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
-import { NOTIFICATIONS_LIST } from '@/api/urls';
+import { NOTIFICATIONS_LIST, MENU_BADGES } from '@/api/urls';
 import type { Notification } from '@/types';
 
 // Hierarchical query keys — invalidating `notificationKeys.all` refreshes the
@@ -16,7 +16,39 @@ import type { Notification } from '@/types';
 export const notificationKeys = {
   all: ['notifications'] as const,
   list: (employeeId?: number) => [...notificationKeys.all, 'list', employeeId ?? null] as const,
+  // Menyu raqamlari `all` ostida — amal bajarilgach (imzo/kelishuv/tiket)
+  // yuboriladigan `invalidateQueries(['notifications'])` ularni ham yangilaydi.
+  menuBadges: () => [...notificationKeys.all, 'menu-badges'] as const,
 };
+
+/** Bo'limlar kesimidagi "amal kutmoqda" sonlari (web menyusidagi qizil raqamlar). */
+export interface MenuBadges {
+  letters: number;
+  orders: number;
+  support: number;
+  projects: number;
+  fleet: number;
+  documents: number;
+}
+
+const EMPTY_BADGES: MenuBadges = {
+  letters: 0, orders: 0, support: 0, projects: 0, fleet: 0, documents: 0,
+};
+
+// Web DashboardLayout bu manbani 60 soniyada bir marta so'raydi; mobilда ham
+// shunday. Xato bo'lsa raqamsiz qolamiz (menyu ishlashda davom etadi).
+export function menuBadgesQuery() {
+  return queryOptions({
+    queryKey: notificationKeys.menuBadges(),
+    queryFn: () =>
+      apiClient
+        .get<Partial<MenuBadges>>(MENU_BADGES)
+        .then((r) => ({ ...EMPTY_BADGES, ...(r.data ?? {}) }) as MenuBadges)
+        .catch(() => EMPTY_BADGES),
+    staleTime: 60 * 1000,
+    refetchInterval: 60 * 1000,
+  });
+}
 
 export function notificationsListQuery(employeeId?: number) {
   return queryOptions({

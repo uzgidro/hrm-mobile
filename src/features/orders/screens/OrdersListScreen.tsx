@@ -46,11 +46,10 @@ export default function OrdersListScreen() {
   const split = bp.isTablet && bp.isLandscape;
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
-  const orgBranchId =
-    employee?.organization_branches?.[0]?.id ??
-    employee?.department?.organization_branch_id;
-
-  const { data: orders = [], isLoading, refetch, isFetching } = useQuery(ordersListQuery(orgBranchId));
+  // Buyruqlar ro'yxati FILIALGA qisilmaydi — ko'lamni backend belgilaydi
+  // (`ordersListQuery` izohiga qarang): boshqa filial buyrug'iga imzolovchi
+  // qilib belgilangan rahbar uni mobilда ham ko'rishi shart.
+  const { data: orders = [], isLoading, refetch, isFetching } = useQuery(ordersListQuery());
 
   const actionCount = useMemo(
     () => orders.filter((o) => needsMyAction(o, employeeId)).length,

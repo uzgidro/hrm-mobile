@@ -14,7 +14,7 @@ import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 import type { ThemeColors } from '../theme/palettes';
 import { Icon, type IconName } from './Icon';
 import { buildNavSections, type NavItem } from '../utils/navItems';
-import { canAccessPage, type PageKey } from '../utils/roles';
+import { canAccessPage, hasSupervisor, type PageKey } from '../utils/roles';
 import { leaveStatusGroup } from '../utils/leaveStatus';
 import { homeAssignedLeavesQuery, homeNotificationsQuery } from '@/features/dashboard/api/queries';
 
@@ -41,7 +41,7 @@ const PRIMARY: PrimaryItem[] = [
 export function NavRail() {
   const { user } = useAuthStore();
   const employee = user?.employee;
-  const isSupervisor = !employee?.supervisor;
+  const isSupervisor = !hasSupervisor(user);
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { t } = useTranslation();

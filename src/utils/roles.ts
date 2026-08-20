@@ -24,6 +24,20 @@ export function hasMultiOrgRole(user: User | null | undefined, role: string): bo
   return getMultiOrgRoles(user?.employee).includes(role);
 }
 
+/**
+ * Xodimga BEVOSITA rahbar biriktirilganmi (web roleHelpers.hasSupervisor 1:1).
+ *
+ * Ilgari ekranlar `!employee?.supervisor` deb faqat ICHMA-ICH kelgan obyektga
+ * qarardi. `EmployeeRead` payloadi yengillashtirilib (N+1 auditi) rekursiv
+ * `supervisor` obyekti olib tashlansa, `supervisor_id` qolgan bo'lsa ham HAR
+ * BIR xodim "rahbar" bo'lib qolardi: Bosh sahifa "Mening so'rovlarim" o'rniga
+ * "Kiruvchi so'rovlar"ni ko'rsatardi. Ikkala manbani ham tekshiramiz.
+ */
+export function hasSupervisor(user?: User | null): boolean {
+  const emp = user?.employee;
+  return !!(emp?.supervisor_id || emp?.supervisor?.id);
+}
+
 /** master-admin type OR employee with 'ministr' role */
 export function isMasterAdmin(user?: User | null): boolean {
   return user?.type === 'master-admin' || getMultiOrgRole(user) === 'ministr';

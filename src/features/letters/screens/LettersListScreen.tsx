@@ -16,7 +16,7 @@ import { FilterChip } from '@/components/FilterChip';
 import { SearchBox } from '@/components/SearchBox';
 import { useBreakpoint } from '@/utils/responsive';
 import { selectSplitId } from '@/utils/splitView';
-import { canSignLetter, letterTypeLabel, letterStatusMeta, normalizeLetterType } from '@/utils/letterStatus';
+import { letterNeedsMyAction, letterTypeLabel, letterStatusMeta, normalizeLetterType } from '@/utils/letterStatus';
 import { lettersListQuery, type LettersTab } from '../api/queries';
 import { LetterListCard } from '../components/LetterListCard';
 import { LetterDetailView } from '../components/LetterDetailView';
@@ -48,7 +48,7 @@ export default function LettersListScreen() {
   const { data: letters = [], isLoading, refetch, isFetching } = useQuery(lettersListQuery(tab));
 
   const actionCount = useMemo(
-    () => letters.filter((l) => canSignLetter(l, employeeId)).length,
+    () => letters.filter((l) => letterNeedsMyAction(l, employeeId)).length,
     [letters, employeeId]
   );
 
@@ -72,6 +72,9 @@ export default function LettersListScreen() {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return sorted.filter((l) => {
+      // "Amal" tabi endi mijozda ajratiladi (server `assigned_signer` filtri
+      // devonxona/KADR/kelishuv amallarini tashlab ketardi) — web bilan bir xil.
+      if (tab === 'action' && !letterNeedsMyAction(l, employeeId)) return false;
       if (typeFilter !== 'all' && normalizeLetterType(l.letter_type) !== typeFilter) return false;
       if (statusFilter !== 'all' && (l.status ?? '') !== statusFilter) return false;
       if (!q) return true;
@@ -83,7 +86,7 @@ export default function LettersListScreen() {
         (l.description?.toLowerCase().includes(q) ?? false)
       );
     });
-  }, [sorted, search, typeFilter, statusFilter]);
+  }, [sorted, search, typeFilter, statusFilter, tab, employeeId]);
 
   // Auto-select the first row when entering split with nothing selected yet
   // (so the detail pane isn't blank on first tablet-landscape render); clear
@@ -170,7 +173,7 @@ export default function LettersListScreen() {
               <LetterListCard
                 key={l.id}
                 letter={l}
-                action={canSignLetter(l, employeeId)}
+                action={letterNeedsMyAction(l, employeeId)}
                 onPress={split ? () => setSelectedId(l.id) : undefined}
                 selected={split ? selectedId === l.id : undefined}
               />

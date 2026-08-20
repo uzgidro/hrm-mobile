@@ -23,6 +23,7 @@ import {
   canAgreeLetter,
   canSubmitAgreementDraft,
   canSendAgreementLetter,
+  letterNeedsMyAction,
 } from '../letterStatus';
 import { statusColor as orderStatusColor } from '../orderStatus';
 import i18n from '../../i18n';
@@ -727,5 +728,34 @@ describe('canChancelleryConfirmRegistration', () => {
   it('false for a regular employee or a devonxona of another branch', () => {
     expect(canChancelleryConfirmRegistration({ id: 1, letter_type: 'bildirgi', status: 'pending_registration', organization_branch_id: 7 } as Letter, regular)).toBe(false);
     expect(canChancelleryConfirmRegistration({ id: 1, letter_type: 'bildirgi', status: 'pending_registration', organization_branch_id: 8 } as Letter, branchDevonxona)).toBe(false);
+  });
+});
+
+describe("letterNeedsMyAction (ro'yxatdagi \"amal talab qiladi\")", () => {
+  it("backend `action_required` bayrog'iga ISHONADI (imzo/kelishuv bo'lmasa ham)", () => {
+    // Devonxona ro'yxatga oladi / KADR \"Keldi\" tasdiqlaydi / muallif qaytarilgan
+    // hisobotni tuzatadi — bularda foydalanuvchi imzolovchi EMAS.
+    const l = { id: 1, letter_type: 'business_trip', status: 'signed', action_required: true } as Letter;
+    expect(letterNeedsMyAction(l, 99)).toBe(true);
+  });
+
+  it('KELISHUV kutayotgan bildirgini amal deb belgilaydi (bayroqsiz eski javobda ham)', () => {
+    const l = {
+      id: 2, letter_type: 'bildirgi', status: 'pending_agreement',
+      assigned_signers: [{ employee_id: 7, signer_type: 'agreement', agreed: null }],
+    } as Letter;
+    // canSignLetter bu yerda DOIM false (bildirgi imzolanmaydi) — eski mantiq
+    // aynan shu holatda sariqni ko'rsatmasdi.
+    expect(canSignLetter(l, 7)).toBe(false);
+    expect(letterNeedsMyAction(l, 7)).toBe(true);
+  });
+
+  it("kelishib bo'lgan yoki begona hujjatda false", () => {
+    const agreed = {
+      id: 3, letter_type: 'bildirgi', status: 'pending_registration',
+      assigned_signers: [{ employee_id: 7, signer_type: 'agreement', agreed: true }],
+    } as Letter;
+    expect(letterNeedsMyAction(agreed, 7)).toBe(false);
+    expect(letterNeedsMyAction({ id: 4, letter_type: 'business_trip', status: 'pending' } as Letter, 7)).toBe(false);
   });
 });

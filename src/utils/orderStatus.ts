@@ -125,6 +125,11 @@ export function decreePermissions(o: OrderAct, employeeId?: number): DecreePermi
 
 // Does the given employee need to act on this decree right now?
 export function needsMyAction(o: OrderAct, employeeId?: number): boolean {
+  // Backend har bir qator uchun `action_required` ni JORIY foydalanuvchiga
+  // hisoblab beradi (web BuyruqlarTable ham shundan foydalanadi) — u quyidagi
+  // mijoz mantiqidan kengroq (masalan devonxona ro'yxatga olishi). Bayroq
+  // bo'lmasa (eski javob/kesh) — quyidagi tekshiruvlar ishlaydi.
+  if (o.action_required === true) return true;
   if (!employeeId) return false;
   const stage = currentStageType(o);
   if (stage) {

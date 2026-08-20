@@ -119,6 +119,15 @@ describe('needsMyAction', () => {
     expect(needsMyAction(order({ status: 'pending_approval' }), 0)).toBe(false);
   });
 
+  it("backend `action_required` bayrog'i mijoz mantiqidan USTUN (web bilan bir xil)", () => {
+    // Devonxona ro'yxatga olishi kabi holatlarda foydalanuvchi imzolovchi emas,
+    // lekin amal aynan undan kutiladi.
+    const o = order({ status: 'pending_chancellery', action_required: true } as any);
+    expect(needsMyAction(o, 123)).toBe(true);
+    // Bayroqsiz — eski mijoz mantiqi.
+    expect(needsMyAction(order({ status: 'pending_chancellery' }), 123)).toBe(false);
+  });
+
   it('returns true when employee is an assigned stage signer and has not signed', () => {
     const o = order({
       status: 'pending_approval',

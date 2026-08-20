@@ -36,7 +36,12 @@ export const letterKeys = {
 };
 
 function paramsForTab(tab: LettersTab): Record<string, unknown> {
-  if (tab === 'action') return { assigned_signer: true };
+  // "Amal talab qiladi" tabi SERVERDA filtrlanmaydi: amal faqat imzolovchida
+  // emas — devonxona ro'yxatga oladi, KADR "Keldi" tasdiqlaydi, muallif
+  // qaytarilgan hisobotni tuzatadi, kelishuvchi kelishadi. Backend buni har
+  // qator uchun `action_required` bayrog'ida beradi, web ham AYNAN shu
+  // ro'yxatni mijozda ajratadi (LettersTable). `assigned_signer=true` esa
+  // faqat imzolovchi qatorlarini qaytarib, qolgan barcha amallarni yashirardi.
   if (tab === 'mine') return { signer: true };
   return {};
 }

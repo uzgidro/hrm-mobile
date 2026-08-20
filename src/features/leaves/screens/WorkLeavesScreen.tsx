@@ -12,6 +12,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { useBreakpoint } from '@/utils/responsive';
+import { hasSupervisor } from '@/utils/roles';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader, HeaderAction } from '@/components/ScreenHeader';
@@ -108,7 +109,7 @@ export default function WorkLeavesScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { t } = useTranslation();
-  const isSupervisor = !employee?.supervisor;
+  const isSupervisor = !hasSupervisor(user);
   const bp = useBreakpoint();
   const cols = bp.isTablet ? (bp.isLandscape ? 3 : 2) : 1;
 
