@@ -32,6 +32,8 @@ describe('ORDER_STATUS_META', () => {
   it('locks in every known status labelKey + kind', () => {
     expect(ORDER_STATUS_META).toEqual({
       draft: { labelKey: 'status.orderDraft', kind: 'neutral' },
+      // Kirituvchi (submitter) tasdig'i — backend `pending_submitter`.
+      pending_submitter: { labelKey: 'status.orderPendingSubmitter', kind: 'pending' },
       pending_approval: { labelKey: 'status.orderPendingApproval', kind: 'pending' },
       pending_leadership: { labelKey: 'status.orderPendingLeadership', kind: 'pending' },
       pending_chancellery: { labelKey: 'status.orderPendingChancellery', kind: 'info' },

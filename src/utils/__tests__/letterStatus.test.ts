@@ -20,6 +20,9 @@ import {
   canResetReport,
   isReportReturned,
   canChancelleryConfirmRegistration,
+  canAgreeLetter,
+  canSubmitAgreementDraft,
+  canSendAgreementLetter,
 } from '../letterStatus';
 import { statusColor as orderStatusColor } from '../orderStatus';
 import i18n from '../../i18n';
@@ -317,29 +320,80 @@ describe('canSignLetter', () => {
     });
   });
 
-  describe('application', () => {
-    it('any assigned, not-yet-signed signer can sign', () => {
+  // BILDIRGI/ARIZA IMZOLANMAYDI: backend `/sign` ga 400 `use_agreement_flow`
+  // qaytaradi — kelishuv oqimi (agree/disagree) ishlatiladi. Avval bu yerda
+  // `true` qulflangan edi va mobil tugmani ko'rsatib, bosilganda xato berardi.
+  describe('kelishuv hujjatlari (ariza/bildirgi)', () => {
+    it('ariza IMZOLANMAYDI — kelishuv oqimi ishlatiladi', () => {
       const l = letter({
         letter_type: 'application',
-        status: 'pending',
-        assigned_signers: [{ signer_type: 'ordinary', employee_id: 1 }],
+        status: 'pending_agreement',
+        assigned_signers: [{ signer_type: 'agreement', employee_id: 1 }],
       });
-      expect(canSignLetter(l, 1)).toBe(true);
+      expect(canSignLetter(l, 1)).toBe(false);
+      expect(canAgreeLetter(l, 1)).toBe(true);
     });
   });
 
   describe('bildirgi', () => {
-    it('only the main signer can sign', () => {
+    it('bildirgi ham IMZOLANMAYDI — u ham kelishuv hujjati', () => {
+      // `bildirgi` → 'explanatory'; backend uchun u ham kelishuv oqimida
+      // (sign_letter: letter_type in ("application", "explanatory") → 400).
       const main = letter({
         letter_type: 'bildirgi',
         assigned_signers: [{ signer_type: 'main', employee_id: 1 }],
       });
-      expect(canSignLetter(main, 1)).toBe(true);
-      const ordinary = letter({
-        letter_type: 'bildirgi',
-        assigned_signers: [{ signer_type: 'ordinary', employee_id: 1 }],
+      expect(canSignLetter(main, 1)).toBe(false);
+    });
+  });
+
+  describe('kelishuv amallari (web helpers.js bilan 1:1)', () => {
+    const agreementLetter = (over = {}) =>
+      letter({
+        letter_type: 'application',
+        status: 'pending_agreement',
+        creator_employee_id: 5,
+        assigned_signers: [
+          { signer_type: 'agreement', employee_id: 1, agreed: null },
+          { signer_type: 'agreement', employee_id: 2, agreed: true },
+        ],
+        ...over,
       });
-      expect(canSignLetter(ordinary, 1)).toBe(false);
+
+    it('kelishmagan kelishuvchi kelisha oladi, kelishgani — yo\'q', () => {
+      const l = agreementLetter();
+      expect(canAgreeLetter(l, 1)).toBe(true);
+      expect(canAgreeLetter(l, 2)).toBe(false);
+      expect(canAgreeLetter(l, 9)).toBe(false); // umuman kelishuvchi emas
+    });
+
+    it('devonxona bosqichida kelishuv YOPIQ', () => {
+      for (const status of ['registered', 'review', 'returned']) {
+        expect(canAgreeLetter(agreementLetter({ status }), 1)).toBe(false);
+      }
+    });
+
+    it('qoralamani FAQAT muallif kelishuvga yuboradi', () => {
+      const draft = agreementLetter({ status: 'draft' });
+      expect(canSubmitAgreementDraft(draft, 5)).toBe(true);
+      expect(canSubmitAgreementDraft(draft, 1)).toBe(false);
+      // Arizada kelishuvchi MAJBURIY
+      expect(canSubmitAgreementDraft(agreementLetter({ status: 'draft', assigned_signers: [] }), 5)).toBe(false);
+    });
+
+    it('devonxonaga yuborish — HAMMA kelishgach va faqat muallifga', () => {
+      const partly = agreementLetter({ status: 'signed' });
+      expect(canSendAgreementLetter(partly, 5)).toBe(false); // 1-kelishuvchi kutmoqda
+      const all = agreementLetter({
+        status: 'signed',
+        assigned_signers: [
+          { signer_type: 'agreement', employee_id: 1, agreed: true },
+          { signer_type: 'agreement', employee_id: 2, agreed: true },
+        ],
+      });
+      expect(canSendAgreementLetter(all, 5)).toBe(true);
+      expect(canSendAgreementLetter(all, 1)).toBe(false);
+      expect(canSendAgreementLetter(agreementLetter({ status: 'pending_agreement' }), 5)).toBe(false);
     });
   });
 });

@@ -138,6 +138,14 @@ export const LETTER_CONFIRM_RETURN = (id: number) => `letters/${id}/confirm-retu
 // management_approved); the devonxona may edit the auto number/date. The
 // availability endpoint (declared BEFORE /{pk} server-side) live-checks whether a
 // registration number is free in the branch. exclude_id = the letter's own id.
+// BILDIRGI/ARIZA kelishuv oqimi. Bu hujjatlar IMZOLANMAYDI — backend
+// `/sign` ga 400 `use_agreement_flow` qaytaradi; kelishuvchi agree/disagree
+// qiladi (izoh MAJBURIY), muallif esa qoralamani kelishuvga yuboradi va
+// hammasi kelishgach devonxonaga jo'natadi.
+export const LETTER_AGREE = (id: number) => `letters/${id}/agree`;
+export const LETTER_DISAGREE = (id: number) => `letters/${id}/disagree`;
+export const LETTER_SUBMIT_AGREEMENT = (id: number) => `letters/${id}/submit-agreement`;
+export const LETTER_SEND_TO_REGISTRY = (id: number) => `letters/${id}/send-to-registry`;
 export const LETTER_CONFIRM_REGISTRATION = (id: number) => `letters/${id}/confirm-registration`;
 export const LETTER_REGISTERED_NUMBER_AVAILABILITY = 'letters/registered-number/availability';
 
@@ -151,7 +159,15 @@ export const ORDER_ACT_DETAIL = (id: number) => `order-acts/${id}`;
 export const ORDER_ACT_DECREE_APPROVE = (id: number) => `order-acts/${id}/decree/approve`;
 export const ORDER_ACT_DECREE_REJECT = (id: number) => `order-acts/${id}/decree/reject`;
 export const ORDER_ACT_DECREE_RESUBMIT = (id: number) => `order-acts/${id}/decree/resubmit`;
-export const ORDER_ACT_DECREE_FORWARD = (id: number) => `order-acts/${id}/decree/forward-to-leadership`;
+// Yaratuvchi kelishilgan buyruqni RAHBARIYATGA yuboradi. Yo'l `send-to-leadership`
+// (backend api/v1/order_act.py) — mijozda `forward-to-leadership` deb yozilgan
+// edi va tugma har safar 404 bilan yiqilardi.
+export const ORDER_ACT_DECREE_FORWARD = (id: number) => `order-acts/${id}/decree/send-to-leadership`;
+// KIRITUVCHI shaxs (submitter) buyruqni tasdiqlaydi: pending_submitter →
+// pending_approval / approved. Mijozda umuman yo'q edi — buyruq mobilда
+// shu bosqichda tiqilib qolardi.
+export const ORDER_ACT_DECREE_CONFIRM_SUBMISSION = (id: number) =>
+  `order-acts/${id}/decree/confirm-submission`;
 export const ORDER_ACT_DECREE_REGISTER = (id: number) => `order-acts/${id}/decree/register`;
 export const ORDER_ACT_DECREE_ACKNOWLEDGE = (id: number) => `order-acts/${id}/decree/acknowledge`;
 export const ORDER_ACT_DECREE_ASSIGN_FAMILIARIZERS = (id: number) =>

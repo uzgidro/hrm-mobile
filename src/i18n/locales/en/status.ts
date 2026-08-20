@@ -4,6 +4,7 @@ export default {
   // ── Order-act (decree) statuses ─────────────────────────────────────────────
   orderDraft: 'Draft',
   orderPendingApproval: 'Awaiting approval',
+  orderPendingSubmitter: 'Awaiting submitter',
   orderPendingLeadership: 'Awaiting leadership signature',
   orderPendingChancellery: 'Awaiting chancellery',
   orderApproved: 'Approved',
@@ -24,6 +25,7 @@ export default {
   letterRejected: 'Rejected',
   letterRegistered: 'Registered',
   letterPendingRegistration: 'Awaiting registration',
+  letterPendingAgreement: 'In agreement',
   letterCancelled: 'Cancelled',
   letterSignedStatus: 'Signed',
   letterInChancellery: 'In chancellery',

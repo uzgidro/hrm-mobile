@@ -6,6 +6,7 @@ import {
   LETTER_CONFIRM_RETURN, LETTER_SUBMIT_TRIP,
   LETTER_APPROVE_TRIP, LETTER_APPROVE_REPORT, LETTER_APPROVE_GUVOHNOMA,
   LETTER_CONFIRM_REGISTRATION,
+  LETTER_AGREE, LETTER_DISAGREE, LETTER_SUBMIT_AGREEMENT, LETTER_SEND_TO_REGISTRY,
 } from '@/api/urls';
 import type { PickedFile } from '@/components/AttachmentField';
 import { letterKeys } from './queries';
@@ -166,6 +167,55 @@ export function useConfirmReturn(id: number) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (form: ConfirmReturnForm) => confirmReturn(id, form),
+    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+  });
+}
+
+// ── BILDIRGI/ARIZA kelishuv oqimi ───────────────────────────────────────────
+// Bu hujjatlar IMZOLANMAYDI: backend `/sign` ga 400 `use_agreement_flow` beradi.
+// Kelishuvchi agree/disagree qiladi va IZOH MAJBURIY (static.uz talabi —
+// `LetterAgreementAction.comment` min_length=1), shu bois bo'sh izoh bilan
+// so'rov umuman yuborilmaydi.
+export function agreeLetter(id: number, comment: string): Promise<unknown> {
+  return apiClient.post(LETTER_AGREE(id), { comment }).then((r) => r.data);
+}
+
+export function disagreeLetter(id: number, comment: string): Promise<unknown> {
+  return apiClient.post(LETTER_DISAGREE(id), { comment }).then((r) => r.data);
+}
+
+// Muallif qoralamani kelishuvchilarga yuboradi: draft → pending_agreement
+// (kelishuvchisiz bildirgi — to'g'ridan ro'yxatga).
+export function submitAgreementLetter(id: number): Promise<unknown> {
+  return apiClient.post(LETTER_SUBMIT_AGREEMENT(id)).then((r) => r.data);
+}
+
+// Hammasi kelishgach muallif hujjatni DEVONXONAGA yuboradi.
+export function sendLetterToRegistry(id: number): Promise<unknown> {
+  return apiClient.post(LETTER_SEND_TO_REGISTRY(id)).then((r) => r.data);
+}
+
+export function useAgreeLetter(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ agreed, comment }: { agreed: boolean; comment: string }) =>
+      (agreed ? agreeLetter : disagreeLetter)(id, comment),
+    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+  });
+}
+
+export function useSubmitAgreement(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => submitAgreementLetter(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+  });
+}
+
+export function useSendToRegistry(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => sendLetterToRegistry(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
   });
 }

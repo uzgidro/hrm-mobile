@@ -84,6 +84,8 @@ export default {
   actionRequestChange: 'Request change',
   actionApprove: 'Approve',
   actionResubmit: 'Resubmit',
+  actionConfirmSubmission: 'Confirm',
+  confirmSubmissionSuccess: 'Decree confirmed',
   actionForward: 'Forward to leadership',
   actionRegister: 'Register',
   actionAcknowledge: 'Acknowledge',

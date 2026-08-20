@@ -85,6 +85,8 @@ export default {
   actionRequestChange: 'Изменить',
   actionApprove: 'Подтвердить',
   actionResubmit: 'Отправить повторно',
+  actionConfirmSubmission: 'Подтвердить',
+  confirmSubmissionSuccess: 'Приказ подтверждён',
   actionForward: 'Отправить руководству',
   actionRegister: 'Зарегистрировать',
   actionAcknowledge: 'Ознакомился',

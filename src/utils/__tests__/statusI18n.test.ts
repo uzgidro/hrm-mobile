@@ -68,6 +68,7 @@ describe('enum keys / codes are NOT translated (web-parity contract)', () => {
         'pending_approval',
         'pending_chancellery',
         'pending_leadership',
+        'pending_submitter',
         'rejected',
         'signed',
       ].sort(),
