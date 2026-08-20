@@ -6,11 +6,12 @@ import {
   LETTER_CONFIRM_RETURN, LETTER_SELF_CONFIRM_RETURN, LETTER_RETURN_DATE, LETTER_SUBMIT_TRIP,
   LETTER_APPROVE_TRIP, LETTER_APPROVE_REPORT, LETTER_APPROVE_GUVOHNOMA,
   LETTER_CONFIRM_REGISTRATION,
+  LETTER_AGREE, LETTER_DISAGREE, LETTER_SUBMIT_AGREEMENT, LETTER_SEND_TO_REGISTRY,
 } from '@/api/urls';
 import {
   signLetter, rejectLetter, createLetter, submitReport, resetReport, uploadReport,
   confirmReturn, selfConfirmReturn, updateReturnDate, submitTrip, approveTrip, approveReport, approveGuvohnoma,
-  confirmRegistration,
+  confirmRegistration, agreeLetter, disagreeLetter, submitAgreementLetter, sendLetterToRegistry,
 } from '../mutations';
 
 let mock: MockAdapter;
@@ -46,6 +47,31 @@ describe('updateReturnDate (KADR kelgan sanani tuzatadi)', () => {
     expect(data).toEqual({ id: 9, actual_return_date: '2026-08-17' });
     expect(mock.history.patch[0].url).toBe(LETTER_RETURN_DATE(9));
     expect(JSON.parse(mock.history.patch[0].data)).toEqual({ return_date: '2026-08-17' });
+  });
+});
+
+// BILDIRGI/ARIZA kelishuv oqimi — mobilда umuman yo'q edi (imzo tugmasi esa
+// backendда 400 `use_agreement_flow` berardi).
+describe('kelishuv (agreement) so\'rovlari', () => {
+  it('agree/disagree izohni tanada yuboradi (backend uni MAJBURIY qiladi)', async () => {
+    mock.onPost(LETTER_AGREE(3)).reply(200, { id: 3, status: 'signed' });
+    await agreeLetter(3, 'Kelishildi');
+    expect(mock.history.post[0].url).toBe(LETTER_AGREE(3));
+    expect(JSON.parse(mock.history.post[0].data)).toEqual({ comment: 'Kelishildi' });
+
+    mock.onPost(LETTER_DISAGREE(3)).reply(200, { id: 3, status: 'rejected' });
+    await disagreeLetter(3, 'Xato bor');
+    expect(JSON.parse(mock.history.post[1].data)).toEqual({ comment: 'Xato bor' });
+  });
+
+  it('submit-agreement va send-to-registry TANASIZ POST', async () => {
+    mock.onPost(LETTER_SUBMIT_AGREEMENT(4)).reply(200, { id: 4, status: 'pending_agreement' });
+    mock.onPost(LETTER_SEND_TO_REGISTRY(4)).reply(200, { id: 4, status: 'pending_registration' });
+    await submitAgreementLetter(4);
+    await sendLetterToRegistry(4);
+    expect(mock.history.post[0].url).toBe(LETTER_SUBMIT_AGREEMENT(4));
+    expect(mock.history.post[0].data).toBeUndefined();
+    expect(mock.history.post[1].url).toBe(LETTER_SEND_TO_REGISTRY(4));
   });
 });
 

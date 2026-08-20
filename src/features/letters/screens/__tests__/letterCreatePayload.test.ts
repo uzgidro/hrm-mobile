@@ -70,20 +70,32 @@ describe('buildLetterCreatePayload — non-trip (application/bildirgi)', () => {
     expect(p.description).toBe('Summary\n\nBody');
   });
 
-  it('builds assigned_signers (main + ordinaries, main de-duped out of ordinaries)', () => {
+  // Backend bildirgi/ariza uchun AYNAN bitta `addressee` (adresat, imzolamaydi)
+  // va `agreement` (kelishuvchi) turlarini kutadi — eski `main`/`ordinary`
+  // bilan har bir yaratish 400 `addressee_required` bo'lardi.
+  it('adresat + kelishuvchilar yuboradi (adresat kelishuvchilardan chiqariladi)', () => {
     const p = buildLetterCreatePayload(baseLetter);
     expect(p.assigned_signers).toEqual([
-      { employee_id: 4, signer_type: 'main' },
-      { employee_id: 6, signer_type: 'ordinary' },
-      { employee_id: 8, signer_type: 'ordinary' },
+      { employee_id: 4, signer_type: 'addressee' },
+      { employee_id: 6, signer_type: 'agreement' },
+      { employee_id: 8, signer_type: 'agreement' },
     ]);
     // non-trip letters never carry trip-only keys
     expect('submitter_id' in p).toBe(false);
     expect('destination_branch_ids' in p).toBe(false);
   });
 
-  it('omits the main signer entry when none is chosen', () => {
+  it('takroriy kelishuvchini bir marta yuboradi', () => {
+    const p = buildLetterCreatePayload({ ...baseLetter, ordinarySigners: [6, 6, 8] });
+    expect(p.assigned_signers).toEqual([
+      { employee_id: 4, signer_type: 'addressee' },
+      { employee_id: 6, signer_type: 'agreement' },
+      { employee_id: 8, signer_type: 'agreement' },
+    ]);
+  });
+
+  it('adresat tanlanmasa uning qatori yuborilmaydi', () => {
     const p = buildLetterCreatePayload({ ...baseLetter, mainSignerId: null, ordinarySigners: [6] });
-    expect(p.assigned_signers).toEqual([{ employee_id: 6, signer_type: 'ordinary' }]);
+    expect(p.assigned_signers).toEqual([{ employee_id: 6, signer_type: 'agreement' }]);
   });
 });

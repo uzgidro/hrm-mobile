@@ -163,8 +163,13 @@ export interface OrderAct {
 export interface LetterSigner {
   id?: number;
   employee_id?: number;
-  signer_type?: 'main' | 'ordinary' | 'management' | string;
+  // 'agreement' — bildirgi/ariza KELISHUVCHISI, 'addressee' — adresat (imzolamaydi).
+  signer_type?: 'main' | 'ordinary' | 'management' | 'agreement' | 'addressee' | string;
   employee?: Employee;
+  // Kelishuvchi holati (signer_type='agreement'): null = kutmoqda, true/false.
+  agreed?: boolean | null;
+  comment?: string | null;
+  acted_at?: string | null;
 }
 
 // Per-user, per-record action flags the backend computes on the letter DETAIL

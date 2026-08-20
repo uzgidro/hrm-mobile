@@ -25,6 +25,7 @@ import { useResetReport, useSubmitTrip } from '../api/mutations';
 import { DetailHeader, Section, KV, SignerRow } from './DetailParts';
 import { LetterActionBar } from './LetterActionBar';
 import { TripMovementsSection } from './TripMovementsSection';
+import { AgreementSection } from './AgreementSection';
 import { ConfirmRegistrationModal } from './ConfirmRegistrationModal';
 
 // The body of the letter detail — extracted so it can render either as the
@@ -172,6 +173,9 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
         </Section>
 
         <TripMovementsSection letter={letter} user={user} onChanged={refetch} />
+
+        {/* Bildirgi/ariza kelishuvi — kelishuvchilar holati va amallar. */}
+        <AgreementSection letter={letter} employeeId={employeeId} onChanged={refetch} />
 
         {timeline.length > 0 && (
           <Section title={t('letters.sectionSigners')}>

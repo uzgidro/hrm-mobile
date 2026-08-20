@@ -11,6 +11,7 @@ export default {
   // ── Order-act (decree) statuses — ORDER_STATUS_META ─────────────────────────
   orderDraft: 'Qoralama',
   orderPendingApproval: 'Kelishish kutilmoqda',
+  orderPendingSubmitter: 'Kirituvchi tasdig\'ida',
   orderPendingLeadership: 'Rahbariyat imzosi kutilmoqda',
   orderPendingChancellery: 'Kanselyariya kutilmoqda',
   orderApproved: 'Kelishildi',
@@ -31,6 +32,7 @@ export default {
   letterRejected: 'Rad etildi',
   letterRegistered: "Ro'yxatga olingan",
   letterPendingRegistration: "Ro'yxatga olish kutilmoqda",
+  letterPendingAgreement: 'Kelishuvda',
   letterCancelled: 'Bekor qilingan',
   letterSignedStatus: 'Imzolangan',
   letterInChancellery: 'Devonxonada',

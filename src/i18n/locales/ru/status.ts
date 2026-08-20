@@ -4,6 +4,7 @@ export default {
   // ── Order-act (decree) statuses ─────────────────────────────────────────────
   orderDraft: 'Черновик',
   orderPendingApproval: 'Ожидает согласования',
+  orderPendingSubmitter: 'На подтверждении вводящего',
   orderPendingLeadership: 'Ожидает подписи руководства',
   orderPendingChancellery: 'Ожидает канцелярию',
   orderApproved: 'Согласовано',
@@ -24,6 +25,7 @@ export default {
   letterRejected: 'Отклонено',
   letterRegistered: 'Зарегистрировано',
   letterPendingRegistration: 'Ожидает регистрации',
+  letterPendingAgreement: 'На согласовании',
   letterCancelled: 'Отменено',
   letterSignedStatus: 'Подписано',
   letterInChancellery: 'В канцелярии',

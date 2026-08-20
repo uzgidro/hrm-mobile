@@ -174,10 +174,77 @@ export function canSignLetter(l: Letter, employeeId?: number): boolean {
     if (assigned.signer_type === 'main') return l.status === 'pending' && !isNewTripFlow(l);
     return false;
   }
-  if (isApplication(l)) return !isLetterRejected(l);
+  // BILDIRGI/ARIZA IMZOLANMAYDI — kelishuv oqimi (agree/disagree). Backend
+  // `/sign` ga 400 `use_agreement_flow` qaytaradi, ya'ni bu yerdagi eski
+  // `if (isApplication(l)) return true` tugmani ko'rsatib, bosilganda xato
+  // berardi (web'да bunday tugma umuman yo'q).
+  if (isAgreementLetter(l)) return false;
   // Bildirgi: faqat main imzolaydi
   if (assigned.signer_type !== 'main') return false;
   return !isMainRejection(l);
+}
+
+// ── Bildirgi/ariza KELISHUV oqimi (web helpers.js bilan 1:1) ────────────────
+
+/** Bildirgi yoki ariza (kelishuv oqimidagi hujjat). */
+export function isAgreementLetter(l: Letter): boolean {
+  const t = normalizeLetterType(l.letter_type);
+  return t === 'application' || t === 'explanatory';
+}
+
+/** Hujjatning kelishuvchilari (signer_type='agreement'). */
+export function getLetterAgreements(l: Letter): LetterSigner[] {
+  return (l.assigned_signers ?? []).filter((a) => a.signer_type === 'agreement');
+}
+
+export function getMyAgreementRow(l: Letter, employeeId?: number): LetterSigner | null {
+  if (!employeeId) return null;
+  return getLetterAgreements(l).find((a) => eq(sid(a), employeeId)) ?? null;
+}
+
+/** Hamma kelishuvchilar kelishganmi (kelishuvchi bo'lmasa — ha). */
+export function allAgreementsAgreed(l: Letter): boolean {
+  const rows = getLetterAgreements(l);
+  return rows.length === 0 || rows.every((a) => a.agreed === true);
+}
+
+/**
+ * Kelishuvchi HOZIR kelisha/rad eta oladimi.
+ * `registered` — yakuniy; `review`/`returned` — devonxona bosqichi (kelishuv yopiq).
+ */
+export function canAgreeLetter(l: Letter, employeeId?: number): boolean {
+  if (!isAgreementLetter(l)) return false;
+  if (['registered', 'review', 'returned'].includes(l.status ?? '')) return false;
+  const row = getMyAgreementRow(l, employeeId);
+  return !!row && row.agreed !== true;
+}
+
+/** Muallif QORALAMANI kelishuvchilarga yuboradi (draft → pending_agreement). */
+export function canSubmitAgreementDraft(l: Letter, employeeId?: number): boolean {
+  if (!isAgreementLetter(l)) return false;
+  if (l.status !== 'draft') return false;
+  if (!isLetterAuthor(l, employeeId)) return false;
+  // Arizada kamida bitta kelishuvchi MAJBURIY (backend ham shunday).
+  if (normalizeLetterType(l.letter_type) === 'application' && getLetterAgreements(l).length === 0) {
+    return false;
+  }
+  return true;
+}
+
+/** Muallif kelishilgan hujjatni DEVONXONAGA yuboradi. */
+export function canSendAgreementLetter(l: Letter, employeeId?: number): boolean {
+  if (!isAgreementLetter(l)) return false;
+  if (!isLetterAuthor(l, employeeId)) return false;
+  if (!['pending', 'signed', 'returned'].includes(l.status ?? '')) return false;
+  if (normalizeLetterType(l.letter_type) === 'application' && getLetterAgreements(l).length === 0) {
+    return false;
+  }
+  return allAgreementsAgreed(l);
+}
+
+function isLetterAuthor(l: Letter, employeeId?: number): boolean {
+  if (!employeeId) return false;
+  return eq(l.creator_employee_id, employeeId) || eq(l.submitter_id, employeeId);
 }
 
 export interface TimelineItem {
@@ -300,6 +367,9 @@ export function letterStatusMeta(l: Letter): { label: string; kind: StatusKind }
     // registered). Must precede the is_stamped→registered fallthrough below, or a
     // stamped-but-unconfirmed letter falsely reads "registered/success". Web
     // parity (backend letter.py:5036 sets it, :5072 keeps is_stamped set).
+    // Kelishuvchilar ko'rib chiqmoqda — avval umumiy "Kutilmoqda" chiqardi.
+    case 'pending_agreement':
+      return { label: i18n.t('status.letterPendingAgreement'), kind: 'pending' };
     case 'pending_registration':
       return { label: i18n.t('status.letterPendingRegistration'), kind: 'pending' };
     // Terminal — the letter/trip was cancelled. Web renders it red "Bekor

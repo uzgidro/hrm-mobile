@@ -4,7 +4,11 @@
 //   - business_trip: destination_branch_ids, rahbariyat_ids, dates, work_plan,
 //     and an OPTIONAL submitter_id (web parity — an empty submitter means the
 //     author submits and signs their own trip, so the key is omitted, not null).
-//   - application/bildirgi: assigned_signers (main + ordinaries).
+//   - application/bildirgi: assigned_signers — ADRESAT (`addressee`, imzolamaydi)
+//     + KELISHUVCHILAR (`agreement`). Avval bu yerda eski `main`/`ordinary`
+//     turlari yuborilardi va backend har bir yaratishni
+//     400 `addressee_required` bilan rad etardi (web buildAssignedSigners bilan
+//     1:1: aynan bitta adresat + takrorlanmaydigan kelishuvchilar).
 
 export interface LetterCreateInput {
   isTrip: boolean;
@@ -47,11 +51,19 @@ export function buildLetterCreatePayload(input: LetterCreateInput): Record<strin
     payload.arrival_date = input.arrivalDate || null;
     payload.work_plan = input.workPlan.trim() || null;
   } else {
+    const seen = new Set<number>(input.mainSignerId ? [Number(input.mainSignerId)] : []);
+    const agreements: { employee_id: number; signer_type: string }[] = [];
+    input.ordinarySigners.forEach((id) => {
+      const n = Number(id);
+      if (!id || seen.has(n)) return;
+      seen.add(n);
+      agreements.push({ employee_id: n, signer_type: 'agreement' });
+    });
     payload.assigned_signers = [
-      ...(input.mainSignerId ? [{ employee_id: input.mainSignerId, signer_type: 'main' }] : []),
-      ...input.ordinarySigners
-        .filter((id) => id && id !== input.mainSignerId)
-        .map((id) => ({ employee_id: id, signer_type: 'ordinary' })),
+      ...(input.mainSignerId
+        ? [{ employee_id: Number(input.mainSignerId), signer_type: 'addressee' }]
+        : []),
+      ...agreements,
     ];
   }
 

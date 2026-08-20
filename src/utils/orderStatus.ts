@@ -21,6 +21,9 @@ export type StatusKind = 'pending' | 'info' | 'success' | 'error' | 'neutral';
 // hook per screen. This keeps the util itself pure/React-free.
 export const ORDER_STATUS_META: Record<string, { labelKey: string; kind: StatusKind }> = {
   draft:               { labelKey: 'status.orderDraft',              kind: 'neutral' },
+  // Kirituvchi (submitter) tasdig'i — backend `pending_submitter`. Xaritada
+  // bo'lmagani uchun mobilда status o'rniga XOM kod chiqardi.
+  pending_submitter:   { labelKey: 'status.orderPendingSubmitter',   kind: 'pending' },
   pending_approval:    { labelKey: 'status.orderPendingApproval',    kind: 'pending' },
   pending_leadership:  { labelKey: 'status.orderPendingLeadership',  kind: 'pending' },
   pending_chancellery: { labelKey: 'status.orderPendingChancellery', kind: 'info' },
@@ -64,6 +67,8 @@ export function currentStageType(o: OrderAct): 'approver' | 'leadership' | null 
 // which editor mode to offer.
 export interface DecreePermissions {
   canApprove: boolean;
+  /** Kirituvchi shaxs (submitter) tasdig'i — `pending_submitter` bosqichi. */
+  canConfirmSubmission: boolean;
   canResubmit: boolean;
   canForward: boolean;
   canRegister: boolean;
@@ -82,6 +87,12 @@ export function decreePermissions(o: OrderAct, employeeId?: number): DecreePermi
   const canApprove = iAmStageSigner && !iSigned;
 
   const isCreator = o.created_by_id === employeeId || o.submitter_id === employeeId;
+  // KIRITUVCHI tasdig'i: buyruqni boshqa shaxs nomidan kiritganda oqim
+  // `pending_submitter`da to'xtaydi va FAQAT tanlangan kirituvchi uni
+  // tasdiqlaydi (backend decree_confirm_submission). Mobilда bu amal yo'q edi —
+  // buyruq shu bosqichda tiqilib qolardi.
+  const canConfirmSubmission =
+    o.status === 'pending_submitter' && !!employeeId && o.submitter_id === employeeId;
   const canResubmit = o.status === 'changes_requested' && isCreator;
   const canForward = o.status === 'approved' && isCreator;
   const canRegister = o.status === 'pending_chancellery' && isCreator;
@@ -92,7 +103,8 @@ export function decreePermissions(o: OrderAct, employeeId?: number): DecreePermi
   const canAcknowledge =
     !!myFam && !myFam.acknowledged && (o.status === 'confirmed' || o.status === 'applied');
 
-  const hasActions = canApprove || canResubmit || canForward || canRegister || canAcknowledge;
+  const hasActions =
+    canApprove || canConfirmSubmission || canResubmit || canForward || canRegister || canAcknowledge;
 
   const docLocked =
     o.status === 'confirmed' || o.status === 'applied' || o.status === 'rejected';
@@ -100,6 +112,7 @@ export function decreePermissions(o: OrderAct, employeeId?: number): DecreePermi
 
   return {
     canApprove,
+    canConfirmSubmission,
     canResubmit,
     canForward,
     canRegister,
@@ -120,6 +133,8 @@ export function needsMyAction(o: OrderAct, employeeId?: number): boolean {
     const alreadySigned = (o.signers ?? []).some((s) => s.employee_id === employeeId || s.employee?.id === employeeId);
     if (assigned && !alreadySigned) return true;
   }
+  // kirituvchi shaxs tasdiqlashi kerak
+  if (o.status === 'pending_submitter' && o.submitter_id === employeeId) return true;
   // creator must resubmit
   if (o.status === 'changes_requested' && (o.created_by_id === employeeId || o.submitter_id === employeeId)) {
     return true;
