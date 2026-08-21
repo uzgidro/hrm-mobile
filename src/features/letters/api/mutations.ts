@@ -174,18 +174,23 @@ export function useConfirmReturn(id: number) {
 
 // ── Xodimning O'ZI safarni yakunlashi (Face ID) ───────────────────────────────
 // KADR "Keldi" tugmasining xodim tomonidagi juftligi (backend 2026-08-19).
-// TANASIZ POST: qaytish sanasini SERVER o'zi qo'yadi — u xodim o'z filiali
-// turniketidan (Face ID) o'tgan sana. Mijoz sana yubormaydi (yuborsa ham
-// e'tiborga olinmaydi), shu bois "hali qaytmasdan yakunlash" mumkin emas.
-// Server sharti bajarilmasa 400 `face_id_required` qaytadi.
-export function selfConfirmReturn(id: number): Promise<unknown> {
-  return apiClient.post(LETTER_SELF_CONFIRM_RETURN(id), {}).then((r) => r.data);
+// ODATDA TANASIZ POST: qaytish sanasini SERVER o'zi qo'yadi — u xodim o'z
+// filiali turniketidan (Face ID) o'tgan sana; mijoz yuborgan sana e'tiborga
+// OLINMAYDI. Server sharti bajarilmasa 400 `face_id_required` qaytadi.
+//
+// ISTISNO (backend 2026-08-21): SODDALASHTIRILGAN tartibdagi xodim (rais va
+// yordamchilari) turniketdan o'tmasligi mumkin — u holda `self_finish_date`
+// bo'sh keladi va sanani XODIMNING O'ZI belgilaydi. Faqat SHU holatda sana
+// yuboriladi (web'dagi bilan bir xil qoida).
+export function selfConfirmReturn(id: number, returnDate?: string | null): Promise<unknown> {
+  const body = returnDate ? { return_date: returnDate } : {};
+  return apiClient.post(LETTER_SELF_CONFIRM_RETURN(id), body).then((r) => r.data);
 }
 
 export function useSelfConfirmReturn(id: number) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: () => selfConfirmReturn(id),
+    mutationFn: (returnDate?: string | null) => selfConfirmReturn(id, returnDate),
     onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
   });
 }

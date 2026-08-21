@@ -59,6 +59,7 @@ export default {
   selfFinishConfirm: 'Finish this business trip? The return date will be the date of your turnstile (Face ID) pass — {{date}}. The report step then opens and HR is notified.',
   selfFinishYes: 'Yes, finish',
   selfFinishHint: 'Your turnstile (Face ID) pass was detected — finishing sets {{date}} as the return date.',
+  selfFinishHintPickDate: 'You set the return date yourself — HR is notified once the trip is finished.',
   rejectionReason: 'Rejection reason',
 
   // ── Action bar ──────────────────────────────────────────────────────────────

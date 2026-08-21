@@ -320,6 +320,14 @@ const NOTIF_META: Record<string, { titleKey: string; icon: IconName }> = {
   support_ticket_message: { titleKey: 'notifications.supportTicketMessage', icon: 'mail' },
   vehicle_requested: { titleKey: 'notifications.vehicleRequested', icon: 'briefcase' },
   vehicle_request_answered: { titleKey: 'notifications.vehicleRequestAnswered', icon: 'check' },
+  // Avtopark TASDIQLOVCHISI bosqichi (backend 2026-08-21): so'rov avval unga
+  // keladi, u tasdiqlagach BFD ga o'tadi. Sarlavhasiz bu turlar prefiks
+  // zaxirasi bilan shunchaki "Transport" bo'lib chiqardi.
+  vehicle_approval_needed: { titleKey: 'notifications.vehicleApprovalNeeded', icon: 'briefcase' },
+  vehicle_approval_answered: { titleKey: 'notifications.vehicleApprovalAnswered', icon: 'check' },
+  // Yoqilg'i narxi tasdiqlanishi kerak — mobilда avtopark ekrani YO'Q, shu bois
+  // faqat sarlavha (bosilganda hech qayerga o'tmaydi, web'да tasdiqlanadi).
+  fuel_price_pending: { titleKey: 'notifications.fuelPricePending', icon: 'briefcase' },
   driver_trip_created: { titleKey: 'notifications.driverTripCreated', icon: 'briefcase' },
   workspace_deleted: { titleKey: 'notifications.workspaceDeleted', icon: 'close' },
   zoom_organizer_changed: { titleKey: 'notifications.zoomOrganizerChanged', icon: 'phone' },

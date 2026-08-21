@@ -69,6 +69,14 @@ export function TripMovementsSection({
   const selfFinishDate = letter.available_actions?.self_finish_date;
 
   const askSelfFinish = () => {
+    // Turniket sanasi YO'Q — sanani xodim tanlaydi (modal ochiladi).
+    if (!selfFinishDate) {
+      setEditMode(false);
+      setSelfMode(true);
+      setReturnDate(dayjs().format('YYYY-MM-DD'));
+      setModalOpen(true);
+      return;
+    }
     Alert.alert(
       t('letters.selfFinishTitle'),
       t('letters.selfFinishConfirm', {
@@ -94,6 +102,10 @@ export function TripMovementsSection({
   // (backend 2026-08-19: PATCH /letters/{id}/return-date, har qanday bosqichda).
   const [modalOpen, setModalOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
+  /* SODDALASHTIRILGAN tartib (rais va yordamchilari, backend 2026-08-21):
+     turniketdan o'tish sharti qo'llanmaydi, shu bois `self_finish_date` bo'sh
+     keladi va qaytgan sanani XODIMNING O'ZI belgilaydi (web bilan bir xil). */
+  const [selfMode, setSelfMode] = useState(false);
   const [returnDate, setReturnDate] = useState(dayjs().format('YYYY-MM-DD'));
   const [note, setNote] = useState('');
 
@@ -105,6 +117,15 @@ export function TripMovementsSection({
       return;
     }
     setModalOpen(false);
+    if (selfMode) {
+      setSelfMode(false);
+      selfFinishM.mutate(returnDate.trim(), {
+        onSuccess: () => onChanged(),
+        onError: (e) =>
+          Alert.alert(t('letters.actionError'), getApiErrorMessage(e, t('letters.actionError'))),
+      });
+      return;
+    }
     if (editMode) {
       editDateM.mutate(returnDate.trim(), {
         onSuccess: () => onChanged(),
@@ -175,9 +196,9 @@ export function TripMovementsSection({
       {canSelfFinish && (
         <>
           <Text style={styles.selfFinishHint}>
-            {t('letters.selfFinishHint', {
-              date: selfFinishDate ? dayjs(selfFinishDate).format('DD.MM.YYYY') : '—',
-            })}
+            {selfFinishDate
+              ? t('letters.selfFinishHint', { date: dayjs(selfFinishDate).format('DD.MM.YYYY') })
+              : t('letters.selfFinishHintPickDate')}
           </Text>
           <TouchableOpacity
             style={styles.selfFinishBtn}
@@ -209,7 +230,11 @@ export function TripMovementsSection({
         <View style={styles.overlay}>
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>
-              {editMode ? t('letters.editReturnDateTitle') : t('letters.confirmReturn')}
+              {editMode
+                ? t('letters.editReturnDateTitle')
+                : selfMode
+                  ? t('letters.selfFinishTitle')
+                  : t('letters.confirmReturn')}
             </Text>
             <Text style={styles.modalLabel}>{t('letters.confirmReturnDateLabel')}</Text>
             <TextInput
@@ -219,7 +244,7 @@ export function TripMovementsSection({
               placeholder="YYYY-MM-DD"
               placeholderTextColor={colors.textMuted}
             />
-            {!editMode && (
+            {!editMode && !selfMode && (
               <TextInput
                 style={[styles.input, { minHeight: 60 }]}
                 value={note}
@@ -232,7 +257,11 @@ export function TripMovementsSection({
             )}
             {editMode && <Text style={styles.editHint}>{t('letters.editReturnDateHint')}</Text>}
             <View style={styles.modalBtns}>
-              <TouchableOpacity style={styles.modalCancel} onPress={() => setModalOpen(false)} activeOpacity={0.8}>
+              <TouchableOpacity
+                style={styles.modalCancel}
+                onPress={() => { setModalOpen(false); setSelfMode(false); }}
+                activeOpacity={0.8}
+              >
                 <Text style={styles.modalCancelText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.modalSubmit} onPress={submitConfirm} activeOpacity={0.8}>

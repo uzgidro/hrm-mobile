@@ -65,6 +65,7 @@ export default {
   selfFinishConfirm: 'Rostdan ham xizmat safarini yakunlamoqchimisiz? Qaytish sanasi sifatida turniketdan (Face ID) o\'tgan sanangiz — {{date}} yoziladi. Keyin hisobot yozish ochiladi va kadrga xabar boradi.',
   selfFinishYes: 'Ha, yakunlayman',
   selfFinishHint: 'Turniketdan (Face ID) o\'tganingiz aniqlandi — safarni yakunlasangiz qaytish sanasi {{date}} bo\'ladi.',
+  selfFinishHintPickDate: 'Qaytgan sanangizni o\'zingiz belgilaysiz — yakunlagach kadrga xabar boradi.',
   rejectionReason: 'Rad etish sababi',
 
   // ── Action bar ──────────────────────────────────────────────────────────────
