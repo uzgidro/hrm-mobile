@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router';
 import { View, Text, StyleSheet } from 'react-native';
+import { useQuery } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../src/theme/ThemeProvider';
@@ -9,10 +10,11 @@ import { useAuthStore } from '../../src/store/authStore';
 import { canAccessPage } from '../../src/utils/roles';
 import { useBreakpoint } from '../../src/utils/responsive';
 import { NavRail } from '../../src/components/NavRail';
+import { menuBadgesQuery } from '../../src/features/notifications/api/queries';
 
 function TabIcon({
-  focused, name, label, colors,
-}: { focused: boolean; name: IconName; label: string; colors: ThemeColors }) {
+  focused, name, label, colors, badge,
+}: { focused: boolean; name: IconName; label: string; colors: ThemeColors; badge?: number }) {
   return (
     <View style={styles.wrap}>
       <View style={[styles.pill, focused && { backgroundColor: colors.tabBarActiveBg }]}>
@@ -22,6 +24,13 @@ function TabIcon({
           color={focused ? colors.tabBarActive : colors.tabBarInactive}
           strokeWidth={focused ? 2.2 : 1.9}
         />
+        {/* Amal kutayotgan hujjatlar soni — web chap menyusidagi qizil raqam
+            (backend notifications/menu-badges). */}
+        {!!badge && badge > 0 && (
+          <View style={[styles.badge, { backgroundColor: colors.error, borderColor: colors.tabBar }]}>
+            <Text style={styles.badgeText}>{badge > 9 ? '9+' : badge}</Text>
+          </View>
+        )}
       </View>
       <Text
         style={[
@@ -43,6 +52,7 @@ export default function TabsLayout() {
   const { t } = useTranslation();
   const bp = useBreakpoint();
   const useRail = bp.isTablet;
+  const { data: menuBadges } = useQuery(menuBadgesQuery());
 
   return (
     <View style={{ flex: 1, flexDirection: 'row' }}>
@@ -79,7 +89,7 @@ export default function TabsLayout() {
             options={{
               href: canAccessPage(user, 'orders') ? undefined : null,
               tabBarButtonTestID: 'tab-orders',
-              tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="orders" label={t('modules.labels.orders')} colors={colors} />,
+              tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="orders" label={t('modules.labels.orders')} colors={colors} badge={menuBadges?.orders} />,
             }}
           />
           <Tabs.Screen
@@ -87,7 +97,7 @@ export default function TabsLayout() {
             options={{
               href: canAccessPage(user, 'letters') ? undefined : null,
               tabBarButtonTestID: 'tab-letters',
-              tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="mail" label={t('modules.labels.letters')} colors={colors} />,
+              tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="mail" label={t('modules.labels.letters')} colors={colors} badge={menuBadges?.letters} />,
             }}
           />
           <Tabs.Screen
@@ -108,4 +118,9 @@ const styles = StyleSheet.create({
   wrap: { alignItems: 'center', gap: 3, width: 64 },
   pill: { width: 46, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
   label: { fontSize: 10.5 },
+  badge: {
+    position: 'absolute', top: -2, right: 4, minWidth: 16, height: 16, borderRadius: 8,
+    borderWidth: 1.5, paddingHorizontal: 4, alignItems: 'center', justifyContent: 'center',
+  },
+  badgeText: { color: '#fff', fontSize: 9.5, fontWeight: '800' },
 });

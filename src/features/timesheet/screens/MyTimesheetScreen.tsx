@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
-import { Icon } from '@/components/Icon';
+import { AttendanceEventRow } from '@/components/AttendanceEventRow';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { MonthNavigator } from '@/components/MonthNavigator';
@@ -194,12 +194,15 @@ export default function MyTimesheetScreen() {
               {dayDetail.journal.length === 0 ? (
                 <Text style={styles.emptyText}>{t('timesheet.logEmpty')}</Text>
               ) : (
-                dayDetail.journal.map((ev) => (
-                  <View key={ev.id} style={styles.eventRow}>
-                    <Text style={styles.eventTime}>{dayjs(ev.happen_time).format('HH:mm')}</Text>
-                    <Icon name={ev.direction_type === 'entrance' || ev.check_in_out_type === 1 ? 'chevronRight' : 'chevronLeft'} size={16} color={colors.textSecondary} />
-                    <Text style={styles.eventDir}>{ev.direction_type === 'entrance' || ev.check_in_out_type === 1 ? t('timesheet.entryTitle') : t('timesheet.exitTitle')}</Text>
-                  </View>
+                // Qator endi FAQAT vaqt+yo'nalish emas: qaysi GES/obyekt, Face ID
+                // surati va (bosilganda) xarita ham ko'rinadi — hammasi backend
+                // allaqachon yuboradigan maydonlardan (AttendanceEventRow).
+                dayDetail.journal.map((ev, i) => (
+                  <AttendanceEventRow
+                    key={ev.id}
+                    event={ev}
+                    showBorder={i < dayDetail.journal.length - 1}
+                  />
                 ))
               )}
             </View>

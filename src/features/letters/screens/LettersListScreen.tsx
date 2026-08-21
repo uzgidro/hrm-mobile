@@ -16,7 +16,7 @@ import { FilterChip } from '@/components/FilterChip';
 import { SearchBox } from '@/components/SearchBox';
 import { useBreakpoint } from '@/utils/responsive';
 import { selectSplitId } from '@/utils/splitView';
-import { canSignLetter, letterTypeLabel, letterStatusMeta, normalizeLetterType } from '@/utils/letterStatus';
+import { letterNeedsMyAction, isMyLetter, letterTypeLabel, letterStatusMeta, normalizeLetterType } from '@/utils/letterStatus';
 import { lettersListQuery, type LettersTab } from '../api/queries';
 import { LetterListCard } from '../components/LetterListCard';
 import { LetterDetailView } from '../components/LetterDetailView';
@@ -45,10 +45,10 @@ export default function LettersListScreen() {
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
-  const { data: letters = [], isLoading, refetch, isFetching } = useQuery(lettersListQuery(tab));
+  const { data: letters = [], isLoading, refetch, isFetching } = useQuery(lettersListQuery());
 
   const actionCount = useMemo(
-    () => letters.filter((l) => canSignLetter(l, employeeId)).length,
+    () => letters.filter((l) => letterNeedsMyAction(l, employeeId)).length,
     [letters, employeeId]
   );
 
@@ -72,6 +72,11 @@ export default function LettersListScreen() {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return sorted.filter((l) => {
+      // Tablar mijozda ajratiladi (serverdagi `assigned_signer`/`signer`
+      // filtrlari amal va "mening" ma'nolarini noto'g'ri torайtirardi —
+      // `lettersListQuery` izohiga qarang).
+      if (tab === 'action' && !letterNeedsMyAction(l, employeeId)) return false;
+      if (tab === 'mine' && !isMyLetter(l, employeeId)) return false;
       if (typeFilter !== 'all' && normalizeLetterType(l.letter_type) !== typeFilter) return false;
       if (statusFilter !== 'all' && (l.status ?? '') !== statusFilter) return false;
       if (!q) return true;
@@ -83,7 +88,7 @@ export default function LettersListScreen() {
         (l.description?.toLowerCase().includes(q) ?? false)
       );
     });
-  }, [sorted, search, typeFilter, statusFilter]);
+  }, [sorted, search, typeFilter, statusFilter, tab, employeeId]);
 
   // Auto-select the first row when entering split with nothing selected yet
   // (so the detail pane isn't blank on first tablet-landscape render); clear
@@ -170,7 +175,7 @@ export default function LettersListScreen() {
               <LetterListCard
                 key={l.id}
                 letter={l}
-                action={canSignLetter(l, employeeId)}
+                action={letterNeedsMyAction(l, employeeId)}
                 onPress={split ? () => setSelectedId(l.id) : undefined}
                 selected={split ? selectedId === l.id : undefined}
               />

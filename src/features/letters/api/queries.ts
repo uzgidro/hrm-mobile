@@ -30,23 +30,30 @@ export type LettersTab = 'action' | 'mine' | 'all';
 
 export const letterKeys = {
   all: ['letters'] as const,
-  list: (tab: LettersTab) => [...letterKeys.all, tab] as const,
+  // Bitta ro'yxat — tablar mijozda ajratiladi (pastdagi izohga qarang).
+  list: () => [...letterKeys.all, 'list'] as const,
   detail: (id: number) => [...letterKeys.all, 'detail', id] as const,
   tripMovements: (id: number) => [...letterKeys.all, 'trip-movements', id] as const,
 };
 
-function paramsForTab(tab: LettersTab): Record<string, unknown> {
-  if (tab === 'action') return { assigned_signer: true };
-  if (tab === 'mine') return { signer: true };
-  return {};
-}
-
-// The list tab. Key/params mirror the old tab query exactly.
-export function lettersListQuery(tab: LettersTab) {
+// Ro'yxat BIR MARTA olinadi, tablar esa mijozda ajratiladi — web LettersTable
+// ham shunday ishlaydi.
+//
+// Nega serverda emas:
+//  • "Menda" (amal): amal faqat imzolovchida emas — devonxona ro'yxatga oladi,
+//    KADR "Keldi" tasdiqlaydi, kelishuvchi kelishadi (bildirgi/ariza
+//    IMZOLANMAYDI), muallif qaytarilgan hisobotni tuzatadi. Backend buni har
+//    qator uchun `action_required` bayrog'ida beradi.
+//  • "Mening": avval `signer=true` yuborilardi — ya'ni "men IMZOLAGANLARIM".
+//    O'z bildirgisini yozgan oddiy xodim uni imzolamaydi, shu bois O'Z hujjati
+//    "Mening" tabida ko'rinmasdi. (Web `employee_id` yuboradi, lekin backend
+//    bunday parametrni umuman qabul qilmaydi — natijada webda bu tab to'liq
+//    ro'yxat bo'lib qoladi.) Endi muallif/kirituvchi/imzolovchi bo'yicha
+//    mijozda ajratamiz — `isMyLetter`.
+export function lettersListQuery() {
   return queryOptions({
-    queryKey: letterKeys.list(tab),
-    queryFn: () =>
-      apiClient.get(LETTERS_LIST, { params: paramsForTab(tab) }).then((r) => unwrapList<Letter>(r.data)),
+    queryKey: letterKeys.list(),
+    queryFn: () => apiClient.get(LETTERS_LIST).then((r) => unwrapList<Letter>(r.data)),
     staleTime: 30 * 1000,
     refetchInterval: 60 * 1000,
   });

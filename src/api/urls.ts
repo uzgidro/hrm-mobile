@@ -65,6 +65,10 @@ export const CHAIRMAN_TASK_DETAIL = (id: number) => `chairman-tasks/${id}`;
 export const NOTIFICATIONS_LIST = 'notifications';
 export const NOTIFICATION_READ = (id: number) => `notifications/${id}/read`;
 export const NOTIFICATIONS_READ_ALL = 'notifications/read-all';
+// Menyudagi QIZIL raqamlar: foydalanuvchining AMALINI kutayotgan hujjatlar soni
+// bo'limlar kesimida ({letters, orders, support, projects, fleet, documents}).
+// Backend 60s keshlaydi; web chap menyuda AYNAN shu manbadan foydalanadi.
+export const MENU_BADGES = 'notifications/menu-badges';
 
 // Employees list
 export const EMPLOYEES_LIST = 'employees';
@@ -123,6 +127,11 @@ export const LETTER_SUBMIT_TRIP = (id: number) => `letters/${id}/submit-trip`;
 // (OLD flow). Gated on the server available_actions flags (the client cannot
 // compute the trip_approver rights).
 export const LETTER_APPROVE_TRIP = (id: number) => `letters/${id}/approve-trip`;
+// DEVONXONA ro'yxatga olgach RAHBAR tasdig'i: registered_pending_rahbar →
+// management_approved (boshqa filial safari). Web'da bu tugma bor edi, mobilda
+// yo'q — ya'ni rahbar safarni telefondan tasdiqlay olmasdi.
+export const LETTER_APPROVE_TRIP_REGISTRATION = (id: number) =>
+  `letters/${id}/approve-trip-registration`;
 export const LETTER_APPROVE_REPORT = (id: number) => `letters/${id}/approve-report`;
 export const LETTER_APPROVE_GUVOHNOMA = (id: number) => `letters/${id}/approve-guvohnoma`;
 
@@ -131,6 +140,10 @@ export const LETTER_APPROVE_GUVOHNOMA = (id: number) => `letters/${id}/approve-g
 // manage rights are branch-scoped (see isBranchHr).
 export const LETTER_TRIP_MOVEMENTS = (id: number) => `letters/${id}/trip-movements`;
 export const LETTER_CONFIRM_RETURN = (id: number) => `letters/${id}/confirm-return`;
+// XODIMNING O'ZI safarni yakunlashi (Face ID sharti serverda tekshiriladi).
+export const LETTER_SELF_CONFIRM_RETURN = (id: number) => `letters/${id}/self-confirm-return`;
+// KADR tasdiqlangan safarning KELGAN SANASINI tuzatadi (har qanday bosqichda).
+export const LETTER_RETURN_DATE = (id: number) => `letters/${id}/return-date`;
 
 // Devonxona "Tasdiqlash": a stamped bildirgi/ariza/xizmat safari sits at
 // pending_registration (auto number+seal) until the chancellery confirms it.
@@ -138,6 +151,14 @@ export const LETTER_CONFIRM_RETURN = (id: number) => `letters/${id}/confirm-retu
 // management_approved); the devonxona may edit the auto number/date. The
 // availability endpoint (declared BEFORE /{pk} server-side) live-checks whether a
 // registration number is free in the branch. exclude_id = the letter's own id.
+// BILDIRGI/ARIZA kelishuv oqimi. Bu hujjatlar IMZOLANMAYDI — backend
+// `/sign` ga 400 `use_agreement_flow` qaytaradi; kelishuvchi agree/disagree
+// qiladi (izoh MAJBURIY), muallif esa qoralamani kelishuvga yuboradi va
+// hammasi kelishgach devonxonaga jo'natadi.
+export const LETTER_AGREE = (id: number) => `letters/${id}/agree`;
+export const LETTER_DISAGREE = (id: number) => `letters/${id}/disagree`;
+export const LETTER_SUBMIT_AGREEMENT = (id: number) => `letters/${id}/submit-agreement`;
+export const LETTER_SEND_TO_REGISTRY = (id: number) => `letters/${id}/send-to-registry`;
 export const LETTER_CONFIRM_REGISTRATION = (id: number) => `letters/${id}/confirm-registration`;
 export const LETTER_REGISTERED_NUMBER_AVAILABILITY = 'letters/registered-number/availability';
 
@@ -151,7 +172,15 @@ export const ORDER_ACT_DETAIL = (id: number) => `order-acts/${id}`;
 export const ORDER_ACT_DECREE_APPROVE = (id: number) => `order-acts/${id}/decree/approve`;
 export const ORDER_ACT_DECREE_REJECT = (id: number) => `order-acts/${id}/decree/reject`;
 export const ORDER_ACT_DECREE_RESUBMIT = (id: number) => `order-acts/${id}/decree/resubmit`;
-export const ORDER_ACT_DECREE_FORWARD = (id: number) => `order-acts/${id}/decree/forward-to-leadership`;
+// Yaratuvchi kelishilgan buyruqni RAHBARIYATGA yuboradi. Yo'l `send-to-leadership`
+// (backend api/v1/order_act.py) — mijozda `forward-to-leadership` deb yozilgan
+// edi va tugma har safar 404 bilan yiqilardi.
+export const ORDER_ACT_DECREE_FORWARD = (id: number) => `order-acts/${id}/decree/send-to-leadership`;
+// KIRITUVCHI shaxs (submitter) buyruqni tasdiqlaydi: pending_submitter →
+// pending_approval / approved. Mijozda umuman yo'q edi — buyruq mobilда
+// shu bosqichda tiqilib qolardi.
+export const ORDER_ACT_DECREE_CONFIRM_SUBMISSION = (id: number) =>
+  `order-acts/${id}/decree/confirm-submission`;
 export const ORDER_ACT_DECREE_REGISTER = (id: number) => `order-acts/${id}/decree/register`;
 export const ORDER_ACT_DECREE_ACKNOWLEDGE = (id: number) => `order-acts/${id}/decree/acknowledge`;
 export const ORDER_ACT_DECREE_ASSIGN_FAMILIARIZERS = (id: number) =>
@@ -194,4 +223,11 @@ export const SUPPORT_TICKET_TAKE = (id: number) => `support-tickets/${id}/take`;
 export const SUPPORT_TICKET_DONE = (id: number) => `support-tickets/${id}/done`;
 export const SUPPORT_TICKET_RATE = (id: number) => `support-tickets/${id}/rate`;
 export const SUPPORT_TICKET_REOPEN = (id: number) => `support-tickets/${id}/reopen`;
+// Ticket ichidagi YOZISHMA (AKT ↔ murojaatchi) va o'qilgan belgisi.
+export const SUPPORT_TICKET_MESSAGES = (id: number) => `support-tickets/${id}/messages`;
+export const SUPPORT_TICKET_READ = (id: number) => `support-tickets/${id}/read`;
+
+// ── Turniket / HikCentral monitoringi (AKT, admin, master-admin) ────────────
+export const HIK_MONITORING_SUMMARY = 'hik-monitoring/summary';
+export const HIK_MONITORING_DEVICES = 'hik-monitoring/devices';
 export const ONLYOFFICE_SERVER_URL = Env.onlyOfficeUrl;

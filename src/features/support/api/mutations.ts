@@ -4,9 +4,11 @@ import {
   SUPPORT_TICKETS,
   SUPPORT_TICKET_RATE,
   SUPPORT_TICKET_REOPEN,
+  SUPPORT_TICKET_MESSAGES,
+  SUPPORT_TICKET_READ,
 } from '@/api/urls';
 import type { PickedFile } from '@/components/AttachmentField';
-import type { SupportTicket } from '@/types';
+import type { SupportTicket, SupportTicketMessage } from '@/types';
 import { supportKeys } from './queries';
 
 export interface CreateTicketForm {
@@ -74,5 +76,30 @@ export function useReopenTicket(id: number) {
   return useMutation({
     mutationFn: () => reopenTicket(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: supportKeys.all }),
+  });
+}
+
+// ── Ticket yozishmasi (AKT ↔ murojaatchi) ───────────────────────────────────
+// Backend bo'sh va 4000 belgidan uzun xabarni rad etadi, shu bois mijoz ham
+// bo'sh matnda so'rov yubormaydi.
+export function sendTicketMessage(id: number, body: string): Promise<SupportTicketMessage> {
+  return apiClient
+    .post<SupportTicketMessage>(SUPPORT_TICKET_MESSAGES(id), { body })
+    .then((r) => r.data);
+}
+
+// Yozishmani O'QILGAN deb belgilaydi (ro'yxatdagi o'qilmagan soni nolga tushadi).
+export function markTicketRead(id: number): Promise<unknown> {
+  return apiClient.post(SUPPORT_TICKET_READ(id)).then((r) => r.data);
+}
+
+export function useSendTicketMessage(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: string) => sendTicketMessage(id, body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: supportKeys.messages(id) });
+      qc.invalidateQueries({ queryKey: supportKeys.all });
+    },
   });
 }

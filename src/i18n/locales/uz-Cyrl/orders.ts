@@ -84,6 +84,8 @@ export default {
   actionRequestChange: 'Ўзгартириш',
   actionApprove: 'Тасдиқлаш',
   actionResubmit: 'Қайта юбориш',
+  actionConfirmSubmission: 'Тасдиқлаш',
+  confirmSubmissionSuccess: 'Буйруқ тасдиқланди',
   actionForward: 'Раҳбариятга юбориш',
   actionRegister: 'Рўйхатга олиш',
   actionAcknowledge: 'Танишдим',

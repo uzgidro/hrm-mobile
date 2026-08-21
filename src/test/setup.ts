@@ -16,6 +16,18 @@ jest.mock('expo-image', () => {
   };
 });
 
+// react-native-webview → a plain View. WebView'ning native moduli jest'da yo'q
+// (`TurboModuleRegistry.getEnforcing('RNCWebView')` yiqiladi), lekin uni
+// ishlatadigan ekranlarni (hujjat ko'ruvchi, turniket hodisasi xaritasi) shunda
+// ham render qilib tekshirish mumkin.
+jest.mock('react-native-webview', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  const WebView = (props: Record<string, unknown>) =>
+    React.createElement(View, { ...props, testID: props.testID ?? 'webview' });
+  return { __esModule: true, WebView, default: WebView };
+});
+
 // expo-secure-store → in-memory map so storage.ts works without the native layer.
 jest.mock('expo-secure-store', () => {
   const store = new Map<string, string>();

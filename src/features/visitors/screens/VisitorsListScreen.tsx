@@ -11,6 +11,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { useBreakpoint } from '@/utils/responsive';
+import { isEmployeeLike, isKPP } from '@/utils/roles';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader, HeaderAction } from '@/components/ScreenHeader';
@@ -37,9 +38,18 @@ export default function MehmonlarScreen() {
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
-  const orgBranchId =
+  // FILIAL parametri — web GuestsTable bilan bir xil qoida: ko'p filialli
+  // rollarga (buxgalter, kuzatuvchi, KPP va oddiy xodim) UMUMAN yuborilmaydi.
+  // Backend (`VisitorService.list_visitors`) ularga BIRIKTIRILGAN BARCHA
+  // filiallarning mehmonlarini beradi; parametr esa ro'yxatni BITTA filialga
+  // qisardi — ikki filialga biriktirilgan KPP mobilда ikkinchisining
+  // mehmonlarini umuman ko'rmasdi. Qolgan rollar (kadr, o'rinbosar,
+  // master-admin) uchun o'z filiali — webdagi tanlangan filialning ekvivalenti.
+  const skipBranchParam = isEmployeeLike(user) || isKPP(user);
+  const ownBranchId =
     user?.employee?.organization_branches?.[0]?.id ??
     user?.employee?.department?.organization_branch_id;
+  const orgBranchId = skipBranchParam ? undefined : ownBranchId;
 
   const { data: visitors = [], isLoading, refetch, isFetching } = useQuery(visitorsListQuery(orgBranchId));
 

@@ -88,6 +88,8 @@ export default {
   actionRequestChange: "O'zgartirish",
   actionApprove: 'Tasdiqlash',
   actionResubmit: 'Qayta yuborish',
+  actionConfirmSubmission: 'Tasdiqlash',
+  confirmSubmissionSuccess: 'Buyruq tasdiqlandi',
   actionForward: 'Rahbariyatga yuborish',
   actionRegister: "Ro'yxatga olish",
   actionAcknowledge: 'Tanishdim',

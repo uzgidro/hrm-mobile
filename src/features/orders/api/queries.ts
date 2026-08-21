@@ -25,18 +25,24 @@ import type { Employee, OrderAct, OrderActCategory } from '@/types';
 // refreshes the list AND the open detail in one call.
 export const orderKeys = {
   all: ['order-acts'] as const,
-  list: (orgBranchId?: number) => [...orderKeys.all, orgBranchId ?? null] as const,
+  list: () => [...orderKeys.all, 'list'] as const,
   detail: (id: number) => [...orderKeys.all, 'detail', id] as const,
 };
 
-// The list tab. Key/params mirror the old tab query exactly.
-export function ordersListQuery(orgBranchId?: number) {
+// The list tab.
+//
+// FILIAL parametri ATAYLAB YUBORILMAYDI. Backend (`OrderActService._apply_visibility`)
+// master-admin'дan tashqari HAMMANI baribir "menga tegishli buyruqlar" bilan
+// cheklaydi — muallif / subyekt / kirituvchi / kelishuvchi / rahbar / tanishtiriladigan /
+// bo'lim boshlig'i / o'z filiali devonxonasi. `organization_branch_id` esa bu
+// ro'yxatni YANA filialga qisadi: boshqa filial buyrug'iga imzolovchi qilib
+// belgilangan rahbar uni mobilда UMUMAN ko'rmasdi (webda bu holat uchun
+// leadership tabi `organization_branch_id: null` yuboradi — buildOrdersListParams).
+// Mobil'da filial tanlagichi yo'q, shu bois to'g'ri javob — filtrsiz so'rash.
+export function ordersListQuery() {
   return queryOptions({
-    queryKey: orderKeys.list(orgBranchId),
-    queryFn: () =>
-      apiClient
-        .get(ORDER_ACTS, { params: orgBranchId ? { organization_branch_id: orgBranchId } : {} })
-        .then((r) => unwrapList<OrderAct>(r.data)),
+    queryKey: orderKeys.list(),
+    queryFn: () => apiClient.get(ORDER_ACTS).then((r) => unwrapList<OrderAct>(r.data)),
     staleTime: 30 * 1000,
     refetchInterval: 60 * 1000,
   });

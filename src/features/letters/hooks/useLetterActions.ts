@@ -5,7 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { getApiErrorMessage } from '@/api/errors';
 import { confirm } from '@/lib/confirm';
 import {
-  signLetter, rejectLetter, approveTrip, approveReport, approveGuvohnoma,
+  signLetter, rejectLetter, approveTrip, approveTripRegistration, approveReport, approveGuvohnoma,
 } from '../api/mutations';
 import { letterKeys } from '../api/queries';
 
@@ -65,8 +65,14 @@ export function useLetterActions(letterId: number, refetch: () => void) {
   // confirm/done copy is per-kind (approving a report or guvohnoma is not the
   // same as approving the whole trip).
   const approve = useCallback(
-    async (kind: 'trip' | 'report' | 'guvohnoma') => {
-      const fn = kind === 'trip' ? approveTrip : kind === 'report' ? approveReport : approveGuvohnoma;
+    async (kind: 'trip' | 'registration' | 'report' | 'guvohnoma') => {
+      const fn = kind === 'trip'
+        ? approveTrip
+        : kind === 'registration'
+          ? approveTripRegistration
+          : kind === 'report'
+            ? approveReport
+            : approveGuvohnoma;
       const ok = await confirm({
         title: t(`letters.approve_${kind}_confirmTitle`),
         message: t(`letters.approve_${kind}_confirmMessage`),

@@ -57,8 +57,12 @@ export default function MyKpiScreen() {
   const hasTeam = (teamQ.data?.employees?.length ?? 0) > 0;
 
   const profile = data?.profile;
-  const entries = data?.entries ?? [];
-  const periods = data?.available_periods ?? [];
+  // TUZOQ: `data` massiv bo'lib qolsa (API shakli o'zgarsa yoki xato javob
+  // ro'yxat qaytarsa) `data.entries` — `Array.prototype.entries` FUNKSIYASI
+  // bo'ladi, `?? []` uni to'sib qololmaydi va ekran "not iterable" bilan oq
+  // ekranga aylanardi. Shakl tekshiruvi shu bois qat'iy.
+  const entries = Array.isArray(data?.entries) ? data.entries : [];
+  const periods = Array.isArray(data?.available_periods) ? data.available_periods : [];
   const activePeriod = period || data?.period || '';
   const totals = scorecardTotals(entries);
 

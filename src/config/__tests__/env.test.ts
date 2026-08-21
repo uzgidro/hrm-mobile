@@ -27,8 +27,17 @@ describe('Env config', () => {
     expect(Env.onlyOfficeUrl.endsWith('/')).toBe(false);
   });
 
+  it('exposes mapViewerUrl as a non-empty https URL with no trailing slash', () => {
+    expect(typeof Env.mapViewerUrl).toBe('string');
+    expect(Env.mapViewerUrl.length).toBeGreaterThan(0);
+    expect(Env.mapViewerUrl).toMatch(HTTPS_URL);
+    expect(Env.mapViewerUrl.endsWith('/')).toBe(false);
+  });
+
   it('equals the production defaults when no EXPO_PUBLIC_* override is set', () => {
     expect(Env.apiUrl).toBe('https://hr-api.uzgidro.uz');
     expect(Env.onlyOfficeUrl).toBe('https://doc-editor.uzgidro.uz');
+    // Xarita — O'Z tayler serverimiz (tashqi provayder EMAS).
+    expect(Env.mapViewerUrl).toBe('https://hr.uzgidro.uz/tiles/styles/uzgidro-dark');
   });
 });

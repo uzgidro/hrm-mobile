@@ -46,7 +46,7 @@ export function OrderDetailView({ id, embedded = false }: { id: number; embedded
 
   const { data: order, isLoading, refetch } = useQuery(orderDetailQuery(orderId));
 
-  const { busy, approve, reject, resubmit, forward, acknowledge, register } =
+  const { busy, approve, reject, resubmit, forward, confirmSubmission, acknowledge, register } =
     useDecreeActions(orderId, refetch);
 
   const assignFam = useAssignFamiliarizers(orderId);
@@ -234,6 +234,7 @@ export function OrderDetailView({ id, embedded = false }: { id: number; embedded
         onApprove={approve}
         onReject={() => setRejectOpen(true)}
         onResubmit={resubmit}
+        onConfirmSubmission={confirmSubmission}
         onForward={forward}
         onAcknowledge={acknowledge}
         onRegister={() => setRegisterOpen(true)}

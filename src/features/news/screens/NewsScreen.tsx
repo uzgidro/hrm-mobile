@@ -1,4 +1,4 @@
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import {
   View, Text, FlatList, StyleSheet, RefreshControl,
   type ListRenderItem,
@@ -17,18 +17,26 @@ import { router } from 'expo-router';
 import { isNewsManager } from '@/utils/roles';
 import { LoadingView, EmptyState } from '@/components/StateViews';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
-import { newsListQuery } from '../api/queries';
+import { newsListQuery, newsBranchesQuery } from '../api/queries';
 
 type Styles = ReturnType<typeof makeStyles>;
 
-const NewsCard = memo(function NewsCard({ item, styles, grid }: { item: NewsPost; styles: Styles; grid?: boolean }) {
+const NewsCard = memo(function NewsCard(
+  { item, styles, grid, branchName }:
+  { item: NewsPost; styles: Styles; grid?: boolean; branchName?: string },
+) {
   const { t } = useTranslation();
+  // MUALLIF: `GET news-posts` muallifni QAYTARMAYDI (web ham ko'rsatmaydi) —
+  // shu bois avatar+ism faqat backend uni bergan holatda chiziladi, aks holda
+  // sana yolg'iz sarlavha bo'ladi. Ilgari bu yerda har doim "Admin" degan
+  // soxta muallif va bo'sh avatar turardi.
+  const author = item.author;
   return (
     <View style={[styles.card, grid && styles.cardGrid]}>
       <View style={styles.cardHeader}>
-        <EmployeeAvatar emp={item.author ?? {}} size={42} />
+        {author ? <EmployeeAvatar emp={author} size={42} /> : null}
         <View style={styles.authorInfo}>
-          <Text style={styles.authorName}>{item.author?.legal_name || t('news.authorFallback')}</Text>
+          {author ? <Text style={styles.authorName}>{author.legal_name}</Text> : null}
           <Text style={styles.newsDate}>{dayjs(item.created_at).format('DD.MM.YYYY HH:mm')}</Text>
         </View>
       </View>
@@ -37,7 +45,13 @@ const NewsCard = memo(function NewsCard({ item, styles, grid }: { item: NewsPost
       {item.description ? <Text style={styles.newsDesc} numberOfLines={4}>{item.description}</Text> : null}
 
       <View style={styles.tagWrapper}>
-        <Text style={styles.tag}>{item.organization_branch?.name || t('news.allEmployees')}</Text>
+        {/* Filial NOMI ro'yxat javobida yo'q (faqat organization_branch_id) —
+            web ham uni filiallar ro'yxatidan qidiradi (NewsPage branchName).
+            Aks holda filialga yo'naltirilgan yangilik ham "Barcha xodimlarga"
+            deb ko'rinardi. */}
+        <Text style={styles.tag}>
+          {item.organization_branch?.name || branchName || t('news.allEmployees')}
+        </Text>
       </View>
     </View>
   );
@@ -54,10 +68,27 @@ export default function NewsScreen() {
   const canManage = isNewsManager(user);
 
   const { data: news = [], isLoading, refetch, isFetching } = useQuery(newsListQuery(branchId));
+  // Filial nomlari — yangilik qaysi filialga yo'naltirilganini yozish uchun
+  // (ro'yxat javobida faqat `organization_branch_id` bor). Forma ham shu
+  // keshdan foydalanadi.
+  const { data: branches = [] } = useQuery(newsBranchesQuery(true));
+  const branchNameById = useMemo(
+    () => new Map(branches.map((b) => [Number(b.id), b.name])),
+    [branches],
+  );
 
   const renderItem = useCallback<ListRenderItem<NewsPost>>(
-    ({ item }) => <NewsCard item={item} styles={styles} grid={cols > 1} />,
-    [styles, cols],
+    ({ item }) => (
+      <NewsCard
+        item={item}
+        styles={styles}
+        grid={cols > 1}
+        branchName={item.organization_branch_id != null
+          ? branchNameById.get(Number(item.organization_branch_id))
+          : undefined}
+      />
+    ),
+    [styles, cols, branchNameById],
   );
 
   const keyExtractor = useCallback((item: NewsPost) => String(item.id), []);

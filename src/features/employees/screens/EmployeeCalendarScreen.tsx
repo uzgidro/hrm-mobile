@@ -12,6 +12,7 @@ import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { AttendanceEvent } from '@/types';
 import { Icon } from '@/components/Icon';
+import { AttendanceEventRow } from '@/components/AttendanceEventRow';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { MonthNavigator } from '@/components/MonthNavigator';
@@ -185,12 +186,14 @@ export default function EmployeeCalendarScreen() {
           {selectedEvents.length === 0 ? (
             <Text style={styles.emptyText}>{t('employees.logEmpty')}</Text>
           ) : (
-            selectedEvents.map((ev) => (
-              <View key={ev.id} style={styles.eventRow}>
-                <Text style={styles.eventTime}>{dayjs(ev.happen_time).format('HH:mm')}</Text>
-                <Icon name={ev.direction_type === 'entrance' ? 'chevronRight' : 'chevronLeft'} size={16} color={colors.textSecondary} />
-                <Text style={styles.eventDir}>{ev.direction_type === 'entrance' ? t('employees.entryTitle') : t('employees.exitTitle')}</Text>
-              </View>
+            // Mening tabelim bilan bir xil qator: GES/obyekt nomi, Face ID
+            // surati va bosilganda xarita (AttendanceEventRow).
+            selectedEvents.map((ev, i) => (
+              <AttendanceEventRow
+                key={ev.id}
+                event={ev}
+                showBorder={i < selectedEvents.length - 1}
+              />
             ))
           )}
         </View>

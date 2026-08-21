@@ -2,6 +2,9 @@
 // See uz-Latn/support.ts for the meaning of each key.
 export default {
   title: 'Техподдержка',
+  chatPlaceholder: 'Напишите сообщение...',
+  chatEmpty: 'Сообщений нет — напишите первым',
+  chatTitle: 'Переписка',
   subtitle: 'Мои обращения',
   empty: 'Обращений нет',
   loadError: 'Ошибка загрузки обращений',

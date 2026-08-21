@@ -22,10 +22,14 @@ export type NavContext = {
   employee: Employee | undefined;
   pendingCount: number;
   unreadCount: number;
+  // Backend `notifications/menu-badges` — bo'limlar kesimida foydalanuvchining
+  // AMALINI kutayotgan hujjatlar soni (web chap menyusidagi qizil raqamlar).
+  // Ixtiyoriy: berilmasa plitkalar raqamsiz chiziladi.
+  menuBadges?: { projects?: number; documents?: number; support?: number };
 };
 
 export function buildNavSections(t: TFunction, ctx: NavContext): NavSection[] {
-  const { user, employee, pendingCount, unreadCount } = ctx;
+  const { user, employee, pendingCount, unreadCount, menuBadges } = ctx;
 
   const raw: NavSection[] = [
     {
@@ -45,7 +49,7 @@ export function buildNavSections(t: TFunction, ctx: NavContext): NavSection[] {
         { key: 'assistant', icon: 'target', label: t('modules.labels.assistant'), route: '/assistant', access: 'assistant' },
         { key: 'requests', icon: 'checklist', label: t('modules.labels.requests'), route: '/work-leaves', access: 'requests', badge: pendingCount },
         { key: 'chairman', icon: 'calendar', label: t('modules.labels.chairman'), route: '/chairman-tasks', access: 'chairman' },
-        { key: 'projects', icon: 'board', label: t('modules.labels.projects'), route: '/loyihalar', access: 'projects' },
+        { key: 'projects', icon: 'board', label: t('modules.labels.projects'), route: '/loyihalar', access: 'projects', badge: menuBadges?.projects },
         { key: 'kpi', icon: 'target', label: t('modules.labels.kpi'), route: '/kpi', access: 'kpi' },
         { key: 'salary', icon: 'wallet', label: t('modules.labels.salary'), route: '/salary', access: 'salary' },
       ],
@@ -63,8 +67,11 @@ export function buildNavSections(t: TFunction, ctx: NavContext): NavSection[] {
     {
       title: t('modules.sections.other'),
       items: [
-        { key: 'documents', icon: 'folder', label: t('modules.labels.documents'), route: '/hujjatlar', access: 'documents' },
-        { key: 'support', icon: 'help', label: t('modules.labels.support'), route: '/texnik-yordam', access: 'support' },
+        { key: 'documents', icon: 'folder', label: t('modules.labels.documents'), route: '/hujjatlar', access: 'documents', badge: menuBadges?.documents },
+        { key: 'support', icon: 'help', label: t('modules.labels.support'), route: '/texnik-yordam', access: 'support', badge: menuBadges?.support },
+        // TERMINALLAR (turniket/HikCentral) — AKT xodimi, admin va master-admin
+        // uchun; `canAccessPage('terminals')` boshqalarda uni tozalab tashlaydi.
+        { key: 'terminals', icon: 'fingerprint', label: t('modules.labels.terminals'), route: '/terminallar', access: 'terminals' },
         { key: 'news', icon: 'news', label: t('modules.labels.news'), route: '/news', access: 'news' },
         { key: 'notifications', icon: 'bell', label: t('modules.labels.notifications'), route: '/notifications', access: 'notifications', badge: unreadCount },
         { key: 'profile', icon: 'user', label: t('modules.labels.profile'), route: '/(tabs)/profile', access: 'profile' },

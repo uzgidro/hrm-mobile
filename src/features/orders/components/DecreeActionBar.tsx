@@ -8,7 +8,8 @@ import type { DecreePermissions } from '@/utils/orderStatus';
 // entirely by `perms` (from decreePermissions — the web-parity gating); the
 // screen passes the workflow callbacks. `busy` disables + shows a spinner.
 export function DecreeActionBar({
-  perms, busy, onApprove, onReject, onResubmit, onForward, onAcknowledge, onRegister,
+  perms, busy, onApprove, onReject, onResubmit, onForward, onConfirmSubmission,
+  onAcknowledge, onRegister,
 }: {
   perms: DecreePermissions;
   busy: boolean;
@@ -16,6 +17,7 @@ export function DecreeActionBar({
   onReject: () => void;
   onResubmit: () => void;
   onForward: () => void;
+  onConfirmSubmission: () => void;
   onAcknowledge: () => void;
   onRegister: () => void;
 }) {
@@ -35,6 +37,11 @@ export function DecreeActionBar({
             {busy ? <ActivityIndicator color={colors.onPrimary} /> : <Text style={styles.actApproveText}>{t('orders.actionApprove')}</Text>}
           </TouchableOpacity>
         </>
+      )}
+      {perms.canConfirmSubmission && (
+        <TouchableOpacity style={[styles.actBtn, styles.actApprove]} disabled={busy} onPress={onConfirmSubmission} activeOpacity={0.85}>
+          {busy ? <ActivityIndicator color={colors.onPrimary} /> : <Text style={styles.actApproveText}>{t('orders.actionConfirmSubmission')}</Text>}
+        </TouchableOpacity>
       )}
       {perms.canResubmit && (
         <TouchableOpacity style={[styles.actBtn, styles.actApprove]} disabled={busy} onPress={onResubmit} activeOpacity={0.85}>

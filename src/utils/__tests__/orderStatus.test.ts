@@ -32,6 +32,8 @@ describe('ORDER_STATUS_META', () => {
   it('locks in every known status labelKey + kind', () => {
     expect(ORDER_STATUS_META).toEqual({
       draft: { labelKey: 'status.orderDraft', kind: 'neutral' },
+      // Kirituvchi (submitter) tasdig'i — backend `pending_submitter`.
+      pending_submitter: { labelKey: 'status.orderPendingSubmitter', kind: 'pending' },
       pending_approval: { labelKey: 'status.orderPendingApproval', kind: 'pending' },
       pending_leadership: { labelKey: 'status.orderPendingLeadership', kind: 'pending' },
       pending_chancellery: { labelKey: 'status.orderPendingChancellery', kind: 'info' },
@@ -115,6 +117,15 @@ describe('needsMyAction', () => {
   it('returns false when employeeId is missing', () => {
     expect(needsMyAction(order({ status: 'pending_approval' }))).toBe(false);
     expect(needsMyAction(order({ status: 'pending_approval' }), 0)).toBe(false);
+  });
+
+  it("backend `action_required` bayrog'i mijoz mantiqidan USTUN (web bilan bir xil)", () => {
+    // Devonxona ro'yxatga olishi kabi holatlarda foydalanuvchi imzolovchi emas,
+    // lekin amal aynan undan kutiladi.
+    const o = order({ status: 'pending_chancellery', action_required: true } as any);
+    expect(needsMyAction(o, 123)).toBe(true);
+    // Bayroqsiz — eski mijoz mantiqi.
+    expect(needsMyAction(order({ status: 'pending_chancellery' }), 123)).toBe(false);
   });
 
   it('returns true when employee is an assigned stage signer and has not signed', () => {

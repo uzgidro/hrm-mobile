@@ -17,7 +17,8 @@ import {
   canSubmitReport, canResetReport, canChancelleryConfirmRegistration,
 } from '@/utils/letterStatus';
 import {
-  canSubmitTrip, canApproveTrip, canApproveReport, canApproveGuvohnoma, canRejectLetter,
+  canSubmitTrip, canApproveTrip, canApproveTripRegistration, canApproveReport,
+  canApproveGuvohnoma, canRejectLetter,
 } from '@/utils/tripStatus';
 import { letterDetailQuery } from '../api/queries';
 import { useLetterActions } from '../hooks/useLetterActions';
@@ -25,6 +26,7 @@ import { useResetReport, useSubmitTrip } from '../api/mutations';
 import { DetailHeader, Section, KV, SignerRow } from './DetailParts';
 import { LetterActionBar } from './LetterActionBar';
 import { TripMovementsSection } from './TripMovementsSection';
+import { AgreementSection } from './AgreementSection';
 import { ConfirmRegistrationModal } from './ConfirmRegistrationModal';
 
 // The body of the letter detail — extracted so it can render either as the
@@ -81,13 +83,17 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
   const hasDoc = !!letter.generated_document_path;
 
   // ── Trip leadership approvals (server flags; mutually-exclusive statuses) ──
+  // `registration` — devonxona ro'yxatidan keyingi RAHBAR tasdig'i: buning uchun
+  // server bayrog'i YO'Q, shu bois mijoz web bilan bir xil qoidani qo'llaydi.
   const approveTripKind = canApproveTrip(letter)
     ? 'trip'
-    : canApproveReport(letter)
-      ? 'report'
-      : canApproveGuvohnoma(letter)
-        ? 'guvohnoma'
-        : null;
+    : canApproveTripRegistration(letter, user, employeeId)
+      ? 'registration'
+      : canApproveReport(letter)
+        ? 'report'
+        : canApproveGuvohnoma(letter)
+          ? 'guvohnoma'
+          : null;
 
   // ── Trip report (xizmat safari, OLD flow) ──
   const canReport = canSubmitReport(letter, employeeId);
@@ -173,6 +179,9 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
 
         <TripMovementsSection letter={letter} user={user} onChanged={refetch} />
 
+        {/* Bildirgi/ariza kelishuvi — kelishuvchilar holati va amallar. */}
+        <AgreementSection letter={letter} employeeId={employeeId} onChanged={refetch} />
+
         {timeline.length > 0 && (
           <Section title={t('letters.sectionSigners')}>
             {timeline.map((entry) => <SignerRow key={entry.key} item={entry} />)}
@@ -222,7 +231,11 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
             disabled={busy}
           >
             <Icon name="check" size={16} color={colors.onPrimary} />
-            <Text style={styles.approveText}>{t('letters.tripApprove')}</Text>
+            <Text style={styles.approveText}>
+              {approveTripKind === 'registration'
+                ? t('letters.approve_registration_action')
+                : t('letters.tripApprove')}
+            </Text>
           </TouchableOpacity>
         )}
 

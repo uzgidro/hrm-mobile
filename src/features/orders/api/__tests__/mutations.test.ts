@@ -7,6 +7,7 @@ import {
   ORDER_ACT_DECREE_REJECT,
   ORDER_ACT_DECREE_RESUBMIT,
   ORDER_ACT_DECREE_FORWARD,
+  ORDER_ACT_DECREE_CONFIRM_SUBMISSION,
   ORDER_ACT_DECREE_REGISTER,
   ORDER_ACT_DECREE_ACKNOWLEDGE,
   ORDER_ACT_DECREE_ASSIGN_FAMILIARIZERS,
@@ -20,6 +21,7 @@ import {
   registerDecree,
   assignFamiliarizers,
   createOrder,
+  confirmSubmissionDecree,
 } from '../mutations';
 
 let mock: MockAdapter;
@@ -27,6 +29,16 @@ beforeEach(() => {
   mock = new MockAdapter(apiClient);
 });
 afterEach(() => mock.restore());
+
+// Kirituvchi shaxs tasdig'i (pending_submitter) — mobilда bu amal yo'q edi.
+describe('confirmSubmissionDecree', () => {
+  it('TANASIZ POST bilan confirm-submission ga boradi', async () => {
+    mock.onPost(ORDER_ACT_DECREE_CONFIRM_SUBMISSION(6)).reply(200, { id: 6, status: 'pending_approval' });
+    const data = await confirmSubmissionDecree(6);
+    expect(data).toEqual({ id: 6, status: 'pending_approval' });
+    expect(mock.history.post[0].url).toBe(ORDER_ACT_DECREE_CONFIRM_SUBMISSION(6));
+  });
+});
 
 describe('decree workflow request functions', () => {
   it('approveDecree POSTs the approve endpoint with an empty {} body', async () => {

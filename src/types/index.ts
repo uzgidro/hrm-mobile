@@ -9,12 +9,22 @@ export interface User {
   hr_branch_ids?: number[];
   /** branches where this user is a chancellery/devonxona branch-leader (leadership_role='chancellery'), from /me */
   chancellery_branch_ids?: number[];
+  // Tabel sozlamalarida "Texnik yordam (AKT)" roli berilgan filiallar —
+  // backend `require_system_admin` shu roldagi XODIMni ham kiritadi
+  // (turniket/HikCentral monitoringi).
+  akt_branch_ids?: number[];
   /** departments this user heads (department head), from /me — scopes work-leave "all" view like the web */
   headed_department_ids?: number[];
   /** may create/edit news posts (auth/me flag = can_manage_news on the backend) */
   is_news_manager?: boolean;
   /** may access the KPI module — auth/me flag (backend scoping.kpi_enabled); gates the KPI tile like the web nav */
   kpi_enabled?: boolean;
+  // Tabel sozlamalarida filialga DIREKTOR / O'RINBOSAR qilib biriktirilgan
+  // filiallar (auth/me). Safarni rahbar tasdiqlashi shular bo'yicha aniqlanadi
+  // (web roleHelpers.canApproveTripForBranch) — backendда bu amal uchun
+  // available_actions bayrog'i YO'Q.
+  director_branch_ids?: number[];
+  deputy_branch_ids?: number[];
 }
 
 export interface Employee {
@@ -44,15 +54,40 @@ export interface OrganizationBranch {
   name: string;
 }
 
+// Turniket joylashuvi (GES / obyekt). `locations` M2M bo'lgani uchun massiv
+// keladi; amalda bitta joylashuv bo'ladi — `eventPlace()` (utils/attendance)
+// birinchisini oladi va nomni shundan yasaydi.
+export interface TurnstileLocation {
+  id?: number;
+  name?: string | null;
+  address?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  organization_branch_id?: number | null;
+  organization_branch?: { id?: number; name?: string | null } | null;
+}
+
 export interface AttendanceEvent {
   id: number;
   happen_time: string;
   direction_type?: string | null;
   check_in_out_type?: number | null;
   employee_id?: number | null;
-  turnstile?: { acs_dev_name?: string; name?: string };
+  turnstile?: {
+    acs_dev_name?: string;
+    name?: string;
+    display_name?: string | null;
+    locations?: TurnstileLocation[] | null;
+  };
   is_granted?: boolean;
   user_type?: string | null;
+  // Face ID suratining (MinIO) to'liq manzili — backend `photo_path` computed
+  // maydonida beradi (imzolangan URL, brauzer/RN <Image> uchun tayyor).
+  photo_path?: string | null;
+  // Turniket joylashgan filial (backend computed) — GES nomini topib bo'lmasa
+  // filial nomiga tayanamiz.
+  terminal_branch_id?: number | null;
+  employee_branch_id?: number | null;
 }
 
 export interface WorkLeave {
@@ -133,13 +168,22 @@ export interface OrderAct {
   rejection_reason?: string | null;
   comments?: OrderActComment[];
   document?: { id: number; document_objectname?: string } | null;
+  // Backend joriy foydalanuvchi uchun hisoblaydigan bayroqlar (web BuyruqlarTable
+  // ularni sariq ajratish uchun ishlatadi).
+  action_required?: boolean;
+  is_unseen?: boolean;
 }
 
 export interface LetterSigner {
   id?: number;
   employee_id?: number;
-  signer_type?: 'main' | 'ordinary' | 'management' | string;
+  // 'agreement' — bildirgi/ariza KELISHUVCHISI, 'addressee' — adresat (imzolamaydi).
+  signer_type?: 'main' | 'ordinary' | 'management' | 'agreement' | 'addressee' | string;
   employee?: Employee;
+  // Kelishuvchi holati (signer_type='agreement'): null = kutmoqda, true/false.
+  agreed?: boolean | null;
+  comment?: string | null;
+  acted_at?: string | null;
 }
 
 // Per-user, per-record action flags the backend computes on the letter DETAIL
@@ -154,6 +198,13 @@ export interface LetterAvailableActions {
   can_approve_trip?: boolean;
   can_approve_report?: boolean;
   can_approve_guvohnoma?: boolean;
+  // Xodim safarni O'ZI yakunlaydi (backend 2026-08-19). Tugma FAQAT xodim o'z
+  // filiali turniketidan (Face ID) o'tgach ochiladi va yakunlash sanasi ham
+  // o'sha o'tish sanasi (`self_finish_date`) — shartni SERVER hisoblaydi,
+  // mijoz uni qayta talqin qilmaydi (aks holda tugma ko'rinib, bosganda
+  // `face_id_required` 400 bo'lardi).
+  can_self_finish_trip?: boolean;
+  self_finish_date?: string | null;
 }
 
 export interface Letter {
@@ -214,6 +265,13 @@ export interface Letter {
   // docx — form edits are missing from the document. Drives a warning banner
   // in the detail view (web parity: LetterDetailModal document_out_of_sync).
   document_out_of_sync?: boolean;
+  // Backend HAR BIR foydalanuvchi uchun hisoblaydigan bayroqlar (ro'yxatda ham,
+  // tafsilotda ham keladi). `action_required` — "hozir bosiladigan tugmasi bor"
+  // (kelishuv, devonxona ro'yxatga olishi, rahbar tasdig'i, hisobot...). Web
+  // undan sariq ajratish uchun foydalanadi (LettersTable rowNeedsAction).
+  action_required?: boolean;
+  // Hech ochilmagan yoki oxirgi ochilishdan keyin O'ZGARGAN hujjat.
+  is_unseen?: boolean;
 }
 
 // A single kelish/ketish event of a business trip. event_type is a backend
@@ -252,6 +310,13 @@ export interface Notification {
   news_post_id?: number | null;
   workspace_id?: number | null;
   card_id?: number | null;
+  // Backend NotificationRead bularni RO'YXATDA ham qaytaradi (faqat push'da
+  // emas) — deep-link shu id'lar orqali tafsilotga o'tadi.
+  letter_id?: number | null;
+  kpi_entry_id?: number | null;
+  support_ticket_id?: number | null;
+  work_leave_id?: number | null;
+  medical_checkup_id?: number | null;
   is_read: boolean;
   read_at?: string | null;
   created_at: string;
@@ -785,4 +850,52 @@ export interface SupportTicket {
   creator?: Employee | null;
   assignee?: Employee | null;
   attachments?: SupportTicketAttachment[];
+  participants?: SupportTicketParticipant[];
+  // Shu foydalanuvchi uchun O'QILMAGAN xabarlar soni (ro'yxatdagi qizil nuqta).
+  // Xabarlarning O'ZI ro'yxatga tushmaydi — ular alohida endpointda.
+  unread_count?: number | null;
+}
+
+// Ticket ichidagi yozishma (AKT ↔ murojaatchi). `is_system` — tizim xabari
+// ("X yozishmaga qo'shildi"), u markazda kulrang ko'rsatiladi.
+// ── Turniket (HikCentral) monitoringi ───────────────────────────────────────
+export interface HikSummary {
+  devices_online?: number;
+  devices_offline?: number;
+  devices_total?: number;
+  enrollment_verified?: number;
+  enrollment_failed?: number;
+  enrollment_pending?: number;
+}
+
+export interface HikDevice {
+  id: number;
+  acs_dev_name?: string | null;
+  display_name?: string | null;
+  /** display_name || acs_dev_name — serverda hisoblanadi. */
+  effective_name?: string | null;
+  acs_dev_ip?: string | null;
+  status?: string | null;
+  online?: boolean | null;
+  last_online_at?: string | null;
+  last_offline_at?: string | null;
+  doors?: { id?: number; name?: string | null; direction_type?: string | null }[] | null;
+  locations?: { id?: number; name?: string | null; organization_branch_id?: number | null }[] | null;
+}
+
+export interface SupportTicketMessage {
+  id: number;
+  ticket_id?: number;
+  author_id?: number | null;
+  author?: Employee | null;
+  body?: string | null;
+  is_system?: boolean | null;
+  created_at?: string | null;
+}
+
+export interface SupportTicketParticipant {
+  id?: number;
+  employee_id?: number | null;
+  employee?: Employee | null;
+  added_by_id?: number | null;
 }

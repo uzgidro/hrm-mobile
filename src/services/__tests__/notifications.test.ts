@@ -147,3 +147,82 @@ describe('routeForNotification — work_leave', () => {
     ).toBe('/order-detail?id=3');
   });
 });
+
+// 2026-08-19 da backendga qo'shilgan turlar. Ular xaritada bo'lmasa, xabar
+// "Bildirishnoma" degan umumiy sarlavha bilan chiqardi va bosilganda hech
+// qayerga olib bormasdi.
+describe('yangi bildirishnoma turlari (2026-08-19)', () => {
+  it('safar turlari o\'z sarlavhasini oladi', () => {
+    expect(notificationMeta('trip_return_confirm_prompt').title).toBe('Safar yakunlandimi?');
+    expect(notificationMeta('trip_self_finished').title).toBe('Xodim safarni yakunladi');
+    expect(notificationMeta('trip_return_confirm_prompt').icon).toBe('briefcase');
+  });
+
+  it('tibbiy ko\'rik / buyruq muddati / mehmon / zoom turlari xaritada bor', () => {
+    for (const type of [
+      'medical_checkup_due', 'medical_checkup_due_hr', 'medical_result_recorded',
+      'hr_order_soon', 'hr_order_expired', 'visitor_arrived', 'zoom_decision',
+      'navbatchilik_assigned',
+    ]) {
+      expect(notificationMeta(type).title).not.toBe('Bildirishnoma');
+    }
+  });
+
+  it('safar so\'rovi letter_id bilan xat tafsilotiga, idsiz ro\'yxatga boradi', () => {
+    expect(routeForNotification({ type: 'trip_return_confirm_prompt', letter_id: 12 })).toBe(
+      '/letter-detail?id=12'
+    );
+    // In-app qatorda letter_id bo'lmasligi mumkin — xatlar ro'yxatiga tushamiz
+    // ('business_trip' prefiksi bu turlarga to'g'ri kelmaydi).
+    expect(routeForNotification({ notification_type: 'trip_self_finished' })).toBe('/(tabs)/letters');
+  });
+
+  it('mehmon / texnik yordam / buyruq muddati turlari o\'z ekraniga boradi', () => {
+    expect(routeForNotification({ type: 'visitor_arrived' })).toBe('/(tabs)/mehmonlar');
+    expect(routeForNotification({ type: 'support_ticket_message' })).toBe('/texnik-yordam');
+    expect(routeForNotification({ type: 'hr_order_soon' })).toBe('/work-leaves');
+  });
+});
+
+
+// 2026-08-20 auditi: bildirishnoma RO'YXATI (in-app) backenddan letter_id,
+// support_ticket_id, card_id, workspace_id bilan keladi, lekin mijoz ularning
+// bir qismini o'qimasdi — loyiha/vazifa bildirishnomasi bosilganda hech qayerga
+// olib bormasdi (ekranlar esa BOR), texnik yordam esa ro'yxatga tushardi.
+describe("routeForNotification — loyiha / texnik yordam / xat", () => {
+  it('loyiha vazifasini KARTA tafsilotiga, loyihani loyiha tafsilotiga ochadi', () => {
+    expect(routeForNotification({ type: 'card_member_added', card_id: 12 })).toBe('/loyiha-card-detail?id=12');
+    expect(routeForNotification({ type: 'workspace_member_added', workspace_id: 3 })).toBe('/loyiha-detail?id=3');
+  });
+
+  it("id bo'lmasa loyihalar ro'yxatiga tushadi (avval null edi)", () => {
+    expect(routeForNotification({ type: 'workspace_deleted' })).toBe('/loyihalar');
+    expect(routeForNotification({ type: 'card_deadline_approaching' })).toBe('/loyihalar');
+  });
+
+  it('texnik yordam murojaatini TAFSILOTGA ochadi', () => {
+    expect(routeForNotification({ type: 'support_ticket_message', support_ticket_id: 9 }))
+      .toBe('/texnik-yordam-detail?id=9');
+    expect(routeForNotification({ type: 'support_ticket_created' })).toBe('/texnik-yordam');
+  });
+
+  it("xat turlari uchun zaxira yo'nalish — bildirgi va arizalar ro'yxati", () => {
+    expect(routeForNotification({ type: 'letter_registered', letter_id: 4 })).toBe('/letter-detail?id=4');
+    expect(routeForNotification({ type: 'letter_agreement_requested' })).toBe('/(tabs)/letters');
+  });
+});
+
+describe('notificationMeta — nomsiz qolgan oilalar', () => {
+  it("xat / texnik yordam / avtopark / tibbiy ko'rik uchun umumiy sarlavha bor", () => {
+    // Avval bularning hammasi "Bildirishnoma" bo'lib chiqardi.
+    expect(notificationMeta('letter_something_new').title).not.toBe(notificationMeta('totally_unknown').title);
+    expect(notificationMeta('support_ticket_something').title).not.toBe(notificationMeta('totally_unknown').title);
+    expect(notificationMeta('vehicle_something').title).not.toBe(notificationMeta('totally_unknown').title);
+    expect(notificationMeta('medical_something').title).not.toBe(notificationMeta('totally_unknown').title);
+  });
+
+  it("eng ko'p uchraydigan turlar aniq sarlavhaga ega", () => {
+    expect(notificationMeta('letter_agreement_requested').title).toBe("Kelishuv so'raldi");
+    expect(notificationMeta('pending_action_digest').title).toBe('Sizni kutayotgan hujjatlar');
+  });
+});

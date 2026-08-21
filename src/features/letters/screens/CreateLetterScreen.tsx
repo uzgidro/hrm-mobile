@@ -141,7 +141,13 @@ export default function CreateLetterScreen() {
   async function handleCreate() {
     if (!letterType) { Alert.alert(t('common.errorTitle'), t('letters.typeRequired')); return; }
     if (!branchId) { Alert.alert(t('common.errorTitle'), t('letters.branchNotFound')); return; }
+    // Bildirgi/ariza: ADRESAT majburiy; ARIZAda ustiga kamida bitta KELISHUVCHI
+    // ham shart (backend: addressee_required / agreement_required).
     if (!isTrip && !mainSignerId) { Alert.alert(t('common.errorTitle'), t('letters.mainSignerRequired')); return; }
+    if (!isTrip && letterType === 'application' && ordinarySigners.length === 0) {
+      Alert.alert(t('common.errorTitle'), t('letters.coordinatorsRequired'));
+      return;
+    }
     if (isTrip) {
       // submitter is optional (web parity): an empty submitter means the author
       // submits and signs their own trip — the backend handles it.

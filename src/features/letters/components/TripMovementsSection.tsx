@@ -12,7 +12,7 @@ import { isSiteMasterAdmin, isBranchHr } from '@/utils/roles';
 import { normalizeLetterType, canConfirmTripReturn } from '@/utils/letterStatus';
 import { Section } from './DetailParts';
 import { tripMovementsQuery } from '../api/queries';
-import { useConfirmReturn } from '../api/mutations';
+import { useConfirmReturn, useSelfConfirmReturn, useUpdateReturnDate } from '../api/mutations';
 
 // The kelish/ketish movements of a business trip + the "confirm return" action.
 // Renders only for business_trip letters. Confirming the return sets
@@ -58,8 +58,42 @@ export function TripMovementsSection({
     enabled: isTrip && !!letter.id,
   });
   const confirmM = useConfirmReturn(letter.id);
+  const selfFinishM = useSelfConfirmReturn(letter.id);
 
+  // XODIMNING O'ZI safarni yakunlashi (backend 2026-08-19). Shartni SERVER
+  // hisoblaydi: xodim o'z filiali turniketidan (Face ID) o'tgan bo'lishi va
+  // undan keyin boshqa filialga ketmagan bo'lishi kerak; yakunlash sanasi ham
+  // o'sha o'tish sanasi. Shu bois bu yerda status/rol qaytadan tekshirilmaydi —
+  // aks holda tugma ko'rinib, bosganda `face_id_required` 400 bo'lardi.
+  const canSelfFinish = !!letter.available_actions?.can_self_finish_trip;
+  const selfFinishDate = letter.available_actions?.self_finish_date;
+
+  const askSelfFinish = () => {
+    Alert.alert(
+      t('letters.selfFinishTitle'),
+      t('letters.selfFinishConfirm', {
+        date: selfFinishDate ? dayjs(selfFinishDate).format('DD.MM.YYYY') : '—',
+      }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('letters.selfFinishYes'),
+          onPress: () =>
+            selfFinishM.mutate(undefined, {
+              onSuccess: () => onChanged(),
+              onError: (e) =>
+                Alert.alert(t('letters.actionError'), getApiErrorMessage(e, t('letters.actionError'))),
+            }),
+        },
+      ],
+    );
+  };
+
+  const editDateM = useUpdateReturnDate(letter.id);
+  // Modal ikki ish uchun: qaytishni TASDIQLASH va tasdiqlangan sanani TUZATISH
+  // (backend 2026-08-19: PATCH /letters/{id}/return-date, har qanday bosqichda).
   const [modalOpen, setModalOpen] = useState(false);
+  const [editMode, setEditMode] = useState(false);
   const [returnDate, setReturnDate] = useState(dayjs().format('YYYY-MM-DD'));
   const [note, setNote] = useState('');
 
@@ -71,6 +105,14 @@ export function TripMovementsSection({
       return;
     }
     setModalOpen(false);
+    if (editMode) {
+      editDateM.mutate(returnDate.trim(), {
+        onSuccess: () => onChanged(),
+        onError: (e) =>
+          Alert.alert(t('letters.actionError'), getApiErrorMessage(e, t('letters.actionError'))),
+      });
+      return;
+    }
     confirmM.mutate(
       { return_date: returnDate.trim(), note: note.trim() || null },
       {
@@ -91,6 +133,21 @@ export function TripMovementsSection({
           <Text style={styles.confirmedText}>
             {t('letters.returnConfirmedBadge', { date: dayjs(letter.actual_return_date).format('DD.MM.YYYY') })}
           </Text>
+          {/* Sana XATO kiritilgan bo'lsa KADR uni tuzatadi — yakunlangan
+              safarda ham (backend 2026-08-19). */}
+          {canManage && (
+            <TouchableOpacity
+              onPress={() => {
+                setEditMode(true);
+                setReturnDate(letter.actual_return_date ?? dayjs().format('YYYY-MM-DD'));
+                setModalOpen(true);
+              }}
+              hitSlop={8}
+              testID="edit-return-date"
+            >
+              <Text style={styles.editDateLink}>{t('letters.editReturnDate')}</Text>
+            </TouchableOpacity>
+          )}
         </View>
       )}
 
@@ -115,11 +172,31 @@ export function TripMovementsSection({
         ))
       )}
 
+      {canSelfFinish && (
+        <>
+          <Text style={styles.selfFinishHint}>
+            {t('letters.selfFinishHint', {
+              date: selfFinishDate ? dayjs(selfFinishDate).format('DD.MM.YYYY') : '—',
+            })}
+          </Text>
+          <TouchableOpacity
+            style={styles.selfFinishBtn}
+            activeOpacity={0.85}
+            onPress={askSelfFinish}
+            disabled={selfFinishM.isPending}
+          >
+            {selfFinishM.isPending
+              ? <ActivityIndicator size="small" color={colors.onPrimary} />
+              : <><Icon name="check" size={16} color={colors.onPrimary} /><Text style={styles.confirmBtnText}>{t('letters.selfFinish')}</Text></>}
+          </TouchableOpacity>
+        </>
+      )}
+
       {canConfirmReturn && (
         <TouchableOpacity
           style={styles.confirmBtn}
           activeOpacity={0.85}
-          onPress={() => setModalOpen(true)}
+          onPress={() => { setEditMode(false); setModalOpen(true); }}
           disabled={confirmM.isPending}
         >
           {confirmM.isPending
@@ -131,7 +208,9 @@ export function TripMovementsSection({
       <Modal visible={modalOpen} transparent animationType="fade" onRequestClose={() => setModalOpen(false)}>
         <View style={styles.overlay}>
           <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>{t('letters.confirmReturn')}</Text>
+            <Text style={styles.modalTitle}>
+              {editMode ? t('letters.editReturnDateTitle') : t('letters.confirmReturn')}
+            </Text>
             <Text style={styles.modalLabel}>{t('letters.confirmReturnDateLabel')}</Text>
             <TextInput
               style={styles.input}
@@ -140,15 +219,18 @@ export function TripMovementsSection({
               placeholder="YYYY-MM-DD"
               placeholderTextColor={colors.textMuted}
             />
-            <TextInput
-              style={[styles.input, { minHeight: 60 }]}
-              value={note}
-              onChangeText={setNote}
-              placeholder={t('letters.movementNote')}
-              placeholderTextColor={colors.textMuted}
-              multiline
-              textAlignVertical="top"
-            />
+            {!editMode && (
+              <TextInput
+                style={[styles.input, { minHeight: 60 }]}
+                value={note}
+                onChangeText={setNote}
+                placeholder={t('letters.movementNote')}
+                placeholderTextColor={colors.textMuted}
+                multiline
+                textAlignVertical="top"
+              />
+            )}
+            {editMode && <Text style={styles.editHint}>{t('letters.editReturnDateHint')}</Text>}
             <View style={styles.modalBtns}>
               <TouchableOpacity style={styles.modalCancel} onPress={() => setModalOpen(false)} activeOpacity={0.8}>
                 <Text style={styles.modalCancelText}>{t('common.cancel')}</Text>
@@ -167,6 +249,10 @@ export function TripMovementsSection({
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     confirmedBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
+    selfFinishHint: { fontSize: 12, color: c.textMuted, marginTop: 10, lineHeight: 17 },
+    editDateLink: { fontSize: 12, fontWeight: '600', color: c.primaryLight },
+    editHint: { fontSize: 12, color: c.textMuted, lineHeight: 17 },
+    selfFinishBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: c.success, borderRadius: 12, paddingVertical: 12, marginTop: 8 },
     confirmedText: { fontSize: 13, color: c.success, fontWeight: '600' },
     empty: { color: c.textMuted, fontSize: 14, paddingVertical: 4 },
     row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, borderTopWidth: 1, borderTopColor: c.cardBorder },

@@ -8,6 +8,7 @@ import {
   rejectDecree,
   resubmitDecree,
   forwardDecree,
+  confirmSubmissionDecree,
   acknowledgeDecree,
   registerDecree,
 } from '../api/mutations';
@@ -75,6 +76,12 @@ export function useDecreeActions(orderId: number, refetch: () => void) {
     [runAction, orderId]
   );
 
+  // Kirituvchi shaxs tasdig'i: pending_submitter → keyingi bosqich.
+  const confirmSubmission = useCallback(
+    () => runAction(() => confirmSubmissionDecree(orderId), i18n.t('orders.confirmSubmissionSuccess')),
+    [runAction, orderId]
+  );
+
   const acknowledge = useCallback(
     () => runAction(() => acknowledgeDecree(orderId), i18n.t('orders.acknowledgeSuccess')),
     [runAction, orderId]
@@ -92,5 +99,5 @@ export function useDecreeActions(orderId: number, refetch: () => void) {
     [runAction, orderId]
   );
 
-  return { busy, approve, reject, resubmit, forward, acknowledge, register };
+  return { busy, approve, reject, resubmit, forward, confirmSubmission, acknowledge, register };
 }

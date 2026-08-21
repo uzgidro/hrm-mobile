@@ -19,4 +19,16 @@ module.exports = {
     '!**/*.d.ts',
   ],
   clearMocks: true,
+  // Jest'ning standart 5s chegarasi SOVUQ kesh (birinchi ishga tushirish /
+  // CI) uchun yetmaydi: og'ir RN/Expo modullari o'sha payt Babel bilan
+  // transpilyatsiya qilinadi va bu vaqt BIRINCHI testning byudjetidan
+  // yeyiladi. Kesh isigach xuddi shu suite 22s o'rniga 4s da o'tadi — ya'ni
+  // testlar sekin emas, MUHIT sekin.
+  //
+  // 2026-08-20 da o'lchandi: `jest --clearCache` dan keyin HAR SAFAR 5 ta
+  // test "Exceeded timeout of 5000 ms" bilan yiqildi (assert xatosi EMAS —
+  // 5 tasi ham timeout), issiq keshda esa 115/115 suite yashil edi. Sekin
+  // suite'lar sovuq keshda 14-23s oralig'ida, shuning uchun 30s — barqaror
+  // zaxira. Sinaldi: 3 ta ketma-ket sovuq prognoz 115/115 yashil.
+  testTimeout: 30000,
 };

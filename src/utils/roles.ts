@@ -24,6 +24,20 @@ export function hasMultiOrgRole(user: User | null | undefined, role: string): bo
   return getMultiOrgRoles(user?.employee).includes(role);
 }
 
+/**
+ * Xodimga BEVOSITA rahbar biriktirilganmi (web roleHelpers.hasSupervisor 1:1).
+ *
+ * Ilgari ekranlar `!employee?.supervisor` deb faqat ICHMA-ICH kelgan obyektga
+ * qarardi. `EmployeeRead` payloadi yengillashtirilib (N+1 auditi) rekursiv
+ * `supervisor` obyekti olib tashlansa, `supervisor_id` qolgan bo'lsa ham HAR
+ * BIR xodim "rahbar" bo'lib qolardi: Bosh sahifa "Mening so'rovlarim" o'rniga
+ * "Kiruvchi so'rovlar"ni ko'rsatardi. Ikkala manbani ham tekshiramiz.
+ */
+export function hasSupervisor(user?: User | null): boolean {
+  const emp = user?.employee;
+  return !!(emp?.supervisor_id || emp?.supervisor?.id);
+}
+
 /** master-admin type OR employee with 'ministr' role */
 export function isMasterAdmin(user?: User | null): boolean {
   return user?.type === 'master-admin' || getMultiOrgRole(user) === 'ministr';
@@ -83,6 +97,51 @@ export function isDeputy(user?: User | null): boolean {
 /** decree leadership signers: ministr OR deputy */
 export function isLeadership(user?: User | null): boolean {
   return hasMultiOrgRole(user, 'ministr') || hasMultiOrgRole(user, 'deputy');
+}
+
+/** Tabel sozlamalarida shu filialga DIREKTOR qilib biriktirilgan filiallar. */
+export function getDirectorBranchIds(user?: User | null): number[] {
+  return user?.director_branch_ids ?? [];
+}
+
+/** Tabel sozlamalarida shu filialga O'RINBOSAR qilib biriktirilgan filiallar. */
+export function getDeputyBranchIds(user?: User | null): number[] {
+  return user?.deputy_branch_ids ?? [];
+}
+
+/**
+ * ASOSIY filial (id=1) safarini tasdiqlaydigan rahbar — FAQAT "Boshqaruv raisi
+ * o'rinbosari" lavozimidagi deputy ("Birinchi o'rinbosari" KIRMAYDI).
+ * Web roleHelpers.isTripApprover bilan 1:1.
+ */
+export function isTripApprover(user?: User | null): boolean {
+  if (!isDeputy(user)) return false;
+  const jp = user?.employee?.job_position;
+  const name = (typeof jp === 'object' ? jp?.name : (jp as unknown as string)) || '';
+  const norm = name.toLowerCase().replace(/[’`ʼ]/g, "'").trim();
+  return norm.includes("boshqaruv raisi o'rinbosari") && !norm.includes('birinchi');
+}
+
+/** Filialning biriktirilgan rahbari (direktor yoki o'rinbosar)mi. */
+export function isBranchTripApprover(user: User | null | undefined, branchId?: number | null): boolean {
+  if (branchId == null) return false;
+  const bid = Number(branchId);
+  return (
+    getDirectorBranchIds(user).map(Number).includes(bid) ||
+    getDeputyBranchIds(user).map(Number).includes(bid)
+  );
+}
+
+/**
+ * Berilgan filial safarini tasdiqlash huquqi (web canApproveTripForBranch):
+ * asosiy filial (id=1) → qat'iy lavozim, boshqa filial → biriktirilgan rahbar.
+ * Backend `_is_trip_approver` shu qoidani takrorlaydi — tugma ko'rinsa-yu
+ * server rad etsa, foydalanuvchi 403 olardi.
+ */
+export function canApproveTripForBranch(user: User | null | undefined, branchId?: number | null): boolean {
+  if (isSiteMasterAdmin(user)) return true;
+  if (branchId == null || Number(branchId) === 1) return isTripApprover(user);
+  return isBranchTripApprover(user, branchId);
 }
 
 export function isKPP(user?: User | null): boolean {
@@ -189,7 +248,7 @@ export type PageKey =
   | 'home' | 'orders' | 'letters' | 'guests' | 'projects'
   | 'employees' | 'attendance' | 'requests' | 'documents' | 'kpi'
   | 'timesheet' | 'assistant' | 'salary' | 'team' | 'birthdays' | 'news'
-  | 'notifications' | 'profile' | 'support' | 'chairman' | 'directory';
+  | 'notifications' | 'profile' | 'support' | 'chairman' | 'directory' | 'terminals';
 
 /** Whether the given user may see a page. Mirrors which web NAV the role gets. */
 export function canAccessPage(user: User | null | undefined, key: PageKey): boolean {
@@ -242,6 +301,12 @@ export function canAccessPage(user: User | null | undefined, key: PageKey): bool
     // KPP, chancellery, monitoring) is excluded.
     case 'assistant':
       return isMasterAdmin(user) || user?.type === 'admin' || isHR(user) || isDeputy(user);
+    // TERMINALLAR (turniket / HikCentral monitoringi). Backend darvozasi
+    // `require_system_admin`: admin hisobi, master-admin YOKI tabel
+    // sozlamalarida "Texnik yordam (AKT)" roli berilgan xodim (o'z filiali
+    // doirasida). Shu uchtasini aynan takrorlaymiz — boshqasi 403 oladi.
+    case 'terminals':
+      return canMonitorTerminals(user);
     // Chairman agenda (kun tartibi): secretariat / minister / site master-admin.
     case 'chairman':
       return canAccessChairmanTasks(user);
@@ -261,6 +326,20 @@ export function canAccessPage(user: User | null | undefined, key: PageKey): bool
     default:
       return true;
   }
+}
+
+/**
+ * Turniket/HikCentral monitoringiga kira oladimi (backend `require_system_admin`
+ * bilan 1:1): `admin` hisobi, master-admin yoki AKT roli berilgan xodim.
+ * Ministr bu yerga KIRMAYDI — `isMasterAdmin` uni ham qamrab olgani uchun
+ * `isSiteMasterAdmin` ishlatiladi.
+ */
+export function canMonitorTerminals(user?: User | null): boolean {
+  return (
+    user?.type === 'admin' ||
+    isSiteMasterAdmin(user) ||
+    (user?.akt_branch_ids?.length ?? 0) > 0
+  );
 }
 
 // Subtitle for employee pickers: job position (+ head-of-department prefix).

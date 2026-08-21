@@ -23,6 +23,17 @@ export const Env = Object.freeze({
     process.env.EXPO_PUBLIC_ONLYOFFICE_URL,
     'https://doc-editor.uzgidro.uz'
   ),
+  /**
+   * MapLibre style viewer of OUR OWN tile server (tileserver-gl behind the web
+   * host). Turniket hodisasining joylashuvi shu sahifada WebView ichida
+   * ko'rsatiladi — tashqi xarita provayderi (Google/OSM) ISHLATILMAYDI, chunki
+   * veb ham aynan shu tayler serveridan foydalanadi va ma'lumot tashqariga
+   * chiqmaydi. Manzil `#zoom/lat/lon` fragmenti bilan markazlashtiriladi.
+   */
+  mapViewerUrl: readUrl(
+    process.env.EXPO_PUBLIC_MAP_VIEWER_URL,
+    'https://hr.uzgidro.uz/tiles/styles/uzgidro-dark/'
+  ),
 });
 
 export type EnvConfig = typeof Env;

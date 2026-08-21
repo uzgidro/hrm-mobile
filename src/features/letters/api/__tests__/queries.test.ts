@@ -14,42 +14,37 @@ describe('letterKeys', () => {
     expect(letterKeys.all).toEqual(['letters']);
   });
 
-  it('builds the list key identical to the old tab key ["letters", tab]', () => {
-    expect(letterKeys.list('action')).toEqual(['letters', 'action']);
-    expect(letterKeys.list('all')).toEqual(['letters', 'all']);
+  it("ro'yxat kaliti BITTA — tablar mijozda ajratiladi", () => {
+    expect(letterKeys.list()).toEqual(['letters', 'list']);
   });
 
   it('places the detail under `all` so a single invalidate refreshes list + detail', () => {
     expect(letterKeys.detail(42)).toEqual(['letters', 'detail', 42]);
     expect(letterKeys.detail(42).slice(0, 1)).toEqual(letterKeys.all);
-    expect(letterKeys.list('mine').slice(0, 1)).toEqual(letterKeys.all);
+    expect(letterKeys.list().slice(0, 1)).toEqual(letterKeys.all);
   });
 });
 
 describe('lettersListQuery', () => {
-  it('sends assigned_signer for the action tab', async () => {
-    const opts = lettersListQuery('action');
-    expect(opts.queryKey).toEqual(['letters', 'action']);
+  it("SERVER FILTRI YO'Q — `assigned_signer`/`signer` tab ma'nosini buzardi", async () => {
+    // `assigned_signer=true`: devonxona ro'yxatga olishi, KADR "Keldi" tasdig'i,
+    // qaytarilgan hisobot va KELISHUV (bildirgi/ariza imzolanmaydi) "Menda"
+    // tabiga umuman tushmasdi.
+    // `signer=true`: "Mening" = MEN IMZOLAGANLARIM bo'lib qolardi — o'z
+    // bildirgisini yozgan xodim uni imzolamagani uchun ro'yxatda ko'rmasdi.
+    const opts = lettersListQuery();
+    expect(opts.queryKey).toEqual(['letters', 'list']);
     mock.onGet(LETTERS_LIST).reply(200, []);
     await (opts.queryFn as () => Promise<unknown[]>)();
-    expect(mock.history.get[0].params).toEqual({ assigned_signer: true });
-  });
-
-  it('sends signer for the mine tab and no params for the all tab', async () => {
-    mock.onGet(LETTERS_LIST).reply(200, []);
-    await (lettersListQuery('mine').queryFn as () => Promise<unknown[]>)();
-    expect(mock.history.get[0].params).toEqual({ signer: true });
-    mock.resetHistory();
-    await (lettersListQuery('all').queryFn as () => Promise<unknown[]>)();
-    expect(mock.history.get[0].params).toEqual({});
+    expect(mock.history.get[0].params).toBeUndefined();
   });
 
   it('returns a bare array and unwraps an { items } envelope', async () => {
     mock.onGet(LETTERS_LIST).reply(200, [{ id: 1 }, { id: 2 }]);
-    expect(await (lettersListQuery('all').queryFn as () => Promise<unknown[]>)()).toHaveLength(2);
+    expect(await (lettersListQuery().queryFn as () => Promise<unknown[]>)()).toHaveLength(2);
     mock.resetHistory();
     mock.onGet(LETTERS_LIST).reply(200, { items: [{ id: 3 }] });
-    expect(await (lettersListQuery('all').queryFn as () => Promise<unknown[]>)()).toEqual([{ id: 3 }]);
+    expect(await (lettersListQuery().queryFn as () => Promise<unknown[]>)()).toEqual([{ id: 3 }]);
   });
 });
 

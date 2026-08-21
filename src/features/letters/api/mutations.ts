@@ -3,9 +3,11 @@ import { apiClient } from '@/api/client';
 import {
   LETTER_CREATE, LETTER_SIGN, LETTER_REJECT, LETTER_UPLOAD_ATTACHMENT,
   LETTER_SUBMIT_REPORT, LETTER_RESET_REPORT, LETTER_UPLOAD_REPORT,
-  LETTER_CONFIRM_RETURN, LETTER_SUBMIT_TRIP,
-  LETTER_APPROVE_TRIP, LETTER_APPROVE_REPORT, LETTER_APPROVE_GUVOHNOMA,
+  LETTER_CONFIRM_RETURN, LETTER_SELF_CONFIRM_RETURN, LETTER_RETURN_DATE, LETTER_SUBMIT_TRIP,
+  LETTER_APPROVE_TRIP, LETTER_APPROVE_TRIP_REGISTRATION,
+  LETTER_APPROVE_REPORT, LETTER_APPROVE_GUVOHNOMA,
   LETTER_CONFIRM_REGISTRATION,
+  LETTER_AGREE, LETTER_DISAGREE, LETTER_SUBMIT_AGREEMENT, LETTER_SEND_TO_REGISTRY,
 } from '@/api/urls';
 import type { PickedFile } from '@/components/AttachmentField';
 import { letterKeys } from './queries';
@@ -170,6 +172,90 @@ export function useConfirmReturn(id: number) {
   });
 }
 
+// ── Xodimning O'ZI safarni yakunlashi (Face ID) ───────────────────────────────
+// KADR "Keldi" tugmasining xodim tomonidagi juftligi (backend 2026-08-19).
+// TANASIZ POST: qaytish sanasini SERVER o'zi qo'yadi — u xodim o'z filiali
+// turniketidan (Face ID) o'tgan sana. Mijoz sana yubormaydi (yuborsa ham
+// e'tiborga olinmaydi), shu bois "hali qaytmasdan yakunlash" mumkin emas.
+// Server sharti bajarilmasa 400 `face_id_required` qaytadi.
+export function selfConfirmReturn(id: number): Promise<unknown> {
+  return apiClient.post(LETTER_SELF_CONFIRM_RETURN(id), {}).then((r) => r.data);
+}
+
+export function useSelfConfirmReturn(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => selfConfirmReturn(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+  });
+}
+
+// ── KADR kelgan sanani TUZATADI (backend 2026-08-19) ─────────────────────────
+// "Keldi" sanani BIR MARTA qo'yadi; bu esa keyingi tuzatish uchun — guvohnoma va
+// tabel xato sana bilan qolib ketmasin. Har qanday bosqichda ishlaydi (yakunlangan
+// safarda ham). Server tekshiradi: kelajakdagi va safar boshlanishidan oldingi
+// sana 400 beradi.
+export function updateReturnDate(id: number, returnDate: string): Promise<unknown> {
+  return apiClient.patch(LETTER_RETURN_DATE(id), { return_date: returnDate }).then((r) => r.data);
+}
+
+export function useUpdateReturnDate(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (returnDate: string) => updateReturnDate(id, returnDate),
+    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+  });
+}
+
+// ── BILDIRGI/ARIZA kelishuv oqimi ───────────────────────────────────────────
+// Bu hujjatlar IMZOLANMAYDI: backend `/sign` ga 400 `use_agreement_flow` beradi.
+// Kelishuvchi agree/disagree qiladi va IZOH MAJBURIY (static.uz talabi —
+// `LetterAgreementAction.comment` min_length=1), shu bois bo'sh izoh bilan
+// so'rov umuman yuborilmaydi.
+export function agreeLetter(id: number, comment: string): Promise<unknown> {
+  return apiClient.post(LETTER_AGREE(id), { comment }).then((r) => r.data);
+}
+
+export function disagreeLetter(id: number, comment: string): Promise<unknown> {
+  return apiClient.post(LETTER_DISAGREE(id), { comment }).then((r) => r.data);
+}
+
+// Muallif qoralamani kelishuvchilarga yuboradi: draft → pending_agreement
+// (kelishuvchisiz bildirgi — to'g'ridan ro'yxatga).
+export function submitAgreementLetter(id: number): Promise<unknown> {
+  return apiClient.post(LETTER_SUBMIT_AGREEMENT(id)).then((r) => r.data);
+}
+
+// Hammasi kelishgach muallif hujjatni DEVONXONAGA yuboradi.
+export function sendLetterToRegistry(id: number): Promise<unknown> {
+  return apiClient.post(LETTER_SEND_TO_REGISTRY(id)).then((r) => r.data);
+}
+
+export function useAgreeLetter(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ agreed, comment }: { agreed: boolean; comment: string }) =>
+      (agreed ? agreeLetter : disagreeLetter)(id, comment),
+    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+  });
+}
+
+export function useSubmitAgreement(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => submitAgreementLetter(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+  });
+}
+
+export function useSendToRegistry(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => sendLetterToRegistry(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+  });
+}
+
 // ── Devonxona confirm-registration (Tasdiqlash) ───────────────────────────────
 // A stamped bildirgi/ariza/xizmat safari waits at pending_registration until the
 // chancellery confirms it. Both fields are optional — an empty value keeps the
@@ -217,6 +303,15 @@ export function useSubmitTrip(id: number) {
 // — the client only shows the button; the backend still 403s on every call.
 export function approveTrip(id: number): Promise<unknown> {
   return apiClient.post(LETTER_APPROVE_TRIP(id)).then((r) => r.data);
+}
+
+// Devonxona ro'yxatga olgandan keyingi RAHBAR tasdig'i
+// (registered_pending_rahbar → management_approved). Backend ruxsatni
+// `_is_trip_approver` bilan tekshiradi: xodim TANLAGAN rahbariyat imzolovchisi
+// yoki filialga biriktirilgan direktor/o'rinbosar (asosiy filialda — qat'iy
+// lavozim). Mijoz tomonidagi darvoza `canApproveTripRegistration` da.
+export function approveTripRegistration(id: number): Promise<unknown> {
+  return apiClient.post(LETTER_APPROVE_TRIP_REGISTRATION(id)).then((r) => r.data);
 }
 export function approveReport(id: number): Promise<unknown> {
   return apiClient.post(LETTER_APPROVE_REPORT(id)).then((r) => r.data);

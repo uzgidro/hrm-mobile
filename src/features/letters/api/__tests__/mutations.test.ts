@@ -3,14 +3,17 @@ import { apiClient } from '@/api/client';
 import {
   LETTER_CREATE, LETTER_SIGN, LETTER_REJECT, LETTER_UPLOAD_ATTACHMENT,
   LETTER_SUBMIT_REPORT, LETTER_RESET_REPORT, LETTER_UPLOAD_REPORT,
-  LETTER_CONFIRM_RETURN, LETTER_SUBMIT_TRIP,
+  LETTER_CONFIRM_RETURN, LETTER_SELF_CONFIRM_RETURN, LETTER_RETURN_DATE, LETTER_SUBMIT_TRIP,
   LETTER_APPROVE_TRIP, LETTER_APPROVE_REPORT, LETTER_APPROVE_GUVOHNOMA,
   LETTER_CONFIRM_REGISTRATION,
+  LETTER_AGREE, LETTER_DISAGREE, LETTER_SUBMIT_AGREEMENT, LETTER_SEND_TO_REGISTRY,
+  LETTER_APPROVE_TRIP_REGISTRATION,
 } from '@/api/urls';
 import {
   signLetter, rejectLetter, createLetter, submitReport, resetReport, uploadReport,
-  confirmReturn, submitTrip, approveTrip, approveReport, approveGuvohnoma,
-  confirmRegistration,
+  confirmReturn, selfConfirmReturn, updateReturnDate, submitTrip, approveTrip, approveReport, approveGuvohnoma,
+  confirmRegistration, agreeLetter, disagreeLetter, submitAgreementLetter, sendLetterToRegistry,
+  approveTripRegistration,
 } from '../mutations';
 
 let mock: MockAdapter;
@@ -18,6 +21,61 @@ beforeEach(() => {
   mock = new MockAdapter(apiClient);
 });
 afterEach(() => mock.restore());
+
+describe('selfConfirmReturn (xodim safarni O\'ZI yakunlaydi)', () => {
+  it('TANASIZ POST yuboradi — qaytish sanasini SERVER (Face ID) qo\'yadi', async () => {
+    mock.onPost(LETTER_SELF_CONFIRM_RETURN(7)).reply(200, { id: 7, is_trip_confirmed: true });
+    const data = await selfConfirmReturn(7);
+    expect(data).toEqual({ id: 7, is_trip_confirmed: true });
+    expect(mock.history.post[0].url).toBe(LETTER_SELF_CONFIRM_RETURN(7));
+    // Sana YUBORILMAYDI: mijoz uni tanlay olsa "hali qaytmasdan" yakunlash
+    // mumkin bo'lardi — server turniket sanasini o'zi qo'yadi.
+    expect(mock.history.post[0].data).toBe('{}');
+  });
+
+  it('server Face ID shartini bajarmasa 400 ni yuqoriga uzatadi', async () => {
+    mock.onPost(LETTER_SELF_CONFIRM_RETURN(8)).reply(400, {
+      code: 'face_id_required',
+      message: "Safarni yakunlash uchun avval o'z filialingiz turniketidan (Face ID) o'ting",
+    });
+    await expect(selfConfirmReturn(8)).rejects.toBeDefined();
+  });
+});
+
+describe('updateReturnDate (KADR kelgan sanani tuzatadi)', () => {
+  it('PATCH bilan faqat return_date yuboradi', async () => {
+    mock.onPatch(LETTER_RETURN_DATE(9)).reply(200, { id: 9, actual_return_date: '2026-08-17' });
+    const data = await updateReturnDate(9, '2026-08-17');
+    expect(data).toEqual({ id: 9, actual_return_date: '2026-08-17' });
+    expect(mock.history.patch[0].url).toBe(LETTER_RETURN_DATE(9));
+    expect(JSON.parse(mock.history.patch[0].data)).toEqual({ return_date: '2026-08-17' });
+  });
+});
+
+// BILDIRGI/ARIZA kelishuv oqimi — mobilда umuman yo'q edi (imzo tugmasi esa
+// backendда 400 `use_agreement_flow` berardi).
+describe('kelishuv (agreement) so\'rovlari', () => {
+  it('agree/disagree izohni tanada yuboradi (backend uni MAJBURIY qiladi)', async () => {
+    mock.onPost(LETTER_AGREE(3)).reply(200, { id: 3, status: 'signed' });
+    await agreeLetter(3, 'Kelishildi');
+    expect(mock.history.post[0].url).toBe(LETTER_AGREE(3));
+    expect(JSON.parse(mock.history.post[0].data)).toEqual({ comment: 'Kelishildi' });
+
+    mock.onPost(LETTER_DISAGREE(3)).reply(200, { id: 3, status: 'rejected' });
+    await disagreeLetter(3, 'Xato bor');
+    expect(JSON.parse(mock.history.post[1].data)).toEqual({ comment: 'Xato bor' });
+  });
+
+  it('submit-agreement va send-to-registry TANASIZ POST', async () => {
+    mock.onPost(LETTER_SUBMIT_AGREEMENT(4)).reply(200, { id: 4, status: 'pending_agreement' });
+    mock.onPost(LETTER_SEND_TO_REGISTRY(4)).reply(200, { id: 4, status: 'pending_registration' });
+    await submitAgreementLetter(4);
+    await sendLetterToRegistry(4);
+    expect(mock.history.post[0].url).toBe(LETTER_SUBMIT_AGREEMENT(4));
+    expect(mock.history.post[0].data).toBeUndefined();
+    expect(mock.history.post[1].url).toBe(LETTER_SEND_TO_REGISTRY(4));
+  });
+});
 
 describe('letter sign/reject request functions', () => {
   it('signLetter POSTs the sign endpoint with an empty body', async () => {
@@ -180,5 +238,16 @@ describe('trip approve request functions (leadership)', () => {
     await approveGuvohnoma(4);
     expect(mock.history.post[0].url).toBe(LETTER_APPROVE_GUVOHNOMA(4));
     expect(mock.history.post[0].data).toBeUndefined();
+  });
+});
+
+
+// Devonxona ro'yxatidan keyingi RAHBAR tasdig'i — mobilda umuman yo'q edi.
+describe('approveTripRegistration', () => {
+  it('TANASIZ POST yuboradi (registered_pending_rahbar → management_approved)', async () => {
+    mock.onPost(LETTER_APPROVE_TRIP_REGISTRATION(11)).reply(200, { id: 11, status: 'management_approved' });
+    const data = await approveTripRegistration(11);
+    expect(data).toEqual({ id: 11, status: 'management_approved' });
+    expect(mock.history.post[0].url).toBe(LETTER_APPROVE_TRIP_REGISTRATION(11));
   });
 });

@@ -7,6 +7,7 @@ import {
   ORDER_ACT_DECREE_REJECT,
   ORDER_ACT_DECREE_RESUBMIT,
   ORDER_ACT_DECREE_FORWARD,
+  ORDER_ACT_DECREE_CONFIRM_SUBMISSION,
   ORDER_ACT_DECREE_REGISTER,
   ORDER_ACT_DECREE_ACKNOWLEDGE,
   ORDER_ACT_DECREE_ASSIGN_FAMILIARIZERS,
@@ -31,6 +32,11 @@ export function resubmitDecree(id: number): Promise<unknown> {
 
 export function forwardDecree(id: number): Promise<unknown> {
   return apiClient.post(ORDER_ACT_DECREE_FORWARD(id)).then((r) => r.data);
+}
+
+// Kirituvchi shaxs (submitter) tasdig'i — pending_submitter bosqichi.
+export function confirmSubmissionDecree(id: number): Promise<unknown> {
+  return apiClient.post(ORDER_ACT_DECREE_CONFIRM_SUBMISSION(id)).then((r) => r.data);
 }
 
 export function acknowledgeDecree(id: number): Promise<unknown> {

@@ -2,6 +2,9 @@
 // See uz-Latn/support.ts for the meaning of each key.
 export default {
   title: 'Техник ёрдам',
+  chatPlaceholder: 'Хабар ёзинг...',
+  chatEmpty: 'Хабар йўқ — биринчи бўлиб ёзинг',
+  chatTitle: 'Ёзишма',
   subtitle: 'Менинг мурожаатларим',
   empty: 'Мурожаатлар йўқ',
   loadError: 'Мурожаатларни юклашда хатолик',

@@ -5,6 +5,9 @@
 export default {
   // ── List ──────────────────────────────────────────────────────────────────
   title: 'Texnik yordam',
+  chatPlaceholder: 'Xabar yozing...',
+  chatEmpty: 'Xabar yo\'q — birinchi bo\'lib yozing',
+  chatTitle: 'Yozishma',
   subtitle: 'Mening murojaatlarim',
   empty: "Murojaatlar yo'q",
   loadError: 'Murojaatlarni yuklashda xatolik',

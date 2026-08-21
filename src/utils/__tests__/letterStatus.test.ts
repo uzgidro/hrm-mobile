@@ -20,6 +20,11 @@ import {
   canResetReport,
   isReportReturned,
   canChancelleryConfirmRegistration,
+  canAgreeLetter,
+  canSubmitAgreementDraft,
+  canSendAgreementLetter,
+  letterNeedsMyAction,
+  isMyLetter,
 } from '../letterStatus';
 import { statusColor as orderStatusColor } from '../orderStatus';
 import i18n from '../../i18n';
@@ -317,29 +322,80 @@ describe('canSignLetter', () => {
     });
   });
 
-  describe('application', () => {
-    it('any assigned, not-yet-signed signer can sign', () => {
+  // BILDIRGI/ARIZA IMZOLANMAYDI: backend `/sign` ga 400 `use_agreement_flow`
+  // qaytaradi — kelishuv oqimi (agree/disagree) ishlatiladi. Avval bu yerda
+  // `true` qulflangan edi va mobil tugmani ko'rsatib, bosilganda xato berardi.
+  describe('kelishuv hujjatlari (ariza/bildirgi)', () => {
+    it('ariza IMZOLANMAYDI — kelishuv oqimi ishlatiladi', () => {
       const l = letter({
         letter_type: 'application',
-        status: 'pending',
-        assigned_signers: [{ signer_type: 'ordinary', employee_id: 1 }],
+        status: 'pending_agreement',
+        assigned_signers: [{ signer_type: 'agreement', employee_id: 1 }],
       });
-      expect(canSignLetter(l, 1)).toBe(true);
+      expect(canSignLetter(l, 1)).toBe(false);
+      expect(canAgreeLetter(l, 1)).toBe(true);
     });
   });
 
   describe('bildirgi', () => {
-    it('only the main signer can sign', () => {
+    it('bildirgi ham IMZOLANMAYDI — u ham kelishuv hujjati', () => {
+      // `bildirgi` → 'explanatory'; backend uchun u ham kelishuv oqimida
+      // (sign_letter: letter_type in ("application", "explanatory") → 400).
       const main = letter({
         letter_type: 'bildirgi',
         assigned_signers: [{ signer_type: 'main', employee_id: 1 }],
       });
-      expect(canSignLetter(main, 1)).toBe(true);
-      const ordinary = letter({
-        letter_type: 'bildirgi',
-        assigned_signers: [{ signer_type: 'ordinary', employee_id: 1 }],
+      expect(canSignLetter(main, 1)).toBe(false);
+    });
+  });
+
+  describe('kelishuv amallari (web helpers.js bilan 1:1)', () => {
+    const agreementLetter = (over = {}) =>
+      letter({
+        letter_type: 'application',
+        status: 'pending_agreement',
+        creator_employee_id: 5,
+        assigned_signers: [
+          { signer_type: 'agreement', employee_id: 1, agreed: null },
+          { signer_type: 'agreement', employee_id: 2, agreed: true },
+        ],
+        ...over,
       });
-      expect(canSignLetter(ordinary, 1)).toBe(false);
+
+    it('kelishmagan kelishuvchi kelisha oladi, kelishgani — yo\'q', () => {
+      const l = agreementLetter();
+      expect(canAgreeLetter(l, 1)).toBe(true);
+      expect(canAgreeLetter(l, 2)).toBe(false);
+      expect(canAgreeLetter(l, 9)).toBe(false); // umuman kelishuvchi emas
+    });
+
+    it('devonxona bosqichida kelishuv YOPIQ', () => {
+      for (const status of ['registered', 'review', 'returned']) {
+        expect(canAgreeLetter(agreementLetter({ status }), 1)).toBe(false);
+      }
+    });
+
+    it('qoralamani FAQAT muallif kelishuvga yuboradi', () => {
+      const draft = agreementLetter({ status: 'draft' });
+      expect(canSubmitAgreementDraft(draft, 5)).toBe(true);
+      expect(canSubmitAgreementDraft(draft, 1)).toBe(false);
+      // Arizada kelishuvchi MAJBURIY
+      expect(canSubmitAgreementDraft(agreementLetter({ status: 'draft', assigned_signers: [] }), 5)).toBe(false);
+    });
+
+    it('devonxonaga yuborish — HAMMA kelishgach va faqat muallifga', () => {
+      const partly = agreementLetter({ status: 'signed' });
+      expect(canSendAgreementLetter(partly, 5)).toBe(false); // 1-kelishuvchi kutmoqda
+      const all = agreementLetter({
+        status: 'signed',
+        assigned_signers: [
+          { signer_type: 'agreement', employee_id: 1, agreed: true },
+          { signer_type: 'agreement', employee_id: 2, agreed: true },
+        ],
+      });
+      expect(canSendAgreementLetter(all, 5)).toBe(true);
+      expect(canSendAgreementLetter(all, 1)).toBe(false);
+      expect(canSendAgreementLetter(agreementLetter({ status: 'pending_agreement' }), 5)).toBe(false);
     });
   });
 });
@@ -482,7 +538,10 @@ describe('letterStatusMeta', () => {
   // (is_stamped becomes true), so they must be checked BEFORE the is_stamped→
   // registered fallthrough — otherwise a report_submitted trip reads "registered".
   it('report statuses win over is_stamped and resolve to distinct kinds', () => {
-    expect(letterStatusMeta(letter({ status: 'management_approved', is_stamped: true })).kind).toBe('pending');
+    // management_approved + TASDIQLANMAGAN qaytish = safar davom etmoqda ('info');
+    // KADR/xodim qaytishni tasdiqlagach "hisobot kutilmoqda" ('pending') bo'ladi.
+    expect(letterStatusMeta(letter({ status: 'management_approved', is_stamped: true })).kind).toBe('info');
+    expect(letterStatusMeta(letter({ status: 'management_approved', is_stamped: true, is_trip_confirmed: true })).kind).toBe('pending');
     expect(letterStatusMeta(letter({ status: 'report_submitted', is_stamped: true })).kind).toBe('info');
     expect(letterStatusMeta(letter({ status: 'report_returned', is_stamped: true })).kind).toBe('error');
     expect(letterStatusMeta(letter({ status: 'report_management_review', is_stamped: true })).kind).toBe('pending');
@@ -492,8 +551,12 @@ describe('letterStatusMeta', () => {
   // management_approved means two different things: OLD flow = arrived / awaiting
   // report; NEW flow = awaiting the leadership approve-trip. The badge must not
   // say "awaiting report" on a NEW-flow trip the leader has to approve.
-  it('management_approved reads by flow: OLD = arrived, NEW = awaiting leadership', () => {
+  it('management_approved reads by flow: OLD = ongoing/arrived, NEW = awaiting leadership', () => {
+    // ESKI oqim, qaytish TASDIQLANMAGAN — xodim hali yo'lda (web parity
+    // 2026-08-19: "Safar davom etmoqda"), tasdiqlangach hisobot kutiladi.
     expect(letterStatusMeta(letter({ letter_type: 'business_trip', status: 'management_approved' })).label)
+      .toBe('Safar davom etmoqda');
+    expect(letterStatusMeta(letter({ letter_type: 'business_trip', status: 'management_approved', is_trip_confirmed: true })).label)
       .toBe('Hisobot kutilmoqda');
     expect(letterStatusMeta(letter({ letter_type: 'business_trip', status: 'management_approved', flow_version: 2 })).label)
       .toBe("Rahbar tasdig'i kutilmoqda");
@@ -666,5 +729,54 @@ describe('canChancelleryConfirmRegistration', () => {
   it('false for a regular employee or a devonxona of another branch', () => {
     expect(canChancelleryConfirmRegistration({ id: 1, letter_type: 'bildirgi', status: 'pending_registration', organization_branch_id: 7 } as Letter, regular)).toBe(false);
     expect(canChancelleryConfirmRegistration({ id: 1, letter_type: 'bildirgi', status: 'pending_registration', organization_branch_id: 8 } as Letter, branchDevonxona)).toBe(false);
+  });
+});
+
+describe("letterNeedsMyAction (ro'yxatdagi \"amal talab qiladi\")", () => {
+  it("backend `action_required` bayrog'iga ISHONADI (imzo/kelishuv bo'lmasa ham)", () => {
+    // Devonxona ro'yxatga oladi / KADR \"Keldi\" tasdiqlaydi / muallif qaytarilgan
+    // hisobotni tuzatadi — bularda foydalanuvchi imzolovchi EMAS.
+    const l = { id: 1, letter_type: 'business_trip', status: 'signed', action_required: true } as Letter;
+    expect(letterNeedsMyAction(l, 99)).toBe(true);
+  });
+
+  it('KELISHUV kutayotgan bildirgini amal deb belgilaydi (bayroqsiz eski javobda ham)', () => {
+    const l = {
+      id: 2, letter_type: 'bildirgi', status: 'pending_agreement',
+      assigned_signers: [{ employee_id: 7, signer_type: 'agreement', agreed: null }],
+    } as Letter;
+    // canSignLetter bu yerda DOIM false (bildirgi imzolanmaydi) — eski mantiq
+    // aynan shu holatda sariqni ko'rsatmasdi.
+    expect(canSignLetter(l, 7)).toBe(false);
+    expect(letterNeedsMyAction(l, 7)).toBe(true);
+  });
+
+  it("kelishib bo'lgan yoki begona hujjatda false", () => {
+    const agreed = {
+      id: 3, letter_type: 'bildirgi', status: 'pending_registration',
+      assigned_signers: [{ employee_id: 7, signer_type: 'agreement', agreed: true }],
+    } as Letter;
+    expect(letterNeedsMyAction(agreed, 7)).toBe(false);
+    expect(letterNeedsMyAction({ id: 4, letter_type: 'business_trip', status: 'pending' } as Letter, 7)).toBe(false);
+  });
+});
+
+
+// "Mening" tabi — avval `signer=true` (men IMZOLAGANLARIM) bo'lgani uchun
+// o'z bildirgisini yozgan xodim uni ro'yxatda ko'rmasdi.
+describe('isMyLetter', () => {
+  it('muallif va kirituvchi uchun TRUE (imzolamagan bo\'lsa ham)', () => {
+    expect(isMyLetter({ id: 1, letter_type: 'bildirgi', creator_employee_id: 7 } as Letter, 7)).toBe(true);
+    expect(isMyLetter({ id: 2, letter_type: 'application', submitter_id: 7 } as Letter, 7)).toBe(true);
+  });
+
+  it('biriktirilgan imzolovchi/kelishuvchi va imzolagan uchun ham TRUE', () => {
+    expect(isMyLetter({ id: 3, letter_type: 'bildirgi', assigned_signers: [{ employee_id: 7, signer_type: 'agreement' }] } as Letter, 7)).toBe(true);
+    expect(isMyLetter({ id: 4, letter_type: 'business_trip', signers: [{ employee_id: 7 }] } as Letter, 7)).toBe(true);
+  });
+
+  it('begona hujjatda va xodim id\'siz FALSE', () => {
+    expect(isMyLetter({ id: 5, letter_type: 'bildirgi', creator_employee_id: 9 } as Letter, 7)).toBe(false);
+    expect(isMyLetter({ id: 6, letter_type: 'bildirgi', creator_employee_id: 7 } as Letter, undefined)).toBe(false);
   });
 });
