@@ -7,11 +7,13 @@ import {
   LETTER_APPROVE_TRIP, LETTER_APPROVE_REPORT, LETTER_APPROVE_GUVOHNOMA,
   LETTER_CONFIRM_REGISTRATION,
   LETTER_AGREE, LETTER_DISAGREE, LETTER_SUBMIT_AGREEMENT, LETTER_SEND_TO_REGISTRY,
+  LETTER_APPROVE_TRIP_REGISTRATION,
 } from '@/api/urls';
 import {
   signLetter, rejectLetter, createLetter, submitReport, resetReport, uploadReport,
   confirmReturn, selfConfirmReturn, updateReturnDate, submitTrip, approveTrip, approveReport, approveGuvohnoma,
   confirmRegistration, agreeLetter, disagreeLetter, submitAgreementLetter, sendLetterToRegistry,
+  approveTripRegistration,
 } from '../mutations';
 
 let mock: MockAdapter;
@@ -236,5 +238,16 @@ describe('trip approve request functions (leadership)', () => {
     await approveGuvohnoma(4);
     expect(mock.history.post[0].url).toBe(LETTER_APPROVE_GUVOHNOMA(4));
     expect(mock.history.post[0].data).toBeUndefined();
+  });
+});
+
+
+// Devonxona ro'yxatidan keyingi RAHBAR tasdig'i — mobilda umuman yo'q edi.
+describe('approveTripRegistration', () => {
+  it('TANASIZ POST yuboradi (registered_pending_rahbar → management_approved)', async () => {
+    mock.onPost(LETTER_APPROVE_TRIP_REGISTRATION(11)).reply(200, { id: 11, status: 'management_approved' });
+    const data = await approveTripRegistration(11);
+    expect(data).toEqual({ id: 11, status: 'management_approved' });
+    expect(mock.history.post[0].url).toBe(LETTER_APPROVE_TRIP_REGISTRATION(11));
   });
 });

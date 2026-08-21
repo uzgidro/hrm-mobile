@@ -1,4 +1,5 @@
-import type { Letter } from '../types';
+import type { Letter, User } from '../types';
+import { canApproveTripForBranch } from './roles';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Business-trip (xizmat safari) action helpers. Action gating (submit / approve)
@@ -20,6 +21,27 @@ export function canSubmitTrip(l: Letter): boolean {
 export function canApproveTrip(l: Letter): boolean {
   return !!l.available_actions?.can_approve_trip;
 }
+/**
+ * DEVONXONA ro'yxatga olgach RAHBAR tasdig'i (registered_pending_rahbar →
+ * management_approved). Buning uchun backend available_actions bayrog'i
+ * BERMAYDI, shu bois web bilan bir xil qoida mijozda takrorlanadi:
+ * status + (xodim TANLAGAN rahbariyat imzolovchisi YOKI filial safar
+ * tasdiqlovchisi YOKI master-admin).
+ */
+export function canApproveTripRegistration(
+  l: Letter,
+  user: User | null | undefined,
+  employeeId?: number | null,
+): boolean {
+  if (l.letter_type !== 'business_trip' || l.status !== 'registered_pending_rahbar') return false;
+  const isChosenManagement = (l.assigned_signers ?? []).some(
+    (s) => s.signer_type === 'management'
+      && employeeId != null
+      && Number(s.employee_id ?? s.employee?.id) === Number(employeeId),
+  );
+  return isChosenManagement || canApproveTripForBranch(user, l.organization_branch_id);
+}
+
 export function canApproveReport(l: Letter): boolean {
   return !!l.available_actions?.can_approve_report;
 }

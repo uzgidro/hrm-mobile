@@ -167,6 +167,12 @@ export default {
   approve_trip_confirmTitle: 'Safarni tasdiqlash',
   approve_trip_confirmMessage: 'Xizmat safari tasdiqlanadi.',
   approve_trip_done: 'Safar tasdiqlandi',
+  // Devonxona ro'yxatidan keyingi RAHBAR tasdig'i
+  // (registered_pending_rahbar -> management_approved).
+  approve_registration_action: 'Rahbar tasdig\'i',
+  approve_registration_confirmTitle: 'Safarni tasdiqlash',
+  approve_registration_confirmMessage: 'Devonxona ro\'yxatga oldi — safar rahbar sifatida tasdiqlanadi.',
+  approve_registration_done: 'Safar tasdiqlandi',
   approve_report_confirmTitle: 'Hisobotni tasdiqlash',
   approve_report_confirmMessage: 'Safar hisoboti tasdiqlanadi.',
   approve_report_done: 'Hisobot tasdiqlandi',

@@ -4,7 +4,8 @@ import {
   LETTER_CREATE, LETTER_SIGN, LETTER_REJECT, LETTER_UPLOAD_ATTACHMENT,
   LETTER_SUBMIT_REPORT, LETTER_RESET_REPORT, LETTER_UPLOAD_REPORT,
   LETTER_CONFIRM_RETURN, LETTER_SELF_CONFIRM_RETURN, LETTER_RETURN_DATE, LETTER_SUBMIT_TRIP,
-  LETTER_APPROVE_TRIP, LETTER_APPROVE_REPORT, LETTER_APPROVE_GUVOHNOMA,
+  LETTER_APPROVE_TRIP, LETTER_APPROVE_TRIP_REGISTRATION,
+  LETTER_APPROVE_REPORT, LETTER_APPROVE_GUVOHNOMA,
   LETTER_CONFIRM_REGISTRATION,
   LETTER_AGREE, LETTER_DISAGREE, LETTER_SUBMIT_AGREEMENT, LETTER_SEND_TO_REGISTRY,
 } from '@/api/urls';
@@ -302,6 +303,15 @@ export function useSubmitTrip(id: number) {
 // — the client only shows the button; the backend still 403s on every call.
 export function approveTrip(id: number): Promise<unknown> {
   return apiClient.post(LETTER_APPROVE_TRIP(id)).then((r) => r.data);
+}
+
+// Devonxona ro'yxatga olgandan keyingi RAHBAR tasdig'i
+// (registered_pending_rahbar → management_approved). Backend ruxsatni
+// `_is_trip_approver` bilan tekshiradi: xodim TANLAGAN rahbariyat imzolovchisi
+// yoki filialga biriktirilgan direktor/o'rinbosar (asosiy filialda — qat'iy
+// lavozim). Mijoz tomonidagi darvoza `canApproveTripRegistration` da.
+export function approveTripRegistration(id: number): Promise<unknown> {
+  return apiClient.post(LETTER_APPROVE_TRIP_REGISTRATION(id)).then((r) => r.data);
 }
 export function approveReport(id: number): Promise<unknown> {
   return apiClient.post(LETTER_APPROVE_REPORT(id)).then((r) => r.data);

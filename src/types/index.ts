@@ -19,6 +19,12 @@ export interface User {
   is_news_manager?: boolean;
   /** may access the KPI module — auth/me flag (backend scoping.kpi_enabled); gates the KPI tile like the web nav */
   kpi_enabled?: boolean;
+  // Tabel sozlamalarida filialga DIREKTOR / O'RINBOSAR qilib biriktirilgan
+  // filiallar (auth/me). Safarni rahbar tasdiqlashi shular bo'yicha aniqlanadi
+  // (web roleHelpers.canApproveTripForBranch) — backendда bu amal uchun
+  // available_actions bayrog'i YO'Q.
+  director_branch_ids?: number[];
+  deputy_branch_ids?: number[];
 }
 
 export interface Employee {

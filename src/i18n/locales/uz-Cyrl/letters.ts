@@ -159,6 +159,12 @@ export default {
   approve_trip_confirmTitle: 'Сафарни тасдиқлаш',
   approve_trip_confirmMessage: 'Хизмат сафари тасдиқланади.',
   approve_trip_done: 'Сафар тасдиқланди',
+  // Devonxona ro'yxatidan keyingi RAHBAR tasdig'i
+  // (registered_pending_rahbar -> management_approved).
+  approve_registration_action: 'Раҳбар тасдиғи',
+  approve_registration_confirmTitle: 'Сафарни тасдиқлаш',
+  approve_registration_confirmMessage: 'Девонхона рўйхатга олди — сафар раҳбар сифатида тасдиқланади.',
+  approve_registration_done: 'Сафар тасдиқланди',
   approve_report_confirmTitle: 'Ҳисоботни тасдиқлаш',
   approve_report_confirmMessage: 'Сафар ҳисоботи тасдиқланади.',
   approve_report_done: 'Ҳисобот тасдиқланди',
