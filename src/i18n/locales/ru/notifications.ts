@@ -58,6 +58,7 @@ export default {
   letterDeleted: 'Документ удалён',
   letterFallback: 'Заявления',
   orderActConfirmed: 'Приказ утверждён',
+  orderActTextEdited: 'Текст приказа изменён',
   orderActReapproval: 'Приказ на повторном согласовании',
   orderActReturned: 'Приказ возвращён',
   orderActDeleted: 'Приказ удалён',

@@ -58,6 +58,7 @@ export default {
   letterDeleted: 'Document deleted',
   letterFallback: 'Letters',
   orderActConfirmed: 'Decree confirmed',
+  orderActTextEdited: 'Decree text changed',
   orderActReapproval: 'Decree back for approval',
   orderActReturned: 'Decree returned',
   orderActDeleted: 'Decree deleted',

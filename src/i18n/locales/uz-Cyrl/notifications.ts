@@ -58,6 +58,7 @@ export default {
   letterDeleted: 'Ҳужжат ўчирилди',
   letterFallback: 'Билдирги ва аризалар',
   orderActConfirmed: 'Буйруқ кучга кирди',
+  orderActTextEdited: 'Буйруқ матни ўзгарди',
   orderActReapproval: 'Буйруқ қайта келишувда',
   orderActReturned: 'Буйруқ қайтарилди',
   orderActDeleted: 'Буйруқ ўчирилди',

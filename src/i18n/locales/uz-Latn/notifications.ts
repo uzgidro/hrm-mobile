@@ -70,6 +70,7 @@ export default {
   letterDeleted: 'Hujjat o\'chirildi',
   letterFallback: 'Bildirgi va arizalar',
   orderActConfirmed: 'Buyruq kuchga kirdi',
+  orderActTextEdited: 'Buyruq matni o\'zgardi',
   orderActReapproval: 'Buyruq qayta kelishuvda',
   orderActReturned: 'Buyruq qaytarildi',
   orderActDeleted: 'Buyruq o\'chirildi',

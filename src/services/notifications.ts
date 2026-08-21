@@ -300,6 +300,9 @@ const NOTIF_META: Record<string, { titleKey: string; icon: IconName }> = {
   letter_deleted: { titleKey: 'notifications.letterDeleted', icon: 'close' },
   order_act_confirmed: { titleKey: 'notifications.orderActConfirmed', icon: 'check' },
   order_act_reapproval: { titleKey: 'notifications.orderActReapproval', icon: 'edit' },
+  // Kelishilgandan KEYIN matn tahrirlandi — imzolar SAQLANADI, kelishganlarga
+  // ogohlantirish boradi (backend 2026-08-21).
+  order_act_text_edited: { titleKey: 'notifications.orderActTextEdited', icon: 'edit' },
   order_act_returned: { titleKey: 'notifications.orderActReturned', icon: 'edit' },
   order_act_deleted: { titleKey: 'notifications.orderActDeleted', icon: 'close' },
   business_trip_approved: { titleKey: 'notifications.businessTripApproved', icon: 'check' },
