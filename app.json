@@ -2,7 +2,7 @@
   "expo": {
     "name": "HRM Uzgidro",
     "slug": "hrm-mobile",
-    "version": "1.5.0",
+    "version": "1.6.0",
     "runtimeVersion": {
       "policy": "appVersion"
     },
@@ -22,9 +22,7 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "package": "uz.uzgidro.hrm",
-      "predictiveBackGestureEnabled": false,
-      "enableProguardInReleaseBuilds": true,
-      "enableShrinkResourcesInReleaseBuilds": true
+      "predictiveBackGestureEnabled": false
     },
     "web": {
       "bundler": "metro",
@@ -59,7 +57,16 @@
       ],
       "expo-image",
       "expo-localization",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableMinifyInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
