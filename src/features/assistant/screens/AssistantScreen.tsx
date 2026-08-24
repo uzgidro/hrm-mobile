@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList,
-  KeyboardAvoidingView, Platform, ActivityIndicator, ScrollView,
+  KeyboardAvoidingView, ActivityIndicator, ScrollView,
 } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -21,6 +21,7 @@ import {
   streamAssistantMessage, sendAssistantMessage,
 } from '../api/mutations';
 import { splitLoadMoreMarker, stabilizeStreamText } from '../stream';
+import { KEYBOARD_BEHAVIOR } from './keyboard';
 
 // A locally-rendered row: persisted messages come from the query; the pair
 // being streamed lives in component state until the post-stream refetch.
@@ -229,7 +230,7 @@ export default function AssistantScreen() {
 
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={KEYBOARD_BEHAVIOR()}
       >
         {activeId && messagesQ.isLoading ? (
           <LoadingView />
