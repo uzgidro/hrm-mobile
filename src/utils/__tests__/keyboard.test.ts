@@ -16,7 +16,7 @@
 import { Platform } from 'react-native';
 import { KEYBOARD_BEHAVIOR } from '../keyboard';
 
-describe('assistant composer keyboard behavior', () => {
+describe('KEYBOARD_BEHAVIOR', () => {
   const orig = Platform.OS;
   afterEach(() => { (Platform as { OS: string }).OS = orig; });
 

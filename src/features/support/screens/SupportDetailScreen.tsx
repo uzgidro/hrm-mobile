@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, TextInput, Alert, Linking } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, TextInput, Alert, Linking, KeyboardAvoidingView } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
 import dayjs from 'dayjs';
@@ -14,6 +14,7 @@ import { ScreenHeader } from '@/components/ScreenHeader';
 import { confirm } from '@/lib/confirm';
 import { getApiErrorMessage } from '@/api/errors';
 import { ticketStatusKey, ticketPriorityKey, canRateTicket } from '@/utils/supportStatus';
+import { KEYBOARD_BEHAVIOR } from '@/utils/keyboard';
 import { ticketDetailQuery } from '../api/queries';
 import { TicketChat } from '../components/TicketChat';
 import { useRateTicket, useReopenTicket } from '../api/mutations';
@@ -73,55 +74,71 @@ export default function SupportDetailScreen() {
   return (
     <Screen edges={['top', 'bottom']}>
       <ScreenHeader title={t('support.detailTitle')} />
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.card}>
-          <View style={styles.rowBetween}>
-            <Text style={styles.priority}>{t(ticketPriorityKey(ticket.priority))}</Text>
-            <View style={styles.badge}><Text style={styles.badgeText}>{t(ticketStatusKey(ticket.status))}</Text></View>
-          </View>
-          <Text style={styles.description}>{ticket.description}</Text>
-        </View>
-
-        <View style={styles.card}>
-          {!!ticket.uge_number && <KV k={t('support.fieldUge')} v={ticket.uge_number} />}
-          {!!ticket.room_number && <KV k={t('support.fieldRoom')} v={ticket.room_number} />}
-          <KV k={t('support.fieldAssignee')} v={ticket.assignee?.legal_name || t('support.noAssignee')} />
-          {!!ticket.created_at && <KV k={t('support.fieldCreated')} v={dayjs(ticket.created_at).format('DD.MM.YYYY HH:mm')} />}
-          {ticket.rating != null && <KV k={t('support.ratingLabel')} v={`${ticket.rating} / 5`} />}
-        </View>
-
-        {/* AKT ↔ murojaatchi yozishmasi (backendда bor edi, mobilда yo'q edi). */}
-        <TicketChat ticketId={ticket.id} />
-
-        {!!ticket.attachments?.length && (
+      {/* Yozishma maydoni (TicketChat) sahifa ICHIDA — klaviatura ochilganda u
+          ostida qolib ketmasin. Edge-to-edge oynada (Expo SDK 57) oyna o'zi
+          KICHRAYMAYDI, shu bois konteynerni biz qisqartiramiz; ScrollView esa
+          fokusdagi maydonni ko'rinadigan qismga suradi. Batafsil izoh —
+          `utils/keyboard.ts`. */}
+      <KeyboardAvoidingView
+        testID="support-detail-kav"
+        style={styles.flex}
+        behavior={KEYBOARD_BEHAVIOR()}
+      >
+        <ScrollView
+          testID="support-detail-scroll"
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
           <View style={styles.card}>
-            <Text style={styles.sectionTitle}>{t('support.attachmentsTitle')}</Text>
-            {ticket.attachments.map((a) => (
-              <TouchableOpacity
-                key={a.id}
-                style={styles.fileRow}
-                activeOpacity={0.7}
-                onPress={() => a.file_url && Linking.openURL(a.file_url)}
-              >
-                <Icon name="doc" size={16} color={colors.primary} />
-                <Text style={styles.fileName} numberOfLines={1}>{a.original_filename || t('support.attachmentsTitle')}</Text>
-              </TouchableOpacity>
-            ))}
+            <View style={styles.rowBetween}>
+              <Text style={styles.priority}>{t(ticketPriorityKey(ticket.priority))}</Text>
+              <View style={styles.badge}><Text style={styles.badgeText}>{t(ticketStatusKey(ticket.status))}</Text></View>
+            </View>
+            <Text style={styles.description}>{ticket.description}</Text>
           </View>
-        )}
 
-        {canRate && (
-          <View style={styles.actions}>
-            <TouchableOpacity style={[styles.actionBtn, styles.rateBtn]} onPress={() => setRateOpen(true)} disabled={rateM.isPending} activeOpacity={0.85}>
-              <Icon name="check" size={18} color={colors.onPrimary} />
-              <Text style={styles.rateBtnText}>{t('support.rate')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.actionBtn, styles.reopenBtn]} onPress={onReopen} disabled={reopenM.isPending} activeOpacity={0.85}>
-              <Text style={[styles.rateBtnText, { color: colors.text }]}>{t('support.reopen')}</Text>
-            </TouchableOpacity>
+          <View style={styles.card}>
+            {!!ticket.uge_number && <KV k={t('support.fieldUge')} v={ticket.uge_number} />}
+            {!!ticket.room_number && <KV k={t('support.fieldRoom')} v={ticket.room_number} />}
+            <KV k={t('support.fieldAssignee')} v={ticket.assignee?.legal_name || t('support.noAssignee')} />
+            {!!ticket.created_at && <KV k={t('support.fieldCreated')} v={dayjs(ticket.created_at).format('DD.MM.YYYY HH:mm')} />}
+            {ticket.rating != null && <KV k={t('support.ratingLabel')} v={`${ticket.rating} / 5`} />}
           </View>
-        )}
-      </ScrollView>
+
+          {/* AKT ↔ murojaatchi yozishmasi (backendда bor edi, mobilда yo'q edi). */}
+          <TicketChat ticketId={ticket.id} />
+
+          {!!ticket.attachments?.length && (
+            <View style={styles.card}>
+              <Text style={styles.sectionTitle}>{t('support.attachmentsTitle')}</Text>
+              {ticket.attachments.map((a) => (
+                <TouchableOpacity
+                  key={a.id}
+                  style={styles.fileRow}
+                  activeOpacity={0.7}
+                  onPress={() => a.file_url && Linking.openURL(a.file_url)}
+                >
+                  <Icon name="doc" size={16} color={colors.primary} />
+                  <Text style={styles.fileName} numberOfLines={1}>{a.original_filename || t('support.attachmentsTitle')}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
+          {canRate && (
+            <View style={styles.actions}>
+              <TouchableOpacity style={[styles.actionBtn, styles.rateBtn]} onPress={() => setRateOpen(true)} disabled={rateM.isPending} activeOpacity={0.85}>
+                <Icon name="check" size={18} color={colors.onPrimary} />
+                <Text style={styles.rateBtnText}>{t('support.rate')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.actionBtn, styles.reopenBtn]} onPress={onReopen} disabled={reopenM.isPending} activeOpacity={0.85}>
+                <Text style={[styles.rateBtnText, { color: colors.text }]}>{t('support.reopen')}</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       <Modal visible={rateOpen} transparent animationType="fade" onRequestClose={() => setRateOpen(false)}>
         <View style={styles.overlay}>
@@ -182,6 +199,7 @@ const makeStyles = (c: ThemeColors) =>
     kvKey: { fontSize: 13, color: c.textMuted },
     kvVal: { fontSize: 13, color: c.text, fontWeight: '600', flexShrink: 1, textAlign: 'right', marginLeft: 12 },
     fileRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, borderTopWidth: 1, borderTopColor: c.cardBorder },
+    flex: { flex: 1 },
     fileName: { flex: 1, fontSize: 14, color: c.text, fontWeight: '500' },
     actions: { flexDirection: 'row', gap: 10 },
     actionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 12, paddingVertical: 14 },

@@ -1,6 +1,10 @@
 import { Platform } from 'react-native';
 
 /**
+ * Klaviatura ustida qoladigan EKRANLAR uchun umumiy qoida (AI yordamchi,
+ * texnik yordam tafsiloti). Feature'lar bir-biridan import qila olmaydi
+ * (`src/features/README.md`), shu bois qoida `src/utils` da.
+ *
  * `KeyboardAvoidingView` uchun behavior — IKKALA platformada ham beriladi.
  *
  * Ilgari kod `Platform.OS === 'ios' ? 'padding' : undefined` edi: Androidda

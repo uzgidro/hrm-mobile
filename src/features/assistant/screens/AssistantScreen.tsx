@@ -15,13 +15,13 @@ import { LoadingView, ErrorState, EmptyState } from '@/components/StateViews';
 import { confirm } from '@/lib/confirm';
 import { toast } from '@/lib/toast';
 import type { LlmMessage } from '@/types';
+import { KEYBOARD_BEHAVIOR } from '@/utils/keyboard';
 import { assistantKeys, assistantSessionsQuery, assistantMessagesQuery } from '../api/queries';
 import {
   createAssistantSession, deleteAssistantSession,
   streamAssistantMessage, sendAssistantMessage,
 } from '../api/mutations';
 import { splitLoadMoreMarker, stabilizeStreamText } from '../stream';
-import { KEYBOARD_BEHAVIOR } from './keyboard';
 
 // A locally-rendered row: persisted messages come from the query; the pair
 // being streamed lives in component state until the post-stream refetch.
