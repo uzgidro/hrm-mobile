@@ -4,16 +4,18 @@ import {
   LETTER_CREATE, LETTER_SIGN, LETTER_REJECT, LETTER_UPLOAD_ATTACHMENT,
   LETTER_SUBMIT_REPORT, LETTER_RESET_REPORT, LETTER_UPLOAD_REPORT,
   LETTER_CONFIRM_RETURN, LETTER_SELF_CONFIRM_RETURN, LETTER_RETURN_DATE, LETTER_SUBMIT_TRIP,
-  LETTER_APPROVE_TRIP, LETTER_APPROVE_REPORT, LETTER_APPROVE_GUVOHNOMA,
+  LETTER_APPROVE_REPORT, LETTER_APPROVE_GUVOHNOMA,
   LETTER_CONFIRM_REGISTRATION,
   LETTER_AGREE, LETTER_DISAGREE, LETTER_SUBMIT_AGREEMENT, LETTER_SEND_TO_REGISTRY,
   LETTER_APPROVE_TRIP_REGISTRATION,
+  LETTER_RETURN, LETTER_RETURN_REPORT, LETTER_CANCEL_TRIP, LETTER_DETAIL,
 } from '@/api/urls';
 import {
   signLetter, rejectLetter, createLetter, submitReport, resetReport, uploadReport,
-  confirmReturn, selfConfirmReturn, updateReturnDate, submitTrip, approveTrip, approveReport, approveGuvohnoma,
+  confirmReturn, selfConfirmReturn, updateReturnDate, submitTrip, approveReport, approveGuvohnoma,
   confirmRegistration, agreeLetter, disagreeLetter, submitAgreementLetter, sendLetterToRegistry,
   approveTripRegistration,
+  returnLetter, returnReport, cancelTrip, deleteLetter,
 } from '../mutations';
 
 let mock: MockAdapter;
@@ -218,14 +220,6 @@ describe('submitTrip', () => {
 });
 
 describe('trip approve request functions (leadership)', () => {
-  it('approveTrip POSTs approve-trip with an empty body', async () => {
-    mock.onPost(LETTER_APPROVE_TRIP(4)).reply(200, { id: 4, status: 'report_approved' });
-    const data = await approveTrip(4);
-    expect(data).toEqual({ id: 4, status: 'report_approved' });
-    expect(mock.history.post[0].url).toBe(LETTER_APPROVE_TRIP(4));
-    expect(mock.history.post[0].data).toBeUndefined();
-  });
-
   it('approveReport POSTs approve-report with an empty body', async () => {
     mock.onPost(LETTER_APPROVE_REPORT(4)).reply(200, { id: 4, status: 'report_guvohnoma_review' });
     await approveReport(4);
@@ -249,5 +243,40 @@ describe('approveTripRegistration', () => {
     const data = await approveTripRegistration(11);
     expect(data).toEqual({ id: 11, status: 'management_approved' });
     expect(mock.history.post[0].url).toBe(LETTER_APPROVE_TRIP_REGISTRATION(11));
+  });
+});
+
+
+// Devonxona/KADR amallari — mobilда umuman yo'q edi.
+describe('devonxona / KADR amallari', () => {
+  it('returnLetter sababni tanada yuboradi (backend uni MAJBURIY qiladi)', async () => {
+    mock.onPost(LETTER_RETURN(12)).reply(200, { id: 12, status: 'returned' });
+    const data = await returnLetter(12, 'Raqam xato');
+    expect(data).toEqual({ id: 12, status: 'returned' });
+    expect(mock.history.post[0].url).toBe(LETTER_RETURN(12));
+    expect(JSON.parse(mock.history.post[0].data)).toEqual({ reason: 'Raqam xato' });
+  });
+
+  it('returnReport sababni tanada yuboradi', async () => {
+    mock.onPost(LETTER_RETURN_REPORT(13)).reply(200, { id: 13, status: 'report_returned' });
+    await returnReport(13, "Hisobot to'liq emas");
+    expect(mock.history.post[0].url).toBe(LETTER_RETURN_REPORT(13));
+    expect(JSON.parse(mock.history.post[0].data)).toEqual({ reason: "Hisobot to'liq emas" });
+  });
+
+  it('cancelTrip sabab IXTIYORIY — bo\'sh izohda BO\'SH tana yuboradi', async () => {
+    mock.onPost(LETTER_CANCEL_TRIP(14)).reply(200, { id: 14, status: 'cancelled' });
+    await cancelTrip(14, '   ');
+    expect(JSON.parse(mock.history.post[0].data)).toEqual({});
+
+    mock.resetHistory();
+    await cancelTrip(14, 'Safar bekor');
+    expect(JSON.parse(mock.history.post[0].data)).toEqual({ reason: 'Safar bekor' });
+  });
+
+  it('deleteLetter DELETE /letters/{id} chaqiradi', async () => {
+    mock.onDelete(LETTER_DETAIL(15)).reply(200, { detail: 'Letter deleted successfully' });
+    await deleteLetter(15);
+    expect(mock.history.delete[0].url).toBe(LETTER_DETAIL(15));
   });
 });

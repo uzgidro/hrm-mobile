@@ -2,8 +2,9 @@
 // A branch may belong to SEVERAL regions via `regions[]`; legacy records carry a
 // single `region` string. These pure helpers back the region multi-select →
 // destination-branch filter in CreateLetterScreen, matching the web's
-// `branchRegions(b)` + `.some()` behaviour. Regions are a UI-only filter — they
-// are never part of the submit payload (only destination_branch_ids is sent).
+// `branchRegions(b)` + `.some()` behaviour. The selection is BOTH a filter for
+// the destination-branch list AND part of the create payload
+// (`destination_regions`) — the trip document's "hudud" is written from it.
 
 export interface BranchLite {
   id: number;

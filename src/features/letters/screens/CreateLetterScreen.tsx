@@ -151,6 +151,9 @@ export default function CreateLetterScreen() {
     if (isTrip) {
       // submitter is optional (web parity): an empty submitter means the author
       // submits and signs their own trip — the backend handles it.
+      // VILOYAT majburiy (web AddLetterDrawer bilan bir xil): hujjatdagi "hudud"
+      // aynan shu tanlovdan yoziladi.
+      if (regions.length === 0) { Alert.alert(t('common.errorTitle'), t('letters.regionRequired')); return; }
       if (destinationIds.length === 0) { Alert.alert(t('common.errorTitle'), t('letters.destinationRequired')); return; }
       if (rahbariyatIds.length === 0) { Alert.alert(t('common.errorTitle'), t('letters.leadershipRequired')); return; }
     }
@@ -160,7 +163,7 @@ export default function CreateLetterScreen() {
       branchId, employeeId: employee?.id,
       shortSummary, description, workPlan,
       mainSignerId, ordinarySigners,
-      submitterId, rahbariyatIds, destinationIds,
+      submitterId, rahbariyatIds, destinationIds, regions,
       departureDate, arrivalDate,
     });
 

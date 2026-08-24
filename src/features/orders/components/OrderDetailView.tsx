@@ -13,7 +13,7 @@ import type { Employee } from '@/types';
 import { Icon } from '@/components/Icon';
 import { LoadingView } from '@/components/StateViews';
 import { PickerModal, type PickerOption } from '@/components/PickerModal';
-import { statusMeta, statusColor, decreePermissions } from '@/utils/orderStatus';
+import { statusMeta, statusColor, decreePermissions, decreeSubmitTarget } from '@/utils/orderStatus';
 import { isHR, isSiteMasterAdmin, employeeSubLabel } from '@/utils/roles';
 import { orderDetailQuery, orderEmployeesQuery } from '../api/queries';
 import { useDecreeActions } from '../hooks/useDecreeActions';
@@ -46,7 +46,7 @@ export function OrderDetailView({ id, embedded = false }: { id: number; embedded
 
   const { data: order, isLoading, refetch } = useQuery(orderDetailQuery(orderId));
 
-  const { busy, approve, reject, resubmit, forward, confirmSubmission, acknowledge, register } =
+  const { busy, submit, approve, reject, resubmit, forward, confirmSubmission, acknowledge, register } =
     useDecreeActions(orderId, refetch);
 
   const assignFam = useAssignFamiliarizers(orderId);
@@ -140,7 +140,12 @@ export function OrderDetailView({ id, embedded = false }: { id: number; embedded
 
   const meta = statusMeta(order.status);
   const sc = statusColor(meta.kind, colors);
-  const perms = decreePermissions(order, employeeId);
+  // `user` ham uzatiladi: ro'yxatga olish DEVONXONA huquqi (yaratuvchiniki emas)
+  // va KADR buyrug'ida "Rahbariyatga yuborish" KADRга ham ochiq.
+  const perms = decreePermissions(order, employeeId, user);
+  const submitLabel = decreeSubmitTarget(order) === 'submitter'
+    ? t('orders.actionSubmitToSubmitter')
+    : t('orders.actionSubmitToApprovers');
 
   // Assigning familiarizers mirrors the web gate (OrderDetailModal): HR while the
   // decree is `confirmed`, or a site master-admin (strict `type === 'master-admin'`,
@@ -231,6 +236,8 @@ export function OrderDetailView({ id, embedded = false }: { id: number; embedded
       <DecreeActionBar
         perms={perms}
         busy={busy}
+        submitLabel={submitLabel}
+        onSubmit={submit}
         onApprove={approve}
         onReject={() => setRejectOpen(true)}
         onResubmit={resubmit}

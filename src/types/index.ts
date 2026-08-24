@@ -52,6 +52,11 @@ export interface Employee {
 export interface OrganizationBranch {
   id: number;
   name: string;
+  // Filial BIR NECHTA viloyatga qarashi mumkin (`regions[]`); eski yozuvlarda
+  // bitta `region` satri. `branchRegions()` (utils/tripRegions) ikkalasini
+  // birlashtiradi — filial viloyatini shu yerdan o'qing.
+  region?: string | null;
+  regions?: string[] | null;
 }
 
 // Turniket joylashuvi (GES / obyekt). `locations` M2M bo'lgani uchun massiv
@@ -143,7 +148,10 @@ export interface OrderActComment {
 export interface OrderAct {
   id: number;
   category_id?: number;
-  category_rel?: { id: number; name: string };
+  // `creator_role` — 'employee' | 'hr'. KADR buyrug'ida devonxona qadami YO'Q
+  // (backend decree_register 400 `hr_decree_no_chancellery`), shu bois
+  // ro'yxatga olish tugmasi faqat XODIM buyrug'ida chiqadi.
+  category_rel?: { id: number; name: string; creator_role?: string | null; type?: number | null };
   act_number?: number | null;
   act_date?: string | null;
   summary?: string;
@@ -211,8 +219,13 @@ export interface Letter {
   id: number;
   letter_type?: string;
   letter_number?: string | null;
+  // Xizmat safarida "Bildirgi raqami" — web ro'yxati/tafsiloti raqam sifatida
+  // AVVAL shuni ko'rsatadi (bo'lmasa letter_number).
+  decree_number?: string | null;
   letter_date?: string | null;
   description?: string;
+  /** Safar REJASI / maqsadi (web "Reja"). Tafsilotда ko'rsatiladi. */
+  work_plan?: string | null;
   status?: string;
   reject_by_id?: number | null;
   rejection_reason?: string | null;
@@ -259,6 +272,20 @@ export interface Letter {
   // to build the branch set that gates trip-movement management (isBranchHr).
   destination_branch_id?: number | null;
   destination_branches?: OrganizationBranch[] | null;
+  /** Foydalanuvchi TANLAGAN viloyat(lar) — hujjatdagi "hudud" shu bo'yicha. */
+  destination_regions?: string[] | null;
+  // ASOS BUYRUQ (KADR kiritadi) — web tafsilotда alohida qator.
+  basis_decree_number?: string | null;
+  basis_decree_date?: string | null;
+  /** Guvohnoma (safar varaqasi) raqami va fayli. */
+  guvohnoma_number?: string | null;
+  guvohnoma_path?: string | null;
+  /** Soddalashtirilgan safar (rais + yordamchilari): devonxona/hisobot YO'Q. */
+  is_simple_trip?: boolean | null;
+  // Safarni UZAYTIRISH so'rovi (rahbariyat tasdig'ini kutadi).
+  extension_requested_date?: string | null;
+  extension_note?: string | null;
+  status_before_extension?: string | null;
   /** action flags computed by the backend — only present on the detail read */
   available_actions?: LetterAvailableActions | null;
   // True when DB form text could not be patched into the (anchorless / stale)

@@ -8,6 +8,7 @@ import {
   rejectDecree,
   resubmitDecree,
   forwardDecree,
+  submitDecree,
   confirmSubmissionDecree,
   acknowledgeDecree,
   registerDecree,
@@ -76,6 +77,12 @@ export function useDecreeActions(orderId: number, refetch: () => void) {
     [runAction, orderId]
   );
 
+  // Qoralamani oqimga yuborish (draft → pending_submitter/pending_approval).
+  const submit = useCallback(
+    () => runAction(() => submitDecree(orderId), i18n.t('orders.submitSuccess')),
+    [runAction, orderId]
+  );
+
   // Kirituvchi shaxs tasdig'i: pending_submitter → keyingi bosqich.
   const confirmSubmission = useCallback(
     () => runAction(() => confirmSubmissionDecree(orderId), i18n.t('orders.confirmSubmissionSuccess')),
@@ -99,5 +106,5 @@ export function useDecreeActions(orderId: number, refetch: () => void) {
     [runAction, orderId]
   );
 
-  return { busy, approve, reject, resubmit, forward, confirmSubmission, acknowledge, register };
+  return { busy, submit, approve, reject, resubmit, forward, confirmSubmission, acknowledge, register };
 }

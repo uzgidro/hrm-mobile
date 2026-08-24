@@ -123,10 +123,11 @@ export const LETTER_RESET_REPORT = (id: number) => `letters/${id}/reset-report`;
 
 // The employee sends a trip draft into the flow (draft → pending).
 export const LETTER_SUBMIT_TRIP = (id: number) => `letters/${id}/submit-trip`;
-// Leadership approvals: approve-trip (NEW flow) / approve-report + approve-guvohnoma
-// (OLD flow). Gated on the server available_actions flags (the client cannot
-// compute the trip_approver rights).
-export const LETTER_APPROVE_TRIP = (id: number) => `letters/${id}/approve-trip`;
+// Leadership approvals: approve-report + approve-guvohnoma. Gated on the server
+// available_actions flags (the client cannot compute the trip_approver rights).
+// ⚠️ `approve-trip` (eski flow_version 2 shoxi) backenddan OLIB TASHLANGAN
+// (safar oqimi yagona) — u endi 404 beradi, shu bois mijozdan ham olib
+// tashlandi. `available_actions.can_approve_trip` ham qaytarilmaydi.
 // DEVONXONA ro'yxatga olgach RAHBAR tasdig'i: registered_pending_rahbar →
 // management_approved (boshqa filial safari). Web'da bu tugma bor edi, mobilda
 // yo'q — ya'ni rahbar safarni telefondan tasdiqlay olmasdi.
@@ -160,6 +161,14 @@ export const LETTER_DISAGREE = (id: number) => `letters/${id}/disagree`;
 export const LETTER_SUBMIT_AGREEMENT = (id: number) => `letters/${id}/submit-agreement`;
 export const LETTER_SEND_TO_REGISTRY = (id: number) => `letters/${id}/send-to-registry`;
 export const LETTER_CONFIRM_REGISTRATION = (id: number) => `letters/${id}/confirm-registration`;
+// DEVONXONA hujjatni yaratuvchiga QAYTARADI (sabab MAJBURIY) — ISTALGAN
+// bosqichda: muhr/ro'yxat bekor bo'ladi, status 'returned'. Mobilда bu amal
+// yo'q edi, ya'ni devonxona telefondan hujjatni qaytara olmasdi.
+export const LETTER_RETURN = (id: number) => `letters/${id}/return`;
+// DEVONXONA safar HISOBOTINI qaytaradi (report_submitted → report_returned).
+export const LETTER_RETURN_REPORT = (id: number) => `letters/${id}/return-report`;
+// KADR xizmat safarini BEKOR qiladi (sabab ixtiyoriy).
+export const LETTER_CANCEL_TRIP = (id: number) => `letters/${id}/cancel-trip`;
 export const LETTER_REGISTERED_NUMBER_AVAILABILITY = 'letters/registered-number/availability';
 
 // Organization branches
@@ -176,6 +185,10 @@ export const ORDER_ACT_DECREE_RESUBMIT = (id: number) => `order-acts/${id}/decre
 // (backend api/v1/order_act.py) — mijozda `forward-to-leadership` deb yozilgan
 // edi va tugma har safar 404 bilan yiqilardi.
 export const ORDER_ACT_DECREE_FORWARD = (id: number) => `order-acts/${id}/decree/send-to-leadership`;
+// YARATUVCHI qoralamani OQIMGA yuboradi: draft → pending_submitter (kirituvchi
+// boshqa odam bo'lsa) yoki pending_approval. Mijozda umuman yo'q edi — mobilda
+// yaratilgan buyruq DRAFTда abadiy qolib ketardi (web'da "Yuborish" tugmasi bor).
+export const ORDER_ACT_DECREE_SUBMIT = (id: number) => `order-acts/${id}/decree/submit`;
 // KIRITUVCHI shaxs (submitter) buyruqni tasdiqlaydi: pending_submitter →
 // pending_approval / approved. Mijozda umuman yo'q edi — buyruq mobilда
 // shu bosqichda tiqilib qolardi.

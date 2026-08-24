@@ -7,6 +7,7 @@ import {
   ORDER_ACT_DECREE_REJECT,
   ORDER_ACT_DECREE_RESUBMIT,
   ORDER_ACT_DECREE_FORWARD,
+  ORDER_ACT_DECREE_SUBMIT,
   ORDER_ACT_DECREE_CONFIRM_SUBMISSION,
   ORDER_ACT_DECREE_REGISTER,
   ORDER_ACT_DECREE_ACKNOWLEDGE,
@@ -32,6 +33,13 @@ export function resubmitDecree(id: number): Promise<unknown> {
 
 export function forwardDecree(id: number): Promise<unknown> {
   return apiClient.post(ORDER_ACT_DECREE_FORWARD(id)).then((r) => r.data);
+}
+
+// YARATUVCHI qoralamani oqimga yuboradi (draft → pending_submitter/pending_approval).
+// Bu amal mobilда umuman yo'q edi: mobilда yaratilgan buyruq DRAFTда qolib,
+// uni faqat webdan yuborish mumkin edi.
+export function submitDecree(id: number): Promise<unknown> {
+  return apiClient.post(ORDER_ACT_DECREE_SUBMIT(id)).then((r) => r.data);
 }
 
 // Kirituvchi shaxs (submitter) tasdig'i — pending_submitter bosqichi.
@@ -107,6 +115,14 @@ export async function createOrder(
 // list and any open detail via the hierarchical key). The decree detail screen
 // uses `useDecreeActions` instead of these for its busy/Alert orchestration;
 // these remain available for callers that only need fire-and-invalidate.
+
+export function useSubmitDecree(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => submitDecree(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: orderKeys.all }),
+  });
+}
 
 export function useApproveDecree(id: number) {
   const qc = useQueryClient();

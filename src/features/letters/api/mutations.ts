@@ -4,10 +4,11 @@ import {
   LETTER_CREATE, LETTER_SIGN, LETTER_REJECT, LETTER_UPLOAD_ATTACHMENT,
   LETTER_SUBMIT_REPORT, LETTER_RESET_REPORT, LETTER_UPLOAD_REPORT,
   LETTER_CONFIRM_RETURN, LETTER_SELF_CONFIRM_RETURN, LETTER_RETURN_DATE, LETTER_SUBMIT_TRIP,
-  LETTER_APPROVE_TRIP, LETTER_APPROVE_TRIP_REGISTRATION,
+  LETTER_APPROVE_TRIP_REGISTRATION,
   LETTER_APPROVE_REPORT, LETTER_APPROVE_GUVOHNOMA,
   LETTER_CONFIRM_REGISTRATION,
   LETTER_AGREE, LETTER_DISAGREE, LETTER_SUBMIT_AGREEMENT, LETTER_SEND_TO_REGISTRY,
+  LETTER_RETURN, LETTER_RETURN_REPORT, LETTER_CANCEL_TRIP, LETTER_DETAIL,
 } from '@/api/urls';
 import type { PickedFile } from '@/components/AttachmentField';
 import { letterKeys } from './queries';
@@ -306,9 +307,6 @@ export function useSubmitTrip(id: number) {
 // Bare POSTs, no body. Whether the current user may call each is decided by the
 // backend and surfaced as letter.available_actions.can_approve_* (see tripStatus)
 // — the client only shows the button; the backend still 403s on every call.
-export function approveTrip(id: number): Promise<unknown> {
-  return apiClient.post(LETTER_APPROVE_TRIP(id)).then((r) => r.data);
-}
 
 // Devonxona ro'yxatga olgandan keyingi RAHBAR tasdig'i
 // (registered_pending_rahbar → management_approved). Backend ruxsatni
@@ -325,13 +323,6 @@ export function approveGuvohnoma(id: number): Promise<unknown> {
   return apiClient.post(LETTER_APPROVE_GUVOHNOMA(id)).then((r) => r.data);
 }
 
-export function useApproveTrip(id: number) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: () => approveTrip(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
-  });
-}
 export function useApproveReport(id: number) {
   const qc = useQueryClient();
   return useMutation({
@@ -343,6 +334,64 @@ export function useApproveGuvohnoma(id: number) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: () => approveGuvohnoma(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+  });
+}
+
+// ── DEVONXONA / KADR amallari ────────────────────────────────────────────────
+// Bularning uchtasi ham mobilда umuman yo'q edi (webda tugmalari bor):
+// devonxona hujjatni ham, hisobotni ham qaytara olmasdi va hujjatni o'chira
+// olmasdi; KADR esa safarni bekor qila olmasdi.
+
+/** Devonxona hujjatni yaratuvchiga QAYTARADI — sabab MAJBURIY (backend min_length=1). */
+export function returnLetter(id: number, reason: string): Promise<unknown> {
+  return apiClient.post(LETTER_RETURN(id), { reason }).then((r) => r.data);
+}
+
+/** Devonxona safar HISOBOTINI qaytaradi — sabab MAJBURIY. */
+export function returnReport(id: number, reason: string): Promise<unknown> {
+  return apiClient.post(LETTER_RETURN_REPORT(id), { reason }).then((r) => r.data);
+}
+
+/** KADR safarni BEKOR qiladi — sabab IXTIYORIY (bo'sh izoh yuborilmaydi). */
+export function cancelTrip(id: number, reason?: string | null): Promise<unknown> {
+  const trimmed = (reason ?? '').trim();
+  return apiClient.post(LETTER_CANCEL_TRIP(id), trimmed ? { reason: trimmed } : {}).then((r) => r.data);
+}
+
+/** Devonxona hujjatni ro'yxatdan O'CHIRADI (har bosqichda). */
+export function deleteLetter(id: number): Promise<unknown> {
+  return apiClient.delete(LETTER_DETAIL(id)).then((r) => r.data);
+}
+
+export function useReturnLetter(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (reason: string) => returnLetter(id, reason),
+    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+  });
+}
+
+export function useReturnReport(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (reason: string) => returnReport(id, reason),
+    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+  });
+}
+
+export function useCancelTrip(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (reason?: string | null) => cancelTrip(id, reason),
+    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+  });
+}
+
+export function useDeleteLetter(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => deleteLetter(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
   });
 }

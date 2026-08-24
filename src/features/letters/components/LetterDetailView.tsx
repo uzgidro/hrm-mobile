@@ -12,22 +12,29 @@ import { Icon } from '@/components/Icon';
 import { LoadingView } from '@/components/StateViews';
 import { confirm } from '@/lib/confirm';
 import { getApiErrorMessage } from '@/api/errors';
+import { branchRegions } from '@/utils/tripRegions';
 import {
   letterStatusMeta, letterTypeLabel, canSignLetter, getSigningTimeline, statusColor,
   canSubmitReport, canResetReport, canChancelleryConfirmRegistration,
+  getManagementSigners, normalizeLetterType,
 } from '@/utils/letterStatus';
 import {
-  canSubmitTrip, canApproveTrip, canApproveTripRegistration, canApproveReport,
+  canSubmitTrip, canApproveTripRegistration, canApproveReport,
   canApproveGuvohnoma, canRejectLetter,
+  canReturnLetter, canDeleteLetter, canReturnTripReport, canCancelTrip,
 } from '@/utils/tripStatus';
 import { letterDetailQuery } from '../api/queries';
 import { useLetterActions } from '../hooks/useLetterActions';
-import { useResetReport, useSubmitTrip } from '../api/mutations';
+import {
+  useResetReport, useSubmitTrip,
+  useReturnLetter, useReturnReport, useCancelTrip, useDeleteLetter,
+} from '../api/mutations';
 import { DetailHeader, Section, KV, SignerRow } from './DetailParts';
 import { LetterActionBar } from './LetterActionBar';
 import { TripMovementsSection } from './TripMovementsSection';
 import { AgreementSection } from './AgreementSection';
 import { ConfirmRegistrationModal } from './ConfirmRegistrationModal';
+import { ReasonModal } from './ReasonModal';
 
 // The body of the letter detail — extracted so it can render either as the
 // pushed route's content (phone / push-notification deep links, `embedded`
@@ -49,6 +56,13 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
   const resetReportM = useResetReport(letterId);
   const submitTripM = useSubmitTrip(letterId);
   const [confirmRegOpen, setConfirmRegOpen] = useState(false);
+  // Devonxona / KADR amallari (web LetterDetailModal bilan bir xil).
+  const returnLetterM = useReturnLetter(letterId);
+  const returnReportM = useReturnReport(letterId);
+  const cancelTripM = useCancelTrip(letterId);
+  const deleteLetterM = useDeleteLetter(letterId);
+  const [reasonModal, setReasonModal] = useState<null | 'return' | 'returnReport' | 'cancelTrip'>(null);
+  const [reasonText, setReasonText] = useState('');
 
   // Embedded (split-view pane): no safe-area root — the outer list screen's
   // Screen/SafeAreaView already owns the insets. Routed (pushed screen): the
@@ -82,18 +96,45 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
   const canReject = canRejectLetter(letter);
   const hasDoc = !!letter.generated_document_path;
 
+  // ── Tafsilot maydonlari (web LetterDetailModal parity) ──
+  const isTrip = normalizeLetterType(letter.letter_type) === 'business_trip';
+  // Safarda muallif = creator_employee (web "Yuboriluvchi (xodim)").
+  const authorName =
+    letter.creator_employee?.legal_name
+    || letter.employee?.legal_name
+    || letter.submitter?.legal_name
+    || '';
+  const managementNames = getManagementSigners(letter)
+    .map((sgn) => sgn.employee?.legal_name)
+    .filter(Boolean)
+    .join(', ');
+  const addresseeName =
+    (letter.assigned_signers ?? []).find((sgn) => sgn.signer_type === 'addressee' || sgn.signer_type === 'main')
+      ?.employee?.legal_name ?? '';
+  const destinationNames = (letter.destination_branches ?? [])
+    .map((b) => b?.name)
+    .filter(Boolean)
+    .join(', ');
+  // Viloyat: hujjatga yozilgan TANLOV birinchi manba; eski (tanlovsiz)
+  // hujjatlarda filialning viloyatlaridan hosil qilinadi — web bilan bir xil.
+  // Web `displayNumber`: safarda AVVAL "Bildirgi raqami" (decree_number).
+  const displayNumber = isTrip ? (letter.decree_number || letter.letter_number) : letter.letter_number;
+  const regionNames = (
+    letter.destination_regions?.length
+      ? letter.destination_regions
+      : Array.from(new Set((letter.destination_branches ?? []).flatMap(branchRegions)))
+  ).filter(Boolean).join(', ');
+
   // ── Trip leadership approvals (server flags; mutually-exclusive statuses) ──
   // `registration` — devonxona ro'yxatidan keyingi RAHBAR tasdig'i: buning uchun
   // server bayrog'i YO'Q, shu bois mijoz web bilan bir xil qoidani qo'llaydi.
-  const approveTripKind = canApproveTrip(letter)
-    ? 'trip'
-    : canApproveTripRegistration(letter, user, employeeId)
-      ? 'registration'
-      : canApproveReport(letter)
-        ? 'report'
-        : canApproveGuvohnoma(letter)
-          ? 'guvohnoma'
-          : null;
+  const approveTripKind = canApproveTripRegistration(letter, user, employeeId)
+    ? 'registration'
+    : canApproveReport(letter)
+      ? 'report'
+      : canApproveGuvohnoma(letter)
+        ? 'guvohnoma'
+        : null;
 
   // ── Trip report (xizmat safari, OLD flow) ──
   const canReport = canSubmitReport(letter, employeeId);
@@ -103,6 +144,39 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
   // Devonxona "Tasdiqlash": a stamped bildirgi/ariza/trip at pending_registration
   // awaits the chancellery's confirmation (auto number editable).
   const canConfirmReg = canChancelleryConfirmRegistration(letter, user);
+  // Devonxona: hujjatni qaytarish / hisobotni qaytarish / o'chirish.
+  // KADR: safarni bekor qilish. Hech biri mobilда yo'q edi.
+  const showReturn = canReturnLetter(letter, user);
+  const showReturnReport = canReturnTripReport(letter, user);
+  const showCancelTrip = canCancelTrip(letter, user);
+  const showDelete = canDeleteLetter(letter, user);
+
+  const closeReason = () => { setReasonModal(null); setReasonText(''); };
+  const runReason = () => {
+    const reason = reasonText.trim();
+    const onError = (e: unknown) =>
+      Alert.alert(t('letters.actionError'), getApiErrorMessage(e, t('letters.actionError')));
+    const opts = { onSuccess: () => { closeReason(); refetch(); }, onError };
+    if (reasonModal === 'return') returnLetterM.mutate(reason, opts);
+    else if (reasonModal === 'returnReport') returnReportM.mutate(reason, opts);
+    else if (reasonModal === 'cancelTrip') cancelTripM.mutate(reason, opts);
+  };
+  const onDeleteLetter = async () => {
+    const ok = await confirm({
+      title: t('letters.deleteConfirmTitle'),
+      message: t('letters.deleteConfirmMessage'),
+      confirmLabel: t('letters.deleteAction'),
+      cancelLabel: t('common.cancel'),
+      icon: 'close',
+      destructive: true,
+    });
+    if (!ok) return;
+    deleteLetterM.mutate(undefined, {
+      // Hujjat endi yo'q — ro'yxatga qaytamiz (tafsilot 404 bo'lib qolmasin).
+      onSuccess: () => router.back(),
+      onError: (e) => Alert.alert(t('letters.actionError'), getApiErrorMessage(e, t('letters.actionError'))),
+    });
+  };
   const onSubmitTrip = async () => {
     const ok = await confirm({
       title: t('letters.tripSubmitConfirmTitle'),
@@ -151,7 +225,7 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
             <Text style={[styles.badgeText, { color: sc.fg }]}>{meta.label}</Text>
           </View>
           <Text style={styles.bigTitle}>
-            {letterTypeLabel(letter.letter_type)}{letter.letter_number ? `  №${letter.letter_number}` : ''}
+            {letterTypeLabel(letter.letter_type)}{displayNumber ? `  №${displayNumber}` : ''}
           </Text>
           {!!letter.letter_date && <Text style={styles.subMeta}>{t('letters.fieldDate')}: {dayjs(letter.letter_date).format('DD.MM.YYYY')}</Text>}
           {hasDoc && (
@@ -170,12 +244,62 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
           <Section title={t('letters.sectionContent')}><Text style={styles.bodyText}>{letter.description}</Text></Section>
         )}
 
+        {/* Web LetterDetailModal bilan bir xil maydonlar. Avval bu bo'limda
+            FAQAT muallif + ikkita sana bor edi: borish filiali, viloyat, reja,
+            yuboruvchi, rahbariyat, devonxona raqami, kelgan sana va asos buyruq
+            mobilда UMUMAN ko'rinmasdi (webda ko'rinadi). */}
         <Section title={t('letters.sectionInfo')}>
-          {!!(letter.employee?.legal_name || letter.submitter?.legal_name) &&
-            <KV k={t('letters.fieldAuthor')} v={(letter.employee?.legal_name || letter.submitter?.legal_name)!} />}
+          {!!authorName && <KV k={t('letters.fieldAuthor')} v={authorName} />}
+          {isTrip && !!letter.submitter?.legal_name && (
+            <KV k={t('letters.fieldSubmitter')} v={letter.submitter.legal_name} />
+          )}
+          {isTrip && !!managementNames && <KV k={t('letters.detailLeadership')} v={managementNames} />}
+          {!isTrip && !!addresseeName && <KV k={t('letters.fieldAddressee')} v={addresseeName} />}
+          {isTrip && !!destinationNames && (
+            <KV k={t('letters.fieldDestinations')} v={destinationNames} />
+          )}
+          {isTrip && !!regionNames && <KV k={t('letters.fieldRegions')} v={regionNames} />}
           {!!letter.departure_date && <KV k={t('letters.fieldDeparture')} v={dayjs(letter.departure_date).format('DD.MM.YYYY')} />}
           {!!letter.arrival_date && <KV k={t('letters.fieldReturn')} v={dayjs(letter.arrival_date).format('DD.MM.YYYY')} />}
+          {!!letter.actual_return_date && (
+            <KV k={t('letters.fieldActualReturn')} v={dayjs(letter.actual_return_date).format('DD.MM.YYYY')} />
+          )}
+          {!!letter.basis_decree_number && (
+            <KV
+              k={t('letters.fieldBasisDecree')}
+              v={letter.basis_decree_number
+                + (letter.basis_decree_date ? ` — ${dayjs(letter.basis_decree_date).format('DD.MM.YYYY')}` : '')}
+            />
+          )}
+          {!!letter.guvohnoma_number && (
+            <KV k={t('letters.fieldGuvohnomaNumber')} v={letter.guvohnoma_number} />
+          )}
+          <KV
+            k={t('letters.fieldRegistry')}
+            v={letter.registered_number
+              ? `${letter.registered_number}${letter.registered_date ? ` — ${dayjs(letter.registered_date).format('DD.MM.YYYY')}` : ''}`
+              : t('letters.registryNotRegistered')}
+          />
         </Section>
+
+        {/* Safar REJASI (maqsad/vazifa) — webda alohida bo'lim, mobilда yo'q edi. */}
+        {!!letter.work_plan && (
+          <Section title={t('letters.sectionWorkPlan')}>
+            <Text style={styles.bodyText}>{letter.work_plan}</Text>
+          </Section>
+        )}
+
+        {/* Uzaytirish so'rovi rahbariyat tasdig'ini kutmoqda. */}
+        {letter.status === 'extension_review' && !!letter.extension_requested_date && (
+          <View style={styles.warnCard}>
+            <Text style={styles.warnText}>
+              {t('letters.extensionPending', {
+                date: dayjs(letter.extension_requested_date).format('DD.MM.YYYY'),
+              })}
+              {letter.extension_note ? `\n${letter.extension_note}` : ''}
+            </Text>
+          </View>
+        )}
 
         <TripMovementsSection letter={letter} user={user} onChanged={refetch} />
 
@@ -278,6 +402,56 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
           </View>
         )}
 
+        {/* ── DEVONXONA / KADR amallari ── */}
+        {showReturnReport && (
+          <TouchableOpacity
+            style={styles.warnBtn}
+            activeOpacity={0.85}
+            onPress={() => { setReasonText(''); setReasonModal('returnReport'); }}
+            testID="letter-return-report"
+          >
+            <Icon name="arrowDown" size={16} color={colors.warning} />
+            <Text style={styles.warnBtnText}>{t('letters.returnReportAction')}</Text>
+          </TouchableOpacity>
+        )}
+
+        {showReturn && (
+          <TouchableOpacity
+            style={styles.warnBtn}
+            activeOpacity={0.85}
+            onPress={() => { setReasonText(''); setReasonModal('return'); }}
+            testID="letter-return"
+          >
+            <Icon name="arrowDown" size={16} color={colors.warning} />
+            <Text style={styles.warnBtnText}>{t('letters.returnAction')}</Text>
+          </TouchableOpacity>
+        )}
+
+        {showCancelTrip && (
+          <TouchableOpacity
+            style={styles.dangerBtn}
+            activeOpacity={0.85}
+            onPress={() => { setReasonText(''); setReasonModal('cancelTrip'); }}
+            testID="letter-cancel-trip"
+          >
+            <Icon name="close" size={16} color={colors.error} />
+            <Text style={styles.dangerBtnText}>{t('letters.cancelTripAction')}</Text>
+          </TouchableOpacity>
+        )}
+
+        {showDelete && (
+          <TouchableOpacity
+            style={styles.dangerBtn}
+            activeOpacity={0.85}
+            onPress={onDeleteLetter}
+            disabled={deleteLetterM.isPending}
+            testID="letter-delete"
+          >
+            <Icon name="trash" size={16} color={colors.error} />
+            <Text style={styles.dangerBtnText}>{t('letters.deleteAction')}</Text>
+          </TouchableOpacity>
+        )}
+
         <View style={{ height: 120 }} />
       </ScrollView>
 
@@ -288,6 +462,27 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
           onReject={canReject ? reject : undefined}
         />
       )}
+
+      <ReasonModal
+        visible={reasonModal !== null}
+        title={
+          reasonModal === 'cancelTrip' ? t('letters.cancelTripAction')
+            : reasonModal === 'returnReport' ? t('letters.returnReportAction')
+              : t('letters.returnAction')
+        }
+        label={reasonModal === 'cancelTrip' ? t('letters.reasonOptionalLabel') : t('letters.reasonRequiredLabel')}
+        placeholder={t('letters.reasonPlaceholder')}
+        reason={reasonText}
+        // Qaytarishda sabab MAJBURIY (backend min_length=1); bekor qilishda ixtiyoriy.
+        required={reasonModal !== 'cancelTrip'}
+        busy={returnLetterM.isPending || returnReportM.isPending || cancelTripM.isPending}
+        confirmLabel={t('common.confirm')}
+        destructive={reasonModal === 'cancelTrip'}
+        onChangeReason={setReasonText}
+        onClose={closeReason}
+        onSubmit={runReason}
+        testID="letter-reason-submit"
+      />
 
       {canConfirmReg && (
         <ConfirmRegistrationModal
@@ -339,4 +534,17 @@ const makeStyles = (c: ThemeColors) =>
     },
     reportResetBtn: { flex: 0, paddingHorizontal: 18, backgroundColor: c.errorSoft, borderWidth: 1, borderColor: c.error },
     reportBtnText: { color: c.onPrimary, fontSize: 14, fontWeight: '700' },
+
+    warnBtn: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+      backgroundColor: c.warningSoft, borderWidth: 1, borderColor: c.warning,
+      borderRadius: 12, paddingVertical: 14, marginBottom: 12,
+    },
+    warnBtnText: { color: c.warning, fontSize: 14, fontWeight: '700' },
+    dangerBtn: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+      backgroundColor: c.errorSoft, borderWidth: 1, borderColor: c.error,
+      borderRadius: 12, paddingVertical: 14, marginBottom: 12,
+    },
+    dangerBtnText: { color: c.error, fontSize: 14, fontWeight: '700' },
   });
