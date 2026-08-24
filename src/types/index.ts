@@ -174,6 +174,9 @@ export interface OrderAct {
   signers?: OrderActSigner[];
   rejected_by?: Employee;
   rejection_reason?: string | null;
+  // Devonxona muhri qo'yilganmi — muhrlangan buyruq TAHRIRLANMAYDI
+  // (backend `_assert_decree_editable`).
+  is_stamped?: boolean;
   comments?: OrderActComment[];
   document?: { id: number; document_objectname?: string } | null;
   // Backend joriy foydalanuvchi uchun hisoblaydigan bayroqlar (web BuyruqlarTable

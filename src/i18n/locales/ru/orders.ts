@@ -14,6 +14,8 @@ export default {
 
   // ── Create screen ───────────────────────────────────────────────────────────
   createTitle: 'Новый приказ',
+  editTitle: 'Редактирование приказа',
+  editAction: 'Редактировать',
   hrSubtitle: 'Кадровый приказ',
   employeeSubtitle: 'Приказ сотрудника',
   categoryLabel: 'Типы приказов',

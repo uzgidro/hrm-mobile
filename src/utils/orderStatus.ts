@@ -1,7 +1,7 @@
 import i18n from '../i18n';
 import type { ThemeColors } from '../theme/palettes';
 import type { OrderAct, User } from '../types';
-import { canActAsChancellery, isHR, isSiteMasterAdmin } from './roles';
+import { canActAsChancellery, isBranchHr, isHR, isSiteMasterAdmin } from './roles';
 
 export type StatusKind = 'pending' | 'info' | 'success' | 'error' | 'neutral';
 
@@ -69,6 +69,8 @@ export function currentStageType(o: OrderAct): 'approver' | 'leadership' | null 
 export interface DecreePermissions {
   /** YARATUVCHI qoralamani oqimga yuboradi (draft → …). Web "Yuborish". */
   canSubmit: boolean;
+  /** Buyruq FORMASINI tahrirlash (PATCH) — devonxona ro'yxatiga olgunicha. */
+  canEdit: boolean;
   canApprove: boolean;
   /** Kirituvchi shaxs (submitter) tasdig'i — `pending_submitter` bosqichi. */
   canConfirmSubmission: boolean;
@@ -142,12 +144,24 @@ export function decreePermissions(
   const canSubmit =
     o.status === 'draft' && (isCreator || (isHrDecree(o) && isHR(user)));
 
+  // TAHRIRLASH (backend `_assert_can_edit_decree` + `_assert_decree_editable`
+  // bilan 1:1): muallif / kirituvchi / KADR (o'z filialida), va FAQAT devonxona
+  // ro'yxatga olgunicha (muhrlangan yoki pending_chancellery/confirmed/applied
+  // — yopiq). Master-admin har doim. Mobilда bu amal umuman yo'q edi.
+  const isLocked =
+    o.is_stamped === true
+    || ['pending_chancellery', 'confirmed', 'applied'].includes(o.status ?? '');
+  const canEdit = isSiteMasterAdmin(user)
+    || (!isLocked && (isCreator || (isHR(user) && isBranchHr(user, o.organization_branch_id))));
+
   const myFam = (o.familiarizers ?? []).find(
     (f) => (f.employee_id ?? f.employee?.id) === employeeId
   );
   const canAcknowledge =
     !!myFam && !myFam.acknowledged && (o.status === 'confirmed' || o.status === 'applied');
 
+  // `canEdit` HISOBGA OLINMAYDI: tahrir tugmasi pastdagi amal panelida emas,
+  // tafsilot ichida turadi (web bilan bir xil joylashuv).
   const hasActions =
     canSubmit || canApprove || canConfirmSubmission || canResubmit || canForward
     || canRegister || canAcknowledge;
@@ -158,6 +172,7 @@ export function decreePermissions(
 
   return {
     canSubmit,
+    canEdit,
     canApprove,
     canConfirmSubmission,
     canResubmit,
@@ -168,6 +183,15 @@ export function decreePermissions(
     docLocked,
     canEditDoc,
   };
+}
+
+/**
+ * Buyruq shu foydalanuvchi uchun YANGImi — web `rowIsUnseen` bilan bir xil:
+ * amalini kutayotgan (ochib ko'rish o'chirmaydi) YOKI hech ochilmagan /
+ * oxirgi ochilishdan keyin o'zgargan.
+ */
+export function isOrderUnseen(o: OrderAct, employeeId?: number): boolean {
+  return needsMyAction(o, employeeId) || o.is_unseen === true;
 }
 
 // Does the given employee need to act on this decree right now?

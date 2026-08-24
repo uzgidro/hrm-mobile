@@ -2,7 +2,7 @@ import i18n from '../i18n';
 import type { Letter, LetterSigner, User } from '../types';
 import type { StatusKind } from './orderStatus';
 import { statusColor } from './orderStatus';
-import { canActAsChancellery, isSiteMasterAdmin } from './roles';
+import { canActAsChancellery, isBranchHr, isSiteMasterAdmin } from './roles';
 
 export { statusColor };
 
@@ -26,6 +26,26 @@ export function letterTypeLabel(type?: string): string {
   const key = LETTER_TYPE_LABELS[type ?? ''];
   if (key) return i18n.t(key);
   return type || i18n.t('status.letterTypeDefault');
+}
+
+/**
+ * Ro'yxatda/tafsilotda ko'rsatiladigan RAQAM (web `displayNumber` 1:1):
+ * xizmat safarida avval kiritilgan "Bildirgi raqami" (`decree_number`),
+ * bo'lmasa avto-generatsiya (`letter_number`). Boshqa turlarда — letter_number.
+ */
+export function letterDisplayNumber(l: Letter): string | null {
+  const isTrip = normalizeLetterType(l.letter_type) === 'business_trip';
+  return (isTrip ? (l.decree_number || l.letter_number) : l.letter_number) ?? null;
+}
+
+/**
+ * Hujjat shu foydalanuvchi uchun YANGImi — web `rowIsUnseen` bilan bir xil:
+ * amalini kutayotgan (ochib ko'rish o'chirmaydi) YOKI hech ochilmagan /
+ * oxirgi ochilishdan keyin o'zgargan. Mobil ro'yxatда faqat AMAL belgilanardi,
+ * ya'ni o'zgargan (lekin amal talab qilmaydigan) hujjat ajralib turmasdi.
+ */
+export function isLetterUnseen(l: Letter, employeeId?: number): boolean {
+  return letterNeedsMyAction(l, employeeId) || l.is_unseen === true;
 }
 
 export function normalizeLetterType(type?: string): string {
@@ -360,6 +380,35 @@ export function canChancelleryConfirmRegistration(l: Letter, user?: User | null)
   const isAgreementOrTrip = type === 'explanatory' || type === 'application' || type === 'business_trip';
   if (!isAgreementOrTrip) return false;
   return isSiteMasterAdmin(user) || canActAsChancellery(user, l.organization_branch_id);
+}
+
+/**
+ * Hujjatni TAHRIRLASH huquqi — backend `update_letter` bilan 1:1 (web
+ * `isLetterEditStageOpen` + yaratuvchi tekshiruvidan ko'ra QAT'IYROQ, chunki
+ * bevosita backend qoidasini takrorlaydi; aks holda tugma ko'rinib, saqlashда
+ * 403/400 bo'lardi):
+ *
+ *  • bildirgi/ariza — yaratuvchi/kirituvchi va status
+ *    draft | pending | pending_agreement | returned | signed
+ *    (devonxonaga ketgach yopiladi);
+ *  • xizmat safari — yaratuvchi/kirituvchi YOKI filial KADR'i va status
+ *    draft | pending | signed (tasdiqlangach yopiladi);
+ *  • master-admin — har doim.
+ */
+export function canEditLetter(l: Letter, employeeId?: number | null, user?: User | null): boolean {
+  if (isSiteMasterAdmin(user)) return true;
+  const type = normalizeLetterType(l.letter_type);
+  const status = l.status ?? 'draft';
+  if (type === 'application' || type === 'explanatory') {
+    if (!isLetterAuthor(l, employeeId ?? undefined)) return false;
+    return ['draft', 'pending', 'pending_agreement', 'returned', 'signed'].includes(status);
+  }
+  if (type === 'business_trip') {
+    const owner = isLetterAuthor(l, employeeId ?? undefined);
+    if (!owner && !isBranchHr(user, l.organization_branch_id)) return false;
+    return ['draft', 'pending', 'signed'].includes(status);
+  }
+  return false;
 }
 
 export function letterStatusMeta(l: Letter): { label: string; kind: StatusKind } {

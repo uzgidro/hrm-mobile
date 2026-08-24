@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
 import {
   ORDER_ACTS,
+  ORDER_ACT_DETAIL,
   ORDER_ACT_DOCUMENTS,
   ORDER_ACT_DECREE_APPROVE,
   ORDER_ACT_DECREE_REJECT,
@@ -110,6 +111,39 @@ export async function createOrder(
   return orderId;
 }
 
+// ── Tahrirlash (PATCH /order-acts/{id}) ──────────────────────────────────────
+// Mobilда buyruqni TAHRIRLASH umuman yo'q edi (webda "Tahrirlash" tugmasi bor):
+// "o'zgartirish so'ralgan" (changes_requested) buyruqni telefondan tuzatib
+// bo'lmasdi — faqat qayta yuborish mumkin edi. Backend tahrirni devonxona
+// ro'yxatga olgunicha qabul qiladi va matn o'zgarsa kelishganlarga ogohlantirish
+// yuboradi (imzolar SAQLANADI).
+export async function updateOrder(
+  id: number,
+  payload: Partial<CreateOrderPayload>,
+  files: PickedFile[] = [],
+  onFilesError?: () => void
+): Promise<number> {
+  await apiClient.patch(ORDER_ACT_DETAIL(id), payload);
+  if (files.length) {
+    const fd = new FormData();
+    files.forEach((f) =>
+      fd.append('files', {
+        uri: f.uri,
+        name: f.name,
+        type: f.mimeType || 'application/octet-stream',
+      } as unknown as Blob)
+    );
+    try {
+      await apiClient.post(ORDER_ACT_DOCUMENTS(id), fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+    } catch {
+      onFilesError?.();
+    }
+  }
+  return id;
+}
+
 // ── Thin mutation hooks ───────────────────────────────────────────────────────
 // Each invalidates the whole order subtree on success (one call refreshes the
 // list and any open detail via the hierarchical key). The decree detail screen
@@ -176,6 +210,16 @@ export function useRegisterDecree(id: number) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (actNumber?: number) => registerDecree(id, actNumber),
+    onSuccess: () => qc.invalidateQueries({ queryKey: orderKeys.all }),
+  });
+}
+
+export function useUpdateOrder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (args: {
+      id: number; payload: Partial<CreateOrderPayload>; files?: PickedFile[]; onFilesError?: () => void;
+    }) => updateOrder(args.id, args.payload, args.files, args.onFilesError),
     onSuccess: () => qc.invalidateQueries({ queryKey: orderKeys.all }),
   });
 }

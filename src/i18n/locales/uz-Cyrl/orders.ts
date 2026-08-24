@@ -14,6 +14,8 @@ export default {
 
   // ── Create screen ───────────────────────────────────────────────────────────
   createTitle: 'Янги буйруқ',
+  editTitle: 'Буйруқни таҳрирлаш',
+  editAction: 'Таҳрирлаш',
   hrSubtitle: 'Кадр буйруғи',
   employeeSubtitle: 'Ходим буйруғи',
   categoryLabel: 'Буйруқ турлари',

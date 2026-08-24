@@ -209,6 +209,18 @@ export function OrderDetailView({ id, embedded = false }: { id: number; embedded
 
         <DetailSections order={order} />
 
+        {perms.canEdit && (
+          <TouchableOpacity
+            style={styles.editBtn}
+            activeOpacity={0.85}
+            onPress={() => router.push({ pathname: '/create-order', params: { id: String(orderId) } })}
+            testID="decree-edit"
+          >
+            <Icon name="edit" size={16} color={colors.primary} />
+            <Text style={styles.editBtnText}>{t('orders.editAction')}</Text>
+          </TouchableOpacity>
+        )}
+
         {canAssignFamiliarizers && (
           <TouchableOpacity
             style={styles.famBtn}
@@ -297,5 +309,10 @@ const makeStyles = (c: ThemeColors) =>
 
     rejectCard: { backgroundColor: c.errorSoft, borderRadius: 14, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: c.error },
     rejectTitle: { fontSize: 13, fontWeight: '700', color: c.error, marginBottom: 4 },
+    editBtn: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+      backgroundColor: c.primarySoft, borderRadius: 12, paddingVertical: 14, marginBottom: 12,
+    },
+    editBtnText: { color: c.primary, fontSize: 14, fontWeight: '700' },
     rejectText: { fontSize: 13, color: c.text, lineHeight: 19 },
   });

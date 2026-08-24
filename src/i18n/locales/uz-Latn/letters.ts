@@ -11,6 +11,8 @@ export default {
   listTitle: 'Xatlar',
   detailTitle: 'Xat',
   createTitle: 'Yangi xat',
+  editTitle: 'Hujjatni tahrirlash',
+  editAction: 'Tahrirlash',
   documentTitle: 'Hujjat',
 
   // ── List screen ─────────────────────────────────────────────────────────────

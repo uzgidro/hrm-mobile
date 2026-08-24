@@ -25,6 +25,9 @@ import {
   canSendAgreementLetter,
   letterNeedsMyAction,
   isMyLetter,
+  canEditLetter,
+  letterDisplayNumber,
+  isLetterUnseen,
 } from '../letterStatus';
 import { statusColor as orderStatusColor } from '../orderStatus';
 import i18n from '../../i18n';
@@ -778,5 +781,80 @@ describe('isMyLetter', () => {
   it('begona hujjatda va xodim id\'siz FALSE', () => {
     expect(isMyLetter({ id: 5, letter_type: 'bildirgi', creator_employee_id: 9 } as Letter, 7)).toBe(false);
     expect(isMyLetter({ id: 6, letter_type: 'bildirgi', creator_employee_id: 7 } as Letter, undefined)).toBe(false);
+  });
+});
+
+
+// ── Tahrirlash / ko'rsatiladigan raqam / "yangi" belgisi ─────────────────────
+
+describe('canEditLetter (backend update_letter bilan 1:1)', () => {
+  const masterAdmin = { id: 1, type: 'master-admin' } as unknown as User;
+  const hrOf = (branchId: number): User => ({
+    id: 2,
+    type: 'employee',
+    employee: {
+      id: 50,
+      is_multi_org_user: true,
+      multi_org_employee_role: 'hr',
+      organization_branches: [{ id: branchId, name: 'B' }],
+    },
+  }) as unknown as User;
+
+  it('bildirgi/ariza: muallif tahrirlaydi — DEVONXONAGA ketguncha', () => {
+    for (const status of ['draft', 'pending', 'pending_agreement', 'returned', 'signed']) {
+      expect(canEditLetter(letter({ letter_type: 'application', status, creator_employee_id: 7 }), 7)).toBe(true);
+    }
+    // Devonxonaga ketgach — faqat master-admin.
+    for (const status of ['pending_registration', 'review', 'registered']) {
+      const l = letter({ letter_type: 'application', status, creator_employee_id: 7 });
+      expect(canEditLetter(l, 7)).toBe(false);
+      expect(canEditLetter(l, 7, masterAdmin)).toBe(true);
+    }
+  });
+
+  it('bildirgi/ariza: begona odam tahrirlay olmaydi', () => {
+    expect(canEditLetter(letter({ letter_type: 'application', status: 'draft', creator_employee_id: 7 }), 99)).toBe(false);
+  });
+
+  it('xizmat safari: muallif yoki FILIAL KADR\'i, TASDIQLANGUNCHA', () => {
+    const base = { letter_type: 'business_trip', creator_employee_id: 7, organization_branch_id: 4 };
+    for (const status of ['draft', 'pending', 'signed']) {
+      expect(canEditLetter(letter({ ...base, status }), 7)).toBe(true);
+      expect(canEditLetter(letter({ ...base, status }), 99, hrOf(4))).toBe(true);
+      // Boshqa filial KADR'i — YO'Q.
+      expect(canEditLetter(letter({ ...base, status }), 99, hrOf(77))).toBe(false);
+    }
+    // Tasdiqlangach yopiladi.
+    for (const status of ['management_approved', 'report_submitted', 'report_approved']) {
+      expect(canEditLetter(letter({ ...base, status }), 7)).toBe(false);
+    }
+  });
+});
+
+describe('letterDisplayNumber (web displayNumber parity)', () => {
+  it('safarda AVVAL decree_number, bo\'lmasa letter_number', () => {
+    expect(letterDisplayNumber(letter({ letter_type: 'business_trip', decree_number: '12-A', letter_number: '99' })))
+      .toBe('12-A');
+    expect(letterDisplayNumber(letter({ letter_type: 'business_trip', letter_number: '99' }))).toBe('99');
+  });
+
+  it('boshqa turlarда letter_number', () => {
+    expect(letterDisplayNumber(letter({ letter_type: 'application', decree_number: '12-A', letter_number: '99' })))
+      .toBe('99');
+    expect(letterDisplayNumber(letter({ letter_type: 'application' }))).toBeNull();
+  });
+});
+
+describe('isLetterUnseen (web rowIsUnseen parity)', () => {
+  it('amal kutayotgan hujjat DOIM yangi', () => {
+    expect(isLetterUnseen(letter({ action_required: true }), 7)).toBe(true);
+  });
+
+  it('amal talab qilmasa ham O\'ZGARGAN hujjat yangi (avval belgilanmasdi)', () => {
+    expect(isLetterUnseen(letter({ is_unseen: true }), 7)).toBe(true);
+  });
+
+  it('ko\'rilgan va amal kutmaydigan hujjat — yangi EMAS', () => {
+    expect(isLetterUnseen(letter({ action_required: false, is_unseen: false }), 7)).toBe(false);
   });
 });

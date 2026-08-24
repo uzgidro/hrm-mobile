@@ -5,6 +5,8 @@ export default {
   listTitle: 'Letters',
   detailTitle: 'Letter',
   createTitle: 'New letter',
+  editTitle: 'Edit the document',
+  editAction: 'Edit',
   documentTitle: 'Document',
 
   // ── List screen ─────────────────────────────────────────────────────────────

@@ -17,7 +17,7 @@ import { FilterChip } from '@/components/FilterChip';
 import { SearchBox } from '@/components/SearchBox';
 import { useBreakpoint } from '@/utils/responsive';
 import { selectSplitId } from '@/utils/splitView';
-import { needsMyAction, statusMeta } from '@/utils/orderStatus';
+import { needsMyAction, isOrderUnseen, statusMeta } from '@/utils/orderStatus';
 import { ordersListQuery } from '../api/queries';
 import { OrderListCard } from '../components/OrderListCard';
 import { OrderDetailView } from '../components/OrderDetailView';
@@ -185,6 +185,7 @@ export default function OrdersListScreen() {
                 key={o.id}
                 order={o}
                 action={needsMyAction(o, employeeId)}
+                unseen={isOrderUnseen(o, employeeId)}
                 onPress={split ? () => setSelectedId(o.id) : undefined}
                 selected={split && o.id === selectedId}
               />

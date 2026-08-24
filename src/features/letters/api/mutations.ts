@@ -36,6 +36,47 @@ export function rejectLetter(id: number): Promise<unknown> {
 // field is dropped.
 export type CreateLetterPayload = Record<string, unknown>;
 
+// ── Tahrirlash (PATCH /letters/{id}) ─────────────────────────────────────────
+// Mobilда hujjatni TAHRIRLASH umuman yo'q edi (webda "Tahrirlash" tugmasi bor):
+// qaytarilgan bildirgi/arizani yoki yuborilmagan safarni telefondan tuzatib
+// bo'lmasdi. Backend oqim maydonlarini (status/is_stamped/letter_number/…)
+// PATCH orqali qabul QILMAYDI — faqat forma maydonlari yuboriladi.
+export async function updateLetter(
+  id: number,
+  payload: CreateLetterPayload,
+  files: PickedFile[] = [],
+  onFilesError?: () => void
+): Promise<number> {
+  await apiClient.patch(LETTER_DETAIL(id), payload);
+  if (files.length) {
+    const f = files[0];
+    const fd = new FormData();
+    fd.append('file', {
+      uri: f.uri,
+      name: f.name,
+      type: f.mimeType || 'application/octet-stream',
+    } as unknown as Blob);
+    try {
+      await apiClient.post(LETTER_UPLOAD_ATTACHMENT(id), fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+    } catch {
+      onFilesError?.();
+    }
+  }
+  return id;
+}
+
+export function useUpdateLetter() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (args: {
+      id: number; payload: CreateLetterPayload; files?: PickedFile[]; onFilesError?: () => void;
+    }) => updateLetter(args.id, args.payload, args.files, args.onFilesError),
+    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+  });
+}
+
 // Creates the letter, then (best-effort) uploads a single attachment as
 // multipart to the upload-attachment endpoint — preserving the old screen's
 // exact FormData (single `file` field, LETTER_UPLOAD_ATTACHMENT flow) and the

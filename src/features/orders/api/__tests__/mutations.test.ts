@@ -11,12 +11,16 @@ import {
   ORDER_ACT_DECREE_REGISTER,
   ORDER_ACT_DECREE_ACKNOWLEDGE,
   ORDER_ACT_DECREE_ASSIGN_FAMILIARIZERS,
+  ORDER_ACT_DECREE_SUBMIT,
+  ORDER_ACT_DETAIL,
 } from '@/api/urls';
 import {
   approveDecree,
   rejectDecree,
   resubmitDecree,
   forwardDecree,
+  submitDecree,
+  updateOrder,
   acknowledgeDecree,
   registerDecree,
   assignFamiliarizers,
@@ -158,5 +162,38 @@ describe('createOrder', () => {
     const id = await createOrder(payload, [{ uri: 'file:///a.pdf', name: 'a.pdf' }], onFilesError);
     expect(id).toBe(300);
     expect(onFilesError).toHaveBeenCalledTimes(1);
+  });
+});
+
+
+// Regression: bu ikki amal mobilда yo'q edi — mobilда yaratilgan buyruq DRAFTда
+// qolib ketardi va uni tahrirlab ham bo'lmasdi.
+describe('submitDecree (qoralamani oqimga yuborish)', () => {
+  it('TANASIZ POST decree/submit', async () => {
+    mock.onPost(ORDER_ACT_DECREE_SUBMIT(31)).reply(200, { id: 31, status: 'pending_approval' });
+    const data = await submitDecree(31);
+    expect(data).toEqual({ id: 31, status: 'pending_approval' });
+    expect(mock.history.post[0].url).toBe(ORDER_ACT_DECREE_SUBMIT(31));
+    expect(mock.history.post[0].data).toBeUndefined();
+  });
+});
+
+describe('updateOrder (tahrirlash)', () => {
+  it('PATCH /order-acts/{id} qiladi', async () => {
+    mock.onPatch(ORDER_ACT_DETAIL(32)).reply(200, { id: 32 });
+    const id = await updateOrder(32, { description: 'tuzatildi' });
+    expect(id).toBe(32);
+    expect(mock.history.patch[0].url).toBe(ORDER_ACT_DETAIL(32));
+    expect(JSON.parse(mock.history.patch[0].data)).toEqual({ description: 'tuzatildi' });
+    expect(mock.history.post).toHaveLength(0);
+  });
+
+  it('fayllar berilsa ularni documents endpointiga yuklaydi', async () => {
+    mock.onPatch(ORDER_ACT_DETAIL(33)).reply(200, { id: 33 });
+    mock.onPost(ORDER_ACT_DOCUMENTS(33)).reply(200, {});
+    await updateOrder(33, { description: 'x' }, [{ uri: 'file:///a.pdf', name: 'a.pdf' }]);
+    const up = mock.history.post.find((r) => r.url === ORDER_ACT_DOCUMENTS(33));
+    expect(up).toBeTruthy();
+    expect(up!.data instanceof FormData).toBe(true);
   });
 });

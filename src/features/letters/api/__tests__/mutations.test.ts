@@ -15,7 +15,7 @@ import {
   confirmReturn, selfConfirmReturn, updateReturnDate, submitTrip, approveReport, approveGuvohnoma,
   confirmRegistration, agreeLetter, disagreeLetter, submitAgreementLetter, sendLetterToRegistry,
   approveTripRegistration,
-  returnLetter, returnReport, cancelTrip, deleteLetter,
+  returnLetter, returnReport, cancelTrip, deleteLetter, updateLetter,
 } from '../mutations';
 
 let mock: MockAdapter;
@@ -278,5 +278,36 @@ describe('devonxona / KADR amallari', () => {
     mock.onDelete(LETTER_DETAIL(15)).reply(200, { detail: 'Letter deleted successfully' });
     await deleteLetter(15);
     expect(mock.history.delete[0].url).toBe(LETTER_DETAIL(15));
+  });
+});
+
+
+describe('updateLetter (tahrirlash)', () => {
+  it('PATCH /letters/{id} qiladi va id qaytaradi', async () => {
+    mock.onPatch(LETTER_DETAIL(21)).reply(200, { id: 21 });
+    const id = await updateLetter(21, { description: 'yangi matn' });
+    expect(id).toBe(21);
+    expect(mock.history.patch[0].url).toBe(LETTER_DETAIL(21));
+    expect(JSON.parse(mock.history.patch[0].data)).toEqual({ description: 'yangi matn' });
+    // Ilova YO'Q — yuklash urinilmaydi.
+    expect(mock.history.post).toHaveLength(0);
+  });
+
+  it('ilova berilsa uni multipart bilan yuklaydi', async () => {
+    mock.onPatch(LETTER_DETAIL(22)).reply(200, { id: 22 });
+    mock.onPost(LETTER_UPLOAD_ATTACHMENT(22)).reply(200, {});
+    await updateLetter(22, { description: 'x' }, [{ uri: 'file:///a.pdf', name: 'a.pdf' }]);
+    const up = mock.history.post.find((r) => r.url === LETTER_UPLOAD_ATTACHMENT(22));
+    expect(up).toBeTruthy();
+    expect(up!.data instanceof FormData).toBe(true);
+  });
+
+  it('ilova yuklanmasa ham TAHRIR saqlangan bo\'lib qoladi (onFilesError chaqiriladi)', async () => {
+    mock.onPatch(LETTER_DETAIL(23)).reply(200, { id: 23 });
+    mock.onPost(LETTER_UPLOAD_ATTACHMENT(23)).reply(500);
+    const onFilesError = jest.fn();
+    const id = await updateLetter(23, { description: 'x' }, [{ uri: 'file:///a.pdf', name: 'a.pdf' }], onFilesError);
+    expect(id).toBe(23);
+    expect(onFilesError).toHaveBeenCalledTimes(1);
   });
 });

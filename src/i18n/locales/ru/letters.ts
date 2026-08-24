@@ -6,6 +6,8 @@ export default {
   listTitle: 'Письма',
   detailTitle: 'Письмо',
   createTitle: 'Новое письмо',
+  editTitle: 'Редактирование документа',
+  editAction: 'Редактировать',
   documentTitle: 'Документ',
 
   // ── List screen ─────────────────────────────────────────────────────────────

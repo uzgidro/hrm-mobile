@@ -16,7 +16,7 @@ import { branchRegions } from '@/utils/tripRegions';
 import {
   letterStatusMeta, letterTypeLabel, canSignLetter, getSigningTimeline, statusColor,
   canSubmitReport, canResetReport, canChancelleryConfirmRegistration,
-  getManagementSigners, normalizeLetterType,
+  getManagementSigners, normalizeLetterType, canEditLetter,
 } from '@/utils/letterStatus';
 import {
   canSubmitTrip, canApproveTripRegistration, canApproveReport,
@@ -150,6 +150,9 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
   const showReturnReport = canReturnTripReport(letter, user);
   const showCancelTrip = canCancelTrip(letter, user);
   const showDelete = canDeleteLetter(letter, user);
+  // Tahrirlash — backend `update_letter` qoidasi bilan 1:1 (mobilда yo'q edi:
+  // qaytarilgan hujjatni telefondan tuzatib bo'lmasdi).
+  const showEdit = canEditLetter(letter, employeeId, user);
 
   const closeReason = () => { setReasonModal(null); setReasonText(''); };
   const runReason = () => {
@@ -402,6 +405,18 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
           </View>
         )}
 
+        {showEdit && (
+          <TouchableOpacity
+            style={styles.editBtn}
+            activeOpacity={0.85}
+            onPress={() => router.push({ pathname: '/create-letter', params: { id: String(letterId) } })}
+            testID="letter-edit"
+          >
+            <Icon name="edit" size={16} color={colors.primary} />
+            <Text style={styles.editBtnText}>{t('letters.editAction')}</Text>
+          </TouchableOpacity>
+        )}
+
         {/* ── DEVONXONA / KADR amallari ── */}
         {showReturnReport && (
           <TouchableOpacity
@@ -547,4 +562,9 @@ const makeStyles = (c: ThemeColors) =>
       borderRadius: 12, paddingVertical: 14, marginBottom: 12,
     },
     dangerBtnText: { color: c.error, fontSize: 14, fontWeight: '700' },
+    editBtn: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+      backgroundColor: c.primarySoft, borderRadius: 12, paddingVertical: 14, marginBottom: 12,
+    },
+    editBtnText: { color: c.primary, fontSize: 14, fontWeight: '700' },
   });

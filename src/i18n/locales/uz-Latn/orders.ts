@@ -18,6 +18,8 @@ export default {
 
   // ── Create screen (CreateOrderScreen) ───────────────────────────────────────
   createTitle: 'Yangi buyruq',
+  editTitle: 'Buyruqni tahrirlash',
+  editAction: 'Tahrirlash',
   hrSubtitle: "Kadr buyrug'i",
   employeeSubtitle: "Xodim buyrug'i",
   categoryLabel: 'Buyruq turlari',

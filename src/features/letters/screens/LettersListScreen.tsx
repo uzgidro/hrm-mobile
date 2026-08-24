@@ -16,7 +16,10 @@ import { FilterChip } from '@/components/FilterChip';
 import { SearchBox } from '@/components/SearchBox';
 import { useBreakpoint } from '@/utils/responsive';
 import { selectSplitId } from '@/utils/splitView';
-import { letterNeedsMyAction, isMyLetter, letterTypeLabel, letterStatusMeta, normalizeLetterType } from '@/utils/letterStatus';
+import {
+  letterNeedsMyAction, isMyLetter, letterTypeLabel, letterStatusMeta, normalizeLetterType,
+  letterDisplayNumber, isLetterUnseen,
+} from '@/utils/letterStatus';
 import { lettersListQuery, type LettersTab } from '../api/queries';
 import { LetterListCard } from '../components/LetterListCard';
 import { LetterDetailView } from '../components/LetterDetailView';
@@ -81,7 +84,10 @@ export default function LettersListScreen() {
       if (statusFilter !== 'all' && (l.status ?? '') !== statusFilter) return false;
       if (!q) return true;
       return (
-        (l.letter_number?.toLowerCase().includes(q) ?? false) ||
+        // Safar raqami `decree_number`da bo'lishi mumkin, devonxona raqami esa
+        // `registered_number`da — avval faqat `letter_number` qidirilardi.
+        (letterDisplayNumber(l)?.toLowerCase().includes(q) ?? false) ||
+        (l.registered_number?.toLowerCase().includes(q) ?? false) ||
         letterTypeLabel(l.letter_type).toLowerCase().includes(q) ||
         (l.employee?.legal_name?.toLowerCase().includes(q) ?? false) ||
         (l.submitter?.legal_name?.toLowerCase().includes(q) ?? false) ||
@@ -176,6 +182,7 @@ export default function LettersListScreen() {
                 key={l.id}
                 letter={l}
                 action={letterNeedsMyAction(l, employeeId)}
+                unseen={isLetterUnseen(l, employeeId)}
                 onPress={split ? () => setSelectedId(l.id) : undefined}
                 selected={split ? selectedId === l.id : undefined}
               />

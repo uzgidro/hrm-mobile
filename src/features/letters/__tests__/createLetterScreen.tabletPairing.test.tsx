@@ -18,7 +18,12 @@ import { renderWithProviders, fireEvent } from '@/test/renderWithProviders';
 import { useAuthStore } from '@/store/authStore';
 import CreateLetterScreen from '../screens/CreateLetterScreen';
 
-jest.mock('expo-router', () => ({ router: { back: jest.fn(), replace: jest.fn() } }));
+// `useLocalSearchParams` — TAHRIR rejimi uchun (`?id=`); bu testlar YARATISH
+// rejimini tekshiradi, shu bois bo'sh params qaytaradi.
+jest.mock('expo-router', () => ({
+  router: { back: jest.fn(), replace: jest.fn(), push: jest.fn() },
+  useLocalSearchParams: () => ({}),
+}));
 jest.mock('react-native/Libraries/Utilities/useWindowDimensions');
 
 const TABLET_LANDSCAPE = { width: 1194, height: 834, scale: 2, fontScale: 1 };

@@ -14,6 +14,8 @@ export default {
 
   // ── Create screen ───────────────────────────────────────────────────────────
   createTitle: 'New order',
+  editTitle: 'Edit the decree',
+  editAction: 'Edit',
   hrSubtitle: 'HR order',
   employeeSubtitle: 'Employee order',
   categoryLabel: 'Order types',

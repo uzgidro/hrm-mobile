@@ -370,3 +370,48 @@ describe('decreePermissions (web-parity approval chain)', () => {
     expect(decreePermissions(order({ status: 'confirmed', created_by_id: 3 }), 3).canEditDoc).toBe(false);
   });
 });
+
+
+// TAHRIRLASH — backend `_assert_can_edit_decree` + `_assert_decree_editable`.
+// Regression: mobilда buyruqni tahrirlash umuman yo'q edi.
+describe('decreePermissions.canEdit', () => {
+  const hrOf = (branchId: number): User => ({
+    id: 5,
+    type: 'employee',
+    employee: {
+      id: 3,
+      is_multi_org_user: true,
+      multi_org_employee_role: 'hr',
+      organization_branches: [{ id: branchId, name: 'B' }],
+    },
+  }) as unknown as User;
+
+  it('true for the creator before the chancellery locks it', () => {
+    for (const status of ['draft', 'pending_submitter', 'pending_approval', 'pending_leadership', 'approved', 'changes_requested']) {
+      expect(decreePermissions(order({ status, created_by_id: 3 }), 3, plainUser()).canEdit).toBe(true);
+    }
+  });
+
+  it('false once registered/stamped (backend 400 order_act_locked)', () => {
+    for (const status of ['pending_chancellery', 'confirmed', 'applied']) {
+      expect(decreePermissions(order({ status, created_by_id: 3 }), 3, plainUser()).canEdit).toBe(false);
+    }
+    expect(decreePermissions(order({ status: 'approved', created_by_id: 3, is_stamped: true }), 3, plainUser()).canEdit)
+      .toBe(false);
+  });
+
+  it('false for a stranger, true for the branch KADR, always true for master-admin', () => {
+    const o = order({ status: 'pending_approval', created_by_id: 3, organization_branch_id: 4 });
+    expect(decreePermissions(o, 99, plainUser()).canEdit).toBe(false);
+    expect(decreePermissions(o, 99, hrOf(4)).canEdit).toBe(true);
+    // Boshqa filial KADR'i — YO'Q (DOCU-02 cross-branch write).
+    expect(decreePermissions(o, 99, hrOf(77)).canEdit).toBe(false);
+    expect(decreePermissions(order({ status: 'confirmed' }), 99, masterAdminUser()).canEdit).toBe(true);
+  });
+
+  it('does NOT put the edit button in the bottom action bar', () => {
+    // hasActions faqat oqim tugmalari uchun — tahrir tafsilot ichida turadi.
+    expect(decreePermissions(order({ status: 'pending_approval', created_by_id: 3 }), 3, plainUser()).hasActions)
+      .toBe(false);
+  });
+});

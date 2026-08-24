@@ -5,6 +5,8 @@ export default {
   listTitle: 'Хатлар',
   detailTitle: 'Хат',
   createTitle: 'Янги хат',
+  editTitle: 'Ҳужжатни таҳрирлаш',
+  editAction: 'Таҳрирлаш',
   documentTitle: 'Ҳужжат',
 
   // ── List screen ─────────────────────────────────────────────────────────────
