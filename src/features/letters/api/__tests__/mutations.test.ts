@@ -9,6 +9,7 @@ import {
   LETTER_AGREE, LETTER_DISAGREE, LETTER_SUBMIT_AGREEMENT, LETTER_SEND_TO_REGISTRY,
   LETTER_APPROVE_TRIP_REGISTRATION,
   LETTER_RETURN, LETTER_RETURN_REPORT, LETTER_CANCEL_TRIP, LETTER_DETAIL,
+  LETTER_EXTEND_TRIP, LETTER_APPROVE_EXTENSION, LETTER_REJECT_EXTENSION,
 } from '@/api/urls';
 import {
   signLetter, rejectLetter, createLetter, submitReport, resetReport, uploadReport,
@@ -16,6 +17,7 @@ import {
   confirmRegistration, agreeLetter, disagreeLetter, submitAgreementLetter, sendLetterToRegistry,
   approveTripRegistration,
   returnLetter, returnReport, cancelTrip, deleteLetter, updateLetter,
+  extendTrip, decideExtension,
 } from '../mutations';
 
 let mock: MockAdapter;
@@ -309,5 +311,30 @@ describe('updateLetter (tahrirlash)', () => {
     const id = await updateLetter(23, { description: 'x' }, [{ uri: 'file:///a.pdf', name: 'a.pdf' }], onFilesError);
     expect(id).toBe(23);
     expect(onFilesError).toHaveBeenCalledTimes(1);
+  });
+});
+
+
+describe('safarni uzaytirish', () => {
+  it('extendTrip yangi qaytish sanasini yuboradi; izoh bo\'sh bo\'lsa yuborilmaydi', async () => {
+    mock.onPost(LETTER_EXTEND_TRIP(41)).reply(200, { id: 41, status: 'extension_review' });
+    await extendTrip(41, '2026-09-10');
+    expect(JSON.parse(mock.history.post[0].data)).toEqual({ arrival_date: '2026-09-10' });
+
+    mock.resetHistory();
+    await extendTrip(41, '2026-09-10', '  Ish tugamadi ');
+    expect(JSON.parse(mock.history.post[0].data)).toEqual({
+      arrival_date: '2026-09-10',
+      note: 'Ish tugamadi',
+    });
+  });
+
+  it('decideExtension approve/reject uchun TO\'G\'RI yo\'lni tanlaydi', async () => {
+    mock.onPost(LETTER_APPROVE_EXTENSION(42)).reply(200, { id: 42 });
+    mock.onPost(LETTER_REJECT_EXTENSION(42)).reply(200, { id: 42 });
+    await decideExtension(42, true);
+    expect(mock.history.post[0].url).toBe(LETTER_APPROVE_EXTENSION(42));
+    await decideExtension(42, false);
+    expect(mock.history.post[1].url).toBe(LETTER_REJECT_EXTENSION(42));
   });
 });

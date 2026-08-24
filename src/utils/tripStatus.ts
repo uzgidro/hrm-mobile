@@ -73,9 +73,34 @@ export function canReturnLetter(l: Letter, user?: User | null): boolean {
   return isSiteMasterAdmin(user) || canActAsChancellery(user, l.organization_branch_id);
 }
 
-/** Devonxona hujjatni ro'yxatdan O'CHIRADI (web: isChancellery bo'lsa doim). */
-export function canDeleteLetter(l: Letter, user?: User | null): boolean {
-  return isSiteMasterAdmin(user) || canActAsChancellery(user, l.organization_branch_id);
+/**
+ * Hujjatni O'CHIRISH — web `canDeleteRow` + devonxona qoidasi birlashtirilgan
+ * (backend `delete_letter` bilan mos):
+ *  • master-admin — har doim;
+ *  • DEVONXONA — o'z filialining hujjatini HAR bosqichda (soft-delete);
+ *  • MUALLIF — faqat boshlang'ich holatda: safar draft|pending|rejected;
+ *    bildirgi/ariza ro'yxatga olinmagan VA hech kim kelishmagan bo'lsa.
+ */
+export function canDeleteLetter(l: Letter, user?: User | null, employeeId?: number | null): boolean {
+  if (isSiteMasterAdmin(user)) return true;
+  if (canActAsChancellery(user, l.organization_branch_id)) return true;
+  const isAuthor = employeeId != null
+    && (Number(l.creator_employee_id) === Number(employeeId)
+      || Number(l.submitter_id) === Number(employeeId));
+  if (!isAuthor) return false;
+  const status = l.status ?? 'draft';
+  if (l.letter_type === 'business_trip') {
+    return ['draft', 'pending', 'rejected'].includes(status);
+  }
+  if (l.letter_type === 'application' || l.letter_type === 'explanatory') {
+    if (status === 'registered') return false;
+    // Kelishuvchilardan biri KELISHGAN bo'lsa — o'chirilmaydi (backend ham).
+    const anyAgreed = (l.assigned_signers ?? []).some(
+      (sg) => sg.signer_type === 'agreement' && sg.agreed === true,
+    );
+    return !anyAgreed;
+  }
+  return false;
 }
 
 /**
@@ -97,4 +122,29 @@ export function canCancelTrip(l: Letter, user?: User | null): boolean {
   if (l.is_trip_confirmed) return false;
   if (['report_approved', 'cancelled'].includes(l.status ?? '')) return false;
   return isSiteMasterAdmin(user) || isBranchHr(user, l.organization_branch_id);
+}
+
+
+// ── Safarni UZAYTIRISH (KADR so'raydi, rahbariyat hal qiladi) ────────────────
+// Web TripExtendDrawer + `canExtendTrip`. Mobilда oqim umuman yo'q edi: KADR
+// muddatni uzaytira olmasdi va so'rov `extension_review`da qolib ketardi
+// (rahbar uni telefondan tasdiqlay ham, rad eta ham olmasdi).
+
+/** KADR faol safarni uzaytira oladimi (tasdiqlangan, hali qaytmagan). */
+export function canExtendTrip(l: Letter, user?: User | null): boolean {
+  if (l.letter_type !== 'business_trip') return false;
+  if (l.status !== 'management_approved' || l.is_trip_confirmed) return false;
+  return isSiteMasterAdmin(user) || isBranchHr(user, l.organization_branch_id);
+}
+
+/** Rahbariyat uzaytirish so'rovini hal qila oladimi (`extension_review`). */
+export function canDecideExtension(l: Letter, user?: User | null, employeeId?: number | null): boolean {
+  if (l.letter_type !== 'business_trip' || l.status !== 'extension_review') return false;
+  const isChosenManagement = (l.assigned_signers ?? []).some(
+    (sg) => sg.signer_type === 'management'
+      && employeeId != null
+      && Number(sg.employee_id ?? sg.employee?.id) === Number(employeeId),
+  );
+  return isChosenManagement || isSiteMasterAdmin(user)
+    || canApproveTripForBranch(user, l.organization_branch_id);
 }

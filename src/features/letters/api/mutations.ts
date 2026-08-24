@@ -9,6 +9,7 @@ import {
   LETTER_CONFIRM_REGISTRATION,
   LETTER_AGREE, LETTER_DISAGREE, LETTER_SUBMIT_AGREEMENT, LETTER_SEND_TO_REGISTRY,
   LETTER_RETURN, LETTER_RETURN_REPORT, LETTER_CANCEL_TRIP, LETTER_DETAIL,
+  LETTER_EXTEND_TRIP, LETTER_APPROVE_EXTENSION, LETTER_REJECT_EXTENSION,
 } from '@/api/urls';
 import type { PickedFile } from '@/components/AttachmentField';
 import { letterKeys } from './queries';
@@ -433,6 +434,40 @@ export function useDeleteLetter(id: number) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: () => deleteLetter(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+  });
+}
+
+
+// ── Safarni UZAYTIRISH ───────────────────────────────────────────────────────
+
+/** KADR yangi QAYTISH sanasini so'raydi (izoh ixtiyoriy) → extension_review. */
+export function extendTrip(id: number, arrivalDate: string, note?: string | null): Promise<unknown> {
+  const body: Record<string, unknown> = { arrival_date: arrivalDate };
+  const trimmed = (note ?? '').trim();
+  if (trimmed) body.note = trimmed;
+  return apiClient.post(LETTER_EXTEND_TRIP(id), body).then((r) => r.data);
+}
+
+/** Rahbariyat uzaytirishni tasdiqlaydi / rad etadi (tanasiz POST). */
+export function decideExtension(id: number, approve: boolean): Promise<unknown> {
+  const url = approve ? LETTER_APPROVE_EXTENSION(id) : LETTER_REJECT_EXTENSION(id);
+  return apiClient.post(url).then((r) => r.data);
+}
+
+export function useExtendTrip(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (args: { arrivalDate: string; note?: string | null }) =>
+      extendTrip(id, args.arrivalDate, args.note),
+    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+  });
+}
+
+export function useDecideExtension(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (approve: boolean) => decideExtension(id, approve),
     onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
   });
 }

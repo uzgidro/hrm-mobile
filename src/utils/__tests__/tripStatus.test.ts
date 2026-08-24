@@ -2,6 +2,7 @@ import type { Letter, User } from '@/types';
 import {
   canSubmitTrip, canApproveReport, canApproveGuvohnoma, canRejectLetter,
   canReturnLetter, canDeleteLetter, canReturnTripReport, canCancelTrip,
+  canExtendTrip, canDecideExtension,
 } from '../tripStatus';
 
 const letter = (o: Partial<Letter>): Letter => ({ id: 1, ...o });
@@ -84,12 +85,66 @@ describe('canReturnLetter (devonxona "Qaytarish")', () => {
   });
 });
 
-describe('canDeleteLetter (devonxona "O\'chirish")', () => {
-  it('true for the branch devonxona at ANY stage (web parity), false otherwise', () => {
+describe('canDeleteLetter (devonxona + MUALLIF, web canDeleteRow parity)', () => {
+  it('devonxona o\'z filialining hujjatini HAR bosqichda o\'chiradi', () => {
     const l = letter({ status: 'registered', organization_branch_id: 7 });
     expect(canDeleteLetter(l, devonxonaOf(7))).toBe(true);
     expect(canDeleteLetter(l, devonxonaOf(99))).toBe(false);
     expect(canDeleteLetter(l, plainUser())).toBe(false);
+  });
+
+  it('safar MUALLIFI faqat boshlang\'ich holatda o\'chiradi', () => {
+    const base = { letter_type: 'business_trip', creator_employee_id: 3, organization_branch_id: 7 };
+    for (const status of ['draft', 'pending', 'rejected']) {
+      expect(canDeleteLetter(letter({ ...base, status }), plainUser(), 3)).toBe(true);
+    }
+    for (const status of ['signed', 'management_approved', 'report_approved']) {
+      expect(canDeleteLetter(letter({ ...base, status }), plainUser(), 3)).toBe(false);
+    }
+    // Begona odam — hech qachon.
+    expect(canDeleteLetter(letter({ ...base, status: 'draft' }), plainUser(), 99)).toBe(false);
+  });
+
+  it('bildirgi/ariza: ro\'yxatga olingan yoki KELISHILGAN hujjat o\'chirilmaydi', () => {
+    const base = { letter_type: 'application', creator_employee_id: 3, organization_branch_id: 7 };
+    expect(canDeleteLetter(letter({ ...base, status: 'draft' }), plainUser(), 3)).toBe(true);
+    expect(canDeleteLetter(letter({ ...base, status: 'registered' }), plainUser(), 3)).toBe(false);
+    expect(canDeleteLetter(
+      letter({
+        ...base,
+        status: 'pending_agreement',
+        assigned_signers: [{ signer_type: 'agreement', employee_id: 8, agreed: true }],
+      }),
+      plainUser(),
+      3,
+    )).toBe(false);
+  });
+});
+
+// Uzaytirish oqimi mobilда umuman yo'q edi.
+describe('canExtendTrip / canDecideExtension', () => {
+  it('KADR faol safarni uzaytiradi (tasdiqlangan, hali qaytmagan)', () => {
+    const l = letter({ letter_type: 'business_trip', status: 'management_approved', organization_branch_id: 7 });
+    expect(canExtendTrip(l, hrOf(7))).toBe(true);
+    expect(canExtendTrip(l, hrOf(99))).toBe(false);
+    expect(canExtendTrip(l, plainUser())).toBe(false);
+    // Qaytgach — yo'q.
+    expect(canExtendTrip(letter({ ...l, is_trip_confirmed: true }), hrOf(7))).toBe(false);
+    // Boshqa bosqichda — yo'q.
+    expect(canExtendTrip(letter({ ...l, status: 'pending' }), hrOf(7))).toBe(false);
+  });
+
+  it('so\'rovni XODIM TANLAGAN rahbariyat hal qiladi (extension_review)', () => {
+    const l = letter({
+      letter_type: 'business_trip',
+      status: 'extension_review',
+      organization_branch_id: 7,
+      assigned_signers: [{ signer_type: 'management', employee_id: 42 }],
+    });
+    expect(canDecideExtension(l, plainUser(), 42)).toBe(true);
+    expect(canDecideExtension(l, plainUser(), 99)).toBe(false);
+    // Boshqa bosqichda tugma yo'q.
+    expect(canDecideExtension(letter({ ...l, status: 'management_approved' }), plainUser(), 42)).toBe(false);
   });
 });
 

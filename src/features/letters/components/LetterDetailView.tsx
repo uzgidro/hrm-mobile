@@ -22,12 +22,14 @@ import {
   canSubmitTrip, canApproveTripRegistration, canApproveReport,
   canApproveGuvohnoma, canRejectLetter,
   canReturnLetter, canDeleteLetter, canReturnTripReport, canCancelTrip,
+  canExtendTrip, canDecideExtension,
 } from '@/utils/tripStatus';
 import { letterDetailQuery } from '../api/queries';
 import { useLetterActions } from '../hooks/useLetterActions';
 import {
   useResetReport, useSubmitTrip,
   useReturnLetter, useReturnReport, useCancelTrip, useDeleteLetter,
+  useExtendTrip, useDecideExtension,
 } from '../api/mutations';
 import { DetailHeader, Section, KV, SignerRow } from './DetailParts';
 import { LetterActionBar } from './LetterActionBar';
@@ -35,6 +37,7 @@ import { TripMovementsSection } from './TripMovementsSection';
 import { AgreementSection } from './AgreementSection';
 import { ConfirmRegistrationModal } from './ConfirmRegistrationModal';
 import { ReasonModal } from './ReasonModal';
+import { DatePickerModal } from '@/components/DatePicker';
 
 // The body of the letter detail — extracted so it can render either as the
 // pushed route's content (phone / push-notification deep links, `embedded`
@@ -63,6 +66,10 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
   const deleteLetterM = useDeleteLetter(letterId);
   const [reasonModal, setReasonModal] = useState<null | 'return' | 'returnReport' | 'cancelTrip'>(null);
   const [reasonText, setReasonText] = useState('');
+  // Safarni uzaytirish: KADR yangi qaytish sanasini tanlaydi.
+  const extendM = useExtendTrip(letterId);
+  const decideExtM = useDecideExtension(letterId);
+  const [extendPickerOpen, setExtendPickerOpen] = useState(false);
 
   // Embedded (split-view pane): no safe-area root — the outer list screen's
   // Screen/SafeAreaView already owns the insets. Routed (pushed screen): the
@@ -149,7 +156,9 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
   const showReturn = canReturnLetter(letter, user);
   const showReturnReport = canReturnTripReport(letter, user);
   const showCancelTrip = canCancelTrip(letter, user);
-  const showDelete = canDeleteLetter(letter, user);
+  const showDelete = canDeleteLetter(letter, user, employeeId);
+  const showExtend = canExtendTrip(letter, user);
+  const showDecideExtension = canDecideExtension(letter, user, employeeId);
   // Tahrirlash — backend `update_letter` qoidasi bilan 1:1 (mobilда yo'q edi:
   // qaytarilgan hujjatni telefondan tuzatib bo'lmasdi).
   const showEdit = canEditLetter(letter, employeeId, user);
@@ -163,6 +172,27 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
     if (reasonModal === 'return') returnLetterM.mutate(reason, opts);
     else if (reasonModal === 'returnReport') returnReportM.mutate(reason, opts);
     else if (reasonModal === 'cancelTrip') cancelTripM.mutate(reason, opts);
+  };
+  const onExtendConfirm = (iso: string) => {
+    extendM.mutate({ arrivalDate: iso }, {
+      onSuccess: () => refetch(),
+      onError: (e) => Alert.alert(t('letters.actionError'), getApiErrorMessage(e, t('letters.actionError'))),
+    });
+  };
+  const onDecideExtension = async (approve: boolean) => {
+    const ok = await confirm({
+      title: approve ? t('letters.extensionApprove') : t('letters.extensionReject'),
+      message: t('letters.extensionDecideConfirm'),
+      confirmLabel: approve ? t('letters.extensionApprove') : t('letters.extensionReject'),
+      cancelLabel: t('common.cancel'),
+      icon: approve ? 'check' : 'close',
+      destructive: !approve,
+    });
+    if (!ok) return;
+    decideExtM.mutate(approve, {
+      onSuccess: () => refetch(),
+      onError: (e) => Alert.alert(t('letters.actionError'), getApiErrorMessage(e, t('letters.actionError'))),
+    });
   };
   const onDeleteLetter = async () => {
     const ok = await confirm({
@@ -417,6 +447,45 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
           </TouchableOpacity>
         )}
 
+        {/* Rahbariyat uzaytirish so'rovini hal qiladi. */}
+        {showDecideExtension && (
+          <View style={styles.reportActions}>
+            <TouchableOpacity
+              style={[styles.reportBtn, styles.reportResetBtn]}
+              activeOpacity={0.85}
+              onPress={() => onDecideExtension(false)}
+              disabled={decideExtM.isPending}
+              testID="letter-extension-reject"
+            >
+              <Text style={[styles.reportBtnText, { color: colors.error }]}>{t('letters.extensionReject')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.reportBtn}
+              activeOpacity={0.85}
+              onPress={() => onDecideExtension(true)}
+              disabled={decideExtM.isPending}
+              testID="letter-extension-approve"
+            >
+              <Icon name="check" size={16} color={colors.onPrimary} />
+              <Text style={styles.reportBtnText}>{t('letters.extensionApprove')}</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* KADR safar muddatini uzaytiradi. */}
+        {showExtend && (
+          <TouchableOpacity
+            style={styles.editBtn}
+            activeOpacity={0.85}
+            onPress={() => setExtendPickerOpen(true)}
+            disabled={extendM.isPending}
+            testID="letter-extend-trip"
+          >
+            <Icon name="calendar" size={16} color={colors.primary} />
+            <Text style={styles.editBtnText}>{t('letters.extendTripAction')}</Text>
+          </TouchableOpacity>
+        )}
+
         {/* ── DEVONXONA / KADR amallari ── */}
         {showReturnReport && (
           <TouchableOpacity
@@ -477,6 +546,14 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
           onReject={canReject ? reject : undefined}
         />
       )}
+
+      <DatePickerModal
+        visible={extendPickerOpen}
+        value={letter.arrival_date ?? null}
+        title={t('letters.extendTripAction')}
+        onConfirm={onExtendConfirm}
+        onClose={() => setExtendPickerOpen(false)}
+      />
 
       <ReasonModal
         visible={reasonModal !== null}

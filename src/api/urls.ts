@@ -169,6 +169,12 @@ export const LETTER_RETURN = (id: number) => `letters/${id}/return`;
 export const LETTER_RETURN_REPORT = (id: number) => `letters/${id}/return-report`;
 // KADR xizmat safarini BEKOR qiladi (sabab ixtiyoriy).
 export const LETTER_CANCEL_TRIP = (id: number) => `letters/${id}/cancel-trip`;
+// SAFARNI UZAYTIRISH: KADR yangi qaytish sanasini so'raydi (status →
+// extension_review), rahbariyat esa tasdiqlaydi yoki rad etadi. Mobilда butun
+// oqim yo'q edi — so'rov shu bosqichda tiqilib qolardi.
+export const LETTER_EXTEND_TRIP = (id: number) => `letters/${id}/extend-trip`;
+export const LETTER_APPROVE_EXTENSION = (id: number) => `letters/${id}/approve-extension`;
+export const LETTER_REJECT_EXTENSION = (id: number) => `letters/${id}/reject-extension`;
 export const LETTER_REGISTERED_NUMBER_AVAILABILITY = 'letters/registered-number/availability';
 
 // Organization branches
