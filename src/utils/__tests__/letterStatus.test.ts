@@ -846,15 +846,29 @@ describe('letterDisplayNumber (web displayNumber parity)', () => {
 });
 
 describe('isLetterUnseen (web rowIsUnseen parity)', () => {
+  const devonxona = {
+    id: 9,
+    type: 'employee',
+    employee: { id: 9 },
+    chancellery_branch_ids: [3],
+  } as unknown as User;
+
   it('amal kutayotgan hujjat DOIM yangi', () => {
     expect(isLetterUnseen(letter({ action_required: true }), 7)).toBe(true);
   });
 
-  it('amal talab qilmasa ham O\'ZGARGAN hujjat yangi (avval belgilanmasdi)', () => {
+  it('amal talab qilmasa ham KO\'RILMAGAN hujjat yangi (avval belgilanmasdi)', () => {
     expect(isLetterUnseen(letter({ is_unseen: true }), 7)).toBe(true);
   });
 
   it('ko\'rilgan va amal kutmaydigan hujjat — yangi EMAS', () => {
     expect(isLetterUnseen(letter({ action_required: false, is_unseen: false }), 7)).toBe(false);
+  });
+
+  it('DEVONXONA uchun manba `chancellery_seen` (umumiy bayroq), `is_unseen` EMAS', () => {
+    // Devonxona ochgan: chancellery_seen=true → yangi emas, is_unseen bo'lsa ham.
+    expect(isLetterUnseen(letter({ chancellery_seen: true, is_unseen: true }), 9, devonxona)).toBe(false);
+    // Hech kim ochmagan → yangi.
+    expect(isLetterUnseen(letter({ chancellery_seen: false, is_unseen: false }), 9, devonxona)).toBe(true);
   });
 });

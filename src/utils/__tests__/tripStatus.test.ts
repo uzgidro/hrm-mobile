@@ -2,7 +2,7 @@ import type { Letter, User } from '@/types';
 import {
   canSubmitTrip, canApproveReport, canApproveGuvohnoma, canRejectLetter,
   canReturnLetter, canDeleteLetter, canReturnTripReport, canCancelTrip,
-  canExtendTrip, canDecideExtension,
+  canExtendTrip, canDecideExtension, canSetBasisDecree,
 } from '../tripStatus';
 
 const letter = (o: Partial<Letter>): Letter => ({ id: 1, ...o });
@@ -189,5 +189,21 @@ describe('canCancelTrip (KADR "Safarni bekor qilish")', () => {
 
   it('false for a non-trip letter', () => {
     expect(canCancelTrip(letter({ letter_type: 'application', status: 'pending', organization_branch_id: 7 }), hrOf(7))).toBe(false);
+  });
+});
+
+
+describe('canSetBasisDecree (KADR, bosqich cheklovi YO\'Q)', () => {
+  it('faqat KADR va faqat SAFAR uchun — har qanday bosqichda', () => {
+    // Raqam ko'pincha safar YAKUNLANGACH ma'lum bo'ladi, shuning uchun
+    // report_approved da ham ochiq (backend ataylab shunday).
+    for (const status of ['draft', 'management_approved', 'report_approved', 'cancelled']) {
+      expect(canSetBasisDecree(
+        letter({ letter_type: 'business_trip', status, organization_branch_id: 7 }), hrOf(7),
+      )).toBe(true);
+    }
+    expect(canSetBasisDecree(letter({ letter_type: 'business_trip', organization_branch_id: 7 }), hrOf(99))).toBe(false);
+    expect(canSetBasisDecree(letter({ letter_type: 'business_trip', organization_branch_id: 7 }), plainUser())).toBe(false);
+    expect(canSetBasisDecree(letter({ letter_type: 'application', organization_branch_id: 7 }), hrOf(7))).toBe(false);
   });
 });

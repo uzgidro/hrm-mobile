@@ -148,3 +148,14 @@ export function canDecideExtension(l: Letter, user?: User | null, employeeId?: n
   return isChosenManagement || isSiteMasterAdmin(user)
     || canApproveTripForBranch(user, l.organization_branch_id);
 }
+
+
+/**
+ * KADR asos buyruq raqami+sanasini kirita oladimi. Backend `set_basis_decree`:
+ * FAQAT xizmat safari va FAQAT KADR (filialga bog'langan) — bosqich cheklovi
+ * YO'Q, chunki buyruq raqami ko'pincha safar yakunlangach ma'lum bo'ladi.
+ */
+export function canSetBasisDecree(l: Letter, user?: User | null): boolean {
+  if (l.letter_type !== 'business_trip') return false;
+  return isSiteMasterAdmin(user) || isBranchHr(user, l.organization_branch_id);
+}

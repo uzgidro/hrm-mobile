@@ -10,6 +10,7 @@ import {
   LETTER_AGREE, LETTER_DISAGREE, LETTER_SUBMIT_AGREEMENT, LETTER_SEND_TO_REGISTRY,
   LETTER_RETURN, LETTER_RETURN_REPORT, LETTER_CANCEL_TRIP, LETTER_DETAIL,
   LETTER_EXTEND_TRIP, LETTER_APPROVE_EXTENSION, LETTER_REJECT_EXTENSION,
+  LETTER_BASIS_DECREE,
 } from '@/api/urls';
 import type { PickedFile } from '@/components/AttachmentField';
 import { letterKeys } from './queries';
@@ -468,6 +469,28 @@ export function useDecideExtension(id: number) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (approve: boolean) => decideExtension(id, approve),
+    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+  });
+}
+
+
+// ── ASOS BUYRUQ (KADR) ───────────────────────────────────────────────────────
+// Guvohnomadagi "Asos:" qatori. Ikkala maydon ham MAJBURIY (backend schemasi
+// `basis_decree_number: str`, `basis_decree_date: date`).
+export function setBasisDecree(id: number, numberValue: string, dateIso: string): Promise<unknown> {
+  return apiClient
+    .post(LETTER_BASIS_DECREE(id), {
+      basis_decree_number: numberValue.trim(),
+      basis_decree_date: dateIso,
+    })
+    .then((r) => r.data);
+}
+
+export function useSetBasisDecree(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (args: { number: string; date: string }) =>
+      setBasisDecree(id, args.number, args.date),
     onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
   });
 }

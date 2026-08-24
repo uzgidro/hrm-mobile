@@ -182,7 +182,7 @@ export default function LettersListScreen() {
                 key={l.id}
                 letter={l}
                 action={letterNeedsMyAction(l, employeeId)}
-                unseen={isLetterUnseen(l, employeeId)}
+                unseen={isLetterUnseen(l, employeeId, user)}
                 onPress={split ? () => setSelectedId(l.id) : undefined}
                 selected={split ? selectedId === l.id : undefined}
               />

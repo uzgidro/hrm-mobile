@@ -10,6 +10,7 @@ import {
   LETTER_APPROVE_TRIP_REGISTRATION,
   LETTER_RETURN, LETTER_RETURN_REPORT, LETTER_CANCEL_TRIP, LETTER_DETAIL,
   LETTER_EXTEND_TRIP, LETTER_APPROVE_EXTENSION, LETTER_REJECT_EXTENSION,
+  LETTER_BASIS_DECREE,
 } from '@/api/urls';
 import {
   signLetter, rejectLetter, createLetter, submitReport, resetReport, uploadReport,
@@ -17,7 +18,7 @@ import {
   confirmRegistration, agreeLetter, disagreeLetter, submitAgreementLetter, sendLetterToRegistry,
   approveTripRegistration,
   returnLetter, returnReport, cancelTrip, deleteLetter, updateLetter,
-  extendTrip, decideExtension,
+  extendTrip, decideExtension, setBasisDecree,
 } from '../mutations';
 
 let mock: MockAdapter;
@@ -336,5 +337,18 @@ describe('safarni uzaytirish', () => {
     expect(mock.history.post[0].url).toBe(LETTER_APPROVE_EXTENSION(42));
     await decideExtension(42, false);
     expect(mock.history.post[1].url).toBe(LETTER_REJECT_EXTENSION(42));
+  });
+});
+
+
+describe('setBasisDecree (KADR asos buyruqni kiritadi)', () => {
+  it('raqam+sanani yuboradi va raqamdagi bo\'shliqlarni kesadi', async () => {
+    mock.onPost(LETTER_BASIS_DECREE(51)).reply(200, { id: 51 });
+    await setBasisDecree(51, '  145-A ', '2026-08-01');
+    expect(mock.history.post[0].url).toBe(LETTER_BASIS_DECREE(51));
+    expect(JSON.parse(mock.history.post[0].data)).toEqual({
+      basis_decree_number: '145-A',
+      basis_decree_date: '2026-08-01',
+    });
   });
 });

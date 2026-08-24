@@ -1,6 +1,6 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, type ReactNode } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert, Modal, TextInput } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import dayjs from 'dayjs';
@@ -22,14 +22,14 @@ import {
   canSubmitTrip, canApproveTripRegistration, canApproveReport,
   canApproveGuvohnoma, canRejectLetter,
   canReturnLetter, canDeleteLetter, canReturnTripReport, canCancelTrip,
-  canExtendTrip, canDecideExtension,
+  canExtendTrip, canDecideExtension, canSetBasisDecree,
 } from '@/utils/tripStatus';
 import { letterDetailQuery } from '../api/queries';
 import { useLetterActions } from '../hooks/useLetterActions';
 import {
   useResetReport, useSubmitTrip,
   useReturnLetter, useReturnReport, useCancelTrip, useDeleteLetter,
-  useExtendTrip, useDecideExtension,
+  useExtendTrip, useDecideExtension, useSetBasisDecree,
 } from '../api/mutations';
 import { DetailHeader, Section, KV, SignerRow } from './DetailParts';
 import { LetterActionBar } from './LetterActionBar';
@@ -70,6 +70,12 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
   const extendM = useExtendTrip(letterId);
   const decideExtM = useDecideExtension(letterId);
   const [extendPickerOpen, setExtendPickerOpen] = useState(false);
+  // Asos buyruq (guvohnomadagi "Asos:" qatori) — KADR kiritadi/tuzatadi.
+  const basisM = useSetBasisDecree(letterId);
+  const [basisOpen, setBasisOpen] = useState(false);
+  const [basisNumber, setBasisNumber] = useState('');
+  const [basisDate, setBasisDate] = useState<string | null>(null);
+  const [basisDatePickerOpen, setBasisDatePickerOpen] = useState(false);
 
   // Embedded (split-view pane): no safe-area root — the outer list screen's
   // Screen/SafeAreaView already owns the insets. Routed (pushed screen): the
@@ -159,6 +165,7 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
   const showDelete = canDeleteLetter(letter, user, employeeId);
   const showExtend = canExtendTrip(letter, user);
   const showDecideExtension = canDecideExtension(letter, user, employeeId);
+  const showBasisDecree = canSetBasisDecree(letter, user);
   // Tahrirlash — backend `update_letter` qoidasi bilan 1:1 (mobilда yo'q edi:
   // qaytarilgan hujjatni telefondan tuzatib bo'lmasdi).
   const showEdit = canEditLetter(letter, employeeId, user);
@@ -326,12 +333,30 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
           {!!letter.actual_return_date && (
             <KV k={t('letters.fieldActualReturn')} v={dayjs(letter.actual_return_date).format('DD.MM.YYYY')} />
           )}
-          {!!letter.basis_decree_number && (
+          {(!!letter.basis_decree_number || showBasisDecree) && (
             <KV
               k={t('letters.fieldBasisDecree')}
               v={letter.basis_decree_number
-                + (letter.basis_decree_date ? ` — ${dayjs(letter.basis_decree_date).format('DD.MM.YYYY')}` : '')}
+                ? letter.basis_decree_number
+                  + (letter.basis_decree_date ? ` — ${dayjs(letter.basis_decree_date).format('DD.MM.YYYY')}` : '')
+                : '—'}
             />
+          )}
+          {showBasisDecree && (
+            <TouchableOpacity
+              style={styles.inlineBtn}
+              activeOpacity={0.8}
+              onPress={() => {
+                setBasisNumber(letter.basis_decree_number ?? '');
+                setBasisDate(letter.basis_decree_date ?? null);
+                setBasisOpen(true);
+              }}
+              testID="letter-basis-decree"
+            >
+              <Text style={styles.inlineBtnText}>
+                {letter.basis_decree_number ? t('letters.editAction') : t('letters.basisDecreeSet')}
+              </Text>
+            </TouchableOpacity>
           )}
           {!!letter.guvohnoma_number && (
             <KV k={t('letters.fieldGuvohnomaNumber')} v={letter.guvohnoma_number} />
@@ -586,6 +611,63 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
         />
       )}
 
+      {/* ASOS BUYRUQ — raqam + sana (ikkalasi ham majburiy). */}
+      <Modal visible={basisOpen} transparent animationType="fade" onRequestClose={() => setBasisOpen(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>{t('letters.fieldBasisDecree')}</Text>
+            <Text style={styles.modalLabel}>{t('letters.basisDecreeNumber')}</Text>
+            <TextInput
+              style={styles.modalInput}
+              value={basisNumber}
+              onChangeText={setBasisNumber}
+              placeholder={t('letters.basisDecreeNumberPlaceholder')}
+              placeholderTextColor={colors.textMuted}
+              testID="basis-decree-number"
+            />
+            <Text style={styles.modalLabel}>{t('letters.basisDecreeDate')}</Text>
+            <TouchableOpacity
+              style={styles.modalInput}
+              activeOpacity={0.8}
+              onPress={() => setBasisDatePickerOpen(true)}
+              testID="basis-decree-date"
+            >
+              <Text style={basisDate ? styles.modalInputText : styles.modalInputPlaceholder}>
+                {basisDate ? dayjs(basisDate).format('DD.MM.YYYY') : t('letters.placeholderSelectDate')}
+              </Text>
+            </TouchableOpacity>
+            <View style={styles.modalBtns}>
+              <TouchableOpacity style={styles.modalCancel} onPress={() => setBasisOpen(false)} activeOpacity={0.8}>
+                <Text style={styles.modalCancelText}>{t('common.cancel')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalSubmit, (!basisNumber.trim() || !basisDate || basisM.isPending) && styles.modalSubmitDisabled]}
+                disabled={!basisNumber.trim() || !basisDate || basisM.isPending}
+                onPress={() => basisM.mutate(
+                  { number: basisNumber, date: basisDate! },
+                  {
+                    onSuccess: () => { setBasisOpen(false); refetch(); },
+                    onError: (e) => Alert.alert(t('letters.actionError'), getApiErrorMessage(e, t('letters.actionError'))),
+                  },
+                )}
+                activeOpacity={0.8}
+                testID="basis-decree-submit"
+              >
+                <Text style={styles.modalSubmitText}>{t('common.save')}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <DatePickerModal
+        visible={basisDatePickerOpen}
+        value={basisDate}
+        title={t('letters.basisDecreeDate')}
+        onConfirm={setBasisDate}
+        onClose={() => setBasisDatePickerOpen(false)}
+      />
+
       <DatePickerModal
         visible={extendPickerOpen}
         value={letter.arrival_date ?? null}
@@ -683,4 +765,23 @@ const makeStyles = (c: ThemeColors) =>
       backgroundColor: c.primarySoft, borderRadius: 12, paddingVertical: 14, marginBottom: 12,
     },
     editBtnText: { color: c.primary, fontSize: 14, fontWeight: '700' },
+    inlineBtn: {
+      alignSelf: 'flex-end', marginTop: 4, backgroundColor: c.primarySoft,
+      borderRadius: 9, paddingHorizontal: 14, paddingVertical: 7,
+    },
+    inlineBtnText: { color: c.primary, fontSize: 12, fontWeight: '700' },
+
+    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center', padding: 20 },
+    modalCard: { width: '100%', backgroundColor: c.card, borderRadius: 16, borderWidth: 1, borderColor: c.cardBorder, padding: 18, gap: 8 },
+    modalTitle: { fontSize: 16, fontWeight: '700', color: c.text, marginBottom: 2 },
+    modalLabel: { fontSize: 12, color: c.textMuted },
+    modalInput: { borderWidth: 1, borderColor: c.cardBorder, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 12, color: c.text, fontSize: 14, justifyContent: 'center' },
+    modalInputText: { color: c.text, fontSize: 14 },
+    modalInputPlaceholder: { color: c.textMuted, fontSize: 14 },
+    modalBtns: { flexDirection: 'row', gap: 10, marginTop: 6 },
+    modalCancel: { flex: 1, paddingVertical: 12, borderRadius: 12, alignItems: 'center', backgroundColor: c.cardBorder },
+    modalCancelText: { color: c.text, fontSize: 14, fontWeight: '600' },
+    modalSubmit: { flex: 1, paddingVertical: 12, borderRadius: 12, alignItems: 'center', backgroundColor: c.primary },
+    modalSubmitDisabled: { opacity: 0.5 },
+    modalSubmitText: { color: c.onPrimary, fontSize: 14, fontWeight: '700' },
   });

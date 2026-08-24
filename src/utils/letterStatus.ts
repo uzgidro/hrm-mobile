@@ -2,7 +2,7 @@ import i18n from '../i18n';
 import type { Letter, LetterSigner, User } from '../types';
 import type { StatusKind } from './orderStatus';
 import { statusColor } from './orderStatus';
-import { canActAsChancellery, isBranchHr, isSiteMasterAdmin } from './roles';
+import { canActAsChancellery, isAnyChancellery, isBranchHr, isSiteMasterAdmin } from './roles';
 
 export { statusColor };
 
@@ -40,12 +40,17 @@ export function letterDisplayNumber(l: Letter): string | null {
 
 /**
  * Hujjat shu foydalanuvchi uchun YANGImi — web `rowIsUnseen` bilan bir xil:
- * amalini kutayotgan (ochib ko'rish o'chirmaydi) YOKI hech ochilmagan /
- * oxirgi ochilishdan keyin o'zgargan. Mobil ro'yxatда faqat AMAL belgilanardi,
- * ya'ni o'zgargan (lekin amal talab qilmaydigan) hujjat ajralib turmasdi.
+ * amalini kutayotgan (ochib ko'rish o'chirmaydi) YOKI hali ko'rilmagan.
+ * Mobil ro'yxatда faqat AMAL belgilanardi, ya'ni o'zgargan (lekin amal talab
+ * qilmaydigan) hujjat ajralib turmasdi.
+ *
+ * DEVONXONA uchun manba boshqacha: `chancellery_seen` — bu UMUMIY bayroq
+ * (kim ochsa, hammaga ko'rilgan bo'ladi), `is_unseen` esa foydalanuvchiga xos.
  */
-export function isLetterUnseen(l: Letter, employeeId?: number): boolean {
-  return letterNeedsMyAction(l, employeeId) || l.is_unseen === true;
+export function isLetterUnseen(l: Letter, employeeId?: number, user?: User | null): boolean {
+  if (letterNeedsMyAction(l, employeeId)) return true;
+  if (isAnyChancellery(user)) return l.chancellery_seen !== true;
+  return l.is_unseen === true;
 }
 
 export function normalizeLetterType(type?: string): string {

@@ -178,6 +178,11 @@ export const LETTER_CANCEL_TRIP = (id: number) => `letters/${id}/cancel-trip`;
 // SAFARNI UZAYTIRISH: KADR yangi qaytish sanasini so'raydi (status →
 // extension_review), rahbariyat esa tasdiqlaydi yoki rad etadi. Mobilда butun
 // oqim yo'q edi — so'rov shu bosqichda tiqilib qolardi.
+// ASOS BUYRUQ (guvohnomadagi "Asos:" qatori) — KADR raqam+sanani kiritadi,
+// guvohnoma qayta yaratiladi. Bosqich cheklovi YO'Q (raqam ko'pincha safar
+// yakunlangach ma'lum bo'ladi). Mobilда qiymat ko'rinardi-yu, KIRITIB
+// bo'lmasdi.
+export const LETTER_BASIS_DECREE = (id: number) => `letters/${id}/basis-decree`;
 export const LETTER_EXTEND_TRIP = (id: number) => `letters/${id}/extend-trip`;
 export const LETTER_APPROVE_EXTENSION = (id: number) => `letters/${id}/approve-extension`;
 export const LETTER_REJECT_EXTENSION = (id: number) => `letters/${id}/reject-extension`;

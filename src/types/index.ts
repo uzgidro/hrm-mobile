@@ -315,6 +315,9 @@ export interface Letter {
   action_required?: boolean;
   // Hech ochilmagan yoki oxirgi ochilishdan keyin O'ZGARGAN hujjat.
   is_unseen?: boolean;
+  // DEVONXONA uchun alohida (umumiy, foydalanuvchiga bog'liq EMAS) ko'rildi
+  // bayrog'i — devonxona ro'yxatida "yangi" shu bo'yicha aniqlanadi.
+  chancellery_seen?: boolean;
 }
 
 // A single kelish/ketish event of a business trip. event_type is a backend
