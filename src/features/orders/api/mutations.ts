@@ -13,6 +13,7 @@ import {
   ORDER_ACT_DECREE_REGISTER,
   ORDER_ACT_DECREE_ACKNOWLEDGE,
   ORDER_ACT_DECREE_ASSIGN_FAMILIARIZERS,
+  ORDER_ACT_COMMENTS,
 } from '@/api/urls';
 import type { PickedFile } from '@/components/AttachmentField';
 import { orderKeys } from './queries';
@@ -109,6 +110,19 @@ export async function createOrder(
     }
   }
   return orderId;
+}
+
+// Buyruqqa IZOH qoldirish — buyruqni ko'ra oladigan har kim (status o'zgarmaydi).
+export function addOrderComment(id: number, text: string): Promise<unknown> {
+  return apiClient.post(ORDER_ACT_COMMENTS(id), { text }).then((r) => r.data);
+}
+
+export function useAddOrderComment(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (text: string) => addOrderComment(id, text),
+    onSuccess: () => qc.invalidateQueries({ queryKey: orderKeys.all }),
+  });
 }
 
 // ── Tahrirlash (PATCH /order-acts/{id}) ──────────────────────────────────────

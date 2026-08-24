@@ -21,6 +21,12 @@ export default {
 
   // ── Detail screen ───────────────────────────────────────────────────────────
   openDocument: 'Open document',
+  openGuvohnoma: 'Open the certificate',
+  openAttachment: 'Open the attachment',
+  openReportDocument: 'Open the report',
+  reportDocumentTitle: 'Report',
+  guvohnomaDocumentTitle: 'Certificate',
+  attachmentDocumentTitle: 'Attachment',
   docOutOfSyncWarning:
     'The form text did not reach the document — it was edited in Word (OnlyOffice) and is in the old (anchorless) format. To apply the changes, open and edit it in Word, or regenerate the document.',
   sectionContent: 'Content',

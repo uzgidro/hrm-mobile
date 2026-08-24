@@ -22,6 +22,12 @@ export default {
 
   // ── Detail screen ───────────────────────────────────────────────────────────
   openDocument: 'Открыть документ',
+  openGuvohnoma: 'Открыть удостоверение',
+  openAttachment: 'Открыть приложение',
+  openReportDocument: 'Открыть отчёт',
+  reportDocumentTitle: 'Отчёт',
+  guvohnomaDocumentTitle: 'Удостоверение',
+  attachmentDocumentTitle: 'Приложение',
   docOutOfSyncWarning:
     'Текст из формы не попал в документ — этот документ редактировался в Word (OnlyOffice) и имеет старый (без якорей) формат. Чтобы изменения попали в документ, откройте и отредактируйте его в Word или создайте документ заново.',
   sectionContent: 'Содержание',

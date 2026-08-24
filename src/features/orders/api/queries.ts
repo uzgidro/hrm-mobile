@@ -8,9 +8,13 @@ import {
   DEPARTMENTS_LIST,
   EMPLOYEES_LIST,
   ORGANIZATION_BRANCH_LEADERS,
+  ORDER_ACT_COMMENTS,
+  ORDER_ACT_HISTORY,
 } from '@/api/urls';
 import { fetchAllEmployees } from '@/utils/employees';
-import type { Employee, OrderAct, OrderActCategory } from '@/types';
+import type {
+  Employee, OrderAct, OrderActCategory, OrderActComment, OrderActHistoryEntry,
+} from '@/types';
 
 // Hierarchical query keys.
 //
@@ -27,7 +31,32 @@ export const orderKeys = {
   all: ['order-acts'] as const,
   list: () => [...orderKeys.all, 'list'] as const,
   detail: (id: number) => [...orderKeys.all, 'detail', id] as const,
+  comments: (id: number) => [...orderKeys.all, 'comments', id] as const,
+  history: (id: number) => [...orderKeys.all, 'history', id] as const,
 };
+
+// Buyruq IZOHLARI — buyruqni ko'ra oladigan har kim yozadi, status o'zgarmaydi.
+// Kelishuvchi "o'zgartirish so'radi" degan izohlar ham shu ro'yxatда (action).
+export function orderCommentsQuery(id: number) {
+  return queryOptions({
+    queryKey: orderKeys.comments(id),
+    queryFn: () =>
+      apiClient.get<OrderActComment[]>(ORDER_ACT_COMMENTS(id)).then((r) => r.data ?? []),
+    enabled: !!id,
+    refetchOnMount: 'always',
+  });
+}
+
+// Buyruq MATNI tahriri tarixi (kim, qachon, eski/yangi matn).
+export function orderHistoryQuery(id: number) {
+  return queryOptions({
+    queryKey: orderKeys.history(id),
+    queryFn: () =>
+      apiClient.get<OrderActHistoryEntry[]>(ORDER_ACT_HISTORY(id)).then((r) => r.data ?? []),
+    enabled: !!id,
+    refetchOnMount: 'always',
+  });
+}
 
 // The list tab.
 //

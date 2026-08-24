@@ -113,6 +113,12 @@ export const LETTER_DETAIL = (id: number) => `letters/${id}`;
 export const LETTER_SIGN = (id: number) => `letters/${id}/sign`;
 export const LETTER_REJECT = (id: number) => `letters/${id}/reject`;
 export const LETTER_EDITOR_CONFIG = (id: number) => `letters/${id}/editor-config`;
+// Xatning BOSHQA hujjatlari uchun OnlyOffice konfiglari. Mobilда faqat ASOSIY
+// hujjat ochilardi — guvohnoma (safar varaqasi), hisobot docx'i va ILOVA
+// umuman ko'rib bo'lmasdi (webda uchalasi ham ochiladi).
+export const LETTER_REPORT_EDITOR_CONFIG = (id: number) => `letters/${id}/report-editor-config`;
+export const LETTER_GUVOHNOMA_EDITOR_CONFIG = (id: number) => `letters/${id}/guvohnoma-editor-config`;
+export const LETTER_ATTACHMENT_EDITOR_CONFIG = (id: number) => `letters/${id}/attachment-editor-config`;
 export const LETTER_UPLOAD_ATTACHMENT = (id: number) => `letters/${id}/upload-attachment`;
 // Business-trip report stage (xizmat safari, OLD flow). submit-report takes a
 // plain JSON body; upload-report is an optional single-file multipart; the
@@ -205,6 +211,11 @@ export const ORDER_ACT_DECREE_ACKNOWLEDGE = (id: number) => `order-acts/${id}/de
 export const ORDER_ACT_DECREE_ASSIGN_FAMILIARIZERS = (id: number) =>
   `order-acts/${id}/decree/assign-familiarizers`;
 export const ORDER_ACT_EDITOR_CONFIG = (id: number) => `order-acts/${id}/editor-config`;
+// Buyruq IZOHLARI (ko'ra oladigan har kim yozadi; status o'zgarmaydi) va MATN
+// TAHRIRI TARIXI. Ikkalasi ham webda ko'rinadi, mobilда umuman yo'q edi —
+// kelishuv yozishmasi va "matn qachon/kim tomonidan o'zgardi" ko'rinmasdi.
+export const ORDER_ACT_COMMENTS = (id: number) => `order-acts/${id}/comments`;
+export const ORDER_ACT_HISTORY = (id: number) => `order-acts/${id}/history`;
 
 // Documents (Hujjatlar) — files/folders storage, view-only on mobile.
 // Folders are flat (no nesting) and embed their files[] inline. Root (folder-

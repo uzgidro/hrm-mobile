@@ -20,6 +20,7 @@ import { useDecreeActions } from '../hooks/useDecreeActions';
 import { useAssignFamiliarizers } from '../api/mutations';
 import { DetailHeader, Section, KV } from './DetailParts';
 import { DetailSections } from './DetailSections';
+import { CommentsSection } from './CommentsSection';
 import { DecreeActionBar } from './DecreeActionBar';
 import { RejectModal, RegisterModal } from './DetailModals';
 
@@ -208,6 +209,9 @@ export function OrderDetailView({ id, embedded = false }: { id: number; embedded
         </Section>
 
         <DetailSections order={order} />
+
+        {/* Izohlar + matn tahriri tarixi (webda bor, mobilда yo'q edi). */}
+        <CommentsSection orderId={orderId} />
 
         {perms.canEdit && (
           <TouchableOpacity

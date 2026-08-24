@@ -8,22 +8,53 @@ import { useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { apiClient } from '@/api/client';
-import { LETTER_EDITOR_CONFIG, ONLYOFFICE_SERVER_URL } from '@/api/urls';
+import {
+  LETTER_EDITOR_CONFIG, LETTER_REPORT_EDITOR_CONFIG, LETTER_GUVOHNOMA_EDITOR_CONFIG,
+  LETTER_ATTACHMENT_EDITOR_CONFIG, ONLYOFFICE_SERVER_URL,
+} from '@/api/urls';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { ErrorState } from '@/components/StateViews';
 
+// Xatning QAYSI hujjati ochilyapti. `main` — bildirgi/ariza/safar hujjati;
+// `guvohnoma` — safar varaqasi; `report` — hisobot docx'i; `attachment` —
+// muallif biriktirgan ilova. Konfig yo'li shu bo'yicha tanlanadi (ruxsat va
+// view/edit rejimini SERVER hal qiladi).
+type DocKind = 'main' | 'report' | 'guvohnoma' | 'attachment';
+
+const CONFIG_URL: Record<DocKind, (id: number) => string> = {
+  main: LETTER_EDITOR_CONFIG,
+  report: LETTER_REPORT_EDITOR_CONFIG,
+  guvohnoma: LETTER_GUVOHNOMA_EDITOR_CONFIG,
+  attachment: LETTER_ATTACHMENT_EDITOR_CONFIG,
+};
+
+const TITLE_KEY: Record<DocKind, string> = {
+  main: 'letters.documentTitle',
+  report: 'letters.reportDocumentTitle',
+  guvohnoma: 'letters.guvohnomaDocumentTitle',
+  attachment: 'letters.attachmentDocumentTitle',
+};
+
 export default function LetterDocumentScreen() {
   const { t } = useTranslation();
-  const { id, mode = 'view' } = useLocalSearchParams<{ id: string; mode?: string }>();
+  const { id, mode = 'view', kind: kindParam } =
+    useLocalSearchParams<{ id: string; mode?: string; kind?: string }>();
+  const kind: DocKind = (kindParam && kindParam in CONFIG_URL ? kindParam : 'main') as DocKind;
   const letterId = Number(id);
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
   const { data: config, isLoading, isError, refetch } = useQuery<any>({
-    queryKey: ['letter-editor-config', letterId, mode],
-    queryFn: () => apiClient.get(LETTER_EDITOR_CONFIG(letterId), { params: { mode } }).then((r) => r.data),
+    queryKey: ['letter-editor-config', letterId, kind, mode],
+    // Guvohnoma/ilova konfiglari `mode` ni umuman qabul qilmaydi (server doim
+    // ko'rish beradi) — ortiqcha parametr yubormaymiz.
+    queryFn: () => apiClient
+      .get(CONFIG_URL[kind](letterId), {
+        params: kind === 'main' || kind === 'report' ? { mode } : undefined,
+      })
+      .then((r) => r.data),
     enabled: !!letterId,
     staleTime: 0,
     gcTime: 0,
@@ -52,7 +83,7 @@ export default function LetterDocumentScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-      <ScreenHeader title={t('letters.documentTitle')} />
+      <ScreenHeader title={t(TITLE_KEY[kind])} />
 
       {isLoading ? (
         <View style={styles.center}>

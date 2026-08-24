@@ -163,6 +163,11 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
   // qaytarilgan hujjatni telefondan tuzatib bo'lmasdi).
   const showEdit = canEditLetter(letter, employeeId, user);
 
+  // Xatning istalgan hujjatini OnlyOffice ko'ruvchisida ochish. Ruxsat va
+  // ko'rish/tahrir rejimini SERVER hal qiladi.
+  const openDoc = (kind: 'main' | 'report' | 'guvohnoma' | 'attachment') =>
+    router.push({ pathname: '/letter-document', params: { id: String(letterId), kind } });
+
   const closeReason = () => { setReasonModal(null); setReasonText(''); };
   const runReason = () => {
     const reason = reasonText.trim();
@@ -265,10 +270,34 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
             <TouchableOpacity
               style={styles.docBtn}
               activeOpacity={0.85}
-              onPress={() => router.push({ pathname: '/letter-document', params: { id: String(letterId) } })}
+              onPress={() => openDoc('main')}
             >
               <Icon name="doc" size={16} color={colors.primary} />
               <Text style={styles.docBtnText}>{t('letters.openDocument')}</Text>
+            </TouchableOpacity>
+          )}
+          {/* GUVOHNOMA (safar varaqasi) — mobilда umuman ochib bo'lmasdi. */}
+          {!!letter.guvohnoma_path && (
+            <TouchableOpacity
+              style={styles.docBtn}
+              activeOpacity={0.85}
+              onPress={() => openDoc('guvohnoma')}
+              testID="letter-open-guvohnoma"
+            >
+              <Icon name="doc" size={16} color={colors.primary} />
+              <Text style={styles.docBtnText}>{t('letters.openGuvohnoma')}</Text>
+            </TouchableOpacity>
+          )}
+          {/* Muallif biriktirgan ILOVA. */}
+          {!!letter.attachment_path && (
+            <TouchableOpacity
+              style={styles.docBtn}
+              activeOpacity={0.85}
+              onPress={() => openDoc('attachment')}
+              testID="letter-open-attachment"
+            >
+              <Icon name="doc" size={16} color={colors.primary} />
+              <Text style={styles.docBtnText}>{t('letters.openAttachment')}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -365,6 +394,16 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
                 <Text style={styles.bodyText}>{letter.report_content}</Text>
               </View>
             )}
+            {/* Hisobot DOCX'i — web ham uni ko'ruvchida ochadi (yuklamaydi). */}
+            <TouchableOpacity
+              style={styles.docBtn}
+              activeOpacity={0.85}
+              onPress={() => openDoc('report')}
+              testID="letter-open-report-doc"
+            >
+              <Icon name="doc" size={16} color={colors.primary} />
+              <Text style={styles.docBtnText}>{t('letters.openReportDocument')}</Text>
+            </TouchableOpacity>
           </Section>
         )}
 

@@ -21,6 +21,12 @@ export default {
 
   // ── Detail screen ───────────────────────────────────────────────────────────
   openDocument: 'Ҳужжатни очиш',
+  openGuvohnoma: 'Гувоҳномани очиш',
+  openAttachment: 'Иловани очиш',
+  openReportDocument: 'Ҳисоботни очиш',
+  reportDocumentTitle: 'Ҳисобот',
+  guvohnomaDocumentTitle: 'Гувоҳнома',
+  attachmentDocumentTitle: 'Илова',
   docOutOfSyncWarning:
     'Формадаги матн ҳужжатга тушмади — бу ҳужжат Word (OnlyOffice)да таҳрирланган ва эски (лангарсиз) шаклда. Ўзгаришлар ҳужжатга тушиши учун Wordда очинг ва таҳрирланг, ёки ҳужжатни қайтадан яратинг.',
   sectionContent: 'Мазмуни',

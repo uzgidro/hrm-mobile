@@ -145,6 +145,19 @@ export interface OrderActComment {
   created_at?: string;
 }
 
+// Buyruq MATNI tahriri izi (backend OrderActHistory). Matn o'zgarganda imzolar
+// SAQLANADI, shuning uchun "qachon/kim o'zgartirdi" faqat shu tarixdan bilinadi.
+export interface OrderActHistoryEntry {
+  id?: number;
+  order_act_id?: number;
+  editor_employee_id?: number | null;
+  editor?: Employee | null;
+  field?: string | null;
+  old_text?: string | null;
+  new_text?: string | null;
+  created_at?: string;
+}
+
 export interface OrderAct {
   id: number;
   category_id?: number;
