@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList,
-  KeyboardAvoidingView, Platform, ActivityIndicator, ScrollView,
+  KeyboardAvoidingView, ActivityIndicator, ScrollView,
 } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -15,6 +15,7 @@ import { LoadingView, ErrorState, EmptyState } from '@/components/StateViews';
 import { confirm } from '@/lib/confirm';
 import { toast } from '@/lib/toast';
 import type { LlmMessage } from '@/types';
+import { KEYBOARD_BEHAVIOR } from '@/utils/keyboard';
 import { assistantKeys, assistantSessionsQuery, assistantMessagesQuery } from '../api/queries';
 import {
   createAssistantSession, deleteAssistantSession,
@@ -229,7 +230,7 @@ export default function AssistantScreen() {
 
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={KEYBOARD_BEHAVIOR()}
       >
         {activeId && messagesQ.isLoading ? (
           <LoadingView />
