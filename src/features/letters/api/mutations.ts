@@ -177,6 +177,10 @@ export function useSubmitReport(id: number) {
 export function useResetReport(id: number) {
   const qc = useQueryClient();
   return useMutation({
+    // Bu mutatsiya XATONI O'ZI ko'rsatadi (chaqiruvchi `Alert.alert`),
+    // shuning uchun global toast o'chiriladi — aks holda foydalanuvchi
+    // bitta xato uchun HAM toast, HAM bloklovchi Alert ko'rardi.
+    meta: { skipErrorToast: true },
     mutationFn: () => resetReport(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
   });
@@ -309,6 +313,10 @@ export function confirmRegistration(id: number, form: ConfirmRegistrationForm): 
 export function useConfirmRegistration(id: number) {
   const qc = useQueryClient();
   return useMutation({
+    // Bu mutatsiya XATONI O'ZI ko'rsatadi (chaqiruvchi `Alert.alert`),
+    // shuning uchun global toast o'chiriladi — aks holda foydalanuvchi
+    // bitta xato uchun HAM toast, HAM bloklovchi Alert ko'rardi.
+    meta: { skipErrorToast: true },
     mutationFn: (form: ConfirmRegistrationForm) => confirmRegistration(id, form),
     onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
   });
@@ -325,6 +333,10 @@ export function submitTrip(id: number): Promise<unknown> {
 export function useSubmitTrip(id: number) {
   const qc = useQueryClient();
   return useMutation({
+    // Bu mutatsiya XATONI O'ZI ko'rsatadi (chaqiruvchi `Alert.alert`),
+    // shuning uchun global toast o'chiriladi — aks holda foydalanuvchi
+    // bitta xato uchun HAM toast, HAM bloklovchi Alert ko'rardi.
+    meta: { skipErrorToast: true },
     mutationFn: () => submitTrip(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
   });
@@ -379,6 +391,10 @@ export function deleteLetter(id: number): Promise<unknown> {
 export function useReturnLetter(id: number) {
   const qc = useQueryClient();
   return useMutation({
+    // Bu mutatsiya XATONI O'ZI ko'rsatadi (chaqiruvchi `Alert.alert`),
+    // shuning uchun global toast o'chiriladi — aks holda foydalanuvchi
+    // bitta xato uchun HAM toast, HAM bloklovchi Alert ko'rardi.
+    meta: { skipErrorToast: true },
     mutationFn: (reason: string) => returnLetter(id, reason),
     onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
   });
@@ -387,6 +403,10 @@ export function useReturnLetter(id: number) {
 export function useReturnReport(id: number) {
   const qc = useQueryClient();
   return useMutation({
+    // Bu mutatsiya XATONI O'ZI ko'rsatadi (chaqiruvchi `Alert.alert`),
+    // shuning uchun global toast o'chiriladi — aks holda foydalanuvchi
+    // bitta xato uchun HAM toast, HAM bloklovchi Alert ko'rardi.
+    meta: { skipErrorToast: true },
     mutationFn: (reason: string) => returnReport(id, reason),
     onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
   });
@@ -395,6 +415,10 @@ export function useReturnReport(id: number) {
 export function useCancelTrip(id: number) {
   const qc = useQueryClient();
   return useMutation({
+    // Bu mutatsiya XATONI O'ZI ko'rsatadi (chaqiruvchi `Alert.alert`),
+    // shuning uchun global toast o'chiriladi — aks holda foydalanuvchi
+    // bitta xato uchun HAM toast, HAM bloklovchi Alert ko'rardi.
+    meta: { skipErrorToast: true },
     mutationFn: (reason?: string | null) => cancelTrip(id, reason),
     onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
   });
@@ -403,6 +427,10 @@ export function useCancelTrip(id: number) {
 export function useDeleteLetter(id: number) {
   const qc = useQueryClient();
   return useMutation({
+    // Bu mutatsiya XATONI O'ZI ko'rsatadi (chaqiruvchi `Alert.alert`),
+    // shuning uchun global toast o'chiriladi — aks holda foydalanuvchi
+    // bitta xato uchun HAM toast, HAM bloklovchi Alert ko'rardi.
+    meta: { skipErrorToast: true },
     mutationFn: () => deleteLetter(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
   });
@@ -428,6 +456,10 @@ export function decideExtension(id: number, approve: boolean): Promise<unknown> 
 export function useExtendTrip(id: number) {
   const qc = useQueryClient();
   return useMutation({
+    // Bu mutatsiya XATONI O'ZI ko'rsatadi (chaqiruvchi `Alert.alert`),
+    // shuning uchun global toast o'chiriladi — aks holda foydalanuvchi
+    // bitta xato uchun HAM toast, HAM bloklovchi Alert ko'rardi.
+    meta: { skipErrorToast: true },
     mutationFn: (args: { arrivalDate: string; note?: string | null }) =>
       extendTrip(id, args.arrivalDate, args.note),
     onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
@@ -437,6 +469,10 @@ export function useExtendTrip(id: number) {
 export function useDecideExtension(id: number) {
   const qc = useQueryClient();
   return useMutation({
+    // Bu mutatsiya XATONI O'ZI ko'rsatadi (chaqiruvchi `Alert.alert`),
+    // shuning uchun global toast o'chiriladi — aks holda foydalanuvchi
+    // bitta xato uchun HAM toast, HAM bloklovchi Alert ko'rardi.
+    meta: { skipErrorToast: true },
     mutationFn: (approve: boolean) => decideExtension(id, approve),
     onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
   });
@@ -458,6 +494,10 @@ export function setBasisDecree(id: number, numberValue: string, dateIso: string)
 export function useSetBasisDecree(id: number) {
   const qc = useQueryClient();
   return useMutation({
+    // Bu mutatsiya XATONI O'ZI ko'rsatadi (chaqiruvchi `Alert.alert`),
+    // shuning uchun global toast o'chiriladi — aks holda foydalanuvchi
+    // bitta xato uchun HAM toast, HAM bloklovchi Alert ko'rardi.
+    meta: { skipErrorToast: true },
     mutationFn: (args: { number: string; date: string }) =>
       setBasisDecree(id, args.number, args.date),
     onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),

@@ -66,6 +66,10 @@ export function useCreateTicket() {
 export function useRateTicket(id: number) {
   const qc = useQueryClient();
   return useMutation({
+    // Bu mutatsiya XATONI O'ZI ko'rsatadi (chaqiruvchi `Alert.alert`),
+    // shuning uchun global toast o'chiriladi — aks holda foydalanuvchi
+    // bitta xato uchun HAM toast, HAM bloklovchi Alert ko'rardi.
+    meta: { skipErrorToast: true },
     mutationFn: (form: RateTicketForm) => rateTicket(id, form),
     onSuccess: () => qc.invalidateQueries({ queryKey: supportKeys.all }),
   });
@@ -74,6 +78,10 @@ export function useRateTicket(id: number) {
 export function useReopenTicket(id: number) {
   const qc = useQueryClient();
   return useMutation({
+    // Bu mutatsiya XATONI O'ZI ko'rsatadi (chaqiruvchi `Alert.alert`),
+    // shuning uchun global toast o'chiriladi — aks holda foydalanuvchi
+    // bitta xato uchun HAM toast, HAM bloklovchi Alert ko'rardi.
+    meta: { skipErrorToast: true },
     mutationFn: () => reopenTicket(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: supportKeys.all }),
   });
@@ -96,6 +104,10 @@ export function markTicketRead(id: number): Promise<unknown> {
 export function useSendTicketMessage(id: number) {
   const qc = useQueryClient();
   return useMutation({
+    // Bu mutatsiya XATONI O'ZI ko'rsatadi (chaqiruvchi `Alert.alert`),
+    // shuning uchun global toast o'chiriladi — aks holda foydalanuvchi
+    // bitta xato uchun HAM toast, HAM bloklovchi Alert ko'rardi.
+    meta: { skipErrorToast: true },
     mutationFn: (body: string) => sendTicketMessage(id, body),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: supportKeys.messages(id) });
