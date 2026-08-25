@@ -1,6 +1,6 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, type ReactNode } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert, Modal, TextInput } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import dayjs from 'dayjs';
@@ -15,15 +15,10 @@ import { getApiErrorMessage } from '@/api/errors';
 import { branchRegions } from '@/utils/tripRegions';
 import {
   letterStatusMeta, letterTypeLabel, canSignLetter, getSigningTimeline, statusColor,
-  canSubmitReport, canResetReport, canChancelleryConfirmRegistration,
-  getManagementSigners, normalizeLetterType, canEditLetter,
+  getManagementSigners, normalizeLetterType,
 } from '@/utils/letterStatus';
-import {
-  canSubmitTrip, canApproveTripRegistration, canApproveReport,
-  canApproveGuvohnoma, canRejectLetter,
-  canReturnLetter, canDeleteLetter, canReturnTripReport, canCancelTrip,
-  canExtendTrip, canDecideExtension, canSetBasisDecree,
-} from '@/utils/tripStatus';
+import { canRejectLetter } from '@/utils/tripStatus';
+import { letterPermissions } from '@/utils/letterPermissions';
 import { letterDetailQuery } from '../api/queries';
 import { useLetterActions } from '../hooks/useLetterActions';
 import {
@@ -140,37 +135,11 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
       : Array.from(new Set((letter.destination_branches ?? []).flatMap(branchRegions)))
   ).filter(Boolean).join(', ');
 
-  // ── Trip leadership approvals (server flags; mutually-exclusive statuses) ──
-  // `registration` — devonxona ro'yxatidan keyingi RAHBAR tasdig'i: buning uchun
-  // server bayrog'i YO'Q, shu bois mijoz web bilan bir xil qoidani qo'llaydi.
-  const approveTripKind = canApproveTripRegistration(letter, user, employeeId)
-    ? 'registration'
-    : canApproveReport(letter)
-      ? 'report'
-      : canApproveGuvohnoma(letter)
-        ? 'guvohnoma'
-        : null;
-
-  // ── Trip report (xizmat safari, OLD flow) ──
-  const canReport = canSubmitReport(letter, employeeId);
-  const canReset = canResetReport(letter, employeeId);
-  // The employee sends a trip draft into the flow (server flag, detail-only).
-  const canSend = canSubmitTrip(letter);
-  // Devonxona "Tasdiqlash": a stamped bildirgi/ariza/trip at pending_registration
-  // awaits the chancellery's confirmation (auto number editable).
-  const canConfirmReg = canChancelleryConfirmRegistration(letter, user);
-  // Devonxona: hujjatni qaytarish / hisobotni qaytarish / o'chirish.
-  // KADR: safarni bekor qilish. Hech biri mobilда yo'q edi.
-  const showReturn = canReturnLetter(letter, user);
-  const showReturnReport = canReturnTripReport(letter, user);
-  const showCancelTrip = canCancelTrip(letter, user);
-  const showDelete = canDeleteLetter(letter, user, employeeId);
-  const showExtend = canExtendTrip(letter, user);
-  const showDecideExtension = canDecideExtension(letter, user, employeeId);
-  const showBasisDecree = canSetBasisDecree(letter, user);
-  // Tahrirlash — backend `update_letter` qoidasi bilan 1:1 (mobilда yo'q edi:
-  // qaytarilgan hujjatni telefondan tuzatib bo'lmasdi).
-  const showEdit = canEditLetter(letter, employeeId, user);
+  // Barcha ruxsatlar BITTA sof funksiyadan (buyruqlardagi `decreePermissions`
+  // bilan bir xil yondashuv). Ilgari shu 11 bayroq shu yerda alohida-alohida
+  // hisoblanardi va ularning kompozitsiyasi hech qayerda testlanmagan edi.
+  const perms = letterPermissions(letter, user, employeeId);
+  const { approveTripKind } = perms;
 
   // Xatning istalgan hujjatini OnlyOffice ko'ruvchisida ochish. Ruxsat va
   // ko'rish/tahrir rejimini SERVER hal qiladi.
@@ -335,7 +304,7 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
           {!!letter.actual_return_date && (
             <KV k={t('letters.fieldActualReturn')} v={dayjs(letter.actual_return_date).format('DD.MM.YYYY')} />
           )}
-          {(!!letter.basis_decree_number || showBasisDecree) && (
+          {(!!letter.basis_decree_number || perms.canSetBasis) && (
             <KV
               k={t('letters.fieldBasisDecree')}
               v={letter.basis_decree_number
@@ -344,7 +313,7 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
                 : '—'}
             />
           )}
-          {showBasisDecree && (
+          {perms.canSetBasis && (
             <TouchableOpacity
               style={styles.inlineBtn}
               activeOpacity={0.8}
@@ -430,7 +399,7 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
           </Section>
         )}
 
-        {canSend && (
+        {perms.canSend && (
           <TouchableOpacity
             style={styles.submitTripBtn}
             activeOpacity={0.85}
@@ -458,7 +427,7 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
           </TouchableOpacity>
         )}
 
-        {canConfirmReg && (
+        {perms.canConfirmRegistration && (
           <TouchableOpacity
             style={styles.approveBtn}
             activeOpacity={0.85}
@@ -469,15 +438,15 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
           </TouchableOpacity>
         )}
 
-        {(canReport || canReset) && (
+        {(perms.canReport || perms.canResetReport) && (
           <View style={styles.reportActions}>
-            {canReport && (
+            {perms.canReport && (
               <TouchableOpacity style={styles.reportBtn} activeOpacity={0.85} onPress={openReportForm}>
                 <Icon name="edit" size={16} color={colors.onPrimary} />
                 <Text style={styles.reportBtnText}>{hasReport ? t('letters.reportEdit') : t('letters.reportSubmit')}</Text>
               </TouchableOpacity>
             )}
-            {canReset && (
+            {perms.canResetReport && (
               <TouchableOpacity
                 style={[styles.reportBtn, styles.reportResetBtn]}
                 activeOpacity={0.85}
@@ -497,7 +466,7 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
           </View>
         )}
 
-        {showEdit && (
+        {perms.canEdit && (
           <TouchableOpacity
             style={styles.editBtn}
             activeOpacity={0.85}
@@ -510,7 +479,7 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
         )}
 
         {/* Rahbariyat uzaytirish so'rovini hal qiladi. */}
-        {showDecideExtension && (
+        {perms.canDecideExtension && (
           <View style={styles.reportActions}>
             <TouchableOpacity
               style={[styles.reportBtn, styles.reportResetBtn]}
@@ -535,7 +504,7 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
         )}
 
         {/* KADR safar muddatini uzaytiradi. */}
-        {showExtend && (
+        {perms.canExtend && (
           <TouchableOpacity
             style={styles.editBtn}
             activeOpacity={0.85}
@@ -549,7 +518,7 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
         )}
 
         {/* ── DEVONXONA / KADR amallari ── */}
-        {showReturnReport && (
+        {perms.canReturnReport && (
           <TouchableOpacity
             style={styles.warnBtn}
             activeOpacity={0.85}
@@ -561,7 +530,7 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
           </TouchableOpacity>
         )}
 
-        {showReturn && (
+        {perms.canReturn && (
           <TouchableOpacity
             style={styles.warnBtn}
             activeOpacity={0.85}
@@ -573,7 +542,7 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
           </TouchableOpacity>
         )}
 
-        {showCancelTrip && (
+        {perms.canCancelTrip && (
           <TouchableOpacity
             style={styles.dangerBtn}
             activeOpacity={0.85}
@@ -585,7 +554,7 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
           </TouchableOpacity>
         )}
 
-        {showDelete && (
+        {perms.canDelete && (
           <TouchableOpacity
             style={styles.dangerBtn}
             activeOpacity={0.85}
@@ -647,7 +616,7 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
         testID="letter-reason-submit"
       />
 
-      {canConfirmReg && (
+      {perms.canConfirmRegistration && (
         <ConfirmRegistrationModal
           letter={letter}
           visible={confirmRegOpen}
