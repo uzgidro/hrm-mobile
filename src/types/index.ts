@@ -219,7 +219,6 @@ export interface LetterAvailableActions {
   can_submit_trip?: boolean;
   can_sign?: boolean;
   can_reject?: boolean;
-  can_approve_trip?: boolean;
   can_approve_report?: boolean;
   can_approve_guvohnoma?: boolean;
   // Xodim safarni O'ZI yakunlaydi (backend 2026-08-19). Tugma FAQAT xodim o'z
@@ -269,8 +268,6 @@ export interface Letter {
   signers?: LetterSigner[];
 
   // ── Business-trip report stage (xizmat safari; OLD flow only) ──────────────
-  // flow_version 2 = NEW flow (main branch, no report stage); 1/null = OLD flow.
-  flow_version?: number | null;
   // Set by KADR "Keldi" (hr-arrive / confirm-return) — gates report submission.
   is_trip_confirmed?: boolean | null;
   actual_return_date?: string | null;

@@ -35,6 +35,7 @@ export default {
   letterTripOngoing: 'Сафар давом этмоқда',
   letterTripLeadershipPending: 'Раҳбар тасдиғи кутилмоқда',
   letterTripGuvohnomaReview: 'Гувоҳнома тасдиғида',
+  letterTripExtensionReview: 'Узайтириш тасдиғи кутилмоқда',
   letterReportSubmitted: 'Ҳисобот юборилди',
   letterReturned: 'Қайтарилган',
   letterReportReturned: 'Ҳисобот қайтарилди',

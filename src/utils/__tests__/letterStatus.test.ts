@@ -14,7 +14,6 @@ import {
   getSigningTimeline,
   letterStatusMeta,
   statusColor,
-  isNewTripFlow,
   canConfirmTripReturn,
   canSubmitReport,
   canResetReport,
@@ -306,15 +305,6 @@ describe('canSignLetter', () => {
       // OLD flow with a non-pending status → no sign.
       expect(canSignLetter(letter({ ...base, status: 'management_approved' }), 1)).toBe(false);
     });
-    it('main does NOT sign a NEW-flow trip even at pending (backend 400s)', () => {
-      const l = letter({
-        letter_type: 'business_trip',
-        status: 'pending',
-        flow_version: 2,
-        assigned_signers: [{ signer_type: 'main', employee_id: 1 }],
-      });
-      expect(canSignLetter(l, 1)).toBe(false);
-    });
     it('other signer types can never sign a trip', () => {
       const l = letter({
         letter_type: 'business_trip',
@@ -561,8 +551,6 @@ describe('letterStatusMeta', () => {
       .toBe('Safar davom etmoqda');
     expect(letterStatusMeta(letter({ letter_type: 'business_trip', status: 'management_approved', is_trip_confirmed: true })).label)
       .toBe('Hisobot kutilmoqda');
-    expect(letterStatusMeta(letter({ letter_type: 'business_trip', status: 'management_approved', flow_version: 2 })).label)
-      .toBe("Rahbar tasdig'i kutilmoqda");
   });
 
   it('report_guvohnoma_review is its own guvohnoma-approval badge (web parity)', () => {
@@ -601,23 +589,6 @@ describe('letterStatusMeta', () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// isNewTripFlow — flow_version 2 = NEW (main branch, NO report stage);
-// 1 / null / undefined = OLD (report stage exists). Mirrors backend
-// _is_new_trip_flow.
-// ─────────────────────────────────────────────────────────────────────────────
-describe('isNewTripFlow', () => {
-  it('true only for a business_trip with flow_version === 2', () => {
-    expect(isNewTripFlow(letter({ letter_type: 'business_trip', flow_version: 2 }))).toBe(true);
-  });
-  it('false for old flow (1) and unset (null/undefined)', () => {
-    expect(isNewTripFlow(letter({ letter_type: 'business_trip', flow_version: 1 }))).toBe(false);
-    expect(isNewTripFlow(letter({ letter_type: 'business_trip', flow_version: null }))).toBe(false);
-    expect(isNewTripFlow(letter({ letter_type: 'business_trip' }))).toBe(false);
-  });
-  it('false for a non-trip letter even with flow_version 2 (backend guards on type)', () => {
-    expect(isNewTripFlow(letter({ letter_type: 'application', flow_version: 2 }))).toBe(false);
-  });
-});
 
 // ── KADR "Keldi" stage gate (web canConfirmTripReturn parity, helpers.js:504) ──
 // OLD-flow trip only; confirm-return is blocked by the backend (400
@@ -625,7 +596,7 @@ describe('isNewTripFlow', () => {
 // status is still in the pre-registration set. The button must not show then.
 describe('canConfirmTripReturn', () => {
   const oldTrip = (status: string, extra: Partial<Letter> = {}): Letter =>
-    letter({ letter_type: 'business_trip', flow_version: 1, status, ...extra });
+    letter({ letter_type: 'business_trip', status, ...extra });
 
   it('false in every pre-registration / terminal status', () => {
     for (const s of ['draft', 'pending', 'signed', 'pending_registration',
@@ -640,10 +611,6 @@ describe('canConfirmTripReturn', () => {
 
   it('false when the return is already confirmed', () => {
     expect(canConfirmTripReturn(oldTrip('management_approved', { is_trip_confirmed: true }))).toBe(false);
-  });
-
-  it('false for a NEW-flow trip (arrival goes through hr-arrive, not confirm-return)', () => {
-    expect(canConfirmTripReturn(letter({ letter_type: 'business_trip', flow_version: 2, status: 'management_approved' }))).toBe(false);
   });
 
   it('false for a non-trip letter', () => {
@@ -675,11 +642,6 @@ describe('canSubmitReport', () => {
   it('FALSE on management_approved when arrival is not confirmed', () => {
     expect(canSubmitReport(trip({ status: 'management_approved', is_trip_confirmed: false }), ME)).toBe(false);
     expect(canSubmitReport(trip({ status: 'management_approved' }), ME)).toBe(false);
-  });
-  it('false for the new flow (flow_version 2)', () => {
-    expect(
-      canSubmitReport(trip({ status: 'management_approved', is_trip_confirmed: true, flow_version: 2 }), ME)
-    ).toBe(false);
   });
   it('false for a non-author, past-stage statuses, non-trips and unknown me', () => {
     expect(canSubmitReport(trip({ status: 'report_submitted', creator_employee_id: 999 }), ME)).toBe(false);
@@ -870,5 +832,41 @@ describe('isLetterUnseen (web rowIsUnseen parity)', () => {
     expect(isLetterUnseen(letter({ chancellery_seen: true, is_unseen: true }), 9, devonxona)).toBe(false);
     // Hech kim ochmagan → yangi.
     expect(isLetterUnseen(letter({ chancellery_seen: false, is_unseen: false }), 9, devonxona)).toBe(true);
+  });
+});
+
+// UZAYTIRISH SO'ROVI (`extension_review`) — statusning O'Z yorlig'i bo'lishi shart.
+//
+// Bu status kodda ALLAQACHON ishlatilardi (`TRIP_MGMT_APPROVED_STATUSES`,
+// `canDecideExtension`), lekin `letterStatusMeta` da `case` yo'q edi — natijada
+// u umumiy fallback'ga tushib "Kutilmoqda" bo'lib ko'rinardi va foydalanuvchi
+// hujjat AYNAN uzaytirish qarorini kutayotganini bilmasdi.
+describe('letterStatusMeta — extension_review', () => {
+  it('uzaytirish so\'rovi o\'z yorlig\'ini oladi (umumiy "kutilmoqda" EMAS)', () => {
+    const trip = { id: 1, letter_type: 'business_trip', status: 'extension_review' } as never;
+    const generic = { id: 2, letter_type: 'business_trip', status: 'some_unknown_status' } as never;
+    const meta = letterStatusMeta(trip);
+    expect(meta.kind).toBe('pending');
+    // Asosiy tekshiruv: fallback yorlig'idan FARQ qilishi kerak.
+    expect(meta.label).not.toBe(letterStatusMeta(generic).label);
+  });
+});
+
+// `flow_version` backenddan BUTUNLAY olib tashlangan (migratsiya
+// `wf1dropflow2ver3` ustunni DROP qildi, sxemalardan ham chiqarilgan).
+// Demak endi YAGONA oqim bor — "eski" oqim. Bu testlar shu xulqni qulflaydi:
+// maydon KELMASA ham safar eski oqim qoidalari bo'yicha ishlashi kerak.
+describe('safar oqimi — flow_version olib tashlangandan keyin', () => {
+  const trip = (extra: object = {}) =>
+    ({ id: 1, letter_type: 'business_trip', ...extra }) as never;
+
+  it('management_approved + qaytish tasdiqlanmagan = "safar davom etmoqda"', () => {
+    const meta = letterStatusMeta(trip({ status: 'management_approved', is_trip_confirmed: false }));
+    expect(meta.label).toBe(i18n.t('status.letterTripOngoing'));
+  });
+
+  it('management_approved + qaytish tasdiqlangan = keldi (hisobot bosqichi)', () => {
+    const meta = letterStatusMeta(trip({ status: 'management_approved', is_trip_confirmed: true }));
+    expect(meta.label).toBe(i18n.t('status.letterTripArrived'));
   });
 });

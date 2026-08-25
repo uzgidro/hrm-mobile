@@ -42,6 +42,7 @@ export default {
   letterTripOngoing: 'Safar davom etmoqda',
   letterTripLeadershipPending: "Rahbar tasdig'i kutilmoqda",
   letterTripGuvohnomaReview: "Guvohnoma tasdig'ida",
+  letterTripExtensionReview: "Uzaytirish tasdig'i kutilmoqda",
   letterReportSubmitted: 'Hisobot yuborildi',
   letterReturned: 'Qaytarilgan',
   letterReportReturned: 'Hisobot qaytarildi',

@@ -44,7 +44,7 @@ describe('trip action gates read their own flag and default to false', () => {
 
   it('canApproveReport reads can_approve_report only', () => {
     expect(canApproveReport(letter({ available_actions: { can_approve_report: true } }))).toBe(true);
-    expect(canApproveReport(letter({ available_actions: { can_approve_trip: true } }))).toBe(false);
+    expect(canApproveReport(letter({ available_actions: { } }))).toBe(false);
     expect(canApproveReport(letter({}))).toBe(false);
   });
 
