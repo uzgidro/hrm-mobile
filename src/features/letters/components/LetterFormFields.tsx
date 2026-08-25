@@ -40,6 +40,11 @@ export function LetterFormFields(props: {
   signerOptions: PickerOption[];
   ordinarySigners: number[];
   signersLoading: boolean;
+  /** Kelishuvchilar ALOHIDA so'rovdan keladi — o'z yuklanish holati bilan. */
+  agreementLoading: boolean;
+  /** Hujjat MUALLIFI (bildirgi/ariza) — bo'sh bo'lsa joriy foydalanuvchi. */
+  creatorId: number | null;
+  creatorOptions: PickerOption[];
   nameOf: (id: number | null, opts: PickerOption[]) => string | undefined;
 }) {
   const { t } = useTranslation();
@@ -52,7 +57,8 @@ export function LetterFormFields(props: {
     departureDate, arrivalDate, regions, destinationIds, branchesLoading,
     description, onChangeDescription, workPlan, onChangeWorkPlan, shortSummary, onChangeShortSummary,
     rahbariyatIds, rahbariyatLoading, submitterId, submitterOptions, submittersLoading,
-    mainSignerId, signerOptions, ordinarySigners, signersLoading, nameOf,
+    mainSignerId, signerOptions, ordinarySigners, signersLoading, agreementLoading,
+    creatorId, creatorOptions, nameOf,
   } = props;
 
   return (
@@ -123,6 +129,19 @@ export function LetterFormFields(props: {
             <TextInput style={[styles.textArea, { minHeight: 140 }]} placeholder={t('letters.placeholderText')} placeholderTextColor={colors.textMuted} value={description} onChangeText={onChangeDescription} multiline textAlignVertical="top" />
           </Field>
 
+          {/* Hujjat MUALLIFI — boshqa xodim nomidan kiritish uchun (web
+              "Hujjat yaratuvchisi"). Bo'sh qoldirilsa joriy foydalanuvchi. */}
+          <View testID="letter-field-creator">
+            <Field label={t('letters.fieldCreator')}>
+              <Selector
+                loading={agreementLoading}
+                text={nameOf(creatorId, creatorOptions)}
+                placeholder={t('letters.creatorSelf')}
+                onPress={() => onOpenPicker('creator')}
+              />
+            </Field>
+          </View>
+
           {/* main signer + coordinators: both short selectors, adjacent — pair on tablet. */}
           <View testID="letter-signer-coordinators-row" style={twoCol ? styles.fieldRow : undefined}>
             <View testID="letter-field-mainSigner" style={twoCol ? styles.fieldHalf : undefined}>
@@ -132,7 +151,7 @@ export function LetterFormFields(props: {
             </View>
             <View testID="letter-field-coordinators" style={twoCol ? styles.fieldHalf : undefined}>
               <Field label={t('letters.fieldCoordinators')}>
-                <Selector loading={signersLoading} text={ordinarySigners.length ? t('letters.coordinatorsSelected', { count: ordinarySigners.length }) : undefined} placeholder={t('letters.placeholderCoordinators')} onPress={() => onOpenPicker('ordinary')} />
+                <Selector loading={agreementLoading} text={ordinarySigners.length ? t('letters.coordinatorsSelected', { count: ordinarySigners.length }) : undefined} placeholder={t('letters.placeholderCoordinators')} onPress={() => onOpenPicker('ordinary')} />
               </Field>
             </View>
           </View>

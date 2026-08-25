@@ -21,6 +21,13 @@ export interface LetterCreateInput {
   workPlan: string;
   mainSignerId: number | null;
   ordinarySigners: number[];
+  /**
+   * Bildirgi/ariza MUALLIFI — boshqa xodim nomidan kiritish uchun (static.uz
+   * `id_employee` ekvivalenti). Bo'sh bo'lsa backend joriy foydalanuvchini
+   * qo'yadi, shu bois kalit umuman YUBORILMAYDI (web ham `null` yuboradi va
+   * backend uni default bilan almashtiradi).
+   */
+  creatorId?: number | null;
   submitterId: number | null;
   rahbariyatIds: number[];
   destinationIds: number[];
@@ -74,6 +81,7 @@ export function buildLetterCreatePayload(input: LetterCreateInput): Record<strin
         : []),
       ...agreements,
     ];
+    if (input.creatorId) payload.creator_employee_id = Number(input.creatorId);
   }
 
   return payload;

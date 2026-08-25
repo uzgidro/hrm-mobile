@@ -75,6 +75,13 @@ export const EMPLOYEES_LIST = 'employees';
 export const EMPLOYEES_BIRTHDAYS = 'employees/birthdays';
 // Company phone book — light, no PII, served to every role without scoping.
 export const PHONE_DIRECTORY = 'employees/phone-directory';
+// XODIM TANLAGICHLARI uchun yengil ro'yxat — BARCHA filiallar bo'yicha, PII'siz.
+// `GET /employees` ATAYLAB filialga qamalgan (PII himoyasi, EMPL-01), shu bois
+// nomzod BUTUN TASHKILOTDAN bo'lishi kerak bo'lgan formalar (loyiha a'zolari,
+// mehmon "Tizimdagi xodim", hujjat ulashish) jimgina o'z filialiga qamalib
+// qolardi. Xat kelishuvchilari / buyruq imzolovchilari / safar rahbariyati esa
+// ATAYLAB filialga bog'liq — ular `EMPLOYEES_LIST` da qoladi.
+export const EMPLOYEE_OPTIONS = 'employees/options';
 
 // Departments
 export const DEPARTMENTS_LIST = 'departments';

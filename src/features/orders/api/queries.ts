@@ -103,10 +103,13 @@ export function orderCategoriesQuery(creatorRole: 'hr' | 'employee') {
   });
 }
 
+// Buyruq KELISHUVCHILARI / xodimi / kirituvchisi — filialning BARCHA xodimlari
+// (rol cheklovisiz). `sort_by_razryad` web `employeesPaginated` bilan bir xil:
+// eng baland razryad tepada, shunda rahbar xodimlar ro'yxat boshida turadi.
 export function orderEmployeesQuery(branchId?: number) {
   return queryOptions({
     queryKey: ['create-order-employees', branchId] as const,
-    queryFn: () => fetchAllEmployees(branchId),
+    queryFn: () => fetchAllEmployees(branchId, { sort_by_razryad: true }),
     staleTime: 5 * 60 * 1000,
   });
 }

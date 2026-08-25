@@ -23,7 +23,7 @@ import { ScreenHeader } from '@/components/ScreenHeader';
 import { useBreakpoint } from '@/utils/responsive';
 import {
   letterSignersQuery, letterRahbariyatQuery, letterSubmittersQuery, orgBranchesQuery,
-  letterDetailQuery,
+  letterAgreementSignersQuery, letterDetailQuery,
 } from '../api/queries';
 import { useCreateLetter, useUpdateLetter } from '../api/mutations';
 import { Field, Selector } from '../components/FormParts';
@@ -82,6 +82,8 @@ export default function CreateLetterScreen() {
   const [regions, setRegions] = useState<string[]>([]);
   const [destinationIds, setDestinationIds] = useState<number[]>([]);
   const [submitterId, setSubmitterId] = useState<number | null>(null);
+  // Hujjat MUALLIFI (bildirgi/ariza) — bo'sh bo'lsa joriy foydalanuvchi.
+  const [creatorId, setCreatorId] = useState<number | null>(null);
   const [rahbariyatIds, setRahbariyatIds] = useState<number[]>([]);
 
   const [picker, setPicker] = useState<PickerKind>(null);
@@ -129,6 +131,7 @@ export default function CreateLetterScreen() {
         .filter((v): v is number => v != null),
     );
     setSubmitterId(editing.submitter_id ?? null);
+    setCreatorId(editing.creator_employee_id ?? null);
     setDepartureDate(editing.departure_date ?? null);
     setArrivalDate(editing.arrival_date ?? null);
     setDestinationIds((editing.destination_branches ?? []).map((b) => b.id));
@@ -148,6 +151,11 @@ export default function CreateLetterScreen() {
 
   // ── Data ───────────────────────────────────────────────────────────────────
   const { data: signerEmps = [], isLoading: signersLoading } = useQuery(letterSignersQuery(branchId));
+  // KELISHUVCHILAR alohida manbadan: filialning BARCHA xodimlari (rol
+  // cheklovisiz). Avval adresat ro'yxati qayta ishlatilardi va kelishuvchi
+  // sifatida faqat 3-4 ta rahbariyat xodimi chiqardi.
+  const { data: agreementEmps = [], isLoading: agreementLoading } =
+    useQuery(letterAgreementSignersQuery(branchId, !isTrip));
   const { data: rahbariyatEmps = [], isLoading: rahbariyatLoading } = useQuery(letterRahbariyatQuery(branchId, isTrip));
   const { data: submitterData, isLoading: submittersLoading } = useQuery(letterSubmittersQuery(branchId, isTrip));
   const { data: branches = [], isLoading: branchesLoading } = useQuery(orgBranchesQuery(isTrip));
@@ -158,9 +166,28 @@ export default function CreateLetterScreen() {
     [t]
   );
   const signerOptions = useMemo(() => signerEmps.map(empOption), [signerEmps, empOption]);
-  const ordinaryOptions = useMemo(() => signerOptions.filter((o) => o.value !== mainSignerId), [signerOptions, mainSignerId]);
+  // Muallif tanlagichi kelishuvchilar bilan BIR XIL manbadan (filialning barcha
+  // xodimlari) — web `creatorEmployeesPaginated` ham shunday.
+  const creatorOptions = useMemo(() => agreementEmps.map(empOption), [agreementEmps, empOption]);
+  // Adresat kelishuvchi ham bo'lib qolmasin (web buildAssignedSigners ham uni
+  // kelishuvchilar orasidan chiqarib tashlaydi).
+  const ordinaryOptions = useMemo(
+    () => agreementEmps.map(empOption).filter((o) => o.value !== mainSignerId),
+    [agreementEmps, empOption, mainSignerId],
+  );
   const rahbariyatOptions = useMemo(() => rahbariyatEmps.map(empOption), [rahbariyatEmps, empOption]);
-  const submitterOptions = useMemo(() => (submitterData?.items ?? []).map(empOption), [submitterData, empOption]);
+  // "Rahbariyat"da belgilangan xodim "Yuboruvchi"da CHIQMASIN (web qoidasi):
+  // bitta odam ham rahbariyat (management), ham yuboruvchi (main) bo'lib qolsa
+  // imzo oqimi chalkashadi.
+  const submitterOptions = useMemo(() => {
+    const excluded = new Set<number>([
+      ...rahbariyatOptions.map((o) => Number(o.value)),
+      ...rahbariyatIds.map(Number),
+    ]);
+    return (submitterData?.items ?? [])
+      .filter((e) => !excluded.has(Number(e.id)))
+      .map(empOption);
+  }, [submitterData, empOption, rahbariyatOptions, rahbariyatIds]);
 
   const regionOptions = useMemo<PickerOption[]>(
     () => regionLabels(branches).map((r, i) => ({ value: i + 1, label: r })),
@@ -196,6 +223,16 @@ export default function CreateLetterScreen() {
   const toggle = (setter: React.Dispatch<React.SetStateAction<number[]>>) => (v: number) =>
     setter((p) => (p.includes(v) ? p.filter((x) => x !== v) : [...p, v]));
 
+  // BITTA nomzod bo'lsa AVTO tanlash (web AddLetterDrawer 2026-08-19): ko'p
+  // filialda rahbariyat/adresat ro'yxati yagona rahbardan iborat — foydalanuvchi
+  // baribir o'shani tanlar edi. TAHRIRda tegilmaydi (tanlov allaqachon bor).
+  const soleRahbariyat = !editId && isTrip && rahbariyatIds.length === 0 && rahbariyatOptions.length === 1
+    ? Number(rahbariyatOptions[0].value) : null;
+  if (soleRahbariyat != null) setRahbariyatIds([soleRahbariyat]);
+  const soleAddressee = !editId && !isTrip && mainSignerId == null && signerOptions.length === 1
+    ? Number(signerOptions[0].value) : null;
+  if (soleAddressee != null) setMainSignerId(soleAddressee);
+
   // ── Submit ───────────────────────────────────────────────────────────────────
   async function handleCreate() {
     if (!letterType) { Alert.alert(t('common.errorTitle'), t('letters.typeRequired')); return; }
@@ -221,7 +258,7 @@ export default function CreateLetterScreen() {
       isTrip, letterType, letterDate,
       branchId, employeeId: employee?.id,
       shortSummary, description, workPlan,
-      mainSignerId, ordinarySigners,
+      mainSignerId, ordinarySigners, creatorId,
       submitterId, rahbariyatIds, destinationIds, regions,
       departureDate, arrivalDate,
     });
@@ -304,6 +341,8 @@ export default function CreateLetterScreen() {
           rahbariyatIds={rahbariyatIds} rahbariyatLoading={rahbariyatLoading}
           submitterId={submitterId} submitterOptions={submitterOptions} submittersLoading={submittersLoading}
           mainSignerId={mainSignerId} signerOptions={signerOptions} ordinarySigners={ordinarySigners} signersLoading={signersLoading}
+          agreementLoading={agreementLoading}
+          creatorId={creatorId} creatorOptions={creatorOptions}
           nameOf={nameOf}
         />
 
@@ -321,6 +360,9 @@ export default function CreateLetterScreen() {
         selectedTypeValue={letterType ? VALUE_BY_TYPE[letterType] : null}
         onSelectType={(v) => { setLetterType(TYPE_BY_VALUE[v]); setPicker(null); }}
         signerOptions={signerOptions} ordinaryOptions={ordinaryOptions} signersLoading={signersLoading}
+        ordinaryLoading={agreementLoading}
+        creatorOptions={creatorOptions} creatorId={creatorId}
+        onSelectCreator={(v) => { setCreatorId(v); setPicker(null); }}
         mainSignerId={mainSignerId} onSelectMain={(v) => { setMainSignerId(v); setPicker(null); }}
         ordinarySigners={ordinarySigners} onToggleOrdinary={toggle(setOrdinarySigners)}
         rahbariyatOptions={rahbariyatOptions} rahbariyatLoading={rahbariyatLoading}

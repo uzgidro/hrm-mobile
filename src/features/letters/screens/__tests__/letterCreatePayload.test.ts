@@ -110,3 +110,31 @@ describe('buildLetterCreatePayload — non-trip (application/bildirgi)', () => {
     expect(p.assigned_signers).toEqual([{ employee_id: 6, signer_type: 'agreement' }]);
   });
 });
+
+
+// MUALLIF (creator_employee_id) — mobilда bu maydon umuman yo'q edi, ya'ni
+// hujjatni faqat O'Z nomingdan yozish mumkin edi.
+describe('buildLetterCreatePayload — hujjat muallifi', () => {
+  const baseLetter: LetterCreateInput = {
+    ...baseTrip,
+    isTrip: false,
+    letterType: 'application',
+    mainSignerId: 4,
+    ordinarySigners: [6],
+  };
+
+  it('tanlangan muallifni creator_employee_id sifatida yuboradi', () => {
+    const p = buildLetterCreatePayload({ ...baseLetter, creatorId: 77 });
+    expect(p.creator_employee_id).toBe(77);
+  });
+
+  it("tanlanmasa kalit UMUMAN yuborilmaydi (backend joriy foydalanuvchini qo'yadi)", () => {
+    expect('creator_employee_id' in buildLetterCreatePayload({ ...baseLetter, creatorId: null })).toBe(false);
+    expect('creator_employee_id' in buildLetterCreatePayload(baseLetter)).toBe(false);
+  });
+
+  it('SAFARда muallif maydoni yo\'q (u yerda yuboruvchi/rahbariyat ishlatiladi)', () => {
+    const p = buildLetterCreatePayload({ ...baseTrip, creatorId: 77 });
+    expect('creator_employee_id' in p).toBe(false);
+  });
+});

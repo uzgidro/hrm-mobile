@@ -1,7 +1,7 @@
 import MockAdapter from 'axios-mock-adapter';
 import { apiClient } from '../../api/client';
-import { EMPLOYEES_LIST } from '../../api/urls';
-import { fetchAllEmployees, employeesQueryKey } from '../employees';
+import { EMPLOYEES_LIST, EMPLOYEE_OPTIONS } from '../../api/urls';
+import { fetchAllEmployees, employeesQueryKey, fetchEmployeeOptions } from '../employees';
 
 // Characterization tests: lock in the CURRENT behavior of fetchAllEmployees.
 // The app talks to the backend only through `apiClient`, so we mock its adapter.
@@ -164,5 +164,53 @@ describe('employeesQueryKey', () => {
 
   it('is undefined-tolerant when no branch id is passed', () => {
     expect(employeesQueryKey()).toEqual(['team-employees-all', undefined]);
+  });
+});
+
+
+describe('fetchAllEmployees — qo\'shimcha server filtrlari', () => {
+  it('extraParams BARCHA sahifaga uzatiladi (aks holda 2-sahifa boshqa tartibda kelardi)', async () => {
+    mock.onGet(EMPLOYEES_LIST).reply((cfg) => {
+      const page = Number(cfg.params.page);
+      return [200, { items: makeItems((page - 1) * 100, 100), total: 250 }];
+    });
+    await fetchAllEmployees(7, { include_multi_org: false, sort_by_razryad: true });
+    expect(mock.history.get).toHaveLength(3);
+    for (const req of mock.history.get) {
+      expect(req.params.include_multi_org).toBe(false);
+      expect(req.params.sort_by_razryad).toBe(true);
+      expect(req.params.organization_branch_id).toBe(7);
+    }
+  });
+});
+
+// `/employees/options` — BUTUN TASHKILOT bo'yicha, PII'siz tanlagich ro'yxati.
+// `/employees` PII himoyasi uchun filialga qamalgan, shu bois loyiha a'zolari
+// kabi tanlagichlar undan o'qilganda jimgina o'z filialiga qisilib qolardi.
+describe('fetchEmployeeOptions', () => {
+  it('filialsiz so\'raydi va bitta sahifani qaytaradi', async () => {
+    mock.onGet(EMPLOYEE_OPTIONS).reply(200, {
+      items: [{ id: 1, legal_name: 'A' }],
+      total: 1,
+    });
+    const rows = await fetchEmployeeOptions();
+    expect(rows).toEqual([{ id: 1, legal_name: 'A' }]);
+    expect(mock.history.get[0].url).toBe(EMPLOYEE_OPTIONS);
+    expect(mock.history.get[0].params.organization_branch_id).toBeUndefined();
+  });
+
+  it('100 dan ko\'p bo\'lsa qolgan sahifalarni parallel oladi', async () => {
+    mock.onGet(EMPLOYEE_OPTIONS).reply((cfg) => {
+      const page = Number(cfg.params.page);
+      return [200, { items: makeItems((page - 1) * 100, 100), total: 230 }];
+    });
+    const rows = await fetchEmployeeOptions();
+    expect(rows).toHaveLength(300);
+    expect(mock.history.get).toHaveLength(3);
+  });
+
+  it('bo\'sh javobda yiqilmaydi', async () => {
+    mock.onGet(EMPLOYEE_OPTIONS).reply(200, {});
+    expect(await fetchEmployeeOptions()).toEqual([]);
   });
 });

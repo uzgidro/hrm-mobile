@@ -1,7 +1,12 @@
 import MockAdapter from 'axios-mock-adapter';
 import { apiClient } from '@/api/client';
-import { ORDER_ACTS, ORDER_ACT_DETAIL } from '@/api/urls';
-import { orderKeys, ordersListQuery, orderDetailQuery } from '../queries';
+import {
+  ORDER_ACTS, ORDER_ACT_DETAIL, EMPLOYEES_LIST, ORDER_ACT_COMMENTS, ORDER_ACT_HISTORY,
+} from '@/api/urls';
+import {
+  orderKeys, ordersListQuery, orderDetailQuery,
+  orderEmployeesQuery, orderCommentsQuery, orderHistoryQuery,
+} from '../queries';
 
 let mock: MockAdapter;
 beforeEach(() => {
@@ -63,5 +68,32 @@ describe('orderDetailQuery', () => {
     mock.onGet(ORDER_ACT_DETAIL(42)).reply(200, { id: 42, status: 'approved' });
     const data = await (orderDetailQuery(42).queryFn as unknown as () => Promise<{ id: number }>)();
     expect(data.id).toBe(42);
+  });
+});
+
+
+describe('orderEmployeesQuery — buyruq KELISHUVCHILARI', () => {
+  it('filialning BARCHA xodimlari, rol filtrisiz, razryad bo\'yicha tartiblangan', async () => {
+    mock.onGet(EMPLOYEES_LIST).reply(200, { items: [], total: 0 });
+    await (orderEmployeesQuery(4).queryFn as () => Promise<unknown>)();
+    const p = mock.history.get[0].params;
+    expect(p.organization_branch_id).toBe(4);
+    // Kelishuvchi HAR QANDAY xodim bo'lishi mumkin — rol filtri bo'lmasligi shart.
+    expect(p.multi_org_employee_role).toBeUndefined();
+    expect(p.sort_by_razryad).toBe(true);
+  });
+});
+
+describe('izohlar va tahrir tarixi', () => {
+  it('o\'z endpointlaridan o\'qiydi va bo\'sh javobda [] qaytaradi', async () => {
+    mock.onGet(ORDER_ACT_COMMENTS(5)).reply(200, null);
+    mock.onGet(ORDER_ACT_HISTORY(5)).reply(200, null);
+    expect(await (orderCommentsQuery(5).queryFn as () => Promise<unknown>)()).toEqual([]);
+    expect(await (orderHistoryQuery(5).queryFn as () => Promise<unknown>)()).toEqual([]);
+  });
+
+  it('id berilmasa so\'rov yubormaydi', () => {
+    expect(orderCommentsQuery(0).enabled).toBe(false);
+    expect(orderHistoryQuery(0).enabled).toBe(false);
   });
 });
