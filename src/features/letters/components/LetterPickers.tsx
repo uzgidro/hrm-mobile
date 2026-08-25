@@ -3,7 +3,10 @@ import { PickerModal, type PickerOption } from '@/components/PickerModal';
 import { DatePickerModal } from '@/components/DatePicker';
 
 export type PickerKind =
-  | 'type' | 'main' | 'ordinary' | 'submitter' | 'rahbariyat' | 'regions' | 'destinations' | null;
+  | 'type' | 'main' | 'ordinary' | 'submitter' | 'rahbariyat' | 'regions' | 'destinations'
+  // Bildirgi/ariza MUALLIFI (boshqa xodim nomidan kiritish) — web'da bor edi,
+  // mobilда yo'q edi, ya'ni faqat o'z nomingdan yozish mumkin edi.
+  | 'creator' | null;
 export type DateKind = 'letter' | 'departure' | 'arrival' | null;
 
 // All picker + date-picker modals of the create-letter form, grouped so the
@@ -23,6 +26,11 @@ export function LetterPickers(props: {
   signerOptions: PickerOption[];
   ordinaryOptions: PickerOption[];
   signersLoading: boolean;
+  /** Kelishuvchilar ALOHIDA so'rovdan keladi — o'z yuklanish holati bilan. */
+  ordinaryLoading: boolean;
+  creatorOptions: PickerOption[];
+  creatorId: number | null;
+  onSelectCreator: (v: number | null) => void;
   mainSignerId: number | null;
   onSelectMain: (v: number) => void;
   ordinarySigners: number[];
@@ -58,7 +66,8 @@ export function LetterPickers(props: {
   const {
     picker, datePicker, onClosePicker, onCloseDatePicker,
     typeOptions, selectedTypeValue, onSelectType,
-    signerOptions, ordinaryOptions, signersLoading, mainSignerId, onSelectMain, ordinarySigners, onToggleOrdinary,
+    signerOptions, ordinaryOptions, signersLoading, ordinaryLoading, mainSignerId, onSelectMain, ordinarySigners, onToggleOrdinary,
+    creatorOptions, creatorId, onSelectCreator,
     rahbariyatOptions, rahbariyatLoading, rahbariyatIds, onToggleRahbariyat,
     submitterOptions, submittersLoading, submitterId, onSelectSubmitter,
     regionOptions, branchesLoading, selectedRegionValues, onToggleRegion,
@@ -75,7 +84,18 @@ export function LetterPickers(props: {
       <PickerModal visible={picker === 'main'} title={t('letters.pickerMainSigner')} options={signerOptions} loading={signersLoading} selected={mainSignerId}
         onClose={onClosePicker} onSelect={onSelectMain} />
 
-      <PickerModal visible={picker === 'ordinary'} title={t('letters.pickerCoordinators')} options={ordinaryOptions} loading={signersLoading} multiple selected={ordinarySigners}
+      {/* Muallif IXTIYORIY — tanlanmasa joriy foydalanuvchi (backend default),
+          shu bois ro'yxat boshida "O'zim" varianti turadi (value 0). */}
+      <PickerModal
+        visible={picker === 'creator'}
+        title={t('letters.pickerCreator')}
+        options={[{ value: 0, label: t('letters.creatorSelf') }, ...creatorOptions]}
+        loading={ordinaryLoading}
+        selected={creatorId ?? 0}
+        onClose={onClosePicker}
+        onSelect={(v) => onSelectCreator(Number(v) === 0 ? null : Number(v))}
+      />
+      <PickerModal visible={picker === 'ordinary'} title={t('letters.pickerCoordinators')} options={ordinaryOptions} loading={ordinaryLoading} multiple selected={ordinarySigners}
         onClose={onClosePicker} onSelect={() => {}} onToggle={onToggleOrdinary} />
 
       <PickerModal visible={picker === 'rahbariyat'} title={t('letters.pickerLeadership')} options={rahbariyatOptions} loading={rahbariyatLoading} multiple selected={rahbariyatIds}

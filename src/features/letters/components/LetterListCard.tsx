@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import type { Letter } from '@/types';
-import { letterStatusMeta, letterTypeLabel, statusColor } from '@/utils/letterStatus';
+import { letterDisplayNumber, letterStatusMeta, letterTypeLabel, statusColor } from '@/utils/letterStatus';
 
 // One row of the letters list. `action` = the current user's signature is
 // pending (derived by the list screen via canSignLetter) which highlights the
@@ -17,11 +17,14 @@ import { letterStatusMeta, letterTypeLabel, statusColor } from '@/utils/letterSt
 export function LetterListCard({
   letter,
   action,
+  unseen,
   onPress,
   selected,
 }: {
   letter: Letter;
   action: boolean;
+  /** Hech ochilmagan yoki oxirgi ochilishdan keyin O'ZGARGAN (web `rowIsUnseen`). */
+  unseen?: boolean;
   onPress?: () => void;
   selected?: boolean;
 }) {
@@ -30,6 +33,7 @@ export function LetterListCard({
   const styles = useThemedStyles(makeStyles);
   const meta = letterStatusMeta(letter);
   const sc = statusColor(meta.kind, colors);
+  const num = letterDisplayNumber(letter);
 
   return (
     <TouchableOpacity
@@ -38,8 +42,11 @@ export function LetterListCard({
       activeOpacity={0.8}
     >
       <View style={styles.cardTop}>
+        {/* Web `rowIsUnseen`: amal kutayotgan YOKI o'zgargan hujjat ajralib
+            turadi — avval mobilда faqat AMAL belgilanardi. */}
+        {unseen && !action && <View style={styles.unseenDot} testID="letter-unseen-dot" />}
         <Text style={styles.cardType} numberOfLines={1}>
-          {letterTypeLabel(letter.letter_type)}{letter.letter_number ? `  №${letter.letter_number}` : ''}
+          {letterTypeLabel(letter.letter_type)}{num ? `  №${num}` : ''}
         </Text>
         <View style={[styles.badge, { backgroundColor: sc.bg }]}>
           <Text style={[styles.badgeText, { color: sc.fg }]}>{meta.label}</Text>
@@ -68,6 +75,7 @@ const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     card: { backgroundColor: c.card, borderRadius: 16, padding: 16, marginBottom: 10, borderWidth: 1, borderColor: c.cardBorder, gap: 8 },
     cardAction: { borderColor: c.warning },
+    unseenDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: c.primary },
     cardSelected: { borderColor: c.primary, borderWidth: 2 },
     cardTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
     cardType: { flex: 1, fontSize: 15, fontWeight: '700', color: c.text },

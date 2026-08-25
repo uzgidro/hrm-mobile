@@ -14,9 +14,14 @@ import { statusMeta, statusColor } from '@/utils/orderStatus';
 // id + highlighting the active row; existing phone/portrait callers pass
 // neither and keep today's push behavior unchanged.
 export function OrderListCard({
-  order, action, onPress, selected,
+  order, action, unseen, onPress, selected,
 }: {
-  order: OrderAct; action: boolean; onPress?: () => void; selected?: boolean;
+  order: OrderAct;
+  action: boolean;
+  /** Hech ochilmagan yoki oxirgi ochilishdan keyin O'ZGARGAN (web `rowIsUnseen`). */
+  unseen?: boolean;
+  onPress?: () => void;
+  selected?: boolean;
 }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -33,6 +38,7 @@ export function OrderListCard({
       activeOpacity={0.8}
     >
       <View style={styles.cardTop}>
+        {unseen && !action && <View style={styles.unseenDot} testID="order-unseen-dot" />}
         <Text style={styles.cardCategory} numberOfLines={1}>
           {order.category_rel?.name || t('orders.fallbackTitle')}
           {order.act_number ? `  №${order.act_number}` : ''}
@@ -71,6 +77,7 @@ const makeStyles = (c: ThemeColors) =>
       borderWidth: 1, borderColor: c.cardBorder, gap: 8,
     },
     cardAction: { borderColor: c.warning },
+    unseenDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: c.primary },
     cardSelected: { borderColor: c.primary, borderWidth: 1.5 },
     cardTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
     cardCategory: { flex: 1, fontSize: 15, fontWeight: '700', color: c.text },

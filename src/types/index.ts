@@ -52,6 +52,11 @@ export interface Employee {
 export interface OrganizationBranch {
   id: number;
   name: string;
+  // Filial BIR NECHTA viloyatga qarashi mumkin (`regions[]`); eski yozuvlarda
+  // bitta `region` satri. `branchRegions()` (utils/tripRegions) ikkalasini
+  // birlashtiradi — filial viloyatini shu yerdan o'qing.
+  region?: string | null;
+  regions?: string[] | null;
 }
 
 // Turniket joylashuvi (GES / obyekt). `locations` M2M bo'lgani uchun massiv
@@ -140,10 +145,26 @@ export interface OrderActComment {
   created_at?: string;
 }
 
+// Buyruq MATNI tahriri izi (backend OrderActHistory). Matn o'zgarganda imzolar
+// SAQLANADI, shuning uchun "qachon/kim o'zgartirdi" faqat shu tarixdan bilinadi.
+export interface OrderActHistoryEntry {
+  id?: number;
+  order_act_id?: number;
+  editor_employee_id?: number | null;
+  editor?: Employee | null;
+  field?: string | null;
+  old_text?: string | null;
+  new_text?: string | null;
+  created_at?: string;
+}
+
 export interface OrderAct {
   id: number;
   category_id?: number;
-  category_rel?: { id: number; name: string };
+  // `creator_role` — 'employee' | 'hr'. KADR buyrug'ida devonxona qadami YO'Q
+  // (backend decree_register 400 `hr_decree_no_chancellery`), shu bois
+  // ro'yxatga olish tugmasi faqat XODIM buyrug'ida chiqadi.
+  category_rel?: { id: number; name: string; creator_role?: string | null; type?: number | null };
   act_number?: number | null;
   act_date?: string | null;
   summary?: string;
@@ -166,6 +187,9 @@ export interface OrderAct {
   signers?: OrderActSigner[];
   rejected_by?: Employee;
   rejection_reason?: string | null;
+  // Devonxona muhri qo'yilganmi — muhrlangan buyruq TAHRIRLANMAYDI
+  // (backend `_assert_decree_editable`).
+  is_stamped?: boolean;
   comments?: OrderActComment[];
   document?: { id: number; document_objectname?: string } | null;
   // Backend joriy foydalanuvchi uchun hisoblaydigan bayroqlar (web BuyruqlarTable
@@ -195,7 +219,6 @@ export interface LetterAvailableActions {
   can_submit_trip?: boolean;
   can_sign?: boolean;
   can_reject?: boolean;
-  can_approve_trip?: boolean;
   can_approve_report?: boolean;
   can_approve_guvohnoma?: boolean;
   // Xodim safarni O'ZI yakunlaydi (backend 2026-08-19). Tugma FAQAT xodim o'z
@@ -211,8 +234,13 @@ export interface Letter {
   id: number;
   letter_type?: string;
   letter_number?: string | null;
+  // Xizmat safarida "Bildirgi raqami" — web ro'yxati/tafsiloti raqam sifatida
+  // AVVAL shuni ko'rsatadi (bo'lmasa letter_number).
+  decree_number?: string | null;
   letter_date?: string | null;
   description?: string;
+  /** Safar REJASI / maqsadi (web "Reja"). Tafsilotда ko'rsatiladi. */
+  work_plan?: string | null;
   status?: string;
   reject_by_id?: number | null;
   rejection_reason?: string | null;
@@ -240,8 +268,6 @@ export interface Letter {
   signers?: LetterSigner[];
 
   // ── Business-trip report stage (xizmat safari; OLD flow only) ──────────────
-  // flow_version 2 = NEW flow (main branch, no report stage); 1/null = OLD flow.
-  flow_version?: number | null;
   // Set by KADR "Keldi" (hr-arrive / confirm-return) — gates report submission.
   is_trip_confirmed?: boolean | null;
   actual_return_date?: string | null;
@@ -259,6 +285,20 @@ export interface Letter {
   // to build the branch set that gates trip-movement management (isBranchHr).
   destination_branch_id?: number | null;
   destination_branches?: OrganizationBranch[] | null;
+  /** Foydalanuvchi TANLAGAN viloyat(lar) — hujjatdagi "hudud" shu bo'yicha. */
+  destination_regions?: string[] | null;
+  // ASOS BUYRUQ (KADR kiritadi) — web tafsilotда alohida qator.
+  basis_decree_number?: string | null;
+  basis_decree_date?: string | null;
+  /** Guvohnoma (safar varaqasi) raqami va fayli. */
+  guvohnoma_number?: string | null;
+  guvohnoma_path?: string | null;
+  /** Soddalashtirilgan safar (rais + yordamchilari): devonxona/hisobot YO'Q. */
+  is_simple_trip?: boolean | null;
+  // Safarni UZAYTIRISH so'rovi (rahbariyat tasdig'ini kutadi).
+  extension_requested_date?: string | null;
+  extension_note?: string | null;
+  status_before_extension?: string | null;
   /** action flags computed by the backend — only present on the detail read */
   available_actions?: LetterAvailableActions | null;
   // True when DB form text could not be patched into the (anchorless / stale)
@@ -272,6 +312,9 @@ export interface Letter {
   action_required?: boolean;
   // Hech ochilmagan yoki oxirgi ochilishdan keyin O'ZGARGAN hujjat.
   is_unseen?: boolean;
+  // DEVONXONA uchun alohida (umumiy, foydalanuvchiga bog'liq EMAS) ko'rildi
+  // bayrog'i — devonxona ro'yxatida "yangi" shu bo'yicha aniqlanadi.
+  chancellery_seen?: boolean;
 }
 
 // A single kelish/ketish event of a business trip. event_type is a backend

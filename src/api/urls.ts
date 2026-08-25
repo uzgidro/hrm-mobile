@@ -75,6 +75,13 @@ export const EMPLOYEES_LIST = 'employees';
 export const EMPLOYEES_BIRTHDAYS = 'employees/birthdays';
 // Company phone book — light, no PII, served to every role without scoping.
 export const PHONE_DIRECTORY = 'employees/phone-directory';
+// XODIM TANLAGICHLARI uchun yengil ro'yxat — BARCHA filiallar bo'yicha, PII'siz.
+// `GET /employees` ATAYLAB filialga qamalgan (PII himoyasi, EMPL-01), shu bois
+// nomzod BUTUN TASHKILOTDAN bo'lishi kerak bo'lgan formalar (loyiha a'zolari,
+// mehmon "Tizimdagi xodim", hujjat ulashish) jimgina o'z filialiga qamalib
+// qolardi. Xat kelishuvchilari / buyruq imzolovchilari / safar rahbariyati esa
+// ATAYLAB filialga bog'liq — ular `EMPLOYEES_LIST` da qoladi.
+export const EMPLOYEE_OPTIONS = 'employees/options';
 
 // Departments
 export const DEPARTMENTS_LIST = 'departments';
@@ -113,6 +120,12 @@ export const LETTER_DETAIL = (id: number) => `letters/${id}`;
 export const LETTER_SIGN = (id: number) => `letters/${id}/sign`;
 export const LETTER_REJECT = (id: number) => `letters/${id}/reject`;
 export const LETTER_EDITOR_CONFIG = (id: number) => `letters/${id}/editor-config`;
+// Xatning BOSHQA hujjatlari uchun OnlyOffice konfiglari. Mobilда faqat ASOSIY
+// hujjat ochilardi — guvohnoma (safar varaqasi), hisobot docx'i va ILOVA
+// umuman ko'rib bo'lmasdi (webda uchalasi ham ochiladi).
+export const LETTER_REPORT_EDITOR_CONFIG = (id: number) => `letters/${id}/report-editor-config`;
+export const LETTER_GUVOHNOMA_EDITOR_CONFIG = (id: number) => `letters/${id}/guvohnoma-editor-config`;
+export const LETTER_ATTACHMENT_EDITOR_CONFIG = (id: number) => `letters/${id}/attachment-editor-config`;
 export const LETTER_UPLOAD_ATTACHMENT = (id: number) => `letters/${id}/upload-attachment`;
 // Business-trip report stage (xizmat safari, OLD flow). submit-report takes a
 // plain JSON body; upload-report is an optional single-file multipart; the
@@ -123,10 +136,11 @@ export const LETTER_RESET_REPORT = (id: number) => `letters/${id}/reset-report`;
 
 // The employee sends a trip draft into the flow (draft → pending).
 export const LETTER_SUBMIT_TRIP = (id: number) => `letters/${id}/submit-trip`;
-// Leadership approvals: approve-trip (NEW flow) / approve-report + approve-guvohnoma
-// (OLD flow). Gated on the server available_actions flags (the client cannot
-// compute the trip_approver rights).
-export const LETTER_APPROVE_TRIP = (id: number) => `letters/${id}/approve-trip`;
+// Leadership approvals: approve-report + approve-guvohnoma. Gated on the server
+// available_actions flags (the client cannot compute the trip_approver rights).
+// ⚠️ `approve-trip` (eski flow_version 2 shoxi) backenddan OLIB TASHLANGAN
+// (safar oqimi yagona) — u endi 404 beradi, shu bois mijozdan ham olib
+// tashlandi. `available_actions.can_approve_trip` ham qaytarilmaydi.
 // DEVONXONA ro'yxatga olgach RAHBAR tasdig'i: registered_pending_rahbar →
 // management_approved (boshqa filial safari). Web'da bu tugma bor edi, mobilda
 // yo'q — ya'ni rahbar safarni telefondan tasdiqlay olmasdi.
@@ -160,6 +174,25 @@ export const LETTER_DISAGREE = (id: number) => `letters/${id}/disagree`;
 export const LETTER_SUBMIT_AGREEMENT = (id: number) => `letters/${id}/submit-agreement`;
 export const LETTER_SEND_TO_REGISTRY = (id: number) => `letters/${id}/send-to-registry`;
 export const LETTER_CONFIRM_REGISTRATION = (id: number) => `letters/${id}/confirm-registration`;
+// DEVONXONA hujjatni yaratuvchiga QAYTARADI (sabab MAJBURIY) — ISTALGAN
+// bosqichda: muhr/ro'yxat bekor bo'ladi, status 'returned'. Mobilда bu amal
+// yo'q edi, ya'ni devonxona telefondan hujjatni qaytara olmasdi.
+export const LETTER_RETURN = (id: number) => `letters/${id}/return`;
+// DEVONXONA safar HISOBOTINI qaytaradi (report_submitted → report_returned).
+export const LETTER_RETURN_REPORT = (id: number) => `letters/${id}/return-report`;
+// KADR xizmat safarini BEKOR qiladi (sabab ixtiyoriy).
+export const LETTER_CANCEL_TRIP = (id: number) => `letters/${id}/cancel-trip`;
+// SAFARNI UZAYTIRISH: KADR yangi qaytish sanasini so'raydi (status →
+// extension_review), rahbariyat esa tasdiqlaydi yoki rad etadi. Mobilда butun
+// oqim yo'q edi — so'rov shu bosqichda tiqilib qolardi.
+// ASOS BUYRUQ (guvohnomadagi "Asos:" qatori) — KADR raqam+sanani kiritadi,
+// guvohnoma qayta yaratiladi. Bosqich cheklovi YO'Q (raqam ko'pincha safar
+// yakunlangach ma'lum bo'ladi). Mobilда qiymat ko'rinardi-yu, KIRITIB
+// bo'lmasdi.
+export const LETTER_BASIS_DECREE = (id: number) => `letters/${id}/basis-decree`;
+export const LETTER_EXTEND_TRIP = (id: number) => `letters/${id}/extend-trip`;
+export const LETTER_APPROVE_EXTENSION = (id: number) => `letters/${id}/approve-extension`;
+export const LETTER_REJECT_EXTENSION = (id: number) => `letters/${id}/reject-extension`;
 export const LETTER_REGISTERED_NUMBER_AVAILABILITY = 'letters/registered-number/availability';
 
 // Organization branches
@@ -176,6 +209,10 @@ export const ORDER_ACT_DECREE_RESUBMIT = (id: number) => `order-acts/${id}/decre
 // (backend api/v1/order_act.py) — mijozda `forward-to-leadership` deb yozilgan
 // edi va tugma har safar 404 bilan yiqilardi.
 export const ORDER_ACT_DECREE_FORWARD = (id: number) => `order-acts/${id}/decree/send-to-leadership`;
+// YARATUVCHI qoralamani OQIMGA yuboradi: draft → pending_submitter (kirituvchi
+// boshqa odam bo'lsa) yoki pending_approval. Mijozda umuman yo'q edi — mobilda
+// yaratilgan buyruq DRAFTда abadiy qolib ketardi (web'da "Yuborish" tugmasi bor).
+export const ORDER_ACT_DECREE_SUBMIT = (id: number) => `order-acts/${id}/decree/submit`;
 // KIRITUVCHI shaxs (submitter) buyruqni tasdiqlaydi: pending_submitter →
 // pending_approval / approved. Mijozda umuman yo'q edi — buyruq mobilда
 // shu bosqichda tiqilib qolardi.
@@ -186,6 +223,11 @@ export const ORDER_ACT_DECREE_ACKNOWLEDGE = (id: number) => `order-acts/${id}/de
 export const ORDER_ACT_DECREE_ASSIGN_FAMILIARIZERS = (id: number) =>
   `order-acts/${id}/decree/assign-familiarizers`;
 export const ORDER_ACT_EDITOR_CONFIG = (id: number) => `order-acts/${id}/editor-config`;
+// Buyruq IZOHLARI (ko'ra oladigan har kim yozadi; status o'zgarmaydi) va MATN
+// TAHRIRI TARIXI. Ikkalasi ham webda ko'rinadi, mobilда umuman yo'q edi —
+// kelishuv yozishmasi va "matn qachon/kim tomonidan o'zgardi" ko'rinmasdi.
+export const ORDER_ACT_COMMENTS = (id: number) => `order-acts/${id}/comments`;
+export const ORDER_ACT_HISTORY = (id: number) => `order-acts/${id}/history`;
 
 // Documents (Hujjatlar) — files/folders storage, view-only on mobile.
 // Folders are flat (no nesting) and embed their files[] inline. Root (folder-

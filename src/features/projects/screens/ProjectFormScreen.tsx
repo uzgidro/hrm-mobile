@@ -5,7 +5,6 @@ import {
 import { router, useLocalSearchParams } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { ScreenHeader } from '@/components/ScreenHeader';
@@ -15,10 +14,9 @@ import { Screen } from '@/components/Screen';
 import { LoadingView } from '@/components/StateViews';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { PickerModal } from '@/components/PickerModal';
-import { employeesListQuery } from '@/utils/employees';
-import { employeeSubLabel } from '@/utils/roles';
+import { employeeOptionsQuery, type EmployeeOptionRow } from '@/utils/employees';
 import { getApiErrorMessage } from '@/api/errors';
-import type { Employee } from '@/types';
+
 import { getWorkspace, projectKeys } from '../api/queries';
 import {
   useCreateWorkspace, useUpdateWorkspace, addWorkspaceMember, removeWorkspaceMember,
@@ -29,16 +27,11 @@ export default function LoyihaFormScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>();
   const isEdit = !!id;
   const wsId = Number(id);
-  const { user } = useAuthStore();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const qc = useQueryClient();
   const createMut = useCreateWorkspace();
   const updateMut = useUpdateWorkspace(wsId);
-
-  const orgBranchId =
-    user?.employee?.organization_branches?.[0]?.id ??
-    user?.employee?.department?.organization_branch_id;
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -49,10 +42,13 @@ export default function LoyihaFormScreen() {
   const [loading, setLoading] = useState(false);
   const [hydrating, setHydrating] = useState(isEdit);
 
-  const { data: empData } = useQuery(employeesListQuery(orgBranchId));
-  const employees: Employee[] = empData?.items ?? [];
+  // A'zolar BUTUN TASHKILOTDAN tanlanadi: loyihada boshqa filial hamkasbi ham
+  // bo'lishi mumkin. `GET /employees` PII saqlagani uchun ataylab filialga
+  // qamalgan (EMPL-01) — undan o'qilganda tanlagich jimgina o'z filialiga
+  // qisilib qolardi; `GET /employees/options` esa PII'siz va filialsiz.
+  const { data: employees = [] } = useQuery(employeeOptionsQuery());
   const empById = useMemo(() => {
-    const m = new Map<number, Employee>();
+    const m = new Map<number, EmployeeOptionRow>();
     employees.forEach((e) => m.set(e.id, e));
     return m;
   }, [employees]);
@@ -107,7 +103,9 @@ export default function LoyihaFormScreen() {
     }
   };
 
-  const selectedMembers = memberIds.map((mid) => empById.get(mid)).filter(Boolean) as Employee[];
+  const selectedMembers = memberIds
+    .map((mid) => empById.get(mid))
+    .filter(Boolean) as EmployeeOptionRow[];
 
   return (
     <Screen edges={['top']} maxWidth={600}>
@@ -163,8 +161,12 @@ export default function LoyihaFormScreen() {
         selected={memberIds}
         options={employees.map((e) => ({
           value: e.id,
-          label: e.legal_name,
-          subLabel: employeeSubLabel(e),
+          label: e.legal_name ?? '',
+          // `/employees/options` lavozim/bo'limni tayyor NOM qilib beradi
+          // (obyekt emas) — filial nomi ham qo'shiladi, chunki ro'yxat butun
+          // tashkilot bo'yicha va bir xil ismlar farqlanishi kerak.
+          subLabel: [e.job_position_name, e.department_name, e.organization_name]
+            .filter(Boolean).join(' · '),
           photo: e.photo_path,
         }))}
         onToggle={toggleMember}

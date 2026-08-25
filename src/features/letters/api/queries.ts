@@ -113,7 +113,13 @@ export function tripMovementsQuery(id: number) {
 // These read-only lookups keep the old inline keys so they share the same cache
 // entries as before the migration.
 
-// Rahbariyat / kelishuvchi (imzolovchilar) — hr / deputy / ministr roli.
+// ADRESAT (bildirgi/ariza `main_signer`) — filialning hr/deputy/ministr rolidagi
+// xodimlari. Web `multiOrgEmployeesPaginated` bilan bir xil.
+//
+// ⚠️ Bu ro'yxat KELISHUVCHILAR uchun ISHLATILMAYDI — buning uchun alohida
+// `letterAgreementSignersQuery` bor (pastda). Ilgari ikkalasi ham shu manbadan
+// o'qirdi va "Kelishuvchilar" ro'yxatida filialning 3-4 ta rahbariyat xodimi
+// chiqardi, oddiy hamkasblar esa umuman ko'rinmasdi.
 export function letterSignersQuery(branchId?: number) {
   return queryOptions({
     queryKey: ['letter-signers', branchId] as const,
@@ -156,13 +162,18 @@ export function letterRahbariyatQuery(branchId: number | undefined, enabled: boo
           .catch(() => [] as Employee[]);
         if (branchLeaders.length) return branchLeaders;
       }
+      // FALLBACK FILIALGA BOG'LANMAYDI (web `rahbariyatEmployeesPaginated`):
+      // ministr/o'rinbosar bir nechta filialga xizmat qiladi va ularning
+      // bo'limi ko'pincha BOSHQA filialda. `organization_branch_id` bilan
+      // so'ralganda ro'yxat BO'SH qaytib, filialga rahbar belgilanmagan
+      // bo'lsa safar yaratib bo'lmasdi.
       return apiClient
         .get(EMPLOYEES_LIST, {
           params: {
             multi_org_employee_role: ['deputy', 'ministr'],
             include_multi_org: true,
+            sort_by_razryad: true,
             size: 100,
-            ...(branchId ? { organization_branch_id: branchId } : {}),
           },
         })
         .then((r) => unwrapList<Employee>(r.data));
@@ -171,11 +182,39 @@ export function letterRahbariyatQuery(branchId: number | undefined, enabled: boo
   });
 }
 
+// KELISHUVCHILAR (bildirgi/ariza `agreement`) — filialning BARCHA xodimlari,
+// ROL CHEKLOVISIZ. Adresat faqat rahbariyatdan bo'ladi, kelishuvchi esa har
+// qanday xodim bo'lishi mumkin (web `agreementEmployeesPaginated` 1:1):
+//   • `include_multi_org: false` — bo'limi AYNAN shu filialga tegishlilar
+//     (boshqa filialga m2m orqali bog'langanlar chiqib ketmaydi);
+//   • `sort_by_razryad: true` — eng baland razryad tepada;
+//   • lavozimi kiritilmagan xodimlar ro'yxatda CHIQMAYDI (web ham filtrlaydi).
+export function letterAgreementSignersQuery(branchId: number | undefined, enabled: boolean) {
+  return queryOptions({
+    queryKey: ['letter-agreement-signers', branchId] as const,
+    enabled: enabled && !!branchId,
+    queryFn: async () => {
+      const { items } = await fetchAllEmployees(branchId, {
+        include_multi_org: false,
+        sort_by_razryad: true,
+      });
+      return items.filter((e) => {
+        const jp = typeof e.job_position === 'object' ? e.job_position?.name : e.job_position;
+        return !!(jp && String(jp).trim());
+      });
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+// "Sizni yuborayotgan shaxs" (safar `submitter`) — FAQAT o'z filiali xodimlari.
+// `include_multi_org: false` bo'lmasa boshqa filialga m2m bog'langanlar ham
+// chiqib ketardi (web izohi: "qat'iy ravishda bo'limi shu filialga tegishli").
 export function letterSubmittersQuery(branchId: number | undefined, enabled: boolean) {
   return queryOptions({
     queryKey: ['letter-submitters', branchId] as const,
     enabled,
-    queryFn: () => fetchAllEmployees(branchId),
+    queryFn: () => fetchAllEmployees(branchId, { include_multi_org: false, sort_by_razryad: true }),
     staleTime: 5 * 60 * 1000,
   });
 }

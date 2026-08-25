@@ -13,13 +13,14 @@ import type { Employee } from '@/types';
 import { Icon } from '@/components/Icon';
 import { LoadingView } from '@/components/StateViews';
 import { PickerModal, type PickerOption } from '@/components/PickerModal';
-import { statusMeta, statusColor, decreePermissions } from '@/utils/orderStatus';
+import { statusMeta, statusColor, decreePermissions, decreeSubmitTarget } from '@/utils/orderStatus';
 import { isHR, isSiteMasterAdmin, employeeSubLabel } from '@/utils/roles';
 import { orderDetailQuery, orderEmployeesQuery } from '../api/queries';
 import { useDecreeActions } from '../hooks/useDecreeActions';
 import { useAssignFamiliarizers } from '../api/mutations';
 import { DetailHeader, Section, KV } from './DetailParts';
 import { DetailSections } from './DetailSections';
+import { CommentsSection } from './CommentsSection';
 import { DecreeActionBar } from './DecreeActionBar';
 import { RejectModal, RegisterModal } from './DetailModals';
 
@@ -46,7 +47,7 @@ export function OrderDetailView({ id, embedded = false }: { id: number; embedded
 
   const { data: order, isLoading, refetch } = useQuery(orderDetailQuery(orderId));
 
-  const { busy, approve, reject, resubmit, forward, confirmSubmission, acknowledge, register } =
+  const { busy, submit, approve, reject, resubmit, forward, confirmSubmission, acknowledge, register } =
     useDecreeActions(orderId, refetch);
 
   const assignFam = useAssignFamiliarizers(orderId);
@@ -140,7 +141,12 @@ export function OrderDetailView({ id, embedded = false }: { id: number; embedded
 
   const meta = statusMeta(order.status);
   const sc = statusColor(meta.kind, colors);
-  const perms = decreePermissions(order, employeeId);
+  // `user` ham uzatiladi: ro'yxatga olish DEVONXONA huquqi (yaratuvchiniki emas)
+  // va KADR buyrug'ida "Rahbariyatga yuborish" KADRга ham ochiq.
+  const perms = decreePermissions(order, employeeId, user);
+  const submitLabel = decreeSubmitTarget(order) === 'submitter'
+    ? t('orders.actionSubmitToSubmitter')
+    : t('orders.actionSubmitToApprovers');
 
   // Assigning familiarizers mirrors the web gate (OrderDetailModal): HR while the
   // decree is `confirmed`, or a site master-admin (strict `type === 'master-admin'`,
@@ -204,6 +210,21 @@ export function OrderDetailView({ id, embedded = false }: { id: number; embedded
 
         <DetailSections order={order} />
 
+        {/* Izohlar + matn tahriri tarixi (webda bor, mobilда yo'q edi). */}
+        <CommentsSection orderId={orderId} />
+
+        {perms.canEdit && (
+          <TouchableOpacity
+            style={styles.editBtn}
+            activeOpacity={0.85}
+            onPress={() => router.push({ pathname: '/create-order', params: { id: String(orderId) } })}
+            testID="decree-edit"
+          >
+            <Icon name="edit" size={16} color={colors.primary} />
+            <Text style={styles.editBtnText}>{t('orders.editAction')}</Text>
+          </TouchableOpacity>
+        )}
+
         {canAssignFamiliarizers && (
           <TouchableOpacity
             style={styles.famBtn}
@@ -231,6 +252,8 @@ export function OrderDetailView({ id, embedded = false }: { id: number; embedded
       <DecreeActionBar
         perms={perms}
         busy={busy}
+        submitLabel={submitLabel}
+        onSubmit={submit}
         onApprove={approve}
         onReject={() => setRejectOpen(true)}
         onResubmit={resubmit}
@@ -290,5 +313,10 @@ const makeStyles = (c: ThemeColors) =>
 
     rejectCard: { backgroundColor: c.errorSoft, borderRadius: 14, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: c.error },
     rejectTitle: { fontSize: 13, fontWeight: '700', color: c.error, marginBottom: 4 },
+    editBtn: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+      backgroundColor: c.primarySoft, borderRadius: 12, paddingVertical: 14, marginBottom: 12,
+    },
+    editBtnText: { color: c.primary, fontSize: 14, fontWeight: '700' },
     rejectText: { fontSize: 13, color: c.text, lineHeight: 19 },
   });

@@ -1,6 +1,7 @@
 import i18n from '../i18n';
 import type { ThemeColors } from '../theme/palettes';
-import type { OrderAct } from '../types';
+import type { OrderAct, User } from '../types';
+import { canActAsChancellery, isBranchHr, isHR, isSiteMasterAdmin } from './roles';
 
 export type StatusKind = 'pending' | 'info' | 'success' | 'error' | 'neutral';
 
@@ -66,6 +67,10 @@ export function currentStageType(o: OrderAct): 'approver' | 'leadership' | null 
 // permissions remain the final authority; these only decide which buttons and
 // which editor mode to offer.
 export interface DecreePermissions {
+  /** YARATUVCHI qoralamani oqimga yuboradi (draft → …). Web "Yuborish". */
+  canSubmit: boolean;
+  /** Buyruq FORMASINI tahrirlash (PATCH) — devonxona ro'yxatiga olgunicha. */
+  canEdit: boolean;
   canApprove: boolean;
   /** Kirituvchi shaxs (submitter) tasdig'i — `pending_submitter` bosqichi. */
   canConfirmSubmission: boolean;
@@ -78,7 +83,32 @@ export interface DecreePermissions {
   canEditDoc: boolean;
 }
 
-export function decreePermissions(o: OrderAct, employeeId?: number): DecreePermissions {
+/**
+ * KADR buyrug'imi (kategoriya `creator_role === 'hr'`). KADR buyrug'ida
+ * DEVONXONA QADAMI YO'Q — raqam+sanani KADR yaratishda kiritadi va backend
+ * `decree_register` ni 400 `hr_decree_no_chancellery` bilan rad etadi.
+ */
+export function isHrDecree(o: OrderAct): boolean {
+  return o.category_rel?.creator_role === 'hr';
+}
+
+/**
+ * "Yuborish" tugmasi buyruqni QAYERGA jo'natadi (web `decreeSubmitLabel` 1:1):
+ * kirituvchi yaratuvchidan boshqa odam bo'lsa — avval o'sha kirituvchining
+ * tasdig'iga; aks holda to'g'ridan kelishuvchilarga.
+ */
+export function decreeSubmitTarget(o: OrderAct): 'submitter' | 'approvers' {
+  const submitterId = o.submitter_id ?? o.submitter?.id ?? null;
+  const creatorId = o.created_by_id ?? o.created_by?.id ?? null;
+  if (submitterId && creatorId && Number(submitterId) !== Number(creatorId)) return 'submitter';
+  return 'approvers';
+}
+
+export function decreePermissions(
+  o: OrderAct,
+  employeeId?: number,
+  user?: User | null,
+): DecreePermissions {
   const stage = currentStageType(o);
   const stageSigners = (o.assigned_signers ?? []).filter((s) => s.signer_type === stage);
   const iAmStageSigner =
@@ -94,8 +124,35 @@ export function decreePermissions(o: OrderAct, employeeId?: number): DecreePermi
   const canConfirmSubmission =
     o.status === 'pending_submitter' && !!employeeId && o.submitter_id === employeeId;
   const canResubmit = o.status === 'changes_requested' && isCreator;
-  const canForward = o.status === 'approved' && isCreator;
-  const canRegister = o.status === 'pending_chancellery' && isCreator;
+  // Kelishuvchilar kelishgach yaratuvchi RAHBARIYATGA yuboradi. KADR buyrug'ida
+  // buni buyruqni boshqaruvchi KADR ham qila oladi (backend
+  // decree_send_to_leadership: `is_hr_decree && actor_is_hr`).
+  const canForward =
+    o.status === 'approved' && (isCreator || (isHrDecree(o) && isHR(user)));
+  // ⚠️ RO'YXATGA OLISH = DEVONXONA amali, yaratuvchiniki EMAS. Avval bu yerda
+  // `isCreator` turardi: yaratuvchi tugmani ko'rib bosardi va backend
+  // 403 `not_chancellery` qaytarardi, DEVONXONA esa (yaratuvchi bo'lmagani
+  // uchun) tugmani umuman ko'rmasdi — buyruq mobilда `pending_chancellery`da
+  // tiqilib qolardi. Backend `_can_act_as_chancellery` bilan 1:1
+  // (+ KADR buyrug'ida devonxona qadami YO'Q).
+  const canRegister =
+    o.status === 'pending_chancellery'
+    && !isHrDecree(o)
+    && (isSiteMasterAdmin(user) || canActAsChancellery(user, o.organization_branch_id));
+  // Qoralamani OQIMGA yuborish — faqat yaratuvchi/kirituvchi (backend
+  // `_assert_decree_creator`), KADR buyrug'ida KADR ham.
+  const canSubmit =
+    o.status === 'draft' && (isCreator || (isHrDecree(o) && isHR(user)));
+
+  // TAHRIRLASH (backend `_assert_can_edit_decree` + `_assert_decree_editable`
+  // bilan 1:1): muallif / kirituvchi / KADR (o'z filialida), va FAQAT devonxona
+  // ro'yxatga olgunicha (muhrlangan yoki pending_chancellery/confirmed/applied
+  // — yopiq). Master-admin har doim. Mobilда bu amal umuman yo'q edi.
+  const isLocked =
+    o.is_stamped === true
+    || ['pending_chancellery', 'confirmed', 'applied'].includes(o.status ?? '');
+  const canEdit = isSiteMasterAdmin(user)
+    || (!isLocked && (isCreator || (isHR(user) && isBranchHr(user, o.organization_branch_id))));
 
   const myFam = (o.familiarizers ?? []).find(
     (f) => (f.employee_id ?? f.employee?.id) === employeeId
@@ -103,14 +160,19 @@ export function decreePermissions(o: OrderAct, employeeId?: number): DecreePermi
   const canAcknowledge =
     !!myFam && !myFam.acknowledged && (o.status === 'confirmed' || o.status === 'applied');
 
+  // `canEdit` HISOBGA OLINMAYDI: tahrir tugmasi pastdagi amal panelida emas,
+  // tafsilot ichida turadi (web bilan bir xil joylashuv).
   const hasActions =
-    canApprove || canConfirmSubmission || canResubmit || canForward || canRegister || canAcknowledge;
+    canSubmit || canApprove || canConfirmSubmission || canResubmit || canForward
+    || canRegister || canAcknowledge;
 
   const docLocked =
     o.status === 'confirmed' || o.status === 'applied' || o.status === 'rejected';
   const canEditDoc = !docLocked && (isCreator || canApprove);
 
   return {
+    canSubmit,
+    canEdit,
     canApprove,
     canConfirmSubmission,
     canResubmit,
@@ -121,6 +183,15 @@ export function decreePermissions(o: OrderAct, employeeId?: number): DecreePermi
     docLocked,
     canEditDoc,
   };
+}
+
+/**
+ * Buyruq shu foydalanuvchi uchun YANGImi — web `rowIsUnseen` bilan bir xil:
+ * amalini kutayotgan (ochib ko'rish o'chirmaydi) YOKI hech ochilmagan /
+ * oxirgi ochilishdan keyin o'zgargan.
+ */
+export function isOrderUnseen(o: OrderAct, employeeId?: number): boolean {
+  return needsMyAction(o, employeeId) || o.is_unseen === true;
 }
 
 // Does the given employee need to act on this decree right now?

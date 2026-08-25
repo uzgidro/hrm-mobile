@@ -21,9 +21,24 @@ export interface LetterCreateInput {
   workPlan: string;
   mainSignerId: number | null;
   ordinarySigners: number[];
+  /**
+   * Bildirgi/ariza MUALLIFI — boshqa xodim nomidan kiritish uchun (static.uz
+   * `id_employee` ekvivalenti). Bo'sh bo'lsa backend joriy foydalanuvchini
+   * qo'yadi, shu bois kalit umuman YUBORILMAYDI (web ham `null` yuboradi va
+   * backend uni default bilan almashtiradi).
+   */
+  creatorId?: number | null;
   submitterId: number | null;
   rahbariyatIds: number[];
   destinationIds: number[];
+  /**
+   * Foydalanuvchi TANLAGAN viloyat(lar). Hujjatdagi "hudud" AYNAN shu tanlov
+   * bo'yicha yoziladi — filial bir nechta viloyatga qarasa ham. Bu maydon
+   * avval umuman YUBORILMASDI (ekran uni faqat filial ro'yxatini filtrlash
+   * uchun ishlatardi), shu bois mobilда yaratilgan safar hujjatida hudud
+   * filialdan hosil qilinardi va webdagidan farq qilardi.
+   */
+  regions: string[];
   departureDate: string | null;
   arrivalDate: string | null;
 }
@@ -43,6 +58,7 @@ export function buildLetterCreatePayload(input: LetterCreateInput): Record<strin
 
   if (input.isTrip) {
     payload.destination_branch_ids = input.destinationIds;
+    payload.destination_regions = input.regions.filter(Boolean);
     // Optional (web parity): omit the key when no submitter is chosen so the
     // backend makes the author the submitter rather than seeing a null.
     if (input.submitterId) payload.submitter_id = input.submitterId;
@@ -65,6 +81,7 @@ export function buildLetterCreatePayload(input: LetterCreateInput): Record<strin
         : []),
       ...agreements,
     ];
+    if (input.creatorId) payload.creator_employee_id = Number(input.creatorId);
   }
 
   return payload;

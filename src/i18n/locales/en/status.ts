@@ -35,6 +35,7 @@ export default {
   letterTripOngoing: 'Trip in progress',
   letterTripLeadershipPending: 'Awaiting leadership approval',
   letterTripGuvohnomaReview: 'Awaiting guvohnoma approval',
+  letterTripExtensionReview: 'Awaiting extension approval',
   letterReportSubmitted: 'Report submitted',
   letterReturned: 'Returned',
   letterReportReturned: 'Report returned',

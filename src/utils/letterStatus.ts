@@ -2,7 +2,7 @@ import i18n from '../i18n';
 import type { Letter, LetterSigner, User } from '../types';
 import type { StatusKind } from './orderStatus';
 import { statusColor } from './orderStatus';
-import { canActAsChancellery, isSiteMasterAdmin } from './roles';
+import { canActAsChancellery, isAnyChancellery, isBranchHr, isSiteMasterAdmin } from './roles';
 
 export { statusColor };
 
@@ -26,6 +26,31 @@ export function letterTypeLabel(type?: string): string {
   const key = LETTER_TYPE_LABELS[type ?? ''];
   if (key) return i18n.t(key);
   return type || i18n.t('status.letterTypeDefault');
+}
+
+/**
+ * Ro'yxatda/tafsilotda ko'rsatiladigan RAQAM (web `displayNumber` 1:1):
+ * xizmat safarida avval kiritilgan "Bildirgi raqami" (`decree_number`),
+ * bo'lmasa avto-generatsiya (`letter_number`). Boshqa turlarда — letter_number.
+ */
+export function letterDisplayNumber(l: Letter): string | null {
+  const isTrip = normalizeLetterType(l.letter_type) === 'business_trip';
+  return (isTrip ? (l.decree_number || l.letter_number) : l.letter_number) ?? null;
+}
+
+/**
+ * Hujjat shu foydalanuvchi uchun YANGImi — web `rowIsUnseen` bilan bir xil:
+ * amalini kutayotgan (ochib ko'rish o'chirmaydi) YOKI hali ko'rilmagan.
+ * Mobil ro'yxatда faqat AMAL belgilanardi, ya'ni o'zgargan (lekin amal talab
+ * qilmaydigan) hujjat ajralib turmasdi.
+ *
+ * DEVONXONA uchun manba boshqacha: `chancellery_seen` — bu UMUMIY bayroq
+ * (kim ochsa, hammaga ko'rilgan bo'ladi), `is_unseen` esa foydalanuvchiga xos.
+ */
+export function isLetterUnseen(l: Letter, employeeId?: number, user?: User | null): boolean {
+  if (letterNeedsMyAction(l, employeeId)) return true;
+  if (isAnyChancellery(user)) return l.chancellery_seen !== true;
+  return l.is_unseen === true;
 }
 
 export function normalizeLetterType(type?: string): string {
@@ -56,13 +81,12 @@ export function getManagementSigners(l: Letter) {
 function isApplication(l: Letter) { return normalizeLetterType(l.letter_type) === 'application'; }
 function isBusinessTrip(l: Letter) { return normalizeLetterType(l.letter_type) === 'business_trip'; }
 
-// ── Business-trip report stage (xizmat safari, OLD flow only) ──────────────────
-// flow_version 2 = NEW flow (main branch): XODIM→KADR→RAHBAR→BUXGALTERIYA, with
-// NO report substage. 1 / null / undefined = OLD flow, which has the report
-// stage. Mirrors backend _is_new_trip_flow (letter.py:45).
-export function isNewTripFlow(l: Letter): boolean {
-  return isBusinessTrip(l) && l.flow_version === 2;
-}
+// ── Business-trip report stage (xizmat safari) ────────────────────────────────
+// 2026-08-24: backend `flow_version` ni BUTUNLAY olib tashladi (migratsiya
+// `wf1dropflow2ver3` ustunni DROP qildi) — "ikkinchi oqim" endi yo'q, safar
+// YAGONA oqimda ishlaydi va hisobot bosqichi HAR DOIM bor. Shu sababli bu
+// yerdagi `isNewTripFlow` tekshiruvlari olib tashlandi: maydon kelmagani uchun
+// ular baribir doim `false` qaytarardi (jim o'lik shox).
 
 // Statuses a trip is in while the employee may submit/edit a report.
 const REPORT_SUBMITTABLE_STATUSES = ['management_approved', 'report_submitted', 'report_returned'];
@@ -90,7 +114,7 @@ export function isReportReturned(l: Letter): boolean {
 // arrival must be confirmed (is_trip_confirmed) — else the backend 400s
 // arrival_not_confirmed; and the caller must be the trip's creator or submitter.
 export function canSubmitReport(l: Letter, employeeId?: number | null): boolean {
-  if (!isBusinessTrip(l) || isNewTripFlow(l)) return false;
+  if (!isBusinessTrip(l)) return false;
   if (!REPORT_SUBMITTABLE_STATUSES.includes(l.status ?? '')) return false;
   if (l.status === 'management_approved' && !l.is_trip_confirmed) return false;
   return isTripAuthor(l, employeeId);
@@ -100,7 +124,7 @@ export function canSubmitReport(l: Letter, employeeId?: number | null): boolean 
 // (re-open for editing). Only while report_submitted. (Backend also allows HR;
 // the mobile author-only slice is a safe subset.)
 export function canResetReport(l: Letter, employeeId?: number | null): boolean {
-  if (!isBusinessTrip(l) || isNewTripFlow(l)) return false;
+  if (!isBusinessTrip(l)) return false;
   if (l.status !== 'report_submitted') return false;
   return isTripAuthor(l, employeeId);
 }
@@ -120,7 +144,7 @@ const TRIP_RETURN_BLOCKED_STATUSES = [
 // master-admin bypass the stage, matching the backend (confirm-return allows
 // master-admin regardless of status). Mirrors web canConfirmTripReturn.
 export function canConfirmTripReturn(l: Letter): boolean {
-  if (!isBusinessTrip(l) || isNewTripFlow(l)) return false;
+  if (!isBusinessTrip(l)) return false;
   if (l.is_trip_confirmed) return false;
   return !TRIP_RETURN_BLOCKED_STATUSES.includes(l.status ?? '');
 }
@@ -171,7 +195,7 @@ export function canSignLetter(l: Letter, employeeId?: number): boolean {
     // Only the main signer signs a trip, and only in the OLD flow at 'pending'.
     // The NEW flow is not signed (backend 400s). The management signer never
     // signs — they approve via approve-trip/approve-report, not /sign.
-    if (assigned.signer_type === 'main') return l.status === 'pending' && !isNewTripFlow(l);
+    if (assigned.signer_type === 'main') return l.status === 'pending';
     return false;
   }
   // BILDIRGI/ARIZA IMZOLANMAYDI — kelishuv oqimi (agree/disagree). Backend
@@ -362,20 +386,43 @@ export function canChancelleryConfirmRegistration(l: Letter, user?: User | null)
   return isSiteMasterAdmin(user) || canActAsChancellery(user, l.organization_branch_id);
 }
 
+/**
+ * Hujjatni TAHRIRLASH huquqi — backend `update_letter` bilan 1:1 (web
+ * `isLetterEditStageOpen` + yaratuvchi tekshiruvidan ko'ra QAT'IYROQ, chunki
+ * bevosita backend qoidasini takrorlaydi; aks holda tugma ko'rinib, saqlashда
+ * 403/400 bo'lardi):
+ *
+ *  • bildirgi/ariza — yaratuvchi/kirituvchi va status
+ *    draft | pending | pending_agreement | returned | signed
+ *    (devonxonaga ketgach yopiladi);
+ *  • xizmat safari — yaratuvchi/kirituvchi YOKI filial KADR'i va status
+ *    draft | pending | signed (tasdiqlangach yopiladi);
+ *  • master-admin — har doim.
+ */
+export function canEditLetter(l: Letter, employeeId?: number | null, user?: User | null): boolean {
+  if (isSiteMasterAdmin(user)) return true;
+  const type = normalizeLetterType(l.letter_type);
+  const status = l.status ?? 'draft';
+  if (type === 'application' || type === 'explanatory') {
+    if (!isLetterAuthor(l, employeeId ?? undefined)) return false;
+    return ['draft', 'pending', 'pending_agreement', 'returned', 'signed'].includes(status);
+  }
+  if (type === 'business_trip') {
+    const owner = isLetterAuthor(l, employeeId ?? undefined);
+    if (!owner && !isBranchHr(user, l.organization_branch_id)) return false;
+    return ['draft', 'pending', 'signed'].includes(status);
+  }
+  return false;
+}
+
 export function letterStatusMeta(l: Letter): { label: string; kind: StatusKind } {
   if (isLetterRejected(l)) return { label: i18n.t('status.letterRejected'), kind: 'error' };
   // Report-stage statuses (business_trip, OLD flow) come AFTER registration, so a
   // report_* trip already has is_stamped=true — check these BEFORE the
   // is_stamped→registered fallthrough or they'd all read "registered".
   switch (l.status) {
-    // management_approved is dual-meaning: OLD flow = arrived / awaiting report;
-    // NEW flow = awaiting the leadership approve-trip. Show the right label so a
-    // leader doesn't see "awaiting report" on a trip they must approve.
     case 'management_approved':
-      if (isNewTripFlow(l)) {
-        return { label: i18n.t('status.letterTripLeadershipPending'), kind: 'pending' };
-      }
-      // ESKI oqim: rahbariyat tasdig'idan keyin xodim hali YO'LDA bo'lishi
+      // Rahbariyat tasdig'idan keyin xodim hali YO'LDA bo'lishi
       // mumkin — "hisobot kutilmoqda" faqat KADR/xodim qaytishni tasdiqlagach
       // to'g'ri bo'ladi (web parity 2026-08-19: "Safar davom etmoqda").
       return l.is_trip_confirmed
@@ -386,6 +433,11 @@ export function letterStatusMeta(l: Letter): { label: string; kind: StatusKind }
     // (web parity: the backend labels them differently).
     case 'registered_pending_rahbar':
       return { label: i18n.t('status.letterTripLeadershipPending'), kind: 'pending' };
+    // Safar UZAYTIRISH so'rovi rahbariyat qarorini kutmoqda. Bu status
+    // `TRIP_MGMT_APPROVED_STATUSES` va `canDecideExtension` da allaqachon
+    // ishlatilardi, lekin YORLIG'I yo'q edi — umumiy "Kutilmoqda" chiqardi.
+    case 'extension_review':
+      return { label: i18n.t('status.letterTripExtensionReview'), kind: 'pending' };
     case 'report_guvohnoma_review':
       return { label: i18n.t('status.letterTripGuvohnomaReview'), kind: 'pending' };
     case 'report_submitted': return { label: i18n.t('status.letterReportSubmitted'), kind: 'info' };

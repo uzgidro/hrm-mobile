@@ -4,10 +4,13 @@ import {
   LETTER_CREATE, LETTER_SIGN, LETTER_REJECT, LETTER_UPLOAD_ATTACHMENT,
   LETTER_SUBMIT_REPORT, LETTER_RESET_REPORT, LETTER_UPLOAD_REPORT,
   LETTER_CONFIRM_RETURN, LETTER_SELF_CONFIRM_RETURN, LETTER_RETURN_DATE, LETTER_SUBMIT_TRIP,
-  LETTER_APPROVE_TRIP, LETTER_APPROVE_TRIP_REGISTRATION,
+  LETTER_APPROVE_TRIP_REGISTRATION,
   LETTER_APPROVE_REPORT, LETTER_APPROVE_GUVOHNOMA,
   LETTER_CONFIRM_REGISTRATION,
   LETTER_AGREE, LETTER_DISAGREE, LETTER_SUBMIT_AGREEMENT, LETTER_SEND_TO_REGISTRY,
+  LETTER_RETURN, LETTER_RETURN_REPORT, LETTER_CANCEL_TRIP, LETTER_DETAIL,
+  LETTER_EXTEND_TRIP, LETTER_APPROVE_EXTENSION, LETTER_REJECT_EXTENSION,
+  LETTER_BASIS_DECREE,
 } from '@/api/urls';
 import type { PickedFile } from '@/components/AttachmentField';
 import { letterKeys } from './queries';
@@ -34,6 +37,47 @@ export function rejectLetter(id: number): Promise<unknown> {
 // letter_type); the create screen assembles it. We keep it as a record so no
 // field is dropped.
 export type CreateLetterPayload = Record<string, unknown>;
+
+// ── Tahrirlash (PATCH /letters/{id}) ─────────────────────────────────────────
+// Mobilда hujjatni TAHRIRLASH umuman yo'q edi (webda "Tahrirlash" tugmasi bor):
+// qaytarilgan bildirgi/arizani yoki yuborilmagan safarni telefondan tuzatib
+// bo'lmasdi. Backend oqim maydonlarini (status/is_stamped/letter_number/…)
+// PATCH orqali qabul QILMAYDI — faqat forma maydonlari yuboriladi.
+export async function updateLetter(
+  id: number,
+  payload: CreateLetterPayload,
+  files: PickedFile[] = [],
+  onFilesError?: () => void
+): Promise<number> {
+  await apiClient.patch(LETTER_DETAIL(id), payload);
+  if (files.length) {
+    const f = files[0];
+    const fd = new FormData();
+    fd.append('file', {
+      uri: f.uri,
+      name: f.name,
+      type: f.mimeType || 'application/octet-stream',
+    } as unknown as Blob);
+    try {
+      await apiClient.post(LETTER_UPLOAD_ATTACHMENT(id), fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+    } catch {
+      onFilesError?.();
+    }
+  }
+  return id;
+}
+
+export function useUpdateLetter() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (args: {
+      id: number; payload: CreateLetterPayload; files?: PickedFile[]; onFilesError?: () => void;
+    }) => updateLetter(args.id, args.payload, args.files, args.onFilesError),
+    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+  });
+}
 
 // Creates the letter, then (best-effort) uploads a single attachment as
 // multipart to the upload-attachment endpoint — preserving the old screen's
@@ -174,18 +218,23 @@ export function useConfirmReturn(id: number) {
 
 // ── Xodimning O'ZI safarni yakunlashi (Face ID) ───────────────────────────────
 // KADR "Keldi" tugmasining xodim tomonidagi juftligi (backend 2026-08-19).
-// TANASIZ POST: qaytish sanasini SERVER o'zi qo'yadi — u xodim o'z filiali
-// turniketidan (Face ID) o'tgan sana. Mijoz sana yubormaydi (yuborsa ham
-// e'tiborga olinmaydi), shu bois "hali qaytmasdan yakunlash" mumkin emas.
-// Server sharti bajarilmasa 400 `face_id_required` qaytadi.
-export function selfConfirmReturn(id: number): Promise<unknown> {
-  return apiClient.post(LETTER_SELF_CONFIRM_RETURN(id), {}).then((r) => r.data);
+// ODATDA TANASIZ POST: qaytish sanasini SERVER o'zi qo'yadi — u xodim o'z
+// filiali turniketidan (Face ID) o'tgan sana; mijoz yuborgan sana e'tiborga
+// OLINMAYDI. Server sharti bajarilmasa 400 `face_id_required` qaytadi.
+//
+// ISTISNO (backend 2026-08-21): SODDALASHTIRILGAN tartibdagi xodim (rais va
+// yordamchilari) turniketdan o'tmasligi mumkin — u holda `self_finish_date`
+// bo'sh keladi va sanani XODIMNING O'ZI belgilaydi. Faqat SHU holatda sana
+// yuboriladi (web'dagi bilan bir xil qoida).
+export function selfConfirmReturn(id: number, returnDate?: string | null): Promise<unknown> {
+  const body = returnDate ? { return_date: returnDate } : {};
+  return apiClient.post(LETTER_SELF_CONFIRM_RETURN(id), body).then((r) => r.data);
 }
 
 export function useSelfConfirmReturn(id: number) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: () => selfConfirmReturn(id),
+    mutationFn: (returnDate?: string | null) => selfConfirmReturn(id, returnDate),
     onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
   });
 }
@@ -301,9 +350,6 @@ export function useSubmitTrip(id: number) {
 // Bare POSTs, no body. Whether the current user may call each is decided by the
 // backend and surfaced as letter.available_actions.can_approve_* (see tripStatus)
 // — the client only shows the button; the backend still 403s on every call.
-export function approveTrip(id: number): Promise<unknown> {
-  return apiClient.post(LETTER_APPROVE_TRIP(id)).then((r) => r.data);
-}
 
 // Devonxona ro'yxatga olgandan keyingi RAHBAR tasdig'i
 // (registered_pending_rahbar → management_approved). Backend ruxsatni
@@ -320,13 +366,6 @@ export function approveGuvohnoma(id: number): Promise<unknown> {
   return apiClient.post(LETTER_APPROVE_GUVOHNOMA(id)).then((r) => r.data);
 }
 
-export function useApproveTrip(id: number) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: () => approveTrip(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
-  });
-}
 export function useApproveReport(id: number) {
   const qc = useQueryClient();
   return useMutation({
@@ -338,6 +377,120 @@ export function useApproveGuvohnoma(id: number) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: () => approveGuvohnoma(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+  });
+}
+
+// ── DEVONXONA / KADR amallari ────────────────────────────────────────────────
+// Bularning uchtasi ham mobilда umuman yo'q edi (webda tugmalari bor):
+// devonxona hujjatni ham, hisobotni ham qaytara olmasdi va hujjatni o'chira
+// olmasdi; KADR esa safarni bekor qila olmasdi.
+
+/** Devonxona hujjatni yaratuvchiga QAYTARADI — sabab MAJBURIY (backend min_length=1). */
+export function returnLetter(id: number, reason: string): Promise<unknown> {
+  return apiClient.post(LETTER_RETURN(id), { reason }).then((r) => r.data);
+}
+
+/** Devonxona safar HISOBOTINI qaytaradi — sabab MAJBURIY. */
+export function returnReport(id: number, reason: string): Promise<unknown> {
+  return apiClient.post(LETTER_RETURN_REPORT(id), { reason }).then((r) => r.data);
+}
+
+/** KADR safarni BEKOR qiladi — sabab IXTIYORIY (bo'sh izoh yuborilmaydi). */
+export function cancelTrip(id: number, reason?: string | null): Promise<unknown> {
+  const trimmed = (reason ?? '').trim();
+  return apiClient.post(LETTER_CANCEL_TRIP(id), trimmed ? { reason: trimmed } : {}).then((r) => r.data);
+}
+
+/** Devonxona hujjatni ro'yxatdan O'CHIRADI (har bosqichda). */
+export function deleteLetter(id: number): Promise<unknown> {
+  return apiClient.delete(LETTER_DETAIL(id)).then((r) => r.data);
+}
+
+export function useReturnLetter(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (reason: string) => returnLetter(id, reason),
+    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+  });
+}
+
+export function useReturnReport(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (reason: string) => returnReport(id, reason),
+    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+  });
+}
+
+export function useCancelTrip(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (reason?: string | null) => cancelTrip(id, reason),
+    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+  });
+}
+
+export function useDeleteLetter(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => deleteLetter(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+  });
+}
+
+
+// ── Safarni UZAYTIRISH ───────────────────────────────────────────────────────
+
+/** KADR yangi QAYTISH sanasini so'raydi (izoh ixtiyoriy) → extension_review. */
+export function extendTrip(id: number, arrivalDate: string, note?: string | null): Promise<unknown> {
+  const body: Record<string, unknown> = { arrival_date: arrivalDate };
+  const trimmed = (note ?? '').trim();
+  if (trimmed) body.note = trimmed;
+  return apiClient.post(LETTER_EXTEND_TRIP(id), body).then((r) => r.data);
+}
+
+/** Rahbariyat uzaytirishni tasdiqlaydi / rad etadi (tanasiz POST). */
+export function decideExtension(id: number, approve: boolean): Promise<unknown> {
+  const url = approve ? LETTER_APPROVE_EXTENSION(id) : LETTER_REJECT_EXTENSION(id);
+  return apiClient.post(url).then((r) => r.data);
+}
+
+export function useExtendTrip(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (args: { arrivalDate: string; note?: string | null }) =>
+      extendTrip(id, args.arrivalDate, args.note),
+    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+  });
+}
+
+export function useDecideExtension(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (approve: boolean) => decideExtension(id, approve),
+    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+  });
+}
+
+
+// ── ASOS BUYRUQ (KADR) ───────────────────────────────────────────────────────
+// Guvohnomadagi "Asos:" qatori. Ikkala maydon ham MAJBURIY (backend schemasi
+// `basis_decree_number: str`, `basis_decree_date: date`).
+export function setBasisDecree(id: number, numberValue: string, dateIso: string): Promise<unknown> {
+  return apiClient
+    .post(LETTER_BASIS_DECREE(id), {
+      basis_decree_number: numberValue.trim(),
+      basis_decree_date: dateIso,
+    })
+    .then((r) => r.data);
+}
+
+export function useSetBasisDecree(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (args: { number: string; date: string }) =>
+      setBasisDecree(id, args.number, args.date),
     onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
   });
 }

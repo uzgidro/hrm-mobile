@@ -14,7 +14,6 @@ import {
   getSigningTimeline,
   letterStatusMeta,
   statusColor,
-  isNewTripFlow,
   canConfirmTripReturn,
   canSubmitReport,
   canResetReport,
@@ -25,6 +24,9 @@ import {
   canSendAgreementLetter,
   letterNeedsMyAction,
   isMyLetter,
+  canEditLetter,
+  letterDisplayNumber,
+  isLetterUnseen,
 } from '../letterStatus';
 import { statusColor as orderStatusColor } from '../orderStatus';
 import i18n from '../../i18n';
@@ -303,15 +305,6 @@ describe('canSignLetter', () => {
       // OLD flow with a non-pending status → no sign.
       expect(canSignLetter(letter({ ...base, status: 'management_approved' }), 1)).toBe(false);
     });
-    it('main does NOT sign a NEW-flow trip even at pending (backend 400s)', () => {
-      const l = letter({
-        letter_type: 'business_trip',
-        status: 'pending',
-        flow_version: 2,
-        assigned_signers: [{ signer_type: 'main', employee_id: 1 }],
-      });
-      expect(canSignLetter(l, 1)).toBe(false);
-    });
     it('other signer types can never sign a trip', () => {
       const l = letter({
         letter_type: 'business_trip',
@@ -558,8 +551,6 @@ describe('letterStatusMeta', () => {
       .toBe('Safar davom etmoqda');
     expect(letterStatusMeta(letter({ letter_type: 'business_trip', status: 'management_approved', is_trip_confirmed: true })).label)
       .toBe('Hisobot kutilmoqda');
-    expect(letterStatusMeta(letter({ letter_type: 'business_trip', status: 'management_approved', flow_version: 2 })).label)
-      .toBe("Rahbar tasdig'i kutilmoqda");
   });
 
   it('report_guvohnoma_review is its own guvohnoma-approval badge (web parity)', () => {
@@ -598,23 +589,6 @@ describe('letterStatusMeta', () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// isNewTripFlow — flow_version 2 = NEW (main branch, NO report stage);
-// 1 / null / undefined = OLD (report stage exists). Mirrors backend
-// _is_new_trip_flow.
-// ─────────────────────────────────────────────────────────────────────────────
-describe('isNewTripFlow', () => {
-  it('true only for a business_trip with flow_version === 2', () => {
-    expect(isNewTripFlow(letter({ letter_type: 'business_trip', flow_version: 2 }))).toBe(true);
-  });
-  it('false for old flow (1) and unset (null/undefined)', () => {
-    expect(isNewTripFlow(letter({ letter_type: 'business_trip', flow_version: 1 }))).toBe(false);
-    expect(isNewTripFlow(letter({ letter_type: 'business_trip', flow_version: null }))).toBe(false);
-    expect(isNewTripFlow(letter({ letter_type: 'business_trip' }))).toBe(false);
-  });
-  it('false for a non-trip letter even with flow_version 2 (backend guards on type)', () => {
-    expect(isNewTripFlow(letter({ letter_type: 'application', flow_version: 2 }))).toBe(false);
-  });
-});
 
 // ── KADR "Keldi" stage gate (web canConfirmTripReturn parity, helpers.js:504) ──
 // OLD-flow trip only; confirm-return is blocked by the backend (400
@@ -622,7 +596,7 @@ describe('isNewTripFlow', () => {
 // status is still in the pre-registration set. The button must not show then.
 describe('canConfirmTripReturn', () => {
   const oldTrip = (status: string, extra: Partial<Letter> = {}): Letter =>
-    letter({ letter_type: 'business_trip', flow_version: 1, status, ...extra });
+    letter({ letter_type: 'business_trip', status, ...extra });
 
   it('false in every pre-registration / terminal status', () => {
     for (const s of ['draft', 'pending', 'signed', 'pending_registration',
@@ -637,10 +611,6 @@ describe('canConfirmTripReturn', () => {
 
   it('false when the return is already confirmed', () => {
     expect(canConfirmTripReturn(oldTrip('management_approved', { is_trip_confirmed: true }))).toBe(false);
-  });
-
-  it('false for a NEW-flow trip (arrival goes through hr-arrive, not confirm-return)', () => {
-    expect(canConfirmTripReturn(letter({ letter_type: 'business_trip', flow_version: 2, status: 'management_approved' }))).toBe(false);
   });
 
   it('false for a non-trip letter', () => {
@@ -672,11 +642,6 @@ describe('canSubmitReport', () => {
   it('FALSE on management_approved when arrival is not confirmed', () => {
     expect(canSubmitReport(trip({ status: 'management_approved', is_trip_confirmed: false }), ME)).toBe(false);
     expect(canSubmitReport(trip({ status: 'management_approved' }), ME)).toBe(false);
-  });
-  it('false for the new flow (flow_version 2)', () => {
-    expect(
-      canSubmitReport(trip({ status: 'management_approved', is_trip_confirmed: true, flow_version: 2 }), ME)
-    ).toBe(false);
   });
   it('false for a non-author, past-stage statuses, non-trips and unknown me', () => {
     expect(canSubmitReport(trip({ status: 'report_submitted', creator_employee_id: 999 }), ME)).toBe(false);
@@ -778,5 +743,130 @@ describe('isMyLetter', () => {
   it('begona hujjatda va xodim id\'siz FALSE', () => {
     expect(isMyLetter({ id: 5, letter_type: 'bildirgi', creator_employee_id: 9 } as Letter, 7)).toBe(false);
     expect(isMyLetter({ id: 6, letter_type: 'bildirgi', creator_employee_id: 7 } as Letter, undefined)).toBe(false);
+  });
+});
+
+
+// ── Tahrirlash / ko'rsatiladigan raqam / "yangi" belgisi ─────────────────────
+
+describe('canEditLetter (backend update_letter bilan 1:1)', () => {
+  const masterAdmin = { id: 1, type: 'master-admin' } as unknown as User;
+  const hrOf = (branchId: number): User => ({
+    id: 2,
+    type: 'employee',
+    employee: {
+      id: 50,
+      is_multi_org_user: true,
+      multi_org_employee_role: 'hr',
+      organization_branches: [{ id: branchId, name: 'B' }],
+    },
+  }) as unknown as User;
+
+  it('bildirgi/ariza: muallif tahrirlaydi — DEVONXONAGA ketguncha', () => {
+    for (const status of ['draft', 'pending', 'pending_agreement', 'returned', 'signed']) {
+      expect(canEditLetter(letter({ letter_type: 'application', status, creator_employee_id: 7 }), 7)).toBe(true);
+    }
+    // Devonxonaga ketgach — faqat master-admin.
+    for (const status of ['pending_registration', 'review', 'registered']) {
+      const l = letter({ letter_type: 'application', status, creator_employee_id: 7 });
+      expect(canEditLetter(l, 7)).toBe(false);
+      expect(canEditLetter(l, 7, masterAdmin)).toBe(true);
+    }
+  });
+
+  it('bildirgi/ariza: begona odam tahrirlay olmaydi', () => {
+    expect(canEditLetter(letter({ letter_type: 'application', status: 'draft', creator_employee_id: 7 }), 99)).toBe(false);
+  });
+
+  it('xizmat safari: muallif yoki FILIAL KADR\'i, TASDIQLANGUNCHA', () => {
+    const base = { letter_type: 'business_trip', creator_employee_id: 7, organization_branch_id: 4 };
+    for (const status of ['draft', 'pending', 'signed']) {
+      expect(canEditLetter(letter({ ...base, status }), 7)).toBe(true);
+      expect(canEditLetter(letter({ ...base, status }), 99, hrOf(4))).toBe(true);
+      // Boshqa filial KADR'i — YO'Q.
+      expect(canEditLetter(letter({ ...base, status }), 99, hrOf(77))).toBe(false);
+    }
+    // Tasdiqlangach yopiladi.
+    for (const status of ['management_approved', 'report_submitted', 'report_approved']) {
+      expect(canEditLetter(letter({ ...base, status }), 7)).toBe(false);
+    }
+  });
+});
+
+describe('letterDisplayNumber (web displayNumber parity)', () => {
+  it('safarda AVVAL decree_number, bo\'lmasa letter_number', () => {
+    expect(letterDisplayNumber(letter({ letter_type: 'business_trip', decree_number: '12-A', letter_number: '99' })))
+      .toBe('12-A');
+    expect(letterDisplayNumber(letter({ letter_type: 'business_trip', letter_number: '99' }))).toBe('99');
+  });
+
+  it('boshqa turlarда letter_number', () => {
+    expect(letterDisplayNumber(letter({ letter_type: 'application', decree_number: '12-A', letter_number: '99' })))
+      .toBe('99');
+    expect(letterDisplayNumber(letter({ letter_type: 'application' }))).toBeNull();
+  });
+});
+
+describe('isLetterUnseen (web rowIsUnseen parity)', () => {
+  const devonxona = {
+    id: 9,
+    type: 'employee',
+    employee: { id: 9 },
+    chancellery_branch_ids: [3],
+  } as unknown as User;
+
+  it('amal kutayotgan hujjat DOIM yangi', () => {
+    expect(isLetterUnseen(letter({ action_required: true }), 7)).toBe(true);
+  });
+
+  it('amal talab qilmasa ham KO\'RILMAGAN hujjat yangi (avval belgilanmasdi)', () => {
+    expect(isLetterUnseen(letter({ is_unseen: true }), 7)).toBe(true);
+  });
+
+  it('ko\'rilgan va amal kutmaydigan hujjat — yangi EMAS', () => {
+    expect(isLetterUnseen(letter({ action_required: false, is_unseen: false }), 7)).toBe(false);
+  });
+
+  it('DEVONXONA uchun manba `chancellery_seen` (umumiy bayroq), `is_unseen` EMAS', () => {
+    // Devonxona ochgan: chancellery_seen=true → yangi emas, is_unseen bo'lsa ham.
+    expect(isLetterUnseen(letter({ chancellery_seen: true, is_unseen: true }), 9, devonxona)).toBe(false);
+    // Hech kim ochmagan → yangi.
+    expect(isLetterUnseen(letter({ chancellery_seen: false, is_unseen: false }), 9, devonxona)).toBe(true);
+  });
+});
+
+// UZAYTIRISH SO'ROVI (`extension_review`) — statusning O'Z yorlig'i bo'lishi shart.
+//
+// Bu status kodda ALLAQACHON ishlatilardi (`TRIP_MGMT_APPROVED_STATUSES`,
+// `canDecideExtension`), lekin `letterStatusMeta` da `case` yo'q edi — natijada
+// u umumiy fallback'ga tushib "Kutilmoqda" bo'lib ko'rinardi va foydalanuvchi
+// hujjat AYNAN uzaytirish qarorini kutayotganini bilmasdi.
+describe('letterStatusMeta — extension_review', () => {
+  it('uzaytirish so\'rovi o\'z yorlig\'ini oladi (umumiy "kutilmoqda" EMAS)', () => {
+    const trip = { id: 1, letter_type: 'business_trip', status: 'extension_review' } as never;
+    const generic = { id: 2, letter_type: 'business_trip', status: 'some_unknown_status' } as never;
+    const meta = letterStatusMeta(trip);
+    expect(meta.kind).toBe('pending');
+    // Asosiy tekshiruv: fallback yorlig'idan FARQ qilishi kerak.
+    expect(meta.label).not.toBe(letterStatusMeta(generic).label);
+  });
+});
+
+// `flow_version` backenddan BUTUNLAY olib tashlangan (migratsiya
+// `wf1dropflow2ver3` ustunni DROP qildi, sxemalardan ham chiqarilgan).
+// Demak endi YAGONA oqim bor — "eski" oqim. Bu testlar shu xulqni qulflaydi:
+// maydon KELMASA ham safar eski oqim qoidalari bo'yicha ishlashi kerak.
+describe('safar oqimi — flow_version olib tashlangandan keyin', () => {
+  const trip = (extra: object = {}) =>
+    ({ id: 1, letter_type: 'business_trip', ...extra }) as never;
+
+  it('management_approved + qaytish tasdiqlanmagan = "safar davom etmoqda"', () => {
+    const meta = letterStatusMeta(trip({ status: 'management_approved', is_trip_confirmed: false }));
+    expect(meta.label).toBe(i18n.t('status.letterTripOngoing'));
+  });
+
+  it('management_approved + qaytish tasdiqlangan = keldi (hisobot bosqichi)', () => {
+    const meta = letterStatusMeta(trip({ status: 'management_approved', is_trip_confirmed: true }));
+    expect(meta.label).toBe(i18n.t('status.letterTripArrived'));
   });
 });

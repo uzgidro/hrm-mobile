@@ -4,7 +4,7 @@ import {
   ScrollView, ActivityIndicator, Alert,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
@@ -20,8 +20,9 @@ import { ScreenHeader } from '@/components/ScreenHeader';
 import { useBreakpoint } from '@/utils/responsive';
 import {
   orderCategoriesQuery, orderEmployeesQuery, orderDepartmentsQuery, orderLeadershipQuery,
+  orderDetailQuery,
 } from '../api/queries';
-import { useCreateOrder } from '../api/mutations';
+import { useCreateOrder, useUpdateOrder } from '../api/mutations';
 import { Field, Selector } from '../components/FormParts';
 import { ApproversEditor, type Approver } from '../components/ApproversEditor';
 import { OrderPickers, type PickerKind } from '../components/OrderPickers';
@@ -29,7 +30,13 @@ import { OrderPickers, type PickerKind } from '../components/OrderPickers';
 export default function CreateOrderScreen() {
   const { user } = useAuthStore();
   const employee = user?.employee;
+  // TAHRIR rejimi: `id` berilsa mavjud buyruq yuklanadi va POST o'rniga PATCH
+  // yuboriladi (web AddOrderDrawer `editId` bilan bir xil).
+  const { id: editIdParam } = useLocalSearchParams<{ id?: string }>();
+  const editId = editIdParam ? Number(editIdParam) : null;
+  const { data: editing } = useQuery({ ...orderDetailQuery(editId ?? 0), enabled: !!editId });
   const branchId =
+    editing?.organization_branch_id ??
     employee?.organization_branches?.[0]?.id ??
     employee?.department?.organization_branch_id;
   const hr = isHR(user);
@@ -39,6 +46,7 @@ export default function CreateOrderScreen() {
   const styles = useThemedStyles(makeStyles);
   const { t } = useTranslation();
   const createMutation = useCreateOrder();
+  const updateMutation = useUpdateOrder();
   const bp = useBreakpoint();
   const twoCol = bp.isTablet;
 
@@ -53,6 +61,37 @@ export default function CreateOrderScreen() {
   const [saving, setSaving] = useState(false);
   const [picker, setPicker] = useState<PickerKind>(null);
   const [approverPickerIndex, setApproverPickerIndex] = useState<number | null>(null);
+
+  // Tahrir rejimida formani BIR MARTA to'ldiramiz (keyingi refetch kiritilayotgan
+  // matnni bosib ketmasin). RENDER PAYTIDA moslash — React'ning "adjusting state
+  // when a prop changes" naqshi (effekt ichida setState ortiqcha kaskad render
+  // beradi: react-hooks/set-state-in-effect).
+  const [prefilledFor, setPrefilledFor] = useState<number | null>(null);
+  if (editing && prefilledFor !== editing.id) {
+    setPrefilledFor(editing.id);
+    setCategoryId(editing.category_id ?? null);
+    setSummary(editing.summary ?? '');
+    setDescription(editing.description ?? '');
+    setSubmitterId(editing.submitter_id ?? null);
+    const signers = editing.assigned_signers ?? [];
+    setLeadershipId(signers.find((sg) => sg.signer_type === 'leadership')?.employee_id ?? null);
+    setApprovers(
+      signers
+        .filter((sg) => sg.signer_type === 'approver')
+        .map((sg) => ({
+          employee_id: sg.employee_id ?? sg.employee?.id ?? 0,
+          can_edit_document: sg.can_edit_document ?? false,
+        }))
+        .filter((a) => a.employee_id),
+    );
+    setFamiliarizerDeptIds(
+      Array.from(new Set(
+        (editing.familiarizers ?? [])
+          .map((f) => f.employee?.department?.id)
+          .filter((v): v is number => v != null),
+      )),
+    );
+  }
 
   const pickFiles = async () => {
     const res = await DocumentPicker.getDocumentAsync({ multiple: true, copyToCacheDirectory: true });
@@ -108,17 +147,26 @@ export default function CreateOrderScreen() {
       submitter_id: submitterId || null,
       familiarizer_department_ids: familiarizerDeptIds,
       assigned_signers,
-      organization_branch_id: branchId,
     };
+
+    const onFilesError = () =>
+      Alert.alert(t('orders.filesPartialTitle'), t('orders.filesPartialMessage'));
 
     setSaving(true);
     try {
-      const orderId = await createMutation.mutateAsync({
-        payload,
-        files,
-        onFilesError: () => Alert.alert(t('orders.filesPartialTitle'), t('orders.filesPartialMessage')),
-      });
-      router.replace({ pathname: '/order-detail', params: { id: String(orderId) } });
+      if (editId) {
+        // Tahrirda EGALIK o'zgarmaydi — filial hujjatniki bo'lib qoladi
+        // (web ham editда `organization_branch_id` yubormaydi).
+        await updateMutation.mutateAsync({ id: editId, payload, files, onFilesError });
+        router.back();
+      } else {
+        const orderId = await createMutation.mutateAsync({
+          payload: { ...payload, organization_branch_id: branchId },
+          files,
+          onFilesError,
+        });
+        router.replace({ pathname: '/order-detail', params: { id: String(orderId) } });
+      }
     } catch (err) {
       Alert.alert(t('common.errorTitle'), getApiErrorMessage(err, t('errors.generic')));
     } finally {
@@ -130,7 +178,7 @@ export default function CreateOrderScreen() {
   return (
     <Screen edges={['top', 'bottom']} maxWidth={640}>
       <ScreenHeader
-        title={t('orders.createTitle')}
+        title={editId ? t('orders.editTitle') : t('orders.createTitle')}
         subtitle={hr ? t('orders.hrSubtitle') : t('orders.employeeSubtitle')}
         right={
           <TouchableOpacity
@@ -139,7 +187,7 @@ export default function CreateOrderScreen() {
             disabled={saving}
             activeOpacity={0.8}
           >
-            {saving ? <ActivityIndicator size="small" color={colors.onPrimary} /> : <Text style={styles.createBtnText}>{t('common.create')}</Text>}
+            {saving ? <ActivityIndicator size="small" color={colors.onPrimary} /> : <Text style={styles.createBtnText}>{editId ? t('common.save') : t('common.create')}</Text>}
           </TouchableOpacity>
         }
       />
