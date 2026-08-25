@@ -10,6 +10,7 @@ import i18n from '../src/i18n';
 import { useAuthStore } from '../src/store/authStore';
 import { useLockStore } from '../src/store/lockStore';
 import { createAppQueryClient } from '../src/lib/queryClient';
+import { wireQueryFocusToAppState } from '../src/lib/queryFocus';
 import { ThemeProvider, useTheme } from '../src/theme/ThemeProvider';
 import { addNotificationListeners } from '../src/services/notifications';
 import { useAuthBootstrap } from '../src/auth/useAuthBootstrap';
@@ -39,6 +40,12 @@ function ThemedNavigation() {
   // Re-lock the app after it has spent RELOCK_AFTER_MS in the background.
   // The hook self-guards (web / non-'unlocked'), so it needs no conditions here.
   useAppLock();
+
+  // React Query's "focus" notion is wired to visibilitychange on the web and to
+  // NOTHING in React Native — so every refetchInterval keeps hitting the network
+  // while the app sits in the background. Wire it to AppState so polling pauses
+  // when the app is backgrounded (battery + mobile data for field staff).
+  useEffect(() => wireQueryFocusToAppState(), []);
 
   // The mandatory PIN gate. Native-only (SecureStore + the lock store report
   // 'unlocked' on web), rendered as a full-screen sibling of the navigator so

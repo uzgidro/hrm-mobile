@@ -143,11 +143,17 @@ describe('OrdersListScreen', () => {
     );
     expect(await findByText('First decree')).toBeTruthy(); // master row still listed
 
-    // Let the newly-mounted detail pane's background queries (employees list
-    // for the familiarizer picker) settle before the test tears down, so their
-    // resolution doesn't land as an unwrapped state update after this test ends.
+    // Detail paneli montaj bo'lgach uning fon so'rovi (buyruq tafsiloti)
+    // tugashini kutamiz — aks holda javob test tugagandan KEYIN keladi va
+    // "unwrapped state update" ogohlantirishi chiqadi.
+    //
+    // Ilgari bu yerda `/employees` so'rovi kutilardi: `OrderDetailView`
+    // tanishuvchilar pikeri uchun BUTUN filial reestrini shartsiz yuklardi.
+    // Endi u `enabled: canAssignFamiliarizers` bilan gated, va bu testdagi
+    // foydalanuvchi — oddiy xodim (`type: 'employee'`), ya'ni so'rov UMUMAN
+    // ketmaydi. Shuning uchun tafsilot so'rovini kutamiz.
     await waitFor(
-      () => expect(mock.history.get.some((r) => /employees/.test(r.url ?? ''))).toBe(true),
+      () => expect(mock.history.get.some((r) => /order-acts\/2/.test(r.url ?? ''))).toBe(true),
       { timeout: 10000 }
     );
   }, 15000);

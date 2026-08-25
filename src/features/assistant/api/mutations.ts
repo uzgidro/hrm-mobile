@@ -1,4 +1,3 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetch as expoFetch } from 'expo/fetch';
 import { apiClient } from '@/api/client';
 import { getAccessToken } from '@/api/authToken';
@@ -12,7 +11,6 @@ import {
 } from '@/api/urls';
 import type { LlmChatResponse, LlmLargeListPage, LlmSession } from '@/types';
 import { parseStreamChunk } from '../stream';
-import { assistantKeys } from './queries';
 
 // ── Pure request functions (unit-tested with axios-mock-adapter) ─────────────
 
@@ -130,18 +128,3 @@ export async function streamAssistantMessage(
 
 // ── Hooks ─────────────────────────────────────────────────────────────────────
 
-export function useCreateAssistantSession() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (name?: string) => createAssistantSession(name),
-    onSuccess: () => qc.invalidateQueries({ queryKey: assistantKeys.all }),
-  });
-}
-
-export function useDeleteAssistantSession() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (sessionId: number) => deleteAssistantSession(sessionId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: assistantKeys.all }),
-  });
-}

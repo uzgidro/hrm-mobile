@@ -157,22 +157,6 @@ export function uploadReport(id: number, file: PickedFile): Promise<unknown> {
 // `useLetterActions` for its busy/Alert orchestration; these remain available
 // for callers that only need fire-and-invalidate.
 
-export function useSignLetter(id: number) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: () => signLetter(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
-  });
-}
-
-export function useRejectLetter(id: number) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: () => rejectLetter(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
-  });
-}
-
 export function useCreateLetter() {
   const qc = useQueryClient();
   return useMutation({
@@ -364,21 +348,6 @@ export function approveReport(id: number): Promise<unknown> {
 }
 export function approveGuvohnoma(id: number): Promise<unknown> {
   return apiClient.post(LETTER_APPROVE_GUVOHNOMA(id)).then((r) => r.data);
-}
-
-export function useApproveReport(id: number) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: () => approveReport(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
-  });
-}
-export function useApproveGuvohnoma(id: number) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: () => approveGuvohnoma(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
-  });
 }
 
 // ── DEVONXONA / KADR amallari ────────────────────────────────────────────────

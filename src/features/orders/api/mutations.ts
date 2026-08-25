@@ -164,66 +164,10 @@ export async function updateOrder(
 // uses `useDecreeActions` instead of these for its busy/Alert orchestration;
 // these remain available for callers that only need fire-and-invalidate.
 
-export function useSubmitDecree(id: number) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: () => submitDecree(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: orderKeys.all }),
-  });
-}
-
-export function useApproveDecree(id: number) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: () => approveDecree(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: orderKeys.all }),
-  });
-}
-
-export function useRejectDecree(id: number) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (comment: string) => rejectDecree(id, comment),
-    onSuccess: () => qc.invalidateQueries({ queryKey: orderKeys.all }),
-  });
-}
-
-export function useResubmitDecree(id: number) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: () => resubmitDecree(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: orderKeys.all }),
-  });
-}
-
-export function useForwardDecree(id: number) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: () => forwardDecree(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: orderKeys.all }),
-  });
-}
-
-export function useAcknowledgeDecree(id: number) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: () => acknowledgeDecree(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: orderKeys.all }),
-  });
-}
-
 export function useAssignFamiliarizers(id: number) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (employeeIds: number[]) => assignFamiliarizers(id, employeeIds),
-    onSuccess: () => qc.invalidateQueries({ queryKey: orderKeys.all }),
-  });
-}
-
-export function useRegisterDecree(id: number) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (actNumber?: number) => registerDecree(id, actNumber),
     onSuccess: () => qc.invalidateQueries({ queryKey: orderKeys.all }),
   });
 }
