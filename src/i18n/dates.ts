@@ -19,10 +19,6 @@ export function weekdayName(dayIndex: number): string {
   return dayjs().localeData().weekdays()[dayIndex] ?? '';
 }
 
-export function monthNameShort(monthIndex: number): string {
-  return dayjs().localeData().monthsShort()[monthIndex] ?? '';
-}
-
 export function weekdayNameShort(dayIndex: number): string {
   return dayjs().localeData().weekdaysShort()[dayIndex] ?? '';
 }

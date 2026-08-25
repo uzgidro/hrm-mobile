@@ -52,9 +52,21 @@ export function OrderDetailView({ id, embedded = false }: { id: number; embedded
 
   const assignFam = useAssignFamiliarizers(orderId);
   // Employees to pick from — scoped to the order's branch like the create form.
-  const { data: empData, isLoading: empsLoading } = useQuery(
-    orderEmployeesQuery(order?.organization_branch_id),
-  );
+  // `enabled`: the picker is ONLY reachable for master-admin / KADR (see
+  // `canAssignFamiliarizers` below), but this query pulls the WHOLE branch
+  // roster through `fetchAllEmployees` (paged, up to 4 parallel requests).
+  // Without the gate every reader paid for that on every order open — and on a
+  // tablet split-view, on every row click.
+  // Web gate (OrderDetailModal) bilan 1:1: KADR — buyruq `confirmed` bo'lganda,
+  // yoki sayt master-admini (qat'iy `type === 'master-admin'`, ministr EMAS —
+  // backend bu huquqni faqat master-admin hisobiga beradi, `isMasterAdmin`
+  // bo'lsa ministrga backend rad etadigan tugma ko'rinib qolardi).
+  const canAssignFamiliarizers =
+    isSiteMasterAdmin(user) || (isHR(user) && order?.status === 'confirmed');
+  const { data: empData, isLoading: empsLoading } = useQuery({
+    ...orderEmployeesQuery(order?.organization_branch_id),
+    enabled: canAssignFamiliarizers,
+  });
   const empOptions = useMemo<PickerOption[]>(
     () =>
       (empData?.items ?? []).map((e: Employee) => ({
@@ -147,13 +159,6 @@ export function OrderDetailView({ id, embedded = false }: { id: number; embedded
   const submitLabel = decreeSubmitTarget(order) === 'submitter'
     ? t('orders.actionSubmitToSubmitter')
     : t('orders.actionSubmitToApprovers');
-
-  // Assigning familiarizers mirrors the web gate (OrderDetailModal): HR while the
-  // decree is `confirmed`, or a site master-admin (strict `type === 'master-admin'`,
-  // NOT ministr — the backend only grants this to the master-admin account, so
-  // gating on isMasterAdmin would show ministr a button the backend rejects).
-  const canAssignFamiliarizers =
-    isSiteMasterAdmin(user) || (isHR(user) && order.status === 'confirmed');
 
   return renderRoot(
     <>

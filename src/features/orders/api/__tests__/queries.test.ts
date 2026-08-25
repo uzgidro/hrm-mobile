@@ -4,8 +4,12 @@ import {
   ORDER_ACTS, ORDER_ACT_DETAIL, EMPLOYEES_LIST, ORDER_ACT_COMMENTS, ORDER_ACT_HISTORY,
 } from '@/api/urls';
 import {
-  orderKeys, ordersListQuery, orderDetailQuery,
-  orderEmployeesQuery, orderCommentsQuery, orderHistoryQuery,
+  orderKeys,
+  ordersListQuery,
+  orderDetailQuery,
+  orderEmployeesQuery,
+  orderCommentsQuery,
+  orderHistoryQuery,
 } from '../queries';
 
 let mock: MockAdapter;
@@ -95,5 +99,17 @@ describe('izohlar va tahrir tarixi', () => {
   it('id berilmasa so\'rov yubormaydi', () => {
     expect(orderCommentsQuery(0).enabled).toBe(false);
     expect(orderHistoryQuery(0).enabled).toBe(false);
+  });
+});
+
+// Izohlar va matn tarixi imzo zanjiriga kirmaydi — ular `always` bilan har bir
+// montajda so'rov yubormasligi kerak (planshet split-view da bu har bir qator
+// bosilishida 2 ta ortiqcha so'rov edi).
+describe('orderCommentsQuery / orderHistoryQuery — keshlanadi', () => {
+  it('always EMAS, staleTime bor', () => {
+    for (const opts of [orderCommentsQuery(1), orderHistoryQuery(1)]) {
+      expect(opts.refetchOnMount).toBeUndefined();
+      expect(opts.staleTime).toBeGreaterThan(0);
+    }
   });
 });

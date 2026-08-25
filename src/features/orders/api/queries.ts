@@ -43,7 +43,12 @@ export function orderCommentsQuery(id: number) {
     queryFn: () =>
       apiClient.get<OrderActComment[]>(ORDER_ACT_COMMENTS(id)).then((r) => r.data ?? []),
     enabled: !!id,
-    refetchOnMount: 'always',
+    // `refetchOnMount: 'always'` EMAS (avval shunday edi): planshet split-view da
+    // har bir qator bosilganda `OrderDetailView` qayta montaj bo'ladi va bu 60s
+    // global `staleTime` ni chetlab o'tib har safar so'rov yuborardi. Izohlar va
+    // matn tarixi imzo zanjiriga KIRMAYDI, ya'ni bir necha soniyalik eskilik
+    // hech nimani buzmaydi. Ekranda pull-to-refresh bor.
+    staleTime: 30 * 1000,
   });
 }
 
@@ -54,7 +59,7 @@ export function orderHistoryQuery(id: number) {
     queryFn: () =>
       apiClient.get<OrderActHistoryEntry[]>(ORDER_ACT_HISTORY(id)).then((r) => r.data ?? []),
     enabled: !!id,
-    refetchOnMount: 'always',
+    staleTime: 30 * 1000, // izohlar bilan bir xil sabab (yuqoriga qarang)
   });
 }
 
