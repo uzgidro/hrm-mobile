@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, TextInput, Alert, Linking, KeyboardAvoidingView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert, Linking, KeyboardAvoidingView } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
 import dayjs from 'dayjs';
@@ -11,6 +11,7 @@ import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { LoadingView, ErrorState } from '@/components/StateViews';
 import { ScreenHeader } from '@/components/ScreenHeader';
+import { ModalCard } from '@/components/ModalCard';
 import { confirm } from '@/lib/confirm';
 import { getApiErrorMessage } from '@/api/errors';
 import { ticketStatusKey, ticketPriorityKey, canRateTicket } from '@/utils/supportStatus';
@@ -140,37 +141,30 @@ export default function SupportDetailScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      <Modal visible={rateOpen} transparent animationType="fade" onRequestClose={() => setRateOpen(false)}>
-        <View style={styles.overlay}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>{t('support.rateTitle')}</Text>
-            <View style={styles.stars}>
-              {[1, 2, 3, 4, 5].map((n) => (
-                <TouchableOpacity key={n} onPress={() => setRating(n)} hitSlop={6}>
-                  <Icon name={n <= rating ? 'check' : 'close'} size={26} color={n <= rating ? colors.success : colors.textMuted} />
-                </TouchableOpacity>
-              ))}
-            </View>
-            <TextInput
-              style={styles.input}
-              value={note}
-              onChangeText={setNote}
-              placeholder={t('support.rateNotePlaceholder')}
-              placeholderTextColor={colors.textMuted}
-              multiline
-              textAlignVertical="top"
-            />
-            <View style={styles.modalBtns}>
-              <TouchableOpacity style={styles.modalCancel} onPress={() => setRateOpen(false)} activeOpacity={0.8}>
-                <Text style={styles.modalCancelText}>{t('common.cancel')}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.modalSubmit} onPress={submitRate} activeOpacity={0.8}>
-                <Text style={styles.modalSubmitText}>{t('common.confirm')}</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+      <ModalCard
+        visible={rateOpen}
+        title={t('support.rateTitle')}
+        confirmLabel={t('common.confirm')}
+        onClose={() => setRateOpen(false)}
+        onSubmit={submitRate}
+      >
+        <View style={styles.stars}>
+          {[1, 2, 3, 4, 5].map((n) => (
+            <TouchableOpacity key={n} onPress={() => setRating(n)} hitSlop={6}>
+              <Icon name={n <= rating ? 'check' : 'close'} size={26} color={n <= rating ? colors.success : colors.textMuted} />
+            </TouchableOpacity>
+          ))}
         </View>
-      </Modal>
+        <TextInput
+          style={styles.input}
+          value={note}
+          onChangeText={setNote}
+          placeholder={t('support.rateNotePlaceholder')}
+          placeholderTextColor={colors.textMuted}
+          multiline
+          textAlignVertical="top"
+        />
+      </ModalCard>
     </Screen>
   );
 }
@@ -206,14 +200,6 @@ const makeStyles = (c: ThemeColors) =>
     rateBtn: { backgroundColor: c.primary },
     reopenBtn: { backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder },
     rateBtnText: { color: c.onPrimary, fontSize: 14, fontWeight: '700' },
-    overlay: { flex: 1, backgroundColor: c.overlay, justifyContent: 'center', paddingHorizontal: 24 },
-    modalCard: { backgroundColor: c.card, borderRadius: 18, padding: 20, gap: 12 },
-    modalTitle: { fontSize: 16, fontWeight: '800', color: c.text },
     stars: { flexDirection: 'row', gap: 10, justifyContent: 'center' },
     input: { backgroundColor: c.bg, borderRadius: 10, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, color: c.text, minHeight: 60 },
-    modalBtns: { flexDirection: 'row', gap: 10 },
-    modalCancel: { flex: 1, borderRadius: 10, paddingVertical: 12, alignItems: 'center', backgroundColor: c.bg, borderWidth: 1, borderColor: c.cardBorder },
-    modalCancelText: { color: c.text, fontSize: 14, fontWeight: '600' },
-    modalSubmit: { flex: 1, borderRadius: 10, paddingVertical: 12, alignItems: 'center', backgroundColor: c.primary },
-    modalSubmitText: { color: c.onPrimary, fontSize: 14, fontWeight: '700' },
   });

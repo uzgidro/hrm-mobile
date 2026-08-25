@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, ActivityIndicator, Alert,
+  View, Text, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, Alert,
 } from 'react-native';
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ModalCard } from '@/components/ModalCard';
 import type { Letter, LetterSigner } from '@/types';
 import { Icon } from '@/components/Icon';
 import { getApiErrorMessage } from '@/api/errors';
@@ -151,34 +152,27 @@ export function AgreementSection({
         </TouchableOpacity>
       )}
 
-      <Modal visible={modal !== null} transparent animationType="fade" onRequestClose={() => setModal(null)}>
-        <View style={styles.overlay}>
-          <View style={styles.card}>
-            <Text style={styles.modalTitle}>
-              {modal === 'agree' ? t('letters.agree') : t('letters.disagree')}
-            </Text>
-            {/* Izoh MAJBURIY — backend `comment` min_length=1 talab qiladi. */}
-            <Text style={styles.modalLabel}>{t('letters.agreementCommentLabel')}</Text>
-            <TextInput
-              style={styles.input}
-              value={comment}
-              onChangeText={setComment}
-              placeholder={t('letters.agreementCommentPlaceholder')}
-              placeholderTextColor={colors.textMuted}
-              multiline
-              textAlignVertical="top"
-            />
-            <View style={styles.modalBtns}>
-              <TouchableOpacity style={styles.modalCancel} onPress={() => setModal(null)} activeOpacity={0.8}>
-                <Text style={styles.modalCancelText}>{t('common.cancel')}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.modalSubmit} onPress={submitDecision} activeOpacity={0.8} testID="agreement-submit">
-                <Text style={styles.modalSubmitText}>{t('common.confirm')}</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      {/* Izoh MAJBURIY — backend `comment` min_length=1 talab qiladi. Tekshiruv
+          `submitDecision` da Alert orqali qoladi (asl xulq saqlandi). */}
+      <ModalCard
+        visible={modal !== null}
+        title={modal === 'agree' ? t('letters.agree') : t('letters.disagree')}
+        hint={t('letters.agreementCommentLabel')}
+        confirmLabel={t('common.confirm')}
+        onClose={() => setModal(null)}
+        onSubmit={submitDecision}
+        testID="agreement-submit"
+      >
+        <TextInput
+          style={styles.input}
+          value={comment}
+          onChangeText={setComment}
+          placeholder={t('letters.agreementCommentPlaceholder')}
+          placeholderTextColor={colors.textMuted}
+          multiline
+          textAlignVertical="top"
+        />
+      </ModalCard>
     </Section>
   );
 }
@@ -196,14 +190,5 @@ const makeStyles = (c: ThemeColors) =>
     btnAgreeText: { color: c.onPrimary, fontSize: 14, fontWeight: '700' },
     btnDecline: { backgroundColor: c.errorSoft },
     btnDeclineText: { color: c.error, fontSize: 14, fontWeight: '700' },
-    overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center', padding: 20 },
-    card: { width: '100%', backgroundColor: c.card, borderRadius: 16, borderWidth: 1, borderColor: c.cardBorder, padding: 18, gap: 10 },
-    modalTitle: { fontSize: 16, fontWeight: '700', color: c.text },
-    modalLabel: { fontSize: 12, color: c.textMuted },
     input: { minHeight: 90, borderWidth: 1, borderColor: c.cardBorder, borderRadius: 10, padding: 12, color: c.text, fontSize: 14 },
-    modalBtns: { flexDirection: 'row', gap: 10, marginTop: 4 },
-    modalCancel: { flex: 1, paddingVertical: 12, borderRadius: 12, alignItems: 'center', backgroundColor: c.cardBorder },
-    modalCancelText: { color: c.text, fontSize: 14, fontWeight: '600' },
-    modalSubmit: { flex: 1, paddingVertical: 12, borderRadius: 12, alignItems: 'center', backgroundColor: c.primary },
-    modalSubmitText: { color: c.onPrimary, fontSize: 14, fontWeight: '700' },
   });

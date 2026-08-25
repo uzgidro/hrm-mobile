@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, Alert } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ModalCard } from '@/components/ModalCard';
 import type { Letter, BusinessTripMovement, User } from '@/types';
 import { Icon } from '@/components/Icon';
 import { getApiErrorMessage } from '@/api/errors';
@@ -226,51 +227,38 @@ export function TripMovementsSection({
         </TouchableOpacity>
       )}
 
-      <Modal visible={modalOpen} transparent animationType="fade" onRequestClose={() => setModalOpen(false)}>
-        <View style={styles.overlay}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>
-              {editMode
-                ? t('letters.editReturnDateTitle')
-                : selfMode
-                  ? t('letters.selfFinishTitle')
-                  : t('letters.confirmReturn')}
-            </Text>
-            <Text style={styles.modalLabel}>{t('letters.confirmReturnDateLabel')}</Text>
-            <TextInput
-              style={styles.input}
-              value={returnDate}
-              onChangeText={setReturnDate}
-              placeholder="YYYY-MM-DD"
-              placeholderTextColor={colors.textMuted}
-            />
-            {!editMode && !selfMode && (
-              <TextInput
-                style={[styles.input, { minHeight: 60 }]}
-                value={note}
-                onChangeText={setNote}
-                placeholder={t('letters.movementNote')}
-                placeholderTextColor={colors.textMuted}
-                multiline
-                textAlignVertical="top"
-              />
-            )}
-            {editMode && <Text style={styles.editHint}>{t('letters.editReturnDateHint')}</Text>}
-            <View style={styles.modalBtns}>
-              <TouchableOpacity
-                style={styles.modalCancel}
-                onPress={() => { setModalOpen(false); setSelfMode(false); }}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.modalCancelText}>{t('common.cancel')}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.modalSubmit} onPress={submitConfirm} activeOpacity={0.8}>
-                <Text style={styles.modalSubmitText}>{t('common.confirm')}</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      <ModalCard
+        visible={modalOpen}
+        title={editMode
+          ? t('letters.editReturnDateTitle')
+          : selfMode
+            ? t('letters.selfFinishTitle')
+            : t('letters.confirmReturn')}
+        hint={t('letters.confirmReturnDateLabel')}
+        confirmLabel={t('common.confirm')}
+        onClose={() => { setModalOpen(false); setSelfMode(false); }}
+        onSubmit={submitConfirm}
+      >
+        <TextInput
+          style={styles.input}
+          value={returnDate}
+          onChangeText={setReturnDate}
+          placeholder="YYYY-MM-DD"
+          placeholderTextColor={colors.textMuted}
+        />
+        {!editMode && !selfMode && (
+          <TextInput
+            style={[styles.input, { minHeight: 60 }]}
+            value={note}
+            onChangeText={setNote}
+            placeholder={t('letters.movementNote')}
+            placeholderTextColor={colors.textMuted}
+            multiline
+            textAlignVertical="top"
+          />
+        )}
+        {editMode && <Text style={styles.editHint}>{t('letters.editReturnDateHint')}</Text>}
+      </ModalCard>
     </Section>
   );
 }
@@ -292,14 +280,5 @@ const makeStyles = (c: ThemeColors) =>
     faceId: { fontSize: 11, color: c.primary, fontWeight: '700' },
     confirmBtn: { marginTop: 12, backgroundColor: c.primary, borderRadius: 12, paddingVertical: 13, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
     confirmBtnText: { color: c.onPrimary, fontSize: 14, fontWeight: '700' },
-    overlay: { flex: 1, backgroundColor: c.overlay, justifyContent: 'center', paddingHorizontal: 24 },
-    modalCard: { backgroundColor: c.card, borderRadius: 18, padding: 20, gap: 10 },
-    modalTitle: { fontSize: 16, fontWeight: '800', color: c.text },
-    modalLabel: { fontSize: 13, color: c.textSecondary, fontWeight: '600' },
     input: { backgroundColor: c.bg, borderRadius: 10, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, color: c.text },
-    modalBtns: { flexDirection: 'row', gap: 10, marginTop: 6 },
-    modalCancel: { flex: 1, borderRadius: 10, paddingVertical: 12, alignItems: 'center', backgroundColor: c.bg, borderWidth: 1, borderColor: c.cardBorder },
-    modalCancelText: { color: c.text, fontSize: 14, fontWeight: '600' },
-    modalSubmit: { flex: 1, borderRadius: 10, paddingVertical: 12, alignItems: 'center', backgroundColor: c.primary },
-    modalSubmitText: { color: c.onPrimary, fontSize: 14, fontWeight: '700' },
   });

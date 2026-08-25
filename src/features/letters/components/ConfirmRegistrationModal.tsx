@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { View, Text, Modal, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ModalCard } from '@/components/ModalCard';
 import { getApiErrorMessage } from '@/api/errors';
 import { DateTimePickerModal } from '@/components/DateTimePicker';
 import type { Letter } from '@/types';
@@ -85,51 +86,42 @@ export function ConfirmRegistrationModal({
   };
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalCard}>
-          <Text style={styles.modalTitle}>{t('letters.confirmRegistrationTitle')}</Text>
-          <Text style={styles.modalHint}>{t('letters.confirmRegistrationHint')}</Text>
-
-          <Text style={styles.fieldLabel}>{t('letters.confirmRegistrationNumberLabel')}</Text>
-          <View style={styles.numberRow}>
-            <TextInput
-              style={[styles.modalInput, styles.numberInput]}
-              value={numberValue}
-              onChangeText={setNumberValue}
-              placeholderTextColor={colors.textMuted}
-              autoCapitalize="none"
-            />
-            {availabilityLabel && (
-              <View style={styles.availPill}>
-                {checking && <ActivityIndicator size="small" color={colors.textMuted} />}
-                <Text style={[styles.availText, { color: availabilityLabel.color }]}>{availabilityLabel.text}</Text>
-              </View>
-            )}
-          </View>
-
-          <Text style={styles.fieldLabel}>{t('letters.confirmRegistrationDateLabel')}</Text>
-          <TouchableOpacity style={styles.dateField} onPress={() => setDatePickerOpen(true)} activeOpacity={0.7}>
-            <Text style={styles.dateText}>{dayjs(dateIso).format('DD.MM.YYYY')}</Text>
-          </TouchableOpacity>
-
-          <View style={styles.modalActions}>
-            <TouchableOpacity style={[styles.modalBtn, styles.modalCancel]} onPress={onClose} disabled={confirmM.isPending}>
-              <Text style={styles.modalCancelText}>{t('common.cancel')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.modalBtn, styles.modalConfirm, !canConfirm && styles.modalConfirmDisabled]}
-              onPress={onSubmit}
-              disabled={!canConfirm}
-            >
-              {confirmM.isPending
-                ? <ActivityIndicator color={colors.onPrimary} />
-                : <Text style={styles.modalConfirmText}>{t('letters.confirmRegistrationSubmit')}</Text>}
-            </TouchableOpacity>
-          </View>
+    <>
+      <ModalCard
+        visible={visible}
+        title={t('letters.confirmRegistrationTitle')}
+        hint={t('letters.confirmRegistrationHint')}
+        confirmLabel={t('letters.confirmRegistrationSubmit')}
+        disabled={!canConfirm}
+        busy={confirmM.isPending}
+        onClose={onClose}
+        onSubmit={onSubmit}
+      >
+        <Text style={styles.fieldLabel}>{t('letters.confirmRegistrationNumberLabel')}</Text>
+        <View style={styles.numberRow}>
+          <TextInput
+            style={[styles.modalInput, styles.numberInput]}
+            value={numberValue}
+            onChangeText={setNumberValue}
+            placeholderTextColor={colors.textMuted}
+            autoCapitalize="none"
+          />
+          {availabilityLabel && (
+            <View style={styles.availPill}>
+              {checking && <ActivityIndicator size="small" color={colors.textMuted} />}
+              <Text style={[styles.availText, { color: availabilityLabel.color }]}>{availabilityLabel.text}</Text>
+            </View>
+          )}
         </View>
-      </View>
 
+        <Text style={styles.fieldLabel}>{t('letters.confirmRegistrationDateLabel')}</Text>
+        <TouchableOpacity style={styles.dateField} onPress={() => setDatePickerOpen(true)} activeOpacity={0.7}>
+          <Text style={styles.dateText}>{dayjs(dateIso).format('DD.MM.YYYY')}</Text>
+        </TouchableOpacity>
+      </ModalCard>
+
+      {/* Sana tanlagich — ModalCard ning YONIDA (ilgari Modal ICHIDA edi;
+          ichma-ich Modal Androidда beqaror). */}
       <DateTimePickerModal
         visible={datePickerOpen}
         value={dateIso}
@@ -137,16 +129,12 @@ export function ConfirmRegistrationModal({
         onConfirm={(iso) => { setDateIso(iso); setDatePickerOpen(false); }}
         onClose={() => setDatePickerOpen(false)}
       />
-    </Modal>
+    </>
   );
 }
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    modalOverlay: { flex: 1, backgroundColor: c.overlay, justifyContent: 'center', paddingHorizontal: 28 },
-    modalCard: { backgroundColor: c.card, borderRadius: 18, padding: 20, borderWidth: 1, borderColor: c.cardBorder },
-    modalTitle: { fontSize: 17, fontWeight: '800', color: c.text, marginBottom: 8 },
-    modalHint: { fontSize: 13, color: c.textMuted, marginBottom: 14, lineHeight: 18 },
     fieldLabel: { fontSize: 12, fontWeight: '700', color: c.textSecondary, marginBottom: 6 },
     numberRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 14 },
     modalInput: {
@@ -161,11 +149,4 @@ const makeStyles = (c: ThemeColors) =>
       paddingHorizontal: 12, paddingVertical: 14, marginBottom: 18,
     },
     dateText: { fontSize: 15, color: c.text, fontWeight: '600' },
-    modalActions: { flexDirection: 'row', gap: 10 },
-    modalBtn: { flex: 1, paddingVertical: 13, borderRadius: 12, alignItems: 'center' },
-    modalCancel: { backgroundColor: c.bg, borderWidth: 1, borderColor: c.cardBorder },
-    modalCancelText: { color: c.textSecondary, fontSize: 15, fontWeight: '700' },
-    modalConfirm: { backgroundColor: c.primary },
-    modalConfirmDisabled: { opacity: 0.5 },
-    modalConfirmText: { color: c.onPrimary, fontSize: 15, fontWeight: '700' },
   });

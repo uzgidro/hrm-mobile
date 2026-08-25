@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Alert } from 'react-native';
+import { Text, StyleSheet, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { getApiErrorMessage } from '@/api/errors';
 import { DatePickerModal } from '@/components/DatePicker';
+import { ModalCard } from '@/components/ModalCard';
 import { useSetBasisDecree } from '../api/mutations';
 
 // ASOS BUYRUQ oynasi — KADR safarga buyruq raqami va sanasini kiritadi
@@ -71,50 +72,38 @@ export function BasisDecreeModal({
 
   return (
     <>
-      <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-        <View style={styles.overlay}>
-          <View style={styles.card}>
-            <Text style={styles.title}>{t('letters.fieldBasisDecree')}</Text>
+      <ModalCard
+        visible={visible}
+        title={t('letters.fieldBasisDecree')}
+        confirmLabel={t('common.save')}
+        disabled={!canSave}
+        busy={saveM.isPending}
+        onClose={onClose}
+        onSubmit={submit}
+        testID="basis-decree-submit"
+      >
+        <Text style={styles.label}>{t('letters.basisDecreeNumber')}</Text>
+        <TextInput
+          style={styles.input}
+          value={number}
+          onChangeText={setNumber}
+          placeholder={t('letters.basisDecreeNumberPlaceholder')}
+          placeholderTextColor={colors.textMuted}
+          testID="basis-decree-number"
+        />
 
-            <Text style={styles.label}>{t('letters.basisDecreeNumber')}</Text>
-            <TextInput
-              style={styles.input}
-              value={number}
-              onChangeText={setNumber}
-              placeholder={t('letters.basisDecreeNumberPlaceholder')}
-              placeholderTextColor={colors.textMuted}
-              testID="basis-decree-number"
-            />
-
-            <Text style={styles.label}>{t('letters.basisDecreeDate')}</Text>
-            <TouchableOpacity
-              style={styles.input}
-              activeOpacity={0.8}
-              onPress={() => setPickerOpen(true)}
-              testID="basis-decree-date"
-            >
-              <Text style={date ? styles.inputText : styles.inputPlaceholder}>
-                {date ? dayjs(date).format('DD.MM.YYYY') : t('letters.placeholderSelectDate')}
-              </Text>
-            </TouchableOpacity>
-
-            <View style={styles.btns}>
-              <TouchableOpacity style={styles.cancel} onPress={onClose} activeOpacity={0.8}>
-                <Text style={styles.cancelText}>{t('common.cancel')}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.submit, !canSave && styles.submitDisabled]}
-                disabled={!canSave}
-                onPress={submit}
-                activeOpacity={0.8}
-                testID="basis-decree-submit"
-              >
-                <Text style={styles.submitText}>{t('common.save')}</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+        <Text style={styles.label}>{t('letters.basisDecreeDate')}</Text>
+        <TouchableOpacity
+          style={styles.input}
+          activeOpacity={0.8}
+          onPress={() => setPickerOpen(true)}
+          testID="basis-decree-date"
+        >
+          <Text style={date ? styles.inputText : styles.inputPlaceholder}>
+            {date ? dayjs(date).format('DD.MM.YYYY') : t('letters.placeholderSelectDate')}
+          </Text>
+        </TouchableOpacity>
+      </ModalCard>
 
       <DatePickerModal
         visible={pickerOpen}
@@ -129,17 +118,8 @@ export function BasisDecreeModal({
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center', padding: 20 },
-    card: { width: '100%', backgroundColor: c.card, borderRadius: 16, borderWidth: 1, borderColor: c.cardBorder, padding: 18, gap: 8 },
-    title: { fontSize: 16, fontWeight: '700', color: c.text, marginBottom: 2 },
     label: { fontSize: 12, color: c.textMuted },
     input: { borderWidth: 1, borderColor: c.cardBorder, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 12, color: c.text, fontSize: 14, justifyContent: 'center' },
     inputText: { color: c.text, fontSize: 14 },
     inputPlaceholder: { color: c.textMuted, fontSize: 14 },
-    btns: { flexDirection: 'row', gap: 10, marginTop: 6 },
-    cancel: { flex: 1, paddingVertical: 12, borderRadius: 12, alignItems: 'center', backgroundColor: c.cardBorder },
-    cancelText: { color: c.text, fontSize: 14, fontWeight: '600' },
-    submit: { flex: 1, paddingVertical: 12, borderRadius: 12, alignItems: 'center', backgroundColor: c.primary },
-    submitDisabled: { opacity: 0.5 },
-    submitText: { color: c.onPrimary, fontSize: 14, fontWeight: '700' },
   });
