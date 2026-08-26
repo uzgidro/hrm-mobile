@@ -1,4 +1,4 @@
-import { TextInput, StyleSheet } from 'react-native';
+import { TextInput, StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
@@ -68,8 +68,93 @@ export function RegisterModal({
   );
 }
 
+
+/**
+ * QO'LLASH oynasi (KADR): buyruq `confirmed` bo'lgach ta'til / ko'chirish /
+ * ishdan bo'shatish yozuvini yaratadi va buyruqni `applied` ga o'tkazadi.
+ *
+ * ⚠️ Mobilda bu qadam UMUMAN yo'q edi: buyruq `confirmed` da tiqilib qolar,
+ * ta'til yozuvi yaratilmasdi va oqim faqat webda yakunlanardi.
+ *
+ * Web `OrderDetailModal` bilan bir xil qoida: ayrim turlarda (ko'chirish,
+ * ishga qabul, bo'shatish, chaqirib olish) TUGASH SANASI shart emas va
+ * "doimiy" belgisi bor.
+ */
+export function ApplyModal({
+  visible, employeeLabel, onPickEmployee, startDate, endDate, needsEndDate,
+  allowPermanent, isPermanent, onTogglePermanent, onPickStart, onPickEnd,
+  busy, onClose, onSubmit,
+}: {
+  visible: boolean;
+  employeeLabel: string | null;
+  onPickEmployee: () => void;
+  startDate: string;
+  endDate: string;
+  needsEndDate: boolean;
+  allowPermanent: boolean;
+  isPermanent: boolean;
+  onTogglePermanent: () => void;
+  onPickStart: () => void;
+  onPickEnd: () => void;
+  busy: boolean;
+  onClose: () => void;
+  onSubmit: () => void;
+}) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const { t } = useTranslation();
+
+  const disabled = !employeeLabel || !startDate || (needsEndDate && !endDate);
+
+  const Row = ({ label, value, onPress }: { label: string; value: string | null; onPress: () => void }) => (
+    <TouchableOpacity style={styles.pickRow} onPress={onPress} activeOpacity={0.8}>
+      <Text style={styles.pickLabel}>{label}</Text>
+      <Text style={value ? styles.pickValue : styles.pickPlaceholder} numberOfLines={1}>
+        {value || t('orders.selectPlaceholder')}
+      </Text>
+    </TouchableOpacity>
+  );
+
+  return (
+    <ModalCard
+      visible={visible}
+      title={t('orders.applyTitle')}
+      hint={t('orders.applyHint')}
+      confirmLabel={t('orders.actionApply')}
+      disabled={disabled}
+      busy={busy}
+      onClose={onClose}
+      onSubmit={onSubmit}
+      testID="decree-apply-modal"
+    >
+      <Row label={t('orders.applyEmployee')} value={employeeLabel} onPress={onPickEmployee} />
+      <Row label={t('orders.applyStart')} value={startDate || null} onPress={onPickStart} />
+      {needsEndDate && (
+        <Row label={t('orders.applyEnd')} value={endDate || null} onPress={onPickEnd} />
+      )}
+      {allowPermanent && (
+        <TouchableOpacity style={styles.permRow} onPress={onTogglePermanent} activeOpacity={0.8}>
+          <View style={[styles.checkbox, isPermanent && { backgroundColor: colors.primary, borderColor: colors.primary }]} />
+          <Text style={styles.pickLabel}>{t('orders.applyPermanent')}</Text>
+        </TouchableOpacity>
+      )}
+    </ModalCard>
+  );
+}
+
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
+    pickRow: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+      gap: 12, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: c.cardBorder,
+    },
+    pickLabel: { fontSize: 13, color: c.textSecondary },
+    pickValue: { fontSize: 14, color: c.text, fontWeight: '600', flexShrink: 1, textAlign: 'right' },
+    pickPlaceholder: { fontSize: 14, color: c.textMuted, flexShrink: 1, textAlign: 'right' },
+    permRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12 },
+    checkbox: {
+      width: 20, height: 20, borderRadius: 6, borderWidth: 1.5, borderColor: c.cardBorder,
+    },
     // Qiymatlar ASL holicha (faqat `marginBottom` ketdi — endi oralarni
     // `ModalCard` ning `gap` i beradi).
     modalInput: {

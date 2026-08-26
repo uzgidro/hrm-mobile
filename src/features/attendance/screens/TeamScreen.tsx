@@ -23,6 +23,7 @@ import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { dayAttendanceQuery, teamLeavesQuery } from '../api/queries';
+import { resolveEmployeeBranchId } from '@/utils/branch';
 
 // This dashboard composes four domains. Attendance + leaves come from this
 // feature's own factories. Employees uses the shared `employeesListQuery`
@@ -124,8 +125,7 @@ export default function TeamScreen() {
   const styles = useThemedStyles(makeStyles);
   const myId = user?.employee?.id;
   const orgBranchId =
-    user?.employee?.organization_branches?.[0]?.id ??
-    user?.employee?.department?.organization_branch_id;
+    resolveEmployeeBranchId(user?.employee);
   const today = dayjs().format('YYYY-MM-DD');
 
   const results = useQueries({

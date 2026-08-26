@@ -21,6 +21,7 @@ import { LoadingView } from '@/components/StateViews';
 import { AttendanceDonut } from '@/components/AttendanceDonut';
 import { RosterRow } from '@/components/RosterRow';
 import { dayAttendanceQuery, teamLeavesQuery } from '../api/queries';
+import { resolveEmployeeBranchId } from '@/utils/branch';
 
 type StatusGroup = AttendanceStatus;
 
@@ -32,8 +33,7 @@ export default function AttendanceDetailScreen() {
   const styles = useThemedStyles(makeStyles);
   const myId = user?.employee?.id;
   const orgBranchId =
-    user?.employee?.organization_branches?.[0]?.id ??
-    user?.employee?.department?.organization_branch_id;
+    resolveEmployeeBranchId(user?.employee);
 
   const [selectedDate, setSelectedDate] = useState(dayjs().format('YYYY-MM-DD'));
   const [sectionFilter, setSectionFilter] = useState<StatusGroup | null>(null);

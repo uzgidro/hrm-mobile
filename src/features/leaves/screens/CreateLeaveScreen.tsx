@@ -25,6 +25,7 @@ import { supervisorOptions } from '../utils';
 import { LeaveDateTimePicker } from '../components/LeaveDateTimePicker';
 import { LeaveTypeSheet, LEAVE_TYPES, leaveTypeLabel } from '../components/LeaveTypeSheet';
 import { KeyboardAvoider } from '@/components/KeyboardAvoider';
+import { resolveEmployeeBranchId } from '@/utils/branch';
 
 export default function CreateLeaveScreen() {
   const { user } = useAuthStore();
@@ -59,8 +60,7 @@ export default function CreateLeaveScreen() {
   // loads employees only in that case). Roster is fetched lazily via `enabled`.
   const needsPick = !supervisorLoading && !assignedSupervisor;
   const branchId =
-    user?.employee?.organization_branches?.[0]?.id ??
-    user?.employee?.department?.organization_branch_id;
+    resolveEmployeeBranchId(user?.employee);
   const { data: roster, isLoading: rosterLoading } = useQuery(
     leaveSupervisorsQuery(branchId, needsPick),
   );

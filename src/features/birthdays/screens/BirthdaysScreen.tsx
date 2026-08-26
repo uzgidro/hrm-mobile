@@ -21,6 +21,7 @@ import { LoadingView, EmptyState } from '@/components/StateViews';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { SearchBox } from '@/components/SearchBox';
 import { birthdaysListQuery } from '../api/queries';
+import { resolveEmployeeBranchId } from '@/utils/branch';
 
 export default function BirthdaysScreen() {
   const { t } = useTranslation();
@@ -32,8 +33,7 @@ export default function BirthdaysScreen() {
   const cols = bp.isTablet ? (bp.isLandscape ? 3 : 2) : 1;
   const myId = user?.employee?.id;
   const orgBranchId =
-    user?.employee?.organization_branches?.[0]?.id ??
-    user?.employee?.department?.organization_branch_id;
+    resolveEmployeeBranchId(user?.employee);
   const [search, setSearch] = useState('');
 
   const { data: birthdays = [], isLoading } = useQuery(birthdaysListQuery(orgBranchId));

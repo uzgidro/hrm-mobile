@@ -28,6 +28,7 @@ import { SelectedChips } from '@/components/SelectedChips';
 import { ApproversEditor, type Approver } from '../components/ApproversEditor';
 import { OrderPickers, type PickerKind } from '../components/OrderPickers';
 import { KeyboardAvoider } from '@/components/KeyboardAvoider';
+import { resolveEmployeeBranchId } from '@/utils/branch';
 
 export default function CreateOrderScreen() {
   const { user } = useAuthStore();
@@ -39,8 +40,7 @@ export default function CreateOrderScreen() {
   const { data: editing } = useQuery({ ...orderDetailQuery(editId ?? 0), enabled: !!editId });
   const branchId =
     editing?.organization_branch_id ??
-    employee?.organization_branches?.[0]?.id ??
-    employee?.department?.organization_branch_id;
+    resolveEmployeeBranchId(employee);
   const hr = isHR(user);
   const creatorRole = hr ? 'hr' : 'employee';
 

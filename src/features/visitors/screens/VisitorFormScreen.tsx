@@ -18,6 +18,7 @@ import { DateTimePickerModal } from '@/components/DateTimePicker';
 import { useBreakpoint } from '@/utils/responsive';
 import { getApiErrorMessage } from '@/api/errors';
 import { getVisitor } from '../api/queries';
+import { resolveEmployeeBranchId } from '@/utils/branch';
 import {
   useCreateVisitor,
   useUpdateVisitor,
@@ -103,8 +104,7 @@ export default function MehmonFormScreen() {
     }
     setLoading(true);
     const orgBranchId =
-      user?.employee?.organization_branches?.[0]?.id ??
-      user?.employee?.department?.organization_branch_id;
+      resolveEmployeeBranchId(user?.employee);
     const payload: VisitorPayload = {
       legal_name: legalName.trim(),
       organization_name: orgName.trim(),

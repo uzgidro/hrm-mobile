@@ -45,6 +45,10 @@ export interface Employee {
   is_multi_org_user?: boolean;
   multi_org_employee_role?: string | string[];
   organization_branches?: OrganizationBranch[];
+  // Xodimga ATAYLAB belgilangan asosiy filial. `organization_branches` M2M
+  // ro'yxati TARTIBSIZ (backend join tartibi), shuning uchun "qaysi filial"
+  // savoliga javob shu maydondan boshlanadi — `src/utils/branch.ts`.
+  primary_organization_branch_id?: number | null;
   supervisor?: Employee;
   supervisor_id?: number;
 }

@@ -77,6 +77,9 @@ export interface DecreePermissions {
   canResubmit: boolean;
   canForward: boolean;
   canRegister: boolean;
+  /** KADR buyruqni QO'LLAYDI: `confirmed` → `applied` (ta'til/ko'chirish
+      yozuvi yaratiladi). Backend `decree_apply`: faqat KADR, o'z filialida. */
+  canApply: boolean;
   canAcknowledge: boolean;
   hasActions: boolean;
   docLocked: boolean;
@@ -154,6 +157,14 @@ export function decreePermissions(
   const canEdit = isSiteMasterAdmin(user)
     || (!isLocked && (isCreator || (isHR(user) && isBranchHr(user, o.organization_branch_id))));
 
+  // QO'LLASH — backend `decree_apply` bilan 1:1: FAQAT kadr (yoki sayt
+  // master-admini), FAQAT o'z filialida va FAQAT `confirmed` holatda.
+  // Bu qadam bo'lmasa buyruq hech qachon `applied` ga o'tmaydi va ta'til /
+  // ko'chirish yozuvi UMUMAN yaratilmaydi — mobilда oqim shu yerda uzilardi.
+  const canApply =
+    o.status === 'confirmed'
+    && (isSiteMasterAdmin(user) || (isHR(user) && isBranchHr(user, o.organization_branch_id)));
+
   const myFam = (o.familiarizers ?? []).find(
     (f) => (f.employee_id ?? f.employee?.id) === employeeId
   );
@@ -164,7 +175,7 @@ export function decreePermissions(
   // tafsilot ichida turadi (web bilan bir xil joylashuv).
   const hasActions =
     canSubmit || canApprove || canConfirmSubmission || canResubmit || canForward
-    || canRegister || canAcknowledge;
+    || canRegister || canApply || canAcknowledge;
 
   const docLocked =
     o.status === 'confirmed' || o.status === 'applied' || o.status === 'rejected';
@@ -178,6 +189,7 @@ export function decreePermissions(
     canResubmit,
     canForward,
     canRegister,
+    canApply,
     canAcknowledge,
     hasActions,
     docLocked,

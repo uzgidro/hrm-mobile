@@ -20,6 +20,7 @@ import { LoadingView, EmptyState } from '@/components/StateViews';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { visitorsListQuery } from '../api/queries';
 import { VisitorDetailView } from '../components/VisitorDetailView';
+import { resolveEmployeeBranchId } from '@/utils/branch';
 
 export default function MehmonlarScreen() {
   const { t } = useTranslation();
@@ -47,8 +48,7 @@ export default function MehmonlarScreen() {
   // master-admin) uchun o'z filiali — webdagi tanlangan filialning ekvivalenti.
   const skipBranchParam = isEmployeeLike(user) || isKPP(user);
   const ownBranchId =
-    user?.employee?.organization_branches?.[0]?.id ??
-    user?.employee?.department?.organization_branch_id;
+    resolveEmployeeBranchId(user?.employee);
   const orgBranchId = skipBranchParam ? undefined : ownBranchId;
 
   const { data: visitors = [], isLoading, refetch, isFetching } = useQuery(visitorsListQuery(orgBranchId));

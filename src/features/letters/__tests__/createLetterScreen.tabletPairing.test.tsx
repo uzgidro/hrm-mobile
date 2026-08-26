@@ -58,25 +58,18 @@ describe('CreateLetterScreen (tablet two-column pairing)', () => {
     fireEvent.press(await findByText('Xizmat safari'));
   }
 
-  it('pairs fieldType + fieldLetterDate on tablet', async () => {
+  // HUJJAT SANASI maydoni OLIB TASHLANDI (web pariteti): webda bunday maydon
+  // yo'q va backend sanani ro'yxatga olishda o'zi qo'yadi — yaratishda
+  // yuborilgan qiymat bazada NULL bo'lib qolardi (TEST serverda o'lchandi).
+  it('hujjat sanasi maydoni KO‘RSATILMAYDI (web pariteti)', async () => {
     (useWindowDimensions as jest.Mock).mockReturnValue(TABLET_LANDSCAPE);
-    const { findByTestId } = await renderWithProviders(<CreateLetterScreen />);
+    const { queryByTestId, findByTestId } = await renderWithProviders(<CreateLetterScreen />);
 
-    const row = await findByTestId('letter-type-date-row');
-    const typeHalf = await findByTestId('letter-field-type');
-    const dateHalf = await findByTestId('letter-field-letterDate');
-
-    expect(row.props.style).toEqual(expect.objectContaining({ flexDirection: 'row' }));
-    expect(typeHalf.props.style).toEqual(expect.objectContaining({ flex: 1 }));
-    expect(dateHalf.props.style).toEqual(expect.objectContaining({ flex: 1 }));
-  });
-
-  it('does not pair fieldType + fieldLetterDate on phone', async () => {
-    (useWindowDimensions as jest.Mock).mockReturnValue(PHONE_PORTRAIT);
-    const { findByTestId } = await renderWithProviders(<CreateLetterScreen />);
-
-    const row = await findByTestId('letter-type-date-row');
-    expect(row.props.style).toBeUndefined();
+    // Tur maydoni o'z o'rnida qoladi...
+    expect(await findByTestId('letter-field-type')).toBeTruthy();
+    // ...sana maydoni va u bilan juftlashgan qator esa yo'q.
+    expect(queryByTestId('letter-field-letterDate')).toBeNull();
+    expect(queryByTestId('letter-type-date-row')).toBeNull();
   });
 
   it('business trip: pairs regions/destinations and leadership/submitter on tablet (new pairing)', async () => {

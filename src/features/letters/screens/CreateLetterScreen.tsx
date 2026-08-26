@@ -30,6 +30,7 @@ import { Field, Selector } from '../components/FormParts';
 import { LetterFormFields } from '../components/LetterFormFields';
 import { LetterPickers, type PickerKind, type DateKind } from '../components/LetterPickers';
 import { buildLetterCreatePayload } from './letterCreatePayload';
+import { resolveEmployeeBranchId } from '@/utils/branch';
 
 type LetterType = 'explanatory' | 'application' | 'business_trip';
 // Value/labelKey pairs — the numeric picker values are internal (never sent to
@@ -54,8 +55,7 @@ export default function CreateLetterScreen() {
   const editId = editIdParam ? Number(editIdParam) : null;
   const { data: editing } = useQuery({ ...letterDetailQuery(editId ?? 0), enabled: !!editId });
   const branchId = editing?.organization_branch_id
-    ?? employee?.organization_branches?.[0]?.id
-    ?? employee?.department?.organization_branch_id;
+    ?? resolveEmployeeBranchId(employee);
 
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -315,18 +315,16 @@ export default function CreateLetterScreen() {
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         {/* Both short single-selects, adjacent — pair into a 2-column row on
             tablet (Task 21); stack full-width on phone. */}
-        <View testID="letter-type-date-row" style={twoCol ? styles.fieldRow : undefined}>
-          <View testID="letter-field-type" style={twoCol ? styles.fieldHalf : undefined}>
-            <Field label={t('letters.fieldType')} required>
-              <Selector text={letterType ? TYPE_OPTIONS.find((o) => TYPE_BY_VALUE[o.value] === letterType)?.label : undefined} placeholder={t('letters.placeholderSelect')} onPress={() => setPicker('type')} />
-            </Field>
-          </View>
-
-          <View testID="letter-field-letterDate" style={twoCol ? styles.fieldHalf : undefined}>
-            <Field label={t('letters.fieldLetterDate')}>
-              <Selector text={letterDate ? dayjs(letterDate).format('DD.MM.YYYY') : undefined} placeholder={t('letters.placeholderSelectDate')} onPress={() => setDatePicker('letter')} />
-            </Field>
-          </View>
+        {/* ⚠️ HUJJAT SANASI maydoni OLIB TASHLANDI (web pariteti).
+            Web `AddLetterDrawer` uni umuman ko'rsatmaydi va yubormaydi:
+            sanani BACKEND ro'yxatga olishda o'zi qo'yadi. TEST serverda
+            o'lchandi (2026-08-26): yaratishda yuborilgan `letter_date`
+            bazada NULL bo'lib qoladi, ya'ni foydalanuvchi tanlagan sana
+            JIMGINA tashlab yuborilardi — soxta maydon edi. */}
+        <View testID="letter-field-type">
+          <Field label={t('letters.fieldType')} required>
+            <Selector text={letterType ? TYPE_OPTIONS.find((o) => TYPE_BY_VALUE[o.value] === letterType)?.label : undefined} placeholder={t('letters.placeholderSelect')} onPress={() => setPicker('type')} />
+          </Field>
         </View>
 
         <LetterFormFields

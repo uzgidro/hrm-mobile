@@ -14,6 +14,7 @@ import {
   ORDER_ACT_DECREE_ACKNOWLEDGE,
   ORDER_ACT_DECREE_ASSIGN_FAMILIARIZERS,
   ORDER_ACT_COMMENTS,
+  ORDER_ACT_DECREE_APPLY,
 } from '@/api/urls';
 import type { PickedFile } from '@/components/AttachmentField';
 import { orderKeys } from './queries';
@@ -191,5 +192,36 @@ export function useCreateOrder() {
     // CreateOrderScreen already shows the error via its own Alert in the catch
     // block; skip the global mutation toast so a failed submit isn't surfaced twice.
     meta: { skipErrorToast: true },
+  });
+}
+
+// KADR buyruqni QO'LLAYDI (`confirmed` -> `applied`). Backend
+// `OrderActApplyRequest`: employee_id + start_date majburiy; end_date
+// ixtiyoriy (doimiy ko'chirish/ishdan bo'shatish turlarida), is_permanent.
+export type DecreeApplyInput = {
+  employee_id: number;
+  start_date: string;
+  end_date?: string | null;
+  is_permanent?: boolean;
+};
+
+export function decreeApply(id: number, input: DecreeApplyInput) {
+  return apiClient
+    .post(ORDER_ACT_DECREE_APPLY(id), {
+      employee_id: input.employee_id,
+      start_date: input.start_date,
+      ...(input.end_date ? { end_date: input.end_date } : {}),
+      is_permanent: !!input.is_permanent,
+    })
+    .then((r) => r.data);
+}
+
+export function useDecreeApply(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: DecreeApplyInput) => decreeApply(id, input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: orderKeys.all });
+    },
   });
 }

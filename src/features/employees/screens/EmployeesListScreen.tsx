@@ -21,6 +21,7 @@ import { FilterChip } from '@/components/FilterChip';
 import { SearchBox } from '@/components/SearchBox';
 import { canAccessPage } from '@/utils/roles';
 import { employeesListQuery } from '../api/queries';
+import { resolveEmployeeBranchId } from '@/utils/branch';
 
 export default function EmployeesListScreen() {
   const { t } = useTranslation();
@@ -32,8 +33,7 @@ export default function EmployeesListScreen() {
   const cols = bp.isTablet ? (bp.isLandscape ? 3 : 2) : 1;
   const myId = user?.employee?.id;
   const orgBranchId =
-    user?.employee?.organization_branches?.[0]?.id ??
-    user?.employee?.department?.organization_branch_id;
+    resolveEmployeeBranchId(user?.employee);
   const [search, setSearch] = useState('');
   const [deptFilter, setDeptFilter] = useState<string>('all');
   const [posFilter, setPosFilter] = useState<string>('all');

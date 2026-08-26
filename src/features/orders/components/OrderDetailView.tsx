@@ -13,16 +13,17 @@ import type { Employee } from '@/types';
 import { Icon } from '@/components/Icon';
 import { LoadingView } from '@/components/StateViews';
 import { PickerModal, type PickerOption } from '@/components/PickerModal';
+import { DatePickerModal } from '@/components/DatePicker';
 import { statusMeta, statusColor, decreePermissions, decreeSubmitTarget } from '@/utils/orderStatus';
 import { isHR, isSiteMasterAdmin, employeeSubLabel } from '@/utils/roles';
 import { orderDetailQuery, orderEmployeesQuery } from '../api/queries';
 import { useDecreeActions } from '../hooks/useDecreeActions';
-import { useAssignFamiliarizers } from '../api/mutations';
+import { useAssignFamiliarizers, useDecreeApply } from '../api/mutations';
 import { DetailHeader, Section, KV } from './DetailParts';
 import { DetailSections } from './DetailSections';
 import { CommentsSection } from './CommentsSection';
 import { DecreeActionBar } from './DecreeActionBar';
-import { RejectModal, RegisterModal } from './DetailModals';
+import { RejectModal, RegisterModal, ApplyModal } from './DetailModals';
 
 // The body of the decree detail — extracted so it can render either as the
 // pushed route's content (phone / push-notification deep links, `embedded`
@@ -44,6 +45,16 @@ export function OrderDetailView({ id, embedded = false }: { id: number; embedded
   const [actNumber, setActNumber] = useState('');
   const [famOpen, setFamOpen] = useState(false);
   const [famIds, setFamIds] = useState<number[]>([]);
+  // QO'LLASH (KADR): xodim + boshlanish/tugash sanasi. Web `OrderDetailModal`
+  // bilan bir xil: ayrim turlarda (ko'chirish/ishga qabul/bo'shatish/chaqirib
+  // olish) tugash sanasi SHART EMAS va "doimiy" belgisi bor.
+  const [applyOpen, setApplyOpen] = useState(false);
+  const [applyEmpId, setApplyEmpId] = useState<number | null>(null);
+  const [applyEmpPicker, setApplyEmpPicker] = useState(false);
+  const [applyStart, setApplyStart] = useState('');
+  const [applyEnd, setApplyEnd] = useState('');
+  const [applyPermanent, setApplyPermanent] = useState(false);
+  const [applyDate, setApplyDate] = useState<null | 'start' | 'end'>(null);
 
   const { data: order, isLoading, refetch } = useQuery(orderDetailQuery(orderId));
 
@@ -51,6 +62,7 @@ export function OrderDetailView({ id, embedded = false }: { id: number; embedded
     useDecreeActions(orderId, refetch);
 
   const assignFam = useAssignFamiliarizers(orderId);
+  const applyM = useDecreeApply(orderId);
   // Employees to pick from — scoped to the order's branch like the create form.
   // `enabled`: the picker is ONLY reachable for master-admin / KADR (see
   // `canAssignFamiliarizers` below), but this query pulls the WHOLE branch
@@ -120,6 +132,30 @@ export function OrderDetailView({ id, embedded = false }: { id: number; embedded
     setRejectOpen(false);
     await reject(rejectReason);
     setRejectReason('');
+  };
+
+  // Web `SPECIAL_APPLY_TYPES` 1:1 — bu turlarda faqat boshlanish sanasi kerak.
+  const SPECIAL_APPLY_TYPES = [7, 8, 9, 11, 13];
+  const isSpecialApply =
+    order?.category_rel?.type != null
+    && SPECIAL_APPLY_TYPES.includes(Number(order.category_rel.type));
+
+  const onApply = async () => {
+    if (!applyEmpId || !applyStart) return;
+    if (!isSpecialApply && !applyEnd) return;
+    try {
+      await applyM.mutateAsync({
+        employee_id: applyEmpId,
+        start_date: applyStart,
+        end_date: applyEnd || null,
+        is_permanent: applyPermanent,
+      });
+      setApplyOpen(false);
+      setApplyEmpId(null); setApplyStart(''); setApplyEnd(''); setApplyPermanent(false);
+      await refetch();
+    } catch {
+      /* xato toast'i QueryClient onError orqali chiqadi */
+    }
   };
 
   const onRegister = async () => {
@@ -266,6 +302,7 @@ export function OrderDetailView({ id, embedded = false }: { id: number; embedded
         onForward={forward}
         onAcknowledge={acknowledge}
         onRegister={() => setRegisterOpen(true)}
+        onApply={() => setApplyOpen(true)}
       />
 
       <RejectModal
@@ -274,6 +311,41 @@ export function OrderDetailView({ id, embedded = false }: { id: number; embedded
         onChangeReason={setRejectReason}
         onClose={() => setRejectOpen(false)}
         onSubmit={onReject}
+      />
+      <ApplyModal
+        visible={applyOpen}
+        employeeLabel={applyEmpId ? (empOptions.find((o) => o.value === applyEmpId)?.label ?? null) : null}
+        onPickEmployee={() => setApplyEmpPicker(true)}
+        startDate={applyStart}
+        endDate={applyEnd}
+        needsEndDate={!isSpecialApply}
+        allowPermanent={isSpecialApply}
+        isPermanent={applyPermanent}
+        onTogglePermanent={() => setApplyPermanent((v) => !v)}
+        onPickStart={() => setApplyDate('start')}
+        onPickEnd={() => setApplyDate('end')}
+        busy={applyM.isPending}
+        onClose={() => setApplyOpen(false)}
+        onSubmit={onApply}
+      />
+      <PickerModal
+        visible={applyEmpPicker}
+        title={t('orders.applyEmployee')}
+        options={empOptions}
+        loading={empsLoading}
+        selected={applyEmpId}
+        onClose={() => setApplyEmpPicker(false)}
+        onSelect={(v) => { setApplyEmpId(v); setApplyEmpPicker(false); }}
+      />
+      <DatePickerModal
+        visible={applyDate !== null}
+        value={applyDate === 'end' ? applyEnd : applyStart}
+        title={t(applyDate === 'end' ? 'orders.applyEnd' : 'orders.applyStart')}
+        onClose={() => setApplyDate(null)}
+        onConfirm={(v) => {
+          if (applyDate === 'end') setApplyEnd(v); else setApplyStart(v);
+          setApplyDate(null);
+        }}
       />
       <RegisterModal
         visible={registerOpen}

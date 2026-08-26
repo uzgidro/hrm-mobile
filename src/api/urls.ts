@@ -219,6 +219,9 @@ export const ORDER_ACT_DECREE_SUBMIT = (id: number) => `order-acts/${id}/decree/
 export const ORDER_ACT_DECREE_CONFIRM_SUBMISSION = (id: number) =>
   `order-acts/${id}/decree/confirm-submission`;
 export const ORDER_ACT_DECREE_REGISTER = (id: number) => `order-acts/${id}/decree/register`;
+// Buyruqni QO'LLASH (KADR): `confirmed` -> `applied`. Shu chaqiruvda ta'til /
+// ko'chirish / ishdan bo'shatish yozuvi yaratiladi — usiz oqim tugamaydi.
+export const ORDER_ACT_DECREE_APPLY = (id: number) => `order-acts/${id}/decree/apply`;
 export const ORDER_ACT_DECREE_ACKNOWLEDGE = (id: number) => `order-acts/${id}/decree/acknowledge`;
 export const ORDER_ACT_DECREE_ASSIGN_FAMILIARIZERS = (id: number) =>
   `order-acts/${id}/decree/assign-familiarizers`;

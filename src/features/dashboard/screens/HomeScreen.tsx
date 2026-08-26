@@ -24,6 +24,7 @@ import { leaveStatusGroup, leaveStatusKind } from '@/utils/leaveStatus';
 import { statusColor } from '@/utils/orderStatus';
 import { employeesListQuery } from '@/utils/employees';
 import { buildAttendanceRoster, type AttendanceStatus } from '@/utils/attendanceRoster';
+import { resolveEmployeeBranchId } from '@/utils/branch';
 import {
   homeAttendanceQuery,
   homeMyLeavesQuery,
@@ -59,7 +60,7 @@ export default function HomeScreen() {
   const canSeeAttendanceContent = canAccessPage(user, 'attendance');
   const onlySubordinates = usePrefsStore((s) => s.onlySubordinates);
   const myId = employee?.id;
-  const orgBranchId = employee?.organization_branches?.[0]?.id ?? employee?.department?.organization_branch_id;
+  const orgBranchId = resolveEmployeeBranchId(employee);
 
   const [refreshing, setRefreshing] = useState(false);
   const [rosterFilter, setRosterFilter] = useState<AttendanceStatus | null>(null);
