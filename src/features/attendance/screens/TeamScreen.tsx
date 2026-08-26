@@ -17,6 +17,8 @@ import type { ThemeColors } from '@/theme/palettes';
 import { Employee, AttendanceEvent, WorkLeave, EmployeeBirthday } from '@/types';
 import { canAccessPage } from '@/utils/roles';
 import { employeesListQuery } from '@/utils/employees';
+import { latenessExcusedQuery } from '@/utils/attendance';
+import { buildAttendanceRoster } from '@/utils/attendanceRoster';
 import { leaveStatusGroup } from '@/utils/leaveStatus';
 import { Icon, IconName } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
@@ -133,6 +135,9 @@ export default function TeamScreen() {
       employeesListQuery(orgBranchId),
       dayAttendanceQuery(today, orgBranchId),
       teamLeavesQuery(today, 20, orgBranchId),
+      // Kechikish uzri (ta'til/buyruq/safar xati) — Davomat ekrani bilan
+      // BIR XIL keshdan.
+      latenessExcusedQuery(today, orgBranchId),
       {
         queryKey: birthdaysListKey(orgBranchId),
         queryFn: () =>
@@ -147,7 +152,7 @@ export default function TeamScreen() {
     ],
   });
 
-  const [empQ, attQ, leavesQ, bDayQ] = results;
+  const [empQ, attQ, leavesQ, excusedQ, bDayQ] = results;
   const isRefreshing = results.some((r) => r.isFetching);
   const refetchAll = () => results.forEach((r) => r.refetch());
 
@@ -164,45 +169,18 @@ export default function TeamScreen() {
 
   const empIdSet = useMemo(() => new Set(employees.map((e) => e.id)), [employees]);
 
+  // Sanoq YAGONA manbadan — Davomat ekrani va bosh sahifa bilan bir xil
+  // `buildAttendanceRoster`. Ilgari bu ekran kechikishni O'ZI hisoblardi
+  // (5 daqiqa, uzrsiz, bayroqlarsiz) va uchinchi nusxa bo'lib uzoqlashib
+  // ketgandi: ta'tildagi/uzri bor xodim bu yerda "kech qolgan" bo'lib
+  // sanalardi. `total` esa serverdagi umumiy son bo'lib qoladi.
   const attendanceStats = useMemo(() => {
-    const attendedIds = new Set<number>();
-    const lateIds = new Set<number>();
-    const firstEntry = new Map<number, string>();
-
-    for (const ev of events) {
-      const eid = ev.employee_id;
-      if (!eid || !empIdSet.has(eid)) continue;
-      const existing = firstEntry.get(eid);
-      if (!existing || ev.happen_time < existing) firstEntry.set(eid, ev.happen_time);
-      attendedIds.add(eid);
-    }
-
-    for (const emp of employees) {
-      const entry = firstEntry.get(emp.id);
-      if (entry && emp.working_hours_start) {
-        const expected = dayjs(`${today}T${emp.working_hours_start}`);
-        if (dayjs(entry).diff(expected, 'minute') > 5) lateIds.add(emp.id);
-      }
-    }
-
-    const todayStart = dayjs(today).startOf('day');
-    const todayEnd = dayjs(today).endOf('day');
-    const onLeaveIds = new Set<number>(
-      workLeaves
-        .filter((l) => {
-          if (!l.employee?.id || !empIdSet.has(l.employee.id)) return false;
-          return dayjs(l.start_date).isBefore(todayEnd) && dayjs(l.end_date).isAfter(todayStart);
-        })
-        .map((l) => l.employee!.id)
+    const excused = (excusedQ.data as number[] | undefined) ?? [];
+    const { counts } = buildAttendanceRoster(
+      employees, events, workLeaves, today, t('attendance.leaveFallback'), excused,
     );
-
-    return {
-      present: Math.max(0, attendedIds.size - lateIds.size),
-      late: lateIds.size,
-      onLeave: onLeaveIds.size,
-      total: empTotal,
-    };
-  }, [events, employees, workLeaves, today, empTotal, empIdSet]);
+    return { present: counts.present, late: counts.late, onLeave: counts.onLeave, total: empTotal };
+  }, [events, employees, workLeaves, excusedQ.data, today, empTotal, t]);
 
   const recentLeaves = useMemo(
     () =>
