@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, ActivityIndicator } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
+import { KeyboardAvoider } from './KeyboardAvoider';
 import type { ThemeColors } from '../theme/palettes';
 
 /**
@@ -63,7 +64,12 @@ export function ModalCard({
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.overlay}>
+      {/* Bu oynalarning KO'PIDA matn maydoni bor (kelishuv izohi, rad etish
+          sababi, devonxona raqami, safar harakati). Modal ota-ekrandagi
+          KeyboardAvoidingView ni MEROS OLMAYDI — shu sababli klaviatura
+          kartani ham, "Bekor / Tasdiqlash" tugmalarini ham yopib qo'yardi.
+          Bitta o'rash 7 ta dialogni birdan tuzatadi. */}
+      <KeyboardAvoider style={styles.overlay}>
         <View style={styles.card}>
           <Text style={styles.title}>{title}</Text>
           {!!hint && <Text style={styles.hint}>{hint}</Text>}
@@ -90,7 +96,7 @@ export function ModalCard({
             </TouchableOpacity>
           </View>
         </View>
-      </View>
+      </KeyboardAvoider>
     </Modal>
   );
 }

@@ -183,6 +183,11 @@ export interface OrderAct {
   created_at?: string;
   organization_branch_id?: number;
   familiarizers?: OrderActFamiliarizer[];
+  // Tanishuvchi BO'LIMLAR — buyruq yaratishda tanlanadi va backend
+  // (`familiarizer_departments`) qaytaradi, lekin tafsilot ekranida
+  // ko'rsatilmasdi: foydalanuvchi qaysi bo'limlar biriktirilganini
+  // umuman ko'ra olmasdi.
+  familiarizer_departments?: { id: number; name: string }[];
   assigned_signers?: OrderActSigner[];
   signers?: OrderActSigner[];
   rejected_by?: Employee;

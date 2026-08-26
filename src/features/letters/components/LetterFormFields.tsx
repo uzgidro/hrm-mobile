@@ -7,10 +7,22 @@ import type { PickerOption } from '@/components/PickerModal';
 import { useBreakpoint } from '@/utils/responsive';
 import { Field, Selector } from './FormParts';
 import type { PickerKind, DateKind } from './LetterPickers';
+import { SelectedChips } from '@/components/SelectedChips';
 
 // The type-dependent field group of the create-letter form (business-trip vs
 // bildirgi/ariza). Selection state + option sources stay in the screen; this is
 // pure composition wired through the two openers and the text setters.
+
+// Tanlangan id larni chip (qiymat + nom) ga aylantiradi. Nomi topilmagan id
+// TASHLAB YUBORILMAYDI: u ham ko'rinishi kerak (aks holda tanlov "yo'qolgan"
+// bo'lib tuyulardi) — o'rniga id ko'rsatiladi.
+function chipsOf(ids: number[], options: PickerOption[]) {
+  return ids.map((id) => ({
+    value: id,
+    label: options.find((o) => o.value === id)?.label ?? `#${id}`,
+  }));
+}
+
 export function LetterFormFields(props: {
   isTrip: boolean;
   typeHint: string;
@@ -31,6 +43,9 @@ export function LetterFormFields(props: {
   onChangeShortSummary: (v: string) => void;
 
   rahbariyatIds: number[];
+  /** Tanlanganlarning NOMINI ko'rsatish uchun (chip). */
+  rahbariyatOptions: PickerOption[];
+  onToggleRahbariyat: (v: number) => void;
   rahbariyatLoading: boolean;
   submitterId: number | null;
   submitterOptions: PickerOption[];
@@ -39,6 +54,8 @@ export function LetterFormFields(props: {
   mainSignerId: number | null;
   signerOptions: PickerOption[];
   ordinarySigners: number[];
+  ordinaryOptions: PickerOption[];
+  onToggleOrdinary: (v: number) => void;
   signersLoading: boolean;
   /** Kelishuvchilar ALOHIDA so'rovdan keladi — o'z yuklanish holati bilan. */
   agreementLoading: boolean;
@@ -56,8 +73,10 @@ export function LetterFormFields(props: {
     isTrip, typeHint, onOpenPicker, onOpenDate,
     departureDate, arrivalDate, regions, destinationIds, branchesLoading,
     description, onChangeDescription, workPlan, onChangeWorkPlan, shortSummary, onChangeShortSummary,
-    rahbariyatIds, rahbariyatLoading, submitterId, submitterOptions, submittersLoading,
-    mainSignerId, signerOptions, ordinarySigners, signersLoading, agreementLoading,
+    rahbariyatIds, rahbariyatOptions, onToggleRahbariyat,
+    rahbariyatLoading, submitterId, submitterOptions, submittersLoading,
+    mainSignerId, signerOptions, ordinarySigners, ordinaryOptions, onToggleOrdinary,
+    signersLoading, agreementLoading,
     creatorId, creatorOptions, nameOf,
   } = props;
 
@@ -111,6 +130,7 @@ export function LetterFormFields(props: {
             <View testID="letter-field-leadership" style={twoCol ? styles.fieldHalf : undefined}>
               <Field label={t('letters.fieldLeadership')} required>
                 <Selector loading={rahbariyatLoading} text={rahbariyatIds.length ? t('letters.leadershipSelected', { count: rahbariyatIds.length }) : undefined} placeholder={t('letters.placeholderLeadership')} onPress={() => onOpenPicker('rahbariyat')} />
+                <SelectedChips items={chipsOf(rahbariyatIds, rahbariyatOptions)} onRemove={onToggleRahbariyat} />
               </Field>
             </View>
             <View testID="letter-field-tripSubmitter" style={twoCol ? styles.fieldHalf : undefined}>
@@ -152,6 +172,7 @@ export function LetterFormFields(props: {
             <View testID="letter-field-coordinators" style={twoCol ? styles.fieldHalf : undefined}>
               <Field label={t('letters.fieldCoordinators')}>
                 <Selector loading={agreementLoading} text={ordinarySigners.length ? t('letters.coordinatorsSelected', { count: ordinarySigners.length }) : undefined} placeholder={t('letters.placeholderCoordinators')} onPress={() => onOpenPicker('ordinary')} />
+                <SelectedChips items={chipsOf(ordinarySigners, ordinaryOptions)} onRemove={onToggleOrdinary} />
               </Field>
             </View>
           </View>

@@ -27,8 +27,10 @@ import support from './support';
 import terminals from './terminals';
 import chairman from './chairman';
 import directory from './directory';
+import qrLogin from './qrLogin';
 
 export default {
+  qrLogin,
   common,
   status,
   notifications,

@@ -43,6 +43,18 @@ export function DetailSections({ order }: { order: OrderAct }) {
         </Section>
       )}
 
+      {(order.familiarizer_departments?.length ?? 0) > 0 && (
+        <Section title={t('orders.sectionFamiliarizerDepts')}>
+          <View style={styles.deptWrap}>
+            {order.familiarizer_departments!.map((d) => (
+              <View key={d.id} style={styles.deptChip}>
+                <Text style={styles.deptChipText}>{d.name}</Text>
+              </View>
+            ))}
+          </View>
+        </Section>
+      )}
+
       {(order.familiarizers?.length ?? 0) > 0 && (
         <Section title={t('orders.sectionFamiliarizers')}>
           {order.familiarizers!.map((f, i) => (
@@ -77,6 +89,19 @@ export function DetailSections({ order }: { order: OrderAct }) {
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
+    deptWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+    deptChip: {
+      backgroundColor: c.primarySoft,
+      borderWidth: 1,
+      borderColor: c.cardBorder,
+      borderRadius: 999,
+      paddingVertical: 5,
+      paddingHorizontal: 10,
+      maxWidth: '100%',
+    },
+    // Bo'lim nomi UZUN bo'lsa keyingi qatorga o'tadi — kesilmaydi.
+    deptChipText: { fontSize: 12, color: c.text, flexShrink: 1 },
+
     signerRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 },
     signerDot: { width: 10, height: 10, borderRadius: 5 },
     signerName: { fontSize: 14, color: c.text, fontWeight: '600' },

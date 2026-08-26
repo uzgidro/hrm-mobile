@@ -2,7 +2,7 @@
   "expo": {
     "name": "HRM Uzgidro",
     "slug": "hrm-mobile",
-    "version": "1.6.0",
+    "version": "1.7.0",
     "runtimeVersion": {
       "policy": "appVersion"
     },
@@ -65,6 +65,12 @@
             "enableMinifyInReleaseBuilds": true,
             "enableShrinkResourcesInReleaseBuilds": true
           }
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Kompyuterdagi QR-kodni skanerlab tizimga kirish uchun kameraga ruxsat bering."
         }
       ]
     ],

@@ -15,6 +15,7 @@ import { PickerModal, type PickerOption } from '@/components/PickerModal';
 import { confirm } from '@/lib/confirm';
 import type { KpiTask } from '@/types';
 import { kpiEntryQuery, entryBonusesQuery, taskStatusesQuery } from '../api/queries';
+import { KeyboardAvoider } from '@/components/KeyboardAvoider';
 import {
   useAddKpiTask, useUpdateKpiTask, useDeleteKpiTask, useSetTaskStatus, useSetTaskGrade,
 } from '../api/mutations';
@@ -122,6 +123,7 @@ export default function KpiEntryScreen() {
       ) : isError || !entry ? (
         <ErrorState title={t('kpi.loadError')} onRetry={() => refetch()} />
       ) : (
+        <KeyboardAvoider>
         <ScrollView
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
@@ -314,6 +316,7 @@ export default function KpiEntryScreen() {
           )}
           <View style={{ height: 24 }} />
         </ScrollView>
+        </KeyboardAvoider>
       )}
 
       <PickerModal

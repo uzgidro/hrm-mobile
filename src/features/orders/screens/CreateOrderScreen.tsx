@@ -24,8 +24,10 @@ import {
 } from '../api/queries';
 import { useCreateOrder, useUpdateOrder } from '../api/mutations';
 import { Field, Selector } from '../components/FormParts';
+import { SelectedChips } from '@/components/SelectedChips';
 import { ApproversEditor, type Approver } from '../components/ApproversEditor';
 import { OrderPickers, type PickerKind } from '../components/OrderPickers';
+import { KeyboardAvoider } from '@/components/KeyboardAvoider';
 
 export default function CreateOrderScreen() {
   const { user } = useAuthStore();
@@ -192,6 +194,7 @@ export default function CreateOrderScreen() {
         }
       />
 
+      <KeyboardAvoider>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Field label={t('orders.categoryLabel')} required>
           <Selector
@@ -261,6 +264,16 @@ export default function CreateOrderScreen() {
             placeholder={t('orders.familiarizersPlaceholder')}
             onPress={() => setPicker('familiarizers')}
           />
+          {/* Tanlangan bo'limlarning NOMI ko'rinadi: ilgari faqat son bor edi
+              va foydalanuvchi qaysi bo'limlarni belgilaganini oynani qayta
+              ochmasdan bilolmasdi. */}
+          <SelectedChips
+            items={familiarizerDeptIds.map((id) => ({
+              value: id,
+              label: departmentOptions.find((o) => o.value === id)?.label ?? `#${id}`,
+            }))}
+            onRemove={(id) => setFamiliarizerDeptIds((prev) => prev.filter((x) => x !== id))}
+          />
         </Field>
 
         <ApproversEditor
@@ -275,6 +288,7 @@ export default function CreateOrderScreen() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+      </KeyboardAvoider>
 
       <OrderPickers
         picker={picker}

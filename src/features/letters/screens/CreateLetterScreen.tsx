@@ -339,8 +339,10 @@ export default function CreateLetterScreen() {
           workPlan={workPlan} onChangeWorkPlan={setWorkPlan}
           shortSummary={shortSummary} onChangeShortSummary={setShortSummary}
           rahbariyatIds={rahbariyatIds} rahbariyatLoading={rahbariyatLoading}
+          rahbariyatOptions={rahbariyatOptions} onToggleRahbariyat={toggle(setRahbariyatIds)}
           submitterId={submitterId} submitterOptions={submitterOptions} submittersLoading={submittersLoading}
           mainSignerId={mainSignerId} signerOptions={signerOptions} ordinarySigners={ordinarySigners} signersLoading={signersLoading}
+          ordinaryOptions={ordinaryOptions} onToggleOrdinary={toggle(setOrdinarySigners)}
           agreementLoading={agreementLoading}
           creatorId={creatorId} creatorOptions={creatorOptions}
           nameOf={nameOf}

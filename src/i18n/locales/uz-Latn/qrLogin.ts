@@ -1,0 +1,23 @@
+// QR orqali web'ga kirishni tasdiqlash (TZ 4.2.3).
+export default {
+  title: 'QR orqali kirish',
+  subtitle: 'Kompyuterdagi QR-kodni skanerlang',
+  hint: 'Kirish sahifasidagi QR-kodni ramka ichiga joylashtiring',
+  permissionBody: 'QR-kodni o‘qish uchun kameraga ruxsat bering.',
+  permissionGrant: 'Ruxsat berish',
+  confirmTitle: 'Kirishni tasdiqlaysizmi?',
+  confirmBody: 'Quyidagi qurilma sizning hisobingiz bilan tizimga kirmoqchi. Bu siz bo‘lmasangiz — rad eting.',
+  device: 'Qurilma',
+  ip: 'IP manzil',
+  unknown: 'Noma‘lum',
+  approve: 'Tasdiqlash',
+  reject: 'Rad etish',
+  retry: 'Qayta urinish',
+  approved: 'Kirish tasdiqlandi',
+  expired: 'QR-kod eskirdi, brauzerda yangilang',
+  scanError: 'QR-kod o‘qilmadi',
+  approveError: 'Tasdiqlanmadi, qayta urinib ko‘ring',
+  rejectedTitle: 'Rad etildi',
+  rejectedBody: 'Kirish so‘rovi rad etildi.',
+  menu: 'QR orqali kirish',
+};
