@@ -73,9 +73,30 @@ export function getHrBranchIds(user?: User | null): number[] {
   return user?.hr_branch_ids ?? [];
 }
 
-/** Branches the user's employee belongs to (multi-org membership). */
+/**
+ * Xodim TEGISHLI bo'lgan filiallar — backend `core/scoping.employee_branch_ids`
+ * bilan 1:1: BO'LIM filiali + M2M biriktirmalari.
+ *
+ * ⚠️ Ilgari bu yerda FAQAT M2M (`organization_branches`) bor edi. Ko'p kadr
+ * xodimining M2M ro'yxati BO'SH (ular filialga BO'LIM orqali tegishli), shu
+ * sababli `isBranchHr` doim `false` qaytarardi va mobil o'sha kadrga
+ * amallarni KO'RSATMASDI, backend esa ruxsat berardi. Jonli o'lchov
+ * (TEST, 2026-08-26): `confirmed` buyruqda kadr uchun backend "qo'llash" ga
+ * RUXSAT berdi, mobilда esa tugma umuman chiqmasdi.
+ */
 export function getAllowedBranchIds(user?: User | null): number[] {
-  return user?.employee?.organization_branches?.map((b) => b.id) ?? [];
+  const emp = user?.employee;
+  if (!emp) return [];
+  const ids = new Set<number>();
+  const deptBranch = emp.department?.organization_branch_id;
+  if (deptBranch != null) ids.add(Number(deptBranch));
+  if (emp.primary_organization_branch_id != null) {
+    ids.add(Number(emp.primary_organization_branch_id));
+  }
+  for (const b of emp.organization_branches ?? []) {
+    if (b?.id != null) ids.add(Number(b.id));
+  }
+  return [...ids];
 }
 
 /**

@@ -1,0 +1,280 @@
+{
+ "orders": {
+  "draft": {
+   "id": 45512,
+   "status": "draft",
+   "organization_branch_id": 1,
+   "created_by_id": 81077,
+   "submitter_id": null,
+   "is_stamped": false,
+   "category_rel": {
+    "id": 9,
+    "creator_role": "employee",
+    "type": null
+   },
+   "assigned_signers": [
+    {
+     "id": 62389,
+     "employee_id": 81079,
+     "signer_type": "approver",
+     "removal_requested": false
+    },
+    {
+     "id": 62390,
+     "employee_id": 606602,
+     "signer_type": "leadership",
+     "removal_requested": false
+    }
+   ],
+   "signers": [],
+   "familiarizers": []
+  },
+  "pending_approval": {
+   "id": 45513,
+   "status": "pending_approval",
+   "organization_branch_id": 1,
+   "created_by_id": 81077,
+   "submitter_id": null,
+   "is_stamped": false,
+   "category_rel": {
+    "id": 9,
+    "creator_role": "employee",
+    "type": null
+   },
+   "assigned_signers": [
+    {
+     "id": 62391,
+     "employee_id": 81079,
+     "signer_type": "approver",
+     "removal_requested": false
+    },
+    {
+     "id": 62392,
+     "employee_id": 606602,
+     "signer_type": "leadership",
+     "removal_requested": false
+    }
+   ],
+   "signers": [],
+   "familiarizers": []
+  },
+  "approved": {
+   "id": 45514,
+   "status": "approved",
+   "organization_branch_id": 1,
+   "created_by_id": 81077,
+   "submitter_id": null,
+   "is_stamped": false,
+   "category_rel": {
+    "id": 9,
+    "creator_role": "employee",
+    "type": null
+   },
+   "assigned_signers": [
+    {
+     "id": 62393,
+     "employee_id": 81079,
+     "signer_type": "approver",
+     "removal_requested": false
+    },
+    {
+     "id": 62394,
+     "employee_id": 606602,
+     "signer_type": "leadership",
+     "removal_requested": false
+    }
+   ],
+   "signers": [
+    {
+     "employee_id": 81079
+    }
+   ],
+   "familiarizers": []
+  },
+  "pending_leadership": {
+   "id": 45515,
+   "status": "pending_leadership",
+   "organization_branch_id": 1,
+   "created_by_id": 81077,
+   "submitter_id": null,
+   "is_stamped": false,
+   "category_rel": {
+    "id": 9,
+    "creator_role": "employee",
+    "type": null
+   },
+   "assigned_signers": [
+    {
+     "id": 62395,
+     "employee_id": 81079,
+     "signer_type": "approver",
+     "removal_requested": false
+    },
+    {
+     "id": 62396,
+     "employee_id": 606602,
+     "signer_type": "leadership",
+     "removal_requested": false
+    }
+   ],
+   "signers": [
+    {
+     "employee_id": 81079
+    }
+   ],
+   "familiarizers": []
+  },
+  "pending_chancellery": {
+   "id": 45516,
+   "status": "pending_chancellery",
+   "organization_branch_id": 1,
+   "created_by_id": 81077,
+   "submitter_id": null,
+   "is_stamped": false,
+   "category_rel": {
+    "id": 9,
+    "creator_role": "employee",
+    "type": null
+   },
+   "assigned_signers": [
+    {
+     "id": 62397,
+     "employee_id": 81079,
+     "signer_type": "approver",
+     "removal_requested": false
+    },
+    {
+     "id": 62398,
+     "employee_id": 606602,
+     "signer_type": "leadership",
+     "removal_requested": false
+    }
+   ],
+   "signers": [
+    {
+     "employee_id": 81079
+    },
+    {
+     "employee_id": 606602
+    }
+   ],
+   "familiarizers": []
+  },
+  "confirmed": {
+   "id": 45517,
+   "status": "confirmed",
+   "organization_branch_id": 1,
+   "created_by_id": 81077,
+   "submitter_id": null,
+   "is_stamped": true,
+   "category_rel": {
+    "id": 9,
+    "creator_role": "employee",
+    "type": null
+   },
+   "assigned_signers": [
+    {
+     "id": 62399,
+     "employee_id": 81079,
+     "signer_type": "approver",
+     "removal_requested": false
+    },
+    {
+     "id": 62400,
+     "employee_id": 606602,
+     "signer_type": "leadership",
+     "removal_requested": false
+    }
+   ],
+   "signers": [
+    {
+     "employee_id": 81079
+    },
+    {
+     "employee_id": 606602
+    }
+   ],
+   "familiarizers": []
+  }
+ },
+ "users": {
+  "emp_a": {
+   "type": "employee",
+   "hr_branch_ids": [],
+   "chancellery_branch_ids": [],
+   "employee": {
+    "id": 81077,
+    "legal_name": "E2E emp_a",
+    "is_multi_org_user": false,
+    "multi_org_employee_role": null,
+    "department": {
+     "id": 3,
+     "name": "Sinov bo'limi",
+     "organization_branch_id": 1
+    },
+    "organization_branches": [],
+    "primary_organization_branch_id": null
+   }
+  },
+  "hr": {
+   "type": "employee",
+   "hr_branch_ids": [],
+   "chancellery_branch_ids": [],
+   "employee": {
+    "id": 81079,
+    "legal_name": "E2E hr",
+    "is_multi_org_user": true,
+    "multi_org_employee_role": "hr",
+    "department": {
+     "id": 3,
+     "name": "Sinov bo'limi",
+     "organization_branch_id": 1
+    },
+    "organization_branches": [],
+    "primary_organization_branch_id": null
+   }
+  },
+  "deputy": {
+   "type": "employee",
+   "hr_branch_ids": [],
+   "chancellery_branch_ids": [],
+   "employee": {
+    "id": 606602,
+    "legal_name": "E2E deputy",
+    "is_multi_org_user": true,
+    "multi_org_employee_role": "deputy",
+    "department": {
+     "id": 3,
+     "name": "Sinov bo'limi",
+     "organization_branch_id": 1
+    },
+    "organization_branches": [],
+    "primary_organization_branch_id": null
+   }
+  },
+  "chancellery": {
+   "type": "employee",
+   "hr_branch_ids": [],
+   "chancellery_branch_ids": [],
+   "employee": {
+    "id": 606603,
+    "legal_name": "E2E chancellery",
+    "is_multi_org_user": true,
+    "multi_org_employee_role": "chancellery",
+    "department": {
+     "id": 3,
+     "name": "Sinov bo'limi",
+     "organization_branch_id": 1
+    },
+    "organization_branches": [],
+    "primary_organization_branch_id": null
+   }
+  }
+ },
+ "ids": {
+  "emp_a": 81077,
+  "hr": 81079,
+  "deputy": 606602,
+  "chancellery": 606603
+ }
+}

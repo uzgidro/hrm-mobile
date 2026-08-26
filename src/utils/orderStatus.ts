@@ -80,6 +80,12 @@ export interface DecreePermissions {
   /** KADR buyruqni QO'LLAYDI: `confirmed` → `applied` (ta'til/ko'chirish
       yozuvi yaratiladi). Backend `decree_apply`: faqat KADR, o'z filialida. */
   canApply: boolean;
+  /** DEVONXONA buyruqni QAYTARADI (rad etish izohi bilan) — muhr bekor
+      bo'ladi, muallif tuzatib qayta yuboradi.
+      ⚠️ Backend buni ISTALGAN bosqichda ruxsat beradi (2026-07-27 qarori),
+      lekin WEB tugmani faqat `pending_chancellery` da ko'rsatadi — mobil
+      ham SHUNGA moslangan (interfeys tartibi bir xil bo'lsin). */
+  canChancelleryReturn: boolean;
   /** Muallif MENI kelishuvchilar safidan chiqarmoqchi — rozilik/rad javobi
       (web `canRespondToRemoval` 1:1).
       ⚠️ Backend 2026-08-13 dan YANGI bunday so'rov YARATMAYDI (kelishuvchi
@@ -164,6 +170,11 @@ export function decreePermissions(
   const canEdit = isSiteMasterAdmin(user)
     || (!isLocked && (isCreator || (isHR(user) && isBranchHr(user, o.organization_branch_id))));
 
+  // Devonxonaning "Qaytarish" tugmasi — `canRegister` bilan BIR XIL shart
+  // (web `chancelleryReject`). Mobilда bu amal umuman yo'q edi: devonxona
+  // buyruqni ro'yxatga olishi mumkin edi, lekin QAYTARA olmasdi.
+  const canChancelleryReturn = canRegister;
+
   // QO'LLASH — backend `decree_apply` bilan 1:1: FAQAT kadr (yoki sayt
   // master-admini), FAQAT o'z filialida va FAQAT `confirmed` holatda.
   // Bu qadam bo'lmasa buyruq hech qachon `applied` ga o'tmaydi va ta'til /
@@ -189,7 +200,8 @@ export function decreePermissions(
   // tafsilot ichida turadi (web bilan bir xil joylashuv).
   const hasActions =
     canSubmit || canApprove || canConfirmSubmission || canResubmit || canForward
-    || canRegister || canApply || canAcknowledge || canRespondToRemoval;
+    || canRegister || canChancelleryReturn || canApply || canAcknowledge
+    || canRespondToRemoval;
 
   const docLocked =
     o.status === 'confirmed' || o.status === 'applied' || o.status === 'rejected';
@@ -204,6 +216,7 @@ export function decreePermissions(
     canForward,
     canRegister,
     canApply,
+    canChancelleryReturn,
     canRespondToRemoval,
     canAcknowledge,
     hasActions,

@@ -1,0 +1,230 @@
+{
+ "draft": {
+  "emp_a": {
+   "submit": 200,
+   "approve": 400,
+   "reject": 400,
+   "forward": 400,
+   "register": 403,
+   "apply": 403,
+   "acknowledge": 403
+  },
+  "hr": {
+   "submit": 403,
+   "approve": 400,
+   "reject": 400,
+   "forward": 400,
+   "register": 403,
+   "apply": 400,
+   "acknowledge": 403
+  },
+  "deputy": {
+   "submit": 403,
+   "approve": 400,
+   "reject": 400,
+   "forward": 400,
+   "register": 403,
+   "apply": 403,
+   "acknowledge": 403
+  },
+  "chancellery": {
+   "submit": 403,
+   "approve": 400,
+   "reject": 200,
+   "forward": 400,
+   "register": 400,
+   "apply": 403,
+   "acknowledge": 403
+  }
+ },
+ "pending_approval": {
+  "emp_a": {
+   "submit": 400,
+   "approve": 403,
+   "reject": 403,
+   "forward": 400,
+   "register": 403,
+   "apply": 403,
+   "acknowledge": 403
+  },
+  "hr": {
+   "submit": 403,
+   "approve": 200,
+   "reject": 200,
+   "forward": 400,
+   "register": 403,
+   "apply": 400,
+   "acknowledge": 403
+  },
+  "deputy": {
+   "submit": 403,
+   "approve": 403,
+   "reject": 403,
+   "forward": 400,
+   "register": 403,
+   "apply": 403,
+   "acknowledge": 403
+  },
+  "chancellery": {
+   "submit": 403,
+   "approve": 403,
+   "reject": 200,
+   "forward": 400,
+   "register": 400,
+   "apply": 403,
+   "acknowledge": 403
+  }
+ },
+ "approved": {
+  "emp_a": {
+   "submit": 400,
+   "approve": 400,
+   "reject": 400,
+   "forward": 200,
+   "register": 403,
+   "apply": 403,
+   "acknowledge": 403
+  },
+  "hr": {
+   "submit": 403,
+   "approve": 400,
+   "reject": 400,
+   "forward": 403,
+   "register": 403,
+   "apply": 400,
+   "acknowledge": 403
+  },
+  "deputy": {
+   "submit": 403,
+   "approve": 400,
+   "reject": 400,
+   "forward": 403,
+   "register": 403,
+   "apply": 403,
+   "acknowledge": 403
+  },
+  "chancellery": {
+   "submit": 403,
+   "approve": 400,
+   "reject": 200,
+   "forward": 403,
+   "register": 400,
+   "apply": 403,
+   "acknowledge": 403
+  }
+ },
+ "pending_leadership": {
+  "emp_a": {
+   "submit": 400,
+   "approve": 403,
+   "reject": 403,
+   "forward": 400,
+   "register": 403,
+   "apply": 403,
+   "acknowledge": 403
+  },
+  "hr": {
+   "submit": 403,
+   "approve": 403,
+   "reject": 403,
+   "forward": 400,
+   "register": 403,
+   "apply": 400,
+   "acknowledge": 403
+  },
+  "deputy": {
+   "submit": 403,
+   "approve": 200,
+   "reject": 200,
+   "forward": 400,
+   "register": 403,
+   "apply": 403,
+   "acknowledge": 403
+  },
+  "chancellery": {
+   "submit": 403,
+   "approve": 403,
+   "reject": 200,
+   "forward": 400,
+   "register": 400,
+   "apply": 403,
+   "acknowledge": 403
+  }
+ },
+ "pending_chancellery": {
+  "emp_a": {
+   "submit": 400,
+   "approve": 400,
+   "reject": 400,
+   "forward": 400,
+   "register": 403,
+   "apply": 403,
+   "acknowledge": 403
+  },
+  "hr": {
+   "submit": 403,
+   "approve": 400,
+   "reject": 400,
+   "forward": 400,
+   "register": 403,
+   "apply": 400,
+   "acknowledge": 403
+  },
+  "deputy": {
+   "submit": 403,
+   "approve": 400,
+   "reject": 400,
+   "forward": 400,
+   "register": 403,
+   "apply": 403,
+   "acknowledge": 403
+  },
+  "chancellery": {
+   "submit": 403,
+   "approve": 400,
+   "reject": 200,
+   "forward": 400,
+   "register": 200,
+   "apply": 403,
+   "acknowledge": 403
+  }
+ },
+ "confirmed": {
+  "emp_a": {
+   "submit": 400,
+   "approve": 400,
+   "reject": 400,
+   "forward": 400,
+   "register": 403,
+   "apply": 403,
+   "acknowledge": 403
+  },
+  "hr": {
+   "submit": 403,
+   "approve": 400,
+   "reject": 400,
+   "forward": 400,
+   "register": 403,
+   "apply": 200,
+   "acknowledge": 403
+  },
+  "deputy": {
+   "submit": 403,
+   "approve": 400,
+   "reject": 400,
+   "forward": 400,
+   "register": 403,
+   "apply": 403,
+   "acknowledge": 403
+  },
+  "chancellery": {
+   "submit": 403,
+   "approve": 400,
+   "reject": 200,
+   "forward": 400,
+   "register": 400,
+   "apply": 403,
+   "acknowledge": 403
+  }
+ }
+}
