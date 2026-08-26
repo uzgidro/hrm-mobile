@@ -25,11 +25,39 @@ describe('buildAttendanceRoster', () => {
   });
 
   it('tags late when arrival is more than the threshold past the expected start', () => {
-    // 09:00 + 5min threshold → 09:06 is late.
-    const { rows, counts } = buildAttendanceRoster([emp(1, 'A', '09:00')], [event(1, '09:06')], [], DATE, 'L');
+    // Backend/web bilan bir xil: 6 daqiqalik grace, QAT'IY undan keyin kech.
+    const { rows, counts } = buildAttendanceRoster([emp(1, 'A', '09:00')], [event(1, '09:07')], [], DATE, 'L');
     expect(rows[0].status).toBe('late');
     expect(counts.late).toBe(1);
-    expect(LATE_THRESHOLD_MIN).toBe(5);
+    expect(LATE_THRESHOLD_MIN).toBe(6);
+  });
+
+  it('exactly the grace period is NOT late (backend: strictly > 6 minutes)', () => {
+    const { rows } = buildAttendanceRoster([emp(1, 'A', '09:00')], [event(1, '09:06')], [], DATE, 'L');
+    expect(rows[0].status).toBe('present');
+  });
+
+  it('an employee with a lateness excuse who came late counts as present, not late', () => {
+    // Ta'til/buyruq/safar xati — backend "Kech qolganlar"da ko'rsatmaydi.
+    const { rows, counts } = buildAttendanceRoster(
+      [emp(1, 'A', '09:00')], [event(1, '11:30')], [], DATE, 'L', [1],
+    );
+    expect(rows[0].status).toBe('present');
+    expect(counts.late).toBe(0);
+  });
+
+  it('an excused employee who never came is onLeave (with the fallback label), not absent', () => {
+    const { rows, counts } = buildAttendanceRoster([emp(1, 'A')], [], [], DATE, 'Ruxsat', [1]);
+    expect(rows[0].status).toBe('onLeave');
+    expect(rows[0].leaveName).toBe('Ruxsat');
+    expect(counts.absent).toBe(0);
+  });
+
+  it('the excuse list does not touch other employees', () => {
+    const { rows } = buildAttendanceRoster(
+      [emp(1, 'A', '09:00'), emp(2, 'B', '09:00')], [event(1, '11:30'), event(2, '11:30')], [], DATE, 'L', [1],
+    );
+    expect(rows.map((r) => r.status)).toEqual(['present', 'late']);
   });
 
   it('tags absent when there is no turnstile entry', () => {

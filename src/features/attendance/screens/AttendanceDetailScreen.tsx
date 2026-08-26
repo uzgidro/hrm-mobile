@@ -20,6 +20,7 @@ import { ScreenHeader } from '@/components/ScreenHeader';
 import { LoadingView } from '@/components/StateViews';
 import { AttendanceDonut } from '@/components/AttendanceDonut';
 import { RosterRow } from '@/components/RosterRow';
+import { latenessExcusedQuery } from '@/utils/attendance';
 import { dayAttendanceQuery, teamLeavesQuery } from '../api/queries';
 
 type StatusGroup = AttendanceStatus;
@@ -49,10 +50,13 @@ export default function AttendanceDetailScreen() {
       employeesListQuery(orgBranchId),
       dayAttendanceQuery(selectedDate, orgBranchId),
       teamLeavesQuery(selectedDate, 100, orgBranchId),
+      // Kechikish uzri (ta'til/buyruq/safar xati) — backend ro'yxati; usiz
+      // uzri bor xodim "kechikdi" bo'lib chiqardi.
+      latenessExcusedQuery(selectedDate, orgBranchId),
     ],
   });
 
-  const [empQ, attQ, leavesQ] = results;
+  const [empQ, attQ, leavesQ, excusedQ] = results;
   const isLoading = results.some((r) => r.isLoading);
 
   const { rows, counts } = useMemo(() => {
@@ -60,8 +64,9 @@ export default function AttendanceDetailScreen() {
     if (onlySubordinates && myId) employees = employees.filter((e) => e.supervisor_id === myId);
     const events: AttendanceEvent[] = attQ.data?.items ?? [];
     const workLeaves: WorkLeave[] = leavesQ.data ?? [];
-    return buildAttendanceRoster(employees, events, workLeaves, selectedDate, t('attendance.leaveFallback'));
-  }, [empQ.data, attQ.data, leavesQ.data, selectedDate, onlySubordinates, myId, t]);
+    const excused = (excusedQ.data as number[] | undefined) ?? [];
+    return buildAttendanceRoster(employees, events, workLeaves, selectedDate, t('attendance.leaveFallback'), excused);
+  }, [empQ.data, attQ.data, leavesQ.data, excusedQ.data, selectedDate, onlySubordinates, myId, t]);
 
   // One alphabetical list; the donut zone (sectionFilter) narrows it.
   const visibleRows = useMemo(

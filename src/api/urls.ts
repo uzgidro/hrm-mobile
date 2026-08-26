@@ -16,6 +16,10 @@ export const EMPLOYEE_DETAIL = (id: number) => `employees/${id}`;
 
 // Turnstile attendance
 export const TURNSTILE_ATTENDANCE_EVENTS = 'turnstile-attendance-events';
+// Kechikish UZRI bor xodimlar (id) — ta'til, buyruq yoki xizmat safari xati.
+// Kechikish davomat ekranlarida KLIENTDA hisoblanadi, uzr esa faqat
+// backendda aniqlanadi (not_excused_lateness_filters) — shu ro'yxat ayiriladi.
+export const DASHBOARD_LATENESS_EXCUSED = 'dashboard/lateness-excused';
 
 // Time-tracking (Учёт времени) — read-only mobile surfaces.
 // The "monthly tabel grid": one row per employee with an attendance.calendar

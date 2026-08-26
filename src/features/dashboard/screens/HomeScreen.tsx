@@ -24,6 +24,7 @@ import { leaveStatusGroup, leaveStatusKind } from '@/utils/leaveStatus';
 import { statusColor } from '@/utils/orderStatus';
 import { employeesListQuery } from '@/utils/employees';
 import { buildAttendanceRoster, type AttendanceStatus } from '@/utils/attendanceRoster';
+import { latenessExcusedQuery } from '@/utils/attendance';
 import {
   homeAttendanceQuery,
   homeMyLeavesQuery,
@@ -103,11 +104,14 @@ export default function HomeScreen() {
       { ...employeesListQuery(orgBranchId), enabled: canSeeAttendanceContent },
       { ...homeTodayAttendanceQuery(todayStr, orgBranchId), enabled: canSeeAttendanceContent },
       { ...homeTeamLeavesQuery(todayStr, 100, orgBranchId), enabled: canSeeAttendanceContent },
+      // Kechikish uzri (ta'til/buyruq/safar xati) — backend ro'yxati; usiz
+      // uzri bor xodim "kechikdi" bo'lib chiqardi.
+      { ...latenessExcusedQuery(todayStr, orgBranchId), enabled: canSeeAttendanceContent },
     ],
     [orgBranchId, todayStr, canSeeAttendanceContent]
   );
   const rosterResults = useQueries({ queries: rosterQueries });
-  const [rosterEmpQ, rosterAttQ, rosterLeavesQ] = rosterResults;
+  const [rosterEmpQ, rosterAttQ, rosterLeavesQ, rosterExcusedQ] = rosterResults;
   const isRosterLoading = canSeeAttendanceContent && rosterResults.some((r) => r.isLoading);
 
   const { rows: rosterRows, counts: rosterCounts } = useMemo(() => {
@@ -115,8 +119,9 @@ export default function HomeScreen() {
     if (onlySubordinates && myId) employees = employees.filter((e) => e.supervisor_id === myId);
     const events: AttendanceEvent[] = (rosterAttQ.data as { items: AttendanceEvent[] } | undefined)?.items ?? [];
     const workLeaves: WorkLeave[] = (rosterLeavesQ.data as WorkLeave[]) ?? [];
-    return buildAttendanceRoster(employees, events, workLeaves, todayStr, t('attendance.leaveFallback'));
-  }, [rosterEmpQ.data, rosterAttQ.data, rosterLeavesQ.data, todayStr, onlySubordinates, myId, t]);
+    const excused = (rosterExcusedQ.data as number[] | undefined) ?? [];
+    return buildAttendanceRoster(employees, events, workLeaves, todayStr, t('attendance.leaveFallback'), excused);
+  }, [rosterEmpQ.data, rosterAttQ.data, rosterLeavesQ.data, rosterExcusedQ.data, todayStr, onlySubordinates, myId, t]);
 
   // One alphabetical list; the donut zone (rosterFilter) narrows it — same
   // behavior as AttendanceDetailScreen.

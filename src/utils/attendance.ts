@@ -1,5 +1,7 @@
+import { queryOptions } from '@tanstack/react-query';
+
 import { apiClient } from '../api/client';
-import { TURNSTILE_ATTENDANCE_EVENTS } from '../api/urls';
+import { DASHBOARD_LATENESS_EXCUSED, TURNSTILE_ATTENDANCE_EVENTS } from '../api/urls';
 import { AttendanceEvent } from '../types';
 import { mapWithConcurrency } from './concurrency';
 
@@ -58,4 +60,34 @@ export async function fetchAllAttendanceEvents(
 
 export function attendanceQueryKey(date: string, orgBranchId?: number) {
   return ['team-attendance', date, orgBranchId] as const;
+}
+
+
+// Kechikish UZRI bor xodimlar (o'sha kun uchun): ta'til, buyruq yoki xizmat
+// safari xati. Davomat ro'yxati kechikishni turniket hodisalaridan KLIENTDA
+// hisoblaydi (buildAttendanceRoster) va uzr haqida hech narsa bilmaydi — shu
+// sabab ta'tildagi xodim ilovada "kechikdi" bo'lib chiqardi, web va backend
+// ro'yxatlarida esa yo'q edi. Uzr sharti backendda YAGONA joyda turadi
+// (not_excused_lateness_filters), bu yerga faqat tayyor id ro'yxati keladi.
+//
+// Home va attendance-detail ekranlari BIR XIL kalitni ulashadi (kesh bitta).
+export function latenessExcusedQuery(date: string, orgBranchId?: number | null) {
+  const params: Record<string, unknown> = { day: date };
+  if (orgBranchId != null) params.organization_branch_id = orgBranchId;
+  return queryOptions({
+    queryKey: ['lateness-excused', date, orgBranchId ?? null] as const,
+    queryFn: () =>
+      apiClient
+        .get(DASHBOARD_LATENESS_EXCUSED, { params })
+        .then((r) => {
+          const d = r.data as any;
+          return ((Array.isArray(d) ? d : d?.employee_ids) ?? []) as number[];
+        })
+        // FAIL-SOFT: bu ro'yxat davomat ekranining QO'SHIMCHA aniqligi, asosi
+        // emas. Backend hali yangilanmagan bo'lsa (404) yoki tarmoq uzilsa —
+        // ro'yxat bo'sh bo'ladi (avvalgi xatti-harakat), ekran esa xato
+        // toast'i chiqarmasdan ishlayveradi.
+        .catch(() => [] as number[]),
+    staleTime: 2 * 60 * 1000,
+  });
 }

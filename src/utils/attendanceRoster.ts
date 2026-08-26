@@ -27,18 +27,29 @@ export interface AttendanceRoster {
   counts: { total: number; present: number; late: number; onLeave: number; absent: number };
 }
 
-// Minutes past the expected start after which an arrival counts as "late".
-export const LATE_THRESHOLD_MIN = 5;
+// Grace period past the expected start; an arrival counts as "late" only
+// STRICTLY beyond it. 6 daqiqa — backend (`> effective_start + interval
+// '6 minutes'`) va web bilan bir xil; ilgari bu 5 edi va aynan 09:06 da
+// kelgan xodim ilovada "kechikdi", web/tabelda esa "keldi" bo'lardi.
+export const LATE_THRESHOLD_MIN = 6;
 
 /** Build the day's roster from employees + turnstile events + team leaves.
- *  `leaveFallback` is the label used when a WorkLeave has no `type`. */
+ *  `leaveFallback` is the label used when a WorkLeave has no `type`.
+ *
+ *  `excusedEmployeeIds` — backend aytgan "o'sha kuni kechikish uzri bor"
+ *  xodimlar (ta'til, buyruq, xizmat safari xati; `latenessExcusedQuery`).
+ *  Ular hech qachon `late` bo'lmaydi: kelgan bo'lsa `present`, kelmagan bo'lsa
+ *  `onLeave`. Uzr sharti backendda yagona joyda turadi — bu yerda faqat
+ *  ro'yxat ayiriladi (kechikish mantig'ining nusxasi ko'paymasin). */
 export function buildAttendanceRoster(
   employees: Employee[],
   events: AttendanceEvent[],
   workLeaves: WorkLeave[],
   selectedDate: string,
   leaveFallback: string,
+  excusedEmployeeIds?: Iterable<number> | null,
 ): AttendanceRoster {
+  const excused = new Set<number>(excusedEmployeeIds ?? []);
   const empIdSet = new Set(employees.map((e) => e.id));
   const firstEntry = new Map<number, string>();
   const lastExit = new Map<number, string>();
@@ -69,19 +80,23 @@ export function buildAttendanceRoster(
     const exit = lastExit.get(emp.id);
     const leaveName = leaveMap.get(emp.id);
 
+    const isExcused = excused.has(emp.id);
+
     // onLeave wins only when the person has NO turnstile entry (a person who
     // came in despite an open leave is counted by their real arrival).
-    if (leaveName && !entry) {
+    if ((leaveName || isExcused) && !entry) {
       counts.onLeave += 1;
-      return { employee: emp, status: 'onLeave' as const, leaveName };
+      return { employee: emp, status: 'onLeave' as const, leaveName: leaveName ?? leaveFallback };
     }
     if (!entry) {
       counts.absent += 1;
       return { employee: emp, status: 'absent' as const };
     }
-    if (emp.working_hours_start) {
+    // Uzri bor xodim kelib turniketdan o'tsa — "keldi", hech qachon "kechikdi"
+    // emas (backenddagi "Kech qolganlar" ro'yxati bilan bir xil qoida).
+    if (emp.working_hours_start && !isExcused) {
       const expected = dayjs(`${selectedDate}T${emp.working_hours_start}`);
-      if (dayjs(entry).diff(expected, 'minute') > LATE_THRESHOLD_MIN) {
+      if (dayjs(entry).diff(expected, 'second') > LATE_THRESHOLD_MIN * 60) {
         counts.late += 1;
         return { employee: emp, status: 'late' as const, entryTime: entry, exitTime: exit };
       }
