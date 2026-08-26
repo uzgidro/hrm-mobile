@@ -128,7 +128,18 @@ export function letterSignersQuery(branchId?: number) {
         .get(EMPLOYEES_LIST, {
           params: {
             multi_org_employee_role: ['hr', 'deputy', 'ministr'],
-            include_multi_org: true,
+            // ⚠️ `include_multi_org: true` OLIB TASHLANDI: u backendда M2M
+            // biriktirmasi bo'yicha filtrlaydi, ya'ni 28 filialga bog'langan
+            // rahbariyat HAR BIR filial ro'yxatida chiqardi ("rahbariyatda
+            // boshqa xodimlar chiqyapti"). Usiz `_branch_visibility_clause`
+            // ishlaydi — xodim ASOSIY filiali ro'yxatida ko'rinadi.
+            //
+            // `has_department: true` — bo'limi va lavozimi bo'lmagan xizmat
+            // hisoblari (test/monitoring akkauntlari) ro'yxatga tushmasin.
+            // Ministr istisno: backend uni bo'limsiz ham qoldiradi.
+            // O'lchandi (TEST, 2026-08-26): 1-filial 11 -> 7 ta, faqat
+            // haqiqiy rahbariyat.
+            has_department: true,
             size: 100,
             ...(branchId ? { organization_branch_id: branchId } : {}),
           },
@@ -172,6 +183,9 @@ export function letterRahbariyatQuery(branchId: number | undefined, enabled: boo
           params: {
             multi_org_employee_role: ['deputy', 'ministr'],
             include_multi_org: true,
+            // Bo'limi/lavozimi yo'q xizmat hisoblari rahbariyat ro'yxatiga
+            // tushmasin (ministr istisnosi backendда).
+            has_department: true,
             sort_by_razryad: true,
             size: 100,
           },
@@ -194,14 +208,21 @@ export function letterAgreementSignersQuery(branchId: number | undefined, enable
     queryKey: ['letter-agreement-signers', branchId] as const,
     enabled: enabled && !!branchId,
     queryFn: async () => {
+      // ⚠️ `include_multi_org: false` OLIB TASHLANDI. U backendда bo'limga
+      // INNER JOIN qilib `Department.organization_branch_id == branch` ni
+      // talab qilardi — ya'ni bo'limi BOSHQA filial daraxtida turgan xodim
+      // (kichik tashkilotlarda odatiy hol) ro'yxatga UMUMAN tushmasdi.
+      // O'lchandi (TEST, 2026-08-26): "Gidroproekt" AJ da 5 xodimdan mobil
+      // 2 tasini ko'rsatardi, "Energoqurilishindustriya" da esa 0 ta —
+      // ya'ni o'sha tashkilotlarda hujjat umuman yaratib bo'lmasdi.
+      //
+      // `has_department: true` server tomonda lavozim+bo'lim shartini
+      // qo'yadi, shuning uchun mijozdagi qo'lda filtr ham KERAK EMAS.
       const { items } = await fetchAllEmployees(branchId, {
-        include_multi_org: false,
+        has_department: true,
         sort_by_razryad: true,
       });
-      return items.filter((e) => {
-        const jp = typeof e.job_position === 'object' ? e.job_position?.name : e.job_position;
-        return !!(jp && String(jp).trim());
-      });
+      return items;
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -214,7 +235,10 @@ export function letterSubmittersQuery(branchId: number | undefined, enabled: boo
   return queryOptions({
     queryKey: ['letter-submitters', branchId] as const,
     enabled,
-    queryFn: () => fetchAllEmployees(branchId, { include_multi_org: false, sort_by_razryad: true }),
+    // Kelishuvchilar bilan bir xil manba (yuqoridagi izoh): bo'limi boshqa
+    // filialda turgan xodim tushib qolmasin, bo'limsiz xizmat hisoblari esa
+    // ro'yxatga chiqmasin.
+    queryFn: () => fetchAllEmployees(branchId, { has_department: true, sort_by_razryad: true }),
     staleTime: 5 * 60 * 1000,
   });
 }

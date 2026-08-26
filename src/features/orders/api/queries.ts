@@ -114,7 +114,11 @@ export function orderCategoriesQuery(creatorRole: 'hr' | 'employee') {
 export function orderEmployeesQuery(branchId?: number) {
   return queryOptions({
     queryKey: ['create-order-employees', branchId] as const,
-    queryFn: () => fetchAllEmployees(branchId, { sort_by_razryad: true }),
+    // `has_department: true` — bo'limi va lavozimi biriktirilmagan xizmat
+    // hisoblari (test/monitoring) tanlagichda chiqmasin. O'lchandi (TEST,
+    // 2026-08-26): 1-filialda 153 tadan 14 tasi lavozimsiz, 8 tasi bo'limsiz
+    // edi va hammasi ro'yxatda ko'rinardi.
+    queryFn: () => fetchAllEmployees(branchId, { has_department: true, sort_by_razryad: true }),
     staleTime: 5 * 60 * 1000,
   });
 }

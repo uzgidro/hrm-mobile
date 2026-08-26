@@ -85,7 +85,12 @@ describe('letterSignersQuery — ADRESAT (faqat rahbariyat rollari)', () => {
     await run(letterSignersQuery(7));
     const p = mock.history.get[0].params;
     expect(p.multi_org_employee_role).toEqual(['hr', 'deputy', 'ministr']);
-    expect(p.include_multi_org).toBe(true);
+    // `include_multi_org` OLIB TASHLANDI: u M2M bo'yicha filtrlab, 28 filialga
+    // bog'langan rahbariyatni HAR BIR filialda ko'rsatardi.
+    expect(p.include_multi_org).toBeUndefined();
+    // Bo'limi/lavozimi yo'q xizmat hisoblari chiqmasin (ministr istisnosi
+    // backendда).
+    expect(p.has_department).toBe(true);
     expect(p.organization_branch_id).toBe(7);
   });
 });
@@ -98,22 +103,29 @@ describe('letterAgreementSignersQuery — KELISHUVCHILAR (filialning BARCHA xodi
     // ENG MUHIMI: rol filtri YO'Q — aks holda oddiy xodim kelishuvchi bo'la olmaydi.
     expect(p.multi_org_employee_role).toBeUndefined();
     expect(p.organization_branch_id).toBe(7);
-    // Boshqa filialga m2m bog'langanlar chiqib ketmasin.
-    expect(p.include_multi_org).toBe(false);
+    // ⚠️ `include_multi_org: false` OLIB TASHLANDI: u bo'limga INNER JOIN
+    // qilib, bo'limi boshqa filial daraxtida turgan xodimni butunlay
+    // yashirardi (o'lchandi: ayrim tashkilotlarda ro'yxat 0 ta bo'lardi).
+    expect(p.include_multi_org).toBeUndefined();
+    // Lavozim+bo'lim sharti endi SERVERDA.
+    expect(p.has_department).toBe(true);
     expect(p.sort_by_razryad).toBe(true);
   });
 
-  it('lavozimi kiritilmagan xodimlarni ro\'yxatdan chiqarib tashlaydi (web ham)', async () => {
+  it('serverdan kelgan ro\'yxatni QIRQMAYDI (filtr endi serverda)', async () => {
+    // Ilgari bu yerda mijoz tomonda `job_position` bo'yicha filtr bor edi.
+    // U `has_department: true` bilan almashtirildi: server bo'lim+lavozim
+    // shartini o'zi qo'yadi va MINISTRni ataylab istisno qiladi — mijozdagi
+    // filtr esa ministrni ham kesib tashlardi.
     mock.onGet(EMPLOYEES_LIST).reply(200, {
       items: [
         { id: 1, legal_name: 'Lavozimli', job_position: { name: 'Muhandis' } },
-        { id: 2, legal_name: 'Lavozimsiz', job_position: null },
-        { id: 3, legal_name: "Bo'sh satr", job_position: { name: '   ' } },
+        { id: 2, legal_name: 'Ministr', job_position: null },
       ],
-      total: 3,
+      total: 2,
     });
     const rows = (await run(letterAgreementSignersQuery(7, true))) as { id: number }[];
-    expect(rows.map((r) => r.id)).toEqual([1]);
+    expect(rows.map((r) => r.id)).toEqual([1, 2]);
   });
 
   it('filial tanlanmagan bo\'lsa umuman so\'rov yubormaydi', () => {
@@ -123,10 +135,11 @@ describe('letterAgreementSignersQuery — KELISHUVCHILAR (filialning BARCHA xodi
 });
 
 describe('letterSubmittersQuery — YUBORUVCHI (faqat o\'z filiali)', () => {
-  it("include_multi_org: false — boshqa filialga bog'langanlar chiqmaydi", async () => {
+  it("has_department bilan so'raydi — bo'limi boshqa filialdagi xodim ham chiqadi", async () => {
     mock.onGet(EMPLOYEES_LIST).reply(200, { items: [], total: 0 });
     await run(letterSubmittersQuery(7, true));
-    expect(mock.history.get[0].params.include_multi_org).toBe(false);
+    expect(mock.history.get[0].params.include_multi_org).toBeUndefined();
+    expect(mock.history.get[0].params.has_department).toBe(true);
     expect(mock.history.get[0].params.organization_branch_id).toBe(7);
   });
 });
