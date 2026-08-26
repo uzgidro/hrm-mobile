@@ -2,6 +2,19 @@
 // uz-Latn/letters.ts (a parity test enforces this). Russian has three plural
 // forms (_one/_few/_many) where uz/en have two (_one/_other).
 export default {
+  'vehicleStatus': 'Статус',
+  'vehicleStatus_awaiting_approval': 'Ожидает подтверждения',
+  'vehicleStatus_pending': 'В автопарке',
+  'vehicleStatus_approved': 'Подтверждён',
+  'vehicleStatus_rejected': 'Отклонён',
+  'vehicleStatus_cancelled': 'Отменён',
+  sectionVehicle: 'Автотранспорт',
+  vehicleNeeded: 'Запрошен автомобиль',
+  vehicleNote: 'Примечание',
+  vehicleAssigned: 'Назначенный автомобиль',
+  vehicleRequest: 'Запросить автомобиль',
+  vehicleCancel: 'Отменить запрос',
+  vehicleNotePlaceholder: 'Укажите куда и зачем нужен автомобиль',
   // ── Screen / header titles ──────────────────────────────────────────────────
   listTitle: 'Письма',
   detailTitle: 'Письмо',

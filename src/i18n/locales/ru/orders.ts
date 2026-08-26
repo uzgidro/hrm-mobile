@@ -1,6 +1,10 @@
 // Orders (Buyruqlar) feature — Russian translation.
 // See uz-Latn/orders.ts for the meaning of each key.
 export default {
+  sectionAttachments: 'Вложения',
+  attachmentFallback: 'Файл',
+  attachmentDeleteTitle: 'Удалить файл',
+  attachmentDeleteBody: 'Файл будет удалён безвозвратно. Продолжить?',
   // ── List screen ─────────────────────────────────────────────────────────────
   title: 'Приказы',
   tabAction: 'Мне',
@@ -88,6 +92,11 @@ export default {
   applyStart: 'Дата начала',
   applyEnd: 'Дата окончания',
   applyPermanent: 'Постоянно',
+  removalConfirm: 'Согласен',
+  removalReject: 'Отклонить',
+  removalHint: 'Автор хочет исключить вас из списка согласующих.',
+  registerDate: 'Дата регистрации',
+  registerDateAuto: 'Сегодняшняя дата',
   assignFamiliarizersTitle: 'Назначить ознакомляемых',
   sectionHistory: 'История',
   signerFallback: 'Сотрудник',

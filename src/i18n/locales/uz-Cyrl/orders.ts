@@ -1,6 +1,10 @@
 // Orders (Buyruqlar) feature — uz-Cyrl transliteration of uz-Latn/orders.ts.
 // See uz-Latn/orders.ts for the meaning of each key.
 export default {
+  sectionAttachments: 'Илова файллар',
+  attachmentFallback: 'Файл',
+  attachmentDeleteTitle: 'Файлни ўчириш',
+  attachmentDeleteBody: 'Файл бутунлай ўчирилади. Давом этамизми?',
   // ── List screen ─────────────────────────────────────────────────────────────
   title: 'Буйруқлар',
   tabAction: 'Менда',
@@ -87,6 +91,11 @@ export default {
   applyStart: 'Бошланиш санаси',
   applyEnd: 'Тугаш санаси',
   applyPermanent: 'Доимий',
+  removalConfirm: 'Розиман',
+  removalReject: 'Рад этаман',
+  removalHint: 'Муаллиф сизни келишувчилар сафидан чиқармоқчи.',
+  registerDate: 'Рўйхат санаси',
+  registerDateAuto: 'Бугунги сана',
   assignFamiliarizersTitle: 'Танишувчиларни бириктириш',
   sectionHistory: 'Тарих',
   signerFallback: 'Ходим',

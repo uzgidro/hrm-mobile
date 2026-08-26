@@ -11,6 +11,7 @@ import {
   LETTER_RETURN, LETTER_RETURN_REPORT, LETTER_CANCEL_TRIP, LETTER_DETAIL,
   LETTER_EXTEND_TRIP, LETTER_APPROVE_EXTENSION, LETTER_REJECT_EXTENSION,
   LETTER_BASIS_DECREE,
+  LETTER_TRIP_VEHICLE,
 } from '@/api/urls';
 import type { PickedFile } from '@/components/AttachmentField';
 import { letterKeys } from './queries';
@@ -501,5 +502,26 @@ export function useSetBasisDecree(id: number) {
     mutationFn: (args: { number: string; date: string }) =>
       setBasisDecree(id, args.number, args.date),
     onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+  });
+}
+
+// ─── Safar uchun avtotransport so'rovi ───────────────────────────────────────
+// Mobilда bu amal umuman yo'q edi: xodim mashina so'rashni FAQAT webdan
+// qila olardi. Backend `set_trip_vehicle`: faqat safar egasi/yuboruvchisi,
+// yakunlangan/bekor qilingan safarga bo'lmaydi.
+export function setTripVehicle(id: number, needed: boolean, note?: string | null) {
+  return apiClient
+    .post(LETTER_TRIP_VEHICLE(id), { needed, ...(note ? { note } : {}) })
+    .then((r) => r.data);
+}
+
+export function useSetTripVehicle(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { needed: boolean; note?: string | null }) =>
+      setTripVehicle(id, input.needed, input.note),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: letterKeys.all });
+    },
   });
 }

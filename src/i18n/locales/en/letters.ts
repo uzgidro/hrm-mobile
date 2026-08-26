@@ -1,6 +1,19 @@
 // English translation of the letters namespace. Keep the key set identical to
 // uz-Latn/letters.ts (a parity test enforces this).
 export default {
+  'vehicleStatus': 'Status',
+  'vehicleStatus_awaiting_approval': 'Awaiting approval',
+  'vehicleStatus_pending': 'With the fleet',
+  'vehicleStatus_approved': 'Approved',
+  'vehicleStatus_rejected': 'Rejected',
+  'vehicleStatus_cancelled': 'Cancelled',
+  sectionVehicle: 'Vehicle',
+  vehicleNeeded: 'Vehicle requested',
+  vehicleNote: 'Note',
+  vehicleAssigned: 'Assigned vehicle',
+  vehicleRequest: 'Request a vehicle',
+  vehicleCancel: 'Cancel the request',
+  vehicleNotePlaceholder: 'Where and why the vehicle is needed',
   // ── Screen / header titles ──────────────────────────────────────────────────
   listTitle: 'Letters',
   detailTitle: 'Letter',

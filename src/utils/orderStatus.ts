@@ -80,6 +80,13 @@ export interface DecreePermissions {
   /** KADR buyruqni QO'LLAYDI: `confirmed` → `applied` (ta'til/ko'chirish
       yozuvi yaratiladi). Backend `decree_apply`: faqat KADR, o'z filialida. */
   canApply: boolean;
+  /** Muallif MENI kelishuvchilar safidan chiqarmoqchi — rozilik/rad javobi
+      (web `canRespondToRemoval` 1:1).
+      ⚠️ Backend 2026-08-13 dan YANGI bunday so'rov YARATMAYDI (kelishuvchi
+      darhol o'chiriladi). Ustun va endpointlar ESKI, javob berilmagan
+      so'rovlar uchun saqlangan — mobilда esa javob berish imkoni umuman
+      yo'q edi, ya'ni eski so'rov abadiy osilib qolardi. */
+  canRespondToRemoval: boolean;
   canAcknowledge: boolean;
   hasActions: boolean;
   docLocked: boolean;
@@ -165,6 +172,13 @@ export function decreePermissions(
     o.status === 'confirmed'
     && (isSiteMasterAdmin(user) || (isHR(user) && isBranchHr(user, o.organization_branch_id)));
 
+  const canRespondToRemoval = (o.assigned_signers ?? []).some(
+    (sg) =>
+      sg.signer_type === 'approver'
+      && (sg.employee_id ?? sg.employee?.id) === employeeId
+      && !!sg.removal_requested,
+  );
+
   const myFam = (o.familiarizers ?? []).find(
     (f) => (f.employee_id ?? f.employee?.id) === employeeId
   );
@@ -175,7 +189,7 @@ export function decreePermissions(
   // tafsilot ichida turadi (web bilan bir xil joylashuv).
   const hasActions =
     canSubmit || canApprove || canConfirmSubmission || canResubmit || canForward
-    || canRegister || canApply || canAcknowledge;
+    || canRegister || canApply || canAcknowledge || canRespondToRemoval;
 
   const docLocked =
     o.status === 'confirmed' || o.status === 'applied' || o.status === 'rejected';
@@ -190,6 +204,7 @@ export function decreePermissions(
     canForward,
     canRegister,
     canApply,
+    canRespondToRemoval,
     canAcknowledge,
     hasActions,
     docLocked,

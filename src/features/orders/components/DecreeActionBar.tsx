@@ -10,6 +10,7 @@ import type { DecreePermissions } from '@/utils/orderStatus';
 export function DecreeActionBar({
   perms, busy, submitLabel, onSubmit, onApprove, onReject, onResubmit, onForward,
   onConfirmSubmission, onAcknowledge, onRegister, onApply,
+  onRemovalConfirm, onRemovalReject,
 }: {
   perms: DecreePermissions;
   busy: boolean;
@@ -25,6 +26,9 @@ export function DecreeActionBar({
   onRegister: () => void;
   /** KADR: buyruqni qo'llash (ta'til/ko'chirish yozuvini yaratish). */
   onApply: () => void;
+  /** Kelishuvchi: safdan chiqishga rozilik / rad. */
+  onRemovalConfirm: () => void;
+  onRemovalReject: () => void;
 }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -67,6 +71,16 @@ export function DecreeActionBar({
         <TouchableOpacity style={[styles.actBtn, styles.actApprove]} disabled={busy} onPress={onRegister} activeOpacity={0.85}>
           <Text style={styles.actApproveText}>{t('orders.actionRegister')}</Text>
         </TouchableOpacity>
+      )}
+      {perms.canRespondToRemoval && (
+        <>
+          <TouchableOpacity style={[styles.actBtn, styles.actReject]} disabled={busy} onPress={onRemovalReject} activeOpacity={0.85} testID="decree-removal-reject">
+            <Text style={styles.actRejectText}>{t('orders.removalReject')}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.actBtn, styles.actApprove]} disabled={busy} onPress={onRemovalConfirm} activeOpacity={0.85} testID="decree-removal-confirm">
+            {busy ? <ActivityIndicator color={colors.onPrimary} /> : <Text style={styles.actApproveText}>{t('orders.removalConfirm')}</Text>}
+          </TouchableOpacity>
+        </>
       )}
       {perms.canApply && (
         <TouchableOpacity style={[styles.actBtn, styles.actApprove]} disabled={busy} onPress={onApply} activeOpacity={0.85} testID="decree-apply">

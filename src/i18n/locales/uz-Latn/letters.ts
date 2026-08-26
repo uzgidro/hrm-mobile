@@ -7,6 +7,19 @@
 // translated (they live as literal keys in the util files) — only what the user
 // reads is localized.
 export default {
+  'vehicleStatus': 'Holati',
+  'vehicleStatus_awaiting_approval': 'Tasdiq kutilmoqda',
+  'vehicleStatus_pending': 'Avtoparkda',
+  'vehicleStatus_approved': 'Tasdiqlangan',
+  'vehicleStatus_rejected': 'Rad etilgan',
+  'vehicleStatus_cancelled': 'Bekor qilingan',
+  sectionVehicle: 'Avtotransport',
+  vehicleNeeded: 'Mashina so‘ralgan',
+  vehicleNote: 'Izoh',
+  vehicleAssigned: 'Biriktirilgan mashina',
+  vehicleRequest: 'Mashina so‘rash',
+  vehicleCancel: 'So‘rovni bekor qilish',
+  vehicleNotePlaceholder: 'Qayerga va nima uchun kerakligini yozing',
   // ── Screen / header titles ──────────────────────────────────────────────────
   listTitle: 'Xatlar',
   detailTitle: 'Xat',

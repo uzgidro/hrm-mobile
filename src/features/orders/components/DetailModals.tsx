@@ -39,9 +39,13 @@ export function RejectModal({
 }
 
 export function RegisterModal({
-  visible, actNumber, onChangeActNumber, onClose, onSubmit,
+  visible, actNumber, onChangeActNumber, actDate, onPickDate, onClose, onSubmit,
 }: {
   visible: boolean; actNumber: string; onChangeActNumber: (t: string) => void;
+  /** Ro'yxatga olish sanasi — web devonxonasi ham tanlaydi. Bo'sh bo'lsa
+      backend bugungi sanani qo'yadi. */
+  actDate?: string;
+  onPickDate?: () => void;
   onClose: () => void; onSubmit: () => void;
 }) {
   const { colors } = useTheme();
@@ -64,6 +68,14 @@ export function RegisterModal({
         onChangeText={onChangeActNumber}
         keyboardType="number-pad"
       />
+      {!!onPickDate && (
+        <TouchableOpacity style={styles.pickRow} onPress={onPickDate} activeOpacity={0.8}>
+          <Text style={styles.pickLabel}>{t('orders.registerDate')}</Text>
+          <Text style={actDate ? styles.pickValue : styles.pickPlaceholder}>
+            {actDate || t('orders.registerDateAuto')}
+          </Text>
+        </TouchableOpacity>
+      )}
     </ModalCard>
   );
 }

@@ -153,6 +153,9 @@ export const LETTER_APPROVE_GUVOHNOMA = (id: number) => `letters/${id}/approve-g
 // confirm-return sets is_trip_confirmed which unblocks the report stage; its
 // manage rights are branch-scoped (see isBranchHr).
 export const LETTER_TRIP_MOVEMENTS = (id: number) => `letters/${id}/trip-movements`;
+// Safarga "mashina kerak" belgisi. Hujjat MATNIGA tegmaydi, shu bois safar
+// yuborilgandan keyin ham ishlaydi (BFD rad etsa xodim qayta so'ray oladi).
+export const LETTER_TRIP_VEHICLE = (id: number) => `letters/${id}/vehicle`;
 export const LETTER_CONFIRM_RETURN = (id: number) => `letters/${id}/confirm-return`;
 // XODIMNING O'ZI safarni yakunlashi (Face ID sharti serverda tekshiriladi).
 export const LETTER_SELF_CONFIRM_RETURN = (id: number) => `letters/${id}/self-confirm-return`;
@@ -222,6 +225,16 @@ export const ORDER_ACT_DECREE_REGISTER = (id: number) => `order-acts/${id}/decre
 // Buyruqni QO'LLASH (KADR): `confirmed` -> `applied`. Shu chaqiruvda ta'til /
 // ko'chirish / ishdan bo'shatish yozuvi yaratiladi — usiz oqim tugamaydi.
 export const ORDER_ACT_DECREE_APPLY = (id: number) => `order-acts/${id}/decree/apply`;
+// Kelishuvchi O'ZINING ro'yxatdan chiqarilishiga rozilik/rad javobi.
+// Rozilik oxirgi kelishuvchidan kelsa buyruq BUTUNLAY o'chishi mumkin
+// (backend `{deleted: true}` qaytaradi).
+export const ORDER_ACT_DECREE_REMOVAL_CONFIRM = (id: number) =>
+  `order-acts/${id}/decree/removal/confirm`;
+export const ORDER_ACT_DECREE_REMOVAL_REJECT = (id: number) =>
+  `order-acts/${id}/decree/removal/reject`;
+// Ilova hujjatini o'chirish (yaratuvchi/kadr).
+export const ORDER_ACT_DOCUMENT_DELETE = (id: number, docId: number) =>
+  `order-acts/${id}/documents/${docId}`;
 export const ORDER_ACT_DECREE_ACKNOWLEDGE = (id: number) => `order-acts/${id}/decree/acknowledge`;
 export const ORDER_ACT_DECREE_ASSIGN_FAMILIARIZERS = (id: number) =>
   `order-acts/${id}/decree/assign-familiarizers`;

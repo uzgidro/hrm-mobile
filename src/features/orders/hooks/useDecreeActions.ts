@@ -96,10 +96,10 @@ export function useDecreeActions(orderId: number, refetch: () => void) {
 
   // act_number is optional — an empty/blank string registers with `{}`.
   const register = useCallback(
-    (actNumber: string) => {
+    (actNumber: string, actDate?: string) => {
       const trimmed = actNumber.trim();
       return runAction(
-        () => registerDecree(orderId, trimmed ? Number(trimmed) : undefined),
+        () => registerDecree(orderId, trimmed ? Number(trimmed) : undefined, actDate),
         i18n.t('orders.registerSuccess')
       );
     },

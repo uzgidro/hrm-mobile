@@ -5,6 +5,10 @@
 // errors.*. Order STATUS labels live in the `status` namespace (via the
 // orderStatus util) and are not repeated here.
 export default {
+  sectionAttachments: 'Ilova fayllar',
+  attachmentFallback: 'Fayl',
+  attachmentDeleteTitle: 'Faylni o‘chirish',
+  attachmentDeleteBody: 'Fayl butunlay o‘chiriladi. Davom etamizmi?',
   // ── List screen (OrdersListScreen) ──────────────────────────────────────────
   title: 'Buyruqlar',
   tabAction: 'Menda',
@@ -91,6 +95,11 @@ export default {
   applyStart: 'Boshlanish sanasi',
   applyEnd: 'Tugash sanasi',
   applyPermanent: 'Doimiy',
+  removalConfirm: 'Roziman',
+  removalReject: 'Rad etaman',
+  removalHint: 'Muallif sizni kelishuvchilar safidan chiqarmoqchi.',
+  registerDate: 'Ro‘yxat sanasi',
+  registerDateAuto: 'Bugungi sana',
   assignFamiliarizersTitle: 'Tanishuvchilarni biriktirish',
   sectionHistory: 'Tarix',
   signerFallback: 'Xodim',

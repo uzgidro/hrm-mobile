@@ -127,6 +127,10 @@ export interface OrderActSigner {
   employee_id?: number;
   signer_type?: string; // 'approver' | 'leadership'
   can_edit_document?: boolean;
+  // Muallif tasdiqlangan buyruqdan shu kelishuvchini OLIB TASHLAMOQCHI —
+  // kelishuvchining O'ZI rozilik berishi kerak (backend `removal/confirm`),
+  // aks holda tahrir bloklanib qoladi.
+  removal_requested?: boolean;
   employee?: Employee;
 }
 
@@ -201,6 +205,10 @@ export interface OrderAct {
   is_stamped?: boolean;
   comments?: OrderActComment[];
   document?: { id: number; document_objectname?: string } | null;
+  // Buyruqqa biriktirilgan HAMMA fayl (asosiy `decree_*` hujjat + ilovalar).
+  // Mobilда ilovalar umuman ko'rsatilmasdi: yaratishda yuklangan fayllarni
+  // keyin ko'rish ham, o'chirish ham mumkin emas edi.
+  documents?: { id: number; document_objectname?: string | null; file_path?: string | null }[];
   // Backend joriy foydalanuvchi uchun hisoblaydigan bayroqlar (web BuyruqlarTable
   // ularni sariq ajratish uchun ishlatadi).
   action_required?: boolean;
@@ -270,6 +278,17 @@ export interface Letter {
   created_by_id?: number | null;
   created_by?: Employee | null;
   creator_employee_id?: number | null;
+  // ⚠️ `vehicle_needed` FAQAT YOZISHDA bor (create/update); O'QISHDA backend
+  // `vehicle_request` obyektini qaytaradi. Shuning uchun UI holatni SHU
+  // obyektdan o'qiydi — `vehicle_needed` doim `undefined` bo'lardi.
+  vehicle_note?: string | null;
+  vehicle_request?: {
+    id?: number;
+    // awaiting_approval | pending | approved | rejected | cancelled
+    status?: string;
+    request_note?: string | null;
+    vehicle?: { id?: number; model?: string | null; plate_number?: string | null } | null;
+  } | null;
   creator_employee?: Employee | null;
   created_at?: string;
   organization_branch_id?: number;

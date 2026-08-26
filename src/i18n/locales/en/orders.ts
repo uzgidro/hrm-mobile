@@ -1,6 +1,10 @@
 // Orders (Buyruqlar) feature — English translation.
 // See uz-Latn/orders.ts for the meaning of each key.
 export default {
+  sectionAttachments: 'Attachments',
+  attachmentFallback: 'File',
+  attachmentDeleteTitle: 'Delete the file',
+  attachmentDeleteBody: 'The file will be permanently deleted. Continue?',
   // ── List screen ─────────────────────────────────────────────────────────────
   title: 'Orders',
   tabAction: 'For me',
@@ -87,6 +91,11 @@ export default {
   applyStart: 'Start date',
   applyEnd: 'End date',
   applyPermanent: 'Permanent',
+  removalConfirm: 'Agree',
+  removalReject: 'Decline',
+  removalHint: 'The author wants to remove you from the approvers.',
+  registerDate: 'Registration date',
+  registerDateAuto: "Today's date",
   assignFamiliarizersTitle: 'Assign acknowledgers',
   sectionHistory: 'History',
   signerFallback: 'Employee',

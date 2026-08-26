@@ -15,6 +15,9 @@ import {
   ORDER_ACT_DECREE_ASSIGN_FAMILIARIZERS,
   ORDER_ACT_COMMENTS,
   ORDER_ACT_DECREE_APPLY,
+  ORDER_ACT_DECREE_REMOVAL_CONFIRM,
+  ORDER_ACT_DECREE_REMOVAL_REJECT,
+  ORDER_ACT_DOCUMENT_DELETE,
 } from '@/api/urls';
 import type { PickedFile } from '@/components/AttachmentField';
 import { orderKeys } from './queries';
@@ -54,10 +57,19 @@ export function acknowledgeDecree(id: number): Promise<unknown> {
   return apiClient.post(ORDER_ACT_DECREE_ACKNOWLEDGE(id)).then((r) => r.data);
 }
 
-// act_number is optional: an empty input sends `{}` (backend auto-assigns).
-export function registerDecree(id: number, actNumber?: number): Promise<unknown> {
+// act_number va act_date IXTIYORIY (backend o'zi qo'yadi). Web devonxona
+// SANANI ham tanlaydi (`OrderStampModal`) — mobilда u umuman yuborilmasdi,
+// ya'ni ro'yxatga olish sanasini devonxona belgilay olmasdi.
+export function registerDecree(
+  id: number,
+  actNumber?: number,
+  actDate?: string,
+): Promise<unknown> {
   return apiClient
-    .post(ORDER_ACT_DECREE_REGISTER(id), actNumber != null ? { act_number: actNumber } : {})
+    .post(ORDER_ACT_DECREE_REGISTER(id), {
+      ...(actNumber != null ? { act_number: actNumber } : {}),
+      ...(actDate ? { act_date: actDate } : {}),
+    })
     .then((r) => r.data);
 }
 
@@ -220,6 +232,43 @@ export function useDecreeApply(id: number) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: DecreeApplyInput) => decreeApply(id, input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: orderKeys.all });
+    },
+  });
+}
+
+// ─── Ro'yxatdan chiqarilishga javob ──────────────────────────────────────────
+// Muallif tasdiqlangan buyruqni tahrirlab kelishuvchini olib tashlamoqchi
+// bo'lsa, backend o'sha kelishuvchida `removal_requested` bayrog'ini qo'yadi
+// va UNING roziligini kutadi. Mobilда bu javob umuman yo'q edi: kelishuvchi
+// mobilда ishlasa, tahrir abadiy kutib qolardi.
+export function decreeRemovalConfirm(id: number) {
+  return apiClient.post(ORDER_ACT_DECREE_REMOVAL_CONFIRM(id)).then((r) => r.data);
+}
+
+export function decreeRemovalReject(id: number) {
+  return apiClient.post(ORDER_ACT_DECREE_REMOVAL_REJECT(id)).then((r) => r.data);
+}
+
+export function useDecreeRemovalResponse(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    // `agree: true` — roziman (safdan chiqaman), `false` — rad etaman.
+    mutationFn: (agree: boolean) =>
+      (agree ? decreeRemovalConfirm(id) : decreeRemovalReject(id)),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: orderKeys.all });
+    },
+  });
+}
+
+// Ilova hujjatini o'chirish.
+export function useDeleteOrderDocument(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (docId: number) =>
+      apiClient.delete(ORDER_ACT_DOCUMENT_DELETE(id, docId)).then((r) => r.data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: orderKeys.all });
     },

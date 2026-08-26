@@ -1,6 +1,19 @@
 // Cyrillic transliteration of the uz-Latn letters namespace. Keep the key set
 // identical to uz-Latn/letters.ts (a parity test enforces this).
 export default {
+  'vehicleStatus': 'Ҳолати',
+  'vehicleStatus_awaiting_approval': 'Тасдиқ кутилмоқда',
+  'vehicleStatus_pending': 'Автопаркда',
+  'vehicleStatus_approved': 'Тасдиқланган',
+  'vehicleStatus_rejected': 'Рад этилган',
+  'vehicleStatus_cancelled': 'Бекор қилинган',
+  sectionVehicle: 'Автотранспорт',
+  vehicleNeeded: 'Машина сўралган',
+  vehicleNote: 'Изоҳ',
+  vehicleAssigned: 'Бириктирилган машина',
+  vehicleRequest: 'Машина сўраш',
+  vehicleCancel: 'Сўровни бекор қилиш',
+  vehicleNotePlaceholder: 'Қаерга ва нима учун кераклигини ёзинг',
   // ── Screen / header titles ──────────────────────────────────────────────────
   listTitle: 'Хатлар',
   detailTitle: 'Хат',
