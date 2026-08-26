@@ -47,6 +47,12 @@ export interface Employee {
   organization_branches?: OrganizationBranch[];
   supervisor?: Employee;
   supervisor_id?: number;
+  // Davomat bayroqlari (backend `employees` javobida keladi) — davomat ro'yxati
+  // ularsiz web/backenddan chetga chiqardi, qarang `utils/attendanceRoster.ts`.
+  ignore_lateness?: boolean | null; // kechikish hisoblanmaydi
+  is_gpx_worker?: boolean | null; // ГПХ — bosh sahifa/davomat ro'yxatida ko'rinmaydi
+  is_remote_worker?: boolean | null; // masofaviy — turniketsiz avto "keldi"
+  hidden_from_regular?: boolean | null; // yashirin xodim — turniketsiz avto "keldi"
 }
 
 export interface OrganizationBranch {

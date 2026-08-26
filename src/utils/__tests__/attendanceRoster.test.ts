@@ -92,6 +92,45 @@ describe('buildAttendanceRoster', () => {
     expect(counts.present + counts.late + counts.onLeave + counts.absent).toBe(counts.total);
   });
 
+  it('never marks an ignore_lateness employee as late', () => {
+    const e = { ...emp(1, 'A', '09:00'), ignore_lateness: true } as Employee;
+    const { rows, counts } = buildAttendanceRoster([e], [event(1, '11:30')], [], DATE, 'L');
+    expect(rows[0].status).toBe('present');
+    expect(counts.late).toBe(0);
+  });
+
+  it('leaves GPX (ГПХ) employees out of the roster entirely', () => {
+    // Web bilan bir xil: ГПХ xodim bosh sahifa/davomat ro'yxatida ko'rinmaydi.
+    const gpx = { ...emp(2, 'B'), is_gpx_worker: true } as Employee;
+    const { rows, counts } = buildAttendanceRoster([emp(1, 'A'), gpx], [], [], DATE, 'L');
+    expect(rows.map((r) => r.employee.id)).toEqual([1]);
+    expect(counts.total).toBe(1);
+  });
+
+  it('counts auto-present employees (remote / hidden / ministr) as present without a turnstile entry', () => {
+    // 2026-08-12 — chorshanba (ish kuni).
+    const remote = { ...emp(1, 'A'), is_remote_worker: true } as Employee;
+    const hidden = { ...emp(2, 'B'), hidden_from_regular: true } as Employee;
+    const ministr = {
+      ...emp(3, 'C'), is_multi_org_user: true, multi_org_employee_role: 'ministr',
+    } as Employee;
+    const { rows, counts } = buildAttendanceRoster([remote, hidden, ministr], [], [], DATE, 'L');
+    expect(rows.map((r) => r.status)).toEqual(['present', 'present', 'present']);
+    expect(counts).toEqual({ total: 3, present: 3, late: 0, onLeave: 0, absent: 0 });
+  });
+
+  it('an auto-present employee is still absent on a non-working day', () => {
+    const remote = { ...emp(1, 'A'), is_remote_worker: true, working_days: [0] } as Employee; // faqat dushanba
+    const { rows } = buildAttendanceRoster([remote], [], [], DATE, 'L'); // DATE = chorshanba
+    expect(rows[0].status).toBe('absent');
+  });
+
+  it('a leave still wins over auto-present', () => {
+    const remote = { ...emp(1, 'A'), is_remote_worker: true } as Employee;
+    const { rows } = buildAttendanceRoster([remote], [], [leave(1, 'mehnat_tatili')], DATE, 'L');
+    expect(rows[0].status).toBe('onLeave');
+  });
+
   it('ignores events for employees outside the roster', () => {
     const { rows, counts } = buildAttendanceRoster([emp(1, 'A')], [event(999, '08:00')], [], DATE, 'L');
     expect(rows[0].status).toBe('absent');

@@ -11,6 +11,7 @@
 // filters it by the donut zone, instead of three separate status sections.
 import dayjs from 'dayjs';
 import type { Employee, AttendanceEvent, WorkLeave } from '@/types';
+import { getMultiOrgRoles } from '@/utils/roles';
 
 export type AttendanceStatus = 'present' | 'late' | 'onLeave' | 'absent';
 
@@ -33,6 +34,23 @@ export interface AttendanceRoster {
 // kelgan xodim ilovada "kechikdi", web/tabelda esa "keldi" bo'lardi.
 export const LATE_THRESHOLD_MIN = 6;
 
+/** Turniketsiz avtomatik "keldi" yuritiladigan xodim — backenddagi
+ *  `is_auto_present_employee` ning aynan o'zi (ministr, yashirin xodim,
+ *  masofaviy ishchi). Ular turniketdan o'tmaydi, shu sabab ro'yxatda
+ *  "Kelmagan" bo'lib chiqardi — backend/tabelda esa "Keldi" (8 soat). */
+export function isAutoPresentEmployee(emp: Employee): boolean {
+  if (getMultiOrgRoles(emp).includes('ministr')) return true;
+  return !!emp.hidden_from_regular || !!emp.is_remote_worker;
+}
+
+/** Xodimning shu kunda ish kuni bormi (working_days; ko'rsatilmagan bo'lsa
+ *  Dush–Juma — backenddagi default bilan bir xil). */
+function isWorkingDayFor(emp: Employee, date: string): boolean {
+  const dow = (dayjs(date).day() + 6) % 7; // 0 = dushanba
+  const days = emp.working_days ?? [0, 1, 2, 3, 4];
+  return days.includes(dow);
+}
+
 /** Build the day's roster from employees + turnstile events + team leaves.
  *  `leaveFallback` is the label used when a WorkLeave has no `type`.
  *
@@ -50,7 +68,11 @@ export function buildAttendanceRoster(
   excusedEmployeeIds?: Iterable<number> | null,
 ): AttendanceRoster {
   const excused = new Set<number>(excusedEmployeeIds ?? []);
-  const empIdSet = new Set(employees.map((e) => e.id));
+  // ГПХ ("yonlanib ishlovchi") xodim bosh sahifa/davomat ro'yxatida UMUMAN
+  // ko'rinmaydi — web bilan bir xil qoida (uning davomati tabelda ALOHIDA
+  // tabda yuritiladi, shtatdagilar sanog'iga qo'shilmaydi).
+  const roster = employees.filter((e) => !e.is_gpx_worker);
+  const empIdSet = new Set(roster.map((e) => e.id));
   const firstEntry = new Map<number, string>();
   const lastExit = new Map<number, string>();
 
@@ -73,9 +95,9 @@ export function buildAttendanceRoster(
     if (s.isBefore(dayEnd) && e.isAfter(dayStart)) leaveMap.set(l.employee.id, l.type ?? leaveFallback);
   }
 
-  const counts = { total: employees.length, present: 0, late: 0, onLeave: 0, absent: 0 };
+  const counts = { total: roster.length, present: 0, late: 0, onLeave: 0, absent: 0 };
 
-  const rows: RosterRow[] = employees.map((emp) => {
+  const rows: RosterRow[] = roster.map((emp) => {
     const entry = firstEntry.get(emp.id);
     const exit = lastExit.get(emp.id);
     const leaveName = leaveMap.get(emp.id);
@@ -89,12 +111,21 @@ export function buildAttendanceRoster(
       return { employee: emp, status: 'onLeave' as const, leaveName: leaveName ?? leaveFallback };
     }
     if (!entry) {
+      // Turniketsiz avto-davomat (ministr, yashirin xodim, masofaviy ishchi):
+      // ish kunida turniket o'tishisiz ham "Keldi" — backend/tabel shunday
+      // sanaydi, ilova esa ularni har kuni "Kelmagan" qilib ko'rsatardi.
+      if (isAutoPresentEmployee(emp) && isWorkingDayFor(emp, selectedDate)) {
+        counts.present += 1;
+        return { employee: emp, status: 'present' as const };
+      }
       counts.absent += 1;
       return { employee: emp, status: 'absent' as const };
     }
     // Uzri bor xodim kelib turniketdan o'tsa — "keldi", hech qachon "kechikdi"
     // emas (backenddagi "Kech qolganlar" ro'yxati bilan bir xil qoida).
-    if (emp.working_hours_start && !isExcused) {
+    // `ignore_lateness` — kadr kartasidagi bayroq: bu xodimda kechikish
+    // UMUMAN hisoblanmaydi (backend va web ham shunday).
+    if (emp.working_hours_start && !isExcused && !emp.ignore_lateness) {
       const expected = dayjs(`${selectedDate}T${emp.working_hours_start}`);
       if (dayjs(entry).diff(expected, 'second') > LATE_THRESHOLD_MIN * 60) {
         counts.late += 1;
