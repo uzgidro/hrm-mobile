@@ -6,4 +6,6 @@ export default {
   sendFailed: 'Failed to send the request',
   refreshFailed: 'Failed to refresh data',
   actionFailed: 'Failed to perform the action',
+  timeout: 'The server did not respond (timed out). The action may still have gone through — refresh the list.',
+  network: 'No internet connection. Check your network.',
 } as const;
