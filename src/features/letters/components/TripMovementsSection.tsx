@@ -68,8 +68,32 @@ export function TripMovementsSection({
   // aks holda tugma ko'rinib, bosganda `face_id_required` 400 bo'lardi.
   const canSelfFinish = !!letter.available_actions?.can_self_finish_trip;
   const selfFinishDate = letter.available_actions?.self_finish_date;
+  // Bir necha kun turniketdan o'tgan bo'lsa (27-da qaytib, 28-da yakunlash
+  // bosilsa) — qaysi kuni qaytganini xodim TANLAYDI; ilgari OXIRGI o'tish
+  // yozilardi (foydalanuvchi hisoboti 2026-08-27).
+  const selfFinishOptions = letter.available_actions?.self_finish_date_options ?? [];
 
   const askSelfFinish = () => {
+    // Bir nechta o'tish kuni bor — xodim qaysi kuni qaytganini tanlaydi.
+    if (selfFinishDate && selfFinishOptions.length > 1) {
+      Alert.alert(
+        t('letters.selfFinishTitle'),
+        t('letters.selfFinishPickDay'),
+        [
+          ...selfFinishOptions.map((d) => ({
+            text: dayjs(d).format('DD.MM.YYYY'),
+            onPress: () =>
+              selfFinishM.mutate(dayjs(d).format('YYYY-MM-DD'), {
+                onSuccess: () => onChanged(),
+                onError: (e) =>
+                  Alert.alert(t('letters.actionError'), getApiErrorMessage(e, t('letters.actionError'))),
+              }),
+          })),
+          { text: t('common.cancel'), style: 'cancel' as const },
+        ],
+      );
+      return;
+    }
     // Turniket sanasi YO'Q — sanani xodim tanlaydi (modal ochiladi).
     if (!selfFinishDate) {
       setEditMode(false);
@@ -197,9 +221,11 @@ export function TripMovementsSection({
       {canSelfFinish && (
         <>
           <Text style={styles.selfFinishHint}>
-            {selfFinishDate
-              ? t('letters.selfFinishHint', { date: dayjs(selfFinishDate).format('DD.MM.YYYY') })
-              : t('letters.selfFinishHintPickDate')}
+            {selfFinishDate && selfFinishOptions.length > 1
+              ? t('letters.selfFinishHintPickDay', { date: dayjs(selfFinishDate).format('DD.MM.YYYY') })
+              : selfFinishDate
+                ? t('letters.selfFinishHint', { date: dayjs(selfFinishDate).format('DD.MM.YYYY') })
+                : t('letters.selfFinishHintPickDate')}
           </Text>
           <TouchableOpacity
             style={styles.selfFinishBtn}

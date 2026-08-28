@@ -85,6 +85,8 @@ export default {
   selfFinishYes: 'Yes, finish',
   selfFinishHint: 'Your turnstile (Face ID) pass was detected — finishing sets {{date}} as the return date.',
   selfFinishHintPickDate: 'You set the return date yourself — HR is notified once the trip is finished.',
+  selfFinishHintPickDay: 'You passed the turnstile on several days — pick the day you returned when finishing (default: {{date}}).',
+  selfFinishPickDay: 'Which day did you return?',
   rejectionReason: 'Rejection reason',
   returnAction: 'Return',
   returnReportAction: 'Return the report',

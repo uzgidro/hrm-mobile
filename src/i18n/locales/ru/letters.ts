@@ -86,6 +86,8 @@ export default {
   selfFinishYes: 'Да, завершить',
   selfFinishHint: 'Проход через турникет (Face ID) зафиксирован — при завершении датой возвращения станет {{date}}.',
   selfFinishHintPickDate: 'Дату возвращения вы указываете сами — после завершения уведомим отдел кадров.',
+  selfFinishHintPickDay: 'Вы проходили турникет несколько дней — при завершении выберите день возвращения (по умолчанию: {{date}}).',
+  selfFinishPickDay: 'В какой день вы вернулись?',
   rejectionReason: 'Причина отклонения',
   returnAction: 'Вернуть',
   returnReportAction: 'Вернуть отчёт',

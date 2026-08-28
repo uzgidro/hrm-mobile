@@ -85,6 +85,8 @@ export default {
   selfFinishYes: 'Ҳа, якунлайман',
   selfFinishHint: 'Турникетдан (Face ID) ўтганингиз аниқланди — сафарни якунласангиз қайтиш санаси {{date}} бўлади.',
   selfFinishHintPickDate: 'Қайтган санангизни ўзингиз белгилайсиз — якунлагач кадрга хабар боради.',
+  selfFinishHintPickDay: 'Турникетдан бир неча кун ўтгансиз — якунлашда қайси куни қайтганингизни танлайсиз (стандарт: {{date}}).',
+  selfFinishPickDay: 'Қайси куни қайтгансиз?',
   rejectionReason: 'Рад этиш сабаби',
   returnAction: 'Қайтариш',
   returnReportAction: 'Ҳисоботни қайтариш',
