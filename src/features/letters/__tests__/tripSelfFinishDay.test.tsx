@@ -33,7 +33,11 @@ const trip = (actions: Record<string, unknown>): Letter =>
 
 async function pressSelfFinish(letter: Letter) {
   const r = await renderWithProviders(
-    <TripMovementsSection letter={letter} onChanged={() => {}} />,
+    // `user` — oddiy xodim (null). Bu testlar AYNAN xodimning o'zi safarni
+    // yakunlash oqimini tekshiradi (`can_self_finish_trip`), admin yo'lini
+    // emas: TripMovementsSection'da `user` faqat isSiteMasterAdmin /
+    // isBranchHr uchun kerak, ular bu yerda ishlamasligi KERAK.
+    <TripMovementsSection letter={letter} user={null} onChanged={() => {}} />,
   );
   fireEvent.press(await waitFor(() => r.getByText('Safarni yakunlash')));
   return r;
