@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, FlatList, Linking, ScrollView,
+  View, Text, StyleSheet, TouchableOpacity, FlatList, Linking, ScrollView, Modal,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
@@ -32,7 +32,6 @@ export default function PhoneDirectoryScreen() {
   const { user } = useAuthStore();
   const [search, setSearch] = useState('');
 
-  const { data = [], isLoading, isError, refetch } = useQuery(phoneDirectoryQuery());
   const { data: branches = [] } = useQuery(directoryBranchesQuery());
 
   const executiveBranchId = useMemo(() => findExecutiveBranchId(branches), [branches]);
@@ -59,15 +58,47 @@ export default function PhoneDirectoryScreen() {
       ? branchChoice
       : scopeChoice == null && autoScope === 'system' ? ownBranchId : null;
 
+  /* Serverdan FAQAT ko'rinadigan ko'lam so'raladi (audit 2026-09-07): "Ijro
+   * apparati" → bosh apparat, bitta filial tanlansa → o'sha filial, "Barcha
+   * filiallar" → hammasi. Ilgari har doim butun tashkilot kelardi (2.6 MB),
+   * ekranda esa odatda bittagina ko'lam ko'rinardi.
+   *
+   * `enabled`: filiallar ro'yxati kelmaguncha "Ijro apparati" ning id'si
+   * noma'lum — filtrsiz (ya'ni butun tashkilotli) so'rov yubormaslik uchun
+   * kutamiz. */
+  const fetchBranchId = scope === 'exec' ? executiveBranchId : systemBranchId;
+  const scopeReady = scope !== 'exec' || executiveBranchId != null;
+  const { data: scoped = [], isLoading, isError, refetch } = useQuery({
+    ...phoneDirectoryQuery(fetchBranchId),
+    enabled: scopeReady,
+  });
+
+  /* Qidiruv BUTUN TASHKILOT bo'ylab (foydalanuvchi so'rovi 2026-09-07).
+   * Ilgari faqat joriy ko'lam ichida qidirardi — "Ijro apparati" da turgan
+   * odam filial xodimini topa olmasdi. Ochilishda emas, aynan qidirilganda
+   * yuklanadi, shunda ko'lam bo'yicha yuklash yutug'i saqlanadi; react-query
+   * keshi tufayli keyingi qidiruvlar tarmoqqa chiqmaydi. */
+  const isSearching = search.trim().length >= 2;
+  const { data: allEntries } = useQuery({
+    ...phoneDirectoryQuery(null),
+    enabled: isSearching,
+  });
+  const searchWholeOrg = isSearching && !!allEntries;
+  const data = searchWholeOrg ? allEntries : scoped;
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     // Scope first (Ijro apparati vs Tizim tashkilotlari + optional single branch),
     // then the free-text search — web TabelPage visibleEmployees parity.
-    const inScope = scope === 'exec'
-      ? data.filter((e) => e.branch_id === executiveBranchId)
-      : data.filter((e) =>
-          e.branch_id !== executiveBranchId &&
-          (systemBranchId == null || e.branch_id === systemBranchId));
+    // Butun tashkilot bo'ylab qidirilayotganda ko'lam cheklovi qo'yilmaydi —
+    // odam qayerda ishlashini bilmasa ham topsin.
+    const inScope = searchWholeOrg
+      ? data
+      : scope === 'exec'
+        ? data.filter((e) => e.branch_id === executiveBranchId)
+        : data.filter((e) =>
+            e.branch_id !== executiveBranchId &&
+            (systemBranchId == null || e.branch_id === systemBranchId));
     if (!q) return inScope;
     return inScope.filter((e) =>
       (e.legal_name?.toLowerCase().includes(q) ?? false) ||
@@ -76,9 +107,25 @@ export default function PhoneDirectoryScreen() {
       (e.internal_phone_number?.toLowerCase().includes(q) ?? false) ||
       (e.phone_number?.toLowerCase().includes(q) ?? false),
     );
-  }, [data, search, scope, systemBranchId, executiveBranchId]);
+  }, [data, search, scope, systemBranchId, executiveBranchId, searchWholeOrg]);
 
   const dial = (phone: string) => Linking.openURL(`tel:${phone.replace(/\s+/g, '')}`);
+
+  /* IKKI RAQAMLI TANLOV (foydalanuvchi so'rovi 2026-09-07).
+   *
+   * Qator ilgari `internal_phone_number || phone_number` ko'rsatardi, ya'ni
+   * ichki raqami bor xodimning SHAXSIY raqamiga umuman yetib bo'lmasdi —
+   * foydalanuvchi aynan shuni xabar qildi ("ba'zida ichki raqam o'rniga
+   * o'zining telefon raqami kerak bo'ladi, buni ko'rishning iloji yo'q").
+   *
+   * Endi ikkalasi ham bo'lsa bosish tanlov oynasini ochadi. Bitta raqam
+   * bo'lsa eski xulq: to'g'ridan-to'g'ri qo'ng'iroq, ortiqcha bosish yo'q. */
+  const [picker, setPicker] = useState<PhoneDirectoryEntry | null>(null);
+  const onPhonePress = (entry: PhoneDirectoryEntry) => {
+    const nums = phoneNumbers(entry);
+    if (nums.length === 1) dial(nums[0].value);
+    else if (nums.length > 1) setPicker(entry);
+  };
 
   return (
     <Screen edges={['top', 'bottom']}>
@@ -123,27 +170,94 @@ export default function PhoneDirectoryScreen() {
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
           ItemSeparatorComponent={cols > 1 ? undefined : () => <View style={styles.separator} />}
-          renderItem={({ item }) => <DirectoryRow entry={item} styles={styles} colors={colors} onDial={dial} t={t} grid={cols > 1} />}
+          renderItem={({ item }) => <DirectoryRow entry={item} styles={styles} colors={colors} onPress={onPhonePress} t={t} grid={cols > 1} />}
           ListEmptyComponent={
             <EmptyState icon="users" title={search ? t('directory.notFound') : t('directory.empty')} />
           }
         />
       )}
+
+      <PhonePicker
+        entry={picker}
+        onClose={() => setPicker(null)}
+        onDial={(n) => { setPicker(null); dial(n); }}
+        styles={styles}
+        colors={colors}
+        t={t}
+      />
     </Screen>
   );
 }
 
+/** Bitta xodimning mavjud raqamlari — ichki birinchi (ish uchun ko'proq kerak). */
+function phoneNumbers(e: PhoneDirectoryEntry): { key: 'internal' | 'personal'; value: string }[] {
+  const out: { key: 'internal' | 'personal'; value: string }[] = [];
+  if (e.internal_phone_number) out.push({ key: 'internal', value: e.internal_phone_number });
+  if (e.phone_number) out.push({ key: 'personal', value: e.phone_number });
+  return out;
+}
+
+/* Tanlov oynasi. `ModalCard` ISHLATILMADI: u "Bekor qilish / Tasdiqlash"
+ * juftligi uchun qurilgan, bu yerda esa TANLOVNING O'ZI amal — tasdiqlash
+ * tugmasi ortiqcha qadam bo'lardi. Shakl tokenlari (overlay, karta radiusi,
+ * padding) o'sha komponentnikiga mos, shuning uchun ko'rinish ajralib
+ * turmaydi. */
+function PhonePicker({
+  entry, onClose, onDial, styles, colors, t,
+}: {
+  entry: PhoneDirectoryEntry | null;
+  onClose: () => void;
+  onDial: (phone: string) => void;
+  styles: Styles;
+  colors: ThemeColors;
+  t: TFunction;
+}) {
+  const nums = entry ? phoneNumbers(entry) : [];
+  return (
+    <Modal visible={!!entry} transparent animationType="fade" onRequestClose={onClose}>
+      <TouchableOpacity style={styles.pickerOverlay} activeOpacity={1} onPress={onClose}>
+        <TouchableOpacity style={styles.pickerCard} activeOpacity={1}>
+          <Text style={styles.pickerTitle} numberOfLines={2}>{entry?.legal_name || t('directory.callTitle')}</Text>
+          <Text style={styles.pickerHint}>{t('directory.callTitle')}</Text>
+          {nums.map((n) => (
+            <TouchableOpacity
+              key={n.key}
+              style={styles.pickerItem}
+              onPress={() => onDial(n.value)}
+              activeOpacity={0.7}
+              testID={`phone-${n.key}`}
+            >
+              <Icon name="phone" size={18} color={colors.primary} />
+              <View style={styles.pickerItemText}>
+                <Text style={styles.pickerLabel}>
+                  {n.key === 'internal' ? t('directory.phoneInternal') : t('directory.phonePersonal')}
+                </Text>
+                <Text style={styles.pickerNumber} selectable>{n.value}</Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+          <TouchableOpacity style={styles.pickerCancel} onPress={onClose} activeOpacity={0.8}>
+            <Text style={styles.pickerCancelText}>{t('common.cancel')}</Text>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </TouchableOpacity>
+    </Modal>
+  );
+}
+
 function DirectoryRow({
-  entry, styles, colors, onDial, t, grid,
+  entry, styles, colors, onPress, t, grid,
 }: {
   entry: PhoneDirectoryEntry;
   styles: Styles;
   colors: ThemeColors;
-  onDial: (phone: string) => void;
+  onPress: (entry: PhoneDirectoryEntry) => void;
   t: TFunction;
   grid?: boolean;
 }) {
-  const phone = entry.internal_phone_number || entry.phone_number;
+  const nums = phoneNumbers(entry);
+  const phone = nums[0]?.value;
+  const hasBoth = nums.length > 1;
   return (
     <View style={[styles.row, grid && styles.rowGrid]}>
       <EmployeeAvatar emp={{ photo_path: entry.photo_thumb_path ?? entry.photo_path, legal_name: entry.legal_name }} size={48} />
@@ -154,9 +268,13 @@ function DirectoryRow({
         </Text>
       </View>
       {phone ? (
-        <TouchableOpacity style={styles.phoneBtn} onPress={() => onDial(phone)} activeOpacity={0.7}>
+        <TouchableOpacity style={styles.phoneBtn} onPress={() => onPress(entry)} activeOpacity={0.7}>
           <Icon name="phone" size={16} color={colors.primary} />
-          <Text style={styles.phoneText} selectable>{phone}</Text>
+          {/* Bitta raqamda `selectable` matn nusxa olishga qulay; ikkita
+              bo'lganda esa bosish tanlov oynasini ochishi kerak, `selectable`
+              esa bosishni yutib yuboradi. */}
+          <Text style={styles.phoneText} selectable={!hasBoth}>{phone}</Text>
+          {hasBoth && <View style={styles.phoneBadge}><Text style={styles.phoneBadgeText}>2</Text></View>}
         </TouchableOpacity>
       ) : (
         <Text style={styles.noPhone}>{t('directory.noPhone')}</Text>
@@ -223,4 +341,35 @@ const makeStyles = (c: ThemeColors) =>
     phoneBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: c.primarySoft, paddingHorizontal: 10, paddingVertical: 7, borderRadius: 10 },
     phoneText: { fontSize: 13, fontWeight: '700', color: c.primary },
     noPhone: { fontSize: 12, color: c.textMuted },
+    // "2" belgisi — qatorda ikkinchi raqam borligini bildiradi, aks holda
+    // foydalanuvchi bosish tanlov ochishini bilmaydi.
+    phoneBadge: {
+      minWidth: 16, height: 16, borderRadius: 8, paddingHorizontal: 4,
+      backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center',
+    },
+    phoneBadgeText: { fontSize: 10, fontWeight: '800', color: c.onPrimary },
+
+    // Tanlov oynasi — o'lchamlari `ModalCard` bilan bir xil (radius 18,
+    // padding 20, gap 10, paddingHorizontal 24), shunda ilova ichida
+    // begona ko'rinmaydi.
+    pickerOverlay: { flex: 1, backgroundColor: c.overlay, justifyContent: 'center', paddingHorizontal: 24 },
+    pickerCard: {
+      backgroundColor: c.card, borderRadius: 18, padding: 20, gap: 10,
+      borderWidth: 1, borderColor: c.cardBorder,
+    },
+    pickerTitle: { fontSize: 16, fontWeight: '700', color: c.text },
+    pickerHint: { fontSize: 12, color: c.textMuted },
+    pickerItem: {
+      flexDirection: 'row', alignItems: 'center', gap: 12,
+      paddingVertical: 12, paddingHorizontal: 14, borderRadius: 12,
+      backgroundColor: c.primarySoft,
+    },
+    pickerItemText: { flex: 1, gap: 2 },
+    pickerLabel: { fontSize: 11, color: c.textMuted, fontWeight: '600' },
+    pickerNumber: { fontSize: 16, fontWeight: '700', color: c.primary },
+    pickerCancel: {
+      paddingVertical: 12, borderRadius: 12, alignItems: 'center',
+      backgroundColor: c.bg, borderWidth: 1, borderColor: c.cardBorder, marginTop: 4,
+    },
+    pickerCancelText: { color: c.text, fontSize: 14, fontWeight: '600' },
   });

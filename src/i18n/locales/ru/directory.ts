@@ -9,4 +9,7 @@ export default {
   scopeExec: 'Исполнительный аппарат',
   scopeSystem: 'Организации системы',
   allBranches: 'Все филиалы',
+  callTitle: 'На какой номер позвонить?',
+  phoneInternal: 'Внутренний номер',
+  phonePersonal: 'Личный номер',
 } as const;

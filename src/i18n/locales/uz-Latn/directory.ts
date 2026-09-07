@@ -9,4 +9,7 @@ export default {
   scopeExec: 'Ijro apparati',
   scopeSystem: 'Tizim tashkilotlari',
   allBranches: 'Barcha filiallar',
+  callTitle: 'Qaysi raqamga qo\'ng\'iroq qilinsin?',
+  phoneInternal: 'Ichki raqam',
+  phonePersonal: 'Shaxsiy raqam',
 } as const;

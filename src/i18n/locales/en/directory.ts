@@ -9,4 +9,7 @@ export default {
   scopeExec: 'Executive office',
   scopeSystem: 'System organizations',
   allBranches: 'All branches',
+  callTitle: 'Which number should we call?',
+  phoneInternal: 'Internal number',
+  phonePersonal: 'Personal number',
 } as const;
