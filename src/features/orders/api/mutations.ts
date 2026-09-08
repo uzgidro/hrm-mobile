@@ -119,7 +119,7 @@ export async function createOrder(
 }
 
 // Buyruqqa IZOH qoldirish — buyruqni ko'ra oladigan har kim (status o'zgarmaydi).
-export function addOrderComment(id: number, text: string): Promise<unknown> {
+function addOrderComment(id: number, text: string): Promise<unknown> {
   return apiClient.post(ORDER_ACT_COMMENTS(id), { text }).then((r) => r.data);
 }
 

@@ -6,7 +6,7 @@ import type { HikDevice, HikSummary } from '@/types';
 // Turniket (HikCentral) monitoringi. Backend darvozasi `require_system_admin`
 // va javob KO'LAMI ham serverda: filial AKT xodimi FAQAT o'z filialini oladi,
 // master-admin hammasini — mijoz hech qanday filial filtri yubormaydi.
-export const terminalKeys = {
+const terminalKeys = {
   all: ['hik-monitoring'] as const,
   summary: () => [...terminalKeys.all, 'summary'] as const,
   devices: (online?: boolean) => [...terminalKeys.all, 'devices', online ?? 'all'] as const,

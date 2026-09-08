@@ -69,12 +69,12 @@ export function isSingleRoleHR(user?: User | null): boolean {
 }
 
 /** Branches where the user is an HR branch-leader (leadership_role='hr'), from /me. */
-export function getHrBranchIds(user?: User | null): number[] {
+function getHrBranchIds(user?: User | null): number[] {
   return user?.hr_branch_ids ?? [];
 }
 
 /** Branches the user's employee belongs to (multi-org membership). */
-export function getAllowedBranchIds(user?: User | null): number[] {
+function getAllowedBranchIds(user?: User | null): number[] {
   return user?.employee?.organization_branches?.map((b) => b.id) ?? [];
 }
 
@@ -100,12 +100,12 @@ export function isLeadership(user?: User | null): boolean {
 }
 
 /** Tabel sozlamalarida shu filialga DIREKTOR qilib biriktirilgan filiallar. */
-export function getDirectorBranchIds(user?: User | null): number[] {
+function getDirectorBranchIds(user?: User | null): number[] {
   return user?.director_branch_ids ?? [];
 }
 
 /** Tabel sozlamalarida shu filialga O'RINBOSAR qilib biriktirilgan filiallar. */
-export function getDeputyBranchIds(user?: User | null): number[] {
+function getDeputyBranchIds(user?: User | null): number[] {
   return user?.deputy_branch_ids ?? [];
 }
 

@@ -35,9 +35,9 @@ export type LeaveStatusGroup = 'pending' | 'approved' | 'rejected';
  * REJECTED_CODES.has (or the equivalent isPendingCode/isRejectedCode below)
  * there instead.
  */
-export const PENDING_CODES = new Set(['pending', 'yuborildi']);
-export const APPROVED_CODES = new Set(['approved', 'tasdiqlangan', 'signed']);
-export const REJECTED_CODES = new Set(['rejected', 'rad_etilgan']);
+const PENDING_CODES = new Set(['pending', 'yuborildi']);
+const APPROVED_CODES = new Set(['approved', 'tasdiqlangan', 'signed']);
+const REJECTED_CODES = new Set(['rejected', 'rad_etilgan']);
 
 /** Exact membership check — false for undefined/unknown, unlike leaveStatusGroup(). */
 export function isPendingCode(status?: string): boolean {

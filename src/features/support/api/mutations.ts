@@ -90,7 +90,7 @@ export function useReopenTicket(id: number) {
 // ── Ticket yozishmasi (AKT ↔ murojaatchi) ───────────────────────────────────
 // Backend bo'sh va 4000 belgidan uzun xabarni rad etadi, shu bois mijoz ham
 // bo'sh matnda so'rov yubormaydi.
-export function sendTicketMessage(id: number, body: string): Promise<SupportTicketMessage> {
+function sendTicketMessage(id: number, body: string): Promise<SupportTicketMessage> {
   return apiClient
     .post<SupportTicketMessage>(SUPPORT_TICKET_MESSAGES(id), { body })
     .then((r) => r.data);

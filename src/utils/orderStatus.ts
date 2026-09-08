@@ -88,7 +88,7 @@ export interface DecreePermissions {
  * DEVONXONA QADAMI YO'Q — raqam+sanani KADR yaratishda kiritadi va backend
  * `decree_register` ni 400 `hr_decree_no_chancellery` bilan rad etadi.
  */
-export function isHrDecree(o: OrderAct): boolean {
+function isHrDecree(o: OrderAct): boolean {
   return o.category_rel?.creator_role === 'hr';
 }
 

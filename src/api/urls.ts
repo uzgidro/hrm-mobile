@@ -3,7 +3,6 @@
 import { Env } from '../config/env';
 
 export const AUTH_LOGIN = 'auth/login';
-export const AUTH_REFRESH = 'auth/refresh';
 export const USER_INFO = 'auth/me';
 
 // OneID (YaIT) SSO — mobile flow. SSO_LOGIN is opened in the system browser
@@ -54,7 +53,6 @@ export const WORK_LEAVE_REJECT = (id: number) => `work-leaves/${id}/reject`;
 
 // News
 export const NEWS_POSTS = 'news-posts';
-export const NEWS_POST_DETAIL = (id: number) => `news-posts/${id}`;
 
 // Chairman tasks (Raisning kun tartibi — agenda). Calendar-style entries: no
 // detail endpoint (the list carries everything). Manage = secretariat / admin.
@@ -272,8 +270,6 @@ export const KPI_BONUSES = 'kpi/bonuses';
 // take/done; the creator rates/reopens.
 export const SUPPORT_TICKETS = 'support-tickets';
 export const SUPPORT_TICKET_DETAIL = (id: number) => `support-tickets/${id}`;
-export const SUPPORT_TICKET_TAKE = (id: number) => `support-tickets/${id}/take`;
-export const SUPPORT_TICKET_DONE = (id: number) => `support-tickets/${id}/done`;
 export const SUPPORT_TICKET_RATE = (id: number) => `support-tickets/${id}/rate`;
 export const SUPPORT_TICKET_REOPEN = (id: number) => `support-tickets/${id}/reopen`;
 // Ticket ichidagi YOZISHMA (AKT ↔ murojaatchi) va o'qilgan belgisi.

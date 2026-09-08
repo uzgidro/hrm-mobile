@@ -221,13 +221,13 @@ export function getLetterAgreements(l: Letter): LetterSigner[] {
   return (l.assigned_signers ?? []).filter((a) => a.signer_type === 'agreement');
 }
 
-export function getMyAgreementRow(l: Letter, employeeId?: number): LetterSigner | null {
+function getMyAgreementRow(l: Letter, employeeId?: number): LetterSigner | null {
   if (!employeeId) return null;
   return getLetterAgreements(l).find((a) => eq(sid(a), employeeId)) ?? null;
 }
 
 /** Hamma kelishuvchilar kelishganmi (kelishuvchi bo'lmasa — ha). */
-export function allAgreementsAgreed(l: Letter): boolean {
+function allAgreementsAgreed(l: Letter): boolean {
   const rows = getLetterAgreements(l);
   return rows.length === 0 || rows.every((a) => a.agreed === true);
 }
