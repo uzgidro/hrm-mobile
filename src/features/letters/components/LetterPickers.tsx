@@ -7,7 +7,7 @@ export type PickerKind =
   // Bildirgi/ariza MUALLIFI (boshqa xodim nomidan kiritish) — web'da bor edi,
   // mobilда yo'q edi, ya'ni faqat o'z nomingdan yozish mumkin edi.
   | 'creator' | null;
-export type DateKind = 'letter' | 'departure' | 'arrival' | null;
+export type DateKind = 'departure' | 'arrival' | null;
 
 // All picker + date-picker modals of the create-letter form, grouped so the
 // screen body stays composition-only. Selection state stays in the screen; this
@@ -35,6 +35,11 @@ export function LetterPickers(props: {
   onSelectMain: (v: number) => void;
   ordinarySigners: number[];
   onToggleOrdinary: (v: number) => void;
+  /** Kelishib bo'lgan (agreed) kelishuvchilar — they cannot be removed while
+   *  editing: the backend rejects the save with `agreement_locked`. Shown as
+   *  selected-and-disabled so the reason is visible, mirroring the web's
+   *  locked "Kelishildi" rows. */
+  lockedOrdinarySigners?: number[];
 
   rahbariyatOptions: PickerOption[];
   rahbariyatLoading: boolean;
@@ -55,10 +60,8 @@ export function LetterPickers(props: {
   destinationIds: number[];
   onToggleDestination: (v: number) => void;
 
-  letterDate: string;
   departureDate: string | null;
   arrivalDate: string | null;
-  onConfirmLetterDate: (v: string) => void;
   onConfirmDepartureDate: (v: string) => void;
   onConfirmArrivalDate: (v: string) => void;
 }) {
@@ -67,13 +70,14 @@ export function LetterPickers(props: {
     picker, datePicker, onClosePicker, onCloseDatePicker,
     typeOptions, selectedTypeValue, onSelectType,
     signerOptions, ordinaryOptions, signersLoading, ordinaryLoading, mainSignerId, onSelectMain, ordinarySigners, onToggleOrdinary,
+    lockedOrdinarySigners = [],
     creatorOptions, creatorId, onSelectCreator,
     rahbariyatOptions, rahbariyatLoading, rahbariyatIds, onToggleRahbariyat,
     submitterOptions, submittersLoading, submitterId, onSelectSubmitter,
     regionOptions, branchesLoading, selectedRegionValues, onToggleRegion,
     destinationOptions, destinationIds, onToggleDestination,
-    letterDate, departureDate, arrivalDate,
-    onConfirmLetterDate, onConfirmDepartureDate, onConfirmArrivalDate,
+    departureDate, arrivalDate,
+    onConfirmDepartureDate, onConfirmArrivalDate,
   } = props;
 
   return (
@@ -96,7 +100,9 @@ export function LetterPickers(props: {
         onSelect={(v) => onSelectCreator(Number(v) === 0 ? null : Number(v))}
       />
       <PickerModal visible={picker === 'ordinary'} title={t('letters.pickerCoordinators')} options={ordinaryOptions} loading={ordinaryLoading} multiple selected={ordinarySigners}
-        onClose={onClosePicker} onSelect={() => {}} onToggle={onToggleOrdinary} />
+        onClose={onClosePicker} onSelect={() => {}}
+        onToggle={(v) => { if (!lockedOrdinarySigners.includes(v)) onToggleOrdinary(v); }}
+        disabledValues={lockedOrdinarySigners} />
 
       <PickerModal visible={picker === 'rahbariyat'} title={t('letters.pickerLeadership')} options={rahbariyatOptions} loading={rahbariyatLoading} multiple selected={rahbariyatIds}
         onClose={onClosePicker} onSelect={() => {}} onToggle={onToggleRahbariyat} />
@@ -110,7 +116,6 @@ export function LetterPickers(props: {
       <PickerModal visible={picker === 'destinations'} title={t('letters.pickerDestinations')} options={destinationOptions} loading={branchesLoading} multiple selected={destinationIds}
         onClose={onClosePicker} onSelect={() => {}} onToggle={onToggleDestination} />
 
-      <DatePickerModal visible={datePicker === 'letter'} value={letterDate} title={t('letters.fieldLetterDate')} onClose={onCloseDatePicker} onConfirm={onConfirmLetterDate} />
       <DatePickerModal visible={datePicker === 'departure'} value={departureDate} title={t('letters.fieldDepartureDate')} onClose={onCloseDatePicker} onConfirm={onConfirmDepartureDate} />
       <DatePickerModal visible={datePicker === 'arrival'} value={arrivalDate} title={t('letters.fieldArrivalDate')} onClose={onCloseDatePicker} onConfirm={onConfirmArrivalDate} />
     </>

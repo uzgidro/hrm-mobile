@@ -26,10 +26,16 @@ interface Props {
   onClose: () => void;
   onSelect: (value: number) => void; // single-select: fires then closes
   onToggle?: (value: number) => void; // multi-select: fires, stays open
+  /** Values that render selected but cannot be toggled off — used where the
+   *  server refuses the change (e.g. a coordinator who already agreed: the
+   *  letter save would fail with `agreement_locked`). Shown dimmed with a lock
+   *  icon so the row explains itself instead of silently ignoring taps. */
+  disabledValues?: number[];
 }
 
 export function PickerModal({
   visible, title, options, loading, multiple, selected, onClose, onSelect, onToggle,
+  disabledValues,
 }: Props) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -78,11 +84,15 @@ export function PickerModal({
               keyboardShouldPersistTaps="handled"
               renderItem={({ item }) => {
                 const sel = isSelected(item.value);
+                const locked = !!disabledValues?.includes(item.value);
                 return (
                   <TouchableOpacity
-                    style={[styles.row, sel && styles.rowActive]}
-                    activeOpacity={0.8}
+                    style={[styles.row, sel && styles.rowActive, locked && styles.rowLocked]}
+                    activeOpacity={locked ? 1 : 0.8}
+                    disabled={locked}
+                    accessibilityState={{ selected: sel, disabled: locked }}
                     onPress={() => {
+                      if (locked) return;
                       if (multiple) onToggle?.(item.value);
                       else onSelect(item.value);
                     }}
@@ -98,7 +108,9 @@ export function PickerModal({
                       <Text style={[styles.label, sel && styles.labelActive]} numberOfLines={1}>{item.label}</Text>
                       {!!item.subLabel && <Text style={styles.subLabel} numberOfLines={1}>{item.subLabel}</Text>}
                     </View>
-                    {sel && <Icon name="check" size={18} color={colors.primary} />}
+                    {locked
+                      ? <Icon name="lock" size={16} color={colors.textMuted} />
+                      : sel && <Icon name="check" size={18} color={colors.primary} />}
                   </TouchableOpacity>
                 );
               }}
@@ -135,6 +147,8 @@ const makeStyles = (c: ThemeColors) =>
     search: { backgroundColor: c.bg, borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, color: c.text },
     row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 18, paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
     rowActive: { backgroundColor: c.primarySoft },
+    // Locked rows stay readable but visibly inert (see `disabledValues`).
+    rowLocked: { opacity: 0.55 },
     photo: { width: 38, height: 38, borderRadius: 19, backgroundColor: c.skeleton },
     photoPlaceholder: { width: 38, height: 38, borderRadius: 19, backgroundColor: c.primarySoft, alignItems: 'center', justifyContent: 'center' },
     photoInitial: { color: c.primary, fontWeight: '700', fontSize: 15 },

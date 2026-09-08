@@ -33,6 +33,19 @@ export default {
   submitterLabel: 'Kirituvchi shaxs',
   familiarizersLabel: 'Buyruq bilan tanishuvchilar',
   familiarizersPlaceholder: "Bo'limlarni tanlang...",
+
+  // ── KADR buyruq raqami + sanasi (faqat yaratishда) ──────────────────────────
+  actNumberLabel: 'Buyruq raqami (ixtiyoriy)',
+  actNumberPlaceholder: 'Masalan: 125 yoki 125/2026-QQ',
+  actDateLabel: 'Buyruq sanasi (ixtiyoriy)',
+  actDatePlaceholder: "Keyinroq ham qo'shish mumkin",
+  numberChecking: 'Tekshirilmoqda…',
+  numberFree: "Raqam bo'sh",
+
+  // ── Biriktirilgan fayllar (tahrir) ──────────────────────────────────────────
+  existingFilesLabel: 'Biriktirilgan fayllar',
+  existingFilesNote: "Yangi fayl tanlansangiz, ular shu ro'yxat ustiga qo'shiladi",
+  existingFileFallback: 'Fayl',
   deptsSelected_one: '{{count}} ta bo\'lim tanlandi',
   deptsSelected_other: '{{count}} ta bo\'lim tanlandi',
 
@@ -53,6 +66,8 @@ export default {
   categoryRequired: 'Buyruq turi tanlanishi shart',
   descriptionRequired: 'Buyruq matni kiritilishi shart',
   approverRequired: 'Kamida bitta kelishuvchi tanlanishi shart',
+  submitterCannotBeApprover: "Kirituvchi shaxs bir vaqtda kelishuvchi bo'la olmaydi",
+  actNumberTaken: 'Bu buyruq raqami band',
   leadershipRequired: 'Rahbariyatdan biri tanlanishi shart',
   branchNotFound: 'Filial aniqlanmadi',
   filesPartialTitle: 'Eslatma',

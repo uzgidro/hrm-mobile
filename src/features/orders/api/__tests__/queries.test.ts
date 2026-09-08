@@ -2,6 +2,7 @@ import MockAdapter from 'axios-mock-adapter';
 import { apiClient } from '@/api/client';
 import {
   ORDER_ACTS, ORDER_ACT_DETAIL, EMPLOYEES_LIST, ORDER_ACT_COMMENTS, ORDER_ACT_HISTORY,
+  ORDER_ACT_NUMBER_AVAILABILITY,
 } from '@/api/urls';
 import {
   orderKeys,
@@ -10,6 +11,7 @@ import {
   orderEmployeesQuery,
   orderCommentsQuery,
   orderHistoryQuery,
+  orderActNumberAvailabilityQuery,
 } from '../queries';
 
 let mock: MockAdapter;
@@ -111,5 +113,41 @@ describe('orderCommentsQuery / orderHistoryQuery — keshlanadi', () => {
       expect(opts.refetchOnMount).toBeUndefined();
       expect(opts.staleTime).toBeGreaterThan(0);
     }
+  });
+});
+
+describe('orderActNumberAvailabilityQuery', () => {
+  it('sends the number as free TEXT plus the branch, and keys on all three inputs', async () => {
+    const opts = orderActNumberAvailabilityQuery(5, '125/2026-QQ', undefined, true);
+    expect(opts.queryKey).toEqual(['order-act-number-availability', 5, '125/2026-QQ', null]);
+
+    mock.onGet(ORDER_ACT_NUMBER_AVAILABILITY).reply(200, { available: false, suggested: 126 });
+    const data = await (opts.queryFn as () => Promise<{ available: boolean }>)();
+
+    expect(mock.history.get[0].params).toEqual({
+      organization_branch_id: 5,
+      act_number: '125/2026-QQ',
+    });
+    expect(data.available).toBe(false);
+  });
+
+  it("tahrirda buyruq O'Z raqamini band ko'rmasin — exclude_id yuboriladi", async () => {
+    const opts = orderActNumberAvailabilityQuery(5, '125', 42, true);
+    mock.onGet(ORDER_ACT_NUMBER_AVAILABILITY).reply(200, { available: true });
+    await (opts.queryFn as () => Promise<unknown>)();
+    expect(mock.history.get[0].params).toEqual({
+      organization_branch_id: 5,
+      act_number: '125',
+      exclude_id: 42,
+    });
+  });
+
+  it('stays disabled without a branch, without a number, or when the caller says so', () => {
+    // The field only exists for KADR on create, so `enabled` is what turns the
+    // whole live check on — and a blank number must never hit the endpoint.
+    expect(orderActNumberAvailabilityQuery(5, '125', null, false).enabled).toBe(false);
+    expect(orderActNumberAvailabilityQuery(undefined, '125', null, true).enabled).toBe(false);
+    expect(orderActNumberAvailabilityQuery(5, '   ', null, true).enabled).toBe(false);
+    expect(orderActNumberAvailabilityQuery(5, '125', null, true).enabled).toBe(true);
   });
 });

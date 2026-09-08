@@ -29,6 +29,19 @@ export default {
   submitterLabel: 'Вносящее лицо',
   familiarizersLabel: 'Ознакомляемые с приказом',
   familiarizersPlaceholder: 'Выберите отделы...',
+
+  // ── Номер и дата кадрового приказа (только при создании) ────────────────────
+  actNumberLabel: 'Номер приказа (необязательно)',
+  actNumberPlaceholder: 'Например: 125 или 125/2026-QQ',
+  actDateLabel: 'Дата приказа (необязательно)',
+  actDatePlaceholder: 'Можно добавить позже',
+  numberChecking: 'Проверка…',
+  numberFree: 'Номер свободен',
+
+  // ── Прикреплённые файлы (редактирование) ────────────────────────────────────
+  existingFilesLabel: 'Прикреплённые файлы',
+  existingFilesNote: 'Новые файлы будут добавлены к этому списку',
+  existingFileFallback: 'Файл',
   deptsSelected_one: 'Выбран {{count}} отдел',
   deptsSelected_few: 'Выбрано {{count}} отдела',
   deptsSelected_many: 'Выбрано {{count}} отделов',
@@ -50,6 +63,8 @@ export default {
   categoryRequired: 'Необходимо выбрать тип приказа',
   descriptionRequired: 'Необходимо ввести текст приказа',
   approverRequired: 'Выберите хотя бы одного согласующего',
+  submitterCannotBeApprover: 'Вносящее лицо не может быть согласующим',
+  actNumberTaken: 'Этот номер приказа уже занят',
   leadershipRequired: 'Необходимо выбрать одного из руководства',
   branchNotFound: 'Филиал не определён',
   filesPartialTitle: 'Примечание',

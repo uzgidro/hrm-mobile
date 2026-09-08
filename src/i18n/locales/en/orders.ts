@@ -29,6 +29,19 @@ export default {
   submitterLabel: 'Submitting person',
   familiarizersLabel: 'People to acknowledge the order',
   familiarizersPlaceholder: 'Select departments...',
+
+  // ── HR decree number + date (create only) ───────────────────────────────────
+  actNumberLabel: 'Order number (optional)',
+  actNumberPlaceholder: 'For example: 125 or 125/2026-QQ',
+  actDateLabel: 'Order date (optional)',
+  actDatePlaceholder: 'Can be added later',
+  numberChecking: 'Checking…',
+  numberFree: 'Number is free',
+
+  // ── Attached files (edit) ───────────────────────────────────────────────────
+  existingFilesLabel: 'Attached files',
+  existingFilesNote: 'Newly picked files are added on top of this list',
+  existingFileFallback: 'File',
   deptsSelected_one: '{{count}} department selected',
   deptsSelected_other: '{{count}} departments selected',
 
@@ -49,6 +62,8 @@ export default {
   categoryRequired: 'Order type must be selected',
   descriptionRequired: 'Order text must be entered',
   approverRequired: 'At least one approver is required',
+  submitterCannotBeApprover: 'The submitting person cannot also be an approver',
+  actNumberTaken: 'This order number is already taken',
   leadershipRequired: 'One of the leadership must be selected',
   branchNotFound: 'Branch could not be determined',
   filesPartialTitle: 'Note',

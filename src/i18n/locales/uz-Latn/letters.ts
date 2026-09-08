@@ -113,7 +113,6 @@ export default {
 
   // ── Create form: field labels ───────────────────────────────────────────────
   fieldType: 'Hujjat turi',
-  fieldLetterDate: 'Sanasi',
   fieldShortSummary: 'Qisqa mazmuni',
   fieldText: 'Matn',
   fieldMainSigner: 'Rahbariyat (adresat)',
@@ -254,4 +253,11 @@ export default {
   numberChecking: 'Tekshirilmoqda…',
   numberFree: "Bo'sh",
   numberTaken: 'Band',
+  attachmentReplaceHint: 'Yangi fayl tanlasangiz, mavjud ilova almashtiriladi',
+  vehicleTitle: 'Transport',
+  vehicleNone: 'Mashinasiz',
+  vehicleNeeded: 'Mashina kerak',
+  vehicleNoteLabel: 'Mashina uchun izoh (ixtiyoriy)',
+  vehicleNotePlaceholder: 'Masalan: 4 kishimiz, soat 7:00 da chiqamiz',
+  vehicleHint: 'So‘rov safar yuborilgach avval avtopark tasdiqlovchisiga boradi; u tasdiqlagach mashina biriktiriladi. Qaysi mashina bo‘lishini siz tanlamaysiz.',
 } as const;

@@ -2,7 +2,10 @@
 // form pair into 2-column rows; on phone they stack (Task 0 behavior).
 // multiline fields (trip purpose / work plan / letter text) must stay
 // full-width on both. Pairs under test:
-//  - CreateLetterScreen: fieldType + fieldLetterDate (new pairing, tablet-only)
+//  - CreateLetterScreen: the type field is now FULL-WIDTH on both devices —
+//    its former partner, "Hujjat sanasi", was removed (the backend discards
+//    `letter_date` on create and blocks it on edit, so the picker asked for a
+//    value that was thrown away; neither web client renders it).
 //  - LetterFormFields (business trip): fieldRegions + fieldDestinations,
 //    fieldLeadership + fieldSubmitter (new pairing, tablet-only).
 //    departureDate + arrivalDate is a PRE-EXISTING intentional row (predates
@@ -58,25 +61,18 @@ describe('CreateLetterScreen (tablet two-column pairing)', () => {
     fireEvent.press(await findByText('Xizmat safari'));
   }
 
-  it('pairs fieldType + fieldLetterDate on tablet', async () => {
-    (useWindowDimensions as jest.Mock).mockReturnValue(TABLET_LANDSCAPE);
-    const { findByTestId } = await renderWithProviders(<CreateLetterScreen />);
+  it.each([
+    ['tablet', TABLET_LANDSCAPE],
+    ['phone', PHONE_PORTRAIT],
+  ])('renders the type field without a date partner on %s', async (_label, dimensions) => {
+    (useWindowDimensions as jest.Mock).mockReturnValue(dimensions);
+    const { findByTestId, queryByTestId } = await renderWithProviders(<CreateLetterScreen />);
 
-    const row = await findByTestId('letter-type-date-row');
-    const typeHalf = await findByTestId('letter-field-type');
-    const dateHalf = await findByTestId('letter-field-letterDate');
-
-    expect(row.props.style).toEqual(expect.objectContaining({ flexDirection: 'row' }));
-    expect(typeHalf.props.style).toEqual(expect.objectContaining({ flex: 1 }));
-    expect(dateHalf.props.style).toEqual(expect.objectContaining({ flex: 1 }));
-  });
-
-  it('does not pair fieldType + fieldLetterDate on phone', async () => {
-    (useWindowDimensions as jest.Mock).mockReturnValue(PHONE_PORTRAIT);
-    const { findByTestId } = await renderWithProviders(<CreateLetterScreen />);
-
-    const row = await findByTestId('letter-type-date-row');
-    expect(row.props.style).toBeUndefined();
+    expect(await findByTestId('letter-field-type')).toBeTruthy();
+    // The "Hujjat sanasi" picker and the row that paired it with the type are
+    // gone: the value never survived the request.
+    expect(queryByTestId('letter-field-letterDate')).toBeNull();
+    expect(queryByTestId('letter-type-date-row')).toBeNull();
   });
 
   it('business trip: pairs regions/destinations and leadership/submitter on tablet (new pairing)', async () => {

@@ -29,6 +29,19 @@ export default {
   submitterLabel: 'Киритувчи шахс',
   familiarizersLabel: 'Буйруқ билан танишувчилар',
   familiarizersPlaceholder: 'Бўлимларни танланг...',
+
+  // ── КАДР буйруқ рақами + санаси (фақат яратишда) ────────────────────────────
+  actNumberLabel: 'Буйруқ рақами (ихтиёрий)',
+  actNumberPlaceholder: 'Масалан: 125 ёки 125/2026-QQ',
+  actDateLabel: 'Буйруқ санаси (ихтиёрий)',
+  actDatePlaceholder: 'Кейинроқ ҳам қўшиш мумкин',
+  numberChecking: 'Текширилмоқда…',
+  numberFree: 'Рақам бўш',
+
+  // ── Бириктирилган файллар (таҳрир) ──────────────────────────────────────────
+  existingFilesLabel: 'Бириктирилган файллар',
+  existingFilesNote: 'Янги файл танласангиз, улар шу рўйхат устига қўшилади',
+  existingFileFallback: 'Файл',
   deptsSelected_one: '{{count}} та бўлим танланди',
   deptsSelected_other: '{{count}} та бўлим танланди',
 
@@ -49,6 +62,8 @@ export default {
   categoryRequired: 'Буйруқ тури танланиши шарт',
   descriptionRequired: 'Буйруқ матни киритилиши шарт',
   approverRequired: 'Камида битта келишувчи танланиши шарт',
+  submitterCannotBeApprover: 'Киритувчи шахс бир вақтда келишувчи бўла олмайди',
+  actNumberTaken: 'Бу буйруқ рақами банд',
   leadershipRequired: 'Раҳбариятдан бири танланиши шарт',
   branchNotFound: 'Филиал аниқланмади',
   filesPartialTitle: 'Эслатма',

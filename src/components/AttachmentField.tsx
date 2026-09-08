@@ -9,12 +9,19 @@ import { Icon } from './Icon';
 export type PickedFile = { uri: string; name: string; mimeType?: string };
 
 export function AttachmentField({
-  label, files, onPick, onRemove,
+  label, files, onPick, onRemove, existingName, existingHint,
 }: {
   label?: string;
   files: PickedFile[];
   onPick: () => void;
   onRemove: (index: number) => void;
+  /** Fayl nomi ALLAQACHON hujjatga biriktirilgan bo'lsa (tahrir rejimi). The
+   *  edit form used to show nothing here, so the user could not tell an
+   *  attachment already existed and re-uploaded it blindly. Read-only: removing
+   *  it is not a create-form action. */
+  existingName?: string | null;
+  /** One-line note explaining what picking a new file does to the stored one. */
+  existingHint?: string;
 }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -22,6 +29,13 @@ export function AttachmentField({
   return (
     <View style={styles.wrap}>
       <Text style={styles.label}>{label ?? t('components.attachmentLabel')}</Text>
+      {!!existingName && (
+        <View style={styles.existingRow}>
+          <Icon name="doc" size={16} color={colors.textMuted} />
+          <Text style={styles.existingName} numberOfLines={1}>{existingName}</Text>
+        </View>
+      )}
+      {!!existingName && !!existingHint && <Text style={styles.existingHint}>{existingHint}</Text>}
       {files.map((f, i) => (
         <View key={`${f.uri}-${i}`} style={styles.fileRow}>
           <Icon name="doc" size={16} color={colors.primary} />
@@ -48,6 +62,13 @@ const makeStyles = (c: ThemeColors) =>
       backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10,
     },
     fileName: { flex: 1, fontSize: 13, color: c.text },
+    existingRow: {
+      flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6,
+      backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, borderRadius: 10,
+      paddingHorizontal: 12, paddingVertical: 10, opacity: 0.8,
+    },
+    existingName: { flex: 1, fontSize: 13, color: c.textSecondary },
+    existingHint: { fontSize: 11, color: c.textMuted, marginBottom: 8 },
     addBtn: {
       flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start',
       backgroundColor: c.primarySoft, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 9,

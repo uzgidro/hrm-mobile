@@ -18,12 +18,25 @@ export function Field({ label, required, children }: { label: string; required?:
 // A tappable dropdown-style row that opens a PickerModal / DatePickerModal;
 // shows a spinner while its option source is loading.
 export function Selector({
-  text, placeholder, loading, onPress,
-}: { text?: string; placeholder: string; loading?: boolean; onPress: () => void }) {
+  text, placeholder, loading, onPress, disabled,
+}: {
+  text?: string; placeholder: string; loading?: boolean; onPress: () => void;
+  /** Read-only: the server would refuse the change anyway (e.g. the letter type
+   *  of an existing document, which `update_letter` blocks for everyone but a
+   *  master-admin). Dimmed and inert rather than hidden, so the current value
+   *  stays visible. */
+  disabled?: boolean;
+}) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   return (
-    <TouchableOpacity style={styles.selector} onPress={onPress} activeOpacity={0.8}>
+    <TouchableOpacity
+      style={[styles.selector, disabled && styles.selectorDisabled]}
+      onPress={onPress}
+      disabled={disabled}
+      accessibilityState={{ disabled: !!disabled }}
+      activeOpacity={0.8}
+    >
       {loading ? (
         <ActivityIndicator size="small" color={colors.textMuted} />
       ) : (
@@ -39,6 +52,7 @@ const makeStyles = (c: ThemeColors) =>
     field: { marginTop: 16 },
     fieldLabel: { fontSize: 13, fontWeight: '700', color: c.textSecondary, marginBottom: 8 },
     req: { color: c.error },
+    selectorDisabled: { opacity: 0.55 },
     selector: { flexDirection: 'row', alignItems: 'center', backgroundColor: c.card, borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 14, paddingVertical: 13, gap: 8 },
     selectorText: { flex: 1, fontSize: 14, color: c.text, fontWeight: '500' },
     selectorPlaceholder: { flex: 1, fontSize: 14, color: c.textMuted },

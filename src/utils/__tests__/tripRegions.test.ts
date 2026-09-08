@@ -1,4 +1,4 @@
-import { branchRegions, regionLabels, branchesInRegions, type BranchLite } from '../tripRegions';
+import { branchRegions, regionLabels, branchesInRegions, type BranchLite, regionOptionLabels, UZ_REGIONS } from '../tripRegions';
 
 // A branch may belong to several regions (b.regions[]); legacy records carry a
 // single b.region. Mirrors the web AddLetterDrawer branchRegions() + .some()
@@ -82,5 +82,27 @@ describe('branchesInRegions', () => {
 
   it('unions across a multi-region selection', () => {
     expect(branchesInRegions(branches, ['Sirdaryo', 'Jizzax']).map((b) => b.id)).toEqual([2, 3]);
+  });
+});
+
+describe('regionOptionLabels — full country list, not just our branches', () => {
+  it('offers every UZ region even when no branch sits there', () => {
+    // Regression: options were derived from branch records only, so a region
+    // where the company has no office could not be chosen and the trip could
+    // not be filed at all — even though the backend accepts a region with no
+    // destination branch. Web v1 has always unioned the two lists.
+    const labels = regionOptionLabels([{ id: 1, name: 'Filial', regions: ['Toshkent shahri'] }]);
+    expect(labels).toEqual(expect.arrayContaining(UZ_REGIONS));
+    expect(labels).toContain('Xorazm viloyati');
+  });
+
+  it('keeps non-standard region spellings that exist on branch records', () => {
+    const labels = regionOptionLabels([{ id: 2, name: 'X', regions: ['Nostandart hudud'] }]);
+    expect(labels).toContain('Nostandart hudud');
+  });
+
+  it('does not duplicate a region that is both standard and on a branch', () => {
+    const labels = regionOptionLabels([{ id: 3, name: 'Y', regions: ['Andijon viloyati'] }]);
+    expect(labels.filter((r) => r === 'Andijon viloyati')).toHaveLength(1);
   });
 });

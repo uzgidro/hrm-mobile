@@ -111,6 +111,10 @@ export const EMPLOYEE_SELF_UPDATE = 'employees/me/self-update';
 
 // Order act categories
 export const ORDER_ACT_CATEGORIES = 'order-act-categories';
+// KADR buyrug'i raqamining bandligi — forma YOZILAYOTGANDA tekshiriladi
+// (devonxona qadami yo'q, raqamni KADR o'zi kiritadi). Declared before /{pk}
+// server-side, so it never collides with the detail route.
+export const ORDER_ACT_NUMBER_AVAILABILITY = 'order-acts/act-number/availability';
 export const ORDER_ACT_DOCUMENTS = (id: number) => `order-acts/${id}/documents`;
 
 // Letters (Xatlar)
@@ -194,6 +198,13 @@ export const LETTER_EXTEND_TRIP = (id: number) => `letters/${id}/extend-trip`;
 export const LETTER_APPROVE_EXTENSION = (id: number) => `letters/${id}/approve-extension`;
 export const LETTER_REJECT_EXTENSION = (id: number) => `letters/${id}/reject-extension`;
 export const LETTER_REGISTERED_NUMBER_AVAILABILITY = 'letters/registered-number/availability';
+
+// TRANSPORT (avtopark). `vehicles/access` returns `requester_branch_ids` — the
+// branches whose staff may ask for a car on a trip. The trip form shows the
+// "Mashina kerak" block only for those branches, exactly like the web
+// (AddLetterDrawer.jsx:176-206); the request itself rides on the letter
+// create/update payload as `vehicle_needed` + `vehicle_note`.
+export const VEHICLE_ACCESS = 'vehicles/access';
 
 // Organization branches
 export const ORGANIZATION_BRANCHES = 'organization-branches';

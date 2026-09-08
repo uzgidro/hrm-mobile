@@ -10,10 +10,14 @@ export type Approver = { employee_id: number; can_edit_document: boolean };
 // The "Kelishuvchilar" (approvers) editor block of the create-order form:
 // add/remove rows, pick an employee per row, and toggle its edit-document flag.
 export function ApproversEditor({
-  approvers, employeesLoading, nameFor, onAdd, onRemove, onPick, onToggleEdit,
+  approvers, employeesLoading, nameFor, error, onAdd, onRemove, onPick, onToggleEdit,
 }: {
   approvers: Approver[];
   employeesLoading: boolean;
+  // Validation message for the block as a whole (no approver at all, or the
+  // submitter picked as one) — shown here because neither failure belongs to a
+  // single row.
+  error?: string;
   nameFor: (employeeId: number | null) => string | undefined;
   onAdd: () => void;
   onRemove: (index: number) => void;
@@ -64,6 +68,8 @@ export function ApproversEditor({
           </View>
         ))
       )}
+
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
     </>
   );
 }
@@ -71,6 +77,7 @@ export function ApproversEditor({
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     fieldLabel: { fontSize: 13, fontWeight: '700', color: c.textSecondary, marginBottom: 8 },
+    errorText: { marginTop: 6, fontSize: 12, color: c.error, fontWeight: '600' },
     approversHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 22, marginBottom: 8 },
     addApproverBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: c.primarySoft, paddingHorizontal: 14, paddingVertical: 7, borderRadius: 14 },
     addApproverText: { color: c.primary, fontSize: 12, fontWeight: '700' },

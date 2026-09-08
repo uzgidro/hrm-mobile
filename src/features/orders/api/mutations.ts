@@ -78,6 +78,12 @@ export interface CreateOrderPayload {
   familiarizer_department_ids: number[];
   assigned_signers: { employee_id: number; signer_type: string; can_edit_document: boolean }[];
   organization_branch_id: number;
+  // KADR buyrug'i: raqam + sana YARATISHDA kiritiladi (devonxona qadami YO'Q,
+  // shu bois raqamni boshqa hech kim bermaydi). STRING — raqam faqat sondan
+  // iborat bo'lmasligi mumkin ("125/2026-QQ"); backend ham `Optional[str]`.
+  // Tahrirda (PATCH) backend bu maydonlarni ataylab qabul qilmaydi.
+  act_number?: string | null;
+  act_date?: string | null;
 }
 
 // Creates the order-act, then (best-effort) uploads any attached files as

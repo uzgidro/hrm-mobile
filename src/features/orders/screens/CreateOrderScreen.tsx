@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
   ScrollView, ActivityIndicator, Alert,
@@ -6,6 +6,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
+import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { isHR, employeeSubLabel, translateCategory } from '@/utils/roles';
@@ -20,12 +21,17 @@ import { ScreenHeader } from '@/components/ScreenHeader';
 import { useBreakpoint } from '@/utils/responsive';
 import {
   orderCategoriesQuery, orderEmployeesQuery, orderDepartmentsQuery, orderLeadershipQuery,
-  orderDetailQuery,
+  orderDetailQuery, orderActNumberAvailabilityQuery,
 } from '../api/queries';
 import { useCreateOrder, useUpdateOrder } from '../api/mutations';
-import { Field, Selector } from '../components/FormParts';
+import { Field, Selector, ExistingDocuments } from '../components/FormParts';
 import { ApproversEditor, type Approver } from '../components/ApproversEditor';
 import { OrderPickers, type PickerKind } from '../components/OrderPickers';
+import {
+  buildCreateOrderPayload, buildUpdateOrderPayload, existingOrderDocuments,
+  seedFamiliarizerDeptIds, validateOrderForm,
+  type OrderFormError, type OrderFormValues,
+} from '../utils/orderForm';
 
 export default function CreateOrderScreen() {
   const { user } = useAuthStore();
@@ -61,6 +67,11 @@ export default function CreateOrderScreen() {
   const [saving, setSaving] = useState(false);
   const [picker, setPicker] = useState<PickerKind>(null);
   const [approverPickerIndex, setApproverPickerIndex] = useState<number | null>(null);
+  // KADR buyrug'i raqami+sanasi (faqat YARATISHда — pastdagi `numberFieldShown`).
+  const [actNumber, setActNumber] = useState('');
+  const [actDate, setActDate] = useState<string | null>(null);
+  const [actDatePickerOpen, setActDatePickerOpen] = useState(false);
+  const [formError, setFormError] = useState<OrderFormError | null>(null);
 
   // Tahrir rejimida formani BIR MARTA to'ldiramiz (keyingi refetch kiritilayotgan
   // matnni bosib ketmasin). RENDER PAYTIDA moslash — React'ning "adjusting state
@@ -84,13 +95,9 @@ export default function CreateOrderScreen() {
         }))
         .filter((a) => a.employee_id),
     );
-    setFamiliarizerDeptIds(
-      Array.from(new Set(
-        (editing.familiarizers ?? [])
-          .map((f) => f.employee?.department?.id)
-          .filter((v): v is number => v != null),
-      )),
-    );
+    // TANISHUVCHI BO'LIMLAR — `familiarizer_departments` dan (web v1 ham shundan:
+    // AddOrderDrawer.jsx:245). Batafsil sabab: `seedFamiliarizerDeptIds`.
+    setFamiliarizerDeptIds(seedFamiliarizerDeptIds(editing));
   }
 
   const pickFiles = async () => {
@@ -104,6 +111,34 @@ export default function CreateOrderScreen() {
   const { data: empData, isLoading: empsLoading } = useQuery(orderEmployeesQuery(branchId));
   const { data: departments = [], isLoading: deptsLoading } = useQuery(orderDepartmentsQuery(branchId));
   const { data: leadership = [], isLoading: leadershipLoading } = useQuery(orderLeadershipQuery(branchId));
+
+  // ── KADR buyruq raqami: bandlikni YOZILAYOTGANDA tekshirish ─────────────────
+  // Maydon faqat KADR YARATishда chiqadi: kadr buyrug'ida devonxona qadami yo'q,
+  // shu bois raqamni boshqa hech kim bermaydi (xodim buyrug'ida raqamni
+  // devonxona ro'yxatga olishda beradi, tahrirda esa backend PATCH'да
+  // act_number/act_date ni umuman qabul qilmaydi).
+  const numberFieldShown = !editId && creatorRole === 'hr';
+
+  // Debounce the typed value BEFORE it becomes part of the query key, so every
+  // keystroke doesn't start (and cancel) a request.
+  const [debouncedActNumber, setDebouncedActNumber] = useState(actNumber);
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedActNumber(actNumber), 400);
+    return () => clearTimeout(id);
+  }, [actNumber]);
+
+  const numberCheckEnabled = numberFieldShown && debouncedActNumber.trim() !== '';
+  const { data: numberAvailability, isFetching: numberChecking } = useQuery(
+    orderActNumberAvailabilityQuery(branchId, debouncedActNumber.trim(), editId, numberCheckEnabled),
+  );
+  // While a NEWER value is still being debounced the previous answer is stale —
+  // don't let it block (or green-light) what the user is typing right now.
+  const numberSettled = numberCheckEnabled && debouncedActNumber === actNumber && !numberChecking;
+  const numberTaken = numberSettled && numberAvailability?.available === false;
+  // The status line follows what is ON SCREEN, not the debounced copy — during
+  // the first 400ms after a keystroke the field would otherwise show nothing
+  // and then flash a verdict.
+  const showNumberStatus = numberFieldShown && actNumber.trim() !== '';
 
   // ── Options ──────────────────────────────────────────────────────────────────
   const empOption = (e: Employee): PickerOption => ({
@@ -122,32 +157,29 @@ export default function CreateOrderScreen() {
 
   const nameOf = (id: number | null, opts: PickerOption[]) => opts.find((o) => o.value === id)?.label;
 
+  // Buyruqqa ALLAQACHON biriktirilgan fayllar (tahrir rejimi) — yangi tanlangan
+  // fayllar ularning USTIGA qo'shiladi, shuning uchun ro'yxat ko'rinib turishi shart.
+  const existingDocs = useMemo(() => existingOrderDocuments(editing), [editing]);
+
+  const fieldError = (field: OrderFormError['field']) =>
+    formError?.field === field ? t(`orders.${formError.messageKey}`) : undefined;
+
   // ── Submit ───────────────────────────────────────────────────────────────────
   async function handleCreate() {
-    if (!categoryId) { Alert.alert(t('common.errorTitle'), t('orders.categoryRequired')); return; }
-    if (!description.trim()) { Alert.alert(t('common.errorTitle'), t('orders.descriptionRequired')); return; }
-    // Web parity (AddOrderDrawer, c66c2af) + backend 7b3326f: decree/submit now
-    // 400s `approver_required` — without at least one kelishuvchi the decree
-    // would skip the agreement/sign stages straight to 'approved'.
-    if (!approvers.some((a) => a.employee_id)) { Alert.alert(t('common.errorTitle'), t('orders.approverRequired')); return; }
-    if (!leadershipId) { Alert.alert(t('common.errorTitle'), t('orders.leadershipRequired')); return; }
-    if (!branchId) { Alert.alert(t('common.errorTitle'), t('orders.branchNotFound')); return; }
-
-    const assigned_signers = [
-      ...approvers
-        .filter((a) => a.employee_id)
-        .map((a) => ({ employee_id: a.employee_id, signer_type: 'approver', can_edit_document: a.can_edit_document })),
-      ...(leadershipId ? [{ employee_id: leadershipId, signer_type: 'leadership', can_edit_document: false }] : []),
-    ];
-
-    const payload = {
-      category_id: categoryId,
-      summary: summary.trim() || null,
-      description: description.trim(),
-      submitter_id: submitterId || null,
-      familiarizer_department_ids: familiarizerDeptIds,
-      assigned_signers,
+    const values: OrderFormValues = {
+      categoryId, summary, description, submitterId, leadershipId,
+      familiarizerDeptIds, approvers, actNumber, actDate,
     };
+    // One source of truth for every blocking rule (see `validateOrderForm`) —
+    // including the ones the backend would only answer with a 400 after the
+    // whole form was filled in: a taken decree number and a submitter who is
+    // also an approver (`submitter_cannot_be_approver`).
+    const invalid = validateOrderForm(values, { branchId, numberFieldShown, numberTaken });
+    setFormError(invalid);
+    if (invalid) {
+      Alert.alert(t('common.errorTitle'), t(`orders.${invalid.messageKey}`));
+      return;
+    }
 
     const onFilesError = () =>
       Alert.alert(t('orders.filesPartialTitle'), t('orders.filesPartialMessage'));
@@ -157,11 +189,13 @@ export default function CreateOrderScreen() {
       if (editId) {
         // Tahrirda EGALIK o'zgarmaydi — filial hujjatniki bo'lib qoladi
         // (web ham editда `organization_branch_id` yubormaydi).
-        await updateMutation.mutateAsync({ id: editId, payload, files, onFilesError });
+        await updateMutation.mutateAsync({
+          id: editId, payload: buildUpdateOrderPayload(values), files, onFilesError,
+        });
         router.back();
       } else {
         const orderId = await createMutation.mutateAsync({
-          payload: { ...payload, organization_branch_id: branchId },
+          payload: buildCreateOrderPayload(values, { branchId: branchId as number, creatorRole }),
           files,
           onFilesError,
         });
@@ -193,7 +227,7 @@ export default function CreateOrderScreen() {
       />
 
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Field label={t('orders.categoryLabel')} required>
+        <Field label={t('orders.categoryLabel')} required error={fieldError('category')}>
           <Selector
             loading={catsLoading}
             text={nameOf(categoryId, categoryOptions)}
@@ -201,6 +235,57 @@ export default function CreateOrderScreen() {
             onPress={() => setPicker('category')}
           />
         </Field>
+
+        {/* KADR buyrug'i: raqam + sana. Kadr buyrug'ida devonxona qadami YO'Q,
+            shuning uchun raqamni KADR shu yerda o'zi kiritadi (ikkalasi ham
+            ixtiyoriy — keyinroq tafsilotlar oynasidan qo'yiladi). Xodim
+            buyrug'ida bu maydonlar yo'q: raqamni devonxona beradi. */}
+        {numberFieldShown && (
+          <View testID="order-act-number-row" style={twoCol ? styles.fieldRow : undefined}>
+            <View style={twoCol ? styles.fieldHalf : undefined}>
+              <Field label={t('orders.actNumberLabel')} error={fieldError('actNumber')}>
+                <TextInput
+                  testID="order-act-number-input"
+                  style={styles.input}
+                  placeholder={t('orders.actNumberPlaceholder')}
+                  placeholderTextColor={colors.textMuted}
+                  value={actNumber}
+                  onChangeText={setActNumber}
+                  // KLAVIATURA sonli EMAS: raqam harf/belgi ham bo'lishi mumkin
+                  // ("125/2026-QQ") — v1 dagi type="number" xatosini takrorlamaymiz.
+                  autoCapitalize="characters"
+                  autoCorrect={false}
+                />
+                {showNumberStatus && (
+                  <Text
+                    testID="order-act-number-availability"
+                    style={[
+                      styles.availability,
+                      { color: numberTaken ? colors.error : numberSettled ? colors.success : colors.textMuted },
+                    ]}
+                  >
+                    {!numberSettled
+                      ? t('orders.numberChecking')
+                      : numberTaken
+                        ? t('orders.actNumberTaken')
+                        : t('orders.numberFree')}
+                  </Text>
+                )}
+              </Field>
+            </View>
+
+            <View style={twoCol ? styles.fieldHalf : undefined}>
+              <Field label={t('orders.actDateLabel')}>
+                <Selector
+                  text={actDate ? dayjs(actDate).format('DD.MM.YYYY') : undefined}
+                  placeholder={t('orders.actDatePlaceholder')}
+                  onPress={() => setActDatePickerOpen(true)}
+                  onClear={actDate ? () => setActDate(null) : undefined}
+                />
+              </Field>
+            </View>
+          </View>
+        )}
 
         <Field label={t('orders.summaryLabel')}>
           <TextInput
@@ -210,7 +295,7 @@ export default function CreateOrderScreen() {
           />
         </Field>
 
-        <Field label={t('orders.descriptionLabel')} required>
+        <Field label={t('orders.descriptionLabel')} required error={fieldError('description')}>
           <TextInput
             style={[styles.textArea, { minHeight: 120 }]} placeholder={t('orders.descriptionPlaceholder')}
             placeholderTextColor={colors.textMuted} value={description} onChangeText={setDescription}
@@ -229,7 +314,7 @@ export default function CreateOrderScreen() {
           style={twoCol ? styles.fieldRow : undefined}
         >
           <View testID="order-field-leadership" style={twoCol ? styles.fieldHalf : undefined}>
-            <Field label={t('orders.leadershipLabel')} required>
+            <Field label={t('orders.leadershipLabel')} required error={fieldError('leadership')}>
               <Selector
                 loading={leadershipLoading}
                 text={nameOf(leadershipId, leadershipOptions)}
@@ -252,6 +337,13 @@ export default function CreateOrderScreen() {
           </View>
         </View>
 
+        <ExistingDocuments
+          documents={existingDocs}
+          label={t('orders.existingFilesLabel')}
+          note={t('orders.existingFilesNote')}
+          fallbackName={t('orders.existingFileFallback')}
+        />
+
         <AttachmentField files={files} onPick={pickFiles} onRemove={(i) => setFiles((p) => p.filter((_, idx) => idx !== i))} />
 
         <Field label={t('orders.familiarizersLabel')}>
@@ -266,6 +358,7 @@ export default function CreateOrderScreen() {
         <ApproversEditor
           approvers={approvers}
           employeesLoading={empsLoading}
+          error={fieldError('approvers')}
           nameFor={(id) => nameOf(id, employeeOptions)}
           onAdd={() => setApprovers((p) => [...p, { employee_id: 0, can_edit_document: false }])}
           onRemove={(i) => setApprovers((p) => p.filter((_, idx) => idx !== i))}
@@ -279,6 +372,9 @@ export default function CreateOrderScreen() {
       <OrderPickers
         picker={picker}
         onClosePicker={() => setPicker(null)}
+        actDatePickerOpen={actDatePickerOpen} actDate={actDate}
+        onCloseActDatePicker={() => setActDatePickerOpen(false)}
+        onConfirmActDate={(iso) => { setActDate(iso); setActDatePickerOpen(false); }}
         approverPickerIndex={approverPickerIndex}
         onCloseApproverPicker={() => setApproverPickerIndex(null)}
         categoryOptions={categoryOptions} categoryId={categoryId} catsLoading={catsLoading}
@@ -306,6 +402,9 @@ const makeStyles = (c: ThemeColors) =>
     createBtnText: { color: c.onPrimary, fontWeight: '700', fontSize: 14 },
 
     content: { paddingHorizontal: 16, paddingTop: 4 },
+
+    input: { backgroundColor: c.card, borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: c.text },
+    availability: { marginTop: 6, fontSize: 12, fontWeight: '600' },
 
     textArea: { backgroundColor: c.card, borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: c.text, minHeight: 80 },
 

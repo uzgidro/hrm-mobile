@@ -3,7 +3,6 @@ import { buildLetterCreatePayload, type LetterCreateInput } from '../letterCreat
 const baseTrip: LetterCreateInput = {
   isTrip: true,
   letterType: 'business_trip',
-  letterDate: '2026-07-24',
   branchId: 10,
   employeeId: 5,
   shortSummary: '',
@@ -136,5 +135,55 @@ describe('buildLetterCreatePayload — hujjat muallifi', () => {
   it('SAFARда muallif maydoni yo\'q (u yerda yuboruvchi/rahbariyat ishlatiladi)', () => {
     const p = buildLetterCreatePayload({ ...baseTrip, creatorId: 77 });
     expect('creator_employee_id' in p).toBe(false);
+  });
+});
+
+// ── Web-parity round 2026-09-08 ──────────────────────────────────────────────
+
+describe('buildLetterCreatePayload — letter_date is never sent', () => {
+  // `create_letter` forces letter_date=None for agreement letters AND trips, and
+  // `update_letter` blocks the field, so the form used to collect a date that
+  // the server threw away. Neither web client sends it.
+  it('omits letter_date for a trip', () => {
+    expect('letter_date' in buildLetterCreatePayload(baseTrip)).toBe(false);
+  });
+
+  it('omits letter_date for a bildirgi/ariza', () => {
+    const p = buildLetterCreatePayload({
+      ...baseTrip, isTrip: false, letterType: 'application', mainSignerId: 4, ordinarySigners: [8],
+    });
+    expect('letter_date' in p).toBe(false);
+  });
+});
+
+describe('buildLetterCreatePayload — vehicle request', () => {
+  it('sends vehicle_needed + note when the branch may request a car', () => {
+    const p = buildLetterCreatePayload({
+      ...baseTrip, canRequestVehicle: true, vehicleNeeded: true, vehicleNote: '  4 kishi  ',
+    });
+    expect(p).toMatchObject({ vehicle_needed: true, vehicle_note: '4 kishi' });
+  });
+
+  it('sends vehicle_needed:false (cancels an existing request) with a null note', () => {
+    const p = buildLetterCreatePayload({
+      ...baseTrip, canRequestVehicle: true, vehicleNeeded: false, vehicleNote: 'ignored',
+    });
+    expect(p).toMatchObject({ vehicle_needed: false, vehicle_note: null });
+  });
+
+  it('OMITS both keys when the branch is not on the requester list', () => {
+    // An omitted key means "unchanged" on edit; sending false from a screen that
+    // never showed the block would silently cancel someone else's request.
+    const p = buildLetterCreatePayload({ ...baseTrip, canRequestVehicle: false, vehicleNeeded: true });
+    expect('vehicle_needed' in p).toBe(false);
+    expect('vehicle_note' in p).toBe(false);
+  });
+
+  it('never sends vehicle keys on a bildirgi/ariza', () => {
+    const p = buildLetterCreatePayload({
+      ...baseTrip, isTrip: false, letterType: 'explanatory', mainSignerId: 4,
+      canRequestVehicle: true, vehicleNeeded: true,
+    });
+    expect('vehicle_needed' in p).toBe(false);
   });
 });

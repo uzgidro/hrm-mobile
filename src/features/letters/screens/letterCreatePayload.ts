@@ -13,7 +13,6 @@
 export interface LetterCreateInput {
   isTrip: boolean;
   letterType: string;
-  letterDate: string | null;
   branchId: number | undefined;
   employeeId: number | undefined;
   shortSummary: string;
@@ -41,6 +40,16 @@ export interface LetterCreateInput {
   regions: string[];
   departureDate: string | null;
   arrivalDate: string | null;
+  /**
+   * MASHINA so'rovi (transport) — sent ONLY from a branch on the fleet's
+   * requester list, exactly like the web. When the caller is not entitled the
+   * keys are omitted entirely: on edit an omitted key means "unchanged", so
+   * sending `false` from an unentitled screen would cancel a request the user
+   * never saw.
+   */
+  canRequestVehicle?: boolean;
+  vehicleNeeded?: boolean;
+  vehicleNote?: string;
 }
 
 export function buildLetterCreatePayload(input: LetterCreateInput): Record<string, unknown> {
@@ -48,9 +57,12 @@ export function buildLetterCreatePayload(input: LetterCreateInput): Record<strin
     ? (input.description.trim() || null)
     : ([input.shortSummary.trim(), input.description.trim()].filter(Boolean).join('\n\n') || null);
 
+  // `letter_date` is deliberately NOT sent: `create_letter` overwrites it with
+  // None for every agreement letter and every trip, and `update_letter` blocks
+  // the field for anyone but a master-admin. Sending it only made the form ask
+  // for a value that was thrown away. Neither web client sends it either.
   const payload: Record<string, unknown> = {
     letter_type: input.letterType,
-    letter_date: input.letterDate || null,
     description,
     organization_branch_id: input.branchId,
     employee_id: input.employeeId,
@@ -66,6 +78,12 @@ export function buildLetterCreatePayload(input: LetterCreateInput): Record<strin
     payload.departure_date = input.departureDate || null;
     payload.arrival_date = input.arrivalDate || null;
     payload.work_plan = input.workPlan.trim() || null;
+    if (input.canRequestVehicle) {
+      payload.vehicle_needed = !!input.vehicleNeeded;
+      payload.vehicle_note = input.vehicleNeeded
+        ? (input.vehicleNote?.trim() || null)
+        : null;
+    }
   } else {
     const seen = new Set<number>(input.mainSignerId ? [Number(input.mainSignerId)] : []);
     const agreements: { employee_id: number; signer_type: string }[] = [];

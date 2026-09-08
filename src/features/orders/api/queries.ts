@@ -10,6 +10,7 @@ import {
   ORGANIZATION_BRANCH_LEADERS,
   ORDER_ACT_COMMENTS,
   ORDER_ACT_HISTORY,
+  ORDER_ACT_NUMBER_AVAILABILITY,
 } from '@/api/urls';
 import { fetchAllEmployees } from '@/utils/employees';
 import type {
@@ -90,6 +91,43 @@ export function orderDetailQuery(id: number) {
     // Decree state must reflect the server on every open — another signer in the
     // approval chain may have acted. Override the global staleTime.
     refetchOnMount: 'always',
+  });
+}
+
+// Live availability of a decree number inside a branch — used by the KADR
+// number field of the create form WHILE IT IS BEING TYPED. Learning that a
+// number is taken only after "Saqlash" is bad: by then the whole form is
+// filled in. The final word still belongs to the backend (someone may take the
+// number between this check and the write) — this is convenience, not a lock.
+//
+// `act_number` is sent as free TEXT: a decree number is not necessarily numeric
+// ("125/2026-QQ"), and the backend compares it as a string.
+export interface OrderActNumberAvailability {
+  available: boolean;
+  suggested?: string | number | null;
+}
+export function orderActNumberAvailabilityQuery(
+  branchId: number | undefined,
+  actNumber: string,
+  excludeId: number | null | undefined,
+  enabled: boolean,
+) {
+  return queryOptions({
+    queryKey: ['order-act-number-availability', branchId, actNumber, excludeId ?? null] as const,
+    enabled: enabled && branchId != null && actNumber.trim() !== '',
+    queryFn: () =>
+      apiClient
+        .get<OrderActNumberAvailability>(ORDER_ACT_NUMBER_AVAILABILITY, {
+          params: {
+            organization_branch_id: branchId,
+            act_number: actNumber,
+            // Tahrirda buyruq O'Z raqamini band ko'rmasin (hozircha maydon faqat
+            // yaratishда chiqadi, lekin endpoint parametri qo'llab-quvvatlanadi).
+            ...(excludeId ? { exclude_id: excludeId } : {}),
+          },
+        })
+        .then((r) => r.data),
+    staleTime: 0,
   });
 }
 

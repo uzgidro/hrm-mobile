@@ -108,7 +108,6 @@ export default {
 
   // ── Create form: field labels ───────────────────────────────────────────────
   fieldType: 'Тип документа',
-  fieldLetterDate: 'Дата',
   fieldShortSummary: 'Краткое содержание',
   fieldText: 'Текст',
   fieldMainSigner: 'Руководитель (адресат)',
@@ -250,4 +249,11 @@ export default {
   numberChecking: 'Проверка…',
   numberFree: 'Свободен',
   numberTaken: 'Занят',
+  attachmentReplaceHint: 'Если выбрать новый файл, существующее приложение будет заменено',
+  vehicleTitle: 'Транспорт',
+  vehicleNone: 'Без машины',
+  vehicleNeeded: 'Нужна машина',
+  vehicleNoteLabel: 'Комментарий к машине (необязательно)',
+  vehicleNotePlaceholder: 'Например: нас 4 человека, выезжаем в 7:00',
+  vehicleHint: 'После отправки командировки запрос сначала идёт согласующему автопарка; после подтверждения машина закрепляется. Конкретную машину выбираете не вы.',
 } as const;

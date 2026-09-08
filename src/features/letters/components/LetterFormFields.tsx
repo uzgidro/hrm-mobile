@@ -1,4 +1,4 @@
-import { View, Text, TextInput, StyleSheet } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
@@ -13,6 +13,19 @@ import type { PickerKind, DateKind } from './LetterPickers';
 // pure composition wired through the two openers and the text setters.
 export function LetterFormFields(props: {
   isTrip: boolean;
+  /** SODDALASHTIRILGAN safar (rais + yordamchilari): maqsad, ish rejasi,
+   *  yuboruvchi, rahbariyat va mashina KO'RSATILMAYDI — the backend ignores all
+   *  of them for such an author and the document is the guvohnoma only. Mobile
+   *  used to demand a leader here that the server would then drop. */
+  isSimpleTrip?: boolean;
+  /** Filial tanlash majburiymi — false when the chosen regions hold none of our
+   *  branches (a legitimate destination the backend accepts). */
+  destinationRequired?: boolean;
+  canRequestVehicle?: boolean;
+  vehicleMode?: 'none' | 'car';
+  onChangeVehicleMode?: (m: 'none' | 'car') => void;
+  vehicleNote?: string;
+  onChangeVehicleNote?: (v: string) => void;
   typeHint: string;
   onOpenPicker: (k: Exclude<PickerKind, null>) => void;
   onOpenDate: (k: Exclude<DateKind, null>) => void;
@@ -53,7 +66,9 @@ export function LetterFormFields(props: {
   const bp = useBreakpoint();
   const twoCol = bp.isTablet;
   const {
-    isTrip, typeHint, onOpenPicker, onOpenDate,
+    isTrip, isSimpleTrip = false, destinationRequired = true,
+    canRequestVehicle = false, vehicleMode = 'none', onChangeVehicleMode, vehicleNote = '', onChangeVehicleNote,
+    typeHint, onOpenPicker, onOpenDate,
     departureDate, arrivalDate, regions, destinationIds, branchesLoading,
     description, onChangeDescription, workPlan, onChangeWorkPlan, shortSummary, onChangeShortSummary,
     rahbariyatIds, rahbariyatLoading, submitterId, submitterOptions, submittersLoading,
@@ -92,12 +107,14 @@ export function LetterFormFields(props: {
               </Field>
             </View>
             <View testID="letter-field-destinations" style={twoCol ? styles.fieldHalf : undefined}>
-              <Field label={t('letters.fieldDestinations')} required>
+              <Field label={t('letters.fieldDestinations')} required={destinationRequired}>
                 <Selector loading={branchesLoading} text={destinationIds.length ? t('letters.destinationsSelected', { count: destinationIds.length }) : undefined} placeholder={t('letters.placeholderDestinations')} onPress={() => onOpenPicker('destinations')} />
               </Field>
             </View>
           </View>
 
+          {!isSimpleTrip && (
+            <>
           <Field label={t('letters.fieldTripPurpose')}>
             <TextInput style={[styles.textArea, { minHeight: 100 }]} placeholder={t('letters.placeholderTripPurpose')} placeholderTextColor={colors.textMuted} value={description} onChangeText={onChangeDescription} multiline textAlignVertical="top" />
           </Field>
@@ -119,6 +136,51 @@ export function LetterFormFields(props: {
               </Field>
             </View>
           </View>
+
+          {/* TRANSPORT — only for a branch on the fleet's requester list. The
+              traveller does NOT choose a car: the request goes to the fleet
+              approver first and BFD assigns the vehicle. Same wording and flow
+              as the web's create form. */}
+          {canRequestVehicle && (
+            <View testID="letter-field-vehicle" style={styles.vehicleBox}>
+              <Text style={styles.vehicleTitle}>{t('letters.vehicleTitle')}</Text>
+              <View style={styles.vehicleModes}>
+                {(['none', 'car'] as const).map((mode) => {
+                  const active = vehicleMode === mode;
+                  return (
+                    <TouchableOpacity
+                      key={mode}
+                      testID={`letter-vehicle-${mode}`}
+                      style={[styles.vehicleMode, active && styles.vehicleModeActive]}
+                      activeOpacity={0.85}
+                      accessibilityState={{ selected: active }}
+                      onPress={() => onChangeVehicleMode?.(mode)}
+                    >
+                      <Text style={[styles.vehicleModeText, active && styles.vehicleModeTextActive]}>
+                        {mode === 'none' ? t('letters.vehicleNone') : t('letters.vehicleNeeded')}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+              {vehicleMode === 'car' && (
+                <>
+                  <Field label={t('letters.vehicleNoteLabel')}>
+                    <TextInput
+                      style={styles.input}
+                      placeholder={t('letters.vehicleNotePlaceholder')}
+                      placeholderTextColor={colors.textMuted}
+                      value={vehicleNote}
+                      onChangeText={onChangeVehicleNote}
+                    />
+                  </Field>
+                  <Text style={styles.vehicleHint}>{t('letters.vehicleHint')}</Text>
+                </>
+              )}
+            </View>
+          )}
+            </>
+          )}
         </>
       ) : (
         <>
@@ -163,6 +225,20 @@ export function LetterFormFields(props: {
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
+    vehicleBox: {
+      marginTop: 16, padding: 14, borderRadius: 12,
+      borderWidth: 1, borderColor: c.cardBorder, backgroundColor: c.card, gap: 10,
+    },
+    vehicleTitle: { fontSize: 13, fontWeight: '700', color: c.textSecondary },
+    vehicleModes: { flexDirection: 'row', gap: 8 },
+    vehicleMode: {
+      paddingHorizontal: 16, paddingVertical: 9, borderRadius: 10,
+      borderWidth: 1, borderColor: c.cardBorder, backgroundColor: c.bg,
+    },
+    vehicleModeActive: { backgroundColor: c.primary, borderColor: c.primary },
+    vehicleModeText: { fontSize: 13, color: c.textSecondary, fontWeight: '600' },
+    vehicleModeTextActive: { color: c.onPrimary },
+    vehicleHint: { fontSize: 11, color: c.textMuted, lineHeight: 16 },
     input: { backgroundColor: c.card, borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: c.text },
     textArea: { backgroundColor: c.card, borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: c.text, minHeight: 100 },
     hintBox: { marginTop: 14, backgroundColor: c.primarySoft, borderRadius: 10, padding: 12 },

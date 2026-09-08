@@ -9,6 +9,7 @@ import {
   EMPLOYEES_LIST,
   ORGANIZATION_BRANCHES,
   ORGANIZATION_BRANCH_LEADERS,
+  VEHICLE_ACCESS,
 } from '@/api/urls';
 import { fetchAllEmployees } from '@/utils/employees';
 import type { BranchLite } from '@/utils/tripRegions';
@@ -226,5 +227,23 @@ export function orgBranchesQuery(enabled: boolean) {
     queryFn: () =>
       apiClient.get(ORGANIZATION_BRANCHES).then((r) => unwrapList<BranchLite>(r.data)),
     staleTime: 10 * 60 * 1000,
+  });
+}
+
+/**
+ * TRANSPORT huquqi: which branches may ask for a car on a business trip.
+ *
+ * The trip form shows the "Mashina kerak" block only when the letter's branch
+ * is on `requester_branch_ids`, exactly like the web (AddLetterDrawer.jsx:176).
+ * Long `staleTime`: the list changes about as often as the org chart does.
+ */
+export function vehicleAccessQuery() {
+  return queryOptions({
+    queryKey: ['vehicle-access'] as const,
+    queryFn: () =>
+      apiClient
+        .get<{ requester_branch_ids?: number[] }>(VEHICLE_ACCESS)
+        .then((r) => r.data ?? {}),
+    staleTime: 30 * 60 * 1000,
   });
 }

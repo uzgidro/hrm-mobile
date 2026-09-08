@@ -47,6 +47,10 @@ export interface Employee {
   organization_branches?: OrganizationBranch[];
   supervisor?: Employee;
   supervisor_id?: number;
+  /** SODDALASHTIRILGAN safar (rais + yordamchilari): the trip form drops
+   *  purpose / work plan / submitter / leadership / vehicle and the document is
+   *  the guvohnoma only. Set by master-admin, arrives on `/auth/me`. */
+  simple_trip_enabled?: boolean;
 }
 
 export interface OrganizationBranch {
@@ -183,6 +187,13 @@ export interface OrderAct {
   created_at?: string;
   organization_branch_id?: number;
   familiarizers?: OrderActFamiliarizer[];
+  // TANISHUVCHI BO'LIMLAR — the create/edit form's real source. `familiarizers`
+  // holds per-EMPLOYEE rows and the backend only materialises them once the
+  // decree is `confirmed` (assign_familiarizers 400s before that), so seeding
+  // the edit form from `familiarizers` showed an empty picker on every draft
+  // and the following PATCH wiped the saved departments (web v1 reads this
+  // field: AddOrderDrawer.jsx:245).
+  familiarizer_departments?: { id: number; name?: string }[];
   assigned_signers?: OrderActSigner[];
   signers?: OrderActSigner[];
   rejected_by?: Employee;
@@ -252,6 +263,9 @@ export interface Letter {
   registered_date?: string | null;
   generated_document_path?: string | null;
   attachment_path?: string | null;
+  /** Stored file name — shown in the edit form so the user can tell an ilova
+   *  is already attached (the create screen used to display nothing). */
+  attachment_filename?: string | null;
   departure_date?: string | null;
   arrival_date?: string | null;
   submitter_id?: number | null;
@@ -271,6 +285,10 @@ export interface Letter {
   // Set by KADR "Keldi" (hr-arrive / confirm-return) — gates report submission.
   is_trip_confirmed?: boolean | null;
   actual_return_date?: string | null;
+  /** Faol MASHINA so'rovi (transport). Present => the trip was created with
+   *  "Mashina kerak"; the edit form opens in that mode and can cancel it by
+   *  sending `vehicle_needed: false` (web v1 AddLetterDrawer.jsx:460-461). */
+  vehicle_request?: { id: number; request_note?: string | null; status?: string | null } | null;
   // Report fields (authored via plain form; the DOCX is built server-side).
   report_number?: string | null;
   report_date?: string | null;

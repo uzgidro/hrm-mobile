@@ -5,12 +5,11 @@ import {
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
-import dayjs from 'dayjs';
 import * as DocumentPicker from 'expo-document-picker';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
-import { employeeSubLabel } from '@/utils/roles';
-import { branchRegions, regionLabels, branchesInRegions } from '@/utils/tripRegions';
+import { employeeSubLabel, isSiteMasterAdmin } from '@/utils/roles';
+import { branchRegions, regionOptionLabels, branchesInRegions } from '@/utils/tripRegions';
 import { normalizeLetterType } from '@/utils/letterStatus';
 import { getApiErrorMessage } from '@/api/errors';
 import { type PickerOption } from '@/components/PickerModal';
@@ -20,10 +19,9 @@ import type { ThemeColors } from '@/theme/palettes';
 import type { Employee } from '@/types';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
-import { useBreakpoint } from '@/utils/responsive';
 import {
   letterSignersQuery, letterRahbariyatQuery, letterSubmittersQuery, orgBranchesQuery,
-  letterAgreementSignersQuery, letterDetailQuery,
+  letterAgreementSignersQuery, letterDetailQuery, vehicleAccessQuery,
 } from '../api/queries';
 import { useCreateLetter, useUpdateLetter } from '../api/mutations';
 import { Field, Selector } from '../components/FormParts';
@@ -61,8 +59,6 @@ export default function CreateLetterScreen() {
   const styles = useThemedStyles(makeStyles);
   const createMutation = useCreateLetter();
   const updateMutation = useUpdateLetter();
-  const bp = useBreakpoint();
-  const twoCol = bp.isTablet;
 
   const TYPE_OPTIONS = useMemo<PickerOption[]>(
     () => TYPE_OPTION_KEYS.map((o) => ({ value: o.value, label: t(o.labelKey) })),
@@ -70,7 +66,6 @@ export default function CreateLetterScreen() {
   );
 
   const [letterType, setLetterType] = useState<LetterType | null>(null);
-  const [letterDate, setLetterDate] = useState<string>(dayjs().format('YYYY-MM-DD'));
   const [shortSummary, setShortSummary] = useState('');
   const [description, setDescription] = useState('');
   const [workPlan, setWorkPlan] = useState('');
@@ -85,6 +80,10 @@ export default function CreateLetterScreen() {
   // Hujjat MUALLIFI (bildirgi/ariza) — bo'sh bo'lsa joriy foydalanuvchi.
   const [creatorId, setCreatorId] = useState<number | null>(null);
   const [rahbariyatIds, setRahbariyatIds] = useState<number[]>([]);
+  // TRANSPORT: 'none' | 'car'. Sent as `vehicle_needed` (+ `vehicle_note`)
+  // only from a branch entitled to ask, exactly like the web.
+  const [vehicleMode, setVehicleMode] = useState<'none' | 'car'>('none');
+  const [vehicleNote, setVehicleNote] = useState('');
 
   const [picker, setPicker] = useState<PickerKind>(null);
   const [datePicker, setDatePicker] = useState<DateKind>(null);
@@ -92,6 +91,35 @@ export default function CreateLetterScreen() {
   const [saving, setSaving] = useState(false);
 
   const isTrip = letterType === 'business_trip';
+
+  // Hujjat TURINI mavjud hujjatda FAQAT master-admin o'zgartira oladi — the
+  // backend's `update_letter` puts `letter_type` in the non-master-admin
+  // `blocked` set, so the picker used to accept a change, report success and
+  // silently discard it. Web v1 disables the field for the same reason.
+  const canChangeLetterType = !editId || isSiteMasterAdmin(user);
+
+  // SODDALASHTIRILGAN safar (rais + yordamchilari): the backend detects it from
+  // the author's `simple_trip_enabled` flag and then wants only dates and a
+  // destination — purpose, work plan, submitter, leadership and vehicle are all
+  // ignored. Mobile still demanded a leader, so such a user had to pick one the
+  // server would drop. Same shape as the web's `isSimpleTripForm`.
+  const isSimpleTripForm = isTrip && !!employee?.simple_trip_enabled;
+
+  // TRANSPORT is offered only to branches on the fleet's requester list.
+  const { data: vehicleAccess } = useQuery({ ...vehicleAccessQuery(), enabled: isTrip });
+  const canRequestVehicle = isTrip && !isSimpleTripForm
+    && (vehicleAccess?.requester_branch_ids ?? []).map(Number).includes(Number(branchId));
+
+  // Kelishgan (agreed === true) kelishuvchilarni tahrirda O'CHIRIB bo'lmaydi —
+  // the backend 400s with `agreement_locked`. Master-admin is exempt, exactly
+  // like the web, which renders those rows locked with a "Kelishildi" badge.
+  const lockedAgreementIds = useMemo(() => {
+    if (!editId || isSiteMasterAdmin(user)) return [] as number[];
+    return (editing?.assigned_signers ?? [])
+      .filter((sg) => sg.signer_type === 'agreement' && sg.agreed === true)
+      .map((sg) => sg.employee_id)
+      .filter((v): v is number => v != null);
+  }, [editId, user, editing]);
 
   // Tahrir rejimida formani BIR MARTA to'ldiramiz (keyingi refetch foydalanuvchi
   // kiritayotgan matnni bosib ketmasin). RENDER PAYTIDA moslash — React'ning
@@ -102,7 +130,6 @@ export default function CreateLetterScreen() {
     setPrefilledFor(editing.id);
     const type = normalizeLetterType(editing.letter_type) as LetterType;
     setLetterType(type === 'business_trip' || type === 'application' ? type : 'explanatory');
-    setLetterDate(editing.letter_date ?? dayjs().format('YYYY-MM-DD'));
     // Bildirgi/ariza matni "qisqa mazmun\n\nmatn" ko'rinishida saqlanadi.
     const desc = editing.description ?? '';
     if (type === 'business_trip') {
@@ -140,6 +167,12 @@ export default function CreateLetterScreen() {
         ? editing.destination_regions
         : Array.from(new Set((editing.destination_branches ?? []).flatMap(branchRegions))),
     );
+    // An active car request opens the form in "Mashina kerak" mode so the user
+    // can see it and, by switching back to "Mashinasiz", CANCEL it — the save
+    // then sends `vehicle_needed: false`. Omitting the key means "unchanged",
+    // so without this the request could never be withdrawn from the phone.
+    setVehicleMode(editing.vehicle_request ? 'car' : 'none');
+    setVehicleNote(editing.vehicle_request?.request_note ?? '');
   }
 
   const pickFiles = async () => {
@@ -190,7 +223,7 @@ export default function CreateLetterScreen() {
   }, [submitterData, empOption, rahbariyatOptions, rahbariyatIds]);
 
   const regionOptions = useMemo<PickerOption[]>(
-    () => regionLabels(branches).map((r, i) => ({ value: i + 1, label: r })),
+    () => regionOptionLabels(branches).map((r, i) => ({ value: i + 1, label: r })),
     [branches]
   );
   const regionLabelByValue = (v: number) => regionOptions.find((o) => o.value === v)?.label;
@@ -199,6 +232,12 @@ export default function CreateLetterScreen() {
     () => branchesInRegions(branches, regions).map((b) => ({ value: b.id, label: b.name, subLabel: branchRegions(b).join(', ') })),
     [branches, regions]
   );
+
+  // Filial tanlash SHU holatdagina majburiy: the selected regions actually
+  // contain one of our branches. A region where the company has no office is a
+  // legitimate destination (the backend accepts regions with no branch) and the
+  // old unconditional check made those trips impossible to file from the phone.
+  const branchRequiredForTrip = regions.length === 0 || destinationOptions.length > 0;
 
   const nameOf = (id: number | null, opts: PickerOption[]) => opts.find((o) => o.value === id)?.label;
   // regions stored as string[]; map via region option values
@@ -250,17 +289,23 @@ export default function CreateLetterScreen() {
       // VILOYAT majburiy (web AddLetterDrawer bilan bir xil): hujjatdagi "hudud"
       // aynan shu tanlovdan yoziladi.
       if (regions.length === 0) { Alert.alert(t('common.errorTitle'), t('letters.regionRequired')); return; }
-      if (destinationIds.length === 0) { Alert.alert(t('common.errorTitle'), t('letters.destinationRequired')); return; }
-      if (rahbariyatIds.length === 0) { Alert.alert(t('common.errorTitle'), t('letters.leadershipRequired')); return; }
+      if (branchRequiredForTrip && destinationIds.length === 0) {
+        Alert.alert(t('common.errorTitle'), t('letters.destinationRequired')); return;
+      }
+      // Soddalashtirilgan safarda rahbariyat YO'Q (backend ham so'ramaydi).
+      if (!isSimpleTripForm && rahbariyatIds.length === 0) {
+        Alert.alert(t('common.errorTitle'), t('letters.leadershipRequired')); return;
+      }
     }
 
     const payload = buildLetterCreatePayload({
-      isTrip, letterType, letterDate,
+      isTrip, letterType,
       branchId, employeeId: employee?.id,
       shortSummary, description, workPlan,
       mainSignerId, ordinarySigners, creatorId,
       submitterId, rahbariyatIds, destinationIds, regions,
       departureDate, arrivalDate,
+      canRequestVehicle, vehicleNeeded: vehicleMode === 'car', vehicleNote,
     });
     // Tahrirda hujjat EGALIGI o'zgarmaydi — backend `update_letter` bu
     // maydonlarni baribir e'tiborsiz qoldiradi, lekin ularni yubormaslik
@@ -315,22 +360,31 @@ export default function CreateLetterScreen() {
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         {/* Both short single-selects, adjacent — pair into a 2-column row on
             tablet (Task 21); stack full-width on phone. */}
-        <View testID="letter-type-date-row" style={twoCol ? styles.fieldRow : undefined}>
-          <View testID="letter-field-type" style={twoCol ? styles.fieldHalf : undefined}>
-            <Field label={t('letters.fieldType')} required>
-              <Selector text={letterType ? TYPE_OPTIONS.find((o) => TYPE_BY_VALUE[o.value] === letterType)?.label : undefined} placeholder={t('letters.placeholderSelect')} onPress={() => setPicker('type')} />
-            </Field>
-          </View>
-
-          <View testID="letter-field-letterDate" style={twoCol ? styles.fieldHalf : undefined}>
-            <Field label={t('letters.fieldLetterDate')}>
-              <Selector text={letterDate ? dayjs(letterDate).format('DD.MM.YYYY') : undefined} placeholder={t('letters.placeholderSelectDate')} onPress={() => setDatePicker('letter')} />
-            </Field>
-          </View>
+        {/* "Hujjat sanasi" maydoni OLIB TASHLANDI: `create_letter` forces
+            `letter_date = None` for every agreement letter and every trip, and
+            `update_letter` blocks the field outright, so the picker asked for a
+            date that was thrown away on both create and edit. Neither web
+            client has ever rendered it. */}
+        <View testID="letter-field-type">
+          <Field label={t('letters.fieldType')} required>
+            <Selector
+              text={letterType ? TYPE_OPTIONS.find((o) => TYPE_BY_VALUE[o.value] === letterType)?.label : undefined}
+              placeholder={t('letters.placeholderSelect')}
+              disabled={!canChangeLetterType}
+              onPress={() => setPicker('type')}
+            />
+          </Field>
         </View>
 
         <LetterFormFields
           isTrip={isTrip}
+          isSimpleTrip={isSimpleTripForm}
+          destinationRequired={branchRequiredForTrip}
+          canRequestVehicle={canRequestVehicle}
+          vehicleMode={vehicleMode}
+          onChangeVehicleMode={(m) => { setVehicleMode(m); if (m === 'none') setVehicleNote(''); }}
+          vehicleNote={vehicleNote}
+          onChangeVehicleNote={setVehicleNote}
           typeHint={typeHint}
           onOpenPicker={setPicker}
           onOpenDate={setDatePicker}
@@ -346,7 +400,22 @@ export default function CreateLetterScreen() {
           nameOf={nameOf}
         />
 
-        <AttachmentField label={t('letters.fieldAttachment')} files={files} onPick={pickFiles} onRemove={() => setFiles([])} />
+        {/* Soddalashtirilgan safarda ILOVA yo'q (web parity: the short form
+            produces the guvohnoma only). */}
+        {!isSimpleTripForm && (
+          <AttachmentField
+            label={t('letters.fieldAttachment')}
+            files={files}
+            onPick={pickFiles}
+            onRemove={() => setFiles([])}
+            // Tahrirda mavjud ILOVA ko'rinadi: without it the user could not
+            // tell whether a file was already attached and would re-upload it
+            // blindly. Picking a new file REPLACES the stored one (single
+            // attachment per letter), which the hint spells out.
+            existingName={editing?.attachment_filename ?? null}
+            existingHint={t('letters.attachmentReplaceHint')}
+          />
+        )}
 
         <View style={{ height: 40 }} />
       </ScrollView>
@@ -365,6 +434,7 @@ export default function CreateLetterScreen() {
         onSelectCreator={(v) => { setCreatorId(v); setPicker(null); }}
         mainSignerId={mainSignerId} onSelectMain={(v) => { setMainSignerId(v); setPicker(null); }}
         ordinarySigners={ordinarySigners} onToggleOrdinary={toggle(setOrdinarySigners)}
+        lockedOrdinarySigners={lockedAgreementIds}
         rahbariyatOptions={rahbariyatOptions} rahbariyatLoading={rahbariyatLoading}
         rahbariyatIds={rahbariyatIds} onToggleRahbariyat={toggle(setRahbariyatIds)}
         submitterOptions={submitterOptions} submittersLoading={submittersLoading}
@@ -372,8 +442,8 @@ export default function CreateLetterScreen() {
         regionOptions={regionOptions} branchesLoading={branchesLoading}
         selectedRegionValues={selectedRegionValues} onToggleRegion={toggleRegion}
         destinationOptions={destinationOptions} destinationIds={destinationIds} onToggleDestination={toggle(setDestinationIds)}
-        letterDate={letterDate} departureDate={departureDate} arrivalDate={arrivalDate}
-        onConfirmLetterDate={setLetterDate} onConfirmDepartureDate={setDepartureDate} onConfirmArrivalDate={setArrivalDate}
+        departureDate={departureDate} arrivalDate={arrivalDate}
+        onConfirmDepartureDate={setDepartureDate} onConfirmArrivalDate={setArrivalDate}
       />
     </Screen>
   );
@@ -386,7 +456,7 @@ const makeStyles = (c: ThemeColors) =>
     createBtnText: { color: c.onPrimary, fontWeight: '700', fontSize: 14 },
     content: { paddingHorizontal: 16, paddingTop: 4 },
 
-    // Task 21: 2-column pairing for short fields on tablet (bp.isTablet).
-    fieldRow: { flexDirection: 'row', gap: 12 },
-    fieldHalf: { flex: 1 },
+    // The type/date 2-column pairing went away with the letter-date field; the
+    // remaining paired rows live in LetterFormFields, which measures the
+    // breakpoint itself.
   });

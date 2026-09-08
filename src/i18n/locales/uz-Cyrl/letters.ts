@@ -107,7 +107,6 @@ export default {
 
   // ── Create form: field labels ───────────────────────────────────────────────
   fieldType: 'Ҳужжат тури',
-  fieldLetterDate: 'Санаси',
   fieldShortSummary: 'Қисқа мазмуни',
   fieldText: 'Матн',
   fieldMainSigner: 'Раҳбарият (адресат)',
@@ -245,4 +244,11 @@ export default {
   numberChecking: 'Текширилмоқда…',
   numberFree: 'Бўш',
   numberTaken: 'Банд',
+  attachmentReplaceHint: 'Янги файл танласангиз, мавжуд илова алмаштирилади',
+  vehicleTitle: 'Транспорт',
+  vehicleNone: 'Машинасиз',
+  vehicleNeeded: 'Машина керак',
+  vehicleNoteLabel: 'Машина учун изоҳ (ихтиёрий)',
+  vehicleNotePlaceholder: 'Масалан: 4 кишимиз, соат 7:00 да чиқамиз',
+  vehicleHint: 'Сўров сафар юборилгач аввал автопарк тасдиқловчисига боради; у тасдиқлагач машина бириктирилади. Қайси машина бўлишини сиз танламайсиз.',
 } as const;

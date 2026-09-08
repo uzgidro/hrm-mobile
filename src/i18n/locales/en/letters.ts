@@ -107,7 +107,6 @@ export default {
 
   // ── Create form: field labels ───────────────────────────────────────────────
   fieldType: 'Document type',
-  fieldLetterDate: 'Date',
   fieldShortSummary: 'Short summary',
   fieldText: 'Text',
   fieldMainSigner: 'Leader (addressee)',
@@ -245,4 +244,11 @@ export default {
   numberChecking: 'Checking…',
   numberFree: 'Available',
   numberTaken: 'Taken',
+  attachmentReplaceHint: 'Picking a new file replaces the existing attachment',
+  vehicleTitle: 'Transport',
+  vehicleNone: 'No car',
+  vehicleNeeded: 'Car needed',
+  vehicleNoteLabel: 'Note for the car (optional)',
+  vehicleNotePlaceholder: 'For example: 4 of us, leaving at 7:00',
+  vehicleHint: 'Once the trip is submitted the request goes to the fleet approver first; after approval a vehicle is assigned. You do not pick the specific car.',
 } as const;

@@ -1,13 +1,15 @@
 import { useTranslation } from 'react-i18next';
 import { PickerModal, type PickerOption } from '@/components/PickerModal';
+import { DatePickerModal } from '@/components/DatePicker';
 
 export type PickerKind = 'category' | 'leadership' | 'submitter' | 'familiarizers' | null;
 
-// All five picker modals of the create-order form, grouped so the screen body
-// stays composition-only. Selection state stays in the screen; this only wires
-// each modal's visibility + option source + callbacks.
+// All picker modals of the create-order form, grouped so the screen body stays
+// composition-only. Selection state stays in the screen; this only wires each
+// modal's visibility + option source + callbacks.
 export function OrderPickers({
   picker, onClosePicker,
+  actDatePickerOpen, actDate, onCloseActDatePicker, onConfirmActDate,
   approverPickerIndex, onCloseApproverPicker,
   categoryOptions, categoryId, catsLoading, onSelectCategory,
   leadershipOptions, leadershipId, leadershipLoading, onSelectLeadership,
@@ -17,6 +19,10 @@ export function OrderPickers({
   approverSelectedId, onSelectApprover,
 }: {
   picker: PickerKind; onClosePicker: () => void;
+  // KADR buyruq SANASI (faqat yaratishда) — brauzer/OS kalendari o'rniga
+  // ilovaning o'z tanlagichi (boshqa formalar bilan bir xil).
+  actDatePickerOpen: boolean; actDate: string | null;
+  onCloseActDatePicker: () => void; onConfirmActDate: (iso: string) => void;
   approverPickerIndex: number | null; onCloseApproverPicker: () => void;
   categoryOptions: PickerOption[]; categoryId: number | null; catsLoading: boolean; onSelectCategory: (v: number) => void;
   leadershipOptions: PickerOption[]; leadershipId: number | null; leadershipLoading: boolean; onSelectLeadership: (v: number) => void;
@@ -58,6 +64,11 @@ export function OrderPickers({
         loading={empsLoading} selected={approverSelectedId}
         onClose={onCloseApproverPicker}
         onSelect={onSelectApprover}
+      />
+      <DatePickerModal
+        visible={actDatePickerOpen} value={actDate} title={t('orders.actDateLabel')}
+        onClose={onCloseActDatePicker}
+        onConfirm={onConfirmActDate}
       />
     </>
   );
