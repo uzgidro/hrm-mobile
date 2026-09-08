@@ -29,7 +29,6 @@ export default {
     kpi: 'KPI',
     timesheet: 'Табель',
     navbatchilik: 'Дежурства',
-    navbatchilikGrid: 'Дежурства 2',
     holidays: 'Праздники',
     assistant: 'Ассистент',
     birthdays: 'Дни рождения',

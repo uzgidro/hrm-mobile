@@ -3,7 +3,6 @@
 export default {
   title: 'Янгиликлар',
 
-  authorFallback: 'Админ',
   allEmployees: 'Барча ходимларга',
 
   empty: "Янгиликлар йўқ",

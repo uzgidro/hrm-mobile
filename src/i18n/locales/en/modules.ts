@@ -29,7 +29,6 @@ export default {
     kpi: 'KPI',
     timesheet: 'Timesheet',
     navbatchilik: 'Duty',
-    navbatchilikGrid: 'Duty 2',
     holidays: 'Holidays',
     assistant: 'Assistant',
     birthdays: 'Birthdays',

@@ -240,7 +240,6 @@ export default {
   confirmRegistrationNumberLabel: 'Registration number',
   confirmRegistrationDateLabel: 'Date',
   confirmRegistrationSubmit: 'Confirm',
-  confirmRegistrationDone: 'Registered',
   numberChecking: 'Checking…',
   numberFree: 'Available',
   numberTaken: 'Taken',

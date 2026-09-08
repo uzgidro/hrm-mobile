@@ -245,7 +245,6 @@ export default {
   confirmRegistrationNumberLabel: 'Регистрационный номер',
   confirmRegistrationDateLabel: 'Дата',
   confirmRegistrationSubmit: 'Подтвердить',
-  confirmRegistrationDone: 'Зарегистрировано',
   numberChecking: 'Проверка…',
   numberFree: 'Свободен',
   numberTaken: 'Занят',

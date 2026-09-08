@@ -240,7 +240,6 @@ export default {
   confirmRegistrationNumberLabel: 'Рўйхат рақами',
   confirmRegistrationDateLabel: 'Сана',
   confirmRegistrationSubmit: 'Тасдиқлаш',
-  confirmRegistrationDone: 'Рўйхатга олинди',
   numberChecking: 'Текширилмоқда…',
   numberFree: 'Бўш',
   numberTaken: 'Банд',

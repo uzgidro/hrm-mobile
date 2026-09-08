@@ -4,14 +4,8 @@
 // Web-parity: color hex values / dates are backend contract — only labels here.
 export default {
   title: 'Kun tartibi',
-  subtitle: 'Rais kun tartibi',
   empty: 'Vazifalar mavjud emas',
   loadError: 'Kun tartibini yuklashda xatolik',
-
-  // Month navigation
-  prevMonth: 'Oldingi oy',
-  nextMonth: 'Keyingi oy',
-  today: 'Bugun',
 
   // Create / edit form
   createTitle: 'Yangi vazifa',

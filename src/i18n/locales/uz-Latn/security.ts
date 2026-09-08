@@ -34,9 +34,4 @@ export default {
   // ── OS biometric prompt (shown by the native biometric sheet on unlock) ─────
   biometricPrompt: 'Ilovani ochish uchun tasdiqlang',
 
-  // ── Biometrics offer alert (after setup) ────────────────────────────────────
-  biometricTitle: 'Biometrik kirish',
-  biometricMessage: 'Ilovani barmoq izi yoki yuz orqali ochishni yoqasizmi?',
-  biometricLater: 'Keyinroq',
-  biometricEnable: 'Yoqish',
 } as const;

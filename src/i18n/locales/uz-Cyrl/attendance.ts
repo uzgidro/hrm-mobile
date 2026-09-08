@@ -12,8 +12,6 @@ export default {
   },
   sectionEmpty: {
     present: 'Келган ходим йўқ',
-    late: 'Кечиккан ходим йўқ',
-    onLeave: 'Рухсат сўровчи йўқ',
   },
 
   legend: {
@@ -26,7 +24,6 @@ export default {
   clearFilter: 'тозалаш учун босинг',
   showAll: 'Барчасини кўрсатиш',
   allEmployees: 'Барча ходимлар',
-  collapse: 'Йиғиш',
 
   leaveFallback: 'Рухсат',
   requestFallback: 'Сўров',

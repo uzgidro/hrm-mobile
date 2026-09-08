@@ -1,13 +1,8 @@
 // Chairman agenda — English translation.
 export default {
   title: 'Agenda',
-  subtitle: "Chairman's agenda",
   empty: 'No tasks',
   loadError: 'Failed to load the agenda',
-
-  prevMonth: 'Previous month',
-  nextMonth: 'Next month',
-  today: 'Today',
 
   createTitle: 'New task',
   editTitle: 'Edit task',

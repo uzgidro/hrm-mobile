@@ -83,8 +83,6 @@ export default {
   // ── Calendar screen ─────────────────────────────────────────────────────────
   entry: 'kirish',
   exit: 'chiqish',
-  entryTitle: 'Kirish',
-  exitTitle: 'Chiqish',
   scheduleTitle: 'Ish jadvali',
   workDay: 'ish kuni',
   break: 'tanaffus',

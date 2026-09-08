@@ -3,7 +3,6 @@
 export default {
   title: 'News',
 
-  authorFallback: 'Admin',
   allEmployees: 'To all employees',
 
   empty: 'No news',

@@ -249,7 +249,6 @@ export default {
   confirmRegistrationNumberLabel: "Ro'yxat raqami",
   confirmRegistrationDateLabel: 'Sana',
   confirmRegistrationSubmit: 'Tasdiqlash',
-  confirmRegistrationDone: "Ro'yxatga olindi",
   numberChecking: 'Tekshirilmoqda…',
   numberFree: "Bo'sh",
   numberTaken: 'Band',

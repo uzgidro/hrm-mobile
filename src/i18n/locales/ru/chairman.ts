@@ -1,13 +1,8 @@
 // Chairman agenda — Russian translation.
 export default {
   title: 'Повестка дня',
-  subtitle: 'Повестка председателя',
   empty: 'Задач нет',
   loadError: 'Ошибка загрузки повестки',
-
-  prevMonth: 'Предыдущий месяц',
-  nextMonth: 'Следующий месяц',
-  today: 'Сегодня',
 
   createTitle: 'Новая задача',
   editTitle: 'Редактировать задачу',

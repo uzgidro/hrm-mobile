@@ -69,8 +69,6 @@ export default {
 
   entry: 'кириш',
   exit: 'чиқиш',
-  entryTitle: 'Кириш',
-  exitTitle: 'Чиқиш',
   scheduleTitle: 'Иш жадвали',
   workDay: 'иш куни',
   break: 'танаффус',

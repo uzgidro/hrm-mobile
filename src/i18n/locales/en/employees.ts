@@ -69,8 +69,6 @@ export default {
 
   entry: 'in',
   exit: 'out',
-  entryTitle: 'Entry',
-  exitTitle: 'Exit',
   scheduleTitle: 'Work schedule',
   workDay: 'work day',
   break: 'break',

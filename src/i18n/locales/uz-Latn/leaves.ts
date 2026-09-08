@@ -22,8 +22,6 @@ export default {
   supervisorLabel: 'Rahbar (Tasdiqlovchi)',
   commentLabel: 'Izoh (ixtiyoriy)',
   commentPlaceholder: 'Sababni qisqacha yozing...',
-  noSupervisor: 'Rahbar biriktirilmagan',
-  supervisorHint: "So'rov HR bo'limiga to'g'ridan-to'g'ri yuboriladi",
   pickSupervisor: 'Rahbarni tanlang',
   pickSupervisorTitle: 'Rahbarni tanlash',
   supervisorRequired: "Iltimos, tasdiqlovchi rahbarni tanlang",

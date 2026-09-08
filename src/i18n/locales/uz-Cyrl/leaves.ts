@@ -15,8 +15,6 @@ export default {
   supervisorLabel: 'Раҳбар (Тасдиқловчи)',
   commentLabel: 'Изоҳ (ихтиёрий)',
   commentPlaceholder: 'Сабабни қисқача ёзинг...',
-  noSupervisor: 'Раҳбар бириктирилмаган',
-  supervisorHint: 'Сўров HR бўлимига тўғридан-тўғри юборилади',
   pickSupervisor: 'Раҳбарни танланг',
   pickSupervisorTitle: 'Раҳбарни танлаш',
   supervisorRequired: 'Илтимос, тасдиқловчи раҳбарни танланг',

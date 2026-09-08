@@ -15,8 +15,6 @@ export default {
   supervisorLabel: 'Supervisor (approver)',
   commentLabel: 'Comment (optional)',
   commentPlaceholder: 'Briefly describe the reason...',
-  noSupervisor: 'No supervisor assigned',
-  supervisorHint: 'The request is sent directly to the HR department',
   pickSupervisor: 'Select a supervisor',
   pickSupervisorTitle: 'Select supervisor',
   supervisorRequired: 'Please select an approving supervisor',

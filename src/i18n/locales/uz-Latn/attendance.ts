@@ -20,8 +20,6 @@ export default {
   },
   sectionEmpty: {
     present: "Kelgan xodim yo'q",
-    late: "Kechikkan xodim yo'q",
-    onLeave: "Ruxsat so'rovchi yo'q",
   },
 
   // Donut legend labels (lowercase, shown under counts)
@@ -35,7 +33,6 @@ export default {
   clearFilter: 'tozalash uchun bosing',
   showAll: "Barchasini ko'rsatish",
   allEmployees: 'Barcha xodimlar',
-  collapse: "Yig'ish",
 
   // Leave-type fallbacks (when the record has no explicit type)
   leaveFallback: 'Ruxsat',

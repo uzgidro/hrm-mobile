@@ -35,7 +35,6 @@ export default {
     kpi: 'KPI',
     timesheet: 'Tabel',
     navbatchilik: 'Navbatchilik',
-    navbatchilikGrid: 'Navbatchilik 2',
     holidays: 'Bayramlar',
     assistant: 'Yordamchi',
     birthdays: "Tug'ilgan kun",

@@ -1,13 +1,8 @@
 // Chairman agenda — uz-Cyrl transliteration of uz-Latn/chairman.ts.
 export default {
   title: 'Кун тартиби',
-  subtitle: 'Раис кун тартиби',
   empty: 'Вазифалар мавжуд эмас',
   loadError: 'Кун тартибини юклашда хатолик',
-
-  prevMonth: 'Олдинги ой',
-  nextMonth: 'Кейинги ой',
-  today: 'Бугун',
 
   createTitle: 'Янги вазифа',
   editTitle: 'Вазифани таҳрирлаш',

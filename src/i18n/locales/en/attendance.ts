@@ -12,8 +12,6 @@ export default {
   },
   sectionEmpty: {
     present: 'No present employees',
-    late: 'No late employees',
-    onLeave: 'No leave requests',
   },
 
   legend: {
@@ -26,7 +24,6 @@ export default {
   clearFilter: 'tap to clear',
   showAll: 'Show all',
   allEmployees: 'All employees',
-  collapse: 'Collapse',
 
   leaveFallback: 'Leave',
   requestFallback: 'Request',

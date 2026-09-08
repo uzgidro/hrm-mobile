@@ -15,8 +15,6 @@ export default {
   supervisorLabel: 'Руководитель (утверждающий)',
   commentLabel: 'Комментарий (необязательно)',
   commentPlaceholder: 'Кратко опишите причину...',
-  noSupervisor: 'Руководитель не назначен',
-  supervisorHint: 'Заявка отправляется напрямую в отдел кадров',
   pickSupervisor: 'Выберите руководителя',
   pickSupervisorTitle: 'Выбор руководителя',
   supervisorRequired: 'Пожалуйста, выберите утверждающего руководителя',

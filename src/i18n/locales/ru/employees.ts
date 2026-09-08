@@ -69,8 +69,6 @@ export default {
 
   entry: 'вход',
   exit: 'выход',
-  entryTitle: 'Вход',
-  exitTitle: 'Выход',
   scheduleTitle: 'График работы',
   workDay: 'рабочий день',
   break: 'перерыв',

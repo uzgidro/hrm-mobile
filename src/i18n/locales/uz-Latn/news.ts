@@ -8,7 +8,6 @@ export default {
   title: 'Yangiliklar',
 
   // Fallbacks when a post carries no author / no target branch
-  authorFallback: 'Admin',
   allEmployees: 'Barcha xodimlarga',
 
   // Empty state

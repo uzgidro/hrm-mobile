@@ -22,9 +22,4 @@ export default {
   forceLogoutMessage: 'You have been logged out for security reasons. Please sign in again.',
 
   biometricPrompt: 'Confirm to open the app',
-
-  biometricTitle: 'Biometric unlock',
-  biometricMessage: 'Unlock the app with fingerprint or face?',
-  biometricLater: 'Later',
-  biometricEnable: 'Enable',
 } as const;

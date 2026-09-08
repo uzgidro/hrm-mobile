@@ -12,8 +12,6 @@ export default {
   },
   sectionEmpty: {
     present: 'Нет пришедших сотрудников',
-    late: 'Нет опоздавших сотрудников',
-    onLeave: 'Нет запросов на отсутствие',
   },
 
   legend: {
@@ -26,7 +24,6 @@ export default {
   clearFilter: 'нажмите, чтобы сбросить',
   showAll: 'Показать все',
   allEmployees: 'Все сотрудники',
-  collapse: 'Свернуть',
 
   leaveFallback: 'Отсутствие',
   requestFallback: 'Запрос',
