@@ -16,8 +16,8 @@ export type NavItem = {
   access: PageKey;
   badge?: number;
 };
-export type NavSection = { title: string; items: NavItem[] };
-export type NavContext = {
+type NavSection = { title: string; items: NavItem[] };
+type NavContext = {
   user: User | null | undefined;
   employee: Employee | undefined;
   pendingCount: number;

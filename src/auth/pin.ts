@@ -15,7 +15,7 @@ export const PIN_RECORD_KEY = 'security_pin_v1';
 export const BIOMETRICS_KEY = 'security_biometrics';
 export const FAILED_ATTEMPTS_KEY = 'security_failed_attempts';
 
-export interface PinRecord {
+interface PinRecord {
   salt: string;
   hash: string;
 }

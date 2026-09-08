@@ -15,9 +15,9 @@ import type { ThemeColors } from '@/theme/palettes';
 
 // A color slot on the theme palette. We return a KEY, not a hex, so the mapping
 // stays theme-agnostic and pure; the screen resolves it against `colors`.
-export type TimesheetColorKey = 'present' | 'warning' | 'error' | 'primaryLight' | 'textMuted';
+type TimesheetColorKey = 'present' | 'warning' | 'error' | 'primaryLight' | 'textMuted';
 
-export interface TabelCodeMeta {
+interface TabelCodeMeta {
   /** dotted i18n key into the `timesheet` namespace */
   labelKey: string;
   /** palette color slot for the day cell / legend dot */
@@ -77,7 +77,7 @@ export function legendCodesFor(calendar?: Record<string, string> | null): string
   return [...known, ...extra];
 }
 
-export interface TabelSummary {
+interface TabelSummary {
   present: number;
   late: number;
   absent: number;
@@ -108,7 +108,7 @@ export function tabelSummary(a?: AttendanceSummary | null): TabelSummary {
 // direction_type==='entrance' OR check_in_out_type===1; an exit when
 // direction_type==='exit' OR check_in_out_type===2 (the backend sends either).
 
-export interface DayAttendanceDetail {
+interface DayAttendanceDetail {
   /** first entry event of the day (earliest), if any */
   firstEntry?: AttendanceEvent;
   /** last exit event of the day (latest), if any */

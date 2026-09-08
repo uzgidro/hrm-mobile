@@ -9,7 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeProvider';
 import { useBreakpoint } from '../utils/responsive';
 
-export type ScreenEdge = 'top' | 'bottom' | 'left' | 'right';
+type ScreenEdge = 'top' | 'bottom' | 'left' | 'right';
 
 export function Screen({
   children,

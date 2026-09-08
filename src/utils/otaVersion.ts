@@ -4,7 +4,7 @@
 // short id. Takes a plain input object (no expo-updates import) so it is
 // trivially unit-testable; the service layer feeds it the real Updates.* values.
 
-export interface OtaLaunchInfo {
+interface OtaLaunchInfo {
   isEmbeddedLaunch: boolean;
   updateId: string | null;
   createdAt: Date | null;

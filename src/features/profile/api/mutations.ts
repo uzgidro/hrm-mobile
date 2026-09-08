@@ -7,7 +7,7 @@ import type { EmployeeFull, User } from '@/types';
 // Self-update payload: only the fields the employee may edit themselves. Values
 // are sent selectively (non-empty) by the caller so blanks never wipe existing
 // data — matching the web self-update form.
-export type MyProfilePayload = Record<string, string>;
+type MyProfilePayload = Record<string, string>;
 
 // ── Request functions (pure data access; unit-testable without React) ────────
 

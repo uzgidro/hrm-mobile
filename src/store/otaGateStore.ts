@@ -5,7 +5,7 @@
 // read via the useOtaGateStore hook.
 import { create } from 'zustand';
 
-export type OtaGatePhase = 'idle' | 'checking' | 'downloading' | 'reloading';
+type OtaGatePhase = 'idle' | 'checking' | 'downloading' | 'reloading';
 
 interface OtaGateState {
   phase: OtaGatePhase;

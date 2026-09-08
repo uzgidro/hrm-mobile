@@ -50,7 +50,7 @@ export async function fetchLargeListPage(
 
 // ── Streaming ─────────────────────────────────────────────────────────────────
 
-export interface StreamCallbacks {
+interface StreamCallbacks {
   /** called with the delta text of each parsed chunk */
   onDelta: (delta: string) => void;
 }

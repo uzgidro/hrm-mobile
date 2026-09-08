@@ -4,7 +4,7 @@ import { NEWS_POSTS } from '@/api/urls';
 import type { NewsPost } from '@/types';
 import { newsKeys } from './queries';
 
-export interface NewsPostForm {
+interface NewsPostForm {
   title: string;
   description?: string;
   organization_branch_id?: number | null;

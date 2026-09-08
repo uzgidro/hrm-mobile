@@ -13,7 +13,7 @@
 // fired while another is open is queued and shown after the first is answered.
 import type { IconName } from '@/components/Icon';
 
-export interface ConfirmOptions {
+interface ConfirmOptions {
   title: string;
   message?: string;
   confirmLabel: string;

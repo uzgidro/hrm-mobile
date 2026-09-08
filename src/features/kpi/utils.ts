@@ -9,7 +9,7 @@ import type { KpiEntry, KpiTask, KpiEntryAccess, KpiTeamMember } from '@/types';
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ── Gauge bands (Verifix 5-band, 100-scale) ──────────────────────────────────
-export interface KpiBand {
+interface KpiBand {
   from: number;
   to: number;
   color: string;
@@ -37,7 +37,7 @@ export function bandFor(value: number | null | undefined): KpiBand {
 
 // ── Entry / task statuses ────────────────────────────────────────────────────
 // Entry status duality: legacy 'locked' ≡ new 'D' (final), legacy 'draft' ≡ 'N'.
-export type EntryStatusKey = 'final' | 'inProgress' | 'draft';
+type EntryStatusKey = 'final' | 'inProgress' | 'draft';
 
 export function entryStatusKey(status: string | null | undefined): EntryStatusKey {
   if (status === 'locked' || status === 'D') return 'final';
@@ -56,7 +56,7 @@ export function isPenaltyEntry(entry: KpiEntry): boolean {
   return (entry.indicator?.direction || 'M') === 'L';
 }
 
-export interface ScorecardTotals {
+interface ScorecardTotals {
   plan: number;
   addFact: number;
   subFact: number;
@@ -92,7 +92,7 @@ export function entryResultDisplay(entry: KpiEntry): string {
 }
 
 // Verifix result color thresholds: ≥75 green, ≥50 yellow, <50 red.
-export type ResultColorKey = 'good' | 'mid' | 'bad' | 'muted';
+type ResultColorKey = 'good' | 'mid' | 'bad' | 'muted';
 
 export function resultColorKey(value: number | null | undefined): ResultColorKey {
   if (value == null) return 'muted';
@@ -150,7 +150,7 @@ export function factSum(tasks: KpiTask[] | undefined): number {
 }
 
 // ── Team roster filtering (KpiTeamScreen search + status chips) ──────────────
-export type TeamStatusFilter = 'all' | 'pending' | 'done';
+type TeamStatusFilter = 'all' | 'pending' | 'done';
 
 // Filter the my-team roster by the status chip and a free-text query (name /
 // position / department, case-insensitive). Pure so the screen's useMemo depends

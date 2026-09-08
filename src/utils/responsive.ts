@@ -7,7 +7,7 @@ import { useWindowDimensions } from 'react-native';
 // orientation-independent way to tell a big screen from a phone in landscape.
 export const TABLET_MIN_WIDTH = 600;
 
-export type Breakpoint = {
+type Breakpoint = {
   width: number;
   height: number;
   isTablet: boolean;

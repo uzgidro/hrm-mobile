@@ -7,7 +7,7 @@
 import React from 'react';
 import Svg, { Rect, Circle, Path, G, ClipPath, Defs } from 'react-native-svg';
 
-export type FlagCode = 'UZ' | 'RU' | 'GB';
+type FlagCode = 'UZ' | 'RU' | 'GB';
 
 type Props = {
   code: FlagCode;

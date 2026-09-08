@@ -27,7 +27,7 @@ function signerHasRole(signer: Employee, role: string): boolean {
   return getMultiOrgRoles(signer).includes(role);
 }
 
-export interface LeaveActionAbility {
+interface LeaveActionAbility {
   canSign: boolean;
   canReject: boolean;
 }

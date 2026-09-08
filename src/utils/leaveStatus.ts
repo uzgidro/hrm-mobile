@@ -21,7 +21,7 @@
 // screen keeps resolving its own label via its own existing t() key.
 import type { StatusKind } from './orderStatus';
 
-export type LeaveStatusGroup = 'pending' | 'approved' | 'rejected';
+type LeaveStatusGroup = 'pending' | 'approved' | 'rejected';
 
 /**
  * Exact-match code sets, exported so callers that need allowlist semantics

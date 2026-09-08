@@ -18,7 +18,7 @@ export interface CreateTicketForm {
   room_number?: string;
 }
 
-export interface RateTicketForm {
+interface RateTicketForm {
   rating: number;
   note?: string | null;
 }

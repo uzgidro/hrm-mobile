@@ -20,7 +20,7 @@ import { storage } from '../api/storage';
 import { USER_CACHE_KEY } from '../store/authStore';
 import type { User } from '../types';
 
-export type BootstrapOutcome =
+type BootstrapOutcome =
   | { status: 'unauthenticated' }
   | { status: 'authenticated'; user: User; fromCache: boolean };
 

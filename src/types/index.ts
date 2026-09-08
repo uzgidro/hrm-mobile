@@ -444,15 +444,6 @@ export interface EmployeeBirthday {
   job_position?: { id: number; name: string };
 }
 
-export interface AttendanceDay {
-  date: string;
-  status: 'present' | 'absent' | 'weekend' | 'holiday' | 'vacation' | 'sick' | 'business_trip';
-  entry_time?: string;
-  exit_time?: string;
-  is_late?: boolean;
-  minutes_late?: number;
-}
-
 // ── Visitors (Mehmonlar) ─────────────────────────────────────────────────────
 export interface Visitor {
   id: number;

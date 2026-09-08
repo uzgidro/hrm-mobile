@@ -7,7 +7,7 @@
 import React from 'react';
 import { TouchableOpacity, Text, type TextStyle, type ViewStyle } from 'react-native';
 
-export interface ChipStyles {
+interface ChipStyles {
   chip: ViewStyle;
   chipActive: ViewStyle;
   chipText: TextStyle;

@@ -3,7 +3,7 @@ import type { WorkspaceCardFull } from '@/types';
 // Card status is derived, not a stored enum: rejected_at wins over is_completed,
 // else completed, else active. (Backend CardReadFull: is_completed +
 // completed_at/rejected_at + completed_by_id/rejected_by_id.)
-export type CardStatus = 'rejected' | 'completed' | 'active';
+type CardStatus = 'rejected' | 'completed' | 'active';
 
 export function cardStatus(card: Pick<WorkspaceCardFull, 'is_completed' | 'rejected_at'>): CardStatus {
   if (card.rejected_at) return 'rejected';

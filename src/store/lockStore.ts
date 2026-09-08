@@ -26,7 +26,7 @@ import { MAX_ATTEMPTS, attemptsRemaining } from '../auth/lockPolicy';
 import { isBiometricAvailable, authenticateBiometric } from '../auth/biometrics';
 import { dismissAllConfirms } from '../lib/confirm';
 
-export type LockStatus = 'unknown' | 'setup-required' | 'locked' | 'unlocked';
+type LockStatus = 'unknown' | 'setup-required' | 'locked' | 'unlocked';
 
 export interface UnlockResult {
   ok: boolean;

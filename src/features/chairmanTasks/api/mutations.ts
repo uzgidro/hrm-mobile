@@ -4,7 +4,7 @@ import { CHAIRMAN_TASKS, CHAIRMAN_TASK_DETAIL } from '@/api/urls';
 import type { ChairmanTask } from '@/types';
 import { chairmanTaskKeys } from './queries';
 
-export interface ChairmanTaskPayload {
+interface ChairmanTaskPayload {
   title: string;
   task_date: string;
   description?: string | null;

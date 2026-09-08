@@ -102,7 +102,7 @@ export function orderDetailQuery(id: number) {
 //
 // `act_number` is sent as free TEXT: a decree number is not necessarily numeric
 // ("125/2026-QQ"), and the backend compares it as a string.
-export interface OrderActNumberAvailability {
+interface OrderActNumberAvailability {
   available: boolean;
   suggested?: string | number | null;
 }

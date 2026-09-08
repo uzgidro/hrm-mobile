@@ -4,7 +4,7 @@ import { WORK_SCHEDULE_DAYS, WORK_SCHEDULE_DAY_DETAIL } from '@/api/urls';
 import type { WorkScheduleDay } from '@/types';
 import { timesheetKeys } from './queries';
 
-export interface ScheduleDayPayload {
+interface ScheduleDayPayload {
   employee_id: number;
   schedule_date: string;
   schedule_type?: string | null;

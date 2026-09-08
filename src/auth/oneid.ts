@@ -59,7 +59,7 @@ async function deriveCodeChallenge(verifier: string): Promise<string> {
   return digest.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-export interface OneIdLoginResult {
+interface OneIdLoginResult {
   access_token: string;
   refresh_token: string;
   user: User;

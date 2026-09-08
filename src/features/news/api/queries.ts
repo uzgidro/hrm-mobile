@@ -3,7 +3,7 @@ import { apiClient } from '@/api/client';
 import { NEWS_POSTS, ORGANIZATION_BRANCHES } from '@/api/urls';
 import type { NewsPost } from '@/types';
 
-export interface NewsBranchOption {
+interface NewsBranchOption {
   id: number;
   name: string;
 }

@@ -15,7 +15,7 @@ import {
 import type { PickedFile } from '@/components/AttachmentField';
 import { letterKeys } from './queries';
 
-export interface ConfirmReturnForm {
+interface ConfirmReturnForm {
   return_date: string;
   note?: string | null;
 }
@@ -36,7 +36,7 @@ export function rejectLetter(id: number): Promise<unknown> {
 // The letter payload is loosely typed on the backend (its shape depends on the
 // letter_type); the create screen assembles it. We keep it as a record so no
 // field is dropped.
-export type CreateLetterPayload = Record<string, unknown>;
+type CreateLetterPayload = Record<string, unknown>;
 
 // ── Tahrirlash (PATCH /letters/{id}) ─────────────────────────────────────────
 // Mobilда hujjatni TAHRIRLASH umuman yo'q edi (webda "Tahrirlash" tugmasi bor):
@@ -115,7 +115,7 @@ export async function createLetter(
 // backend builds the DOCX server-side. report_number is NEVER sent (auto). Empty
 // optional fields go out as null (web LetterReportDrawer parity); report_content
 // is the required body (the caller/UI enforces non-empty).
-export interface ReportForm {
+interface ReportForm {
   report_date?: string;
   report_summary?: string;
   report_task?: string;
@@ -298,7 +298,7 @@ export function useSendToRegistry(id: number) {
 // chancellery confirms it. Both fields are optional — an empty value keeps the
 // auto-assigned number/date; a changed number re-draws the stamp and is
 // duplicate-checked server-side. Agreement → registered; trip → management_approved.
-export interface ConfirmRegistrationForm {
+interface ConfirmRegistrationForm {
   registered_number?: string | null;
   registered_date?: string | null;
 }

@@ -5,7 +5,7 @@ import i18n from '@/i18n';
 // `{ detail: "message" }` or `{ detail: [{ msg, loc }, ...] }` (validation).
 // This centralizes that parsing so screens stop hand-rolling
 // `e?.response?.data?.detail || 'Xatolik yuz berdi'` in every catch block.
-export interface ApiError {
+interface ApiError {
   message: string;
   status?: number;
   detail?: unknown;

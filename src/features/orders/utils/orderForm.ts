@@ -38,7 +38,7 @@ export interface OrderFormError {
   messageKey: string;
 }
 
-export interface OrderFormValidationContext {
+interface OrderFormValidationContext {
   branchId?: number | null;
   // The decree number/date pair is only rendered for KADR on CREATE, so its
   // "band" (taken) state may only block the submit while it is on screen.
@@ -49,12 +49,12 @@ export interface OrderFormValidationContext {
 // GET /order-acts/{id} (OrderActReadFull) carries the already-uploaded
 // attachments in `documents`, but the shared `OrderAct` type does not declare
 // them yet; narrow locally rather than reaching into another owner's file.
-export interface OrderAttachedDocument {
+interface OrderAttachedDocument {
   id: number;
   document_objectname?: string | null;
   file_path?: string | null;
 }
-export type OrderActWithDocuments = OrderAct & {
+type OrderActWithDocuments = OrderAct & {
   documents?: OrderAttachedDocument[] | null;
 };
 

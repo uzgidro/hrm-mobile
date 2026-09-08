@@ -15,7 +15,7 @@ export function isExitEvent(ev: Pick<AttendanceEvent, 'direction_type' | 'check_
   return ev.direction_type === 'exit' || ev.check_in_out_type === 2;
 }
 
-export interface AttendancePlace {
+interface AttendancePlace {
   /** Ko'rsatiladigan nom: "Ges 8" (joylashuv) yoki filial/qurilma nomi. */
   name: string | null;
   address: string | null;

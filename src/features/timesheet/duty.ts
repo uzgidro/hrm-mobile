@@ -11,7 +11,7 @@ import type { ThemeColors } from '@/theme/palettes';
 // NavbatchilikGrid — the backend authorizes writes per group membership.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type DutyColorKey = 'primaryLight' | 'warning' | 'success' | 'error' | 'textMuted';
+type DutyColorKey = 'primaryLight' | 'warning' | 'success' | 'error' | 'textMuted';
 
 // Stable color per shift position (mirrors the web grid coloring shifts 1..N
 // by index). Cycles when a group has more shifts than slots.
@@ -38,7 +38,7 @@ export function timeRange(start?: string | null, end?: string | null): string {
   return `${a || '—'} – ${b || '—'}`;
 }
 
-export interface DutyDayMeta {
+interface DutyDayMeta {
   /** shift name to display ('K'/'T'/custom); null for a day off */
   label: string | null;
   isDayOff: boolean;
@@ -100,7 +100,7 @@ export function daysForEmployee(days: WorkScheduleDay[], employeeId: number): Wo
 
 // ── Shift-cycle cell interaction ────────────────────────────────────────────────
 
-export interface DutyCellAction {
+interface DutyCellAction {
   kind: 'assign' | 'clear' | 'noop';
   shiftName?: string | null;
   isDayOff?: boolean;

@@ -36,4 +36,3 @@ export const Env = Object.freeze({
   ),
 });
 
-export type EnvConfig = typeof Env;

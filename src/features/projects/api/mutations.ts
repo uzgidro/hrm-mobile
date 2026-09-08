@@ -14,12 +14,12 @@ import {
 import type { Workspace, WorkspaceColumn, WorkspaceCard, CardComment } from '@/types';
 import { projectKeys } from './queries';
 
-export interface WorkspacePayload {
+interface WorkspacePayload {
   name: string;
   description?: string;
 }
 
-export interface CardPayload {
+interface CardPayload {
   title: string;
   description?: string;
   column_id: number;

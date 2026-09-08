@@ -22,7 +22,7 @@ export function pickChunkText(payload: unknown): string {
   return '';
 }
 
-export interface StreamParseResult {
+interface StreamParseResult {
   /** concatenated delta text extracted from complete lines */
   text: string;
   /** true once the [DONE] sentinel was seen */
@@ -68,7 +68,7 @@ export function parseStreamChunk(buffer: string): StreamParseResult {
 // GET llm/large-lists/{id}.
 const LOAD_MORE_RE = /\[\[LOAD_MORE:([A-Za-z0-9_-]+):(\d+):(\d+)\]\]/;
 
-export interface LoadMoreMarker {
+interface LoadMoreMarker {
   listId: string;
   shown: number;
   total: number;

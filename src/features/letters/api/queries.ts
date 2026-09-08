@@ -75,7 +75,7 @@ export function letterDetailQuery(id: number) {
 // devonxona confirm-registration dialog while the number is being edited.
 // `available` is false when the number is already taken; `suggested` is the next
 // free number. exclude_id lets the letter keep its own auto-assigned number.
-export interface RegisteredNumberAvailability {
+interface RegisteredNumberAvailability {
   available: boolean;
   suggested?: string | null;
 }

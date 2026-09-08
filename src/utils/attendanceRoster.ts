@@ -22,7 +22,7 @@ export interface RosterRow {
   leaveName?: string; // set only for onLeave
 }
 
-export interface AttendanceRoster {
+interface AttendanceRoster {
   rows: RosterRow[]; // ALL employees, sorted by legal_name (A→Z, locale-aware)
   counts: { total: number; present: number; late: number; onLeave: number; absent: number };
 }

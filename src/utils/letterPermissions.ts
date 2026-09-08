@@ -18,9 +18,9 @@ import {
  *    web bilan 1:1 takrorlanadi (`canApproveTripRegistration`).
  *  - `report` / `guvohnoma` — server bayroqlari asosida.
  */
-export type ApproveTripKind = 'registration' | 'report' | 'guvohnoma' | null;
+type ApproveTripKind = 'registration' | 'report' | 'guvohnoma' | null;
 
-export interface LetterPermissions {
+interface LetterPermissions {
   /** Muallif qoralamani oqimga yuboradi (server bayrog'i, faqat tafsilotda). */
   canSend: boolean;
   /** Xat FORMASINI tahrirlash — backend `update_letter` qoidasi bilan 1:1. */

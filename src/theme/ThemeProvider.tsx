@@ -4,7 +4,7 @@ import { storage } from '../api/storage';
 import { ThemeColors, darkColors, lightColors } from './palettes';
 
 export type ThemeMode = 'system' | 'light' | 'dark';
-export type ResolvedScheme = 'light' | 'dark';
+type ResolvedScheme = 'light' | 'dark';
 
 const MODE_KEY = 'theme_mode';
 
