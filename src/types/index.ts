@@ -6,7 +6,7 @@ export interface User {
    * department, no position — could not be recognised and fell through every
    * check into the ordinary-employee menu.
    */
-  type: 'employee' | 'master-admin' | 'admin' | 'guest' | 'monitoring-operator';
+  type: 'employee' | 'master-admin' | 'admin' | 'guest' | 'monitoring-operator' | 'kpp';
   employee?: Employee;
   is_secretariat?: boolean;
   /** member of a navbatchilik group (auth/me flag; gates the duty tile like the web nav) */
