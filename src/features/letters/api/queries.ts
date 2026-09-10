@@ -124,8 +124,37 @@ export function tripMovementsQuery(id: number) {
 export function letterSignersQuery(branchId?: number) {
   return queryOptions({
     queryKey: ['letter-signers', branchId] as const,
-    queryFn: () =>
-      apiClient
+    queryFn: async () => {
+      /**
+       * ADRESAT — bildirgi/ariza kimga yozilayotgani.
+       *
+       * ⚠️ FILIALGA BELGILANGAN RAHBARLAR AVVAL. Ilgari bu so'rov faqat
+       * `multi_org_employee_role` bo'yicha qidirardi, ya'ni filialning
+       * ro'yxatdan o'tgan `director`/`deputy` rahbari multi-org roli
+       * bo'lmasa mobil ro'yxatda UMUMAN chiqmasdi, veb esa uni ko'rsatardi.
+       * Jonli misol: 1-filialda `deputy` rahbari (emp 429) multi-org rolsiz —
+       * vebda tanlanadi, mobilda tanlab bo'lmasdi.
+       *
+       * Tartib `letterRahbariyatQuery` bilan bir xil: filial rahbarlari
+       * topilsa — shular; aks holda multi-org ro'yxatiga tushamiz. KADR
+       * fallbackda SAQLANADI: mobil ilgari ham kadrni adresat sifatida
+       * taklif qilardi va backend uni ataylab qabul qiladi.
+       */
+      if (branchId) {
+        const branchLeaders = await apiClient
+          .get(ORGANIZATION_BRANCH_LEADERS(branchId))
+          .then(
+            (r) =>
+              (Array.isArray(r.data) ? r.data : [])
+                .filter((l: { employee?: Employee; leadership_role?: string }) =>
+                  l.employee && ['director', 'deputy'].includes(l.leadership_role ?? ''))
+                .map((l: { employee?: Employee }) => l.employee)
+                .filter(Boolean) as Employee[]
+          )
+          .catch(() => [] as Employee[]);
+        if (branchLeaders.length) return branchLeaders;
+      }
+      return apiClient
         .get(EMPLOYEES_LIST, {
           params: {
             multi_org_employee_role: ['hr', 'deputy', 'ministr'],
@@ -134,7 +163,8 @@ export function letterSignersQuery(branchId?: number) {
             ...(branchId ? { organization_branch_id: branchId } : {}),
           },
         })
-        .then((r) => unwrapList<Employee>(r.data)),
+        .then((r) => unwrapList<Employee>(r.data));
+    },
     staleTime: 5 * 60 * 1000,
   });
 }

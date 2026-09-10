@@ -79,14 +79,28 @@ describe('letterDetailQuery', () => {
 const run = async (opts: { queryFn?: unknown }) =>
   (opts.queryFn as () => Promise<unknown>)();
 
-describe('letterSignersQuery — ADRESAT (faqat rahbariyat rollari)', () => {
-  it('rol filtri bilan va FILIALGA bog\'lab so\'raydi', async () => {
+describe('letterSignersQuery — ADRESAT (filial rahbarlari, keyin rollar)', () => {
+  it('filialga rahbar belgilangan bo\'lsa FAQAT director/deputy olinadi', async () => {
+    // Ilgari bu so'rov faqat multi-org roli bo'yicha qidirardi, ya'ni multi-org
+    // rolsiz ro'yxatdan o'tgan filial o'rinbosari (jonli misol: emp 429)
+    // mobilda adresat sifatida UMUMAN chiqmasdi, vebda esa chiqardi.
+    mock.onGet(ORGANIZATION_BRANCH_LEADERS(7)).reply(200, [
+      { leadership_role: 'director', employee: { id: 1, legal_name: 'D' } },
+      { leadership_role: 'akt', employee: { id: 2, legal_name: 'Akt' } },
+      { leadership_role: 'deputy', employee: { id: 3, legal_name: 'O' } },
+    ]);
+    const rows = (await run(letterSignersQuery(7))) as { id: number }[];
+    expect(rows.map((r) => r.id)).toEqual([1, 3]);
+  });
+
+  it('rahbar belgilanmagan bo\'lsa rol filtriga tushadi (KADR ham qoladi)', async () => {
+    mock.onGet(ORGANIZATION_BRANCH_LEADERS(7)).reply(200, []);
     mock.onGet(EMPLOYEES_LIST).reply(200, { items: [], total: 0 });
     await run(letterSignersQuery(7));
-    const p = mock.history.get[0].params;
-    expect(p.multi_org_employee_role).toEqual(['hr', 'deputy', 'ministr']);
-    expect(p.include_multi_org).toBe(true);
-    expect(p.organization_branch_id).toBe(7);
+    const empReq = mock.history.get.find((r) => r.url === EMPLOYEES_LIST)!;
+    expect(empReq.params.multi_org_employee_role).toEqual(['hr', 'deputy', 'ministr']);
+    expect(empReq.params.include_multi_org).toBe(true);
+    expect(empReq.params.organization_branch_id).toBe(7);
   });
 });
 
