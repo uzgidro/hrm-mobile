@@ -79,6 +79,22 @@ function getAllowedBranchIds(user?: User | null): number[] {
 }
 
 /**
+ * Every branch this person belongs to — HOME DEPARTMENT plus the multi-org list.
+ *
+ * ⚠️ The M2M list alone is not membership. The server resolves it as department
+ * branch ∪ M2M (`core/scoping.employee_branch_ids`, and `letter.py._emp_in_branch`
+ * checks the department first), and roughly half the directory has no M2M row at
+ * all — their branch comes only from their department. Judging membership by the
+ * M2M list hid the trip buttons from those KADR accounts while the API would have
+ * accepted the write. The web had the same bug and fixed it the same way.
+ */
+function employeeBranchIds(user?: User | null): number[] {
+  const home = user?.employee?.department?.organization_branch_id;
+  const ids = getAllowedBranchIds(user).map(Number);
+  return home != null ? Array.from(new Set([Number(home), ...ids])) : ids;
+}
+
+/**
  * Branch-scoped HR check — mirrors the web roleHelpers.isBranchHr. True if the
  * user is an HR branch-leader of `branchId`, or a multi-org HR who belongs to it.
  * Use for rights the backend scopes to a specific branch (e.g. trip-movement
@@ -87,7 +103,7 @@ function getAllowedBranchIds(user?: User | null): number[] {
 export function isBranchHr(user: User | null | undefined, branchId?: number | null): boolean {
   if (branchId == null) return false;
   if (getHrBranchIds(user).map(Number).includes(Number(branchId))) return true;
-  return isHR(user) && getAllowedBranchIds(user).map(Number).includes(Number(branchId));
+  return isHR(user) && employeeBranchIds(user).includes(Number(branchId));
 }
 
 export function isDeputy(user?: User | null): boolean {

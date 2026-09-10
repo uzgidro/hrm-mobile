@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TextInput,
   TouchableOpacity, ActivityIndicator, Alert, KeyboardAvoidingView, Platform,
@@ -63,7 +63,7 @@ export default function ProfileEditScreen() {
     (async () => {
       try {
         const e = await getMyProfile(employeeId);
-        setForm({
+        const loaded = {
           legal_name: e.legal_name ?? '',
           phone_number: e.phone_number ?? '',
           internal_phone_number: e.internal_phone_number ?? '',
@@ -76,11 +76,16 @@ export default function ProfileEditScreen() {
           personal_identification_number: e.personal_identification_number ?? '',
           taxpayer_identification_number: e.taxpayer_identification_number ?? '',
           individual_accumulative_pension_account_number: e.individual_accumulative_pension_account_number ?? '',
-        });
+        };
+        setForm(loaded);
+        initialRef.current = loaded;
       } catch {}
       finally { setLoading(false); }
     })();
   }, [employeeId]);
+
+  // What the server had when the screen opened — the baseline `handleSave` diffs against.
+  const initialRef = useRef<Form | null>(null);
 
   const set = (k: keyof Form) => (v: string) => setForm((p) => ({ ...p, [k]: v }));
 
@@ -91,12 +96,33 @@ export default function ProfileEditScreen() {
     }
     setSaving(true);
     try {
-      // Send only non-empty values so we never wipe existing data with blanks.
+      /*
+       * ONLY WHAT CHANGED.
+       *
+       * This used to re-send every non-empty field it had loaded. That was
+       * harmless until the API started checking identity formats: an employee
+       * whose stored passport number is six digits (7 of a 200-record live
+       * sample) then got a 422 on EVERY save — including one that touched only
+       * the phone number — because the untouched bad value travelled with it.
+       * The server now judges a field only when it actually differs, but the
+       * client should not send noise either: a PATCH means "change these".
+       *
+       * Blank values are still dropped, so clearing a field is not how you wipe
+       * data by accident.
+       */
+      const initial = initialRef.current;
       const payload: Record<string, string> = {};
       (Object.keys(form) as (keyof Form)[]).forEach((k) => {
         const val = form[k]?.trim?.() ?? form[k];
-        if (val) payload[k] = val;
+        if (!val) return;
+        if (initial && val === (initial[k]?.trim?.() ?? initial[k])) return;
+        payload[k] = val;
       });
+      if (Object.keys(payload).length === 0) {
+        setSaving(false);
+        router.back();
+        return;
+      }
 
       // The mutation refreshes the cached user (via auth store) and invalidates
       // the employee-detail cache on success.
