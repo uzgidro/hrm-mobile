@@ -267,9 +267,28 @@ export type PageKey =
   | 'notifications' | 'profile' | 'support' | 'chairman' | 'directory' | 'terminals';
 
 /** Whether the given user may see a page. Mirrors which web NAV the role gets. */
+/**
+ * A post/kiosk account: KPP or monitoring. NOT an employee — no department and
+ * no position — but it does have a branch (and may have several), which is the
+ * only thing that scopes it. The web makes the same distinction.
+ */
+export function isSeparateAccount(user?: User | null): boolean {
+  const t = user?.type;
+  if (!t) return false;
+  return t !== 'employee' && t !== 'admin' && t !== 'master-admin' && t !== 'guest';
+}
+
 export function canAccessPage(user: User | null | undefined, key: PageKey): boolean {
   const kpp = isKPP(user);
   const chancellery = isChancellery(user);
+  /*
+   * ⚠️ A POST/KIOSK ACCOUNT GETS THE POST SCREENS, nothing else. Without this
+   * it fell through to the ordinary-employee menu — "Mening davomatim",
+   * "Ruxsat so'rash", "Malaka oshirish", KPI — for an account that has no
+   * employee record at all, so most of it returns empty or 400
+   * `employee_required` now that these accounts are branch-scoped.
+   */
+  if (isSeparateAccount(user)) return key === 'guests' || key === 'directory';
   switch (key) {
     // KPP nav has no documents.
     case 'orders':

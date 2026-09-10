@@ -17,14 +17,48 @@ interface ApiError {
 // omits an explicit fallback, not frozen at module load.
 const defaultMessage = (): string => i18n.t('errors.generic');
 
+/**
+ * The server's `code`, translated — before falling back to its own prose.
+ *
+ * ⚠️ `code` USED TO BE IGNORED ENTIRELY. Every `AppException` carries
+ * `{code, i18n_key, message}` and the message is written in Uzbek, so a user
+ * running the app in Russian or English got Uzbek error text on every failure.
+ * Looking the code up in the catalogue first fixes that for the codes we know,
+ * and the server's own sentence remains the fallback for the ones we do not —
+ * which is exactly what the web does.
+ */
+function translateCode(data: unknown): string | null {
+  if (!data || typeof data !== 'object') return null;
+  const d = data as { code?: unknown; detail?: unknown };
+  // The code may sit at the top level or inside an object-shaped `detail`
+  // (query guards return the latter).
+  const nested = d.detail && typeof d.detail === 'object' && !Array.isArray(d.detail)
+    ? (d.detail as { code?: unknown }).code
+    : undefined;
+  const code = typeof d.code === 'string' ? d.code : typeof nested === 'string' ? nested : null;
+  if (!code) return null;
+  const key = `errors.${code}`;
+  const text = i18n.t(key);
+  // i18next echoes the key back when it has no entry.
+  return text && text !== key ? text : null;
+}
+
 function extractMessage(data: unknown): string | null {
   if (!data || typeof data !== 'object') return null;
+  const translated = translateCode(data);
+  if (translated) return translated;
   const detail = (data as { detail?: unknown }).detail;
   if (typeof detail === 'string' && detail.trim()) return detail;
   if (Array.isArray(detail)) {
     const first = detail[0];
     const msg = first && typeof first === 'object' ? (first as { msg?: unknown }).msg : undefined;
     if (typeof msg === 'string' && msg.trim()) return msg;
+  }
+  // ⚠️ An OBJECT-shaped `detail` used to fall straight through to the generic
+  // "Xatolik yuz berdi", hiding what the server actually said.
+  if (detail && typeof detail === 'object' && !Array.isArray(detail)) {
+    const dm = (detail as { message?: unknown }).message;
+    if (typeof dm === 'string' && dm.trim()) return dm;
   }
   const message = (data as { message?: unknown }).message;
   if (typeof message === 'string' && message.trim()) return message;

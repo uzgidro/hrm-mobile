@@ -1,6 +1,12 @@
 export interface User {
   id: number;
-  type: 'employee' | 'master-admin' | 'admin';
+  /**
+   * Account types the API actually issues. ⚠️ `guest` and `monitoring-operator`
+   * were missing, so a KPP/monitoring KIOSK account — no employee card, no
+   * department, no position — could not be recognised and fell through every
+   * check into the ordinary-employee menu.
+   */
+  type: 'employee' | 'master-admin' | 'admin' | 'guest' | 'monitoring-operator';
   employee?: Employee;
   is_secretariat?: boolean;
   /** member of a navbatchilik group (auth/me flag; gates the duty tile like the web nav) */

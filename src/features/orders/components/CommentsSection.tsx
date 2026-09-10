@@ -93,7 +93,23 @@ export function CommentsSection({ orderId }: { orderId: number }) {
                   <Text style={styles.date}>{dayjs(h.created_at).format('DD.MM.YYYY HH:mm')}</Text>
                 )}
               </View>
-              <Text style={styles.historyNote}>{t('orders.editHistoryTextChanged')}</Text>
+              {/*
+                ⚠️ THE TEXT ITSELF, not just "text changed". The old and new
+                values are already fetched (`OrderActHistoryRead` returns
+                `field`, `old_text`, `new_text`) and were being thrown away, so
+                the entry said something had changed without saying what — which
+                is no use to anyone reviewing a decree.
+              */}
+              {h.old_text || h.new_text ? (
+                <>
+                  {!!h.old_text && (
+                    <Text style={[styles.historyNote, styles.historyOld]}>{h.old_text}</Text>
+                  )}
+                  {!!h.new_text && <Text style={styles.historyNote}>{h.new_text}</Text>}
+                </>
+              ) : (
+                <Text style={styles.historyNote}>{t('orders.editHistoryTextChanged')}</Text>
+              )}
             </View>
           ))}
         </Section>
@@ -111,6 +127,8 @@ const makeStyles = (c: ThemeColors) =>
     date: { fontSize: 11, color: c.textMuted },
     text: { fontSize: 13, color: c.text, lineHeight: 19 },
     historyNote: { fontSize: 12, color: c.textMuted },
+    // The previous wording, struck through, so the change reads at a glance.
+    historyOld: { textDecorationLine: 'line-through' as const, opacity: 0.7 },
     composer: { marginTop: 12, gap: 8 },
     input: {
       minHeight: 72, borderWidth: 1, borderColor: c.cardBorder, borderRadius: 10,

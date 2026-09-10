@@ -45,14 +45,31 @@ export function TripMovementsSection({
       ].filter((x): x is number => x != null),
     [letter],
   );
+  /*
+   * ⚠️ A FINALIZED TRIP IS CLOSED TO EVERYONE. The backend refuses with 400
+   * `trip_finalized` once the report is approved or the trip was rejected or
+   * cancelled — so the certificate cannot be rewritten after the fact. Mobile
+   * had no such check and drew the buttons anyway; the web does check.
+   */
+  const finalized = ['report_approved', 'rejected', 'cancelled'].includes(letter.status ?? '');
   const canManage =
-    isSiteMasterAdmin(user) || tripBranchIds.some((bid) => isBranchHr(user, bid));
+    !finalized && (isSiteMasterAdmin(user) || tripBranchIds.some((bid) => isBranchHr(user, bid)));
   // Stage gate: the backend blocks confirm-return with 400 trip_not_registered
   // until the chancellery registers the trip (it's in the pre-registration set).
   // A site master-admin bypasses the stage, matching the backend. Without this a
   // branch HR would see "Keldi" on a pending_registration trip and hit the 400.
   const stageAllowsReturn = isSiteMasterAdmin(user) || canConfirmTripReturn(letter);
-  const canConfirmReturn = canManage && !letter.is_trip_confirmed && stageAllowsReturn;
+  /*
+   * ⚠️ CONFIRMING THE RETURN IS THE HOME BRANCH'S CALL ALONE. `canManage` also
+   * covers the DESTINATION branches (they may add legs), but the server answers
+   * 403 `not_home_branch_hr` to a destination-branch KADR here — so sharing one
+   * flag drew "Keldi" for people it refuses.
+   */
+  const canConfirmReturn =
+    !finalized &&
+    (isSiteMasterAdmin(user) || isBranchHr(user, letter.organization_branch_id)) &&
+    !letter.is_trip_confirmed &&
+    stageAllowsReturn;
 
   const { data: movements = [], isLoading } = useQuery({
     ...tripMovementsQuery(letter.id),
