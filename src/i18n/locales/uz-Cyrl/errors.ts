@@ -6,6 +6,7 @@ export default {
   // back to the server's own sentence, which is always Uzbek.
   forbidden: 'Ruxsat yo\'q',
   not_authorized: 'Bu amalga ruxsatingiz yo\'q',
+  extension_not_later: 'Янги қайтиш санаси жорий санадан кейин бўлиши керак',
   not_found: 'Topilmadi',
   invalid_addressee: 'Adresat rahbariyat yoki kadr bo\'lishi kerak — ro\'yxatdan tanlang',
   invalid_management_signer: 'Tanlangan xodim bu filialning rahbariyati emas',

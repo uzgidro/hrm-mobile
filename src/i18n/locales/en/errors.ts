@@ -6,6 +6,7 @@ export default {
   // back to the server's own sentence, which is always Uzbek.
   forbidden: 'Access denied',
   not_authorized: 'You are not allowed to do this',
+  extension_not_later: 'The new return date must be later than the current one',
   not_found: 'Not found',
   invalid_addressee: 'The addressee must be management or HR — pick one from the list',
   invalid_management_signer: 'The selected employee is not management of this branch',

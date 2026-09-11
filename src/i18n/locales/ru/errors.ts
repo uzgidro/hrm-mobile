@@ -6,6 +6,7 @@ export default {
   // back to the server's own sentence, which is always Uzbek.
   forbidden: 'Нет доступа',
   not_authorized: 'У вас нет прав на это действие',
+  extension_not_later: 'Новая дата возвращения должна быть позже текущей',
   not_found: 'Не найдено',
   invalid_addressee: 'Адресатом должен быть руководитель или кадры — выберите из списка',
   invalid_management_signer: 'Выбранный сотрудник не относится к руководству этого филиала',
