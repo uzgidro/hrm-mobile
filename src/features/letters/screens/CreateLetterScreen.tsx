@@ -311,7 +311,6 @@ export default function CreateLetterScreen() {
     // maydonlarni baribir e'tiborsiz qoldiradi, lekin ularni yubormaslik
     // aniqroq (web ham editда `organization_branch_id`/`employee_id` yubormaydi).
     if (editId) {
-      delete payload.employee_id;
       delete payload.organization_branch_id;
     }
 

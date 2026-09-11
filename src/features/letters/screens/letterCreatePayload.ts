@@ -65,7 +65,9 @@ export function buildLetterCreatePayload(input: LetterCreateInput): Record<strin
     letter_type: input.letterType,
     description,
     organization_branch_id: input.branchId,
-    employee_id: input.employeeId,
+    // (`employee_id` is NOT a `LetterCreate` field — the owner comes from the
+    // token / `creator_employee_id`. It was sent and ignored; strict request
+    // schemas would reject it. Dropped 2026-09-11.)
   };
 
   if (input.isTrip) {

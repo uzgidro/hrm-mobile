@@ -34,7 +34,6 @@ describe('buildLetterCreatePayload — business_trip', () => {
     expect(p).toMatchObject({
       letter_type: 'business_trip',
       organization_branch_id: 10,
-      employee_id: 5,
       destination_branch_ids: [1, 2],
       // Regression: TANLANGAN viloyat(lar) avval UMUMAN yuborilmasdi — ekran
       // ularni faqat filial ro'yxatini filtrlash uchun ishlatardi, natijada
