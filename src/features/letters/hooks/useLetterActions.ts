@@ -47,18 +47,13 @@ export function useLetterActions(letterId: number, refetch: () => void) {
 
   const sign = useCallback(() => run(() => signLetter(letterId), t('letters.signed')), [run, letterId, t]);
 
-  const reject = useCallback(async () => {
-    const ok = await confirm({
-      title: t('letters.rejectConfirmTitle'),
-      message: t('letters.rejectConfirmMessage'),
-      confirmLabel: t('letters.reject'),
-      cancelLabel: t('common.cancel'),
-      icon: 'close',
-      destructive: true,
-    });
-    if (!ok) return;
-    run(() => rejectLetter(letterId), t('letters.rejected'));
-  }, [run, letterId, t]);
+  // The reason is collected by the screen's ReasonModal (the same sheet the
+  // chancellery's "return" uses), so the author of the letter sees WHY — web
+  // v1/v2 have always asked for it; the mobile confirm-only sheet dropped it.
+  const reject = useCallback(
+    (reason: string) => run(() => rejectLetter(letterId, reason), t('letters.rejected')),
+    [run, letterId, t],
+  );
 
   // Leadership approvals — same run() flow, guarded by a confirm sheet. Which one
   // is offered is decided by the screen via the available_actions flags. The

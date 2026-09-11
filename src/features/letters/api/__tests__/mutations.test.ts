@@ -92,12 +92,18 @@ describe('letter sign/reject request functions', () => {
     expect(mock.history.post[0].data).toBeUndefined();
   });
 
-  it('rejectLetter POSTs the reject endpoint with an empty body', async () => {
+  it('rejectLetter POSTs the reject endpoint with an empty body when no reason is given', async () => {
     mock.onPost(LETTER_REJECT(8)).reply(200, { id: 8, status: 'rejected' });
     const data = await rejectLetter(8);
     expect(data).toEqual({ id: 8, status: 'rejected' });
     expect(mock.history.post[0].url).toBe(LETTER_REJECT(8));
     expect(mock.history.post[0].data).toBeUndefined();
+  });
+
+  it('rejectLetter sends the typed reason as `reason` (the server stores it)', async () => {
+    mock.onPost(LETTER_REJECT(8)).reply(200, { id: 8, status: 'rejected' });
+    await rejectLetter(8, '  Asos yetarli emas ');
+    expect(JSON.parse(mock.history.post[0].data)).toEqual({ reason: 'Asos yetarli emas' });
   });
 });
 

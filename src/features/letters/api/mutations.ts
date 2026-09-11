@@ -28,8 +28,12 @@ export function signLetter(id: number): Promise<unknown> {
   return apiClient.post(LETTER_SIGN(id)).then((r) => r.data);
 }
 
-export function rejectLetter(id: number): Promise<unknown> {
-  return apiClient.post(LETTER_REJECT(id)).then((r) => r.data);
+// The server stores `reason` as the letter's rejection_reason (accepted
+// since 2026-09-11; the route took no body before, and the reason web users
+// typed was discarded). Sent only when given, so the body-less call stays.
+export function rejectLetter(id: number, reason?: string): Promise<unknown> {
+  const trimmed = reason?.trim();
+  return apiClient.post(LETTER_REJECT(id), trimmed ? { reason: trimmed } : undefined).then((r) => r.data);
 }
 
 // ── Create ────────────────────────────────────────────────────────────────────

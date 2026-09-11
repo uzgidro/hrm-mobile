@@ -65,7 +65,7 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
   const returnReportM = useReturnReport(letterId);
   const cancelTripM = useCancelTrip(letterId);
   const deleteLetterM = useDeleteLetter(letterId);
-  const [reasonModal, setReasonModal] = useState<null | 'return' | 'returnReport' | 'cancelTrip'>(null);
+  const [reasonModal, setReasonModal] = useState<null | 'return' | 'returnReport' | 'cancelTrip' | 'reject'>(null);
   const [reasonText, setReasonText] = useState('');
   // Safarni uzaytirish: KADR yangi qaytish sanasini tanlaydi.
   const extendM = useExtendTrip(letterId);
@@ -155,6 +155,7 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
     if (reasonModal === 'return') returnLetterM.mutate(reason, opts);
     else if (reasonModal === 'returnReport') returnReportM.mutate(reason, opts);
     else if (reasonModal === 'cancelTrip') cancelTripM.mutate(reason, opts);
+    else if (reasonModal === 'reject') { closeReason(); void reject(reason); }
   };
   const onExtendConfirm = (iso: string) => {
     extendM.mutate({ arrivalDate: iso }, {
@@ -574,7 +575,7 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
         <LetterActionBar
           busy={busy}
           onSign={canSign ? sign : undefined}
-          onReject={canReject ? reject : undefined}
+          onReject={canReject ? () => setReasonModal('reject') : undefined}
         />
       )}
 
@@ -600,16 +601,17 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
         title={
           reasonModal === 'cancelTrip' ? t('letters.cancelTripAction')
             : reasonModal === 'returnReport' ? t('letters.returnReportAction')
-              : t('letters.returnAction')
+              : reasonModal === 'reject' ? t('letters.rejectConfirmTitle')
+                : t('letters.returnAction')
         }
         label={reasonModal === 'cancelTrip' ? t('letters.reasonOptionalLabel') : t('letters.reasonRequiredLabel')}
         placeholder={t('letters.reasonPlaceholder')}
         reason={reasonText}
         // Qaytarishda sabab MAJBURIY (backend min_length=1); bekor qilishda ixtiyoriy.
         required={reasonModal !== 'cancelTrip'}
-        busy={returnLetterM.isPending || returnReportM.isPending || cancelTripM.isPending}
+        busy={returnLetterM.isPending || returnReportM.isPending || cancelTripM.isPending || busy}
         confirmLabel={t('common.confirm')}
-        destructive={reasonModal === 'cancelTrip'}
+        destructive={reasonModal === 'cancelTrip' || reasonModal === 'reject'}
         onChangeReason={setReasonText}
         onClose={closeReason}
         onSubmit={runReason}

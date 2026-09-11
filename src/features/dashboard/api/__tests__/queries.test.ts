@@ -82,10 +82,10 @@ describe('homeAssignedLeavesQuery', () => {
     expect(key).toEqual(['work-leaves', 'home', 'assigned', 7]);
   });
 
-  it('polls every 60s and keeps a 30s staleTime', () => {
+  it('keeps a 30s staleTime and does NOT poll — the badge poll (menu-badges) carries the count', () => {
     const opts = homeAssignedLeavesQuery(7);
     expect(opts.staleTime).toBe(30 * 1000);
-    expect(opts.refetchInterval).toBe(60 * 1000);
+    expect(opts.refetchInterval).toBeUndefined();
   });
 
   it('sends assigned_signer + size and unwraps an { items } envelope', async () => {
@@ -111,12 +111,13 @@ describe('homeNotificationsQuery', () => {
     expect(key).toEqual(['notifications', 7]);
   });
 
-  it('is disabled until an employee id resolves and polls every 60s', () => {
+  it('is disabled until an employee id resolves and does not poll on its own', () => {
     expect(homeNotificationsQuery(undefined).enabled).toBe(false);
     const opts = homeNotificationsQuery(7);
     expect(opts.enabled).toBe(true);
     expect(opts.staleTime).toBe(30 * 1000);
-    expect(opts.refetchInterval).toBe(60 * 1000);
+    // Polling moved to the single menu-badges request (f454627).
+    expect(opts.refetchInterval).toBeUndefined();
   });
 
   it('unwraps an { items } envelope', async () => {
