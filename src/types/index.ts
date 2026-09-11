@@ -245,6 +245,14 @@ export interface LetterAvailableActions {
   // `face_id_required` 400 bo'lardi).
   can_self_finish_trip?: boolean;
   self_finish_date?: string | null;
+  // Server verdicts added 2026-09-11 — the client re-derivations below them
+  // (`canDecideExtension`, `canApproveTripRegistration`, `canExtendTrip`)
+  // stay only as the fallback for an API that predates the flags.
+  can_approve_extension?: boolean;
+  can_reject_extension?: boolean;
+  can_approve_trip_registration?: boolean;
+  can_extend_trip?: boolean;
+  can_modify?: boolean;
 }
 
 export interface Letter {

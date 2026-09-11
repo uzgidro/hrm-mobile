@@ -2,7 +2,7 @@ import type { Letter, User } from '@/types';
 import {
   canSubmitTrip, canApproveReport, canApproveGuvohnoma, canRejectLetter,
   canReturnLetter, canDeleteLetter, canReturnTripReport, canCancelTrip,
-  canExtendTrip, canDecideExtension, canSetBasisDecree,
+  canExtendTrip, canDecideExtension, canSetBasisDecree, canApproveTripRegistration,
 } from '../tripStatus';
 
 const letter = (o: Partial<Letter>): Letter => ({ id: 1, ...o });
@@ -145,6 +145,24 @@ describe('canExtendTrip / canDecideExtension', () => {
     expect(canDecideExtension(l, plainUser(), 99)).toBe(false);
     // Boshqa bosqichda tugma yo'q.
     expect(canDecideExtension(letter({ ...l, status: 'management_approved' }), plainUser(), 42)).toBe(false);
+  });
+
+  it('server bayroqlari kelsa mijoz hisob-kitobi EMAS, bayroq hal qiladi', () => {
+    const base = {
+      letter_type: 'business_trip', status: 'extension_review', organization_branch_id: 7,
+      assigned_signers: [{ signer_type: 'management', employee_id: 42 }],
+    };
+    // Tanlangan imzolovchi, lekin server "yo'q" dedi → tugma yo'q.
+    expect(canDecideExtension(letter({ ...base, available_actions: { can_approve_extension: false, can_reject_extension: false } }), plainUser(), 42)).toBe(false);
+    // Tanlanmagan, lekin server "ha" dedi (masalan, hisobotni tasdiqlovchi) → bor.
+    expect(canDecideExtension(letter({ ...base, available_actions: { can_approve_extension: true } }), plainUser(), 99)).toBe(true);
+    // Uzaytirish va ro'yxat tasdig'i ham bayroqdan.
+    const active = letter({ letter_type: 'business_trip', status: 'management_approved', organization_branch_id: 7 });
+    expect(canExtendTrip(letter({ ...active, available_actions: { can_extend_trip: false } }), hrOf(7))).toBe(false);
+    expect(canExtendTrip(letter({ ...active, available_actions: { can_extend_trip: true } }), plainUser())).toBe(true);
+    const reg = letter({ letter_type: 'business_trip', status: 'registered_pending_rahbar', organization_branch_id: 7 });
+    expect(canApproveTripRegistration(letter({ ...reg, available_actions: { can_approve_trip_registration: true } }), plainUser(), 1)).toBe(true);
+    expect(canApproveTripRegistration(letter({ ...reg, available_actions: { can_approve_trip_registration: false } }), hrOf(7), 1)).toBe(false);
   });
 });
 

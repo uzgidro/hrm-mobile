@@ -35,6 +35,12 @@ export function canApproveTripRegistration(
   user: User | null | undefined,
   employeeId?: number | null,
 ): boolean {
+  // The server's own verdict wins when present (`_is_trip_approver`); the
+  // derivation below matched neither direction — a chosen management signer
+  // of another branch was hidden, a branch director who was not chosen was
+  // offered the button and got 403 (measured on web, 2026-09-11).
+  const flag = l.available_actions?.can_approve_trip_registration;
+  if (typeof flag === 'boolean') return flag;
   if (l.letter_type !== 'business_trip' || l.status !== 'registered_pending_rahbar') return false;
   const isChosenManagement = (l.assigned_signers ?? []).some(
     (s) => s.signer_type === 'management'
@@ -132,6 +138,8 @@ export function canCancelTrip(l: Letter, user?: User | null): boolean {
 
 /** KADR faol safarni uzaytira oladimi (tasdiqlangan, hali qaytmagan). */
 export function canExtendTrip(l: Letter, user?: User | null): boolean {
+  const flag = l.available_actions?.can_extend_trip;
+  if (typeof flag === 'boolean') return flag;
   if (l.letter_type !== 'business_trip') return false;
   if (l.status !== 'management_approved' || l.is_trip_confirmed) return false;
   return isSiteMasterAdmin(user) || isBranchHr(user, l.organization_branch_id);
@@ -139,6 +147,11 @@ export function canExtendTrip(l: Letter, user?: User | null): boolean {
 
 /** Rahbariyat uzaytirish so'rovini hal qila oladimi (`extension_review`). */
 export function canDecideExtension(l: Letter, user?: User | null, employeeId?: number | null): boolean {
+  // Server flags first (`_can_approve_report` is the rule, not `isLeadership`).
+  const a = l.available_actions;
+  if (a && (typeof a.can_approve_extension === 'boolean' || typeof a.can_reject_extension === 'boolean')) {
+    return !!a.can_approve_extension || !!a.can_reject_extension;
+  }
   if (l.letter_type !== 'business_trip' || l.status !== 'extension_review') return false;
   const isChosenManagement = (l.assigned_signers ?? []).some(
     (sg) => sg.signer_type === 'management'
