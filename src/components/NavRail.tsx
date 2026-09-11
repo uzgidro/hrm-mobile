@@ -7,7 +7,6 @@
 import { useMemo, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { router, usePathname, type Href } from 'expo-router';
-import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../store/authStore';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
@@ -15,8 +14,7 @@ import type { ThemeColors } from '../theme/palettes';
 import { Icon, type IconName } from './Icon';
 import { buildNavSections, type NavItem } from '../utils/navItems';
 import { canAccessPage, hasSupervisor, type PageKey } from '../utils/roles';
-import { leaveStatusGroup } from '../utils/leaveStatus';
-import { homeAssignedLeavesQuery, homeNotificationsQuery } from '@/features/dashboard/api/queries';
+import { useShellBadges } from '@/features/dashboard/api/queries';
 
 const RAIL_COLLAPSED_WIDTH = 88;
 const RAIL_EXPANDED_WIDTH = 260;
@@ -48,25 +46,9 @@ export function NavRail() {
   const pathname = usePathname();
   const [expanded, setExpanded] = useState(false);
 
-  // Same home factories + derivation as app/(tabs)/modules.tsx so the badge
-  // counts on the rail always match the phone grid's counts.
-  const { data: assignedLeaves = [] } = useQuery({
-    ...homeAssignedLeavesQuery(employee?.id),
-    enabled: !!employee?.id && isSupervisor,
-  });
-
-  const { data: notifications = [] } = useQuery({
-    ...homeNotificationsQuery(employee?.id),
-  });
-
-  const pendingCount = useMemo(() => {
-    if (!isSupervisor) return 0;
-    return assignedLeaves.filter(
-      (l) => leaveStatusGroup(l.status) === 'pending' && !l.signers?.some((s) => s.id === employee?.id)
-    ).length;
-  }, [assignedLeaves, isSupervisor, employee?.id]);
-
-  const unreadCount = useMemo(() => notifications.filter((n) => !n.is_read).length, [notifications]);
+  // Both counts from the menu-badges poll the app already makes — see
+  // `useShellBadges` for what this replaced (two more 60 s polls).
+  const { pendingCount, unreadCount } = useShellBadges(employee?.id, isSupervisor);
 
   const sections = useMemo(
     () => buildNavSections(t, { user, employee, pendingCount, unreadCount }),

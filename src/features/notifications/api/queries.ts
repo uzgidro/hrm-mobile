@@ -29,6 +29,10 @@ export interface MenuBadges {
   projects: number;
   fleet: number;
   documents: number;
+  /** Ruxsatnomalar — meni imzosini kutayotganlar (server hisoblaydi). Eski API'da yo'q. */
+  leaves?: number;
+  /** O'qilmagan bildirishnomalar soni — server COUNT(*). Eski API'da yo'q. */
+  unread_notifications?: number;
 }
 
 const EMPTY_BADGES: MenuBadges = {

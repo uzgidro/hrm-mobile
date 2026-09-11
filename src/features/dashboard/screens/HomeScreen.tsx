@@ -29,6 +29,7 @@ import {
   homeMyLeavesQuery,
   homeAssignedLeavesQuery,
   homeNotificationsQuery,
+  useShellBadges,
   homeTodayAttendanceQuery,
   homeTeamLeavesQuery,
   prefetchHomeData,
@@ -84,12 +85,17 @@ export default function HomeScreen() {
     enabled: !!employee?.id && !isSupervisor,
   });
 
+  // Badge numbers from the one poll the app already makes (menu-badges);
+  // the notification LIST is still fetched here because the home card shows
+  // the newest three — limited to five rows now, not the whole history.
+  const { pendingCount, unreadCount } = useShellBadges(employee?.id, isSupervisor);
+  const { data: notifications = [] } = useQuery(homeNotificationsQuery(employee?.id));
+  // The supervisor's home also LISTS the newest assigned leaves (below), so the
+  // rows are still needed here — for the rows, not for the number.
   const { data: assignedLeaves = [], refetch: refetchAssigned } = useQuery({
     ...homeAssignedLeavesQuery(employee?.id),
     enabled: !!employee?.id && isSupervisor,
   });
-
-  const { data: notifications = [] } = useQuery(homeNotificationsQuery(employee?.id));
 
   // Attendance content block (donut + roster) — reuses the SAME queries
   // `prefetchHomeData` below already warms (employeesListQuery,
@@ -125,17 +131,6 @@ export default function HomeScreen() {
     [rosterRows, rosterFilter]
   );
 
-  const unreadCount = useMemo(
-    () => notifications.filter((n) => !n.is_read).length,
-    [notifications]
-  );
-
-  const pendingCount = useMemo(() => {
-    if (!isSupervisor) return 0;
-    return assignedLeaves.filter(
-      (l) => (l.status === 'pending' || l.status === 'yuborildi') && !l.signers?.some((s) => s.id === employee?.id)
-    ).length;
-  }, [assignedLeaves, isSupervisor, employee?.id]);
 
   const recentAssigned = useMemo(
     () => [...assignedLeaves].sort((a, b) => (b.created_at ?? String(b.id)).localeCompare(a.created_at ?? String(a.id))).slice(0, 5),

@@ -1,4 +1,5 @@
-import { queryOptions, type QueryClient } from '@tanstack/react-query';
+import { useMemo } from 'react';
+import { queryOptions, useQuery, type QueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
 import { unwrapList } from '@/api/response';
 import {
@@ -9,6 +10,8 @@ import {
 } from '@/api/urls';
 import { fetchAllAttendanceEvents, attendanceQueryKey } from '@/utils/attendance';
 import { employeesListQuery } from '@/utils/employees';
+import { leaveStatusGroup } from '@/utils/leaveStatus';
+import { menuBadgesQuery } from '@/features/notifications/api/queries';
 import type { AttendanceEvent, WorkLeave, Notification, EmployeeBirthday } from '@/types';
 
 // Per-feature queryOptions factories for the home dashboard. The home tab is a
@@ -67,8 +70,9 @@ export function homeMyLeavesQuery(employeeId: number | undefined) {
 }
 
 // Leaves assigned to me to sign (supervisor branch). Same `'work-leaves'` root
-// so sign/reject invalidations reach it; polled every 60s for the incoming-queue
-// badge.
+// so sign/reject invalidations reach it. The incoming-queue BADGE no longer
+// comes from this list (see `useShellBadges`), so the 60 s poll is gone: the
+// rows on the home card refresh on sign/reject invalidation and pull-to-refresh.
 export function homeAssignedLeavesQuery(employeeId: number | undefined) {
   return queryOptions({
     queryKey: ['work-leaves', 'home', 'assigned', employeeId ?? null] as const,
@@ -77,7 +81,6 @@ export function homeAssignedLeavesQuery(employeeId: number | undefined) {
         .get(WORK_LEAVES, { params: { assigned_signer: true, size: 50 } })
         .then((r) => unwrapList<WorkLeave>(r.data)),
     staleTime: 30 * 1000,
-    refetchInterval: 60 * 1000,
   });
 }
 
@@ -88,11 +91,59 @@ export function homeAssignedLeavesQuery(employeeId: number | undefined) {
 export function homeNotificationsQuery(employeeId: number | undefined) {
   return queryOptions({
     queryKey: ['notifications', employeeId] as const,
-    queryFn: () => apiClient.get(NOTIFICATIONS_LIST).then((r) => unwrapList<Notification>(r.data)),
+    // ⚠️ `limit`: the home card draws THREE rows, and this endpoint is unbounded
+    // (the largest account holds 2 083 notifications). The unread number no
+    // longer comes from this list — see `useShellBadges`. No interval either:
+    // the push receipt and mark-read invalidate `['notifications']` already.
+    queryFn: () =>
+      apiClient
+        .get(NOTIFICATIONS_LIST, { params: { limit: 5 } })
+        .then((r) => unwrapList<Notification>(r.data)),
     enabled: !!employeeId,
     staleTime: 30 * 1000,
-    refetchInterval: 60 * 1000,
   });
+}
+
+/**
+ * The two rail/home badges — pending leaves to sign and unread notifications —
+ * from ONE request, the menu-badges poll the app already makes.
+ *
+ * ⚠️ MEASURED 2026-09-11: the phone polled THREE endpoints every 60 s for
+ * these numbers — the full notification list, `work-leaves?assigned_signer`
+ * (50 rows, then counted in JS) and menu-badges. The server now counts both
+ * (`leaves`, `unread_notifications`), so the first two polls are gone.
+ *
+ * Against an OLDER API the two fields are absent; only then do the old list
+ * queries run, so the badges keep working through a staggered rollout.
+ */
+export function useShellBadges(employeeId: number | undefined, isSupervisor: boolean) {
+  const { data: badges } = useQuery(menuBadgesQuery());
+  const serverLeaves = badges?.leaves;
+  const serverUnread = badges?.unread_notifications;
+
+  const { data: assignedLeaves = [] } = useQuery({
+    ...homeAssignedLeavesQuery(employeeId),
+    enabled: !!employeeId && isSupervisor && serverLeaves === undefined,
+  });
+  const { data: notifications = [] } = useQuery({
+    ...homeNotificationsQuery(employeeId),
+    enabled: !!employeeId && serverUnread === undefined,
+  });
+
+  const pendingCount = useMemo(() => {
+    if (!isSupervisor) return 0;
+    if (serverLeaves !== undefined) return serverLeaves;
+    return assignedLeaves.filter(
+      (l) => leaveStatusGroup(l.status) === 'pending' && !l.signers?.some((s) => s.id === employeeId)
+    ).length;
+  }, [assignedLeaves, isSupervisor, employeeId, serverLeaves]);
+
+  const unreadCount = useMemo(
+    () => (serverUnread !== undefined ? serverUnread : notifications.filter((n) => !n.is_read).length),
+    [notifications, serverUnread]
+  );
+
+  return { pendingCount, unreadCount };
 }
 
 // Today's turnstile events for the WHOLE branch, powering the roster in the
