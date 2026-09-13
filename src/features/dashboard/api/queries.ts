@@ -8,8 +8,7 @@ import {
   TURNSTILE_ATTENDANCE_EVENTS,
   EMPLOYEES_BIRTHDAYS,
 } from '@/api/urls';
-import { fetchAllAttendanceEvents, attendanceQueryKey } from '@/utils/attendance';
-import { employeesListQuery } from '@/utils/employees';
+import { fetchAllAttendanceEvents, attendanceQueryKey, dayRosterQuery } from '@/utils/attendance';
 import { leaveStatusGroup } from '@/utils/leaveStatus';
 import { menuBadgesQuery } from '@/features/notifications/api/queries';
 import type { AttendanceEvent, WorkLeave, Notification, EmployeeBirthday } from '@/types';
@@ -162,29 +161,6 @@ export function homeTodayAttendanceQuery(dateKey: string, orgBranchId?: number) 
   });
 }
 
-// Today's team leaves, powering the roster's onLeave status in the Home
-// attendance content block. Cross-feature imports are disallowed (see
-// `src/features/README.md`), so this can't import the attendance feature's
-// `teamLeavesQuery` — instead it reproduces the IDENTICAL key shape
-// (`['work-leaves', 'team', dateKey, branchId]`) and fetcher that
-// `src/features/attendance/api/queries.ts#teamLeavesQuery` uses, so TanStack
-// Query treats it as the SAME cache entry (dedup, not a fork) when the user
-// also opens Team / Attendance-detail for today. Do NOT change this key
-// shape without updating the attendance feature's copy in lockstep.
-export function homeTeamLeavesQuery(dateKey: string, size: number, branchId?: number | null) {
-  const params: Record<string, unknown> = { size };
-  if (branchId != null) params.organization_branch_id = branchId;
-  return queryOptions({
-    queryKey: ['work-leaves', 'team', dateKey, branchId ?? null] as const,
-    queryFn: () =>
-      apiClient.get(WORK_LEAVES, { params }).then((r) => {
-        const d = r.data as any;
-        return (Array.isArray(d) ? d : (d?.items ?? [])) as WorkLeave[];
-      }),
-    staleTime: 2 * 60 * 1000,
-  });
-}
-
 // Warm the caches the OTHER screens read so navigating to team /
 // attendance-detail / birthdays is instant. Each entry reuses the EXACT shared
 // key + staleTime the destination screen uses (employeesListQuery,
@@ -195,7 +171,8 @@ export function prefetchHomeData(
   orgBranchId: number | undefined,
   today: string,
 ) {
-  qc.prefetchQuery(employeesListQuery(orgBranchId));
+  // The roster itself (server statuses) — same key Home/Team/AttendanceDetail read.
+  qc.prefetchQuery(dayRosterQuery(today, orgBranchId, false));
   qc.prefetchQuery({
     queryKey: attendanceQueryKey(today, orgBranchId),
     queryFn: () => fetchAllAttendanceEvents(today, orgBranchId),

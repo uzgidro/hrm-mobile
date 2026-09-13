@@ -14,15 +14,15 @@ import { useAuthStore } from '@/store/authStore';
 import { usePrefsStore } from '@/store/prefsStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
-import { Employee, AttendanceEvent, WorkLeave, EmployeeBirthday } from '@/types';
+import { Employee, EmployeeAttendance, WorkLeave, EmployeeBirthday } from '@/types';
 import { canAccessPage } from '@/utils/roles';
-import { employeesListQuery } from '@/utils/employees';
+import { buildRosterFromNormalized } from '@/utils/attendanceRoster';
 import { leaveStatusGroup } from '@/utils/leaveStatus';
 import { Icon, IconName } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
-import { dayAttendanceQuery, teamLeavesQuery } from '../api/queries';
+import { dayAttendanceQuery, dayRosterQuery, teamLeavesQuery } from '../api/queries';
 
 // This dashboard composes four domains. Attendance + leaves come from this
 // feature's own factories. Employees uses the shared `employeesListQuery`
@@ -128,9 +128,11 @@ export default function TeamScreen() {
     user?.employee?.department?.organization_branch_id;
   const today = dayjs().format('YYYY-MM-DD');
 
+  // Statuses come from the server (`/normalized`, `supervised=true` = my direct
+  // reports); the raw day events only decorate rows with entry times.
   const results = useQueries({
     queries: [
-      employeesListQuery(orgBranchId),
+      dayRosterQuery(today, orgBranchId, onlySubordinates && !!myId),
       dayAttendanceQuery(today, orgBranchId),
       teamLeavesQuery(today, 20, orgBranchId),
       {
@@ -147,62 +149,29 @@ export default function TeamScreen() {
     ],
   });
 
-  const [empQ, attQ, leavesQ, bDayQ] = results;
+  const [rosterQ, attQ, leavesQ, bDayQ] = results;
   const isRefreshing = results.some((r) => r.isFetching);
   const refetchAll = () => results.forEach((r) => r.refetch());
 
-  const allEmployees: Employee[] = useMemo(() => empQ.data?.items ?? [], [empQ.data]);
-  // "Faqat bo'ysunuvchilar" — show only employees whose supervisor is the current user
-  const employees: Employee[] = useMemo(
-    () => (onlySubordinates && myId ? allEmployees.filter((e) => e.supervisor_id === myId) : allEmployees),
-    [allEmployees, onlySubordinates, myId]
+  const roster = useMemo(
+    () => buildRosterFromNormalized(rosterQ.data?.items ?? [], today, attQ.data?.items ?? []),
+    [rosterQ.data, attQ.data, today],
   );
-  const empTotal: number = onlySubordinates ? employees.length : (empQ.data?.total ?? 0);
-  const events: AttendanceEvent[] = useMemo(() => attQ.data?.items ?? [], [attQ.data]);
+  const employees: EmployeeAttendance[] = useMemo(() => roster.rows.map((r) => r.employee), [roster]);
   const workLeaves: WorkLeave[] = useMemo(() => (leavesQ.data as WorkLeave[]) ?? [], [leavesQ.data]);
   const birthdays: EmployeeBirthday[] = useMemo(() => bDayQ.data ?? [], [bDayQ.data]);
 
   const empIdSet = useMemo(() => new Set(employees.map((e) => e.id)), [employees]);
 
-  const attendanceStats = useMemo(() => {
-    const attendedIds = new Set<number>();
-    const lateIds = new Set<number>();
-    const firstEntry = new Map<number, string>();
-
-    for (const ev of events) {
-      const eid = ev.employee_id;
-      if (!eid || !empIdSet.has(eid)) continue;
-      const existing = firstEntry.get(eid);
-      if (!existing || ev.happen_time < existing) firstEntry.set(eid, ev.happen_time);
-      attendedIds.add(eid);
-    }
-
-    for (const emp of employees) {
-      const entry = firstEntry.get(emp.id);
-      if (entry && emp.working_hours_start) {
-        const expected = dayjs(`${today}T${emp.working_hours_start}`);
-        if (dayjs(entry).diff(expected, 'minute') > 5) lateIds.add(emp.id);
-      }
-    }
-
-    const todayStart = dayjs(today).startOf('day');
-    const todayEnd = dayjs(today).endOf('day');
-    const onLeaveIds = new Set<number>(
-      workLeaves
-        .filter((l) => {
-          if (!l.employee?.id || !empIdSet.has(l.employee.id)) return false;
-          return dayjs(l.start_date).isBefore(todayEnd) && dayjs(l.end_date).isAfter(todayStart);
-        })
-        .map((l) => l.employee!.id)
-    );
-
-    return {
-      present: Math.max(0, attendedIds.size - lateIds.size),
-      late: lateIds.size,
-      onLeave: onLeaveIds.size,
-      total: empTotal,
-    };
-  }, [events, employees, workLeaves, today, empTotal, empIdSet]);
+  const attendanceStats = useMemo(
+    () => ({
+      present: roster.counts.present,
+      late: roster.counts.late,
+      onLeave: roster.counts.onLeave,
+      total: rosterQ.data?.total ?? roster.counts.total,
+    }),
+    [roster, rosterQ.data?.total],
+  );
 
   const recentLeaves = useMemo(
     () =>
@@ -242,7 +211,7 @@ export default function TeamScreen() {
           </View>
         )}
 
-        <SectionCard icon="chart" title={t('attendance.title')} loading={empQ.isLoading || attQ.isLoading} colors={colors} styles={styles}>
+        <SectionCard icon="chart" title={t('attendance.title')} loading={rosterQ.isLoading || attQ.isLoading} colors={colors} styles={styles}>
           <View style={styles.chartRow}>
             <DonutChart c={colors} styles={styles}
               total={attendanceStats.total} present={attendanceStats.present}
@@ -309,7 +278,7 @@ export default function TeamScreen() {
           </TouchableOpacity>
         </SectionCard>
 
-        <SectionCard icon="users" title={t('attendance.teamTitle')} rightLabel={canAccessPage(user, 'employees') ? t('common.all') : undefined} onRightPress={() => router.push('/employees-list')} loading={empQ.isLoading} colors={colors} styles={styles}>
+        <SectionCard icon="users" title={t('attendance.teamTitle')} rightLabel={canAccessPage(user, 'employees') ? t('common.all') : undefined} onRightPress={() => router.push('/employees-list')} loading={rosterQ.isLoading} colors={colors} styles={styles}>
           {topEmployees.length === 0 ? (
             <Text style={styles.emptyText}>{t('attendance.noEmployees')}</Text>
           ) : (

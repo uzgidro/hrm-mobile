@@ -4,6 +4,10 @@ import { WORK_LEAVES } from '@/api/urls';
 import { fetchAllAttendanceEvents, attendanceQueryKey } from '@/utils/attendance';
 import type { WorkLeave } from '@/types';
 
+// The day's roster (server statuses) lives in the shared util so Home / Team /
+// AttendanceDetail read ONE cache entry per (date, branch, supervised).
+export { dayRosterQuery } from '@/utils/attendance';
+
 // Per-feature queryOptions factories for the attendance-centric dashboards
 // (team, attendance-detail). These screens COMPOSE several domains — employees,
 // attendance, leaves, birthdays — so this file only owns the two pieces that are
@@ -50,6 +54,10 @@ export function teamLeavesQuery(dateKey: string, size: number, branchId?: number
   // (cross-branch PII leak). The attendance dashboards are already branch-wide
   // (branch employees + branch attendance), so constraining leaves to the same
   // branch is both the security boundary and the correct data set.
+  //
+  // This feed only powers the "recent requests" card now (the roster's
+  // on-leave status comes from the server via `/normalized`), so it is the
+  // newest `size` requests of the branch, any status.
   const params: Record<string, unknown> = { size };
   if (branchId != null) params.organization_branch_id = branchId;
   return queryOptions({

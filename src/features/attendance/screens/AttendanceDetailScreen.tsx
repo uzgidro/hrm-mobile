@@ -10,17 +10,17 @@ import { useAuthStore } from '@/store/authStore';
 import { usePrefsStore } from '@/store/prefsStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
-import { Employee, AttendanceEvent, WorkLeave } from '@/types';
-import { employeesListQuery } from '@/utils/employees';
-import { buildAttendanceRoster, type AttendanceStatus } from '@/utils/attendanceRoster';
+import { AttendanceEvent } from '@/types';
+import { buildRosterFromNormalized, type AttendanceStatus } from '@/utils/attendanceRoster';
+import { getApiErrorMessage } from '@/api/errors';
 import { monthName, weekdayName } from '@/i18n/dates';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
-import { LoadingView } from '@/components/StateViews';
+import { LoadingView, ErrorState } from '@/components/StateViews';
 import { AttendanceDonut } from '@/components/AttendanceDonut';
 import { RosterRow } from '@/components/RosterRow';
-import { dayAttendanceQuery, teamLeavesQuery } from '../api/queries';
+import { dayAttendanceQuery, dayRosterQuery } from '../api/queries';
 
 type StatusGroup = AttendanceStatus;
 
@@ -44,24 +44,23 @@ export default function AttendanceDetailScreen() {
   const prevDay = () => setSelectedDate(selDay.subtract(1, 'day').format('YYYY-MM-DD'));
   const nextDay = () => setSelectedDate(selDay.add(1, 'day').format('YYYY-MM-DD'));
 
+  // Server-computed statuses (`/normalized`, `supervised=true` = my direct
+  // reports) + the day's raw events for entry/exit times.
   const results = useQueries({
     queries: [
-      employeesListQuery(orgBranchId),
+      dayRosterQuery(selectedDate, orgBranchId, onlySubordinates && !!myId),
       dayAttendanceQuery(selectedDate, orgBranchId),
-      teamLeavesQuery(selectedDate, 100, orgBranchId),
     ],
   });
 
-  const [empQ, attQ, leavesQ] = results;
+  const [rosterQ, attQ] = results;
   const isLoading = results.some((r) => r.isLoading);
+  const isError = rosterQ.isError;
 
   const { rows, counts } = useMemo(() => {
-    let employees: Employee[] = empQ.data?.items ?? [];
-    if (onlySubordinates && myId) employees = employees.filter((e) => e.supervisor_id === myId);
     const events: AttendanceEvent[] = attQ.data?.items ?? [];
-    const workLeaves: WorkLeave[] = leavesQ.data ?? [];
-    return buildAttendanceRoster(employees, events, workLeaves, selectedDate, t('attendance.leaveFallback'));
-  }, [empQ.data, attQ.data, leavesQ.data, selectedDate, onlySubordinates, myId, t]);
+    return buildRosterFromNormalized(rosterQ.data?.items ?? [], selectedDate, events);
+  }, [rosterQ.data, attQ.data, selectedDate]);
 
   // One alphabetical list; the donut zone (sectionFilter) narrows it.
   const visibleRows = useMemo(
@@ -86,6 +85,8 @@ export default function AttendanceDetailScreen() {
 
       {isLoading ? (
         <LoadingView />
+      ) : isError ? (
+        <ErrorState message={getApiErrorMessage(rosterQ.error, t('errors.refreshFailed'))} onRetry={() => rosterQ.refetch()} />
       ) : (
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           {onlySubordinates && (

@@ -7,8 +7,9 @@
 // tile, so a future refactor can't silently break the vertical stack.
 import React from 'react';
 import MockAdapter from 'axios-mock-adapter';
+import dayjs from 'dayjs';
 import { apiClient } from '@/api/client';
-import { TURNSTILE_ATTENDANCE_EVENTS, WORK_LEAVES, EMPLOYEES_LIST, EMPLOYEES_BIRTHDAYS, NOTIFICATIONS_LIST } from '@/api/urls';
+import { TURNSTILE_ATTENDANCE_EVENTS, TURNSTILE_ATTENDANCE_NORMALIZED, WORK_LEAVES, EMPLOYEES_LIST, EMPLOYEES_BIRTHDAYS, NOTIFICATIONS_LIST } from '@/api/urls';
 import { renderWithProviders, waitFor, fireEvent } from '@/test/renderWithProviders';
 import { useAuthStore } from '@/store/authStore';
 import HomeScreen from '../screens/HomeScreen';
@@ -54,11 +55,13 @@ describe('HomeScreen (attendance content block renders the module content, not j
       isAuthenticated: true,
     } as any);
     mock = new MockAdapter(apiClient);
-    mock.onGet(EMPLOYEES_LIST).reply(200, {
-      items: [{ id: 2, legal_name: 'Aliyeva Zulfiya', working_hours_start: '09:00' }],
+    // Roster statuses come from the SERVER (`/normalized`) since 2026-09-13.
+    mock.onGet(TURNSTILE_ATTENDANCE_NORMALIZED).reply(200, {
+      items: [{ id: 2, legal_name: 'Aliyeva Zulfiya', attendance: { calendar: { [dayjs().format('YYYY-MM-DD')]: 'absent' } } }],
       total: 1,
     });
-    mock.onGet(TURNSTILE_ATTENDANCE_EVENTS).reply(200, { items: [], total: 0 });
+    mock.onGet(EMPLOYEES_LIST).reply(200, { items: [], total: 0 });
+    mock.onGet(TURNSTILE_ATTENDANCE_EVENTS).reply(200, []);
     mock.onGet(WORK_LEAVES).reply(200, { items: [] });
     mock.onGet(EMPLOYEES_BIRTHDAYS).reply(200, []);
     mock.onGet(NOTIFICATIONS_LIST).reply(200, { items: [] });

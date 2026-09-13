@@ -1,61 +1,86 @@
+import { queryOptions } from '@tanstack/react-query';
 import { apiClient } from '../api/client';
-import { TURNSTILE_ATTENDANCE_EVENTS } from '../api/urls';
-import { AttendanceEvent } from '../types';
+import { TURNSTILE_ATTENDANCE_EVENTS, TURNSTILE_ATTENDANCE_NORMALIZED } from '../api/urls';
+import { AttendanceEvent, EmployeeAttendance } from '../types';
 import { mapWithConcurrency } from './concurrency';
 
 interface AttendancePage { items: AttendanceEvent[]; total: number }
 
-// Max simultaneous page requests; attendance can span up to 20 pages.
-const PAGE_CONCURRENCY = 4;
+// ── Raw turnstile events of ONE day (entry/exit times on roster rows) ────────
+//
+// `GET /turnstile-attendance-events` is NOT page/size paginated — it takes
+// `limit` (default and max 5000) / `offset` and answers a bare array. The old
+// helper sent `size=100&page=1` (silently dropped by FastAPI), so its
+// "parallel pagination" branch was dead code, and when the branch filter
+// returned 0 rows it re-fetched the WHOLE organisation's day (up to 5000 full
+// rows) as a "fallback". Both are gone: one bounded, branch-scoped request.
+const EVENTS_LIMIT = 5000;
 
-async function paginatedFetch(params: Record<string, unknown>): Promise<AttendancePage> {
-  const firstRes = await apiClient.get(TURNSTILE_ATTENDANCE_EVENTS, { params });
-  const raw = firstRes.data as any;
-
-  // Handle plain array response (API sometimes returns array without pagination wrapper)
-  if (Array.isArray(raw)) return { items: raw as AttendanceEvent[], total: raw.length };
-  if (!raw?.items) return { items: [], total: 0 };
-  if (raw.total <= 100) return { items: raw.items, total: raw.total };
-
-  // Parallel pagination for remaining pages (cap at 20 pages = 2000 events)
-  const totalPages = Math.min(Math.ceil(raw.total / 100), 20);
-  const pages = Array.from({ length: totalPages - 1 }, (_, i) => i + 2);
-  const rest = await mapWithConcurrency(pages, PAGE_CONCURRENCY, (page) =>
-    apiClient
-      .get(TURNSTILE_ATTENDANCE_EVENTS, { params: { ...params, page } })
-      .then((r) => {
-        const d = r.data as any;
-        return ((Array.isArray(d) ? d : d?.items) ?? []) as AttendanceEvent[];
-      })
-      .catch(() => [] as AttendanceEvent[]),
-  );
-  const items = [...raw.items, ...rest.flat()];
-  return { items, total: raw.total };
-}
-
-/**
- * Fetches attendance events for a given date.
- * Strategy: try with organization_branch_id first (fast, scoped).
- * If 0 results, fallback to no filter — empIdSet in team.tsx/attendance-detail.tsx
- * cross-references to only count the correct branch employees.
- * This handles cases where turnstile events have no organization_branch_id set.
- */
 export async function fetchAllAttendanceEvents(
   date: string,
   orgBranchId?: number,
 ): Promise<AttendancePage> {
-  const base: Record<string, unknown> = { date_from: date, date_to: date, size: 100, page: 1 };
-
-  if (orgBranchId) {
-    const result = await paginatedFetch({ ...base, organization_branch_id: orgBranchId });
-    if (result.items.length > 0) return result;
-    // 0 events with branch filter → events may lack organization_branch_id (BFD/MCHJ case)
-  }
-
-  // Fallback: all events for the date — empIdSet cross-reference handles branch scoping
-  return paginatedFetch(base);
+  const params: Record<string, unknown> = { date_from: date, date_to: date, limit: EVENTS_LIMIT };
+  if (orgBranchId) params.organization_branch_id = orgBranchId;
+  const res = await apiClient.get(TURNSTILE_ATTENDANCE_EVENTS, { params });
+  const raw = res.data as unknown;
+  const items = (Array.isArray(raw) ? raw : ((raw as { items?: AttendanceEvent[] })?.items ?? [])) as AttendanceEvent[];
+  return { items, total: items.length };
 }
 
 export function attendanceQueryKey(date: string, orgBranchId?: number) {
   return ['team-attendance', date, orgBranchId] as const;
+}
+
+// ── The day's ROSTER — server-computed statuses ─────────────────────────────
+//
+// `GET /turnstile-attendance-events/normalized` (the web EmployeeAttendancePage
+// source): one row per employee with `attendance.calendar[date]` resolved by
+// the backend (schedule, holidays, navbatchilik days off, leaves, trips,
+// `ignore_lateness`, remote workers, lateness excuses). `supervised=true` =
+// only my direct reports (server-side `supervisor_id`), which replaces the
+// client "onlySubordinates" intersection over the whole roster.
+//
+// Max page is 500; a branch fits in one request, a whole-organisation view
+// (a role without a branch) walks the remaining pages in parallel.
+const ROSTER_PAGE = 500;
+const PAGE_CONCURRENCY = 4;
+
+interface NormalizedPage { items: EmployeeAttendance[]; total: number }
+
+export async function fetchDayRoster(
+  date: string,
+  orgBranchId?: number,
+  supervised = false,
+): Promise<NormalizedPage> {
+  const base: Record<string, unknown> = {
+    date_from: date, date_to: date, size: ROSTER_PAGE, page: 1,
+    ...(orgBranchId ? { organization_branch_id: orgBranchId } : {}),
+    ...(supervised ? { supervised: true } : {}),
+  };
+  const first = (await apiClient.get<NormalizedPage>(TURNSTILE_ATTENDANCE_NORMALIZED, { params: base })).data;
+  const items = first?.items ?? [];
+  const total = first?.total ?? items.length;
+  if (total <= ROSTER_PAGE) return { items, total };
+  const pages = Array.from({ length: Math.ceil(total / ROSTER_PAGE) - 1 }, (_, i) => i + 2);
+  const rest = await mapWithConcurrency(pages, PAGE_CONCURRENCY, (page) =>
+    apiClient
+      .get<NormalizedPage>(TURNSTILE_ATTENDANCE_NORMALIZED, { params: { ...base, page } })
+      .then((r) => r.data?.items ?? []),
+  );
+  return { items: [...items, ...rest.flat()], total };
+}
+
+export function rosterQueryKey(date: string, orgBranchId?: number, supervised = false) {
+  return ['team-roster', date, orgBranchId ?? null, supervised] as const;
+}
+
+// Shared by Home / Team / AttendanceDetail so the three screens read ONE cache
+// entry per (date, branch, supervised).
+export function dayRosterQuery(date: string, orgBranchId?: number, supervised = false) {
+  return queryOptions({
+    queryKey: rosterQueryKey(date, orgBranchId, supervised),
+    queryFn: () => fetchDayRoster(date, orgBranchId, supervised),
+    staleTime: 3 * 60 * 1000,
+  });
 }

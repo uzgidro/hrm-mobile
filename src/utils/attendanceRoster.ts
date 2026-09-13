@@ -1,98 +1,83 @@
 // Pure attendance-roster logic shared by AttendanceDetailScreen (attendance
-// feature) and its content preview on HomeScreen (dashboard feature).
-// Extracted from the screen's useMemo so the bucketing + alphabetical
-// ordering is unit-testable (RNTL 14 rule: test pure functions, not
-// components). Lives in `src/utils` (not the attendance feature) so both
-// features can import it without a cross-feature import — see
-// `src/features/README.md`.
+// feature), TeamScreen and its content preview on HomeScreen (dashboard
+// feature). Lives in `src/utils` so both features can import it without a
+// cross-feature import — see `src/features/README.md`.
 //
-// A single flat roster is returned — every employee tagged with a status — plus
-// the counts the donut needs. The screen renders ONE alphabetical list and
-// filters it by the donut zone, instead of three separate status sections.
-import dayjs from 'dayjs';
-import type { Employee, AttendanceEvent, WorkLeave } from '@/types';
+// SOURCE OF TRUTH (2026-09-13): the SERVER. `GET /turnstile-attendance-events/
+// normalized` returns one row per employee with `attendance.calendar[date]`
+// already resolved — present / late / absent / day_off / business_trip / every
+// leave code — using the schedule, holidays, `ignore_lateness`, remote workers
+// and the lateness excuses the backend knows about. The previous client
+// re-computation (employees + raw events + 20 newest work-leaves, a fixed
+// 5-minute lateness threshold, and no status check on the leaves — so a
+// REJECTED request counted as "on leave") is gone. Raw turnstile events are
+// only used to show the first entry / last exit time on a row.
+import type { AttendanceEvent, EmployeeAttendance } from '@/types';
+import { tabelCodeMeta } from './tabelCodes';
+import i18n from '@/i18n';
 
 export type AttendanceStatus = 'present' | 'late' | 'onLeave' | 'absent';
 
 export interface RosterRow {
-  employee: Employee;
+  employee: EmployeeAttendance;
   status: AttendanceStatus;
+  /** Raw backend calendar code for the day (`present`, `sick_leave`, `day_off` …). */
+  code?: string;
   entryTime?: string; // ISO — first turnstile event of the day
   exitTime?: string; // ISO — last turnstile event of the day
-  leaveName?: string; // set only for onLeave
+  leaveName?: string; // set only for onLeave (localised calendar code label)
 }
 
-interface AttendanceRoster {
+export interface AttendanceRoster {
   rows: RosterRow[]; // ALL employees, sorted by legal_name (A→Z, locale-aware)
   counts: { total: number; present: number; late: number; onLeave: number; absent: number };
 }
 
-// Minutes past the expected start after which an arrival counts as "late".
-export const LATE_THRESHOLD_MIN = 5;
+/** Backend calendar code → donut zone. Anything that is neither presence nor
+ *  absence (leave, trip, day off, holiday, dismissed …) is "onLeave": the
+ *  person is not expected today for a reason the server knows. */
+export function statusForCode(code: string | undefined | null): AttendanceStatus {
+  if (code === 'present' || code === 'early_leave') return 'present';
+  if (code === 'late') return 'late';
+  if (code === 'absent' || code === 'progul' || !code) return 'absent';
+  return 'onLeave';
+}
 
-/** Build the day's roster from employees + turnstile events + team leaves.
- *  `leaveFallback` is the label used when a WorkLeave has no `type`. */
-export function buildAttendanceRoster(
-  employees: Employee[],
-  events: AttendanceEvent[],
-  workLeaves: WorkLeave[],
-  selectedDate: string,
-  leaveFallback: string,
+/** Build the day's roster from the normalized rows (+ optional raw events for
+ *  entry/exit times). */
+export function buildRosterFromNormalized(
+  rows: EmployeeAttendance[],
+  date: string,
+  events: AttendanceEvent[] = [],
 ): AttendanceRoster {
-  const empIdSet = new Set(employees.map((e) => e.id));
   const firstEntry = new Map<number, string>();
   const lastExit = new Map<number, string>();
-
   for (const ev of events) {
     const eid = ev.employee_id;
-    if (!eid || !empIdSet.has(eid)) continue;
+    if (!eid) continue;
     const exEntry = firstEntry.get(eid);
     if (!exEntry || ev.happen_time < exEntry) firstEntry.set(eid, ev.happen_time);
     const exExit = lastExit.get(eid);
     if (!exExit || ev.happen_time > exExit) lastExit.set(eid, ev.happen_time);
   }
 
-  const dayStart = dayjs(selectedDate).startOf('day');
-  const dayEnd = dayjs(selectedDate).endOf('day');
-  const leaveMap = new Map<number, string>();
-  for (const l of workLeaves) {
-    if (!l.employee?.id) continue;
-    const s = dayjs(l.start_date);
-    const e = dayjs(l.end_date);
-    if (s.isBefore(dayEnd) && e.isAfter(dayStart)) leaveMap.set(l.employee.id, l.type ?? leaveFallback);
-  }
-
-  const counts = { total: employees.length, present: 0, late: 0, onLeave: 0, absent: 0 };
-
-  const rows: RosterRow[] = employees.map((emp) => {
-    const entry = firstEntry.get(emp.id);
-    const exit = lastExit.get(emp.id);
-    const leaveName = leaveMap.get(emp.id);
-
-    // onLeave wins only when the person has NO turnstile entry (a person who
-    // came in despite an open leave is counted by their real arrival).
-    if (leaveName && !entry) {
-      counts.onLeave += 1;
-      return { employee: emp, status: 'onLeave' as const, leaveName };
+  const counts = { total: rows.length, present: 0, late: 0, onLeave: 0, absent: 0 };
+  const out: RosterRow[] = rows.map((emp) => {
+    const code = emp.attendance?.calendar?.[date];
+    const status = statusForCode(code);
+    counts[status] += 1;
+    const row: RosterRow = { employee: emp, status, code: code ?? undefined };
+    if (status === 'present' || status === 'late') {
+      row.entryTime = firstEntry.get(emp.id);
+      row.exitTime = lastExit.get(emp.id);
+    } else if (status === 'onLeave') {
+      row.leaveName = i18n.t(tabelCodeMeta(code).labelKey);
     }
-    if (!entry) {
-      counts.absent += 1;
-      return { employee: emp, status: 'absent' as const };
-    }
-    if (emp.working_hours_start) {
-      const expected = dayjs(`${selectedDate}T${emp.working_hours_start}`);
-      if (dayjs(entry).diff(expected, 'minute') > LATE_THRESHOLD_MIN) {
-        counts.late += 1;
-        return { employee: emp, status: 'late' as const, entryTime: entry, exitTime: exit };
-      }
-    }
-    counts.present += 1;
-    return { employee: emp, status: 'present' as const, entryTime: entry, exitTime: exit };
+    return row;
   });
 
-  rows.sort((a, b) =>
+  out.sort((a, b) =>
     (a.employee.legal_name ?? '').localeCompare(b.employee.legal_name ?? '', undefined, { sensitivity: 'base' }),
   );
-
-  return { rows, counts };
+  return { rows: out, counts };
 }

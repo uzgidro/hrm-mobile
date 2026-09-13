@@ -19,11 +19,11 @@ import { AttendanceDonut } from '@/components/AttendanceDonut';
 import { RosterRow } from '@/components/RosterRow';
 import { useBreakpoint } from '@/utils/responsive';
 import { notificationMeta } from '@/services/notifications';
-import { AttendanceEvent, Employee, WorkLeave } from '@/types';
+import { AttendanceEvent, EmployeeAttendance } from '@/types';
 import { leaveStatusGroup, leaveStatusKind } from '@/utils/leaveStatus';
 import { statusColor } from '@/utils/orderStatus';
-import { employeesListQuery } from '@/utils/employees';
-import { buildAttendanceRoster, type AttendanceStatus } from '@/utils/attendanceRoster';
+import { dayRosterQuery } from '@/utils/attendance';
+import { buildRosterFromNormalized, type AttendanceStatus } from '@/utils/attendanceRoster';
 import {
   homeAttendanceQuery,
   homeMyLeavesQuery,
@@ -31,7 +31,6 @@ import {
   homeNotificationsQuery,
   useShellBadges,
   homeTodayAttendanceQuery,
-  homeTeamLeavesQuery,
   prefetchHomeData,
 } from '../api/queries';
 
@@ -106,23 +105,20 @@ export default function HomeScreen() {
   // the tile it replaces, and skipped entirely off that role.
   const rosterQueries = useMemo(
     () => [
-      { ...employeesListQuery(orgBranchId), enabled: canSeeAttendanceContent },
+      { ...dayRosterQuery(todayStr, orgBranchId, onlySubordinates && !!myId), enabled: canSeeAttendanceContent },
       { ...homeTodayAttendanceQuery(todayStr, orgBranchId), enabled: canSeeAttendanceContent },
-      { ...homeTeamLeavesQuery(todayStr, 100, orgBranchId), enabled: canSeeAttendanceContent },
     ],
-    [orgBranchId, todayStr, canSeeAttendanceContent]
+    [orgBranchId, todayStr, canSeeAttendanceContent, onlySubordinates, myId]
   );
   const rosterResults = useQueries({ queries: rosterQueries });
-  const [rosterEmpQ, rosterAttQ, rosterLeavesQ] = rosterResults;
+  const [rosterQ, rosterAttQ] = rosterResults;
   const isRosterLoading = canSeeAttendanceContent && rosterResults.some((r) => r.isLoading);
 
   const { rows: rosterRows, counts: rosterCounts } = useMemo(() => {
-    let employees: Employee[] = (rosterEmpQ.data as { items: Employee[] } | undefined)?.items ?? [];
-    if (onlySubordinates && myId) employees = employees.filter((e) => e.supervisor_id === myId);
     const events: AttendanceEvent[] = (rosterAttQ.data as { items: AttendanceEvent[] } | undefined)?.items ?? [];
-    const workLeaves: WorkLeave[] = (rosterLeavesQ.data as WorkLeave[]) ?? [];
-    return buildAttendanceRoster(employees, events, workLeaves, todayStr, t('attendance.leaveFallback'));
-  }, [rosterEmpQ.data, rosterAttQ.data, rosterLeavesQ.data, todayStr, onlySubordinates, myId, t]);
+    const rosterRowsData = (rosterQ.data as { items: EmployeeAttendance[] } | undefined)?.items ?? [];
+    return buildRosterFromNormalized(rosterRowsData, todayStr, events);
+  }, [rosterQ.data, rosterAttQ.data, todayStr]);
 
   // One alphabetical list; the donut zone (rosterFilter) narrows it — same
   // behavior as AttendanceDetailScreen.

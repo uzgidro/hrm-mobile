@@ -41,7 +41,7 @@ describe('dayAttendanceQuery', () => {
       date_from: '2026-07-06',
       date_to: '2026-07-06',
       organization_branch_id: 3,
-      size: 100,
+      limit: 5000,
     });
   });
 
