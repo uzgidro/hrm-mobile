@@ -5,6 +5,8 @@ import {
   NAVBATCHILIK_GROUPS_MY,
   NAVBATCHILIK_GROUP_MEMBERS,
   WORK_SCHEDULE_DAYS,
+  WORK_SCHEDULE_DAYS_BY_DEPARTMENT,
+  EMPLOYEES_LIST,
   HOLIDAYS_LIST,
   DUTY_DAYS_LIST,
 } from '@/api/urls';
@@ -14,6 +16,8 @@ import {
   myNavbatchilikGroupsQuery,
   groupMembersQuery,
   myScheduleDaysQuery,
+  departmentMembersQuery,
+  departmentScheduleDaysQuery,
   holidaysQuery,
   offDayDutyQuery,
 } from '../queries';
@@ -193,5 +197,53 @@ describe('offDayDutyQuery', () => {
     mock.onGet(DUTY_DAYS_LIST).reply(200, { items: [], total: 0 });
     await (offDayDutyQuery(7).queryFn as () => Promise<unknown[]>)();
     expect(mock.history.get[0].params).toEqual({ size: 100, organization_branch_id: 7 });
+  });
+});
+
+// ── Bo'lim navbatchiligi (department.has_navbatchilik) ───────────────────────
+// Guruhga a'zo bo'lmagan navbatchi bo'lim: guruh zanjiri hech nima qaytarmaydi,
+// shu bois grid bo'sh chiqardi. Bu ikki so'rov o'sha bo'shliqni yopadi.
+
+describe('departmentMembersQuery', () => {
+  it('is disabled until the department is known', () => {
+    expect(departmentMembersQuery(undefined).enabled).toBe(false);
+    expect(departmentMembersQuery(31).enabled).toBe(true);
+  });
+
+  it('keys per department, distinct from the group roster key', () => {
+    expect(departmentMembersQuery(31).queryKey).toEqual(['timesheet', 'dept-members', 31]);
+    expect(departmentMembersQuery(31).queryKey).not.toEqual(timesheetKeys.groupMembers(31));
+  });
+
+  it('asks for the whole department in one page', async () => {
+    mock.onGet(EMPLOYEES_LIST).reply(200, { items: [{ id: 5, legal_name: 'A' }], total: 1 });
+    const data = await (departmentMembersQuery(31).queryFn as () => Promise<unknown[]>)();
+    expect(mock.history.get[0].params).toEqual({ department_id: 31, size: 100 });
+    expect(data).toEqual([{ id: 5, legal_name: 'A' }]);
+  });
+});
+
+describe('departmentScheduleDaysQuery', () => {
+  it('is disabled until the department is known', () => {
+    expect(departmentScheduleDaysQuery('2026-07', undefined).enabled).toBe(false);
+    expect(departmentScheduleDaysQuery('2026-07', 31).enabled).toBe(true);
+  });
+
+  it('keys per month + department, distinct from the group schedule key', () => {
+    expect(departmentScheduleDaysQuery('2026-07', 31).queryKey)
+      .toEqual(['timesheet', 'dept-schedule-days', '2026-07', 31]);
+    expect(departmentScheduleDaysQuery('2026-07', 31).queryKey)
+      .not.toEqual(timesheetKeys.groupScheduleDays('2026-07', 31));
+  });
+
+  it('expands the month and returns a flat unpaginated list', async () => {
+    const rows = [
+      { id: 1, employee_id: 5, schedule_date: '2026-07-04', schedule_type: 'day' },
+      { id: 2, employee_id: 6, schedule_date: '2026-07-04', schedule_type: 'night' },
+    ];
+    mock.onGet(WORK_SCHEDULE_DAYS_BY_DEPARTMENT(31)).reply(200, rows);
+    const data = await (departmentScheduleDaysQuery('2026-07', 31).queryFn as () => Promise<unknown[]>)();
+    expect(mock.history.get[0].params).toEqual({ date_from: '2026-07-01', date_to: '2026-07-31' });
+    expect(data).toEqual(rows);
   });
 });
