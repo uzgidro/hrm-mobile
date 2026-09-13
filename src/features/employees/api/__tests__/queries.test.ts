@@ -36,13 +36,13 @@ describe('employeesListQuery', () => {
     expect(employeesListQuery().queryKey).toEqual(employeesQueryKey());
   });
 
-  it('returns the paginated fetchAllEmployees result (single page, total <= 100)', async () => {
+  it('returns the paginated fetchAllEmployees result (single page, total <= 500)', async () => {
     const items = [{ id: 1 }, { id: 2 }];
     mock.onGet(EMPLOYEES_LIST).reply(200, { items, total: 2 });
     const data = await (employeesListQuery(7).queryFn as () => Promise<{ items: unknown[]; total: number }>)();
     expect(data).toEqual({ items, total: 2 });
     // orgBranchId is forwarded to the roster helper.
-    expect(mock.history.get[0].params).toMatchObject({ organization_branch_id: 7, size: 100 });
+    expect(mock.history.get[0].params).toMatchObject({ organization_branch_id: 7, size: 500 });
   });
 });
 
