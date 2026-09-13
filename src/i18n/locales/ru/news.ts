@@ -19,4 +19,7 @@ export default {
   save: 'Сохранить',
   created: 'Новость опубликована',
   titleRequired: 'Необходимо указать заголовок',
+  editTitle: 'Редактировать новость',
+  updated: 'Сохранено',
+  deleteConfirmTitle: 'Удалить новость?',
 } as const;

@@ -19,4 +19,7 @@ export default {
   save: 'Сақлаш',
   created: 'Янгилик жойланди',
   titleRequired: 'Сарлавҳа киритилиши шарт',
+  editTitle: 'Янгиликни таҳрирлаш',
+  updated: 'Сақланди',
+  deleteConfirmTitle: 'Янгиликни ўчирасизми?',
 } as const;

@@ -1,7 +1,7 @@
 import { queryOptions } from '@tanstack/react-query';
 import { pagedListOptions } from '@/lib/pagedList';
 import { apiClient } from '@/api/client';
-import { NEWS_POSTS, ORGANIZATION_BRANCHES } from '@/api/urls';
+import { NEWS_POSTS, NEWS_POST_DETAIL, ORGANIZATION_BRANCHES } from '@/api/urls';
 import type { NewsPost } from '@/types';
 
 interface NewsBranchOption {
@@ -43,5 +43,14 @@ export function newsBranchesQuery(enabled: boolean) {
       }),
     enabled,
     staleTime: 5 * 60 * 1000,
+  });
+}
+
+// One post — the edit form's prefill (`NewsPostRead`, same shape as a list row).
+export function newsDetailQuery(id: number) {
+  return queryOptions({
+    queryKey: newsKeys.detail(id),
+    queryFn: () => apiClient.get<NewsPost>(NEWS_POST_DETAIL(id)).then((r) => r.data),
+    enabled: !!id,
   });
 }

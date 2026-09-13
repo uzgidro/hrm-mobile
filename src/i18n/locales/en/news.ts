@@ -19,4 +19,7 @@ export default {
   save: 'Save',
   created: 'Post published',
   titleRequired: 'A title is required',
+  editTitle: 'Edit news',
+  updated: 'Saved',
+  deleteConfirmTitle: 'Delete this news post?',
 } as const;

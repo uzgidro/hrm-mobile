@@ -57,6 +57,8 @@ export const WORK_LEAVE_REJECT = (id: number) => `work-leaves/${id}/reject`;
 
 // News
 export const NEWS_POSTS = 'news-posts';
+// Yangilikni tahrirlash / o'chirish (web NewsPage pariteti, 2026-09-13).
+export const NEWS_POST_DETAIL = (id: number) => `news-posts/${id}`;
 
 // Chairman tasks (Raisning kun tartibi — agenda). Calendar-style entries: no
 // detail endpoint (the list carries everything). Manage = secretariat / admin.

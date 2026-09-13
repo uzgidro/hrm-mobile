@@ -26,4 +26,7 @@ export default {
   save: 'Saqlash',
   created: 'Yangilik joylandi',
   titleRequired: 'Sarlavha kiritilishi shart',
+  editTitle: 'Yangilikni tahrirlash',
+  updated: 'Saqlandi',
+  deleteConfirmTitle: "Yangilikni o'chirasizmi?",
 } as const;

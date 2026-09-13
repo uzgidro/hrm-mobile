@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
@@ -11,19 +11,34 @@ import { FormInput } from '@/components/FormInput';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { PickerModal, type PickerOption } from '@/components/PickerModal';
 import { getApiErrorMessage } from '@/api/errors';
-import { newsBranchesQuery } from '../api/queries';
-import { useCreateNewsPost } from '../api/mutations';
+import { newsBranchesQuery, newsDetailQuery } from '../api/queries';
+import { useCreateNewsPost, useUpdateNewsPost } from '../api/mutations';
 
 export default function NewsFormScreen() {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
+  // `?id=` → edit mode (web NewsPage edit modal parity). The form seeds from
+  // the post once, at render time (no effect+setState), keyed by post id.
+  const { id: editIdParam } = useLocalSearchParams<{ id?: string }>();
+  const editId = editIdParam ? Number(editIdParam) : null;
+  const { data: editing } = useQuery({ ...newsDetailQuery(editId ?? 0), enabled: !!editId });
+
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [branchId, setBranchId] = useState<number | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [seededFor, setSeededFor] = useState<number | null>(null);
+  if (editing && seededFor !== editing.id) {
+    setSeededFor(editing.id);
+    setTitle(editing.title ?? '');
+    setDescription(editing.description ?? '');
+    setBranchId(editing.organization_branch_id ?? null);
+  }
   const createM = useCreateNewsPost();
+  const updateM = useUpdateNewsPost(editId ?? 0);
+  const busy = createM.isPending || updateM.isPending;
 
   const { data: branches = [], isLoading: branchesLoading } = useQuery(newsBranchesQuery(pickerOpen));
   const branchOptions = useMemo<PickerOption[]>(
@@ -37,18 +52,18 @@ export default function NewsFormScreen() {
       Alert.alert(t('common.errorTitle'), t('news.titleRequired'));
       return;
     }
-    createM.mutate(
-      { title, description, organization_branch_id: branchId },
-      {
-        onSuccess: () => { Alert.alert(t('news.created'), ''); router.back(); },
-        onError: (e) => Alert.alert(t('common.errorTitle'), getApiErrorMessage(e, t('common.errorTitle'))),
-      },
-    );
+    const form = { title, description, organization_branch_id: branchId };
+    const opts = {
+      onSuccess: () => { Alert.alert(t(editId ? 'news.updated' : 'news.created'), ''); router.back(); },
+      onError: (e: unknown) => Alert.alert(t('common.errorTitle'), getApiErrorMessage(e, t('common.errorTitle'))),
+    };
+    if (editId) updateM.mutate(form, opts);
+    else createM.mutate(form, opts);
   };
 
   return (
     <Screen edges={['top', 'bottom']} maxWidth={640}>
-      <ScreenHeader title={t('news.createTitle')} />
+      <ScreenHeader title={t(editId ? 'news.editTitle' : 'news.createTitle')} />
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <FormInput
           label={t('news.titleLabel')}
@@ -78,8 +93,8 @@ export default function NewsFormScreen() {
           </TouchableOpacity>
         )}
 
-        <TouchableOpacity style={styles.submitBtn} onPress={submit} disabled={createM.isPending} activeOpacity={0.85}>
-          {createM.isPending
+        <TouchableOpacity style={styles.submitBtn} onPress={submit} disabled={busy} activeOpacity={0.85}>
+          {busy
             ? <ActivityIndicator color={colors.onPrimary} />
             : <Text style={styles.submitText}>{t('news.save')}</Text>}
         </TouchableOpacity>

@@ -1,10 +1,10 @@
 import { memo, useMemo, useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import { useAuthStore } from '@/store/authStore';
-import { useThemedStyles } from '@/theme/ThemeProvider';
+import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { useBreakpoint } from '@/utils/responsive';
 import type { NewsPost } from '@/types';
@@ -16,14 +16,18 @@ import { PagedList } from '@/components/PagedList';
 import { SearchBox } from '@/components/SearchBox';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { newsListQuery, newsBranchesQuery } from '../api/queries';
+import { useDeleteNewsPost } from '../api/mutations';
+import { Icon } from '@/components/Icon';
+import { confirm } from '@/lib/confirm';
 
 type Styles = ReturnType<typeof makeStyles>;
 
 const NewsCard = memo(function NewsCard(
-  { item, styles, grid, branchName }:
-  { item: NewsPost; styles: Styles; grid?: boolean; branchName?: string },
+  { item, styles, grid, branchName, onEdit, onDelete }:
+  { item: NewsPost; styles: Styles; grid?: boolean; branchName?: string; onEdit?: () => void; onDelete?: () => void },
 ) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
   // `GET news-posts` has no author (web does not show one either) — the card
   // leads with the date; the branch tag below says who it was addressed to.
   return (
@@ -32,6 +36,17 @@ const NewsCard = memo(function NewsCard(
         <View style={styles.authorInfo}>
           <Text style={styles.newsDate}>{dayjs(item.created_at).format('DD.MM.YYYY HH:mm')}</Text>
         </View>
+        {/* Manager actions (web NewsPage edit/delete parity). */}
+        {!!onEdit && (
+          <TouchableOpacity onPress={onEdit} hitSlop={8} accessibilityLabel={t('common.edit')} style={styles.cardAction}>
+            <Icon name="edit" size={16} color={colors.primary} />
+          </TouchableOpacity>
+        )}
+        {!!onDelete && (
+          <TouchableOpacity onPress={onDelete} hitSlop={8} accessibilityLabel={t('common.delete')} style={styles.cardAction}>
+            <Icon name="trash" size={16} color={colors.error} />
+          </TouchableOpacity>
+        )}
       </View>
 
       <Text style={styles.newsTitle}>{item.title}</Text>
@@ -62,6 +77,18 @@ export default function NewsScreen() {
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebouncedValue(search);
   const query = useInfiniteQuery(newsListQuery(branchId, debouncedSearch));
+  const deleteM = useDeleteNewsPost();
+  const onDelete = async (item: NewsPost) => {
+    if (deleteM.isPending) return;
+    const ok = await confirm({
+      title: t('news.deleteConfirmTitle'),
+      message: item.title,
+      confirmLabel: t('common.delete'),
+      cancelLabel: t('common.cancel'),
+      destructive: true,
+    });
+    if (ok) deleteM.mutate(item.id);
+  };
   // Filial nomlari — yangilik qaysi filialga yo'naltirilganini yozish uchun
   // (ro'yxat javobida faqat `organization_branch_id` bor). Forma ham shu
   // keshdan foydalanadi.
@@ -98,6 +125,8 @@ export default function NewsScreen() {
             branchName={item.organization_branch_id != null
               ? branchNameById.get(Number(item.organization_branch_id))
               : undefined}
+            onEdit={canManage ? () => router.push({ pathname: '/create-news', params: { id: String(item.id) } }) : undefined}
+            onDelete={canManage ? () => onDelete(item) : undefined}
           />
         )}
       />
@@ -113,6 +142,7 @@ const makeStyles = (c: ThemeColors) =>
 
     card: { backgroundColor: c.card, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: c.cardBorder },
     cardGrid: { flex: 1 },
+    cardAction: { padding: 6, borderRadius: 8 },
     cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
     authorInfo: { flex: 1 },
     newsDate: { fontSize: 12, color: c.textMuted, marginTop: 2 },
