@@ -268,4 +268,12 @@ export default {
   reportManualEditNote: 'Report was edited manually in Word — the document text may differ from these fields',
   reportManager: 'Report approver',
   reportManagerPlaceholder: 'Pick the leader',
+  sectionTripAttendance: 'Trip attendance',
+  tripAttPresent: 'Present days',
+  tripAttLate: 'Late',
+  tripAttAbsent: 'Absent',
+  tripAttHours: 'Total hours',
+  tripAttHourShort: 'h',
+  tripAttMore: '{{count}} more days',
+  tripAttLess: 'Less',
 } as const;

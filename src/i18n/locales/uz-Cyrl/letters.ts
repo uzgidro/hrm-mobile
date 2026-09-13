@@ -268,4 +268,12 @@ export default {
   reportManualEditNote: "Ҳисобот Word'да қўлда таҳрирланган — ҳужжат матни бу майдонлардан фарқ қилиши мумкин",
   reportManager: 'Ҳисоботни тасдиқловчи раҳбар',
   reportManagerPlaceholder: 'Раҳбарни танланг',
+  sectionTripAttendance: 'Сафар давомати',
+  tripAttPresent: 'Келган кун',
+  tripAttLate: 'Кечиккан',
+  tripAttAbsent: 'Келмаган',
+  tripAttHours: 'Жами соат',
+  tripAttHourShort: 'соат',
+  tripAttMore: 'Яна {{count}} кун',
+  tripAttLess: 'Камроқ',
 } as const;

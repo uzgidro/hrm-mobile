@@ -41,6 +41,7 @@ describe('Asos buyruq oynasi (BasisDecreeModal)', () => {
   beforeEach(() => {
     useAuthStore.setState({ user: HR_USER, isAuthenticated: true } as never);
     mock.onGet(new RegExp('letters/1/trip-movements')).reply(200, []);
+    mock.onGet(new RegExp('letters/1/trip-attendance')).reply(200, { letter_id: 1, days: [], events: [] });
     mock.onGet(new RegExp('letters/1')).reply(200, TRIP);
   });
   afterEach(() => mock.reset());

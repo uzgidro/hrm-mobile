@@ -399,6 +399,37 @@ export interface Letter {
 // A single kelish/ketish event of a business trip. event_type is a backend
 // contract string ('arrived' | 'departed') — never translated, only its label.
 // turnstile_event_id != null means the event came from a Face-ID turnstile.
+// GET /letters/{id}/trip-attendance (BusinessTripAttendanceRead).
+export interface TripAttendanceDay {
+  date: string;
+  status?: string | null; // present | late | absent | business_trip | annual_leave | ...
+  first_entrance?: string | null;
+  last_exit?: string | null;
+  work_hours?: number;
+  late_minutes?: number;
+  branch_names?: string[];
+  event_count?: number;
+}
+export interface TripAttendanceEvent {
+  id: number;
+  happen_time: string;
+  direction_type?: string | null;
+  turnstile_name?: string | null;
+  branch_name?: string | null;
+}
+export interface TripAttendance {
+  letter_id: number;
+  employee_name?: string | null;
+  date_from?: string | null;
+  date_to?: string | null;
+  days: TripAttendanceDay[];
+  events: TripAttendanceEvent[];
+  total_work_hours: number;
+  present_days: number;
+  late_days: number;
+  absent_days: number;
+}
+
 export interface BusinessTripMovement {
   id: number;
   letter_id?: number;

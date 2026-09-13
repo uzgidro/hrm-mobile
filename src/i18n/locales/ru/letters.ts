@@ -273,4 +273,12 @@ export default {
   reportManualEditNote: 'Отчёт отредактирован вручную в Word — текст документа может отличаться от этих полей',
   reportManager: 'Руководитель, утверждающий отчёт',
   reportManagerPlaceholder: 'Выберите руководителя',
+  sectionTripAttendance: 'Посещаемость в командировке',
+  tripAttPresent: 'Дней явки',
+  tripAttLate: 'Опозданий',
+  tripAttAbsent: 'Отсутствий',
+  tripAttHours: 'Всего часов',
+  tripAttHourShort: 'ч',
+  tripAttMore: 'Ещё {{count}} дн.',
+  tripAttLess: 'Свернуть',
 } as const;

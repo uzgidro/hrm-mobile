@@ -170,6 +170,9 @@ export const LETTER_APPROVE_GUVOHNOMA = (id: number) => `letters/${id}/approve-g
 // confirm-return sets is_trip_confirmed which unblocks the report stage; its
 // manage rights are branch-scoped (see isBranchHr).
 export const LETTER_TRIP_MOVEMENTS = (id: number) => `letters/${id}/trip-movements`;
+// Safar davridagi tabel + turniket eventlari (web TripAttendancePanel) —
+// «keldi/ketdi» xulosasining ortidagi dalil.
+export const LETTER_TRIP_ATTENDANCE = (id: number) => `letters/${id}/trip-attendance`;
 // Safarga "mashina kerak" belgisi. Hujjat MATNIGA tegmaydi, shu bois safar
 // yuborilgandan keyin ham ishlaydi (BFD rad etsa xodim qayta so'ray oladi).
 export const LETTER_TRIP_VEHICLE = (id: number) => `letters/${id}/vehicle`;

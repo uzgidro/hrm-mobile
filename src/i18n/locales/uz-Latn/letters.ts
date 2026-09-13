@@ -277,4 +277,12 @@ export default {
   reportManualEditNote: "Hisobot Word'da qo'lda tahrirlangan — hujjat matni bu maydonlardan farq qilishi mumkin",
   reportManager: 'Hisobotni tasdiqlovchi rahbar',
   reportManagerPlaceholder: 'Rahbarni tanlang',
+  sectionTripAttendance: 'Safar davomati',
+  tripAttPresent: 'Kelgan kun',
+  tripAttLate: 'Kechikkan',
+  tripAttAbsent: 'Kelmagan',
+  tripAttHours: 'Jami soat',
+  tripAttHourShort: 'soat',
+  tripAttMore: 'Yana {{count}} kun',
+  tripAttLess: 'Kamroq',
 } as const;
