@@ -22,7 +22,9 @@ describe('getApiErrorMessage', () => {
   });
 
   it('uses the default fallback for an empty/omitted body', () => {
-    expect(getApiErrorMessage(axiosErrorWith({}))).toBe('Xatolik yuz berdi');
+    // Tana bo'sh bo'lsa ham HOLAT KODI qo'shiladi — sababsiz "Xatolik" hech
+    // narsa demaydi (foydalanuvchi hisoboti: kelishuvda "shunchaki Xato").
+    expect(getApiErrorMessage(axiosErrorWith({}))).toBe('Xatolik yuz berdi (400)');
     expect(getApiErrorMessage(new Error('x'))).toBe('Xatolik yuz berdi');
     expect(getApiErrorMessage(null)).toBe('Xatolik yuz berdi');
   });
@@ -33,7 +35,36 @@ describe('getApiErrorMessage', () => {
 
   it('ignores a non-string array msg and uses the fallback', () => {
     const e = axiosErrorWith({ detail: [{ loc: ['x'] }] });
-    expect(getApiErrorMessage(e)).toBe('Xatolik yuz berdi');
+    expect(getApiErrorMessage(e)).toBe('Xatolik yuz berdi (400)');
+  });
+
+  // ── Sababsiz "Xatolik" ni bartaraf etuvchi holatlar ────────────────────────
+
+  it('reads an OBJECT detail ({code, message})', () => {
+    const e = axiosErrorWith({ detail: { code: 'x', message: 'Kelishuvchi emassiz' } }, 403);
+    expect(getApiErrorMessage(e)).toBe('Kelishuvchi emassiz');
+  });
+
+  it('shows the status when the gateway returns an HTML page (502/504)', () => {
+    const e = axiosErrorWith('<html><body>502 Bad Gateway</body></html>', 502);
+    expect(getApiErrorMessage(e)).toBe('Xatolik yuz berdi (502)');
+  });
+
+  it('shows a plain-text error body as-is', () => {
+    expect(getApiErrorMessage(axiosErrorWith('upstream timed out', 504)))
+      .toBe('upstream timed out');
+  });
+
+  it('says the server did not answer on a timeout', () => {
+    const e = new AxiosError('timeout of 30000ms exceeded');
+    e.code = 'ECONNABORTED';
+    expect(getApiErrorMessage(e)).toMatch(/vaqt tugadi/i);
+  });
+
+  it('says there is no connection on a network error', () => {
+    const e = new AxiosError('Network Error');
+    e.code = 'ERR_NETWORK';
+    expect(getApiErrorMessage(e)).toMatch(/Internet aloqasi/i);
   });
 });
 

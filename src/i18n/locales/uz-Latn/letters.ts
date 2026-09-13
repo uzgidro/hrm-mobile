@@ -91,6 +91,8 @@ export default {
   selfFinishYes: 'Ha, yakunlayman',
   selfFinishHint: 'Turniketdan (Face ID) o\'tganingiz aniqlandi — safarni yakunlasangiz qaytish sanasi {{date}} bo\'ladi.',
   selfFinishHintPickDate: 'Qaytgan sanangizni o\'zingiz belgilaysiz — yakunlagach kadrga xabar boradi.',
+  selfFinishHintPickDay: 'Turniketdan bir necha kun o\'tgansiz — yakunlashda qaysi kuni qaytganingizni tanlaysiz (standart: {{date}}).',
+  selfFinishPickDay: 'Qaysi kuni qaytgansiz?',
   rejectionReason: 'Rad etish sababi',
   returnAction: 'Qaytarish',
   returnReportAction: 'Hisobotni qaytarish',

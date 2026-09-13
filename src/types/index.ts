@@ -245,6 +245,9 @@ export interface LetterAvailableActions {
   // `face_id_required` 400 bo'lardi).
   can_self_finish_trip?: boolean;
   self_finish_date?: string | null;
+  // Turniketdan o'tilgan KUNLAR — bir necha kun bo'lsa xodim qaysi kuni
+  // qaytganini TANLAYDI (standarti — birinchisi, ya'ni qaytgan kun).
+  self_finish_date_options?: string[] | null;
   // Server verdicts added 2026-09-11 — the client re-derivations below them
   // (`canDecideExtension`, `canApproveTripRegistration`, `canExtendTrip`)
   // stay only as the fallback for an API that predates the flags.

@@ -8,9 +8,16 @@ import {
   clearTokens,
 } from './authToken';
 
+// Web bilan bir xil (`hr` so'rov qatlami — 30s). 15s edi va HUJJAT
+// yaratadigan amallar (kelishuv/rad etish, ro'yxatga olish, muhr) serverda
+// .docx ni qayta qurib MinIO'ga yuklaydi — sekin tarmoqda bu 15s dan oshib
+// ketardi. Natijada so'rov JAVOBSIZ uzilardi va ilova sababsiz "Xatolik"
+// ko'rsatardi, server esa amalni BAJARIB bo'lgan bo'lardi.
+export const REQUEST_TIMEOUT_MS = 30000;
+
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 15000,
+  timeout: REQUEST_TIMEOUT_MS,
   headers: { 'Content-Type': 'application/json' },
 });
 

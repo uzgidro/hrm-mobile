@@ -31,4 +31,6 @@ export default {
   // React Query cache onError toast fallbacks (src/lib/queryClient.ts).
   refreshFailed: "Ma'lumotni yangilab bo'lmadi",
   actionFailed: "Amalni bajarib bo'lmadi",
+  timeout: "Server javob bermadi (vaqt tugadi). Amal bajarilgan bo'lishi ham mumkin — ro'yxatni yangilang.",
+  network: "Internet aloqasi yo'q. Ulanishni tekshiring.",
 } as const;
