@@ -23,6 +23,7 @@ export type IconName =
   | 'wallet'
   | 'news'
   | 'idcard'
+  | 'qr'
   | 'gift'
   | 'calendar'
   | 'sun'
@@ -307,6 +308,18 @@ function render(name: IconName, p: any) {
           <Path d="M14 4H6a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h8" {...p} />
           <Polyline points="17 8 21 12 17 16" {...p} />
           <Line x1="21" y1="12" x2="10" y2="12" {...p} />
+        </>
+      );
+    case 'qr':
+      return (
+        <>
+          <Rect x="3" y="3" width="7" height="7" rx="1.5" {...p} />
+          <Rect x="14" y="3" width="7" height="7" rx="1.5" {...p} />
+          <Rect x="3" y="14" width="7" height="7" rx="1.5" {...p} />
+          <Rect x="5.5" y="5.5" width="2" height="2" rx="0.5" {...p} />
+          <Rect x="16.5" y="5.5" width="2" height="2" rx="0.5" {...p} />
+          <Rect x="5.5" y="16.5" width="2" height="2" rx="0.5" {...p} />
+          <Path d="M14 14h3v3h-3zM19 14h2M14 19h2M19 19h2v2M17 21h-3" {...p} />
         </>
       );
     case 'search':

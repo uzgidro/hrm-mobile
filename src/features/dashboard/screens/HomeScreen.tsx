@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, Image,
+  Platform,
 } from 'react-native';
 import dayjs from 'dayjs';
 import type { AttendanceEvent } from '@/types';
@@ -177,6 +178,19 @@ export default function HomeScreen() {
             <Text style={styles.greeting}>{dateStr}</Text>
             <Text style={styles.userName} numberOfLines={1}>{employee?.legal_name || t('dashboard.userFallback')}</Text>
           </TouchableOpacity>
+          {/* QR orqali web'ga kirish — bosh sahifadan bir bosishda (ilgari
+              faqat Profil ichida edi). Faqat qurilmada: web variantida kamera yo'q. */}
+          {Platform.OS !== 'web' && (
+            <TouchableOpacity
+              style={styles.bellBtn}
+              onPress={() => router.push('/qr-scan')}
+              activeOpacity={0.8}
+              accessibilityLabel={t('qrLogin.menu')}
+              testID="home-qr-scan"
+            >
+              <Icon name="qr" size={21} color={colors.text} />
+            </TouchableOpacity>
+          )}
           <TouchableOpacity style={styles.bellBtn} onPress={() => router.push('/notifications')} activeOpacity={0.8}>
             <Icon name="bell" size={21} color={colors.text} />
             {unreadCount > 0 && (
