@@ -196,6 +196,24 @@ export default function ProfileScreen() {
             />
           </View>
 
+          {/* QR orqali web'ga kirishni tasdiqlash (TZ 4.2.3) — faqat qurilmada
+              (web varianti kamera ochmaydi). */}
+          {isNative && (
+            <TouchableOpacity
+              style={[styles.menuItem, styles.menuItemBorder]}
+              onPress={() => router.push('/qr-scan')}
+              activeOpacity={0.7}
+            >
+              <View style={styles.menuItemLeft}>
+                <View style={styles.menuIcon}><Icon name="idcard" size={18} color={colors.textSecondary} /></View>
+                <Text style={styles.menuLabel}>{t('qrLogin.menu')}</Text>
+              </View>
+              <View style={styles.menuChevron}>
+                <Icon name="chevronRight" size={18} color={colors.textMuted} />
+              </View>
+            </TouchableOpacity>
+          )}
+
           {isNative && (
             <TouchableOpacity
               style={[styles.menuItem, styles.menuItemBorder]}

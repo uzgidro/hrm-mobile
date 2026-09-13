@@ -29,6 +29,7 @@ import support from './support';
 import terminals from './terminals';
 import chairman from './chairman';
 import directory from './directory';
+import qrLogin from './qrLogin';
 
 export default {
   common,
@@ -60,4 +61,5 @@ export default {
   terminals,
   chairman,
   directory,
+  qrLogin,
 } as const;

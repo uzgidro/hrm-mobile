@@ -1,0 +1,23 @@
+// QR orqali web'ga kirishni tasdiqlash (TZ 4.2.3).
+export default {
+  title: 'QR sign-in',
+  subtitle: 'Scan the QR code on your computer',
+  hint: 'Point the frame at the QR code on the sign-in page',
+  permissionBody: 'Allow camera access to scan the QR code.',
+  permissionGrant: 'Allow',
+  confirmTitle: 'Approve sign-in?',
+  confirmBody: 'The device below wants to sign in with your account. If this is not you, reject it.',
+  device: 'Device',
+  ip: 'IP address',
+  unknown: 'Unknown',
+  approve: 'Approve',
+  reject: 'Reject',
+  retry: 'Try again',
+  approved: 'Sign-in approved',
+  expired: 'The QR code expired — refresh it in the browser',
+  scanError: 'Could not read the QR code',
+  approveError: 'Could not approve, try again',
+  rejectedTitle: 'Rejected',
+  rejectedBody: 'The sign-in request was rejected.',
+  menu: 'QR sign-in',
+};
