@@ -19,13 +19,30 @@ export const birthdayKeys = {
 // bare-array vs `{ items }` envelope the endpoint may return — so one factory
 // serves both. The birthdays screen additionally intersects the result with the
 // user's subordinates client-side; that filtering stays in the screen.
-export function birthdaysListQuery(orgBranchId?: number) {
+export function birthdaysListQuery(
+  orgBranchId?: number,
+  opts: { search?: string; supervisorId?: number } = {},
+) {
+  const search = opts.search?.trim() || undefined;
+  const supervisorId = opts.supervisorId;
+  // The plain (unfiltered) key stays byte-for-byte `['birthdays','list',branch]`
+  // so the Team/Home prefetch keeps sharing this cache entry.
+  const filtered = search !== undefined || supervisorId !== undefined;
   return queryOptions({
-    queryKey: birthdayKeys.list(orgBranchId),
+    queryKey: filtered
+      ? ([...birthdayKeys.list(orgBranchId), { search: search ?? null, supervisorId: supervisorId ?? null }] as const)
+      : birthdayKeys.list(orgBranchId),
     queryFn: () =>
       apiClient
         .get(EMPLOYEES_BIRTHDAYS, {
-          params: orgBranchId ? { organization_branch_id: orgBranchId } : {},
+          params: {
+            ...(orgBranchId ? { organization_branch_id: orgBranchId } : {}),
+            // Server search (name / position / department) and "only my team"
+            // (`supervisor_id`, backend 2026-09-13) — the screen no longer
+            // downloads the whole roster to intersect it in JS.
+            ...(search ? { search } : {}),
+            ...(supervisorId ? { supervisor_id: supervisorId } : {}),
+          },
         })
         .then((r) => {
           const d = r.data;

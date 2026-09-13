@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
   FlatList,
@@ -11,13 +11,14 @@ import { useAuthStore } from '@/store/authStore';
 import { usePrefsStore } from '@/store/prefsStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
-import { employeesListQuery } from '@/utils/employees';
 import { monthName } from '@/i18n/dates';
 import { useBreakpoint } from '@/utils/responsive';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
-import { LoadingView, EmptyState } from '@/components/StateViews';
+import { LoadingView, EmptyState, ErrorState } from '@/components/StateViews';
+import { useDebouncedValue } from '@/lib/useDebouncedValue';
+import { getApiErrorMessage } from '@/api/errors';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { SearchBox } from '@/components/SearchBox';
 import { birthdaysListQuery } from '../api/queries';
@@ -36,31 +37,16 @@ export default function BirthdaysScreen() {
     user?.employee?.department?.organization_branch_id;
   const [search, setSearch] = useState('');
 
-  const { data: birthdays = [], isLoading } = useQuery(birthdaysListQuery(orgBranchId));
-
-  // The birthdays endpoint returns the whole branch (no subordinate filter), so
-  // when "Faqat bo'ysunuvchilar" is on we intersect with the user's subordinates
-  // (resolved from the employees list, which carries supervisor_id).
-  const { data: empData } = useQuery({
-    ...employeesListQuery(orgBranchId),
-    enabled: onlySubordinates && !!myId,
-  });
-
-  const subordinateIds = useMemo(() => {
-    if (!onlySubordinates || !myId) return null;
-    return new Set((empData?.items ?? []).filter((e) => e.supervisor_id === myId).map((e) => e.id));
-  }, [onlySubordinates, myId, empData]);
-
-  const base = useMemo(
-    () => (subordinateIds ? birthdays.filter((b) => subordinateIds.has(b.id)) : birthdays),
-    [birthdays, subordinateIds]
+  const debouncedSearch = useDebouncedValue(search);
+  // Search and "only my team" are SERVER params now (the screen used to fetch
+  // the whole branch roster to intersect by supervisor_id, then `.includes`).
+  const { data: filtered = [], isLoading, isError, error, refetch } = useQuery(
+    birthdaysListQuery(orgBranchId, {
+      search: debouncedSearch,
+      supervisorId: onlySubordinates && myId ? myId : undefined,
+    }),
   );
-
-  const filtered = useMemo(() => {
-    if (!search.trim()) return base;
-    const q = search.trim().toLowerCase();
-    return base.filter((e) => e.legal_name.toLowerCase().includes(q) || (e.job_position?.name?.toLowerCase().includes(q) ?? false));
-  }, [base, search]);
+  const base = filtered;
 
   const today = dayjs();
 
@@ -74,6 +60,8 @@ export default function BirthdaysScreen() {
 
       {isLoading ? (
         <LoadingView />
+      ) : isError ? (
+        <ErrorState message={getApiErrorMessage(error, t('errors.refreshFailed'))} onRetry={() => refetch()} />
       ) : (
         <FlatList
           data={filtered}

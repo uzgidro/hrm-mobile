@@ -27,12 +27,12 @@ describe('notificationKeys', () => {
 describe('notificationsListQuery', () => {
   it('carries the list key with the employee id and always revalidates on mount', () => {
     const opts = notificationsListQuery(7);
-    expect(opts.queryKey).toEqual(['notifications', 'list', 7]);
+    expect(opts.queryKey).toEqual(['notifications', 'list', 7, 100]);
     expect(opts.refetchOnMount).toBe('always');
   });
 
   it('uses null for an undefined employee id', () => {
-    expect(notificationsListQuery().queryKey).toEqual(['notifications', 'list', null]);
+    expect(notificationsListQuery().queryKey).toEqual(['notifications', 'list', null, 100]);
   });
 
   it('returns a bare array response as-is', async () => {

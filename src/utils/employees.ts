@@ -11,9 +11,14 @@ interface EmployeePage { items: Employee[]; total: number }
 // Max simultaneous page requests when paginating large lists.
 const PAGE_CONCURRENCY = 4;
 
+// One request covers a branch: `GET /employees` allows `size` up to 100 000
+// (`api/v1/employee.py` EmployeePage). The old "API max page size is 100"
+// comment was wrong and cost 15 requests per roster on the largest branch.
+const ROSTER_PAGE = 500;
+
 /**
- * Fetches ALL employees for a branch using parallel pagination.
- * API max page size is 100, so 149 employees = 2 parallel pages.
+ * Fetches ALL employees for a branch (one request for any real branch;
+ * parallel pages only beyond ROSTER_PAGE).
  *
  * `extraParams` — qo'shimcha server filtrlari (`include_multi_org`,
  * `sort_by_razryad`, ...). Ular BARCHA sahifaga bir xil uzatiladi, aks holda
@@ -24,7 +29,7 @@ export async function fetchAllEmployees(
   extraParams?: Record<string, unknown>,
 ): Promise<EmployeePage> {
   const base: Record<string, unknown> = {
-    size: 100,
+    size: ROSTER_PAGE,
     page: 1,
     ...(orgBranchId ? { organization_branch_id: orgBranchId } : {}),
     ...extraParams,
@@ -34,9 +39,9 @@ export async function fetchAllEmployees(
   const first = firstRes.data;
 
   if (!first?.items) return { items: [], total: 0 };
-  if (first.total <= 100) return first;
+  if (first.total <= ROSTER_PAGE) return first;
 
-  const totalPages = Math.ceil(first.total / 100);
+  const totalPages = Math.ceil(first.total / ROSTER_PAGE);
   const pages = Array.from({ length: totalPages - 1 }, (_, i) => i + 2);
   const rest = await mapWithConcurrency(pages, PAGE_CONCURRENCY, (page) =>
     apiClient

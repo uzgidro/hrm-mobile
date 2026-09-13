@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, FlatList, Linking, ScrollView, Modal,
+  View, Text, StyleSheet, TouchableOpacity, Linking, ScrollView, Modal,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
@@ -14,15 +14,16 @@ import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
-import { LoadingView, EmptyState, ErrorState } from '@/components/StateViews';
+import { PagedList } from '@/components/PagedList';
+import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { SearchBox } from '@/components/SearchBox';
 import type { PhoneDirectoryEntry } from '@/types';
 import { phoneDirectoryQuery, directoryBranchesQuery } from '../api/queries';
 
 type Scope = 'exec' | 'system';
 
-// Company phone book: one flat list, client-side search by name / position /
-// department. Open to every role (no PII). Tapping a phone dials it.
+// Company phone book: one flat, server-paged list; server search by name /
+// position / department / phone. Open to every role (no PII). Tapping a phone dials it.
 export default function PhoneDirectoryScreen() {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -58,56 +59,31 @@ export default function PhoneDirectoryScreen() {
       ? branchChoice
       : scopeChoice == null && autoScope === 'system' ? ownBranchId : null;
 
-  /* Serverdan FAQAT ko'rinadigan ko'lam so'raladi (audit 2026-09-07): "Ijro
-   * apparati" → bosh apparat, bitta filial tanlansa → o'sha filial, "Barcha
-   * filiallar" → hammasi. Ilgari har doim butun tashkilot kelardi (2.6 MB),
-   * ekranda esa odatda bittagina ko'lam ko'rinardi.
+  /* Serverdan FAQAT ko'rinadigan ko'lam so'raladi (audit 2026-09-07), 30
+   * tadan (2026-09-13): "Ijro apparati" → bosh apparat, bitta filial → o'sha
+   * filial, "Barcha filiallar" → bosh apparatdan TASHQARI hammasi
+   * (`exclude_branch_id`). Qidiruv esa BUTUN TASHKILOT bo'ylab, SERVERDA
+   * (ism/lavozim/bo'lim/telefon, kirill-lotin folding) — ilgari 2 harf
+   * yozilishi bilan 2.5 MB tortilib JS'da filtrlanardi.
    *
    * `enabled`: filiallar ro'yxati kelmaguncha "Ijro apparati" ning id'si
    * noma'lum — filtrsiz (ya'ni butun tashkilotli) so'rov yubormaslik uchun
    * kutamiz. */
-  const fetchBranchId = scope === 'exec' ? executiveBranchId : systemBranchId;
-  const scopeReady = scope !== 'exec' || executiveBranchId != null;
-  const { data: scoped = [], isLoading, isError, refetch } = useQuery({
-    ...phoneDirectoryQuery(fetchBranchId),
-    enabled: scopeReady,
+  const debouncedSearch = useDebouncedValue(search);
+  const isSearching = debouncedSearch.trim().length >= 2;
+  const scopeReady = executiveBranchId != null || branches.length === 0;
+  const query = useInfiniteQuery({
+    ...phoneDirectoryQuery(
+      isSearching
+        ? { search: debouncedSearch }
+        : scope === 'exec'
+          ? { branchId: executiveBranchId }
+          : systemBranchId != null
+            ? { branchId: systemBranchId }
+            : { excludeBranchId: executiveBranchId },
+    ),
+    enabled: isSearching || scopeReady,
   });
-
-  /* Qidiruv BUTUN TASHKILOT bo'ylab (foydalanuvchi so'rovi 2026-09-07).
-   * Ilgari faqat joriy ko'lam ichida qidirardi — "Ijro apparati" da turgan
-   * odam filial xodimini topa olmasdi. Ochilishda emas, aynan qidirilganda
-   * yuklanadi, shunda ko'lam bo'yicha yuklash yutug'i saqlanadi; react-query
-   * keshi tufayli keyingi qidiruvlar tarmoqqa chiqmaydi. */
-  const isSearching = search.trim().length >= 2;
-  const { data: allEntries } = useQuery({
-    ...phoneDirectoryQuery(null),
-    enabled: isSearching,
-  });
-  const searchWholeOrg = isSearching && !!allEntries;
-  const data = searchWholeOrg ? allEntries : scoped;
-
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    // Scope first (Ijro apparati vs Tizim tashkilotlari + optional single branch),
-    // then the free-text search — web TabelPage visibleEmployees parity.
-    // Butun tashkilot bo'ylab qidirilayotganda ko'lam cheklovi qo'yilmaydi —
-    // odam qayerda ishlashini bilmasa ham topsin.
-    const inScope = searchWholeOrg
-      ? data
-      : scope === 'exec'
-        ? data.filter((e) => e.branch_id === executiveBranchId)
-        : data.filter((e) =>
-            e.branch_id !== executiveBranchId &&
-            (systemBranchId == null || e.branch_id === systemBranchId));
-    if (!q) return inScope;
-    return inScope.filter((e) =>
-      (e.legal_name?.toLowerCase().includes(q) ?? false) ||
-      (e.job_position_name?.toLowerCase().includes(q) ?? false) ||
-      (e.department_name?.toLowerCase().includes(q) ?? false) ||
-      (e.internal_phone_number?.toLowerCase().includes(q) ?? false) ||
-      (e.phone_number?.toLowerCase().includes(q) ?? false),
-    );
-  }, [data, search, scope, systemBranchId, executiveBranchId, searchWholeOrg]);
 
   const dial = (phone: string) => Linking.openURL(`tel:${phone.replace(/\s+/g, '')}`);
 
@@ -156,26 +132,17 @@ export default function PhoneDirectoryScreen() {
         </View>
       )}
 
-      {isLoading ? (
-        <LoadingView />
-      ) : isError ? (
-        <ErrorState title={t('directory.loadError')} onRetry={() => refetch()} />
-      ) : (
-        <FlatList
-          data={filtered}
-          key={cols}
-          numColumns={cols}
-          columnWrapperStyle={cols > 1 ? styles.gridRow : undefined}
-          keyExtractor={(item) => String(item.id)}
-          contentContainerStyle={styles.list}
-          showsVerticalScrollIndicator={false}
-          ItemSeparatorComponent={cols > 1 ? undefined : () => <View style={styles.separator} />}
-          renderItem={({ item }) => <DirectoryRow entry={item} styles={styles} colors={colors} onPress={onPhonePress} t={t} grid={cols > 1} />}
-          ListEmptyComponent={
-            <EmptyState icon="users" title={search ? t('directory.notFound') : t('directory.empty')} />
-          }
-        />
-      )}
+      <PagedList
+        query={query}
+        keyExtractor={(item) => String(item.id)}
+        numColumns={cols}
+        columnWrapperStyle={cols > 1 ? styles.gridRow : undefined}
+        contentContainerStyle={styles.list}
+        ItemSeparatorComponent={cols > 1 ? undefined : () => <View style={styles.separator} />}
+        emptyIcon="users"
+        emptyTitle={search ? t('directory.notFound') : t('directory.empty')}
+        renderItem={(item) => <DirectoryRow entry={item} styles={styles} colors={colors} onPress={onPhonePress} t={t} grid={cols > 1} />}
+      />
 
       <PhonePicker
         entry={picker}
@@ -326,7 +293,7 @@ const makeStyles = (c: ThemeColors) =>
     branchChipText: { fontSize: 12, fontWeight: '600', color: c.textSecondary },
     branchChipTextActive: { color: c.primary },
 
-    list: { paddingTop: 4, paddingBottom: 32 },
+    list: { paddingHorizontal: 0, paddingTop: 4, paddingBottom: 32 },
     separator: { height: 1, backgroundColor: c.cardBorder, marginLeft: 76 },
     gridRow: { gap: 12, paddingHorizontal: 16 },
 

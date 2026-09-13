@@ -27,7 +27,8 @@ export function terminalDevicesQuery(online?: boolean) {
     queryFn: () =>
       apiClient
         .get<{ items?: HikDevice[]; total?: number }>(HIK_MONITORING_DEVICES, {
-          params: { size: 100, page: 1, ...(online == null ? {} : { online }) },
+          // Backend cap is 500 (DeviceStatusPage); 100 silently cut the 108-device fleet.
+          params: { size: 500, page: 1, ...(online == null ? {} : { online }) },
         })
         .then((r) => r.data?.items ?? []),
     staleTime: 30_000,

@@ -94,4 +94,5 @@ export default {
   screenTitle: 'Уведомления',
   markAllRead: 'Прочитано',
   empty: 'Уведомлений нет',
+  loadMore: 'Показать ещё',
 } as const;

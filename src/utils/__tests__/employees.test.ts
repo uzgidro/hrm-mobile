@@ -22,36 +22,36 @@ function makeItems(start: number, count: number) {
 }
 
 describe('fetchAllEmployees — pagination', () => {
-  it('makes a single request when total <= 100 and returns the first page as-is', async () => {
+  it('makes a single request when total <= 500 and returns the first page as-is', async () => {
     const items = makeItems(1, 42);
     mock.onGet(EMPLOYEES_LIST).reply(200, { items, total: 42 });
 
     const result = await fetchAllEmployees();
 
     expect(mock.history.get).toHaveLength(1);
-    // total <= 100 → the raw first page object is returned unchanged.
+    // total <= 500 → the raw first page object is returned unchanged.
     expect(result).toEqual({ items, total: 42 });
     expect(result.items).toHaveLength(42);
   });
 
-  it('treats exactly 100 as a single page (boundary: total <= 100)', async () => {
-    const items = makeItems(1, 100);
-    mock.onGet(EMPLOYEES_LIST).reply(200, { items, total: 100 });
+  it('treats exactly 500 as a single page (boundary: total <= 500)', async () => {
+    const items = makeItems(1, 500);
+    mock.onGet(EMPLOYEES_LIST).reply(200, { items, total: 500 });
 
     const result = await fetchAllEmployees();
 
     expect(mock.history.get).toHaveLength(1);
-    expect(result.total).toBe(100);
-    expect(result.items).toHaveLength(100);
+    expect(result.total).toBe(500);
+    expect(result.items).toHaveLength(500);
   });
 
-  it('uses page size 100 and page 1 on the first request', async () => {
+  it('uses page size 500 and page 1 on the first request', async () => {
     mock.onGet(EMPLOYEES_LIST).reply(200, { items: makeItems(1, 5), total: 5 });
 
     await fetchAllEmployees();
 
     expect(mock.history.get).toHaveLength(1);
-    expect(mock.history.get[0].params).toEqual({ size: 100, page: 1 });
+    expect(mock.history.get[0].params).toEqual({ size: 500, page: 1 });
   });
 
   it('includes organization_branch_id in params when provided', async () => {
@@ -60,7 +60,7 @@ describe('fetchAllEmployees — pagination', () => {
     await fetchAllEmployees(77);
 
     expect(mock.history.get[0].params).toEqual({
-      size: 100,
+      size: 500,
       page: 1,
       organization_branch_id: 77,
     });
@@ -75,12 +75,12 @@ describe('fetchAllEmployees — pagination', () => {
   });
 
   it('fetches remaining pages in parallel and concatenates all pages in order', async () => {
-    // total 250 → ceil(250/100) = 3 pages.
+    // total 1250 → ceil(1250/500) = 3 pages.
     mock.onGet(EMPLOYEES_LIST).reply((config) => {
       const page = config.params.page as number;
-      const start = (page - 1) * 100 + 1;
-      const count = page === 3 ? 50 : 100;
-      return [200, { items: makeItems(start, count), total: 250 }];
+      const start = (page - 1) * 500 + 1;
+      const count = page === 3 ? 250 : 500;
+      return [200, { items: makeItems(start, count), total: 1250 }];
     });
 
     const result = await fetchAllEmployees();
@@ -90,42 +90,42 @@ describe('fetchAllEmployees — pagination', () => {
     const pages = mock.history.get.map((r) => r.params.page).sort((a, b) => a - b);
     expect(pages).toEqual([1, 2, 3]);
 
-    expect(result.total).toBe(250);
-    expect(result.items).toHaveLength(250);
-    // Merged in page order: page1 ids 1..100, page2 101..200, page3 201..250.
+    expect(result.total).toBe(1250);
+    expect(result.items).toHaveLength(1250);
+    // Merged in page order: page1 ids 1..500, page2 501..1000, page3 1001..1250.
     expect(result.items[0]).toEqual({ id: 1 });
-    expect(result.items[100]).toEqual({ id: 101 });
-    expect(result.items[249]).toEqual({ id: 250 });
+    expect(result.items[500]).toEqual({ id: 501 });
+    expect(result.items[1249]).toEqual({ id: 1250 });
   });
 
-  it('computes page count with Math.ceil (149 total → 2 pages)', async () => {
+  it('computes page count with Math.ceil (549 total → 2 pages)', async () => {
     mock.onGet(EMPLOYEES_LIST).reply((config) => {
       const page = config.params.page as number;
-      const start = (page - 1) * 100 + 1;
-      const count = page === 1 ? 100 : 49;
-      return [200, { items: makeItems(start, count), total: 149 }];
+      const start = (page - 1) * 500 + 1;
+      const count = page === 1 ? 500 : 49;
+      return [200, { items: makeItems(start, count), total: 549 }];
     });
 
     const result = await fetchAllEmployees();
 
     expect(mock.history.get).toHaveLength(2);
-    expect(result.items).toHaveLength(149);
-    expect(result.total).toBe(149);
+    expect(result.items).toHaveLength(549);
+    expect(result.total).toBe(549);
   });
 
   it('carries base params (size + org branch id) into every paginated request', async () => {
     mock.onGet(EMPLOYEES_LIST).reply((config) => {
       const page = config.params.page as number;
-      const count = page === 1 ? 100 : 100;
-      const start = (page - 1) * 100 + 1;
-      return [200, { items: makeItems(start, count), total: 200 }];
+      const count = page === 1 ? 500 : 500;
+      const start = (page - 1) * 500 + 1;
+      return [200, { items: makeItems(start, count), total: 1000 }];
     });
 
     await fetchAllEmployees(9);
 
     expect(mock.history.get).toHaveLength(2);
     for (const req of mock.history.get) {
-      expect(req.params.size).toBe(100);
+      expect(req.params.size).toBe(500);
       expect(req.params.organization_branch_id).toBe(9);
     }
     // Page numbers span 1 and 2.
@@ -144,16 +144,16 @@ describe('fetchAllEmployees — pagination', () => {
   it('tolerates a remaining page returning no items (flattens to empty)', async () => {
     mock.onGet(EMPLOYEES_LIST).reply((config) => {
       const page = config.params.page as number;
-      if (page === 1) return [200, { items: makeItems(1, 100), total: 150 }];
+      if (page === 1) return [200, { items: makeItems(1, 500), total: 550 }];
       // Page 2 comes back without an items array.
-      return [200, { total: 150 }];
+      return [200, { total: 550 }];
     });
 
     const result = await fetchAllEmployees();
 
     expect(mock.history.get).toHaveLength(2);
-    expect(result.total).toBe(150);
-    expect(result.items).toHaveLength(100);
+    expect(result.total).toBe(550);
+    expect(result.items).toHaveLength(500);
   });
 });
 
@@ -172,7 +172,7 @@ describe('fetchAllEmployees — qo\'shimcha server filtrlari', () => {
   it('extraParams BARCHA sahifaga uzatiladi (aks holda 2-sahifa boshqa tartibda kelardi)', async () => {
     mock.onGet(EMPLOYEES_LIST).reply((cfg) => {
       const page = Number(cfg.params.page);
-      return [200, { items: makeItems((page - 1) * 100, 100), total: 250 }];
+      return [200, { items: makeItems((page - 1) * 500, 500), total: 1250 }];
     });
     await fetchAllEmployees(7, { include_multi_org: false, sort_by_razryad: true });
     expect(mock.history.get).toHaveLength(3);

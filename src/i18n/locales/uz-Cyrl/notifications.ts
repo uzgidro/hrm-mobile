@@ -94,4 +94,5 @@ export default {
   screenTitle: 'Билдиришномалар',
   markAllRead: "Ўқилди",
   empty: "Билдиришномалар йўқ",
+  loadMore: 'Яна кўрсатиш',
 } as const;

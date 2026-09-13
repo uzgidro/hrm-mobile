@@ -18,10 +18,11 @@ import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { SplitLayout } from '@/components/SplitLayout';
-import { LoadingView, EmptyState } from '@/components/StateViews';
+import { LoadingView, EmptyState, ErrorState } from '@/components/StateViews';
 import { OrderDetailView } from '@/features/orders/components/OrderDetailView';
 import { LetterDetailView } from '@/features/letters/components/LetterDetailView';
-import { notificationKeys, notificationsListQuery } from '../api/queries';
+import { notificationKeys, notificationsListQuery, NOTIFICATIONS_PAGE, NOTIFICATIONS_MAX } from '../api/queries';
+import { menuBadgesQuery } from '@/lib/menuBadges';
 import { markNotificationRead, markAllNotificationsRead } from '../api/mutations';
 
 // A tapped notification's route target, resolved once and reused both to
@@ -55,11 +56,16 @@ export default function NotificationsScreen() {
 
   const [selected, setSelected] = useState<Target>(null);
 
-  const { data: items = [], isLoading, refetch, isFetching } = useQuery(
-    notificationsListQuery(user?.employee?.id)
+  const [limit, setLimit] = useState(NOTIFICATIONS_PAGE);
+  const { data: items = [], isLoading, isError, error, refetch, isFetching } = useQuery(
+    notificationsListQuery(user?.employee?.id, limit)
   );
+  const canLoadMore = items.length >= limit && limit < NOTIFICATIONS_MAX;
 
-  const unread = items.filter((n) => !n.is_read).length;
+  // Unread badge = the server COUNT (menu-badges), not a count over the loaded
+  // window; the JS count stays as the fallback for an older API.
+  const { data: badges } = useQuery(menuBadgesQuery());
+  const unread = badges?.unread_notifications ?? items.filter((n) => !n.is_read).length;
 
   // Clear the split selection when leaving split (rotate back to portrait /
   // phone) so re-entering split starts fresh instead of resuming a stale
@@ -126,6 +132,8 @@ export default function NotificationsScreen() {
 
       {isLoading ? (
         <LoadingView />
+      ) : isError ? (
+        <ErrorState message={getApiErrorMessage(error, t('errors.refreshFailed'))} onRetry={() => refetch()} />
       ) : (
         <FlatList
           data={items}
@@ -164,6 +172,13 @@ export default function NotificationsScreen() {
           ListEmptyComponent={
             <EmptyState icon="bell" title={t('notifications.empty')} />
           }
+          ListFooterComponent={
+            canLoadMore ? (
+              <TouchableOpacity style={styles.moreBtn} onPress={() => setLimit((l) => Math.min(l + NOTIFICATIONS_PAGE, NOTIFICATIONS_MAX))} activeOpacity={0.8}>
+                <Text style={styles.moreText}>{t('notifications.loadMore')}</Text>
+              </TouchableOpacity>
+            ) : null
+          }
         />
       )}
     </>
@@ -196,6 +211,8 @@ function targetEquals(a: Target, b: Target): boolean {
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     content: { padding: 16, gap: 10 },
+    moreBtn: { alignSelf: 'center', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 18, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, marginTop: 4 },
+    moreText: { fontSize: 13, fontWeight: '700', color: c.primary },
     gridRow: { gap: 12 },
     card: { flexDirection: 'row', gap: 12, backgroundColor: c.card, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: c.cardBorder },
     cardGrid: { flex: 1 },

@@ -1,16 +1,13 @@
 import { queryOptions } from '@tanstack/react-query';
+import { pagedListOptions, cleanParams } from '@/lib/pagedList';
 import { apiClient } from '@/api/client';
 import { PHONE_DIRECTORY, ORGANIZATION_BRANCHES } from '@/api/urls';
 import type { PhoneDirectoryEntry, OrganizationBranch } from '@/types';
 
-// Phone book, fetched PER SCOPE. Search/filter stays client-side (see
-// PhoneDirectoryScreen). Same per-feature queryOptions pattern as visitors.
-//
-// Kalitga filial id'si kiradi, shuning uchun har ko'lam react-query keshida
-// ALOHIDA yashaydi: ko'lam almashtirilib qaytilganda qayta so'rov ketmaydi.
+// Phone book, fetched PER SCOPE and paged; search on the server (see
+// `phoneDirectoryQuery`). Same per-feature queryOptions pattern as visitors.
 export const directoryKeys = {
   all: ['phone-directory'] as const,
-  scope: (branchId: number | null) => ['phone-directory', branchId ?? 'all'] as const,
 };
 
 // Branch list — used to name the scope/branch filter and to find the executive
@@ -31,31 +28,33 @@ export function directoryBranchesQuery() {
 }
 
 /**
- * `branchId` berilsa faqat o'sha filial, `null` bo'lsa butun tashkilot.
- *
- * NEGA (audit 2026-09-07): bu so'rov butun tashkilotni olib kelardi — 21
- * filial, 2321 xodim, 2.6 MB. Ekran esa odatda bitta ko'lamni ko'rsatadi
- * (filial xodimi uchun o'z filiali, qolganlar uchun "Ijro apparati"), ya'ni
- * javobning katta qismi mobil internetdan yuklanib, darhol tashlab
- * yuborilardi. Web'da o'lchandi: 2.6 MB → 163 KB.
+ * Server-paged phone book (30 rows). Scope → `branch_id` (one branch) or
+ * `exclude_branch_id` (every system branch = all but the head office);
+ * search → server `search` over name / position / department / both numbers
+ * (backend 2026-09-13, Cyrillic-Latin folding). The search runs over the
+ * WHOLE organisation regardless of scope (user request 2026-09-07) — which
+ * used to mean downloading all 2 321 rows (2.5 MB) as soon as two characters
+ * were typed and filtering in JS.
  *
  * ATAYLAB `branch_id`, `organization_branch_id` EMAS — oxirgisini so'rov
  * qatlami har so'rovga o'zi qo'shadi va backend uni bu endpointda ataylab
  * e'tiborsiz qoldiradi.
  */
-export function phoneDirectoryQuery(branchId: number | null = null) {
-  return queryOptions({
-    queryKey: directoryKeys.scope(branchId),
-    queryFn: () =>
-      apiClient
-        .get<PhoneDirectoryEntry[] | { items: PhoneDirectoryEntry[] }>(PHONE_DIRECTORY, {
-          params: branchId == null ? undefined : { branch_id: branchId },
-        })
-        .then((r) => {
-          const d = r.data as PhoneDirectoryEntry[] | { items?: PhoneDirectoryEntry[] } | null;
-          if (Array.isArray(d)) return d;
-          return d?.items ?? [];
-        }),
+export interface DirectoryParams {
+  branchId?: number | null;
+  excludeBranchId?: number | null;
+  search?: string;
+}
+
+export function phoneDirectoryQuery(p: DirectoryParams) {
+  const search = p.search?.trim() || undefined;
+  const params = search
+    ? { search }
+    : { branch_id: p.branchId ?? undefined, exclude_branch_id: p.excludeBranchId ?? undefined };
+  return pagedListOptions<PhoneDirectoryEntry>({
+    queryKey: [...directoryKeys.all, 'paged', cleanParams(params)] as const,
+    url: PHONE_DIRECTORY,
+    params,
     // The directory changes rarely; keep it warm across opens.
     staleTime: 10 * 60 * 1000,
   });

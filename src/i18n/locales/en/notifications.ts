@@ -94,4 +94,5 @@ export default {
   screenTitle: 'Notifications',
   markAllRead: 'Read',
   empty: 'No notifications',
+  loadMore: 'Show more',
 } as const;

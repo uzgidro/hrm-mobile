@@ -4,6 +4,10 @@ import { PHONE_DIRECTORY } from '@/api/urls';
 import { phoneDirectoryQuery, directoryKeys } from '../queries';
 import type { PhoneDirectoryEntry } from '@/types';
 
+type PageFn = (ctx: { pageParam: number }) => Promise<{ items: PhoneDirectoryEntry[]; total: number }>;
+const run = (opts: ReturnType<typeof phoneDirectoryQuery>, page = 1) =>
+  (opts.queryFn as unknown as PageFn)({ pageParam: page });
+
 let mock: MockAdapter;
 beforeEach(() => {
   mock = new MockAdapter(apiClient);
@@ -17,57 +21,55 @@ describe('directoryKeys', () => {
 
   // Har ko'lam ALOHIDA keshlanishi shart — aks holda filial almashtirilganda
   // react-query eski ko'lamning ma'lumotini qaytarardi.
-  it('gives each scope its own key', () => {
-    expect(directoryKeys.scope(null)).toEqual(['phone-directory', 'all']);
-    expect(directoryKeys.scope(14)).toEqual(['phone-directory', 14]);
-    expect(directoryKeys.scope(1)).not.toEqual(directoryKeys.scope(2));
+  it('gives each scope / search its own key', () => {
+    expect(phoneDirectoryQuery({ branchId: 14 }).queryKey).toEqual(['phone-directory', 'paged', { branch_id: 14 }]);
+    expect(phoneDirectoryQuery({ excludeBranchId: 1 }).queryKey).toEqual(['phone-directory', 'paged', { exclude_branch_id: 1 }]);
+    expect(phoneDirectoryQuery({ search: 'ali' }).queryKey).toEqual(['phone-directory', 'paged', { search: 'ali' }]);
+    expect(phoneDirectoryQuery({ branchId: 1 }).queryKey).not.toEqual(phoneDirectoryQuery({ branchId: 2 }).queryKey);
   });
 });
 
-describe('phoneDirectoryQuery', () => {
-  it('fetches the directory and returns the array', async () => {
-    const rows: PhoneDirectoryEntry[] = [
-      { id: 1, legal_name: 'Ali Valiyev', internal_phone_number: '101' },
-    ];
-    mock.onGet(PHONE_DIRECTORY).reply(200, rows);
-    const opts = phoneDirectoryQuery();
-    expect(opts.queryKey).toEqual(directoryKeys.scope(null));
-    const data = await (opts.queryFn as () => Promise<PhoneDirectoryEntry[]>)();
-    expect(data).toHaveLength(1);
-    expect(data[0].legal_name).toBe('Ali Valiyev');
+describe('phoneDirectoryQuery (server-paged)', () => {
+  it('fetches a page and unwraps the envelope', async () => {
+    mock.onGet(PHONE_DIRECTORY).reply(200, {
+      items: [{ id: 1, legal_name: 'Ali Valiyev', internal_phone_number: '101' }], total: 1, page: 1, size: 30, pages: 1,
+    });
+    const page = await run(phoneDirectoryQuery({ branchId: 14 }));
+    expect(page.items).toHaveLength(1);
+    expect(page.items[0].legal_name).toBe('Ali Valiyev');
+    expect(page.total).toBe(1);
   });
 
-  it('unwraps an { items } envelope', async () => {
-    mock.onGet(PHONE_DIRECTORY).reply(200, { items: [{ id: 1, legal_name: 'A' }] });
-    expect(await (phoneDirectoryQuery().queryFn as () => Promise<PhoneDirectoryEntry[]>)()).toHaveLength(1);
-  });
-
-  it('defaults a null/non-array response to []', async () => {
+  it('tolerates a bare array (older backend) and a null body', async () => {
+    mock.onGet(PHONE_DIRECTORY).reply(200, [{ id: 1, legal_name: 'A' }]);
+    expect((await run(phoneDirectoryQuery({ branchId: 14 }))).items).toHaveLength(1);
+    mock.reset();
     mock.onGet(PHONE_DIRECTORY).reply(200, null);
-    expect(await (phoneDirectoryQuery().queryFn as () => Promise<PhoneDirectoryEntry[]>)()).toEqual([]);
+    expect((await run(phoneDirectoryQuery({ branchId: 14 }))).items).toEqual([]);
   });
 
   // Ko'lam bo'yicha yuklash (audit 2026-09-07): butun tashkilot o'rniga faqat
-  // kerakli filial so'raladi.
-  it('sends branch_id when a branch is given', async () => {
+  // kerakli filial so'raladi — endi 30 tadan.
+  it('sends branch_id + page/size for a branch scope', async () => {
     let sent: Record<string, unknown> | undefined;
-    mock.onGet(PHONE_DIRECTORY).reply((cfg) => {
-      sent = cfg.params as Record<string, unknown>;
-      return [200, []];
-    });
-    await (phoneDirectoryQuery(14).queryFn as () => Promise<PhoneDirectoryEntry[]>)();
-    expect(sent).toEqual({ branch_id: 14 });
+    mock.onGet(PHONE_DIRECTORY).reply((cfg) => { sent = cfg.params; return [200, []]; });
+    await run(phoneDirectoryQuery({ branchId: 14 }), 2);
+    expect(sent).toEqual({ branch_id: 14, page: 2, size: 30 });
   });
 
-  // `null` = butun tashkilot; parametr UMUMAN yuborilmasligi kerak, chunki
-  // `branch_id=null` backendda 422 beradi.
-  it('omits branch_id for the whole organisation', async () => {
-    let sent: Record<string, unknown> | undefined = { touched: true };
-    mock.onGet(PHONE_DIRECTORY).reply((cfg) => {
-      sent = cfg.params as Record<string, unknown> | undefined;
-      return [200, []];
-    });
-    await (phoneDirectoryQuery(null).queryFn as () => Promise<PhoneDirectoryEntry[]>)();
-    expect(sent).toBeUndefined();
+  it('"all system branches" = exclude the head office (exclude_branch_id)', async () => {
+    let sent: Record<string, unknown> | undefined;
+    mock.onGet(PHONE_DIRECTORY).reply((cfg) => { sent = cfg.params; return [200, []]; });
+    await run(phoneDirectoryQuery({ excludeBranchId: 1 }));
+    expect(sent).toEqual({ exclude_branch_id: 1, page: 1, size: 30 });
+  });
+
+  // Qidiruv BUTUN tashkilot bo'ylab, SERVERDA: ko'lam parametrlari tushib qoladi,
+  // `branch_id=null` hech qachon yuborilmaydi (backendda 422).
+  it('search drops the scope and is trimmed', async () => {
+    let sent: Record<string, unknown> | undefined;
+    mock.onGet(PHONE_DIRECTORY).reply((cfg) => { sent = cfg.params; return [200, []]; });
+    await run(phoneDirectoryQuery({ branchId: 14, search: ' Ali ' }));
+    expect(sent).toEqual({ search: 'Ali', page: 1, size: 30 });
   });
 });

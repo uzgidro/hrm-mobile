@@ -111,4 +111,5 @@ export default {
   screenTitle: 'Bildirishnomalar',
   markAllRead: "O'qildi",
   empty: "Bildirishnomalar yo'q",
+  loadMore: "Yana ko'rsatish",
 } as const;
