@@ -151,8 +151,13 @@ export function decreePermissions(
   const isLocked =
     o.is_stamped === true
     || ['pending_chancellery', 'confirmed', 'applied'].includes(o.status ?? '');
-  const canEdit = isSiteMasterAdmin(user)
-    || (!isLocked && (isCreator || (isHR(user) && isBranchHr(user, o.organization_branch_id))));
+  // Server verdict first (`order.can_edit`, 2026-09-11): HR may NOT edit
+  // another person's draft (order_act.py `_assert_can_edit_decree`) — the
+  // client rule below showed Edit and the PATCH answered 403.
+  const canEdit = typeof o.can_edit === 'boolean'
+    ? o.can_edit
+    : isSiteMasterAdmin(user)
+      || (!isLocked && (isCreator || (isHR(user) && isBranchHr(user, o.organization_branch_id))));
 
   const myFam = (o.familiarizers ?? []).find(
     (f) => (f.employee_id ?? f.employee?.id) === employeeId

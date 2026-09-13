@@ -124,9 +124,13 @@ export function canReturnTripReport(l: Letter, user?: User | null): boolean {
  * UY (kelib chiqqan) filial KADR'i (borish filiali HR'i emas).
  */
 export function canCancelTrip(l: Letter, user?: User | null): boolean {
+  // Server verdict first: it excludes `draft` (the endpoint answers 400
+  // wrong_status there) — the client rule used to show the button on a draft.
+  const flag = l.available_actions?.can_cancel_trip;
+  if (typeof flag === 'boolean') return flag;
   if (l.letter_type !== 'business_trip') return false;
   if (l.is_trip_confirmed) return false;
-  if (['report_approved', 'cancelled'].includes(l.status ?? '')) return false;
+  if (['draft', 'report_approved', 'cancelled'].includes(l.status ?? '')) return false;
   return isSiteMasterAdmin(user) || isBranchHr(user, l.organization_branch_id);
 }
 
@@ -169,6 +173,23 @@ export function canDecideExtension(l: Letter, user?: User | null, employeeId?: n
  * YO'Q, chunki buyruq raqami ko'pincha safar yakunlangach ma'lum bo'ladi.
  */
 export function canSetBasisDecree(l: Letter, user?: User | null): boolean {
+  // Server verdict first: `_is_trip_hr_scoped` includes the DESTINATION
+  // branch HR, whom the home-branch-only rule below hides.
+  const flag = l.available_actions?.can_set_basis_decree;
+  if (typeof flag === 'boolean') return flag;
   if (l.letter_type !== 'business_trip') return false;
   return isSiteMasterAdmin(user) || isBranchHr(user, l.organization_branch_id);
+}
+
+/**
+ * KADR tasdiqlangan safarning KELGAN SANASINI tuzatadi — server
+ * `can_fix_return_date` (trip-scoped HR, confirmed or has an actual return
+ * date; NO finalized check: the endpoint allows it after report approval too).
+ */
+export function canFixReturnDate(l: Letter, user?: User | null, tripBranchIds: number[] = []): boolean {
+  const flag = l.available_actions?.can_fix_return_date;
+  if (typeof flag === 'boolean') return flag;
+  if (l.letter_type !== 'business_trip') return false;
+  if (!l.is_trip_confirmed && !l.actual_return_date) return false;
+  return isSiteMasterAdmin(user) || tripBranchIds.some((bid) => isBranchHr(user, bid));
 }

@@ -11,6 +11,7 @@ import { Icon } from '@/components/Icon';
 import { getApiErrorMessage } from '@/api/errors';
 import { isSiteMasterAdmin, isBranchHr } from '@/utils/roles';
 import { normalizeLetterType, canConfirmTripReturn } from '@/utils/letterStatus';
+import { canFixReturnDate } from '@/utils/tripStatus';
 import { Section } from './DetailParts';
 import { tripMovementsQuery } from '../api/queries';
 import { useConfirmReturn, useSelfConfirmReturn, useUpdateReturnDate } from '../api/mutations';
@@ -198,7 +199,7 @@ export function TripMovementsSection({
           </Text>
           {/* Sana XATO kiritilgan bo'lsa KADR uni tuzatadi — yakunlangan
               safarda ham (backend 2026-08-19). */}
-          {canManage && (
+          {canFixReturnDate(letter, user, tripBranchIds) && (
             <TouchableOpacity
               onPress={() => {
                 setEditMode(true);

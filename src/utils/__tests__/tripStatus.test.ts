@@ -2,7 +2,7 @@ import type { Letter, User } from '@/types';
 import {
   canSubmitTrip, canApproveReport, canApproveGuvohnoma, canRejectLetter,
   canReturnLetter, canDeleteLetter, canReturnTripReport, canCancelTrip,
-  canExtendTrip, canDecideExtension, canSetBasisDecree, canApproveTripRegistration,
+  canExtendTrip, canDecideExtension, canSetBasisDecree, canApproveTripRegistration, canFixReturnDate,
 } from '../tripStatus';
 
 const letter = (o: Partial<Letter>): Letter => ({ id: 1, ...o });
@@ -223,5 +223,28 @@ describe('canSetBasisDecree (KADR, bosqich cheklovi YO\'Q)', () => {
     expect(canSetBasisDecree(letter({ letter_type: 'business_trip', organization_branch_id: 7 }), hrOf(99))).toBe(false);
     expect(canSetBasisDecree(letter({ letter_type: 'business_trip', organization_branch_id: 7 }), plainUser())).toBe(false);
     expect(canSetBasisDecree(letter({ letter_type: 'application', organization_branch_id: 7 }), hrOf(7))).toBe(false);
+  });
+});
+
+
+// ── Server verdicts win (2026-09-13); client rules are the fallback ─────────
+describe('server flags: can_cancel_trip / can_set_basis_decree / can_fix_return_date', () => {
+  it('canCancelTrip: the flag wins in both directions; without it a DRAFT is excluded (endpoint 400s)', () => {
+    const base = { letter_type: 'business_trip', status: 'management_approved', organization_branch_id: 7 };
+    expect(canCancelTrip(letter({ ...base, available_actions: { can_cancel_trip: false } }), hrOf(7))).toBe(false);
+    expect(canCancelTrip(letter({ ...base, available_actions: { can_cancel_trip: true } }), plainUser())).toBe(true);
+    expect(canCancelTrip(letter({ ...base, status: 'draft' }), hrOf(7))).toBe(false);
+  });
+
+  it('canSetBasisDecree: destination-branch HR is allowed when the server says so', () => {
+    const l = letter({ letter_type: 'business_trip', organization_branch_id: 7, available_actions: { can_set_basis_decree: true } });
+    expect(canSetBasisDecree(l, hrOf(99))).toBe(true);
+    expect(canSetBasisDecree(letter({ letter_type: 'business_trip', organization_branch_id: 7, available_actions: { can_set_basis_decree: false } }), hrOf(7))).toBe(false);
+  });
+
+  it('canFixReturnDate: flag first; fallback = trip-scoped HR with a confirmed/actual return, no finalized check', () => {
+    expect(canFixReturnDate(letter({ letter_type: 'business_trip', available_actions: { can_fix_return_date: true } }), plainUser())).toBe(true);
+    expect(canFixReturnDate(letter({ letter_type: 'business_trip', status: 'report_approved', is_trip_confirmed: true, organization_branch_id: 7 }), hrOf(7), [7])).toBe(true);
+    expect(canFixReturnDate(letter({ letter_type: 'business_trip', status: 'management_approved', organization_branch_id: 7 }), hrOf(7), [7])).toBe(false);
   });
 });

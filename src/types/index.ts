@@ -171,6 +171,13 @@ export interface OrderActHistoryEntry {
 export interface OrderAct {
   id: number;
   category_id?: number;
+  // Server verdicts (OrderActReadFull, 2026-09-11): `can_edit` mirrors the
+  // PATCH gate (`_assert_can_edit_decree` + stage lock), `can_manage` the
+  // creator/submitter/branch-HR management gate (familiarizers etc). The
+  // client rules are only the fallback for an older API.
+  can_edit?: boolean;
+  can_manage?: boolean;
+  deletion_requested?: boolean | null;
   // `creator_role` — 'employee' | 'hr'. KADR buyrug'ida devonxona qadami YO'Q
   // (backend decree_register 400 `hr_decree_no_chancellery`), shu bois
   // ro'yxatga olish tugmasi faqat XODIM buyrug'ida chiqadi.
@@ -256,6 +263,16 @@ export interface LetterAvailableActions {
   can_approve_trip_registration?: boolean;
   can_extend_trip?: boolean;
   can_modify?: boolean;
+  // Server verdicts read since 2026-09-13 (they were returned but ignored —
+  // the client rules below them differed: cancel on a draft → 400, report
+  // edit hidden in report_management_review, basis decree hidden from the
+  // destination-branch HR, return-date link hidden once approved).
+  can_submit_report?: boolean;
+  can_register_report?: boolean;
+  can_reset_report?: boolean;
+  can_cancel_trip?: boolean;
+  can_fix_return_date?: boolean;
+  can_set_basis_decree?: boolean;
 }
 
 export interface Letter {

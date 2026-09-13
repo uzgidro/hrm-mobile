@@ -114,6 +114,11 @@ export function isReportReturned(l: Letter): boolean {
 // arrival must be confirmed (is_trip_confirmed) — else the backend 400s
 // arrival_not_confirmed; and the caller must be the trip's creator or submitter.
 export function canSubmitReport(l: Letter, employeeId?: number | null): boolean {
+  // Server verdict first (`submit_report` gate mirror: also allows the author
+  // to fix the report while the leader is reviewing it —
+  // `report_management_review` — which the client rule below omits).
+  const flag = l.available_actions?.can_submit_report;
+  if (typeof flag === 'boolean') return flag;
   if (!isBusinessTrip(l)) return false;
   if (!REPORT_SUBMITTABLE_STATUSES.includes(l.status ?? '')) return false;
   if (l.status === 'management_approved' && !l.is_trip_confirmed) return false;
@@ -124,6 +129,8 @@ export function canSubmitReport(l: Letter, employeeId?: number | null): boolean 
 // (re-open for editing). Only while report_submitted. (Backend also allows HR;
 // the mobile author-only slice is a safe subset.)
 export function canResetReport(l: Letter, employeeId?: number | null): boolean {
+  const flag = l.available_actions?.can_reset_report;
+  if (typeof flag === 'boolean') return flag; // server also grants HR / master-admin
   if (!isBusinessTrip(l)) return false;
   if (l.status !== 'report_submitted') return false;
   return isTripAuthor(l, employeeId);

@@ -870,3 +870,15 @@ describe('safar oqimi — flow_version olib tashlangandan keyin', () => {
     expect(meta.label).toBe(i18n.t('status.letterTripArrived'));
   });
 });
+
+
+describe('server flags: can_submit_report / can_reset_report (2026-09-13)', () => {
+  it('canSubmitReport follows the flag (report_management_review is allowed by the server)', () => {
+    expect(canSubmitReport(trip({ status: 'report_management_review', available_actions: { can_submit_report: true } }), ME)).toBe(true);
+    expect(canSubmitReport(trip({ status: 'report_submitted', available_actions: { can_submit_report: false } }), ME)).toBe(false);
+  });
+  it('canResetReport follows the flag (server also grants HR / master-admin)', () => {
+    expect(canResetReport(trip({ status: 'report_submitted', creator_employee_id: 999, available_actions: { can_reset_report: true } }), ME)).toBe(true);
+    expect(canResetReport(trip({ status: 'report_submitted', available_actions: { can_reset_report: false } }), ME)).toBe(false);
+  });
+});

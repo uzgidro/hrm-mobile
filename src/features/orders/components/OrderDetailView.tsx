@@ -15,7 +15,7 @@ import { LoadingView, ErrorState } from '@/components/StateViews';
 import { getApiErrorMessage } from '@/api/errors';
 import { PickerModal, type PickerOption } from '@/components/PickerModal';
 import { statusMeta, statusColor, decreePermissions, decreeSubmitTarget } from '@/utils/orderStatus';
-import { isHR, isSiteMasterAdmin, employeeSubLabel } from '@/utils/roles';
+import { isHR, isSiteMasterAdmin, isBranchHr, employeeSubLabel } from '@/utils/roles';
 import { orderDetailQuery, orderEmployeesQuery } from '../api/queries';
 import { useDecreeActions } from '../hooks/useDecreeActions';
 import { useAssignFamiliarizers } from '../api/mutations';
@@ -65,8 +65,14 @@ export function OrderDetailView({ id, embedded = false }: { id: number; embedded
   // yoki sayt master-admini (qat'iy `type === 'master-admin'`, ministr EMAS —
   // backend bu huquqni faqat master-admin hisobiga beradi, `isMasterAdmin`
   // bo'lsa ministrga backend rad etadigan tugma ko'rinib qolardi).
-  const canAssignFamiliarizers =
-    isSiteMasterAdmin(user) || (isHR(user) && order?.status === 'confirmed');
+  // Server `can_manage` (creator / submitter / branch-scoped HR) + confirmed —
+  // the old rule showed the button to HR of ANY branch (403 `_hr_can_manage`)
+  // and hid it from the creator/submitter the server admits.
+  const canAssignFamiliarizers = order?.status === 'confirmed' && (
+    typeof order.can_manage === 'boolean'
+      ? order.can_manage || isSiteMasterAdmin(user)
+      : isSiteMasterAdmin(user) || (isHR(user) && isBranchHr(user, order.organization_branch_id))
+  );
   const { data: empData, isLoading: empsLoading } = useQuery({
     ...orderEmployeesQuery(order?.organization_branch_id),
     enabled: canAssignFamiliarizers,
