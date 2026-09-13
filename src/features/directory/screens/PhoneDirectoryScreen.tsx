@@ -83,6 +83,7 @@ export default function PhoneDirectoryScreen() {
   });
 
   const dial = (phone: string) => Linking.openURL(`tel:${phone.replace(/\s+/g, '')}`);
+  const branchName = (id?: number | null) => branches.find((b) => b.id === id)?.name ?? null;
 
   /* IKKI RAQAMLI TANLOV (foydalanuvchi so'rovi 2026-09-07).
    *
@@ -138,7 +139,18 @@ export default function PhoneDirectoryScreen() {
         ItemSeparatorComponent={cols > 1 ? undefined : () => <View style={styles.separator} />}
         emptyIcon="users"
         emptyTitle={search ? t('directory.notFound') : t('directory.empty')}
-        renderItem={(item) => <DirectoryRow entry={item} styles={styles} colors={colors} onPress={onPhonePress} t={t} grid={cols > 1} />}
+        renderItem={(item, index, rows) => (
+          <>
+            {/* Web parity: rows come in structure order (see query), so a
+                header wherever the department (or branch, in the "all
+                branches" scope) changes reproduces the web's grouping. Not in
+                the grid (multi-column rows) and not for search hits. */}
+            {cols === 1 && !isSearching && groupLabel(item, rows[index - 1], branchName) ? (
+              <Text style={styles.groupHeader} numberOfLines={1}>{groupLabel(item, rows[index - 1], branchName)}</Text>
+            ) : null}
+            <DirectoryRow entry={item} styles={styles} colors={colors} onPress={onPhonePress} t={t} grid={cols > 1} />
+          </>
+        )}
       />
 
       <PhonePicker
@@ -151,6 +163,23 @@ export default function PhoneDirectoryScreen() {
       />
     </Screen>
   );
+}
+
+/** Group header for a row when its department (or branch) differs from the
+ *  previous row's; null when the row continues the same group. The branch is
+ *  named only when it changes, so a single-branch scope shows plain
+ *  department headers. */
+export function groupLabel(
+  cur: PhoneDirectoryEntry,
+  prev: PhoneDirectoryEntry | undefined,
+  branchName: (id?: number | null) => string | null,
+): string | null {
+  const branchChanged = !prev || prev.branch_id !== cur.branch_id;
+  const deptChanged = !prev || prev.department_name !== cur.department_name;
+  if (!branchChanged && !deptChanged) return null;
+  const dept = cur.department_name || '—';
+  const br = branchChanged ? branchName(cur.branch_id) : null;
+  return br ? `${br} · ${dept}` : dept;
 }
 
 /** Bitta xodimning mavjud raqamlari — ichki birinchi (ish uchun ko'proq kerak). */
@@ -292,6 +321,7 @@ const makeStyles = (c: ThemeColors) =>
 
     list: { paddingHorizontal: 0, paddingTop: 4, paddingBottom: 32 },
     separator: { height: 1, backgroundColor: c.cardBorder, marginLeft: 76 },
+    groupHeader: { fontSize: 12, fontWeight: '800', color: c.textMuted, textTransform: 'uppercase', letterSpacing: 0.4, paddingHorizontal: 4, paddingTop: 14, paddingBottom: 6 },
     gridRow: { gap: 12, paddingHorizontal: 16 },
 
     row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 12, backgroundColor: c.bg },
