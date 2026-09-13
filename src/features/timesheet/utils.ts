@@ -1,4 +1,5 @@
 import dayjs from 'dayjs';
+import { CODE_ORDER, isKnownTabelCode } from '@/utils/tabelCodes';
 import type { AttendanceEvent, AttendanceSummary } from '@/types';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -15,7 +16,6 @@ import type { AttendanceEvent, AttendanceSummary } from '@/types';
 // Code catalog moved to `@/utils/tabelCodes` (shared with the team roster);
 // re-exported so the screen and tests keep importing from here.
 export { tabelCodeMeta, tabelCodeColor } from '@/utils/tabelCodes';
-import { CODE_ORDER, isKnownTabelCode } from '@/utils/tabelCodes';
 
 // The DISTINCT codes present in a month's calendar, in a stable display order
 // (present/late/absent first, then leave/other), so the legend only lists what
