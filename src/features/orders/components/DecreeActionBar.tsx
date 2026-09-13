@@ -72,6 +72,11 @@ export function DecreeActionBar({
           <Text style={styles.actApproveText}>{t('orders.actionRegister')}</Text>
         </TouchableOpacity>
       )}
+      {perms.canChancelleryReturn && (
+        <TouchableOpacity style={[styles.actBtn, styles.actReject]} disabled={busy} onPress={onReject} activeOpacity={0.85} testID="decree-chancellery-return">
+          <Text style={styles.actRejectText}>{t('orders.chancelleryReturn')}</Text>
+        </TouchableOpacity>
+      )}
       {perms.canRespondToRemoval && (
         <>
           <TouchableOpacity style={[styles.actBtn, styles.actReject]} disabled={busy} onPress={onRemovalReject} activeOpacity={0.85} testID="decree-removal-reject">

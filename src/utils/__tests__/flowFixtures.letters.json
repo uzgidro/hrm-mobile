@@ -1,0 +1,164 @@
+{
+ "letters": {
+  "draft": {
+   "id": 127663,
+   "status": "draft",
+   "letter_type": "application",
+   "organization_branch_id": 1,
+   "creator_employee_id": 81077,
+   "submitter_id": null,
+   "assigned_signers": [
+    {
+     "employee_id": 606602,
+     "signer_type": "addressee",
+     "agreed": null
+    },
+    {
+     "employee_id": 81079,
+     "signer_type": "agreement",
+     "agreed": null
+    }
+   ]
+  },
+  "pending_agreement": {
+   "id": 127667,
+   "status": "pending_agreement",
+   "letter_type": "application",
+   "organization_branch_id": 1,
+   "creator_employee_id": 81077,
+   "submitter_id": null,
+   "assigned_signers": [
+    {
+     "employee_id": 606602,
+     "signer_type": "addressee",
+     "agreed": null
+    },
+    {
+     "employee_id": 81079,
+     "signer_type": "agreement",
+     "agreed": null
+    }
+   ]
+  },
+  "agreed": {
+   "id": 127670,
+   "status": "signed",
+   "letter_type": "application",
+   "organization_branch_id": 1,
+   "creator_employee_id": 81077,
+   "submitter_id": null,
+   "assigned_signers": [
+    {
+     "employee_id": 606602,
+     "signer_type": "addressee",
+     "agreed": null
+    },
+    {
+     "employee_id": 81079,
+     "signer_type": "agreement",
+     "agreed": true
+    }
+   ]
+  },
+  "pending_registration": {
+   "id": 127673,
+   "status": "pending_registration",
+   "letter_type": "application",
+   "organization_branch_id": 1,
+   "creator_employee_id": 81077,
+   "submitter_id": null,
+   "assigned_signers": [
+    {
+     "employee_id": 606602,
+     "signer_type": "addressee",
+     "agreed": null
+    },
+    {
+     "employee_id": 81079,
+     "signer_type": "agreement",
+     "agreed": true
+    }
+   ]
+  }
+ },
+ "users": {
+  "emp_a": {
+   "type": "employee",
+   "hr_branch_ids": [],
+   "chancellery_branch_ids": [],
+   "employee": {
+    "id": 81077,
+    "legal_name": "E2E emp_a",
+    "is_multi_org_user": false,
+    "multi_org_employee_role": null,
+    "department": {
+     "id": 3,
+     "name": "Sinov bo'limi",
+     "organization_branch_id": 1
+    },
+    "organization_branches": [],
+    "primary_organization_branch_id": null
+   }
+  },
+  "hr": {
+   "type": "employee",
+   "hr_branch_ids": [],
+   "chancellery_branch_ids": [],
+   "employee": {
+    "id": 81079,
+    "legal_name": "E2E hr",
+    "is_multi_org_user": true,
+    "multi_org_employee_role": "hr",
+    "department": {
+     "id": 3,
+     "name": "Sinov bo'limi",
+     "organization_branch_id": 1
+    },
+    "organization_branches": [],
+    "primary_organization_branch_id": null
+   }
+  },
+  "deputy": {
+   "type": "employee",
+   "hr_branch_ids": [],
+   "chancellery_branch_ids": [],
+   "employee": {
+    "id": 606602,
+    "legal_name": "E2E deputy",
+    "is_multi_org_user": true,
+    "multi_org_employee_role": "deputy",
+    "department": {
+     "id": 3,
+     "name": "Sinov bo'limi",
+     "organization_branch_id": 1
+    },
+    "organization_branches": [],
+    "primary_organization_branch_id": null
+   }
+  },
+  "chancellery": {
+   "type": "employee",
+   "hr_branch_ids": [],
+   "chancellery_branch_ids": [],
+   "employee": {
+    "id": 606603,
+    "legal_name": "E2E chancellery",
+    "is_multi_org_user": true,
+    "multi_org_employee_role": "chancellery",
+    "department": {
+     "id": 3,
+     "name": "Sinov bo'limi",
+     "organization_branch_id": 1
+    },
+    "organization_branches": [],
+    "primary_organization_branch_id": null
+   }
+  }
+ },
+ "ids": {
+  "emp_a": 81077,
+  "hr": 81079,
+  "deputy": 606602,
+  "chancellery": 606603
+ }
+}

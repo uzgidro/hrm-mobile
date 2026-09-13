@@ -1,0 +1,122 @@
+{
+ "draft": {
+  "emp_a": {
+   "submit_agreement": 200,
+   "agree": 403,
+   "disagree": 403,
+   "send_to_registry": 400,
+   "confirm_reg": 403
+  },
+  "hr": {
+   "submit_agreement": 403,
+   "agree": 200,
+   "disagree": 200,
+   "send_to_registry": 403,
+   "confirm_reg": 403
+  },
+  "deputy": {
+   "submit_agreement": 403,
+   "agree": 403,
+   "disagree": 403,
+   "send_to_registry": 403,
+   "confirm_reg": 403
+  },
+  "chancellery": {
+   "submit_agreement": 403,
+   "agree": 403,
+   "disagree": 403,
+   "send_to_registry": 403,
+   "confirm_reg": 400
+  }
+ },
+ "pending_agreement": {
+  "emp_a": {
+   "submit_agreement": 400,
+   "agree": 403,
+   "disagree": 403,
+   "send_to_registry": 400,
+   "confirm_reg": 403
+  },
+  "hr": {
+   "submit_agreement": 403,
+   "agree": 200,
+   "disagree": 200,
+   "send_to_registry": 403,
+   "confirm_reg": 403
+  },
+  "deputy": {
+   "submit_agreement": 403,
+   "agree": 403,
+   "disagree": 403,
+   "send_to_registry": 403,
+   "confirm_reg": 403
+  },
+  "chancellery": {
+   "submit_agreement": 403,
+   "agree": 403,
+   "disagree": 403,
+   "send_to_registry": 403,
+   "confirm_reg": 400
+  }
+ },
+ "agreed": {
+  "emp_a": {
+   "submit_agreement": 400,
+   "agree": 403,
+   "disagree": 403,
+   "send_to_registry": 200,
+   "confirm_reg": 403
+  },
+  "hr": {
+   "submit_agreement": 403,
+   "agree": 400,
+   "disagree": 200,
+   "send_to_registry": 403,
+   "confirm_reg": 403
+  },
+  "deputy": {
+   "submit_agreement": 403,
+   "agree": 403,
+   "disagree": 403,
+   "send_to_registry": 403,
+   "confirm_reg": 403
+  },
+  "chancellery": {
+   "submit_agreement": 403,
+   "agree": 403,
+   "disagree": 403,
+   "send_to_registry": 403,
+   "confirm_reg": 400
+  }
+ },
+ "pending_registration": {
+  "emp_a": {
+   "submit_agreement": 400,
+   "agree": 403,
+   "disagree": 403,
+   "send_to_registry": 400,
+   "confirm_reg": 403
+  },
+  "hr": {
+   "submit_agreement": 403,
+   "agree": 400,
+   "disagree": 200,
+   "send_to_registry": 403,
+   "confirm_reg": 403
+  },
+  "deputy": {
+   "submit_agreement": 403,
+   "agree": 403,
+   "disagree": 403,
+   "send_to_registry": 403,
+   "confirm_reg": 403
+  },
+  "chancellery": {
+   "submit_agreement": 403,
+   "agree": 403,
+   "disagree": 403,
+   "send_to_registry": 403,
+   "confirm_reg": 200
+  }
+ }
+}

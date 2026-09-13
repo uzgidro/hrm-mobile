@@ -5,6 +5,7 @@
 // errors.*. Order STATUS labels live in the `status` namespace (via the
 // orderStatus util) and are not repeated here.
 export default {
+  chancelleryReturn: 'Qaytarish',
   sectionAttachments: 'Ilova fayllar',
   attachmentFallback: 'Fayl',
   attachmentDeleteTitle: 'Faylni o‘chirish',
