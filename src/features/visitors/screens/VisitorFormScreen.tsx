@@ -43,8 +43,12 @@ export default function MehmonFormScreen() {
   const [jobPosition, setJobPosition] = useState('');
   const [telegram, setTelegram] = useState('');
   const [phone, setPhone] = useState('');
-  const [validFrom, setValidFrom] = useState<string>(dayjs().toISOString());
-  const [validUntil, setValidUntil] = useState<string>(dayjs().add(1, 'day').toISOString());
+  // `null` = no bound on the server ("cheklanmagan"). Create mode starts with
+  // today / +1 day; EDIT mode seeds exactly what the server has, so a guest
+  // whose window is open-ended is not silently given a one-day window the
+  // moment someone edits their phone number (the old defaults overwrote null).
+  const [validFrom, setValidFrom] = useState<string | null>(isEdit ? null : dayjs().toISOString());
+  const [validUntil, setValidUntil] = useState<string | null>(isEdit ? null : dayjs().add(1, 'day').toISOString());
   const [picker, setPicker] = useState<null | 'from' | 'until'>(null);
   const [photoBase64, setPhotoBase64] = useState('');   // new picked photo (data URI) to upload
   const [photoPreview, setPhotoPreview] = useState('');  // uri shown in the avatar
@@ -64,8 +68,8 @@ export default function MehmonFormScreen() {
         setJobPosition(data.job_position ?? '');
         setTelegram(data.telegram_username ?? '');
         setPhone(data.phone_number ?? '');
-        if (data.valid_from) setValidFrom(data.valid_from);
-        if (data.valid_until) setValidUntil(data.valid_until);
+        setValidFrom(data.valid_from ?? null);
+        setValidUntil(data.valid_until ?? null);
         if (data.photo_path) { setPhotoPreview(data.photo_path); setExistingPhoto(data.photo_path); }
       } catch {} finally {
         setHydrating(false);
@@ -97,7 +101,7 @@ export default function MehmonFormScreen() {
 
   const save = async () => {
     if (!legalName.trim()) { setError(t('visitors.nameRequired')); return; }
-    if (dayjs(validFrom).isAfter(dayjs(validUntil))) {
+    if (validFrom && validUntil && dayjs(validFrom).isAfter(dayjs(validUntil))) {
       Alert.alert(t('common.errorTitle'), t('visitors.untilBeforeFrom'));
       return;
     }
@@ -111,9 +115,11 @@ export default function MehmonFormScreen() {
       job_position: jobPosition.trim(),
       telegram_username: telegram.trim().replace(/^@/, ''),
       phone_number: phone.trim(),
-      valid_from: validFrom,
-      valid_until: validUntil,
     };
+    // Only bounds the user actually has are sent; an open-ended field stays
+    // open-ended on the server (the PATCH omits the key).
+    if (validFrom) payload.valid_from = validFrom;
+    if (validUntil) payload.valid_until = validUntil;
     if (!isEdit && orgBranchId) payload.organization_branch_id = orgBranchId;
     if (photoBase64) payload.photo_base64 = photoBase64; // only send when a new photo is picked
     try {
@@ -185,23 +191,27 @@ export default function MehmonFormScreen() {
               <Text style={styles.dateLabel}>{t('visitors.dateFrom')}</Text>
               <View style={styles.dateValueRow}>
                 <Icon name="calendar" size={15} color={colors.primary} />
-                <Text style={styles.dateValue}>{dayjs(validFrom).format('DD.MM.YYYY')}</Text>
+                <Text style={styles.dateValue}>{validFrom ? dayjs(validFrom).format('DD.MM.YYYY') : t('visitors.dateUnbounded')}</Text>
               </View>
-              <View style={styles.dateValueRow}>
-                <Icon name="clock" size={15} color={colors.textSecondary} />
-                <Text style={styles.dateTime}>{dayjs(validFrom).format('HH:mm')}</Text>
-              </View>
+              {!!validFrom && (
+                <View style={styles.dateValueRow}>
+                  <Icon name="clock" size={15} color={colors.textSecondary} />
+                  <Text style={styles.dateTime}>{dayjs(validFrom).format('HH:mm')}</Text>
+                </View>
+              )}
             </TouchableOpacity>
             <TouchableOpacity style={styles.dateField} onPress={() => setPicker('until')} activeOpacity={0.7}>
               <Text style={styles.dateLabel}>{t('visitors.dateUntil')}</Text>
               <View style={styles.dateValueRow}>
                 <Icon name="calendar" size={15} color={colors.primary} />
-                <Text style={styles.dateValue}>{dayjs(validUntil).format('DD.MM.YYYY')}</Text>
+                <Text style={styles.dateValue}>{validUntil ? dayjs(validUntil).format('DD.MM.YYYY') : t('visitors.dateUnbounded')}</Text>
               </View>
-              <View style={styles.dateValueRow}>
-                <Icon name="clock" size={15} color={colors.textSecondary} />
-                <Text style={styles.dateTime}>{dayjs(validUntil).format('HH:mm')}</Text>
-              </View>
+              {!!validUntil && (
+                <View style={styles.dateValueRow}>
+                  <Icon name="clock" size={15} color={colors.textSecondary} />
+                  <Text style={styles.dateTime}>{dayjs(validUntil).format('HH:mm')}</Text>
+                </View>
+              )}
             </TouchableOpacity>
           </View>
           <Text style={styles.hint}>{t('visitors.dateHint')}</Text>

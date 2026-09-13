@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { Alert } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
+import { invalidateAfterAction } from '@/lib/invalidateAfterAction';
 import { getApiErrorMessage } from '@/api/errors';
 import i18n from '@/i18n';
 import {
@@ -36,7 +37,7 @@ export function useDecreeActions(orderId: number, refetch: () => void) {
       setBusy(true);
       try {
         await fn();
-        qc.invalidateQueries({ queryKey: orderKeys.all });
+        void invalidateAfterAction(qc, orderKeys.all);
         refetch();
         Alert.alert(i18n.t('orders.actionDoneTitle'), successMsg);
       } catch (e) {
@@ -94,15 +95,14 @@ export function useDecreeActions(orderId: number, refetch: () => void) {
     [runAction, orderId]
   );
 
-  // act_number is optional — an empty/blank string registers with `{}`.
+  // act_number is optional — an empty/blank string registers with `{}`. Sent
+  // as TEXT (lettered numbers are valid); act_date as YYYY-MM-DD or omitted.
   const register = useCallback(
-    (actNumber: string) => {
-      const trimmed = actNumber.trim();
-      return runAction(
-        () => registerDecree(orderId, trimmed ? Number(trimmed) : undefined),
+    (actNumber: string, actDate?: string | null) =>
+      runAction(
+        () => registerDecree(orderId, actNumber, actDate ?? undefined),
         i18n.t('orders.registerSuccess')
-      );
-    },
+      ),
     [runAction, orderId]
   );
 

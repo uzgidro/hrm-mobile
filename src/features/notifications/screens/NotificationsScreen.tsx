@@ -97,11 +97,16 @@ export default function NotificationsScreen() {
     }
   };
 
+  const [markingAll, setMarkingAll] = useState(false);
   const markAllRead = async () => {
+    if (markingAll) return; // double tap = two read-all POSTs
+    setMarkingAll(true);
     try {
       await markAllNotificationsRead();
     } catch (e) {
       getApiErrorMessage(e);
+    } finally {
+      setMarkingAll(false);
     }
     qc.invalidateQueries({ queryKey: notificationKeys.all });
   };
@@ -123,7 +128,7 @@ export default function NotificationsScreen() {
         title={t('notifications.screenTitle')}
         right={
           unread > 0 ? (
-            <TouchableOpacity onPress={markAllRead} hitSlop={8} accessibilityLabel={t('notifications.markAllRead')}>
+            <TouchableOpacity onPress={markAllRead} disabled={markingAll} hitSlop={8} accessibilityLabel={t('notifications.markAllRead')}>
               <Icon name="checkDouble" size={24} color={colors.primary} />
             </TouchableOpacity>
           ) : undefined

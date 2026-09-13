@@ -236,7 +236,7 @@ export default function KpiEntryScreen() {
                         {/* Status pill — tappable for status-setters, opens the catalog picker */}
                         <TouchableOpacity
                           style={[styles.statusPill, { backgroundColor: `${pillColor}22` }]}
-                          disabled={!canStatus || locked}
+                          disabled={!canStatus || locked || setStatus.isPending}
                           onPress={() => setStatusPickerFor(task.id)}
                           activeOpacity={0.8}
                         >
@@ -253,7 +253,7 @@ export default function KpiEntryScreen() {
                             ) : (
                               <TaskAction icon="edit" color={colors.textSecondary} onPress={() => setEditing({ id: task.id, name: task.name ?? '' })} styles={styles} />
                             )}
-                            <TaskAction icon="trash" color={colors.error} onPress={() => onDeleteTask(task)} styles={styles} />
+                            <TaskAction icon="trash" color={colors.error} onPress={() => { if (!deleteTask.isPending) onDeleteTask(task); }} styles={styles} />
                           </View>
                         )}
                       </View>

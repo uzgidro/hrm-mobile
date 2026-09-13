@@ -65,4 +65,5 @@ export default {
 
   nameRequired: 'Необходимо указать Ф.И.О',
   untilBeforeFrom: 'Время ухода должно быть позже времени прихода',
+  dateUnbounded: 'Без ограничения',
 } as const;

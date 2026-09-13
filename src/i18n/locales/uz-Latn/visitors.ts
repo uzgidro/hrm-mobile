@@ -76,4 +76,5 @@ export default {
   // Validation / errors
   nameRequired: 'Ism-sharif kiritilishi shart',
   untilBeforeFrom: "Ketish vaqti kelish vaqtidan keyin bo'lishi kerak",
+  dateUnbounded: 'Cheklanmagan',
 } as const;

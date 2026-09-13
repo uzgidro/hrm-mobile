@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
+import { invalidateAfterAction } from '@/lib/invalidateAfterAction';
 import {
   ORDER_ACTS,
   ORDER_ACT_DETAIL,
@@ -54,10 +55,21 @@ export function acknowledgeDecree(id: number): Promise<unknown> {
 }
 
 // act_number is optional: an empty input sends `{}` (backend auto-assigns).
-export function registerDecree(id: number, actNumber?: number): Promise<unknown> {
-  return apiClient
-    .post(ORDER_ACT_DECREE_REGISTER(id), actNumber != null ? { act_number: actNumber } : {})
-    .then((r) => r.data);
+// It is a STRING — "125/2026-QQ" is a valid number (backend
+// `OrderActRegisterRequest.act_number: Optional[str]`). The old signature took
+// a `number`, so anything with a letter became NaN → null → the server
+// silently auto-assigned a different number than the one typed. `act_date`
+// (YYYY-MM-DD) is what the web stamp modal sends; omitted = today on the server.
+export function registerDecree(
+  id: number,
+  actNumber?: string | null,
+  actDate?: string | null,
+): Promise<unknown> {
+  const body: { act_number?: string; act_date?: string } = {};
+  const num = actNumber?.trim();
+  if (num) body.act_number = num;
+  if (actDate) body.act_date = actDate;
+  return apiClient.post(ORDER_ACT_DECREE_REGISTER(id), body).then((r) => r.data);
 }
 
 // Replace the whole familiarizer list. The backend does a full replace but never
@@ -127,7 +139,7 @@ export function useAddOrderComment(id: number) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (text: string) => addOrderComment(id, text),
-    onSuccess: () => qc.invalidateQueries({ queryKey: orderKeys.all }),
+    onSuccess: () => invalidateAfterAction(qc, orderKeys.all),
   });
 }
 
@@ -174,7 +186,7 @@ export function useAssignFamiliarizers(id: number) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (employeeIds: number[]) => assignFamiliarizers(id, employeeIds),
-    onSuccess: () => qc.invalidateQueries({ queryKey: orderKeys.all }),
+    onSuccess: () => invalidateAfterAction(qc, orderKeys.all),
   });
 }
 
@@ -184,7 +196,7 @@ export function useUpdateOrder() {
     mutationFn: (args: {
       id: number; payload: Partial<CreateOrderPayload>; files?: PickedFile[]; onFilesError?: () => void;
     }) => updateOrder(args.id, args.payload, args.files, args.onFilesError),
-    onSuccess: () => qc.invalidateQueries({ queryKey: orderKeys.all }),
+    onSuccess: () => invalidateAfterAction(qc, orderKeys.all),
   });
 }
 
@@ -193,7 +205,7 @@ export function useCreateOrder() {
   return useMutation({
     mutationFn: (args: { payload: CreateOrderPayload; files?: PickedFile[]; onFilesError?: () => void }) =>
       createOrder(args.payload, args.files, args.onFilesError),
-    onSuccess: () => qc.invalidateQueries({ queryKey: orderKeys.all }),
+    onSuccess: () => invalidateAfterAction(qc, orderKeys.all),
     // CreateOrderScreen already shows the error via its own Alert in the catch
     // block; skip the global mutation toast so a failed submit isn't surfaced twice.
     meta: { skipErrorToast: true },

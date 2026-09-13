@@ -188,6 +188,7 @@ export function routeForNotification(data: any): string | null {
   const ticketId = data.support_ticket_id; // texnik yordam murojaati
   const cardId = data.card_id; // loyiha vazifasi
   const workspaceId = data.workspace_id; // loyiha
+  const visitorId = data.visitor_id; // mehmon keldi (push payload)
 
   if (orderId) return `/order-detail?id=${orderId}`;
   if (letterId) return `/letter-detail?id=${letterId}`;
@@ -199,6 +200,8 @@ export function routeForNotification(data: any): string | null {
   // bildirishnomasini bosish hech qayerga olib bormasdi.
   if (cardId) return `/loyiha-card-detail?id=${cardId}`;
   if (workspaceId) return `/loyiha-detail?id=${workspaceId}`;
+  // `visitor_arrived` pushes carry the visitor id — open the guest, not the list.
+  if (visitorId) return `/mehmon-detail?id=${visitorId}`;
   if (newsId != null) return '/news';
 
   if (type.startsWith('order_act')) return '/(tabs)/orders';
@@ -215,6 +218,9 @@ export function routeForNotification(data: any): string | null {
   if (type.startsWith('work_leave')) return '/work-leaves';
   if (type.startsWith('letter')) return '/(tabs)/letters';
   if (type.startsWith('card') || type.startsWith('workspace')) return '/loyihalar';
+  // Both screens exist on mobile; these used to return null (tap did nothing).
+  if (type.startsWith('navbatchilik')) return '/navbatchilik';
+  if (type.startsWith('employee_assignment')) return '/profile-detail';
   // Avtopark / tibbiy ko'rik / zoom modullari mobilда hali yo'q — joyida qolamiz.
   return null;
 }
@@ -318,6 +324,21 @@ const NOTIF_META: Record<string, { titleKey: string; icon: IconName }> = {
   support_ticket_invited: { titleKey: 'notifications.supportTicketInvited', icon: 'users' },
   support_ticket_rated: { titleKey: 'notifications.supportTicketRated', icon: 'check' },
   support_ticket_message: { titleKey: 'notifications.supportTicketMessage', icon: 'mail' },
+  // 2026-09-13: types the backend emits that had no entry (fell back to the
+  // family title). Keys = backend notification_type codes.
+  business_trip_report_returned: { titleKey: 'notifications.businessTripReportReturned', icon: 'edit' },
+  card_attachment_added: { titleKey: 'notifications.cardAttachmentAdded', icon: 'doc' },
+  card_deleted: { titleKey: 'notifications.cardDeleted', icon: 'close' },
+  card_member_removed: { titleKey: 'notifications.cardMemberRemoved', icon: 'users' },
+  card_uncompleted: { titleKey: 'notifications.cardUncompleted', icon: 'edit' },
+  card_updated: { titleKey: 'notifications.cardUpdated', icon: 'edit' },
+  kpi_performance_created: { titleKey: 'notifications.kpiPerformanceCreated', icon: 'target' },
+  kpi_performance_status: { titleKey: 'notifications.kpiPerformanceStatus', icon: 'target' },
+  order_act_applied: { titleKey: 'notifications.orderActApplied', icon: 'check' },
+  order_act_commented: { titleKey: 'notifications.orderActCommented', icon: 'mail' },
+  support_ticket_reopened: { titleKey: 'notifications.supportTicketReopened', icon: 'help' },
+  workspace_member_removed: { titleKey: 'notifications.workspaceMemberRemoved', icon: 'users' },
+  employee_assignment_added: { titleKey: 'notifications.employeeAssignmentAdded', icon: 'users' },
   vehicle_requested: { titleKey: 'notifications.vehicleRequested', icon: 'briefcase' },
   vehicle_request_answered: { titleKey: 'notifications.vehicleRequestAnswered', icon: 'check' },
   // Avtopark TASDIQLOVCHISI bosqichi (backend 2026-08-21): so'rov avval unga

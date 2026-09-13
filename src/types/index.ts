@@ -287,10 +287,9 @@ export interface Letter {
   arrival_date?: string | null;
   submitter_id?: number | null;
   submitter?: Employee | null;
-  employee_id?: number | null;
-  employee?: Employee | null;
-  created_by_id?: number | null;
-  created_by?: Employee | null;
+  // Author = `creator_employee` (backend LetterRead). The old `employee` /
+  // `created_by` fields were never returned by the API — every read of them
+  // was dead (the list search by author name silently matched nothing).
   creator_employee_id?: number | null;
   creator_employee?: Employee | null;
   created_at?: string;
@@ -368,15 +367,17 @@ export interface BusinessTripMovement {
   turnstile_event_id?: number | null;
 }
 
+// Exactly `NewsPostRead` (list AND detail): id/title/description/branch id +
+// timestamps. There is no author or nested branch on the API — the old
+// `author` / `content` / `organization_branch` fields were never populated
+// (the card used to draw a fake "Admin" avatar).
 export interface NewsPost {
   id: number;
   title: string;
   description?: string;
-  content?: string;
   created_at: string;
-  author?: { legal_name: string; photo_path?: string };
+  updated_at?: string;
   organization_branch_id?: number | null;
-  organization_branch?: OrganizationBranch;
 }
 
 // Matches the backend NotificationRead schema exactly.
@@ -782,6 +783,10 @@ export interface NavbatchilikGroup {
   employees?: Employee[] | null;
   departments?: { id: number; name?: string | null }[] | null;
   effective_member_count?: number | null;
+  /** KADR o'chirib qo'ysa a'zolar jadvalni faqat ko'radi (server yozuvni rad etadi). */
+  members_can_edit?: boolean | null;
+  /** `/navbatchilik-groups/my` da: men bu guruhni faqat KO'RUVCHI sifatida ochyapmanmi. */
+  is_viewer_only?: boolean | null;
 }
 
 // One assigned duty/shift day (GET /work-schedule-days). schedule_type is the

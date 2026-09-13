@@ -139,4 +139,6 @@ export default {
   documentLoading: 'Ҳужжат юкланмоқда...',
   documentLoadError: 'Ҳужжатни юклаб бўлмади',
   documentOpenError: 'Ҳужжатни очишда хатолик',
+  registerDatePlaceholder: 'Сана (КК.ОО.ЙЙЙЙ)',
+  registerDateLabel: 'Рўйхат санаси',
 } as const;

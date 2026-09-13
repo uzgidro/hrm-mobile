@@ -139,4 +139,6 @@ export default {
   documentLoading: 'Loading document...',
   documentLoadError: 'Failed to load the document',
   documentOpenError: 'Error opening the document',
+  registerDatePlaceholder: 'Date (DD.MM.YYYY)',
+  registerDateLabel: 'Registration date',
 } as const;

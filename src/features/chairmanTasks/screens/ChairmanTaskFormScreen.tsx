@@ -111,7 +111,7 @@ export default function ChairmanTaskFormScreen() {
     <Screen edges={['top', 'bottom']} maxWidth={600}>
       <ScreenHeader
         title={t(editing ? 'chairman.editTitle' : 'chairman.createTitle')}
-        right={editing ? <HeaderAction icon="trash" onPress={onDelete} /> : undefined}
+        right={editing ? <HeaderAction icon="trash" onPress={onDelete} disabled={busy} /> : undefined}
       />
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <FormInput label={t('chairman.titleLabel')} required value={title} onChangeText={setTitle} placeholder={t('chairman.titlePlaceholder')} />

@@ -64,18 +64,23 @@ export function HeaderAction({
   icon,
   onPress,
   color,
+  disabled = false,
 }: {
   icon: IconName;
   onPress: () => void;
   color?: string;
+  /** While a mutation is pending — blocks the double tap (delete twice, etc). */
+  disabled?: boolean;
 }) {
   const { colors } = useTheme();
   return (
     <TouchableOpacity
       onPress={onPress}
+      disabled={disabled}
       activeOpacity={0.7}
       hitSlop={8}
       style={{
+        opacity: disabled ? 0.5 : 1,
         width: 38,
         height: 38,
         borderRadius: 12,

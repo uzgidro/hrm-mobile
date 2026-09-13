@@ -11,7 +11,7 @@ import dayjs from 'dayjs';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon, IconName } from '@/components/Icon';
-import { LoadingView } from '@/components/StateViews';
+import { LoadingView, ErrorState } from '@/components/StateViews';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { getApiErrorMessage } from '@/api/errors';
 import { confirm } from '@/lib/confirm';
@@ -45,7 +45,7 @@ export function VisitorDetailView({ id, embedded = false }: { id: number; embedd
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
-  const { data: v, isLoading } = useQuery(visitorDetailQuery(visitorId));
+  const { data: v, isLoading, isError, error, refetch } = useQuery(visitorDetailQuery(visitorId));
 
   const del = useDeleteVisitor();
 
@@ -106,9 +106,10 @@ export function VisitorDetailView({ id, embedded = false }: { id: number; embedd
             </TouchableOpacity>
             <TouchableOpacity
               onPress={onDelete}
+              disabled={del.isPending}
               activeOpacity={0.7}
               hitSlop={8}
-              style={[styles.headerAction, { backgroundColor: colors.primarySoft }]}
+              style={[styles.headerAction, { backgroundColor: colors.primarySoft }, del.isPending && { opacity: 0.5 }]}
             >
               <Icon name="trash" size={20} color={colors.error} />
             </TouchableOpacity>
@@ -116,7 +117,9 @@ export function VisitorDetailView({ id, embedded = false }: { id: number; embedd
         </View>
       </View>
 
-      {isLoading || !v ? (
+      {isError || (!isLoading && !v) ? (
+        <ErrorState message={getApiErrorMessage(error, t('errors.refreshFailed'))} onRetry={() => refetch()} />
+      ) : isLoading || !v ? (
         <LoadingView />
       ) : (
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>

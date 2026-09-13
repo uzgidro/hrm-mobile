@@ -79,16 +79,16 @@ describe('decree workflow request functions', () => {
     expect(mock.history.post[0].url).toBe(ORDER_ACT_DECREE_ACKNOWLEDGE(6));
   });
 
-  it('registerDecree POSTs { act_number } when a number is provided', async () => {
+  it('registerDecree POSTs act_number as TEXT (lettered numbers survive) + act_date', async () => {
     mock.onPost(ORDER_ACT_DECREE_REGISTER(7)).reply(200, { ok: true });
-    await registerDecree(7, 42);
+    await registerDecree(7, ' 125/2026-QQ ', '2026-09-13');
     expect(mock.history.post[0].url).toBe(ORDER_ACT_DECREE_REGISTER(7));
-    expect(JSON.parse(mock.history.post[0].data)).toEqual({ act_number: 42 });
+    expect(JSON.parse(mock.history.post[0].data)).toEqual({ act_number: '125/2026-QQ', act_date: '2026-09-13' });
   });
 
-  it('registerDecree POSTs an empty {} body when no number is provided', async () => {
+  it('registerDecree POSTs an empty {} body when no number/date is provided (server auto-assigns)', async () => {
     mock.onPost(ORDER_ACT_DECREE_REGISTER(7)).reply(200, { ok: true });
-    await registerDecree(7);
+    await registerDecree(7, '   ');
     expect(JSON.parse(mock.history.post[0].data)).toEqual({});
   });
 

@@ -44,6 +44,14 @@ export function useUpdateMyProfile() {
       // importing from `src/features/employees` (cross-feature imports are
       // banned). This couples us to that feature's key root — keep in sync.
       qc.invalidateQueries({ queryKey: ['employees'] });
+      // The rosters do NOT live under ['employees']: the shared branch roster
+      // is ['team-employees-all'], the phone book ['phone-directory'], the
+      // pickers ['employee-options'], birthdays ['birthdays'] — a renamed
+      // employee or new photo used to stay stale on Team / Directory until
+      // their own staleTime ran out.
+      for (const key of [['team-employees-all'], ['team-roster'], ['phone-directory'], ['employee-options'], ['birthdays']]) {
+        qc.invalidateQueries({ queryKey: key });
+      }
     },
   });
 }

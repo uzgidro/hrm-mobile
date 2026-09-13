@@ -63,4 +63,5 @@ export default {
 
   nameRequired: 'Исм-шариф киритилиши шарт',
   untilBeforeFrom: 'Кетиш вақти келиш вақтидан кейин бўлиши керак',
+  dateUnbounded: 'Чекланмаган',
 } as const;

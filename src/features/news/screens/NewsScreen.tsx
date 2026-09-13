@@ -15,7 +15,6 @@ import { isNewsManager } from '@/utils/roles';
 import { PagedList } from '@/components/PagedList';
 import { SearchBox } from '@/components/SearchBox';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
-import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { newsListQuery, newsBranchesQuery } from '../api/queries';
 
 type Styles = ReturnType<typeof makeStyles>;
@@ -25,17 +24,12 @@ const NewsCard = memo(function NewsCard(
   { item: NewsPost; styles: Styles; grid?: boolean; branchName?: string },
 ) {
   const { t } = useTranslation();
-  // MUALLIF: `GET news-posts` muallifni QAYTARMAYDI (web ham ko'rsatmaydi) —
-  // shu bois avatar+ism faqat backend uni bergan holatda chiziladi, aks holda
-  // sana yolg'iz sarlavha bo'ladi. Ilgari bu yerda har doim "Admin" degan
-  // soxta muallif va bo'sh avatar turardi.
-  const author = item.author;
+  // `GET news-posts` has no author (web does not show one either) — the card
+  // leads with the date; the branch tag below says who it was addressed to.
   return (
     <View style={[styles.card, grid && styles.cardGrid]}>
       <View style={styles.cardHeader}>
-        {author ? <EmployeeAvatar emp={author} size={42} /> : null}
         <View style={styles.authorInfo}>
-          {author ? <Text style={styles.authorName}>{author.legal_name}</Text> : null}
           <Text style={styles.newsDate}>{dayjs(item.created_at).format('DD.MM.YYYY HH:mm')}</Text>
         </View>
       </View>
@@ -49,7 +43,7 @@ const NewsCard = memo(function NewsCard(
             Aks holda filialga yo'naltirilgan yangilik ham "Barcha xodimlarga"
             deb ko'rinardi. */}
         <Text style={styles.tag}>
-          {item.organization_branch?.name || branchName || t('news.allEmployees')}
+          {branchName || t('news.allEmployees')}
         </Text>
       </View>
     </View>
@@ -121,7 +115,6 @@ const makeStyles = (c: ThemeColors) =>
     cardGrid: { flex: 1 },
     cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
     authorInfo: { flex: 1 },
-    authorName: { fontSize: 14, fontWeight: '700', color: c.text },
     newsDate: { fontSize: 12, color: c.textMuted, marginTop: 2 },
 
     newsTitle: { fontSize: 16, fontWeight: '700', color: c.text, lineHeight: 23, marginBottom: 8 },

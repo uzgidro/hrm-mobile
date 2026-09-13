@@ -11,7 +11,8 @@ import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import type { Employee } from '@/types';
 import { Icon } from '@/components/Icon';
-import { LoadingView } from '@/components/StateViews';
+import { LoadingView, ErrorState } from '@/components/StateViews';
+import { getApiErrorMessage } from '@/api/errors';
 import { PickerModal, type PickerOption } from '@/components/PickerModal';
 import { statusMeta, statusColor, decreePermissions, decreeSubmitTarget } from '@/utils/orderStatus';
 import { isHR, isSiteMasterAdmin, employeeSubLabel } from '@/utils/roles';
@@ -23,6 +24,7 @@ import { DetailSections } from './DetailSections';
 import { CommentsSection } from './CommentsSection';
 import { DecreeActionBar } from './DecreeActionBar';
 import { RejectModal, RegisterModal } from './DetailModals';
+import { parseDdMmYyyy, formatDdMmYyyy } from '@/lib/dateText';
 
 // The body of the decree detail — extracted so it can render either as the
 // pushed route's content (phone / push-notification deep links, `embedded`
@@ -42,10 +44,12 @@ export function OrderDetailView({ id, embedded = false }: { id: number; embedded
   const [rejectReason, setRejectReason] = useState('');
   const [registerOpen, setRegisterOpen] = useState(false);
   const [actNumber, setActNumber] = useState('');
+  // Web stamp-modal parity: the registration date defaults to today, editable.
+  const [actDate, setActDate] = useState(() => formatDdMmYyyy(dayjs().format('YYYY-MM-DD')));
   const [famOpen, setFamOpen] = useState(false);
   const [famIds, setFamIds] = useState<number[]>([]);
 
-  const { data: order, isLoading, refetch } = useQuery(orderDetailQuery(orderId));
+  const { data: order, isLoading, isError, error, refetch } = useQuery(orderDetailQuery(orderId));
 
   const { busy, submit, approve, reject, resubmit, forward, confirmSubmission, acknowledge, register } =
     useDecreeActions(orderId, refetch);
@@ -124,7 +128,7 @@ export function OrderDetailView({ id, embedded = false }: { id: number; embedded
 
   const onRegister = async () => {
     setRegisterOpen(false);
-    await register(actNumber);
+    await register(actNumber, parseDdMmYyyy(actDate));
     setActNumber('');
   };
 
@@ -142,6 +146,14 @@ export function OrderDetailView({ id, embedded = false }: { id: number; embedded
       </SafeAreaView>
     );
 
+  if (isError || (!isLoading && !order)) {
+    return renderRoot(
+      <>
+        <DetailHeader embedded={embedded} />
+        <ErrorState message={getApiErrorMessage(error, t('errors.refreshFailed'))} onRetry={() => refetch()} />
+      </>,
+    );
+  }
   if (isLoading || !order) {
     return renderRoot(
       <>
@@ -279,6 +291,8 @@ export function OrderDetailView({ id, embedded = false }: { id: number; embedded
         visible={registerOpen}
         actNumber={actNumber}
         onChangeActNumber={setActNumber}
+        actDate={actDate}
+        onChangeActDate={setActDate}
         onClose={() => setRegisterOpen(false)}
         onSubmit={onRegister}
       />

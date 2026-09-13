@@ -9,10 +9,9 @@ import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
-import { LoadingView } from '@/components/StateViews';
+import { LoadingView, ErrorState } from '@/components/StateViews';
 import { confirm } from '@/lib/confirm';
 import { getApiErrorMessage } from '@/api/errors';
-import { branchRegions } from '@/utils/tripRegions';
 import {
   letterStatusMeta, letterTypeLabel, canSignLetter, getSigningTimeline, statusColor,
   getManagementSigners, normalizeLetterType,
@@ -55,7 +54,7 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
-  const { data: letter, isLoading, refetch } = useQuery(letterDetailQuery(letterId));
+  const { data: letter, isLoading, isError, error, refetch } = useQuery(letterDetailQuery(letterId));
   const { busy, sign, reject, approve } = useLetterActions(letterId, refetch);
   const resetReportM = useResetReport(letterId);
   const submitTripM = useSubmitTrip(letterId);
@@ -88,6 +87,16 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
       </SafeAreaView>
     );
 
+  // A failed load used to spin forever (`isLoading || !letter`); the error
+  // now shows with a retry.
+  if (isError || (!isLoading && !letter)) {
+    return renderRoot(
+      <>
+        <DetailHeader embedded={embedded} />
+        <ErrorState message={getApiErrorMessage(error, t('errors.refreshFailed'))} onRetry={() => refetch()} />
+      </>,
+    );
+  }
   if (isLoading || !letter) {
     return renderRoot(
       <>
@@ -111,7 +120,6 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
   // Safarda muallif = creator_employee (web "Yuboriluvchi (xodim)").
   const authorName =
     letter.creator_employee?.legal_name
-    || letter.employee?.legal_name
     || letter.submitter?.legal_name
     || '';
   const managementNames = getManagementSigners(letter)
@@ -129,10 +137,11 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
   // hujjatlarda filialning viloyatlaridan hosil qilinadi — web bilan bir xil.
   // Web `displayNumber`: safarda AVVAL "Bildirgi raqami" (decree_number).
   const displayNumber = isTrip ? (letter.decree_number || letter.letter_number) : letter.letter_number;
+  // Only what the document stores: the nested branch refs carry no regions
+  // (`OrganizationBranchRef` = {id, name}), so the old "derive from branches"
+  // fallback was always empty.
   const regionNames = (
-    letter.destination_regions?.length
-      ? letter.destination_regions
-      : Array.from(new Set((letter.destination_branches ?? []).flatMap(branchRegions)))
+    letter.destination_regions ?? []
   ).filter(Boolean).join(', ');
 
   // Barcha ruxsatlar BITTA sof funksiyadan (buyruqlardagi `decreePermissions`

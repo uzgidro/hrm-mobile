@@ -122,9 +122,12 @@ export function useCreateCard() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (payload: CardPayload) => createCard(payload),
-    // New card belongs to a single column — refresh just that column's list.
-    onSuccess: (_data, payload) =>
-      qc.invalidateQueries({ queryKey: projectKeys.cards(payload.column_id) }),
+    // New card belongs to a single column — refresh that column's list, plus
+    // the workspace list whose `cards_count` badges just changed.
+    onSuccess: (_data, payload) => {
+      qc.invalidateQueries({ queryKey: projectKeys.cards(payload.column_id) });
+      qc.invalidateQueries({ queryKey: projectKeys.myWorkspaces() });
+    },
   });
 }
 
@@ -136,8 +139,13 @@ export function useToggleCardComplete() {
     // not guaranteed to come back on that response, so we invalidate off the
     // column the mutation was invoked from rather than trusting the card.
     mutationFn: ({ card }: { card: WorkspaceCard; columnId: number }) => toggleCardComplete(card),
-    onSuccess: (_data, { columnId }) =>
-      qc.invalidateQueries({ queryKey: projectKeys.cards(columnId) }),
+    // The column list, the open card detail (its `is_completed`/`completed_at`)
+    // and the workspace counters — the detail and counters used to stay stale.
+    onSuccess: (_data, { card, columnId }) => {
+      qc.invalidateQueries({ queryKey: projectKeys.cards(columnId) });
+      qc.invalidateQueries({ queryKey: projectKeys.card(card.id) });
+      qc.invalidateQueries({ queryKey: projectKeys.myWorkspaces() });
+    },
   });
 }
 

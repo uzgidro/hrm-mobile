@@ -140,4 +140,6 @@ export default {
   documentLoading: 'Документ загружается...',
   documentLoadError: 'Не удалось загрузить документ',
   documentOpenError: 'Ошибка при открытии документа',
+  registerDatePlaceholder: 'Дата (ДД.ММ.ГГГГ)',
+  registerDateLabel: 'Дата регистрации',
 } as const;

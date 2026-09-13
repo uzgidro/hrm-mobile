@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { Alert } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
+import { invalidateAfterAction } from '@/lib/invalidateAfterAction';
 import { getApiErrorMessage } from '@/api/errors';
 import { confirm } from '@/lib/confirm';
 import {
@@ -33,7 +34,7 @@ export function useLetterActions(letterId: number, refetch: () => void) {
       setBusy(true);
       try {
         await fn();
-        qc.invalidateQueries({ queryKey: letterKeys.all });
+        void invalidateAfterAction(qc, letterKeys.all);
         refetch();
         Alert.alert(t('letters.actionDoneTitle'), msg);
       } catch (e) {

@@ -126,7 +126,7 @@ export default function LoyihaDetailScreen() {
         ) : (
           cards.map((cd) => (
             <View key={cd.id} style={[styles.taskCard, cd.is_completed && styles.taskDone]}>
-              <TouchableOpacity onPress={() => toggleComplete(cd, col.id)} hitSlop={8} style={[styles.checkbox, cd.is_completed && styles.checkboxOn]}>
+              <TouchableOpacity onPress={() => toggleComplete(cd, col.id)} disabled={toggleCard.isPending} hitSlop={8} style={[styles.checkbox, cd.is_completed && styles.checkboxOn]}>
                 {cd.is_completed && <Icon name="check" size={13} color={colors.onPrimary} />}
               </TouchableOpacity>
               <TouchableOpacity
@@ -163,7 +163,7 @@ export default function LoyihaDetailScreen() {
         right={
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <HeaderAction icon="edit" onPress={() => router.push({ pathname: '/loyiha-form', params: { id: String(workspaceId) } })} />
-            {canDelete && <HeaderAction icon="trash" onPress={onDelete} color={colors.error} />}
+            {canDelete && <HeaderAction icon="trash" onPress={onDelete} color={colors.error} disabled={deleteWs.isPending} />}
           </View>
         }
       />

@@ -162,11 +162,11 @@ export default function CreateLetterScreen() {
     setDepartureDate(editing.departure_date ?? null);
     setArrivalDate(editing.arrival_date ?? null);
     setDestinationIds((editing.destination_branches ?? []).map((b) => b.id));
-    setRegions(
-      editing.destination_regions?.length
-        ? editing.destination_regions
-        : Array.from(new Set((editing.destination_branches ?? []).flatMap(branchRegions))),
-    );
+    // Only the document's OWN selection. The old fallback derived regions from
+    // `destination_branches`, but a letter's nested branch is `{id, name}`
+    // only (no `regions`) — it always produced [] and the PATCH then sent
+    // `destination_regions: []`, wiping the stored selection on every edit.
+    setRegions(editing.destination_regions ?? []);
     // An active car request opens the form in "Mashina kerak" mode so the user
     // can see it and, by switching back to "Mashinasiz", CANCEL it — the save
     // then sends `vehicle_needed: false`. Omitting the key means "unchanged",
@@ -312,6 +312,11 @@ export default function CreateLetterScreen() {
     // aniqroq (web ham editда `organization_branch_id`/`employee_id` yubormaydi).
     if (editId) {
       delete payload.organization_branch_id;
+      // An untouched empty region list on edit must not overwrite the server's
+      // value (a letter created before regions existed has none in the form).
+      if (Array.isArray(payload.destination_regions) && payload.destination_regions.length === 0) {
+        delete payload.destination_regions;
+      }
     }
 
     const onFilesError = () =>

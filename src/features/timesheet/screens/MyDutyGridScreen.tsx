@@ -85,10 +85,17 @@ export default function MyDutyGridScreen({ embedded = false }: { embedded?: bool
   );
   const groupHasDam = (selectedGroup?.shifts?.length ?? 0) >= 1;
   const { assign, clear, isPending } = useScheduleDayMutations(monthKey, selectedGroup?.id, deptId);
+  // Web NavbatchilikPage parity (`readOnly={viewerOnly}`): a VIEWER of the
+  // group (`is_viewer_only`) or a member of a group whose HR turned off
+  // `members_can_edit` only reads the grid — the server rejects their writes,
+  // so the cells must not react to taps.
+  const readOnly = !deptMode && (
+    !!selectedGroup?.is_viewer_only || selectedGroup?.members_can_edit === false
+  );
 
   const onCellPress = useCallback(
     async (emp: Employee, dateStr: string) => {
-      if (isPending) return;
+      if (isPending || readOnly) return;
       if (groupWeekdays.size > 0 && !groupWeekdays.has(dayjs(dateStr).day())) return; // non-group day
       const entry = dayMap[`${emp.id}_${dateStr}`];
       const action = deptMode
@@ -112,7 +119,7 @@ export default function MyDutyGridScreen({ embedded = false }: { embedded?: bool
         Alert.alert(t('timesheet.dutySaveError'));
       }
     },
-    [assign, clear, dayMap, deptMode, groupHasDam, groupWeekdays, isPending, selectedGroup, t],
+    [assign, clear, dayMap, deptMode, groupHasDam, groupWeekdays, isPending, readOnly, selectedGroup, t],
   );
 
   const onRefresh = useCallback(async () => {
@@ -223,7 +230,7 @@ export default function MyDutyGridScreen({ embedded = false }: { embedded?: bool
                             : sIdx >= 0 ? shiftColor(sIdx, colors) : colors.primaryLight;
                         }
                         return (
-                          <TouchableOpacity key={d} style={styles.dayCell} activeOpacity={0.7} onPress={() => onCellPress(emp, d)}>
+                          <TouchableOpacity key={d} style={styles.dayCell} activeOpacity={readOnly ? 1 : 0.7} disabled={readOnly} onPress={() => onCellPress(emp, d)}>
                             {label !== null ? (
                               <View style={[styles.cellChip, { backgroundColor: bg }]}>
                                 <Text style={styles.cellChipText} numberOfLines={1}>{label}</Text>

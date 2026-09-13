@@ -143,4 +143,6 @@ export default {
   documentLoading: 'Hujjat yuklanmoqda...',
   documentLoadError: "Hujjatni yuklab bo'lmadi",
   documentOpenError: 'Hujjatni ochishda xatolik',
+  registerDatePlaceholder: 'Sana (KK.OO.YYYY)',
+  registerDateLabel: "Ro'yxat sanasi",
 } as const;

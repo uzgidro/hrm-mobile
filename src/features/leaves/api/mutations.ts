@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
+import { invalidateAfterAction } from '@/lib/invalidateAfterAction';
 import { WORK_LEAVES, WORK_LEAVE_SIGN, WORK_LEAVE_REJECT, WORK_LEAVE_DETAIL } from '@/api/urls';
 import { leaveKeys } from './queries';
 
@@ -39,7 +40,7 @@ export function useSignLeave(id: number) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: () => signLeave(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: leaveKeys.all }),
+    onSuccess: () => invalidateAfterAction(qc, leaveKeys.all),
   });
 }
 
@@ -47,7 +48,7 @@ export function useRejectLeave(id: number) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (reason: string) => rejectLeave(id, reason),
-    onSuccess: () => qc.invalidateQueries({ queryKey: leaveKeys.all }),
+    onSuccess: () => invalidateAfterAction(qc, leaveKeys.all),
   });
 }
 
@@ -55,7 +56,7 @@ export function useCreateLeave() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: createLeave,
-    onSuccess: () => qc.invalidateQueries({ queryKey: leaveKeys.all }),
+    onSuccess: () => invalidateAfterAction(qc, leaveKeys.all),
   });
 }
 
@@ -63,6 +64,6 @@ export function useDeleteLeave(id: number) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: () => deleteLeave(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: leaveKeys.all }),
+    onSuccess: () => invalidateAfterAction(qc, leaveKeys.all),
   });
 }

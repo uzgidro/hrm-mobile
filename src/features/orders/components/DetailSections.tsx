@@ -1,5 +1,4 @@
 import { View, Text, StyleSheet } from 'react-native';
-import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
@@ -60,17 +59,9 @@ export function DetailSections({ order }: { order: OrderAct }) {
         </Section>
       )}
 
-      {(order.comments?.length ?? 0) > 0 && (
-        <Section title={t('orders.sectionHistory')}>
-          {order.comments!.map((cm, i) => (
-            <View key={cm.id ?? i} style={styles.commentRow}>
-              <Text style={styles.commentAuthor}>{cm.employee?.legal_name || t('orders.signerFallback')}</Text>
-              {!!cm.text && <Text style={styles.commentText}>{cm.text}</Text>}
-              {!!cm.created_at && <Text style={styles.commentDate}>{dayjs(cm.created_at).format('DD.MM.YYYY HH:mm')}</Text>}
-            </View>
-          ))}
-        </Section>
-      )}
+      {/* Comments are rendered ONCE — by <CommentsSection/> (live query +
+          composer). This block used to duplicate them from the embedded
+          `order.comments`, so every comment appeared twice on the screen. */}
     </>
   );
 }
@@ -84,8 +75,4 @@ const makeStyles = (c: ThemeColors) =>
     signerStatus: { fontSize: 12, fontWeight: '600' },
     signerStatusRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
 
-    commentRow: { paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: c.cardBorder, gap: 3 },
-    commentAuthor: { fontSize: 13, fontWeight: '700', color: c.text },
-    commentText: { fontSize: 13, color: c.textSecondary, lineHeight: 18 },
-    commentDate: { fontSize: 11, color: c.textMuted },
   });

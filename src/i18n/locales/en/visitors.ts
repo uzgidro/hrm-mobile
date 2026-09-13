@@ -65,4 +65,5 @@ export default {
 
   nameRequired: 'Full name is required',
   untilBeforeFrom: 'Departure time must be after arrival time',
+  dateUnbounded: 'No limit',
 } as const;

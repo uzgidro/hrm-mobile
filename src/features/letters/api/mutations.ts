@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
+import { invalidateAfterAction } from '@/lib/invalidateAfterAction';
 import {
   LETTER_CREATE, LETTER_SIGN, LETTER_REJECT, LETTER_UPLOAD_ATTACHMENT,
   LETTER_SUBMIT_REPORT, LETTER_RESET_REPORT, LETTER_UPLOAD_REPORT,
@@ -79,7 +80,7 @@ export function useUpdateLetter() {
     mutationFn: (args: {
       id: number; payload: CreateLetterPayload; files?: PickedFile[]; onFilesError?: () => void;
     }) => updateLetter(args.id, args.payload, args.files, args.onFilesError),
-    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+    onSuccess: () => invalidateAfterAction(qc, letterKeys.all),
   });
 }
 
@@ -166,7 +167,7 @@ export function useCreateLetter() {
   return useMutation({
     mutationFn: (args: { payload: CreateLetterPayload; files?: PickedFile[]; onFilesError?: () => void }) =>
       createLetter(args.payload, args.files, args.onFilesError),
-    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+    onSuccess: () => invalidateAfterAction(qc, letterKeys.all),
   });
 }
 
@@ -174,7 +175,7 @@ export function useSubmitReport(id: number) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (form: ReportForm) => submitReport(id, form),
-    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+    onSuccess: () => invalidateAfterAction(qc, letterKeys.all),
   });
 }
 
@@ -186,7 +187,7 @@ export function useResetReport(id: number) {
     // bitta xato uchun HAM toast, HAM bloklovchi Alert ko'rardi.
     meta: { skipErrorToast: true },
     mutationFn: () => resetReport(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+    onSuccess: () => invalidateAfterAction(qc, letterKeys.all),
   });
 }
 
@@ -204,7 +205,7 @@ export function useConfirmReturn(id: number) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (form: ConfirmReturnForm) => confirmReturn(id, form),
-    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+    onSuccess: () => invalidateAfterAction(qc, letterKeys.all),
   });
 }
 
@@ -227,7 +228,7 @@ export function useSelfConfirmReturn(id: number) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (returnDate?: string | null) => selfConfirmReturn(id, returnDate),
-    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+    onSuccess: () => invalidateAfterAction(qc, letterKeys.all),
   });
 }
 
@@ -244,7 +245,7 @@ export function useUpdateReturnDate(id: number) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (returnDate: string) => updateReturnDate(id, returnDate),
-    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+    onSuccess: () => invalidateAfterAction(qc, letterKeys.all),
   });
 }
 
@@ -277,7 +278,7 @@ export function useAgreeLetter(id: number) {
   return useMutation({
     mutationFn: ({ agreed, comment }: { agreed: boolean; comment: string }) =>
       (agreed ? agreeLetter : disagreeLetter)(id, comment),
-    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+    onSuccess: () => invalidateAfterAction(qc, letterKeys.all),
   });
 }
 
@@ -285,7 +286,7 @@ export function useSubmitAgreement(id: number) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: () => submitAgreementLetter(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+    onSuccess: () => invalidateAfterAction(qc, letterKeys.all),
   });
 }
 
@@ -293,7 +294,7 @@ export function useSendToRegistry(id: number) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: () => sendLetterToRegistry(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+    onSuccess: () => invalidateAfterAction(qc, letterKeys.all),
   });
 }
 
@@ -322,7 +323,7 @@ export function useConfirmRegistration(id: number) {
     // bitta xato uchun HAM toast, HAM bloklovchi Alert ko'rardi.
     meta: { skipErrorToast: true },
     mutationFn: (form: ConfirmRegistrationForm) => confirmRegistration(id, form),
-    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+    onSuccess: () => invalidateAfterAction(qc, letterKeys.all),
   });
 }
 
@@ -342,7 +343,7 @@ export function useSubmitTrip(id: number) {
     // bitta xato uchun HAM toast, HAM bloklovchi Alert ko'rardi.
     meta: { skipErrorToast: true },
     mutationFn: () => submitTrip(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+    onSuccess: () => invalidateAfterAction(qc, letterKeys.all),
   });
 }
 
@@ -400,7 +401,7 @@ export function useReturnLetter(id: number) {
     // bitta xato uchun HAM toast, HAM bloklovchi Alert ko'rardi.
     meta: { skipErrorToast: true },
     mutationFn: (reason: string) => returnLetter(id, reason),
-    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+    onSuccess: () => invalidateAfterAction(qc, letterKeys.all),
   });
 }
 
@@ -412,7 +413,7 @@ export function useReturnReport(id: number) {
     // bitta xato uchun HAM toast, HAM bloklovchi Alert ko'rardi.
     meta: { skipErrorToast: true },
     mutationFn: (reason: string) => returnReport(id, reason),
-    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+    onSuccess: () => invalidateAfterAction(qc, letterKeys.all),
   });
 }
 
@@ -424,7 +425,7 @@ export function useCancelTrip(id: number) {
     // bitta xato uchun HAM toast, HAM bloklovchi Alert ko'rardi.
     meta: { skipErrorToast: true },
     mutationFn: (reason?: string | null) => cancelTrip(id, reason),
-    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+    onSuccess: () => invalidateAfterAction(qc, letterKeys.all),
   });
 }
 
@@ -436,7 +437,7 @@ export function useDeleteLetter(id: number) {
     // bitta xato uchun HAM toast, HAM bloklovchi Alert ko'rardi.
     meta: { skipErrorToast: true },
     mutationFn: () => deleteLetter(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+    onSuccess: () => invalidateAfterAction(qc, letterKeys.all),
   });
 }
 
@@ -466,7 +467,7 @@ export function useExtendTrip(id: number) {
     meta: { skipErrorToast: true },
     mutationFn: (args: { arrivalDate: string; note?: string | null }) =>
       extendTrip(id, args.arrivalDate, args.note),
-    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+    onSuccess: () => invalidateAfterAction(qc, letterKeys.all),
   });
 }
 
@@ -478,7 +479,7 @@ export function useDecideExtension(id: number) {
     // bitta xato uchun HAM toast, HAM bloklovchi Alert ko'rardi.
     meta: { skipErrorToast: true },
     mutationFn: (approve: boolean) => decideExtension(id, approve),
-    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+    onSuccess: () => invalidateAfterAction(qc, letterKeys.all),
   });
 }
 
@@ -504,6 +505,6 @@ export function useSetBasisDecree(id: number) {
     meta: { skipErrorToast: true },
     mutationFn: (args: { number: string; date: string }) =>
       setBasisDecree(id, args.number, args.date),
-    onSuccess: () => qc.invalidateQueries({ queryKey: letterKeys.all }),
+    onSuccess: () => invalidateAfterAction(qc, letterKeys.all),
   });
 }
