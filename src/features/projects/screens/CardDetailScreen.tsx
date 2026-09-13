@@ -18,6 +18,7 @@ import { cardDetailQuery, cardCommentsQuery } from '../api/queries';
 import { useCardActions } from '../hooks/useCardActions';
 import { useCreateCardComment } from '../api/mutations';
 import { cardStatus, canActOnCard } from '../cardStatus';
+import { KeyboardAvoider } from '@/components/KeyboardAvoider';
 
 // Read-only card detail + status actions (complete / uncomplete / reject).
 // Description, dates, members, labels, attachments come nested from GET /cards/{id};
@@ -87,6 +88,7 @@ export default function CardDetailScreen() {
       ) : isError || !card ? (
         <ErrorState title={t('projects.cardLoadError')} onRetry={() => refetch()} />
       ) : (
+        <KeyboardAvoider>
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
             {/* Status + title */}
             <View style={styles.card}>
@@ -202,6 +204,7 @@ export default function CardDetailScreen() {
 
             <View style={{ height: canAct ? 96 : 24 }} />
           </ScrollView>
+        </KeyboardAvoider>
       )}
     </Screen>
   );

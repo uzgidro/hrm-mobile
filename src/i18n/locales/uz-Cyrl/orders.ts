@@ -94,6 +94,7 @@ export default {
   // ── Detail sections ─────────────────────────────────────────────────────────
   sectionSigners: 'Имзоловчилар',
   sectionFamiliarizers: 'Танишувчилар',
+  sectionFamiliarizerDepts: 'Танишувчи бўлимлар',
   assignFamiliarizersTitle: 'Танишувчиларни бириктириш',
   sectionHistory: 'Тарих',
   signerFallback: 'Ходим',

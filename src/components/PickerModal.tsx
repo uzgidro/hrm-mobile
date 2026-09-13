@@ -4,10 +4,12 @@ import {
   TouchableOpacity, Image, ActivityIndicator,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 import type { ThemeColors } from '../theme/palettes';
 import { Icon } from './Icon';
 import { useBreakpoint } from '../utils/responsive';
+import { KeyboardAvoider } from './KeyboardAvoider';
 
 export interface PickerOption {
   value: number;
@@ -41,6 +43,7 @@ export function PickerModal({
   const styles = useThemedStyles(makeStyles);
   const { t } = useTranslation();
   const bp = useBreakpoint();
+  const insets = useSafeAreaInsets();
   const [search, setSearch] = useState('');
 
   const filtered = useMemo(() => {
@@ -56,8 +59,19 @@ export function PickerModal({
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <View style={[styles.overlay, bp.isTablet && styles.overlayCentered]}>
-        <View style={[styles.sheet, bp.isTablet && styles.sheetTablet]}>
+      {/* Qidiruv maydoni SHU OYNA ICHIDA — klaviatura ochilganda ro'yxatni
+          ham, ko'p tanlovdagi "Tayyor" tugmasini ham to'sib qo'yardi
+          (Modal ota-ekrandagi KeyboardAvoidingView ni MEROS OLMAYDI).
+          Pastki xavfsiz zona ham shu yerda qo'shiladi: Android edge-to-edge
+          da oxirgi qator navigatsiya paneli ostida qolib ketardi. */}
+      <KeyboardAvoider style={[styles.overlay, bp.isTablet && styles.overlayCentered]}>
+        <View
+          style={[
+            styles.sheet,
+            bp.isTablet && styles.sheetTablet,
+            { paddingBottom: 20 + (bp.isTablet ? 0 : insets.bottom) },
+          ]}
+        >
           <View style={styles.header}>
             <Text style={styles.title} numberOfLines={1}>{title}</Text>
             <TouchableOpacity onPress={onClose} hitSlop={10}>
@@ -122,11 +136,16 @@ export function PickerModal({
 
           {multiple && (
             <TouchableOpacity style={styles.doneBtn} onPress={onClose} activeOpacity={0.85}>
-              <Text style={styles.doneText}>{t('common.done')}</Text>
+              {/* Nechta tanlanganini SHU YERDA ko'rsatamiz — foydalanuvchi
+                  oynani yopmasdan turib nazorat qiladi. */}
+              <Text style={styles.doneText}>
+                {t('common.done')}
+                {Array.isArray(selected) && selected.length ? ` · ${selected.length}` : ''}
+              </Text>
             </TouchableOpacity>
           )}
         </View>
-      </View>
+      </KeyboardAvoider>
     </Modal>
   );
 }

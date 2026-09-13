@@ -24,6 +24,7 @@ import { leaveSupervisorsQuery } from '../api/queries';
 import { supervisorOptions } from '../utils';
 import { LeaveDateTimePicker } from '../components/LeaveDateTimePicker';
 import { LeaveTypeSheet, LEAVE_TYPES, leaveTypeLabel } from '../components/LeaveTypeSheet';
+import { KeyboardAvoider } from '@/components/KeyboardAvoider';
 
 export default function CreateLeaveScreen() {
   const { user } = useAuthStore();
@@ -116,6 +117,7 @@ export default function CreateLeaveScreen() {
     <Screen edges={['top', 'bottom']} maxWidth={600}>
       <ScreenHeader title={t('leaves.createTitle')} />
 
+      <KeyboardAvoider>
       <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
         <Text style={s.label}>{t('leaves.typeLabel')}</Text>
         <TouchableOpacity style={s.selector} onPress={() => setShowTypeSheet(true)} activeOpacity={0.7}>
@@ -201,6 +203,7 @@ export default function CreateLeaveScreen() {
 
         <View style={{ height: 32 }} />
       </ScrollView>
+      </KeyboardAvoider>
 
       <LeaveTypeSheet visible={showTypeSheet} selected={leaveType} onSelect={setLeaveType} onClose={() => setShowTypeSheet(false)} />
       <LeaveDateTimePicker visible={activePicker === 'start'} title={t('leaves.startPickerTitle')} value={startDate}

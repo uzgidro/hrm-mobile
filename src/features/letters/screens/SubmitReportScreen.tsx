@@ -18,6 +18,7 @@ import { getApiErrorMessage } from '@/api/errors';
 import { Field, Selector } from '../components/FormParts';
 import { letterDetailQuery } from '../api/queries';
 import { useSubmitReport, uploadReport } from '../api/mutations';
+import { KeyboardAvoider } from '@/components/KeyboardAvoider';
 
 // Business-trip report submission (xizmat safari, OLD flow — web LetterReportDrawer).
 // Four fields: date (optional), summary (optional), task (optional), content
@@ -119,6 +120,7 @@ export default function SubmitReportScreen() {
         }
       />
 
+      <KeyboardAvoider>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         {letter.status === 'report_returned' && !!letter.return_reason && (
           <View style={styles.returnedCard}>
@@ -176,6 +178,7 @@ export default function SubmitReportScreen() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+      </KeyboardAvoider>
 
       <DatePickerModal
         visible={datePicker}
