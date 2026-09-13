@@ -16,6 +16,7 @@ import { LoadingView, ErrorState, EmptyState } from '@/components/StateViews';
 import type { DutyEmployee } from '@/types';
 import { holidaysQuery, offDayDutyQuery } from '../api/queries';
 import { dateRangeLabel, sortByDateFrom, isOngoing } from '../holidays';
+import { resolveEmployeeBranchId } from '@/utils/branch';
 
 // "Праздники / дежурные дни" — read-only lists (web HolidaysPage's two tabs).
 // CRUD stays on the desktop page; mobile only views.
@@ -23,8 +24,7 @@ export default function HolidaysScreen() {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const orgBranchId =
-    user?.employee?.organization_branches?.[0]?.id ??
-    user?.employee?.department?.organization_branch_id;
+    resolveEmployeeBranchId(user?.employee);
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
 

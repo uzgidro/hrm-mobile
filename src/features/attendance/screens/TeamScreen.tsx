@@ -11,6 +11,7 @@ import Svg, { Circle, G } from 'react-native-svg';
 import { apiClient } from '@/api/client';
 import { EMPLOYEES_BIRTHDAYS } from '@/api/urls';
 import { useAuthStore } from '@/store/authStore';
+import { resolveEmployeeBranchId } from '@/utils/branch';
 import { usePrefsStore } from '@/store/prefsStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
@@ -124,8 +125,7 @@ export default function TeamScreen() {
   const styles = useThemedStyles(makeStyles);
   const myId = user?.employee?.id;
   const orgBranchId =
-    user?.employee?.organization_branches?.[0]?.id ??
-    user?.employee?.department?.organization_branch_id;
+    resolveEmployeeBranchId(user?.employee);
   const today = dayjs().format('YYYY-MM-DD');
 
   // Statuses come from the server (`/normalized`, `supervised=true` = my direct

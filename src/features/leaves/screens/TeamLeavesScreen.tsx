@@ -23,6 +23,7 @@ import { leaveStatusGroup, leaveStatusKind } from '@/utils/leaveStatus';
 import { statusColor } from '@/utils/orderStatus';
 import { leavesListQuery } from '../api/queries';
 import { leaveTypeLabel } from '../components/LeaveTypeSheet';
+import { resolveEmployeeBranchId } from '@/utils/branch';
 
 function statusMeta(status: string, c: ThemeColors, t: TFunction) {
   const group = leaveStatusGroup(status);
@@ -46,8 +47,7 @@ export default function TeamLeavesScreen() {
   const styles = useThemedStyles(makeStyles);
   const { t } = useTranslation();
   const orgBranchId =
-    user?.employee?.organization_branches?.[0]?.id ??
-    user?.employee?.department?.organization_branch_id;
+    resolveEmployeeBranchId(user?.employee);
   const now = dayjs();
   const [selectedMonth, setSelectedMonth] = useState(now.month());
   const [selectedYear] = useState(now.year());

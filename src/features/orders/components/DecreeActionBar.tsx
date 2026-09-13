@@ -9,7 +9,7 @@ import type { DecreePermissions } from '@/utils/orderStatus';
 // screen passes the workflow callbacks. `busy` disables + shows a spinner.
 export function DecreeActionBar({
   perms, busy, submitLabel, onSubmit, onApprove, onReject, onResubmit, onForward,
-  onConfirmSubmission, onAcknowledge, onRegister,
+  onConfirmSubmission, onAcknowledge, onRegister, onApply,
 }: {
   perms: DecreePermissions;
   busy: boolean;
@@ -23,6 +23,8 @@ export function DecreeActionBar({
   onConfirmSubmission: () => void;
   onAcknowledge: () => void;
   onRegister: () => void;
+  /** KADR: buyruqni qo'llash (ta'til/ko'chirish yozuvini yaratish). */
+  onApply: () => void;
 }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -64,6 +66,11 @@ export function DecreeActionBar({
       {perms.canRegister && (
         <TouchableOpacity style={[styles.actBtn, styles.actApprove]} disabled={busy} onPress={onRegister} activeOpacity={0.85}>
           <Text style={styles.actApproveText}>{t('orders.actionRegister')}</Text>
+        </TouchableOpacity>
+      )}
+      {perms.canApply && (
+        <TouchableOpacity style={[styles.actBtn, styles.actApprove]} disabled={busy} onPress={onApply} activeOpacity={0.85} testID="decree-apply">
+          {busy ? <ActivityIndicator color={colors.onPrimary} /> : <Text style={styles.actApproveText}>{t('orders.actionApply')}</Text>}
         </TouchableOpacity>
       )}
       {perms.canAcknowledge && (

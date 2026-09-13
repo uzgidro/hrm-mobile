@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useAuthStore } from '@/store/authStore';
+import { resolveEmployeeBranchId } from '@/utils/branch';
 import { usePrefsStore } from '@/store/prefsStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
@@ -32,8 +33,7 @@ export default function EmployeesListScreen() {
   const cols = bp.isTablet ? (bp.isLandscape ? 3 : 2) : 1;
   const myId = user?.employee?.id;
   const orgBranchId =
-    user?.employee?.organization_branches?.[0]?.id ??
-    user?.employee?.department?.organization_branch_id;
+    resolveEmployeeBranchId(user?.employee);
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebouncedValue(search);
   const [deptFilter, setDeptFilter] = useState<number | 'all'>('all');

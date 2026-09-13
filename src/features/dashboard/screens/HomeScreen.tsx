@@ -8,6 +8,7 @@ import { useQuery, useQueries, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { useAuthStore } from '@/store/authStore';
+import { resolveEmployeeBranchId } from '@/utils/branch';
 import { usePrefsStore } from '@/store/prefsStore';
 import { canAccessPage, hasSupervisor } from '@/utils/roles';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
@@ -59,7 +60,7 @@ export default function HomeScreen() {
   const canSeeAttendanceContent = canAccessPage(user, 'attendance');
   const onlySubordinates = usePrefsStore((s) => s.onlySubordinates);
   const myId = employee?.id;
-  const orgBranchId = employee?.organization_branches?.[0]?.id ?? employee?.department?.organization_branch_id;
+  const orgBranchId = resolveEmployeeBranchId(employee);
 
   const [refreshing, setRefreshing] = useState(false);
   const [rosterFilter, setRosterFilter] = useState<AttendanceStatus | null>(null);

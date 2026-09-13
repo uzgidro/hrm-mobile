@@ -30,6 +30,7 @@ import { useFormDraft } from '@/lib/formDraft';
 import { DraftPrompt } from '@/components/DraftPrompt';
 import { LetterPickers, type PickerKind, type DateKind } from '../components/LetterPickers';
 import { buildLetterCreatePayload } from './letterCreatePayload';
+import { resolveEmployeeBranchId } from '@/utils/branch';
 
 type LetterType = 'explanatory' | 'application' | 'business_trip';
 // Value/labelKey pairs — the numeric picker values are internal (never sent to
@@ -54,8 +55,7 @@ export default function CreateLetterScreen() {
   const editId = editIdParam ? Number(editIdParam) : null;
   const { data: editing } = useQuery({ ...letterDetailQuery(editId ?? 0), enabled: !!editId });
   const branchId = editing?.organization_branch_id
-    ?? employee?.organization_branches?.[0]?.id
-    ?? employee?.department?.organization_branch_id;
+    ?? resolveEmployeeBranchId(employee);
 
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);

@@ -9,7 +9,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { useBreakpoint } from '@/utils/responsive';
-import { findExecutiveBranchId } from '@/utils/branch';
+import { findExecutiveBranchId, resolveEmployeeBranchId } from '@/utils/branch';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
@@ -46,10 +46,7 @@ export default function PhoneDirectoryScreen() {
   // Scope defaults to the user's own world: a filial employee opens on "Tizim
   // tashkilotlari" with their own branch pre-selected; everyone else on "Ijro
   // apparati" (web TabelPage autoScope parity).
-  const ownBranchId =
-    user?.employee?.department?.organization_branch_id ??
-    user?.employee?.organization_branches?.[0]?.id ??
-    null;
+  const ownBranchId = resolveEmployeeBranchId(user?.employee) ?? null;
   const autoScope: Scope = ownBranchId != null && ownBranchId !== executiveBranchId ? 'system' : 'exec';
   const [scopeChoice, setScopeChoice] = useState<Scope | null>(null);
   const [branchChoice, setBranchChoice] = useState<number | null | undefined>(undefined);
