@@ -7,6 +7,7 @@ import {
 import {
   orderKeys,
   ordersListQuery,
+  ordersListServerParams,
   orderDetailQuery,
   orderEmployeesQuery,
   orderCommentsQuery,
@@ -25,35 +26,50 @@ describe('orderKeys', () => {
     expect(orderKeys.all).toEqual(['order-acts']);
   });
 
-  it("ro'yxat kaliti bitta — ro'yxat endi filialga qisilmaydi", () => {
-    expect(orderKeys.list()).toEqual(['order-acts', 'list']);
+  it("ro'yxat kaliti server parametrlarini o'z ichiga oladi (filial YO'Q)", () => {
+    expect(orderKeys.list({ tab: 'all' })).toEqual(['order-acts', 'list', {}]);
+    expect(orderKeys.list({ tab: 'action', status: 'approved' })).toEqual(['order-acts', 'list', { action_required: true, status: 'approved' }]);
   });
 
   it('places the detail under `all` so a single invalidate refreshes list + detail', () => {
     expect(orderKeys.detail(42)).toEqual(['order-acts', 'detail', 42]);
     expect(orderKeys.detail(42).slice(0, 1)).toEqual(orderKeys.all);
-    expect(orderKeys.list().slice(0, 1)).toEqual(orderKeys.all);
+    expect(orderKeys.list({ tab: 'all' }).slice(0, 1)).toEqual(orderKeys.all);
+  });
+});
+
+describe('ordersListServerParams', () => {
+  it('"Menda" → action_required=true; "Mening" → employee_id (web v1 parity)', () => {
+    expect(ordersListServerParams({ tab: 'action', employeeId: 7 })).toMatchObject({ action_required: true, employee_id: undefined });
+    expect(ordersListServerParams({ tab: 'mine', employeeId: 7 })).toMatchObject({ employee_id: 7, action_required: undefined });
+  });
+  it('category/status/search map 1:1', () => {
+    expect(ordersListServerParams({ tab: 'all', categoryId: 5, status: 'approved', search: ' 12 ' }))
+      .toEqual({ action_required: undefined, employee_id: undefined, category_id: 5, status: 'approved', search: '12' });
+    expect(ordersListServerParams({ tab: 'all', categoryId: 'all' }).category_id).toBeUndefined();
   });
 });
 
 describe('ordersListQuery', () => {
-  it("FILIAL parametrini YUBORMAYDI — boshqa filial buyrug'i ham ko'rinsin", async () => {
+  type PageFn = (ctx: { pageParam: number }) => Promise<{ items: unknown[] }>;
+
+  it("FILIAL parametrini YUBORMAYDI — boshqa filial buyrug'i ham ko'rinsin; sahifalangan", async () => {
     // Web leadership tabi ham `organization_branch_id: null` yuboradi: rahbar
     // boshqa filial buyrug'iga imzolovchi bo'lishi mumkin. Ko'lamni backend
     // (`_apply_visibility`) belgilaydi, filtr esa uni noto'g'ri qisardi.
-    const opts = ordersListQuery();
-    expect(opts.queryKey).toEqual(['order-acts', 'list']);
+    const opts = ordersListQuery({ tab: 'all' });
+    expect(opts.queryKey).toEqual(['order-acts', 'list', {}]);
     mock.onGet(ORDER_ACTS).reply(200, []);
-    await (opts.queryFn as () => Promise<unknown[]>)();
-    expect(mock.history.get[0].params).toBeUndefined();
+    await (opts.queryFn as unknown as PageFn)({ pageParam: 1 });
+    expect(mock.history.get[0].params).toEqual({ page: 1, size: 30 });
   });
 
   it('returns a bare array and unwraps an { items } envelope', async () => {
     mock.onGet(ORDER_ACTS).reply(200, [{ id: 1 }, { id: 2 }]);
-    expect(await (ordersListQuery().queryFn as () => Promise<unknown[]>)()).toHaveLength(2);
+    expect((await (ordersListQuery({ tab: 'all' }).queryFn as unknown as PageFn)({ pageParam: 1 })).items).toHaveLength(2);
     mock.resetHistory();
-    mock.onGet(ORDER_ACTS).reply(200, { items: [{ id: 3 }] });
-    expect(await (ordersListQuery().queryFn as () => Promise<unknown[]>)()).toEqual([{ id: 3 }]);
+    mock.onGet(ORDER_ACTS).reply(200, { items: [{ id: 3 }], total: 1, page: 1, size: 30, pages: 1 });
+    expect((await (ordersListQuery({ tab: 'all' }).queryFn as unknown as PageFn)({ pageParam: 1 })).items).toEqual([{ id: 3 }]);
   });
 });
 

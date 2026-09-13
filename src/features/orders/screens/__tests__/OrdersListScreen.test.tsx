@@ -13,7 +13,7 @@ import MockAdapter from 'axios-mock-adapter';
 import { apiClient } from '@/api/client';
 import { renderWithProviders, fireEvent, waitFor } from '@/test/renderWithProviders';
 import { useAuthStore } from '@/store/authStore';
-import { ORDER_ACTS, ORDER_ACT_DETAIL } from '@/api/urls';
+import { ORDER_ACTS, ORDER_ACT_DETAIL, ORDER_ACT_CATEGORIES } from '@/api/urls';
 import OrdersListScreen from '../OrdersListScreen';
 
 // The screen (and the embedded OrderDetailView it renders in split mode) only
@@ -69,6 +69,9 @@ describe('OrdersListScreen', () => {
 
   it('phone/portrait: renders the plain list (no split, both cards visible)', async () => {
     mock.onGet(ORDER_ACTS).reply(200, ORDERS);
+    // Kategoriya chiplari endi katalogdan (server `category_id` filtri uchun),
+    // qatorlardan emas.
+    mock.onGet(ORDER_ACT_CATEGORIES).reply(200, [{ id: 1, name: 'First decree' }, { id: 2, name: 'Second decree' }]);
 
     const { findAllByText, queryByText } = await renderWithProviders(<OrdersListScreen />);
 
@@ -165,23 +168,32 @@ describe('OrdersListScreen', () => {
     // created by 99 -> excluded from "mine". Order 2: created by 99 but
     // already confirmed (no action needed) -> excluded from "action", shows
     // under "mine".
-    mock.onGet(ORDER_ACTS).reply(200, [
-      {
-        id: 1,
-        status: 'pending_approval',
-        created_by_id: 5,
-        assigned_signers: [{ signer_type: 'approver', employee_id: 99 }],
-        category_rel: { name: 'First decree' },
-        created_at: '2026-01-02T00:00:00Z',
-      },
-      {
-        id: 2,
-        status: 'confirmed',
-        created_by_id: 99,
-        category_rel: { name: 'Second decree' },
-        created_at: '2026-01-01T00:00:00Z',
-      },
-    ]);
+    // Tablar SERVERDA ajratiladi (2026-09-13): "Menda" → `action_required=true`,
+    // "Mening" → `employee_id=me`; mock parametrga qarab javob beradi.
+    mock.onGet(ORDER_ACTS).reply((cfg) => {
+      const p = cfg.params ?? {};
+      if (p.action_required) {
+        return [200, { items: [{
+          id: 1,
+          status: 'pending_approval',
+          created_by_id: 5,
+          assigned_signers: [{ signer_type: 'approver', employee_id: 99 }],
+          category_rel: { name: 'First decree' },
+          created_at: '2026-01-02T00:00:00Z',
+        }], total: 1, page: 1, size: 30, pages: 1 }];
+      }
+      if (p.employee_id === 99) {
+        return [200, { items: [{
+          id: 2,
+          status: 'confirmed',
+          created_by_id: 99,
+          employee_id: 99,
+          category_rel: { name: 'Second decree' },
+          created_at: '2026-01-01T00:00:00Z',
+        }], total: 1, page: 1, size: 30, pages: 1 }];
+      }
+      return [200, []];
+    });
     mock.onGet(ORDER_ACT_DETAIL(1)).reply(200, {
       id: 1,
       status: 'pending_approval',

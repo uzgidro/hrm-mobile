@@ -18,4 +18,5 @@ export default {
   retry: 'Qayta urinish',
   success: 'Muvaffaqiyat',
   errorTitle: 'Xatolik',
+  listCount: '{{shown}} / {{total}}',
 } as const;

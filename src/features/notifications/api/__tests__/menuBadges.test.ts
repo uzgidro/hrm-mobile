@@ -22,9 +22,9 @@ describe('menuBadgesQuery', () => {
     expect(data).toEqual({ letters: 3, orders: 1, support: 0, projects: 0, fleet: 0, documents: 0 });
   });
 
-  it('xato bo\'lsa menyuni yiqitmaydi — nol raqamlar qaytadi', async () => {
+  it("xato bo'lsa rad etiladi — react-query oldingi raqamlarni saqlaydi (0 ko'rsatilmaydi)", async () => {
     mock.onGet(MENU_BADGES).reply(500);
-    const data = (await (menuBadgesQuery().queryFn as () => Promise<MenuBadges>)());
-    expect(data).toEqual({ letters: 0, orders: 0, support: 0, projects: 0, fleet: 0, documents: 0 });
+    await expect((menuBadgesQuery().queryFn as () => Promise<MenuBadges>)()).rejects.toBeTruthy();
+    expect(menuBadgesQuery().meta).toEqual({ skipErrorToast: true });
   });
 });

@@ -2,7 +2,7 @@ import MockAdapter from 'axios-mock-adapter';
 import { apiClient } from '@/api/client';
 import { LETTERS_LIST, LETTER_DETAIL, EMPLOYEES_LIST, ORGANIZATION_BRANCH_LEADERS } from '@/api/urls';
 import {
-  letterKeys, lettersListQuery, letterDetailQuery,
+  letterKeys, lettersListQuery, lettersListServerParams, letterDetailQuery,
   letterSignersQuery, letterAgreementSignersQuery, letterSubmittersQuery, letterRahbariyatQuery,
 } from '../queries';
 
@@ -17,37 +17,49 @@ describe('letterKeys', () => {
     expect(letterKeys.all).toEqual(['letters']);
   });
 
-  it("ro'yxat kaliti BITTA — tablar mijozda ajratiladi", () => {
-    expect(letterKeys.list()).toEqual(['letters', 'list']);
+  it("ro'yxat kaliti SERVER parametrlarini o'z ichiga oladi (tab/tur/status/qidiruv)", () => {
+    expect(letterKeys.list({ tab: 'action' })).toEqual(['letters', 'list', { action_required: true }]);
+    expect(letterKeys.list({ tab: 'mine', employeeId: 7, letterType: 'all', status: 'all', search: ' ' }))
+      .toEqual(['letters', 'list', { employee_id: 7 }]);
   });
 
   it('places the detail under `all` so a single invalidate refreshes list + detail', () => {
     expect(letterKeys.detail(42)).toEqual(['letters', 'detail', 42]);
     expect(letterKeys.detail(42).slice(0, 1)).toEqual(letterKeys.all);
-    expect(letterKeys.list().slice(0, 1)).toEqual(letterKeys.all);
+    expect(letterKeys.list({ tab: 'all' }).slice(0, 1)).toEqual(letterKeys.all);
+  });
+});
+
+describe('lettersListServerParams', () => {
+  it('"Menda" → action_required=true (server SQL twin of the yellow-row flag)', () => {
+    expect(lettersListServerParams({ tab: 'action', employeeId: 7 })).toMatchObject({ action_required: true, employee_id: undefined });
+  });
+  it('"Mening" → employee_id (author OR submitter — web v1 parity)', () => {
+    expect(lettersListServerParams({ tab: 'mine', employeeId: 7 })).toMatchObject({ employee_id: 7, action_required: undefined });
+  });
+  it('type/status/search map 1:1; blanks and "all" are dropped by cleanParams', () => {
+    expect(lettersListServerParams({ tab: 'all', letterType: 'business_trip', status: 'pending', search: ' 23-741 ' }))
+      .toEqual({ action_required: undefined, employee_id: undefined, letter_type: 'business_trip', status: 'pending', search: '23-741' });
   });
 });
 
 describe('lettersListQuery', () => {
-  it("SERVER FILTRI YO'Q — `assigned_signer`/`signer` tab ma'nosini buzardi", async () => {
-    // `assigned_signer=true`: devonxona ro'yxatga olishi, KADR "Keldi" tasdig'i,
-    // qaytarilgan hisobot va KELISHUV (bildirgi/ariza imzolanmaydi) "Menda"
-    // tabiga umuman tushmasdi.
-    // `signer=true`: "Mening" = MEN IMZOLAGANLARIM bo'lib qolardi — o'z
-    // bildirgisini yozgan xodim uni imzolamagani uchun ro'yxatda ko'rmasdi.
-    const opts = lettersListQuery();
-    expect(opts.queryKey).toEqual(['letters', 'list']);
-    mock.onGet(LETTERS_LIST).reply(200, []);
-    await (opts.queryFn as () => Promise<unknown[]>)();
-    expect(mock.history.get[0].params).toBeUndefined();
+  it('sahifalangan: page/size + server filtrlari yuboriladi, konvert ochiladi', async () => {
+    const opts = lettersListQuery({ tab: 'action', status: 'pending', employeeId: 7 });
+    mock.onGet(LETTERS_LIST).reply(200, { items: [{ id: 1 }, { id: 2 }], total: 45, page: 1, size: 30, pages: 2 });
+    const page = await (opts.queryFn as unknown as (ctx: { pageParam: number }) => Promise<{ items: unknown[]; pages: number }>)({ pageParam: 1 });
+    expect(mock.history.get[0].params).toEqual({ action_required: true, status: 'pending', page: 1, size: 30 });
+    expect(page.items).toHaveLength(2);
+    expect(opts.getNextPageParam(page as never, [page as never], 1, [1])).toBe(2);
+    expect(opts.refetchInterval).toBe(60 * 1000);
   });
 
-  it('returns a bare array and unwraps an { items } envelope', async () => {
+  it('eski backend (yalang massiv) bilan ham ishlaydi — bitta sahifa', async () => {
     mock.onGet(LETTERS_LIST).reply(200, [{ id: 1 }, { id: 2 }]);
-    expect(await (lettersListQuery().queryFn as () => Promise<unknown[]>)()).toHaveLength(2);
-    mock.resetHistory();
-    mock.onGet(LETTERS_LIST).reply(200, { items: [{ id: 3 }] });
-    expect(await (lettersListQuery().queryFn as () => Promise<unknown[]>)()).toEqual([{ id: 3 }]);
+    const opts = lettersListQuery({ tab: 'all' });
+    const page = await (opts.queryFn as unknown as (ctx: { pageParam: number }) => Promise<{ items: unknown[]; pages: number }>)({ pageParam: 1 });
+    expect(page.items).toHaveLength(2);
+    expect(opts.getNextPageParam(page as never, [page as never], 1, [1])).toBeUndefined();
   });
 });
 

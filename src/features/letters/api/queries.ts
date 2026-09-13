@@ -1,4 +1,5 @@
 import { queryOptions } from '@tanstack/react-query';
+import { pagedListOptions, cleanParams, type ListParams } from '@/lib/pagedList';
 import { apiClient } from '@/api/client';
 import { unwrapList } from '@/api/response';
 import {
@@ -20,41 +21,62 @@ import type { Employee, Letter, BusinessTripMovement } from '@/types';
 // `all` is deliberately `['letters']` (NOT a fresh namespace): the old tab,
 // create-letter and letter-detail screens invalidate/read `['letters']`
 // directly, so keeping `all` equal to that string means those existing prefix
-// invalidations still match every list AND any open detail. The list key is
-// `['letters', tab]` — byte-for-byte the old tab key — so the tab's cache
-// identity + refetchInterval are unchanged. The old detail lived under a
-// separate `['letter-detail', id]` tree; it now lives under `all` (as
-// `['letters', 'detail', id]`) so a single
+// invalidations still match every list AND any open detail. The detail lives
+// under `all` (as `['letters', 'detail', id]`) so a single
 // `invalidateQueries({ queryKey: letterKeys.all })` refreshes the list AND the
 // open detail in one call (mirrors orderKeys / leaveKeys).
 export type LettersTab = 'action' | 'mine' | 'all';
 
+export interface LettersListParams {
+  tab: LettersTab;
+  /** `all` = no type filter. */
+  letterType?: 'all' | 'explanatory' | 'application' | 'business_trip';
+  /** `all` = no status filter; otherwise one backend status code. */
+  status?: string;
+  search?: string;
+  /** Current employee — needed for the `mine` tab (`employee_id`). */
+  employeeId?: number;
+}
+
 export const letterKeys = {
   all: ['letters'] as const,
-  // Bitta ro'yxat — tablar mijozda ajratiladi (pastdagi izohga qarang).
-  list: () => [...letterKeys.all, 'list'] as const,
+  list: (params?: LettersListParams) =>
+    [...letterKeys.all, 'list', params ? cleanParams(lettersListServerParams(params)) : null] as const,
   detail: (id: number) => [...letterKeys.all, 'detail', id] as const,
   tripMovements: (id: number) => [...letterKeys.all, 'trip-movements', id] as const,
 };
 
-// Ro'yxat BIR MARTA olinadi, tablar esa mijozda ajratiladi — web LettersTable
-// ham shunday ishlaydi.
-//
-// Nega serverda emas:
-//  • "Menda" (amal): amal faqat imzolovchida emas — devonxona ro'yxatga oladi,
-//    KADR "Keldi" tasdiqlaydi, kelishuvchi kelishadi (bildirgi/ariza
-//    IMZOLANMAYDI), muallif qaytarilgan hisobotni tuzatadi. Backend buni har
-//    qator uchun `action_required` bayrog'ida beradi.
-//  • "Mening": avval `signer=true` yuborilardi — ya'ni "men IMZOLAGANLARIM".
-//    O'z bildirgisini yozgan oddiy xodim uni imzolamaydi, shu bois O'Z hujjati
-//    "Mening" tabida ko'rinmasdi. (Web `employee_id` yuboradi, lekin backend
-//    bunday parametrni umuman qabul qilmaydi — natijada webda bu tab to'liq
-//    ro'yxat bo'lib qoladi.) Endi muallif/kirituvchi/imzolovchi bo'yicha
-//    mijozda ajratamiz — `isMyLetter`.
-export function lettersListQuery() {
-  return queryOptions({
-    queryKey: letterKeys.list(),
-    queryFn: () => apiClient.get(LETTERS_LIST).then((r) => unwrapList<Letter>(r.data)),
+/**
+ * Tab / chip / search → `GET /letters` query params. Pure; unit-tested.
+ *
+ * • `action` → `action_required=true` (backend 2026-09-13: the SQL twin of the
+ *   yellow-row flag — devonxona registers, KADR confirms arrival, agreers agree,
+ *   the author fixes a returned report; `assigned_signer=true` covered none of
+ *   those, which is why the tab used to be split in JS).
+ * • `mine` → `employee_id=me` — author OR submitter, exactly what web v1 sends
+ *   (`buildLettersListParams` 'my' tab). The backend accepts it since 2026-09-02.
+ * • type/status/search map 1:1; the server folds Cyrillic/Latin and searches
+ *   every number column + author/submitter name + text (core.search).
+ */
+export function lettersListServerParams(p: LettersListParams): ListParams {
+  return {
+    action_required: p.tab === 'action' ? true : undefined,
+    employee_id: p.tab === 'mine' ? p.employeeId : undefined,
+    letter_type: p.letterType,
+    status: p.status,
+    search: p.search?.trim() || undefined,
+  };
+}
+
+// Server-paged, 30 rows at a time (infinite scroll). Every filter is a server
+// param — the whole list (140k rows on PROD for a chancellery clerk, ~7 KB
+// each) is never downloaded any more. The list keeps the backend order
+// (drafts, then rows awaiting my action, then by number desc).
+export function lettersListQuery(params: LettersListParams) {
+  return pagedListOptions<Letter>({
+    queryKey: letterKeys.list(params),
+    url: LETTERS_LIST,
+    params: lettersListServerParams(params),
     staleTime: 30 * 1000,
     refetchInterval: 60 * 1000,
   });

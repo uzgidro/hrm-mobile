@@ -78,15 +78,26 @@ describe('LettersListScreen (tablet-landscape split)', () => {
 
   it('re-anchors selectedId when the selected letter falls out of `sorted` (e.g. switching tabs)', async () => {
     (useWindowDimensions as jest.Mock).mockReturnValue(TABLET_LANDSCAPE);
-    // BITTA so'rov — tablar mijozda ajratiladi:
     //  • id 1 — `action_required` (mening amalim kutilmoqda), lekin muallifi men EMASman;
     //  • id 2 — men yozganman (`creator_employee_id`), amal kutilmayapti.
     // Shu bois "Menda" tabida faqat 1-si, "Mening"da faqat 2-si ko'rinadi va
     // tab almashganda tanlangan qator ro'yxatdan chiqib ketadi.
-    mock.onGet(LETTERS_LIST).reply(200, [
-      { id: 1, status: 'draft', letter_type: 'business_trip', created_at: '2026-01-02', action_required: true },
-      { id: 2, status: 'confirmed', letter_type: 'application', created_at: '2026-01-01', creator_employee_id: 1 },
-    ]);
+    // Tablar SERVERDA ajratiladi (2026-09-13): "Menda" → `action_required=true`,
+    // "Mening" → `employee_id=me`. Mock shu parametrlarga qarab javob beradi.
+    mock.onGet(LETTERS_LIST).reply((cfg) => {
+      const p = cfg.params ?? {};
+      if (p.action_required) {
+        return [200, { items: [
+          { id: 1, status: 'draft', letter_type: 'business_trip', created_at: '2026-01-02', action_required: true },
+        ], total: 1, page: 1, size: 30, pages: 1 }];
+      }
+      if (p.employee_id === 1) {
+        return [200, { items: [
+          { id: 2, status: 'confirmed', letter_type: 'application', created_at: '2026-01-01', creator_employee_id: 1 },
+        ], total: 1, page: 1, size: 30, pages: 1 }];
+      }
+      return [200, []];
+    });
     mock.onGet(new RegExp('letters/1/trip-movements')).reply(200, []);
     mock.onGet(LETTER_DETAIL(1)).reply(200, { id: 1, status: 'draft', letter_type: 'business_trip' });
     mock.onGet(LETTER_DETAIL(2)).reply(200, { id: 2, status: 'confirmed', letter_type: 'application' });

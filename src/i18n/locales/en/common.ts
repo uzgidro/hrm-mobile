@@ -16,4 +16,5 @@ export default {
   retry: 'Retry',
   success: 'Success',
   errorTitle: 'Error',
+  listCount: '{{shown}} / {{total}}',
 } as const;

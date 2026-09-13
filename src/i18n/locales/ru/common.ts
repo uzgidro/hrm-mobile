@@ -16,4 +16,5 @@ export default {
   retry: 'Повторить',
   success: 'Успешно',
   errorTitle: 'Ошибка',
+  listCount: '{{shown}} / {{total}}',
 } as const;

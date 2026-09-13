@@ -1,4 +1,5 @@
 import { queryOptions } from '@tanstack/react-query';
+import { pagedListOptions, cleanParams, type ListParams } from '@/lib/pagedList';
 import { apiClient } from '@/api/client';
 import { unwrapList } from '@/api/response';
 import {
@@ -30,7 +31,8 @@ import type {
 // refreshes the list AND the open detail in one call.
 export const orderKeys = {
   all: ['order-acts'] as const,
-  list: () => [...orderKeys.all, 'list'] as const,
+  list: (params?: OrdersListParams) =>
+    [...orderKeys.all, 'list', params ? cleanParams(ordersListServerParams(params)) : null] as const,
   detail: (id: number) => [...orderKeys.all, 'detail', id] as const,
   comments: (id: number) => [...orderKeys.all, 'comments', id] as const,
   history: (id: number) => [...orderKeys.all, 'history', id] as const,
@@ -64,7 +66,8 @@ export function orderHistoryQuery(id: number) {
   });
 }
 
-// The list tab.
+// The list tab — server-paged (30 rows, infinite scroll), every filter a
+// server param. See `ordersListServerParams`.
 //
 // FILIAL parametri ATAYLAB YUBORILMAYDI. Backend (`OrderActService._apply_visibility`)
 // master-admin'дan tashqari HAMMANI baribir "menga tegishli buyruqlar" bilan
@@ -74,12 +77,54 @@ export function orderHistoryQuery(id: number) {
 // belgilangan rahbar uni mobilда UMUMAN ko'rmasdi (webda bu holat uchun
 // leadership tabi `organization_branch_id: null` yuboradi — buildOrdersListParams).
 // Mobil'da filial tanlagichi yo'q, shu bois to'g'ri javob — filtrsiz so'rash.
-export function ordersListQuery() {
-  return queryOptions({
-    queryKey: orderKeys.list(),
-    queryFn: () => apiClient.get(ORDER_ACTS).then((r) => unwrapList<OrderAct>(r.data)),
+export type OrdersTab = 'action' | 'mine' | 'all';
+
+export interface OrdersListParams {
+  tab: OrdersTab;
+  /** `all` = no category filter; otherwise a category id. */
+  categoryId?: number | 'all';
+  /** `all` = no status filter; otherwise one backend status code. */
+  status?: string;
+  search?: string;
+  employeeId?: number;
+}
+
+/**
+ * • `action` → `action_required=true` (backend 2026-09-13, SQL twin of the
+ *   yellow-row flag).
+ * • `mine` → `employee_id=me` — the order's SUBJECT (web v1 "mine" parity).
+ *   The old JS split also matched creator/submitter; the backend has
+ *   `created_by_id` as a separate AND-ed filter, so an OR is not expressible —
+ *   web sends `employee_id` only and we match it.
+ */
+export function ordersListServerParams(p: OrdersListParams): ListParams {
+  return {
+    action_required: p.tab === 'action' ? true : undefined,
+    employee_id: p.tab === 'mine' ? p.employeeId : undefined,
+    category_id: p.categoryId === 'all' ? undefined : p.categoryId,
+    status: p.status,
+    search: p.search?.trim() || undefined,
+  };
+}
+
+export function ordersListQuery(params: OrdersListParams) {
+  return pagedListOptions<OrderAct>({
+    queryKey: orderKeys.list(params),
+    url: ORDER_ACTS,
+    params: ordersListServerParams(params),
     staleTime: 30 * 1000,
     refetchInterval: 60 * 1000,
+  });
+}
+
+// All categories (both creator roles) — the list's category chips, keyed by id
+// so the chip maps to the server's `category_id` filter.
+export function allOrderCategoriesQuery() {
+  return queryOptions({
+    queryKey: ['order-act-categories', 'all'] as const,
+    queryFn: () =>
+      apiClient.get(ORDER_ACT_CATEGORIES).then((r) => unwrapList<OrderActCategory>(r.data)),
+    staleTime: 5 * 60 * 1000,
   });
 }
 

@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  View, Text, ScrollView, StyleSheet, TouchableOpacity, RefreshControl,
+  View, Text, ScrollView, StyleSheet, TouchableOpacity,
 } from 'react-native';
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
@@ -11,14 +11,16 @@ import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { SplitLayout } from '@/components/SplitLayout';
-import { LoadingView, EmptyState } from '@/components/StateViews';
+import { EmptyState } from '@/components/StateViews';
 import { FilterChip } from '@/components/FilterChip';
 import { SearchBox } from '@/components/SearchBox';
+import { PagedList, usePagedRows } from '@/components/PagedList';
+import { useDebouncedValue } from '@/lib/useDebouncedValue';
+import { menuBadgesQuery } from '@/lib/menuBadges';
 import { useBreakpoint } from '@/utils/responsive';
 import { selectSplitId } from '@/utils/splitView';
 import {
-  letterNeedsMyAction, isMyLetter, letterTypeLabel, letterStatusMeta, normalizeLetterType,
-  letterDisplayNumber, isLetterUnseen,
+  letterNeedsMyAction, letterTypeLabel, isLetterUnseen, letterStatusOptions,
 } from '@/utils/letterStatus';
 import { lettersListQuery, type LettersTab } from '../api/queries';
 import { LetterListCard } from '../components/LetterListCard';
@@ -45,68 +47,40 @@ export default function LettersListScreen() {
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebouncedValue(search);
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
-  const { data: letters = [], isLoading, refetch, isFetching } = useQuery(lettersListQuery());
 
-  const actionCount = useMemo(
-    () => letters.filter((l) => letterNeedsMyAction(l, employeeId)).length,
-    [letters, employeeId]
+  // "Menda" count = the same server number the tab bar shows (menu-badges),
+  // not a JS count over the loaded page.
+  const { data: badges } = useQuery(menuBadgesQuery());
+  const actionCount = badges?.letters ?? 0;
+
+  const statusOptions = useMemo(() => letterStatusOptions(typeFilter), [typeFilter]);
+  // A status chip that does not exist for the picked type reads as "all"
+  // (derived at render, no effect) so the server never gets an impossible filter.
+  const effectiveStatus = statusOptions.some((o) => o.value === statusFilter) ? statusFilter : 'all';
+
+  // Every filter is a SERVER param (tab → action_required / employee_id, chips
+  // → letter_type / status, box → search); the page is 30 rows, the next page
+  // loads on scroll. See `lettersListServerParams`.
+  const query = useInfiniteQuery(
+    lettersListQuery({ tab, letterType: typeFilter, status: effectiveStatus, search: debouncedSearch, employeeId }),
   );
-
-  const sorted = useMemo(
-    () => [...letters].sort((a, b) => (b.created_at ?? String(b.id)).localeCompare(a.created_at ?? String(a.id))),
-    [letters]
-  );
-
-  // Status filter options are derived from what's actually loaded so the chips
-  // are always relevant to the current tab (the full status set is large and
-  // type-dependent). Label via letterStatusMeta so it matches the badges.
-  const statusOptions = useMemo(() => {
-    const seen = new Map<string, string>();
-    for (const l of sorted) {
-      const key = l.status ?? '';
-      if (key && !seen.has(key)) seen.set(key, letterStatusMeta(l).label);
-    }
-    return Array.from(seen, ([value, label]) => ({ value, label }));
-  }, [sorted]);
-
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return sorted.filter((l) => {
-      // Tablar mijozda ajratiladi (serverdagi `assigned_signer`/`signer`
-      // filtrlari amal va "mening" ma'nolarini noto'g'ri torайtirardi —
-      // `lettersListQuery` izohiga qarang).
-      if (tab === 'action' && !letterNeedsMyAction(l, employeeId)) return false;
-      if (tab === 'mine' && !isMyLetter(l, employeeId)) return false;
-      if (typeFilter !== 'all' && normalizeLetterType(l.letter_type) !== typeFilter) return false;
-      if (statusFilter !== 'all' && (l.status ?? '') !== statusFilter) return false;
-      if (!q) return true;
-      return (
-        // Safar raqami `decree_number`da bo'lishi mumkin, devonxona raqami esa
-        // `registered_number`da — avval faqat `letter_number` qidirilardi.
-        (letterDisplayNumber(l)?.toLowerCase().includes(q) ?? false) ||
-        (l.registered_number?.toLowerCase().includes(q) ?? false) ||
-        letterTypeLabel(l.letter_type).toLowerCase().includes(q) ||
-        (l.employee?.legal_name?.toLowerCase().includes(q) ?? false) ||
-        (l.submitter?.legal_name?.toLowerCase().includes(q) ?? false) ||
-        (l.description?.toLowerCase().includes(q) ?? false)
-      );
-    });
-  }, [sorted, search, typeFilter, statusFilter, tab, employeeId]);
+  const { rows: letters } = usePagedRows(query);
 
   // Auto-select the first row when entering split with nothing selected yet
   // (so the detail pane isn't blank on first tablet-landscape render); clear
   // the selection when leaving split (rotate back to portrait / phone) so
   // re-entering split starts fresh instead of resuming a stale id. Also
   // re-anchors to the first visible row whenever the currently selected id
-  // falls out of `filtered` (tab switch, or the letter left the list after an
+  // falls out of the list (tab switch, or the letter left the list after an
   // action) — otherwise the detail pane would keep showing a stale letter
   // that no longer matches the current tab.
   useEffect(() => {
-    setSelectedId((current) => selectSplitId(filtered, current, split));
-  }, [split, filtered]);
+    setSelectedId((current) => selectSplitId(letters, current, split));
+  }, [split, letters]);
 
   const listPane = (
     <>
@@ -128,7 +102,7 @@ export default function LettersListScreen() {
               activeOpacity={0.8}
             >
               <Text style={[styles.tabText, active && styles.tabTextActive]}>{t(tItem.labelKey)}</Text>
-              {tItem.key === 'action' && tab === 'action' && actionCount > 0 && (
+              {tItem.key === 'action' && actionCount > 0 && (
                 <View style={styles.tabBadge}><Text style={styles.tabBadgeText}>{actionCount > 9 ? '9+' : actionCount}</Text></View>
               )}
             </TouchableOpacity>
@@ -152,45 +126,28 @@ export default function LettersListScreen() {
         ))}
       </ScrollView>
 
-      {statusOptions.length > 1 && (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
-          <FilterChip label={t('letters.filterAllStatuses')} active={statusFilter === 'all'} onPress={() => setStatusFilter('all')} styles={styles} subtle />
-          {statusOptions.map((s) => (
-            <FilterChip key={s.value} label={s.label} active={statusFilter === s.value} onPress={() => setStatusFilter(s.value)} styles={styles} subtle />
-          ))}
-        </ScrollView>
-      )}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+        <FilterChip label={t('letters.filterAllStatuses')} active={effectiveStatus === 'all'} onPress={() => setStatusFilter('all')} styles={styles} subtle />
+        {statusOptions.map((s) => (
+          <FilterChip key={s.value} label={s.label} active={effectiveStatus === s.value} onPress={() => setStatusFilter(s.value)} styles={styles} subtle />
+        ))}
+      </ScrollView>
 
-      {isLoading ? (
-        <LoadingView />
-      ) : (
-        <ScrollView
-          contentContainerStyle={styles.content}
-          showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={isFetching && !isLoading} onRefresh={refetch} tintColor={colors.primaryLight} />}
-        >
-          {filtered.length === 0 ? (
-            <View style={styles.emptyWrap}>
-              <EmptyState
-                icon="mail"
-                title={tab === 'action' ? t('letters.emptyAction') : t('letters.empty')}
-              />
-            </View>
-          ) : (
-            filtered.map((l) => (
-              <LetterListCard
-                key={l.id}
-                letter={l}
-                action={letterNeedsMyAction(l, employeeId)}
-                unseen={isLetterUnseen(l, employeeId, user)}
-                onPress={split ? () => setSelectedId(l.id) : undefined}
-                selected={split ? selectedId === l.id : undefined}
-              />
-            ))
-          )}
-          <View style={{ height: 24 }} />
-        </ScrollView>
-      )}
+      <PagedList
+        query={query}
+        keyExtractor={(l) => String(l.id)}
+        emptyIcon="mail"
+        emptyTitle={tab === 'action' ? t('letters.emptyAction') : t('letters.empty')}
+        renderItem={(l) => (
+          <LetterListCard
+            letter={l}
+            action={letterNeedsMyAction(l, employeeId)}
+            unseen={isLetterUnseen(l, employeeId, user)}
+            onPress={split ? () => setSelectedId(l.id) : undefined}
+            selected={split ? selectedId === l.id : undefined}
+          />
+        )}
+      />
     </>
   );
 
@@ -221,9 +178,6 @@ const makeStyles = (c: ThemeColors) =>
     tabTextActive: { color: c.onPrimary },
     tabBadge: { backgroundColor: c.warning, borderRadius: 9, minWidth: 18, height: 18, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
     tabBadgeText: { fontSize: 10, fontWeight: '800', color: '#fff' },
-    content: { paddingHorizontal: 16, paddingTop: 4 },
-    emptyWrap: { paddingTop: 60 },
-
     searchWrap: { paddingHorizontal: 16, paddingBottom: 10 },
     chipRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingBottom: 10, alignItems: 'center' },
     chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 18, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder },

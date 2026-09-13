@@ -470,3 +470,36 @@ export function letterStatusMeta(l: Letter): { label: string; kind: StatusKind }
   if (l.status === 'management_review') return { label: i18n.t('status.letterInLeadership'), kind: 'pending' };
   return { label: i18n.t('status.letterPending'), kind: 'pending' };
 }
+
+// ── Status filter catalog (list chips) ───────────────────────────────────────
+// The list is server-paged now, so the status chips can no longer be derived
+// from "whatever rows happen to be loaded"; they come from this fixed catalog
+// (backend LETTER_STATUSES, grouped by flow). Labels reuse `letterStatusMeta`
+// on a minimal stand-in so a chip reads exactly like the badge on the card.
+const TRIP_STATUSES = [
+  'draft', 'pending', 'signed', 'pending_registration', 'registered_pending_rahbar',
+  'management_approved', 'extension_review', 'report_submitted', 'report_returned',
+  'report_management_review', 'report_guvohnoma_review', 'report_approved', 'rejected', 'cancelled',
+] as const;
+const AGREEMENT_STATUSES = [
+  'draft', 'pending_agreement', 'signed', 'review', 'pending_registration', 'registered',
+  'returned', 'rejected',
+] as const;
+
+export function letterStatusOptions(type: 'all' | 'explanatory' | 'application' | 'business_trip'):
+  { value: string; label: string }[] {
+  const codes = type === 'business_trip'
+    ? TRIP_STATUSES
+    : type === 'all'
+      ? Array.from(new Set<string>([...AGREEMENT_STATUSES, ...TRIP_STATUSES]))
+      : AGREEMENT_STATUSES;
+  const ltype = type === 'all' ? 'application' : type;
+  return codes.map((value) => {
+    if (value === 'draft') return { value, label: i18n.t('status.orderDraft') };
+    if (value === 'rejected') return { value, label: i18n.t('status.letterRejected') };
+    // A bare stand-in has no signers, so `isLetterSigned` would say "pending".
+    if (value === 'signed') return { value, label: i18n.t('status.letterSignedStatus') };
+    const meta = letterStatusMeta({ id: 0, status: value, letter_type: ltype } as Letter);
+    return { value, label: meta.label };
+  });
+}

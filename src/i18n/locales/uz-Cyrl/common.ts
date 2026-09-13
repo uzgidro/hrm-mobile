@@ -16,4 +16,5 @@ export default {
   retry: 'Қайта уриниш',
   success: 'Муваффақият',
   errorTitle: 'Хатолик',
+  listCount: '{{shown}} / {{total}}',
 } as const;

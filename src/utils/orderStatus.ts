@@ -222,3 +222,14 @@ export function needsMyAction(o: OrderAct, employeeId?: number): boolean {
   }
   return false;
 }
+
+// Status filter chips for the (server-paged) list: the fixed decree-flow
+// catalog, not "whatever rows are loaded". Order = flow order.
+const ORDER_FLOW_STATUSES = [
+  'draft', 'pending_submitter', 'pending_approval', 'approved', 'pending_leadership',
+  'pending_chancellery', 'confirmed', 'applied', 'changes_requested', 'rejected',
+] as const;
+
+export function orderStatusOptions(): { value: string; label: string }[] {
+  return ORDER_FLOW_STATUSES.map((value) => ({ value, label: statusMeta(value).label }));
+}
