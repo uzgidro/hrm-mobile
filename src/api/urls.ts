@@ -20,6 +20,11 @@ export const TURNSTILE_ATTENDANCE_EVENTS = 'turnstile-attendance-events';
 // The "monthly tabel grid": one row per employee with an attendance.calendar
 // {date -> status code} map. We request our own employee_id for "my tabel".
 export const TURNSTILE_ATTENDANCE_NORMALIZED = 'turnstile-attendance-events/normalized';
+// TODAY's branch roster by category (present/late/absent/leave/trip/day-off…) —
+// the web employee dashboard's source. Branch-scoped, NOT narrowed to "own
+// people" for a regular employee (unlike /normalized), so a plain employee
+// sees their whole branch exactly like on the web.
+export const DASHBOARD_EMPLOYEES_BY_CATEGORY = 'dashboard/employees-by-category';
 // Navbatchilik (duty roster), read-only on mobile. /my is truly self-scoped;
 // {pk}/members is the effective (dept-expanded) roster; work-schedule-days are
 // the actual day/shift rows — branch-scoped server-side since backend `f9c79f0`

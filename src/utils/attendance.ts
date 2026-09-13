@@ -1,7 +1,7 @@
 import { queryOptions } from '@tanstack/react-query';
 import { apiClient } from '../api/client';
-import { TURNSTILE_ATTENDANCE_EVENTS, TURNSTILE_ATTENDANCE_NORMALIZED } from '../api/urls';
-import { AttendanceEvent, EmployeeAttendance } from '../types';
+import { TURNSTILE_ATTENDANCE_EVENTS, TURNSTILE_ATTENDANCE_NORMALIZED, DASHBOARD_EMPLOYEES_BY_CATEGORY } from '../api/urls';
+import { AttendanceEvent, EmployeeAttendance, EmployeeCategories } from '../types';
 import { mapWithConcurrency } from './concurrency';
 
 interface AttendancePage { items: AttendanceEvent[]; total: number }
@@ -82,5 +82,27 @@ export function dayRosterQuery(date: string, orgBranchId?: number, supervised = 
     queryKey: rosterQueryKey(date, orgBranchId, supervised),
     queryFn: () => fetchDayRoster(date, orgBranchId, supervised),
     staleTime: 3 * 60 * 1000,
+  });
+}
+
+// ── TODAY's roster — `/dashboard/employees-by-category` ─────────────────────
+//
+// Why a second source: `/normalized` narrows a REGULAR employee to "self +
+// direct reports" (backend audit rule — the web tabel page is not shown to
+// them at all), so on the phone the Home/Team roster collapsed to one row.
+// The web EMPLOYEE dashboard, however, shows the whole branch for today from
+// this endpoint (branch scope only). Same categories the web maps: late,
+// vacation, trip, sick, dekret, other leave, day off, present, absent, plus
+// `lateness_excused_employee_ids` and `still_inside_since`. 30 s server cache.
+export function dayCategoriesQuery(orgBranchId?: number) {
+  return queryOptions({
+    queryKey: ['team-categories', orgBranchId ?? null] as const,
+    queryFn: () =>
+      apiClient
+        .get<EmployeeCategories>(DASHBOARD_EMPLOYEES_BY_CATEGORY, {
+          params: orgBranchId ? { organization_branch_id: orgBranchId } : {},
+        })
+        .then((r) => r.data ?? {}),
+    staleTime: 60 * 1000,
   });
 }

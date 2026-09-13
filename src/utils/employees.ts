@@ -184,3 +184,18 @@ export function jobPositionsQuery(branchId?: number) {
     staleTime: 10 * 60 * 1000,
   });
 }
+
+// Ids of my direct reports (the "faqat bo'ysunuvchilar" toggle on today's
+// roster, which comes from the category endpoint that has no supervisor
+// filter). One small request; the full roster is never downloaded for it.
+export function subordinateIdsQuery(myId?: number) {
+  return queryOptions({
+    queryKey: ['employees', 'subordinate-ids', myId ?? null] as const,
+    enabled: !!myId,
+    queryFn: () =>
+      apiClient
+        .get<{ items?: { id: number }[] }>(EMPLOYEES_LIST, { params: { supervisor_id: myId, size: 500, page: 1 } })
+        .then((r) => new Set((r.data?.items ?? []).map((e) => e.id))),
+    staleTime: 10 * 60 * 1000,
+  });
+}

@@ -806,6 +806,36 @@ export interface AttendanceSummary {
   daily_late_minutes?: Record<string, number> | null;
 }
 
+// A row of `/dashboard/employees-by-category` (EmployeeDashboardRead — no PII).
+export interface EmployeeDashboardRow {
+  id: number;
+  legal_name?: string | null;
+  photo_path?: string | null;
+  photo_thumb_path?: string | null;
+  department_id?: number | null;
+  job_position_id?: number | null;
+  job_position?: { id?: number; name?: string | null } | null;
+  department?: { id?: number; name?: string | null } | null;
+  internal_phone_number?: string | null;
+  /** Only on `on_leave_employees`: the leave/order category label. */
+  category_name?: string | null;
+}
+
+export interface EmployeeCategories {
+  on_sick_leave_employees?: EmployeeDashboardRow[];
+  on_vacation_employees?: EmployeeDashboardRow[];
+  on_business_trip_employees?: EmployeeDashboardRow[];
+  on_dekret_employees?: EmployeeDashboardRow[];
+  on_leave_employees?: EmployeeDashboardRow[];
+  absent_employees?: EmployeeDashboardRow[];
+  day_off_employees?: EmployeeDashboardRow[];
+  present_employees?: EmployeeDashboardRow[];
+  late_employees?: EmployeeDashboardRow[];
+  /** Entered yesterday and not out yet: {employee_id: ISO entry time}. */
+  still_inside_since?: Record<string, string>;
+  lateness_excused_employee_ids?: number[];
+}
+
 // One row of the normalized tabel grid: a full Employee plus its attendance
 // summary. For "my tabel" we request employee_id=me and read items[0].
 export interface EmployeeAttendance extends Employee {

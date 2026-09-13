@@ -3,8 +3,9 @@ import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, Image,
 } from 'react-native';
 import dayjs from 'dayjs';
+import type { AttendanceEvent } from '@/types';
 import { router } from 'expo-router';
-import { useQuery, useQueries, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { useAuthStore } from '@/store/authStore';
@@ -20,18 +21,16 @@ import { AttendanceDonut } from '@/components/AttendanceDonut';
 import { RosterRow } from '@/components/RosterRow';
 import { useBreakpoint } from '@/utils/responsive';
 import { notificationMeta } from '@/services/notifications';
-import { AttendanceEvent, EmployeeAttendance } from '@/types';
 import { leaveStatusGroup, leaveStatusKind } from '@/utils/leaveStatus';
 import { statusColor } from '@/utils/orderStatus';
-import { dayRosterQuery } from '@/utils/attendance';
-import { buildRosterFromNormalized, type AttendanceStatus } from '@/utils/attendanceRoster';
+import { type AttendanceStatus } from '@/utils/attendanceRoster';
+import { useDayRoster } from '@/lib/useDayRoster';
 import {
   homeAttendanceQuery,
   homeMyLeavesQuery,
   homeAssignedLeavesQuery,
   homeNotificationsQuery,
   useShellBadges,
-  homeTodayAttendanceQuery,
   prefetchHomeData,
 } from '../api/queries';
 
@@ -104,22 +103,11 @@ export default function HomeScreen() {
   // it's the same cache entries TanStack Query already has (or is about to
   // populate) for Team / Attendance-detail. Gated by the same role check as
   // the tile it replaces, and skipped entirely off that role.
-  const rosterQueries = useMemo(
-    () => [
-      { ...dayRosterQuery(todayStr, orgBranchId, onlySubordinates && !!myId), enabled: canSeeAttendanceContent },
-      { ...homeTodayAttendanceQuery(todayStr, orgBranchId), enabled: canSeeAttendanceContent },
-    ],
-    [orgBranchId, todayStr, canSeeAttendanceContent, onlySubordinates, myId]
-  );
-  const rosterResults = useQueries({ queries: rosterQueries });
-  const [rosterQ, rosterAttQ] = rosterResults;
-  const isRosterLoading = canSeeAttendanceContent && rosterResults.some((r) => r.isLoading);
-
-  const { rows: rosterRows, counts: rosterCounts } = useMemo(() => {
-    const events: AttendanceEvent[] = (rosterAttQ.data as { items: AttendanceEvent[] } | undefined)?.items ?? [];
-    const rosterRowsData = (rosterQ.data as { items: EmployeeAttendance[] } | undefined)?.items ?? [];
-    return buildRosterFromNormalized(rosterRowsData, todayStr, events);
-  }, [rosterQ.data, rosterAttQ.data, todayStr]);
+  const rosterQ = useDayRoster({
+    date: todayStr, orgBranchId, onlySubordinates, myId, enabled: canSeeAttendanceContent,
+  });
+  const isRosterLoading = canSeeAttendanceContent && rosterQ.isLoading;
+  const { rows: rosterRows, counts: rosterCounts } = rosterQ.roster;
 
   // One alphabetical list; the donut zone (rosterFilter) narrows it — same
   // behavior as AttendanceDetailScreen.
@@ -146,9 +134,10 @@ export default function HomeScreen() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
+    rosterQ.refetch();
     await Promise.all([refetchEvents(), isSupervisor ? refetchAssigned() : refetchMyLeaves()]);
     setRefreshing(false);
-  }, [refetchEvents, refetchAssigned, refetchMyLeaves, isSupervisor]);
+  }, [refetchEvents, refetchAssigned, refetchMyLeaves, isSupervisor, rosterQ]);
 
   const sortedToday = [...todayEvents].sort((a, b) => dayjs(a.happen_time).diff(dayjs(b.happen_time)));
   const entry = sortedToday[0];
