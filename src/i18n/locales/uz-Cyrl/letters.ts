@@ -1,6 +1,19 @@
 // Cyrillic transliteration of the uz-Latn letters namespace. Keep the key set
 // identical to uz-Latn/letters.ts (a parity test enforces this).
 export default {
+  'vehicleStatus': 'Ҳолати',
+  'vehicleStatus_awaiting_approval': 'Тасдиқ кутилмоқда',
+  'vehicleStatus_pending': 'Автопаркда',
+  'vehicleStatus_approved': 'Тасдиқланган',
+  'vehicleStatus_rejected': 'Рад этилган',
+  'vehicleStatus_cancelled': 'Бекор қилинган',
+  sectionVehicle: 'Автотранспорт',
+  vehicleNeeded: 'Машина сўралган',
+  vehicleNote: 'Изоҳ',
+  vehicleAssigned: 'Бириктирилган машина',
+  vehicleRequest: 'Машина сўраш',
+  vehicleCancel: 'Сўровни бекор қилиш',
+  vehicleNotePlaceholder: 'Қаерга ва нима учун кераклигини ёзинг',
   // ── Screen / header titles ──────────────────────────────────────────────────
   listTitle: 'Хатлар',
   detailTitle: 'Хат',
@@ -248,9 +261,7 @@ export default {
   attachmentReplaceHint: 'Янги файл танласангиз, мавжуд илова алмаштирилади',
   vehicleTitle: 'Транспорт',
   vehicleNone: 'Машинасиз',
-  vehicleNeeded: 'Машина керак',
   vehicleNoteLabel: 'Машина учун изоҳ (ихтиёрий)',
-  vehicleNotePlaceholder: 'Масалан: 4 кишимиз, соат 7:00 да чиқамиз',
   vehicleHint: 'Сўров сафар юборилгач аввал автопарк тасдиқловчисига боради; у тасдиқлагач машина бириктирилади. Қайси машина бўлишини сиз танламайсиз.',
   reportRegisteredNumber: 'Ҳисобот рўйхат рақами',
   rejectedBy: 'Рад этди — {{name}}',

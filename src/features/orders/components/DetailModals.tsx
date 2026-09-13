@@ -121,7 +121,9 @@ export function ApplyModal({
 
   const disabled = !employeeLabel || !startDate || (needsEndDate && !endDate);
 
-  const Row = ({ label, value, onPress }: { label: string; value: string | null; onPress: () => void }) => (
+  // A plain render helper (not a component defined during render) so the rows
+  // keep their identity across re-renders.
+  const row = (label: string, value: string | null, onPress: () => void) => (
     <TouchableOpacity style={styles.pickRow} onPress={onPress} activeOpacity={0.8}>
       <Text style={styles.pickLabel}>{label}</Text>
       <Text style={value ? styles.pickValue : styles.pickPlaceholder} numberOfLines={1}>
@@ -142,11 +144,9 @@ export function ApplyModal({
       onSubmit={onSubmit}
       testID="decree-apply-modal"
     >
-      <Row label={t('orders.applyEmployee')} value={employeeLabel} onPress={onPickEmployee} />
-      <Row label={t('orders.applyStart')} value={startDate || null} onPress={onPickStart} />
-      {needsEndDate && (
-        <Row label={t('orders.applyEnd')} value={endDate || null} onPress={onPickEnd} />
-      )}
+      {row(t('orders.applyEmployee'), employeeLabel, onPickEmployee)}
+      {row(t('orders.applyStart'), startDate || null, onPickStart)}
+      {needsEndDate && row(t('orders.applyEnd'), endDate || null, onPickEnd)}
       {allowPermanent && (
         <TouchableOpacity style={styles.permRow} onPress={onTogglePermanent} activeOpacity={0.8}>
           <View style={[styles.checkbox, isPermanent && { backgroundColor: colors.primary, borderColor: colors.primary }]} />

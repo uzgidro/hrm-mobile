@@ -143,6 +143,10 @@ export interface OrderActSigner {
   employee_id?: number;
   signer_type?: string; // 'approver' | 'leadership'
   can_edit_document?: boolean;
+  // Muallif tasdiqlangan buyruqdan shu kelishuvchini OLIB TASHLAMOQCHI —
+  // kelishuvchining O'ZI rozilik berishi kerak (backend `removal/confirm`),
+  // aks holda tahrir bloklanib qoladi.
+  removal_requested?: boolean;
   employee?: Employee;
 }
 
@@ -325,6 +329,17 @@ export interface Letter {
   // `created_by` fields were never returned by the API — every read of them
   // was dead (the list search by author name silently matched nothing).
   creator_employee_id?: number | null;
+  // ⚠️ `vehicle_needed` FAQAT YOZISHDA bor (create/update); O'QISHDA backend
+  // `vehicle_request` obyektini qaytaradi. Shuning uchun UI holatni SHU
+  // obyektdan o'qiydi — `vehicle_needed` doim `undefined` bo'lardi.
+  vehicle_note?: string | null;
+  vehicle_request?: {
+    id?: number;
+    // awaiting_approval | pending | approved | rejected | cancelled
+    status?: string;
+    request_note?: string | null;
+    vehicle?: { id?: number; model?: string | null; plate_number?: string | null } | null;
+  } | null;
   creator_employee?: Employee | null;
   created_at?: string;
   organization_branch_id?: number;
@@ -335,10 +350,6 @@ export interface Letter {
   // Set by KADR "Keldi" (hr-arrive / confirm-return) — gates report submission.
   is_trip_confirmed?: boolean | null;
   actual_return_date?: string | null;
-  /** Faol MASHINA so'rovi (transport). Present => the trip was created with
-   *  "Mashina kerak"; the edit form opens in that mode and can cancel it by
-   *  sending `vehicle_needed: false` (web v1 AddLetterDrawer.jsx:460-461). */
-  vehicle_request?: { id: number; request_note?: string | null; status?: string | null } | null;
   // Report fields (authored via plain form; the DOCX is built server-side).
   report_number?: string | null;
   report_date?: string | null;

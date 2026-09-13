@@ -1,6 +1,19 @@
 // English translation of the letters namespace. Keep the key set identical to
 // uz-Latn/letters.ts (a parity test enforces this).
 export default {
+  'vehicleStatus': 'Status',
+  'vehicleStatus_awaiting_approval': 'Awaiting approval',
+  'vehicleStatus_pending': 'With the fleet',
+  'vehicleStatus_approved': 'Approved',
+  'vehicleStatus_rejected': 'Rejected',
+  'vehicleStatus_cancelled': 'Cancelled',
+  sectionVehicle: 'Vehicle',
+  vehicleNeeded: 'Vehicle requested',
+  vehicleNote: 'Note',
+  vehicleAssigned: 'Assigned vehicle',
+  vehicleRequest: 'Request a vehicle',
+  vehicleCancel: 'Cancel the request',
+  vehicleNotePlaceholder: 'Where and why the vehicle is needed',
   // ── Screen / header titles ──────────────────────────────────────────────────
   listTitle: 'Letters',
   detailTitle: 'Letter',
@@ -248,9 +261,7 @@ export default {
   attachmentReplaceHint: 'Picking a new file replaces the existing attachment',
   vehicleTitle: 'Transport',
   vehicleNone: 'No car',
-  vehicleNeeded: 'Car needed',
   vehicleNoteLabel: 'Note for the car (optional)',
-  vehicleNotePlaceholder: 'For example: 4 of us, leaving at 7:00',
   vehicleHint: 'Once the trip is submitted the request goes to the fleet approver first; after approval a vehicle is assigned. You do not pick the specific car.',
   reportRegisteredNumber: 'Report registration number',
   rejectedBy: 'Rejected by {{name}}',

@@ -33,6 +33,7 @@ import {
 import { DetailHeader, Section, KV, SignerRow } from './DetailParts';
 import { LetterActionBar } from './LetterActionBar';
 import { TripMovementsSection } from './TripMovementsSection';
+import { TripVehicleSection } from './TripVehicleSection';
 import { AgreementSection } from './AgreementSection';
 import { ConfirmRegistrationModal } from './ConfirmRegistrationModal';
 import { ReasonModal } from './ReasonModal';
@@ -367,6 +368,7 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
           </View>
         )}
 
+        {isTrip && <TripVehicleSection letter={letter} user={user} onChanged={refetch} />}
         <TripMovementsSection letter={letter} user={user} onChanged={refetch} />
 
         {/* Bildirgi/ariza kelishuvi — kelishuvchilar holati va amallar. */}

@@ -2,6 +2,19 @@
 // uz-Latn/letters.ts (a parity test enforces this). Russian has three plural
 // forms (_one/_few/_many) where uz/en have two (_one/_other).
 export default {
+  'vehicleStatus': 'Статус',
+  'vehicleStatus_awaiting_approval': 'Ожидает подтверждения',
+  'vehicleStatus_pending': 'В автопарке',
+  'vehicleStatus_approved': 'Подтверждён',
+  'vehicleStatus_rejected': 'Отклонён',
+  'vehicleStatus_cancelled': 'Отменён',
+  sectionVehicle: 'Автотранспорт',
+  vehicleNeeded: 'Запрошен автомобиль',
+  vehicleNote: 'Примечание',
+  vehicleAssigned: 'Назначенный автомобиль',
+  vehicleRequest: 'Запросить автомобиль',
+  vehicleCancel: 'Отменить запрос',
+  vehicleNotePlaceholder: 'Укажите куда и зачем нужен автомобиль',
   // ── Screen / header titles ──────────────────────────────────────────────────
   listTitle: 'Письма',
   detailTitle: 'Письмо',
@@ -253,9 +266,7 @@ export default {
   attachmentReplaceHint: 'Если выбрать новый файл, существующее приложение будет заменено',
   vehicleTitle: 'Транспорт',
   vehicleNone: 'Без машины',
-  vehicleNeeded: 'Нужна машина',
   vehicleNoteLabel: 'Комментарий к машине (необязательно)',
-  vehicleNotePlaceholder: 'Например: нас 4 человека, выезжаем в 7:00',
   vehicleHint: 'После отправки командировки запрос сначала идёт согласующему автопарка; после подтверждения машина закрепляется. Конкретную машину выбираете не вы.',
   reportRegisteredNumber: 'Регистрационный номер отчёта',
   rejectedBy: 'Отклонил(а) — {{name}}',

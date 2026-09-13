@@ -19,9 +19,10 @@ import { statusMeta, statusColor, decreePermissions, decreeSubmitTarget } from '
 import { isHR, isSiteMasterAdmin, isBranchHr, employeeSubLabel } from '@/utils/roles';
 import { orderDetailQuery, orderEmployeesQuery } from '../api/queries';
 import { useDecreeActions } from '../hooks/useDecreeActions';
-import { useAssignFamiliarizers, useDecreeApply } from '../api/mutations';
+import { useAssignFamiliarizers, useDecreeApply, useDecreeRemovalResponse } from '../api/mutations';
 import { DetailHeader, Section, KV } from './DetailParts';
 import { DetailSections } from './DetailSections';
+import { AttachmentsSection } from './AttachmentsSection';
 import { CommentsSection } from './CommentsSection';
 import { DecreeActionBar } from './DecreeActionBar';
 import { RejectModal, RegisterModal, ApplyModal } from './DetailModals';
@@ -67,6 +68,7 @@ export function OrderDetailView({ id, embedded = false }: { id: number; embedded
 
   const assignFam = useAssignFamiliarizers(orderId);
   const applyM = useDecreeApply(orderId);
+  const removalM = useDecreeRemovalResponse(orderId);
   // Employees to pick from — scoped to the order's branch like the create form.
   // `enabled`: the picker is ONLY reachable for master-admin / KADR (see
   // `canAssignFamiliarizers` below), but this query pulls the WHOLE branch
@@ -169,10 +171,27 @@ export function OrderDetailView({ id, embedded = false }: { id: number; embedded
     }
   };
 
+  // Safdan chiqishga javob. Rozilik OXIRGI kelishuvchidan kelsa backend
+  // buyruqni butunlay o'chirishi mumkin ({deleted: true}) — bunda ro'yxatga
+  // qaytamiz, aks holda tafsilotni yangilaymiz.
+  const onRemoval = async (agree: boolean) => {
+    try {
+      const res = await removalM.mutateAsync(agree);
+      if (res && typeof res === 'object' && 'deleted' in res && res.deleted) {
+        if (router.canGoBack()) router.back();
+        return;
+      }
+      await refetch();
+    } catch {
+      /* xato toast'i QueryClient onError orqali */
+    }
+  };
+
   const onRegister = async () => {
     setRegisterOpen(false);
     await register(actNumber, parseDdMmYyyy(actDate));
     setActNumber('');
+    setActDate('');
   };
 
   // Embedded (split-view pane): no safe-area root — the outer list screen's
@@ -270,6 +289,8 @@ export function OrderDetailView({ id, embedded = false }: { id: number; embedded
 
         <DetailSections order={order} />
 
+        <AttachmentsSection order={order} canManage={perms.canEdit} onChanged={refetch} />
+
         {/* Izohlar + matn tahriri tarixi (webda bor, mobilда yo'q edi). */}
         <CommentsSection orderId={orderId} />
 
@@ -322,6 +343,8 @@ export function OrderDetailView({ id, embedded = false }: { id: number; embedded
         onAcknowledge={acknowledge}
         onRegister={() => setRegisterOpen(true)}
         onApply={() => setApplyOpen(true)}
+        onRemovalConfirm={() => onRemoval(true)}
+        onRemovalReject={() => onRemoval(false)}
       />
 
       <RejectModal
