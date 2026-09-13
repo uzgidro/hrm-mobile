@@ -252,4 +252,7 @@ export default {
   vehicleNoteLabel: 'Note for the car (optional)',
   vehicleNotePlaceholder: 'For example: 4 of us, leaving at 7:00',
   vehicleHint: 'Once the trip is submitted the request goes to the fleet approver first; after approval a vehicle is assigned. You do not pick the specific car.',
+  reportRegisteredNumber: 'Report registration number',
+  rejectedBy: 'Rejected by {{name}}',
+  reportManualEditNote: 'Report was edited manually in Word — the document text may differ from these fields',
 } as const;

@@ -56,8 +56,9 @@ export function OrderListCard({
         <Text style={styles.cardMetaText}>
           {order.employee?.legal_name || order.submitter?.legal_name || ''}
         </Text>
-        {!!order.created_at && (
-          <Text style={styles.cardMetaText}>{dayjs(order.created_at).format('DD.MM.YYYY')}</Text>
+        {/* Web BuyruqlarTable parity: the decree DATE (act_date) once set, else created. */}
+        {!!(order.act_date || order.created_at) && (
+          <Text style={styles.cardMetaText}>{dayjs(order.act_date || order.created_at).format('DD.MM.YYYY')}</Text>
         )}
       </View>
 

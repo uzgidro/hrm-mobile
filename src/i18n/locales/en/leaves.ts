@@ -79,4 +79,7 @@ export default {
   rejectError: 'Failed to reject',
   deletedSuccess: 'Request deleted',
   deleteError: 'Failed to delete',
+  signerRejected: 'Rejected',
+  fieldOrigin: 'Origin',
+  originHrOrder: 'From an HR order',
 } as const;

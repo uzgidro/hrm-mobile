@@ -53,17 +53,18 @@ export function TripMovementsSection({
    * had no such check and drew the buttons anyway; the web does check.
    */
   const finalized = ['report_approved', 'rejected', 'cancelled'].includes(letter.status ?? '');
-  const canManage =
-    !finalized && (isSiteMasterAdmin(user) || tripBranchIds.some((bid) => isBranchHr(user, bid)));
+  // (The return-date link is gated by `canFixReturnDate` — server flag first —
+  // which deliberately has NO finalized check: the endpoint allows fixing the
+  // date after approval too.)
   // Stage gate: the backend blocks confirm-return with 400 trip_not_registered
   // until the chancellery registers the trip (it's in the pre-registration set).
   // A site master-admin bypasses the stage, matching the backend. Without this a
   // branch HR would see "Keldi" on a pending_registration trip and hit the 400.
   const stageAllowsReturn = isSiteMasterAdmin(user) || canConfirmTripReturn(letter);
   /*
-   * ⚠️ CONFIRMING THE RETURN IS THE HOME BRANCH'S CALL ALONE. `canManage` also
-   * covers the DESTINATION branches (they may add legs), but the server answers
-   * 403 `not_home_branch_hr` to a destination-branch KADR here — so sharing one
+   * ⚠️ CONFIRMING THE RETURN IS THE HOME BRANCH'S CALL ALONE. Trip-scoped HR
+   * (destination branches) may fix the date, but the server answers 403
+   * `not_home_branch_hr` to a destination-branch KADR here — so sharing one
    * flag drew "Keldi" for people it refuses.
    */
   const canConfirmReturn =

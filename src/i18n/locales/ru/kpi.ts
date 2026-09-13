@@ -60,4 +60,6 @@ export default {
   teamAllDone: 'Завершено',
   teamEmpty: 'За вами не закреплены сотрудники',
   bonusesTitle: 'Бонусы',
+  taskDeadline: 'Срок',
+  taskReviewNote: ' {{date}}:Комментарий: {{note}}',
 } as const;

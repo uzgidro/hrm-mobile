@@ -82,4 +82,7 @@ export default {
   rejectError: 'Ошибка при отклонении',
   deletedSuccess: 'Заявка удалена',
   deleteError: 'Ошибка при удалении',
+  signerRejected: 'Отклонил(а)',
+  fieldOrigin: 'Источник',
+  originHrOrder: 'Из приказа кадров',
 } as const;

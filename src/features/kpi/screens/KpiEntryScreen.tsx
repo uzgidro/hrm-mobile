@@ -4,6 +4,7 @@ import {
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import dayjs from 'dayjs';
 import { useLocalSearchParams } from 'expo-router';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
@@ -216,6 +217,13 @@ export default function KpiEntryScreen() {
                       ) : (
                         <Text style={styles.taskName}>{task.name}</Text>
                       )}
+                      {/* Web EntryTasksPage parity: deadline + reviewer's note. */}
+                      {!!task.deadline && (
+                        <Text style={styles.taskSub}>{t('kpi.taskDeadline', { date: dayjs(task.deadline).format('DD.MM.YYYY') })}</Text>
+                      )}
+                      {!!task.review_note && (
+                        <Text style={[styles.taskSub, { color: colors.warning }]}>{t('kpi.taskReviewNote', { note: task.review_note })}</Text>
+                      )}
 
                       <View style={styles.taskMeta}>
                         {/* Score — tappable for graders, otherwise a plain label */}
@@ -405,6 +413,7 @@ const makeStyles = (c: ThemeColors) =>
       padding: 14, marginBottom: 10,
     },
     taskName: { fontSize: 14, color: c.text, lineHeight: 19 },
+    taskSub: { fontSize: 12, color: c.textMuted, marginTop: 2 },
     editInput: {
       backgroundColor: c.bg, borderRadius: 10, borderWidth: 1, borderColor: c.primary,
       paddingHorizontal: 10, paddingVertical: 8, fontSize: 14, color: c.text,

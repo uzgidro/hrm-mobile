@@ -60,4 +60,6 @@ export default {
   teamAllDone: 'Якунланган',
   teamEmpty: 'Сизга бириктирилган ходимлар йўқ',
   bonusesTitle: 'Бонуслар',
+  taskDeadline: 'Муддат',
+  taskReviewNote: ' {{date}}:Изоҳ: {{note}}',
 } as const;

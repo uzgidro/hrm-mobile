@@ -145,4 +145,8 @@ export default {
   documentOpenError: 'Hujjatni ochishda xatolik',
   registerDatePlaceholder: 'Sana (KK.OO.YYYY)',
   registerDateLabel: "Ro'yxat sanasi",
+  rejectedByLabel: 'Rad etdi',
+  sectionFamiliarizerDepartments: "Tanishtiriladigan bo'limlar",
+  sectionAttachments: 'Biriktirilgan fayllar',
+  deletionRequestedNote: "Buyruqni o'chirish so'ralgan",
 } as const;

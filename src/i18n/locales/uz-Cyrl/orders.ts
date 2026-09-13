@@ -141,4 +141,8 @@ export default {
   documentOpenError: 'Ҳужжатни очишда хатолик',
   registerDatePlaceholder: 'Сана (КК.ОО.ЙЙЙЙ)',
   registerDateLabel: 'Рўйхат санаси',
+  rejectedByLabel: 'Рад этди',
+  sectionFamiliarizerDepartments: 'Таништириладиган бўлимлар',
+  sectionAttachments: 'Бириктирилган файллар',
+  deletionRequestedNote: 'Буйруқни ўчириш сўралган',
 } as const;

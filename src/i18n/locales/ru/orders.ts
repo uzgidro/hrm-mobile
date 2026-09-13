@@ -142,4 +142,8 @@ export default {
   documentOpenError: 'Ошибка при открытии документа',
   registerDatePlaceholder: 'Дата (ДД.ММ.ГГГГ)',
   registerDateLabel: 'Дата регистрации',
+  rejectedByLabel: 'Отклонил(а)',
+  sectionFamiliarizerDepartments: 'Ознакомляемые отделы',
+  sectionAttachments: 'Прикреплённые файлы',
+  deletionRequestedNote: 'Запрошено удаление приказа',
 } as const;

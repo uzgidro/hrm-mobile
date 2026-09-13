@@ -99,7 +99,7 @@ export function AgreementSection({
             </View>
             <Text style={[styles.state, { color }]}>
               {t(`letters.agreementState.${state}`)}
-              {r.acted_at ? `  ·  ${dayjs(r.acted_at).format('DD.MM.YYYY')}` : ''}
+              {r.acted_at ? `  ·  ${dayjs(r.acted_at).format('DD.MM.YYYY HH:mm')}` : ''}
             </Text>
           </View>
         );

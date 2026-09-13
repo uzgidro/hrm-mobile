@@ -119,6 +119,12 @@ export interface WorkLeave {
   assigned_signers?: Employee[];
   signers?: Employee[];
   rejection_reason?: string | null;
+  /** Kim rad etgan (web RequestPermissionPage per-signer «Rad etdi» belgisi). */
+  reject_by_id?: number | null;
+  rejected_by?: Employee | null;
+  /** KADR buyrug'idan yaratilgan (ta'til/kasallik buyrug'i) — o'zi so'ramagan. */
+  is_hr_order?: boolean | null;
+  order_act_id?: number | null;
 }
 
 export interface OrderActCategory {
@@ -178,6 +184,9 @@ export interface OrderAct {
   can_edit?: boolean;
   can_manage?: boolean;
   deletion_requested?: boolean | null;
+  rejected_by_id?: number | null;
+  /** Biriktirilgan fayllar (OrderActDocumentRead) — decree_* = generatsiya fayli. */
+  documents?: { id: number; document_objectname?: string | null; file_path?: string | null }[] | null;
   // `creator_role` — 'employee' | 'hr'. KADR buyrug'ida devonxona qadami YO'Q
   // (backend decree_register 400 `hr_decree_no_chancellery`), shu bois
   // ro'yxatga olish tugmasi faqat XODIM buyrug'ida chiqadi.
@@ -300,6 +309,10 @@ export interface Letter {
   /** Stored file name — shown in the edit form so the user can tell an ilova
    *  is already attached (the create screen used to display nothing). */
   attachment_filename?: string | null;
+  /** Devonxonaning HISOBOT uchun ro'yxat raqami (asosiy raqamdan alohida). */
+  report_registered_number?: string | null;
+  /** Hisobot Word'da qo'lda tahrirlangan — matn maydonlari docx bilan farq qilishi mumkin. */
+  manual_report_edit?: boolean | null;
   departure_date?: string | null;
   arrival_date?: string | null;
   submitter_id?: number | null;
@@ -662,6 +675,10 @@ export interface KpiTask {
   task_status?: Partial<Pick<KpiTaskStatus, 'name' | 'color' | 'counts_for_fact' | 'order_no'>> | null;
   review_note?: string | null;
   reviewed_by_id?: number | null;
+  /** Web EntryTasksPage parity (KpiTaskRead). */
+  description?: string | null;
+  deadline?: string | null;
+  priority?: number | null;
 }
 
 // The caller's permissions on ONE entry (backend KpiEntryAccess). Filled ONLY by

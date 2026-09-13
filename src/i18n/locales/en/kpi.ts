@@ -60,4 +60,6 @@ export default {
   teamAllDone: 'Finalized',
   teamEmpty: 'No employees report to you',
   bonusesTitle: 'Bonuses',
+  taskDeadline: 'Due',
+  taskReviewNote: ' {{date}}:Note: {{note}}',
 } as const;

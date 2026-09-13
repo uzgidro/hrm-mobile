@@ -285,7 +285,9 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
               testID="letter-open-attachment"
             >
               <Icon name="doc" size={16} color={colors.primary} />
-              <Text style={styles.docBtnText}>{t('letters.openAttachment')}</Text>
+              <Text style={styles.docBtnText} numberOfLines={1}>
+                {letter.attachment_filename ? `${t('letters.openAttachment')} · ${letter.attachment_filename}` : t('letters.openAttachment')}
+              </Text>
             </TouchableOpacity>
           )}
         </View>
@@ -387,7 +389,12 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
         {hasReport && (
           <Section title={t('letters.sectionReport')}>
             {!!letter.report_number && <KV k={t('letters.reportNumber')} v={letter.report_number} />}
+            {/* The chancellery's OWN registration number/stamp for the report (web LetterDetailModal:1238). */}
+            {!!letter.report_registered_number && <KV k={t('letters.reportRegisteredNumber')} v={letter.report_registered_number} />}
             {!!letter.report_date && <KV k={t('letters.reportDate')} v={dayjs(letter.report_date).format('DD.MM.YYYY')} />}
+            {letter.manual_report_edit && (
+              <Text style={styles.manualEditNote}>{t('letters.reportManualEditNote')}</Text>
+            )}
             {!!letter.report_summary && <KV k={t('letters.reportSummary')} v={letter.report_summary} />}
             {!!letter.report_task && <KV k={t('letters.reportTask')} v={letter.report_task} />}
             {!!letter.report_content && (
@@ -469,10 +476,14 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
           </View>
         )}
 
-        {!!letter.rejection_reason && (
+        {!!(letter.rejection_reason || letter.rejected_by?.legal_name) && (
           <View style={styles.rejectCard}>
-            <Text style={styles.rejectTitle}>{t('letters.rejectionReason')}</Text>
-            <Text style={styles.rejectText}>{letter.rejection_reason}</Text>
+            <Text style={styles.rejectTitle}>
+              {letter.rejected_by?.legal_name
+                ? t('letters.rejectedBy', { name: letter.rejected_by.legal_name })
+                : t('letters.rejectionReason')}
+            </Text>
+            {!!letter.rejection_reason && <Text style={styles.rejectText}>{letter.rejection_reason}</Text>}
           </View>
         )}
 
@@ -654,6 +665,7 @@ const makeStyles = (c: ThemeColors) =>
     bodyText: { fontSize: 14, color: c.text, lineHeight: 21 },
     warnCard: { backgroundColor: c.warningSoft, borderRadius: 14, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: c.warning },
     warnText: { fontSize: 13, color: c.text, lineHeight: 19 },
+    manualEditNote: { fontSize: 12, color: c.warning, paddingHorizontal: 16, paddingBottom: 8 },
     rejectCard: { backgroundColor: c.errorSoft, borderRadius: 14, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: c.error },
     rejectTitle: { fontSize: 13, fontWeight: '700', color: c.error, marginBottom: 4 },
     rejectText: { fontSize: 13, color: c.text, lineHeight: 19 },

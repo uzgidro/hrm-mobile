@@ -141,4 +141,8 @@ export default {
   documentOpenError: 'Error opening the document',
   registerDatePlaceholder: 'Date (DD.MM.YYYY)',
   registerDateLabel: 'Registration date',
+  rejectedByLabel: 'Rejected',
+  sectionFamiliarizerDepartments: 'Departments to acknowledge',
+  sectionAttachments: 'Attached files',
+  deletionRequestedNote: 'Deletion of this order was requested',
 } as const;

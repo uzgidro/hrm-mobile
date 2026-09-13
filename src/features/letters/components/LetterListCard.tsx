@@ -59,7 +59,13 @@ export function LetterListCard({
         <Text style={styles.cardMetaText} numberOfLines={1}>
           {letter.creator_employee?.legal_name || letter.submitter?.legal_name || ''}
         </Text>
-        {!!letter.created_at && <Text style={styles.cardMetaText}>{dayjs(letter.created_at).format('DD.MM.YYYY')}</Text>}
+        {/* Web letters/helpers.js:88 parity: the REGISTRATION date once the
+            chancellery stamped it, else the document date, else created. */}
+        {!!(letter.registered_date || letter.letter_date || letter.created_at) && (
+          <Text style={styles.cardMetaText}>
+            {dayjs(letter.registered_date || letter.letter_date || letter.created_at).format('DD.MM.YYYY')}
+          </Text>
+        )}
       </View>
 
       {action && (

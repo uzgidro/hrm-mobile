@@ -71,4 +71,6 @@ export default {
   teamAllDone: 'Yakunlangan',
   teamEmpty: "Sizga biriktirilgan xodimlar yo'q",
   bonusesTitle: 'Bonuslar',
+  taskDeadline: 'Muddat',
+  taskReviewNote: ' {{date}}:Izoh: {{note}}',
 } as const;

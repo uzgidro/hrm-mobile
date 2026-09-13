@@ -79,4 +79,7 @@ export default {
   rejectError: 'Рад этишда хатолик юз берди',
   deletedSuccess: 'Сўров ўчирилди',
   deleteError: 'Ўчиришда хатолик юз берди',
+  signerRejected: 'Рад этди',
+  fieldOrigin: 'Манба',
+  originHrOrder: 'КАДР буйруғидан',
 } as const;

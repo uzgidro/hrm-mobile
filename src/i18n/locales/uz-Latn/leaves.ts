@@ -100,4 +100,7 @@ export default {
   approveError: 'Tasdiqlashda xatolik yuz berdi',
   rejectError: 'Rad etishda xatolik yuz berdi',
   deleteError: "O'chirishda xatolik yuz berdi",
+  signerRejected: 'Rad etdi',
+  fieldOrigin: 'Manba',
+  originHrOrder: "KADR buyrug'idan",
 } as const;

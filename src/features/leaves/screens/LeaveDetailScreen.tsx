@@ -187,6 +187,9 @@ export default function LeaveDetailScreen() {
 
         <View style={s.infoCard}>
           <View style={s.infoRow}><Text style={s.infoLabel}>{t('leaves.fieldType')}</Text><Text style={s.infoValue}>{leave.type ? leaveTypeLabel(t, leave.type) : t('leaves.typeFallback')}</Text></View>
+          {leave.is_hr_order && (
+            <View style={s.infoRow}><Text style={s.infoLabel}>{t('leaves.fieldOrigin')}</Text><Text style={s.infoValue}>{t('leaves.originHrOrder')}</Text></View>
+          )}
           <View style={s.divider} />
           <View style={s.infoRow}><Text style={s.infoLabel}>{t('leaves.fieldStart')}</Text><Text style={s.infoValue}>{dayjs(leave.start_date).format('DD.MM.YYYY HH:mm')}</Text></View>
           <View style={s.divider} />
@@ -217,6 +220,10 @@ export default function LeaveDetailScreen() {
             <Text style={s.signersTitle}>{t('leaves.signersTitle')}</Text>
             {leave.assigned_signers!.map((signer) => {
               const hasSigned = leave.signers?.some((sg) => sg.id === signer.id);
+              // Web RequestPermissionPage:296 parity: the signer who rejected is marked red.
+              const rejected = !hasSigned && (leave.reject_by_id ?? leave.rejected_by?.id) === signer.id;
+              const tone = hasSigned ? colors.success : rejected ? colors.error : colors.warning;
+              const bg = hasSigned ? colors.successSoft : rejected ? colors.errorSoft : colors.warningSoft;
               return (
                 <View key={signer.id} style={s.signerRow}>
                   <EmployeeAvatar emp={signer} size={40} />
@@ -224,9 +231,11 @@ export default function LeaveDetailScreen() {
                     <Text style={s.signerName}>{signer.legal_name}</Text>
                     <Text style={s.signerSub} numberOfLines={1}>{signer.job_position?.name ?? signer.department?.name ?? '—'}</Text>
                   </View>
-                  <View style={[s.signerStatus, { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: (hasSigned ? colors.success : colors.warning) === colors.success ? colors.successSoft : colors.warningSoft }]}>
-                    <Icon name={hasSigned ? 'check' : 'clock'} size={13} color={hasSigned ? colors.success : colors.warning} />
-                    <Text style={[s.signerStatusText, { color: hasSigned ? colors.success : colors.warning }]}>{hasSigned ? t('leaves.signerSigned') : t('leaves.statusPending')}</Text>
+                  <View style={[s.signerStatus, { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: bg }]}>
+                    <Icon name={hasSigned ? 'check' : rejected ? 'close' : 'clock'} size={13} color={tone} />
+                    <Text style={[s.signerStatusText, { color: tone }]}>
+                      {hasSigned ? t('leaves.signerSigned') : rejected ? t('leaves.signerRejected') : t('leaves.statusPending')}
+                    </Text>
                   </View>
                 </View>
               );

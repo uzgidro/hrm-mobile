@@ -261,4 +261,7 @@ export default {
   vehicleNoteLabel: 'Mashina uchun izoh (ixtiyoriy)',
   vehicleNotePlaceholder: 'Masalan: 4 kishimiz, soat 7:00 da chiqamiz',
   vehicleHint: 'So‘rov safar yuborilgach avval avtopark tasdiqlovchisiga boradi; u tasdiqlagach mashina biriktiriladi. Qaysi mashina bo‘lishini siz tanlamaysiz.',
+  reportRegisteredNumber: "Hisobot ro'yxat raqami",
+  rejectedBy: 'Rad etdi — {{name}}',
+  reportManualEditNote: "Hisobot Word'da qo'lda tahrirlangan — hujjat matni bu maydonlardan farq qilishi mumkin",
 } as const;
