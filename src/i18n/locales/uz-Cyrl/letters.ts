@@ -266,4 +266,6 @@ export default {
   reportRegisteredNumber: 'Ҳисобот рўйхат рақами',
   rejectedBy: 'Рад этди — {{name}}',
   reportManualEditNote: "Ҳисобот Word'да қўлда таҳрирланган — ҳужжат матни бу майдонлардан фарқ қилиши мумкин",
+  reportManager: 'Ҳисоботни тасдиқловчи раҳбар',
+  reportManagerPlaceholder: 'Раҳбарни танланг',
 } as const;

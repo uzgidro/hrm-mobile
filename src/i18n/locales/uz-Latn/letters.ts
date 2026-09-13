@@ -275,4 +275,6 @@ export default {
   reportRegisteredNumber: "Hisobot ro'yxat raqami",
   rejectedBy: 'Rad etdi — {{name}}',
   reportManualEditNote: "Hisobot Word'da qo'lda tahrirlangan — hujjat matni bu maydonlardan farq qilishi mumkin",
+  reportManager: 'Hisobotni tasdiqlovchi rahbar',
+  reportManagerPlaceholder: 'Rahbarni tanlang',
 } as const;

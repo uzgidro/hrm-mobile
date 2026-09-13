@@ -271,4 +271,6 @@ export default {
   reportRegisteredNumber: 'Регистрационный номер отчёта',
   rejectedBy: 'Отклонил(а) — {{name}}',
   reportManualEditNote: 'Отчёт отредактирован вручную в Word — текст документа может отличаться от этих полей',
+  reportManager: 'Руководитель, утверждающий отчёт',
+  reportManagerPlaceholder: 'Выберите руководителя',
 } as const;

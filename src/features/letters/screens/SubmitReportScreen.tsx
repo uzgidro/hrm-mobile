@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Alert,
 } from 'react-native';
@@ -16,7 +16,9 @@ import { AttachmentField, type PickedFile } from '@/components/AttachmentField';
 import { DatePickerModal } from '@/components/DatePicker';
 import { getApiErrorMessage } from '@/api/errors';
 import { Field, Selector } from '../components/FormParts';
-import { letterDetailQuery } from '../api/queries';
+import { letterDetailQuery, letterRahbariyatQuery } from '../api/queries';
+import { PickerModal } from '@/components/PickerModal';
+import { employeeSubLabel } from '@/utils/roles';
 import { useSubmitReport, uploadReport } from '../api/mutations';
 import { KeyboardAvoider } from '@/components/KeyboardAvoider';
 
@@ -44,6 +46,27 @@ export default function SubmitReportScreen() {
   const [file, setFile] = useState<PickedFile | null>(null);
   const [datePicker, setDatePicker] = useState(false);
   const [busy, setBusy] = useState(false);
+
+  // Rahbar (management imzolovchi) — safar boshida tanlangani DEFAULT; web
+  // LetterReportDrawer kabi hisobot topshirishda almashtirish mumkin. Nomzodlar
+  // `letterRahbariyatQuery` (filial rahbarlari, aks holda deputy/ministr).
+  const currentManager = (letter?.assigned_signers ?? []).find((sg) => sg.signer_type === 'management');
+  const currentManagerId = currentManager?.employee_id ?? currentManager?.employee?.id ?? null;
+  const [managerId, setManagerId] = useState<number | null>(null);
+  const [managerPicker, setManagerPicker] = useState(false);
+  const { data: managers = [], isLoading: managersLoading } = useQuery(
+    letterRahbariyatQuery(letter?.organization_branch_id ?? undefined, !!letter),
+  );
+  const effectiveManagerId = managerId ?? currentManagerId;
+  const managerOptions = useMemo(() => {
+    const opts = managers.map((e) => ({ value: e.id, label: e.legal_name ?? '', subLabel: employeeSubLabel(e), photo: e.photo_path }));
+    // Joriy rahbar ro'yxatda bo'lmasa ham ko'rinsin (boshqa filial rahbari).
+    if (currentManagerId && !opts.some((o) => o.value === currentManagerId)) {
+      opts.unshift({ value: currentManagerId, label: currentManager?.employee?.legal_name ?? '—', subLabel: '', photo: currentManager?.employee?.photo_path });
+    }
+    return opts;
+  }, [managers, currentManagerId, currentManager]);
+  const managerLabel = managerOptions.find((o) => o.value === effectiveManagerId)?.label;
 
   // Prefill once from the retained report fields — whether editing a still-
   // submitted report OR fixing a returned one (the backend keeps the prior
@@ -77,6 +100,8 @@ export default function SubmitReportScreen() {
         report_summary: summary || undefined,
         report_task: task || undefined,
         report_content: content.trim(),
+        // Faqat o'zgartirilgan bo'lsa yuboriladi — aks holda server joriy rahbarni saqlaydi.
+        ...(managerId && managerId !== currentManagerId ? { management_signer_id: managerId } : {}),
       });
       // Optional file is best-effort — a failed upload must not undo the report.
       if (file) {
@@ -129,6 +154,15 @@ export default function SubmitReportScreen() {
           </View>
         )}
 
+        <Field label={t('letters.reportManager')}>
+          <Selector
+            text={managerLabel}
+            placeholder={t('letters.reportManagerPlaceholder')}
+            loading={managersLoading}
+            onPress={() => setManagerPicker(true)}
+          />
+        </Field>
+
         <Field label={t('letters.reportDate')}>
           <Selector
             text={reportDate ? dayjs(reportDate).format('DD.MM.YYYY') : undefined}
@@ -180,6 +214,15 @@ export default function SubmitReportScreen() {
       </ScrollView>
       </KeyboardAvoider>
 
+      <PickerModal
+        visible={managerPicker}
+        title={t('letters.reportManager')}
+        options={managerOptions}
+        loading={managersLoading}
+        selected={effectiveManagerId}
+        onSelect={(v) => { setManagerId(v); setManagerPicker(false); }}
+        onClose={() => setManagerPicker(false)}
+      />
       <DatePickerModal
         visible={datePicker}
         value={reportDate || null}

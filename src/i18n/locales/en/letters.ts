@@ -266,4 +266,6 @@ export default {
   reportRegisteredNumber: 'Report registration number',
   rejectedBy: 'Rejected by {{name}}',
   reportManualEditNote: 'Report was edited manually in Word — the document text may differ from these fields',
+  reportManager: 'Report approver',
+  reportManagerPlaceholder: 'Pick the leader',
 } as const;

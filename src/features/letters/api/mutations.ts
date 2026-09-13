@@ -126,6 +126,10 @@ interface ReportForm {
   report_summary?: string;
   report_task?: string;
   report_content: string;
+  /** Web LetterReportDrawer parity: the leader who will review the report may
+   *  be changed at submission (backend `_assert_valid_management_signer`).
+   *  Omitted = keep the trip's management signer. */
+  management_signer_id?: number | null;
 }
 
 export function submitReport(id: number, form: ReportForm): Promise<unknown> {
@@ -134,6 +138,7 @@ export function submitReport(id: number, form: ReportForm): Promise<unknown> {
     report_summary: form.report_summary || null,
     report_task: form.report_task || null,
     report_content: form.report_content,
+    ...(form.management_signer_id ? { management_signer_id: form.management_signer_id } : {}),
   };
   return apiClient.post(LETTER_SUBMIT_REPORT(id), body).then((r) => r.data);
 }
