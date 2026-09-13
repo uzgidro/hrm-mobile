@@ -7,7 +7,6 @@
 // tile, so a future refactor can't silently break the vertical stack.
 import React from 'react';
 import MockAdapter from 'axios-mock-adapter';
-import dayjs from 'dayjs';
 import { apiClient } from '@/api/client';
 import { TURNSTILE_ATTENDANCE_EVENTS, TURNSTILE_ATTENDANCE_NORMALIZED, DASHBOARD_EMPLOYEES_BY_CATEGORY, WORK_LEAVES, EMPLOYEES_LIST, EMPLOYEES_BIRTHDAYS, NOTIFICATIONS_LIST } from '@/api/urls';
 import { renderWithProviders, waitFor, fireEvent } from '@/test/renderWithProviders';
