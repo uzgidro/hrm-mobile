@@ -26,6 +26,8 @@ import {
 import { useCreateLetter, useUpdateLetter } from '../api/mutations';
 import { Field, Selector } from '../components/FormParts';
 import { LetterFormFields } from '../components/LetterFormFields';
+import { useFormDraft } from '@/lib/formDraft';
+import { DraftPrompt } from '@/components/DraftPrompt';
 import { LetterPickers, type PickerKind, type DateKind } from '../components/LetterPickers';
 import { buildLetterCreatePayload } from './letterCreatePayload';
 
@@ -89,6 +91,27 @@ export default function CreateLetterScreen() {
   const [datePicker, setDatePicker] = useState<DateKind>(null);
   const [files, setFiles] = useState<PickedFile[]>([]);
   const [saving, setSaving] = useState(false);
+
+  // Unsaved-draft autosave (CREATE only). Files are not restored.
+  const draft = useFormDraft(
+    'letter-create',
+    {
+      letterType, shortSummary, description, workPlan, mainSignerId, ordinarySigners,
+      departureDate, arrivalDate, regions, destinationIds, submitterId, creatorId, rahbariyatIds,
+      vehicleMode, vehicleNote,
+    },
+    {
+      enabled: !editId,
+      dirty: shortSummary.trim() !== '' || description.trim() !== '' || workPlan.trim() !== '',
+      onRestore: (d) => {
+        setLetterType(d.letterType); setShortSummary(d.shortSummary); setDescription(d.description);
+        setWorkPlan(d.workPlan); setMainSignerId(d.mainSignerId); setOrdinarySigners(d.ordinarySigners);
+        setDepartureDate(d.departureDate); setArrivalDate(d.arrivalDate); setRegions(d.regions);
+        setDestinationIds(d.destinationIds); setSubmitterId(d.submitterId); setCreatorId(d.creatorId);
+        setRahbariyatIds(d.rahbariyatIds); setVehicleMode(d.vehicleMode); setVehicleNote(d.vehicleNote);
+      },
+    },
+  );
 
   const isTrip = letterType === 'business_trip';
 
@@ -329,6 +352,7 @@ export default function CreateLetterScreen() {
         router.back();
       } else {
         const letterId = await createMutation.mutateAsync({ payload, files, onFilesError });
+        void draft.clear();
         router.replace({ pathname: '/letter-detail', params: { id: String(letterId) } });
       }
     } catch (err) {
@@ -362,6 +386,7 @@ export default function CreateLetterScreen() {
       />
 
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <DraftPrompt visible={draft.pendingDraft != null} onRestore={draft.restore} onDiscard={draft.discard} />
         {/* Both short single-selects, adjacent — pair into a 2-column row on
             tablet (Task 21); stack full-width on phone. */}
         {/* "Hujjat sanasi" maydoni OLIB TASHLANDI: `create_letter` forces

@@ -17,4 +17,7 @@ export default {
   success: 'Успешно',
   errorTitle: 'Ошибка',
   listCount: '{{shown}} / {{total}}',
+  draftFoundTitle: 'Есть несохранённый черновик',
+  draftFoundMessage: 'Текст, введённый в прошлый раз, сохранён',
+  draftRestore: 'Восстановить',
 } as const;

@@ -17,4 +17,7 @@ export default {
   success: 'Success',
   errorTitle: 'Error',
   listCount: '{{shown}} / {{total}}',
+  draftFoundTitle: 'Unsaved draft found',
+  draftFoundMessage: 'The text you typed last time was kept',
+  draftRestore: 'Restore',
 } as const;

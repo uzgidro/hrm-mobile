@@ -17,4 +17,7 @@ export default {
   success: 'Муваффақият',
   errorTitle: 'Хатолик',
   listCount: '{{shown}} / {{total}}',
+  draftFoundTitle: 'Сақланмаган қоралама бор',
+  draftFoundMessage: 'Охирги сафар ёзган матнингиз сақлаб қолинган',
+  draftRestore: 'Тиклаш',
 } as const;

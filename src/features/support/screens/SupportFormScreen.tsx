@@ -14,6 +14,8 @@ import { getApiErrorMessage } from '@/api/errors';
 import { ticketPriorityKey } from '@/utils/supportStatus';
 import type { CreateTicketForm } from '../api/mutations';
 import { useCreateTicket } from '../api/mutations';
+import { useFormDraft } from '@/lib/formDraft';
+import { DraftPrompt } from '@/components/DraftPrompt';
 
 const PRIORITIES: CreateTicketForm['priority'][] = ['urgent', 'normal', 'low'];
 
@@ -28,6 +30,17 @@ export default function SupportFormScreen() {
   const [room, setRoom] = useState('');
   const [files, setFiles] = useState<PickedFile[]>([]);
   const createM = useCreateTicket();
+
+  // Autosaved while typing; offered back on the next open (files excluded).
+  const draft = useFormDraft(
+    'support-ticket',
+    { priority, description, uge, room },
+    {
+      enabled: true,
+      dirty: description.trim() !== '' || uge.trim() !== '' || room.trim() !== '',
+      onRestore: (d) => { setPriority(d.priority); setDescription(d.description); setUge(d.uge); setRoom(d.room); },
+    },
+  );
 
   const MAX_FILES = 5; // backend rejects >5 (support_ticket service); block client-side like the web
   const pickFile = async () => {
@@ -53,6 +66,7 @@ export default function SupportFormScreen() {
       { form: { priority, description, uge_number: uge, room_number: room }, files },
       {
         onSuccess: (ticket) => {
+          void draft.clear();
           Alert.alert(t('support.createdTitle'), t('support.createdMessage'));
           router.replace({ pathname: '/texnik-yordam-detail', params: { id: String(ticket.id) } });
         },
@@ -65,6 +79,7 @@ export default function SupportFormScreen() {
     <Screen edges={['top', 'bottom']} maxWidth={600}>
       <ScreenHeader title={t('support.createTitle')} />
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <DraftPrompt visible={draft.pendingDraft != null} onRestore={draft.restore} onDiscard={draft.discard} />
         <Text style={styles.label}>{t('support.priorityLabel')}</Text>
         <View style={styles.chips}>
           {PRIORITIES.map((p) => {

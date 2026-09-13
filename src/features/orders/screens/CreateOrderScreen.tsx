@@ -26,6 +26,8 @@ import {
 import { useCreateOrder, useUpdateOrder } from '../api/mutations';
 import { Field, Selector, ExistingDocuments } from '../components/FormParts';
 import { ApproversEditor, type Approver } from '../components/ApproversEditor';
+import { useFormDraft } from '@/lib/formDraft';
+import { DraftPrompt } from '@/components/DraftPrompt';
 import { OrderPickers, type PickerKind } from '../components/OrderPickers';
 import {
   buildCreateOrderPayload, buildUpdateOrderPayload, existingOrderDocuments,
@@ -72,6 +74,23 @@ export default function CreateOrderScreen() {
   const [actDate, setActDate] = useState<string | null>(null);
   const [actDatePickerOpen, setActDatePickerOpen] = useState(false);
   const [formError, setFormError] = useState<OrderFormError | null>(null);
+
+  // Unsaved-draft autosave (CREATE only — an edit re-seeds from the server).
+  // Files are not restored (picker URIs are transient).
+  const draft = useFormDraft(
+    'order-create',
+    { categoryId, summary, description, leadershipId, submitterId, familiarizerDeptIds, approvers, actNumber, actDate },
+    {
+      enabled: !editId,
+      dirty: summary.trim() !== '' || description.trim() !== '',
+      onRestore: (d) => {
+        setCategoryId(d.categoryId); setSummary(d.summary); setDescription(d.description);
+        setLeadershipId(d.leadershipId); setSubmitterId(d.submitterId);
+        setFamiliarizerDeptIds(d.familiarizerDeptIds); setApprovers(d.approvers);
+        setActNumber(d.actNumber); setActDate(d.actDate);
+      },
+    },
+  );
 
   // Tahrir rejimida formani BIR MARTA to'ldiramiz (keyingi refetch kiritilayotgan
   // matnni bosib ketmasin). RENDER PAYTIDA moslash — React'ning "adjusting state
@@ -199,6 +218,7 @@ export default function CreateOrderScreen() {
           files,
           onFilesError,
         });
+        void draft.clear();
         router.replace({ pathname: '/order-detail', params: { id: String(orderId) } });
       }
     } catch (err) {
@@ -227,6 +247,7 @@ export default function CreateOrderScreen() {
       />
 
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <DraftPrompt visible={draft.pendingDraft != null} onRestore={draft.restore} onDiscard={draft.discard} />
         <Field label={t('orders.categoryLabel')} required error={fieldError('category')}>
           <Selector
             loading={catsLoading}

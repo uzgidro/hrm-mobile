@@ -19,4 +19,7 @@ export default {
   success: 'Muvaffaqiyat',
   errorTitle: 'Xatolik',
   listCount: '{{shown}} / {{total}}',
+  draftFoundTitle: 'Saqlanmagan qoralama bor',
+  draftFoundMessage: 'Oxirgi safar yozgan matningiz saqlab qolingan',
+  draftRestore: 'Tiklash',
 } as const;
