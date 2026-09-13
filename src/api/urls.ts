@@ -15,6 +15,9 @@ export const EMPLOYEE_DETAIL = (id: number) => `employees/${id}`;
 
 // Turnstile attendance
 export const TURNSTILE_ATTENDANCE_EVENTS = 'turnstile-attendance-events';
+// Turnstile locations (name/address/coords) — fallback catalog for the event
+// map when the event's nested location ref carries no coordinates (older API).
+export const LOCATIONS_LIST = 'locations';
 
 // Time-tracking (Учёт времени) — read-only mobile surfaces.
 // The "monthly tabel grid": one row per employee with an attendance.calendar

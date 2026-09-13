@@ -23,9 +23,18 @@ interface AttendancePlace {
   longitude: number | null;
 }
 
-function firstLocation(ev: AttendanceEvent): TurnstileLocation | null {
-  const locs = ev.turnstile?.locations;
-  if (!locs || locs.length === 0) return null;
+function firstLocation(
+  ev: AttendanceEvent,
+  catalog?: Map<number, TurnstileLocation>,
+): TurnstileLocation | null {
+  const raw = ev.turnstile?.locations;
+  if (!raw || raw.length === 0) return null;
+  // Older API: the nested ref has no coords — fill them from the catalog.
+  const locs = raw.map((l) => {
+    if (!l || l.latitude != null || !catalog) return l;
+    const full = l.id != null ? catalog.get(l.id) : undefined;
+    return full ? { ...l, address: l.address ?? full.address, latitude: full.latitude, longitude: full.longitude } : l;
+  });
   // Koordinatasi bor joylashuv ustun — xarita aynan shundan chiziladi.
   return locs.find((l) => l?.latitude != null && l?.longitude != null) ?? locs[0] ?? null;
 }
@@ -37,8 +46,8 @@ function firstLocation(ev: AttendanceEvent): TurnstileLocation | null {
  * nomi → HIK qurilma nomi ("Ges 8 chiqish"). Qurilma nomi eng oxirida, chunki
  * unda yo'nalish so'zi ham bor va u qatorda ikki marta takrorlanardi.
  */
-export function eventPlace(ev: AttendanceEvent): AttendancePlace {
-  const loc = firstLocation(ev);
+export function eventPlace(ev: AttendanceEvent, catalog?: Map<number, TurnstileLocation>): AttendancePlace {
+  const loc = firstLocation(ev, catalog);
   const name =
     loc?.name?.trim() ||
     loc?.organization_branch?.name?.trim() ||

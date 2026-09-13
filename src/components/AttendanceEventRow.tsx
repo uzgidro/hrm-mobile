@@ -8,7 +8,7 @@ import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
-import type { AttendanceEvent } from '@/types';
+import type { AttendanceEvent, TurnstileLocation } from '@/types';
 import { Icon } from '@/components/Icon';
 import {
   eventPhotoUrl, eventPlace, isEntryEvent, mapAppUrl, mapViewerUrl,
@@ -27,9 +27,12 @@ import {
 export function AttendanceEventRow({
   event,
   showBorder = true,
+  locations,
 }: {
   event: AttendanceEvent;
   showBorder?: boolean;
+  /** Per-branch location catalog — coords fallback for an older API. */
+  locations?: Map<number, TurnstileLocation>;
 }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -37,7 +40,7 @@ export function AttendanceEventRow({
   const [open, setOpen] = useState(false);
 
   const entry = isEntryEvent(event);
-  const place = eventPlace(event);
+  const place = eventPlace(event, locations);
   const photo = eventPhotoUrl(event);
   const viewer = mapViewerUrl(place);
   const time = dayjs(event.happen_time).format('HH:mm');

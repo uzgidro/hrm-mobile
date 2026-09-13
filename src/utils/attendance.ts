@@ -1,7 +1,8 @@
 import { queryOptions } from '@tanstack/react-query';
 import { apiClient } from '../api/client';
-import { TURNSTILE_ATTENDANCE_EVENTS, TURNSTILE_ATTENDANCE_NORMALIZED, DASHBOARD_EMPLOYEES_BY_CATEGORY } from '../api/urls';
-import { AttendanceEvent, EmployeeAttendance, EmployeeCategories } from '../types';
+import { TURNSTILE_ATTENDANCE_EVENTS, TURNSTILE_ATTENDANCE_NORMALIZED, DASHBOARD_EMPLOYEES_BY_CATEGORY, LOCATIONS_LIST } from '../api/urls';
+import { unwrapList } from '../api/response';
+import { AttendanceEvent, EmployeeAttendance, EmployeeCategories, TurnstileLocation } from '../types';
 import { mapWithConcurrency } from './concurrency';
 
 interface AttendancePage { items: AttendanceEvent[]; total: number }
@@ -104,5 +105,24 @@ export function dayCategoriesQuery(orgBranchId?: number) {
         })
         .then((r) => r.data ?? {}),
     staleTime: 60 * 1000,
+  });
+}
+
+// ── Location catalog (coordinates for the event map) ─────────────────────────
+// `EventLocationRef` on the event feed carries coords since backend
+// 2026-09-13; against an older API they are missing, so the rows merge them
+// from this per-branch catalog by location id. Rarely changes; cached.
+export function locationsCatalogQuery(orgBranchId?: number) {
+  return queryOptions({
+    queryKey: ['locations', 'catalog', orgBranchId ?? null] as const,
+    queryFn: () =>
+      apiClient
+        .get(LOCATIONS_LIST, { params: orgBranchId ? { organization_branch_id: orgBranchId } : {} })
+        .then((r) => {
+          const map = new Map<number, TurnstileLocation>();
+          for (const l of unwrapList<TurnstileLocation>(r.data)) if (l.id != null) map.set(l.id, l);
+          return map;
+        }),
+    staleTime: 30 * 60 * 1000,
   });
 }
