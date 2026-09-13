@@ -3,7 +3,6 @@ import {
   View, Text, ScrollView, StyleSheet,
   TouchableOpacity,
 } from 'react-native';
-import { useQueries } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import { useAuthStore } from '@/store/authStore';
@@ -11,8 +10,8 @@ import { resolveEmployeeBranchId } from '@/utils/branch';
 import { usePrefsStore } from '@/store/prefsStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
-import { AttendanceEvent } from '@/types';
-import { buildRosterFromNormalized, type AttendanceStatus } from '@/utils/attendanceRoster';
+import { type AttendanceStatus } from '@/utils/attendanceRoster';
+import { useDayRoster } from '@/lib/useDayRoster';
 import { getApiErrorMessage } from '@/api/errors';
 import { monthName, weekdayName } from '@/i18n/dates';
 import { Icon } from '@/components/Icon';
@@ -21,7 +20,6 @@ import { ScreenHeader } from '@/components/ScreenHeader';
 import { LoadingView, ErrorState } from '@/components/StateViews';
 import { AttendanceDonut } from '@/components/AttendanceDonut';
 import { RosterRow } from '@/components/RosterRow';
-import { dayAttendanceQuery, dayRosterQuery } from '../api/queries';
 
 type StatusGroup = AttendanceStatus;
 
@@ -44,23 +42,11 @@ export default function AttendanceDetailScreen() {
   const prevDay = () => setSelectedDate(selDay.subtract(1, 'day').format('YYYY-MM-DD'));
   const nextDay = () => setSelectedDate(selDay.add(1, 'day').format('YYYY-MM-DD'));
 
-  // Server-computed statuses (`/normalized`, `supervised=true` = my direct
-  // reports) + the day's raw events for entry/exit times.
-  const results = useQueries({
-    queries: [
-      dayRosterQuery(selectedDate, orgBranchId, onlySubordinates && !!myId),
-      dayAttendanceQuery(selectedDate, orgBranchId),
-    ],
+  // Today → branch categories (web employee-dashboard source); past days →
+  // /normalized. See `useDayRoster`.
+  const { roster: { rows, counts }, isLoading, isError, error, refetch } = useDayRoster({
+    date: selectedDate, orgBranchId, onlySubordinates, myId,
   });
-
-  const [rosterQ, attQ] = results;
-  const isLoading = results.some((r) => r.isLoading);
-  const isError = rosterQ.isError;
-
-  const { rows, counts } = useMemo(() => {
-    const events: AttendanceEvent[] = attQ.data?.items ?? [];
-    return buildRosterFromNormalized(rosterQ.data?.items ?? [], selectedDate, events);
-  }, [rosterQ.data, attQ.data, selectedDate]);
 
   // One alphabetical list; the donut zone (sectionFilter) narrows it.
   const visibleRows = useMemo(
@@ -86,7 +72,7 @@ export default function AttendanceDetailScreen() {
       {isLoading ? (
         <LoadingView />
       ) : isError ? (
-        <ErrorState message={getApiErrorMessage(rosterQ.error, t('errors.refreshFailed'))} onRetry={() => rosterQ.refetch()} />
+        <ErrorState message={getApiErrorMessage(error, t('errors.refreshFailed'))} onRetry={refetch} />
       ) : (
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           {onlySubordinates && (

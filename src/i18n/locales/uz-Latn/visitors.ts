@@ -77,4 +77,8 @@ export default {
   nameRequired: 'Ism-sharif kiritilishi shart',
   untilBeforeFrom: "Ketish vaqti kelish vaqtidan keyin bo'lishi kerak",
   dateUnbounded: 'Cheklanmagan',
+  modeExternal: 'Tashqi mehmon',
+  modeEmployee: 'Tizimdagi xodim',
+  pickEmployee: 'Xodimni tanlang',
+  pickEmployeeFirst: 'Avval tizimdagi xodimni tanlang',
 } as const;

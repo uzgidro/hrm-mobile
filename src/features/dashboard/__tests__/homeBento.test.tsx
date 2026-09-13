@@ -7,9 +7,8 @@
 // tile, so a future refactor can't silently break the vertical stack.
 import React from 'react';
 import MockAdapter from 'axios-mock-adapter';
-import dayjs from 'dayjs';
 import { apiClient } from '@/api/client';
-import { TURNSTILE_ATTENDANCE_EVENTS, TURNSTILE_ATTENDANCE_NORMALIZED, WORK_LEAVES, EMPLOYEES_LIST, EMPLOYEES_BIRTHDAYS, NOTIFICATIONS_LIST } from '@/api/urls';
+import { TURNSTILE_ATTENDANCE_EVENTS, TURNSTILE_ATTENDANCE_NORMALIZED, DASHBOARD_EMPLOYEES_BY_CATEGORY, WORK_LEAVES, EMPLOYEES_LIST, EMPLOYEES_BIRTHDAYS, NOTIFICATIONS_LIST } from '@/api/urls';
 import { renderWithProviders, waitFor, fireEvent } from '@/test/renderWithProviders';
 import { useAuthStore } from '@/store/authStore';
 import HomeScreen from '../screens/HomeScreen';
@@ -55,11 +54,12 @@ describe('HomeScreen (attendance content block renders the module content, not j
       isAuthenticated: true,
     } as any);
     mock = new MockAdapter(apiClient);
-    // Roster statuses come from the SERVER (`/normalized`) since 2026-09-13.
-    mock.onGet(TURNSTILE_ATTENDANCE_NORMALIZED).reply(200, {
-      items: [{ id: 2, legal_name: 'Aliyeva Zulfiya', attendance: { calendar: { [dayjs().format('YYYY-MM-DD')]: 'absent' } } }],
-      total: 1,
+    // TODAY's roster comes from the branch category endpoint (web employee
+    // dashboard source) since 2026-09-13; /normalized serves past days only.
+    mock.onGet(DASHBOARD_EMPLOYEES_BY_CATEGORY).reply(200, {
+      absent_employees: [{ id: 2, legal_name: 'Aliyeva Zulfiya' }],
     });
+    mock.onGet(TURNSTILE_ATTENDANCE_NORMALIZED).reply(200, { items: [], total: 0 });
     mock.onGet(EMPLOYEES_LIST).reply(200, { items: [], total: 0 });
     mock.onGet(TURNSTILE_ATTENDANCE_EVENTS).reply(200, []);
     mock.onGet(WORK_LEAVES).reply(200, { items: [] });

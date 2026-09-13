@@ -48,9 +48,13 @@ export interface DirectoryParams {
 
 export function phoneDirectoryQuery(p: DirectoryParams) {
   const search = p.search?.trim() || undefined;
+  // Browsing a scope → web grouping order (branch, department structure
+  // index, razryad, name; backend `order=department` 2026-09-13) so the screen
+  // can draw a department header wherever it changes between rows. A search
+  // stays in plain name order — a hit list, not a structure view.
   const params = search
     ? { search }
-    : { branch_id: p.branchId ?? undefined, exclude_branch_id: p.excludeBranchId ?? undefined };
+    : { branch_id: p.branchId ?? undefined, exclude_branch_id: p.excludeBranchId ?? undefined, order: 'department' };
   return pagedListOptions<PhoneDirectoryEntry>({
     queryKey: [...directoryKeys.all, 'paged', cleanParams(params)] as const,
     url: PHONE_DIRECTORY,

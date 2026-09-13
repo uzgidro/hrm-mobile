@@ -15,15 +15,16 @@ import { resolveEmployeeBranchId } from '@/utils/branch';
 import { usePrefsStore } from '@/store/prefsStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
-import { Employee, EmployeeAttendance, WorkLeave, EmployeeBirthday } from '@/types';
+import { Employee, WorkLeave, EmployeeBirthday } from '@/types';
 import { canAccessPage } from '@/utils/roles';
-import { buildRosterFromNormalized } from '@/utils/attendanceRoster';
+import type { RosterEmployee } from '@/utils/attendanceRoster';
+import { useDayRoster } from '@/lib/useDayRoster';
 import { leaveStatusGroup } from '@/utils/leaveStatus';
 import { Icon, IconName } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
-import { dayAttendanceQuery, dayRosterQuery, teamLeavesQuery } from '../api/queries';
+import { teamLeavesQuery } from '../api/queries';
 
 // This dashboard composes four domains. Attendance + leaves come from this
 // feature's own factories. Employees uses the shared `employeesListQuery`
@@ -128,12 +129,11 @@ export default function TeamScreen() {
     resolveEmployeeBranchId(user?.employee);
   const today = dayjs().format('YYYY-MM-DD');
 
-  // Statuses come from the server (`/normalized`, `supervised=true` = my direct
-  // reports); the raw day events only decorate rows with entry times.
+  // Today's roster: branch categories (web employee-dashboard source) + raw
+  // events for entry times. See `useDayRoster`.
+  const rosterQ = useDayRoster({ date: today, orgBranchId, onlySubordinates, myId });
   const results = useQueries({
     queries: [
-      dayRosterQuery(today, orgBranchId, onlySubordinates && !!myId),
-      dayAttendanceQuery(today, orgBranchId),
       teamLeavesQuery(today, 20, orgBranchId),
       {
         queryKey: birthdaysListKey(orgBranchId),
@@ -149,15 +149,12 @@ export default function TeamScreen() {
     ],
   });
 
-  const [rosterQ, attQ, leavesQ, bDayQ] = results;
-  const isRefreshing = results.some((r) => r.isFetching);
-  const refetchAll = () => results.forEach((r) => r.refetch());
+  const [leavesQ, bDayQ] = results;
+  const isRefreshing = rosterQ.isFetching || results.some((r) => r.isFetching);
+  const refetchAll = () => { rosterQ.refetch(); results.forEach((r) => r.refetch()); };
 
-  const roster = useMemo(
-    () => buildRosterFromNormalized(rosterQ.data?.items ?? [], today, attQ.data?.items ?? []),
-    [rosterQ.data, attQ.data, today],
-  );
-  const employees: EmployeeAttendance[] = useMemo(() => roster.rows.map((r) => r.employee), [roster]);
+  const roster = rosterQ.roster;
+  const employees: RosterEmployee[] = useMemo(() => roster.rows.map((r) => r.employee), [roster]);
   const workLeaves: WorkLeave[] = useMemo(() => (leavesQ.data as WorkLeave[]) ?? [], [leavesQ.data]);
   const birthdays: EmployeeBirthday[] = useMemo(() => bDayQ.data ?? [], [bDayQ.data]);
 
@@ -168,9 +165,9 @@ export default function TeamScreen() {
       present: roster.counts.present,
       late: roster.counts.late,
       onLeave: roster.counts.onLeave,
-      total: rosterQ.data?.total ?? roster.counts.total,
+      total: rosterQ.total,
     }),
-    [roster, rosterQ.data?.total],
+    [roster, rosterQ.total],
   );
 
   const recentLeaves = useMemo(
@@ -211,7 +208,7 @@ export default function TeamScreen() {
           </View>
         )}
 
-        <SectionCard icon="chart" title={t('attendance.title')} loading={rosterQ.isLoading || attQ.isLoading} colors={colors} styles={styles}>
+        <SectionCard icon="chart" title={t('attendance.title')} loading={rosterQ.isLoading} colors={colors} styles={styles}>
           <View style={styles.chartRow}>
             <DonutChart c={colors} styles={styles}
               total={attendanceStats.total} present={attendanceStats.present}

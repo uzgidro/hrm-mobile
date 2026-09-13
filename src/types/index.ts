@@ -399,6 +399,37 @@ export interface Letter {
 // A single kelish/ketish event of a business trip. event_type is a backend
 // contract string ('arrived' | 'departed') — never translated, only its label.
 // turnstile_event_id != null means the event came from a Face-ID turnstile.
+// GET /letters/{id}/trip-attendance (BusinessTripAttendanceRead).
+export interface TripAttendanceDay {
+  date: string;
+  status?: string | null; // present | late | absent | business_trip | annual_leave | ...
+  first_entrance?: string | null;
+  last_exit?: string | null;
+  work_hours?: number;
+  late_minutes?: number;
+  branch_names?: string[];
+  event_count?: number;
+}
+export interface TripAttendanceEvent {
+  id: number;
+  happen_time: string;
+  direction_type?: string | null;
+  turnstile_name?: string | null;
+  branch_name?: string | null;
+}
+export interface TripAttendance {
+  letter_id: number;
+  employee_name?: string | null;
+  date_from?: string | null;
+  date_to?: string | null;
+  days: TripAttendanceDay[];
+  events: TripAttendanceEvent[];
+  total_work_hours: number;
+  present_days: number;
+  late_days: number;
+  absent_days: number;
+}
+
 export interface BusinessTripMovement {
   id: number;
   letter_id?: number;
@@ -804,6 +835,36 @@ export interface AttendanceSummary {
   work_duration_hours?: number | null;
   calendar?: Record<string, string> | null;
   daily_late_minutes?: Record<string, number> | null;
+}
+
+// A row of `/dashboard/employees-by-category` (EmployeeDashboardRead — no PII).
+export interface EmployeeDashboardRow {
+  id: number;
+  legal_name?: string | null;
+  photo_path?: string | null;
+  photo_thumb_path?: string | null;
+  department_id?: number | null;
+  job_position_id?: number | null;
+  job_position?: { id?: number; name?: string | null } | null;
+  department?: { id?: number; name?: string | null } | null;
+  internal_phone_number?: string | null;
+  /** Only on `on_leave_employees`: the leave/order category label. */
+  category_name?: string | null;
+}
+
+export interface EmployeeCategories {
+  on_sick_leave_employees?: EmployeeDashboardRow[];
+  on_vacation_employees?: EmployeeDashboardRow[];
+  on_business_trip_employees?: EmployeeDashboardRow[];
+  on_dekret_employees?: EmployeeDashboardRow[];
+  on_leave_employees?: EmployeeDashboardRow[];
+  absent_employees?: EmployeeDashboardRow[];
+  day_off_employees?: EmployeeDashboardRow[];
+  present_employees?: EmployeeDashboardRow[];
+  late_employees?: EmployeeDashboardRow[];
+  /** Entered yesterday and not out yet: {employee_id: ISO entry time}. */
+  still_inside_since?: Record<string, string>;
+  lateness_excused_employee_ids?: number[];
 }
 
 // One row of the normalized tabel grid: a full Employee plus its attendance

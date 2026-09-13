@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, Image,
+  Platform,
 } from 'react-native';
 import dayjs from 'dayjs';
+import type { AttendanceEvent } from '@/types';
 import { router } from 'expo-router';
-import { useQuery, useQueries, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { useAuthStore } from '@/store/authStore';
@@ -20,18 +22,16 @@ import { AttendanceDonut } from '@/components/AttendanceDonut';
 import { RosterRow } from '@/components/RosterRow';
 import { useBreakpoint } from '@/utils/responsive';
 import { notificationMeta } from '@/services/notifications';
-import { AttendanceEvent, EmployeeAttendance } from '@/types';
 import { leaveStatusGroup, leaveStatusKind } from '@/utils/leaveStatus';
 import { statusColor } from '@/utils/orderStatus';
-import { dayRosterQuery } from '@/utils/attendance';
-import { buildRosterFromNormalized, type AttendanceStatus } from '@/utils/attendanceRoster';
+import { type AttendanceStatus } from '@/utils/attendanceRoster';
+import { useDayRoster } from '@/lib/useDayRoster';
 import {
   homeAttendanceQuery,
   homeMyLeavesQuery,
   homeAssignedLeavesQuery,
   homeNotificationsQuery,
   useShellBadges,
-  homeTodayAttendanceQuery,
   prefetchHomeData,
 } from '../api/queries';
 
@@ -104,22 +104,11 @@ export default function HomeScreen() {
   // it's the same cache entries TanStack Query already has (or is about to
   // populate) for Team / Attendance-detail. Gated by the same role check as
   // the tile it replaces, and skipped entirely off that role.
-  const rosterQueries = useMemo(
-    () => [
-      { ...dayRosterQuery(todayStr, orgBranchId, onlySubordinates && !!myId), enabled: canSeeAttendanceContent },
-      { ...homeTodayAttendanceQuery(todayStr, orgBranchId), enabled: canSeeAttendanceContent },
-    ],
-    [orgBranchId, todayStr, canSeeAttendanceContent, onlySubordinates, myId]
-  );
-  const rosterResults = useQueries({ queries: rosterQueries });
-  const [rosterQ, rosterAttQ] = rosterResults;
-  const isRosterLoading = canSeeAttendanceContent && rosterResults.some((r) => r.isLoading);
-
-  const { rows: rosterRows, counts: rosterCounts } = useMemo(() => {
-    const events: AttendanceEvent[] = (rosterAttQ.data as { items: AttendanceEvent[] } | undefined)?.items ?? [];
-    const rosterRowsData = (rosterQ.data as { items: EmployeeAttendance[] } | undefined)?.items ?? [];
-    return buildRosterFromNormalized(rosterRowsData, todayStr, events);
-  }, [rosterQ.data, rosterAttQ.data, todayStr]);
+  const rosterQ = useDayRoster({
+    date: todayStr, orgBranchId, onlySubordinates, myId, enabled: canSeeAttendanceContent,
+  });
+  const isRosterLoading = canSeeAttendanceContent && rosterQ.isLoading;
+  const { rows: rosterRows, counts: rosterCounts } = rosterQ.roster;
 
   // One alphabetical list; the donut zone (rosterFilter) narrows it — same
   // behavior as AttendanceDetailScreen.
@@ -146,9 +135,10 @@ export default function HomeScreen() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
+    rosterQ.refetch();
     await Promise.all([refetchEvents(), isSupervisor ? refetchAssigned() : refetchMyLeaves()]);
     setRefreshing(false);
-  }, [refetchEvents, refetchAssigned, refetchMyLeaves, isSupervisor]);
+  }, [refetchEvents, refetchAssigned, refetchMyLeaves, isSupervisor, rosterQ]);
 
   const sortedToday = [...todayEvents].sort((a, b) => dayjs(a.happen_time).diff(dayjs(b.happen_time)));
   const entry = sortedToday[0];
@@ -188,6 +178,19 @@ export default function HomeScreen() {
             <Text style={styles.greeting}>{dateStr}</Text>
             <Text style={styles.userName} numberOfLines={1}>{employee?.legal_name || t('dashboard.userFallback')}</Text>
           </TouchableOpacity>
+          {/* QR orqali web'ga kirish — bosh sahifadan bir bosishda (ilgari
+              faqat Profil ichida edi). Faqat qurilmada: web variantida kamera yo'q. */}
+          {Platform.OS !== 'web' && (
+            <TouchableOpacity
+              style={styles.bellBtn}
+              onPress={() => router.push('/qr-scan')}
+              activeOpacity={0.8}
+              accessibilityLabel={t('qrLogin.menu')}
+              testID="home-qr-scan"
+            >
+              <Icon name="qr" size={21} color={colors.text} />
+            </TouchableOpacity>
+          )}
           <TouchableOpacity style={styles.bellBtn} onPress={() => router.push('/notifications')} activeOpacity={0.8}>
             <Icon name="bell" size={21} color={colors.text} />
             {unreadCount > 0 && (

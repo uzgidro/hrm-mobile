@@ -6,6 +6,7 @@ import {
   LETTERS_LIST,
   LETTER_DETAIL,
   LETTER_TRIP_MOVEMENTS,
+  LETTER_TRIP_ATTENDANCE,
   LETTER_REGISTERED_NUMBER_AVAILABILITY,
   EMPLOYEES_LIST,
   ORGANIZATION_BRANCHES,
@@ -14,7 +15,7 @@ import {
 } from '@/api/urls';
 import { fetchAllEmployees } from '@/utils/employees';
 import type { BranchLite } from '@/utils/tripRegions';
-import type { Employee, Letter, BusinessTripMovement } from '@/types';
+import type { Employee, Letter, BusinessTripMovement, TripAttendance } from '@/types';
 
 // Hierarchical query keys.
 //
@@ -44,6 +45,7 @@ export const letterKeys = {
     [...letterKeys.all, 'list', params ? cleanParams(lettersListServerParams(params)) : null] as const,
   detail: (id: number) => [...letterKeys.all, 'detail', id] as const,
   tripMovements: (id: number) => [...letterKeys.all, 'trip-movements', id] as const,
+  tripAttendance: (id: number) => [...letterKeys.all, 'trip-attendance', id] as const,
 };
 
 /**
@@ -321,5 +323,16 @@ export function vehicleAccessQuery() {
         .get<{ requester_branch_ids?: number[] }>(VEHICLE_ACCESS)
         .then((r) => r.data ?? {}),
     staleTime: 30 * 60 * 1000,
+  });
+}
+
+// Safar davomati (web TripAttendancePanel): kunlar tabeli + xulosa. Faqat
+// safar yuborilgandan keyin ma'noli; server ko'rish huquqini o'zi tekshiradi.
+export function tripAttendanceQuery(id: number, enabled = true) {
+  return queryOptions({
+    queryKey: letterKeys.tripAttendance(id),
+    queryFn: () => apiClient.get<TripAttendance>(LETTER_TRIP_ATTENDANCE(id)).then((r) => r.data),
+    enabled: enabled && !!id,
+    staleTime: 60 * 1000,
   });
 }

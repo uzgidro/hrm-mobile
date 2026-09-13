@@ -9,6 +9,8 @@ import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { AttendanceEventRow } from '@/components/AttendanceEventRow';
+import { locationsCatalogQuery } from '@/utils/attendance';
+import { resolveEmployeeBranchId } from '@/utils/branch';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { MonthNavigator } from '@/components/MonthNavigator';
@@ -45,6 +47,7 @@ export default function MyTimesheetScreen() {
   const monthKey = currentMonth.format('YYYY-MM');
   const query = myTimesheetQuery(monthKey, employeeId);
   const { data: row, isLoading, isError, refetch } = useQuery(query);
+  const { data: locations } = useQuery(locationsCatalogQuery(resolveEmployeeBranchId(user?.employee)));
   // Raw entry/exit events for Вход/Выход + Журнал (normalized row has no per-event
   // times). Non-blocking: the tabel calendar renders without it.
   const { data: events = [], refetch: refetchEvents } = useQuery(myTimesheetEventsQuery(monthKey, employeeId));
@@ -201,6 +204,7 @@ export default function MyTimesheetScreen() {
                   <AttendanceEventRow
                     key={ev.id}
                     event={ev}
+                    locations={locations}
                     showBorder={i < dayDetail.journal.length - 1}
                   />
                 ))

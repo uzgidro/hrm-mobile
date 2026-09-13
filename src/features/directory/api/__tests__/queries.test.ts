@@ -22,8 +22,8 @@ describe('directoryKeys', () => {
   // Har ko'lam ALOHIDA keshlanishi shart — aks holda filial almashtirilganda
   // react-query eski ko'lamning ma'lumotini qaytarardi.
   it('gives each scope / search its own key', () => {
-    expect(phoneDirectoryQuery({ branchId: 14 }).queryKey).toEqual(['phone-directory', 'paged', { branch_id: 14 }]);
-    expect(phoneDirectoryQuery({ excludeBranchId: 1 }).queryKey).toEqual(['phone-directory', 'paged', { exclude_branch_id: 1 }]);
+    expect(phoneDirectoryQuery({ branchId: 14 }).queryKey).toEqual(['phone-directory', 'paged', { branch_id: 14, order: 'department' }]);
+    expect(phoneDirectoryQuery({ excludeBranchId: 1 }).queryKey).toEqual(['phone-directory', 'paged', { exclude_branch_id: 1, order: 'department' }]);
     expect(phoneDirectoryQuery({ search: 'ali' }).queryKey).toEqual(['phone-directory', 'paged', { search: 'ali' }]);
     expect(phoneDirectoryQuery({ branchId: 1 }).queryKey).not.toEqual(phoneDirectoryQuery({ branchId: 2 }).queryKey);
   });
@@ -54,14 +54,14 @@ describe('phoneDirectoryQuery (server-paged)', () => {
     let sent: Record<string, unknown> | undefined;
     mock.onGet(PHONE_DIRECTORY).reply((cfg) => { sent = cfg.params; return [200, []]; });
     await run(phoneDirectoryQuery({ branchId: 14 }), 2);
-    expect(sent).toEqual({ branch_id: 14, page: 2, size: 30 });
+    expect(sent).toEqual({ branch_id: 14, order: 'department', page: 2, size: 30 });
   });
 
   it('"all system branches" = exclude the head office (exclude_branch_id)', async () => {
     let sent: Record<string, unknown> | undefined;
     mock.onGet(PHONE_DIRECTORY).reply((cfg) => { sent = cfg.params; return [200, []]; });
     await run(phoneDirectoryQuery({ excludeBranchId: 1 }));
-    expect(sent).toEqual({ exclude_branch_id: 1, page: 1, size: 30 });
+    expect(sent).toEqual({ exclude_branch_id: 1, order: 'department', page: 1, size: 30 });
   });
 
   // Qidiruv BUTUN tashkilot bo'ylab, SERVERDA: ko'lam parametrlari tushib qoladi,

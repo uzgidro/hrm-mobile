@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Alert,
 } from 'react-native';
@@ -14,7 +14,7 @@ import { Screen } from '@/components/Screen';
 import { LoadingView } from '@/components/StateViews';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { PickerModal } from '@/components/PickerModal';
-import { employeeOptionsQuery, type EmployeeOptionRow } from '@/utils/employees';
+import { employeeOptionsSearchQuery, type EmployeeOptionRow } from '@/utils/employees';
 import { getApiErrorMessage } from '@/api/errors';
 
 import { getWorkspace, projectKeys } from '../api/queries';
@@ -46,12 +46,21 @@ export default function LoyihaFormScreen() {
   // bo'lishi mumkin. `GET /employees` PII saqlagani uchun ataylab filialga
   // qamalgan (EMPL-01) — undan o'qilganda tanlagich jimgina o'z filialiga
   // qisilib qolardi; `GET /employees/options` esa PII'siz va filialsiz.
-  const { data: employees = [] } = useQuery(employeeOptionsQuery());
-  const empById = useMemo(() => {
-    const m = new Map<number, EmployeeOptionRow>();
-    employees.forEach((e) => m.set(e.id, e));
-    return m;
+  // Server-searched page (100 rows max, narrowed as the user types) instead of
+  // the whole organisation. Everything ever shown is remembered in `known`
+  // so a selected member keeps their name when the search moves on.
+  const [memberSearch, setMemberSearch] = useState('');
+  const { data: employees = [], isFetching: employeesLoading } = useQuery(employeeOptionsSearchQuery(memberSearch));
+  const [known, setKnown] = useState<Map<number, EmployeeOptionRow>>(() => new Map());
+  useEffect(() => {
+    if (!employees.length) return;
+    setKnown((prev) => {
+      const next = new Map(prev);
+      employees.forEach((e) => next.set(e.id, e));
+      return next;
+    });
   }, [employees]);
+  const empById = known;
 
   useEffect(() => {
     if (!isEdit) return;
@@ -63,6 +72,22 @@ export default function LoyihaFormScreen() {
         const ids = (data.members ?? []).map((m) => m.member_id).filter((x): x is number => x != null);
         setMemberIds(ids);
         setInitialMemberIds(ids);
+        // Existing members' names come with the workspace — no need to find
+        // them in the search page.
+        setKnown((prev) => {
+          const next = new Map(prev);
+          for (const m of data.members ?? []) {
+            if (m.member_id != null && m.member && !next.has(m.member_id)) {
+              next.set(m.member_id, {
+                id: m.member_id,
+                legal_name: m.member.legal_name,
+                photo_path: m.member.photo_path,
+                job_position_name: typeof m.member.job_position === 'object' ? m.member.job_position?.name : undefined,
+              });
+            }
+          }
+          return next;
+        });
       } catch {} finally {
         setHydrating(false);
       }
@@ -158,6 +183,8 @@ export default function LoyihaFormScreen() {
         visible={pickerOpen}
         title={t('projects.membersLabel')}
         multiple
+        loading={employeesLoading}
+        onSearchChange={setMemberSearch}
         selected={memberIds}
         options={employees.map((e) => ({
           value: e.id,

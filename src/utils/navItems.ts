@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 // Single source of truth for module navigation. Both the phone Modules grid
 // (app/(tabs)/modules.tsx) and the tablet NavRail render from here, so the
 // role-filtered set is defined once. Pure: no React, no stores — the caller
@@ -75,6 +76,10 @@ export function buildNavSections(t: TFunction, ctx: NavContext): NavSection[] {
         { key: 'news', icon: 'news', label: t('modules.labels.news'), route: '/news', access: 'news' },
         { key: 'notifications', icon: 'bell', label: t('modules.labels.notifications'), route: '/notifications', access: 'notifications', badge: unreadCount },
         { key: 'profile', icon: 'user', label: t('modules.labels.profile'), route: '/(tabs)/profile', access: 'profile' },
+        // QR orqali web'ga kirish — Modullar plitkasi (kamera: faqat qurilmada).
+        ...(Platform.OS !== 'web'
+          ? [{ key: 'qrLogin', icon: 'qr' as IconName, label: t('qrLogin.menu'), route: '/qr-scan', access: 'profile' as PageKey }]
+          : []),
       ],
     },
   ];

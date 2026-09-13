@@ -184,3 +184,36 @@ export function jobPositionsQuery(branchId?: number) {
     staleTime: 10 * 60 * 1000,
   });
 }
+
+// Ids of my direct reports (the "faqat bo'ysunuvchilar" toggle on today's
+// roster, which comes from the category endpoint that has no supervisor
+// filter). One small request; the full roster is never downloaded for it.
+export function subordinateIdsQuery(myId?: number) {
+  return queryOptions({
+    queryKey: ['employees', 'subordinate-ids', myId ?? null] as const,
+    enabled: !!myId,
+    queryFn: () =>
+      apiClient
+        .get<{ items?: { id: number }[] }>(EMPLOYEES_LIST, { params: { supervisor_id: myId, size: 500, page: 1 } })
+        .then((r) => new Set((r.data?.items ?? []).map((e) => e.id))),
+    staleTime: 10 * 60 * 1000,
+  });
+}
+
+// Server-searched picker page: `/employees/options?search=` (100 rows, the
+// backend's cap) — for pickers that pass `onSearchChange` to PickerModal.
+// Without a query the first 100 alphabetically are shown; typing narrows on
+// the server (Cyrillic/Latin folded), so the 15-request full download is gone.
+export function employeeOptionsSearchQuery(search: string, orgBranchId?: number) {
+  return queryOptions({
+    queryKey: ['employee-options', 'search', orgBranchId ?? null, search] as const,
+    queryFn: () =>
+      apiClient
+        .get<{ items: EmployeeOptionRow[] }>(EMPLOYEE_OPTIONS, {
+          params: { size: 100, page: 1, ...(orgBranchId ? { organization_branch_id: orgBranchId } : {}), ...(search ? { search } : {}) },
+        })
+        .then((r) => r.data?.items ?? []),
+    staleTime: 2 * 60 * 1000,
+    placeholderData: (prev) => prev,
+  });
+}

@@ -20,7 +20,9 @@ type Query<T> = UseInfiniteQueryResult<InfiniteData<PageOut<T>, unknown>, Error>
 
 interface Props<T> extends Pick<FlatListProps<T>, 'numColumns' | 'columnWrapperStyle' | 'contentContainerStyle' | 'ItemSeparatorComponent'> {
   query: Query<T>;
-  renderItem: (item: T) => ReactElement | null;
+  /** Row renderer; `index`/`rows` let a screen draw group headers when a
+   *  server-ordered field changes between consecutive rows. */
+  renderItem: (item: T, index: number, rows: T[]) => ReactElement | null;
   keyExtractor: (item: T) => string;
   emptyTitle: string;
   emptyMessage?: string;
@@ -65,7 +67,7 @@ export function PagedList<T>({
       numColumns={numColumns}
       columnWrapperStyle={columnWrapperStyle}
       keyExtractor={keyExtractor}
-      renderItem={({ item }) => renderItem(item)}
+      renderItem={({ item, index }) => renderItem(item, index, rows)}
       ItemSeparatorComponent={ItemSeparatorComponent}
       contentContainerStyle={[styles.content, rows.length === 0 && styles.contentEmpty, contentContainerStyle]}
       showsVerticalScrollIndicator={false}

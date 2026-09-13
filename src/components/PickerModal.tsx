@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, Modal, TextInput, FlatList,
   TouchableOpacity, Image, ActivityIndicator,
@@ -10,6 +10,7 @@ import type { ThemeColors } from '../theme/palettes';
 import { Icon } from './Icon';
 import { useBreakpoint } from '../utils/responsive';
 import { KeyboardAvoider } from './KeyboardAvoider';
+import { useDebouncedValue } from '../lib/useDebouncedValue';
 
 export interface PickerOption {
   value: number;
@@ -33,11 +34,16 @@ interface Props {
    *  letter save would fail with `agreement_locked`). Shown dimmed with a lock
    *  icon so the row explains itself instead of silently ignoring taps. */
   disabledValues?: number[];
+  /** SERVER search: when given, the box no longer filters `options` locally
+   *  — the caller receives the text (already debounced here) and re-queries
+   *  the API with it. Used for organisation-wide employee pickers, which used
+   *  to download every page (15 × 100 rows) just to filter in JS. */
+  onSearchChange?: (query: string) => void;
 }
 
 export function PickerModal({
   visible, title, options, loading, multiple, selected, onClose, onSelect, onToggle,
-  disabledValues,
+  disabledValues, onSearchChange,
 }: Props) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -45,14 +51,20 @@ export function PickerModal({
   const bp = useBreakpoint();
   const insets = useSafeAreaInsets();
   const [search, setSearch] = useState('');
+  const debounced = useDebouncedValue(search);
+  useEffect(() => {
+    onSearchChange?.(debounced.trim());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debounced]);
 
   const filtered = useMemo(() => {
+    if (onSearchChange) return options; // server already filtered
     const q = search.trim().toLowerCase();
     if (!q) return options;
     return options.filter(
       (o) => o.label.toLowerCase().includes(q) || (o.subLabel ?? '').toLowerCase().includes(q)
     );
-  }, [options, search]);
+  }, [options, search, onSearchChange]);
 
   const isSelected = (v: number) =>
     multiple ? Array.isArray(selected) && selected.includes(v) : selected === v;

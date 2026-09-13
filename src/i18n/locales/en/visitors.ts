@@ -66,4 +66,8 @@ export default {
   nameRequired: 'Full name is required',
   untilBeforeFrom: 'Departure time must be after arrival time',
   dateUnbounded: 'No limit',
+  modeExternal: 'External guest',
+  modeEmployee: 'System employee',
+  pickEmployee: 'Pick an employee',
+  pickEmployeeFirst: 'Pick a system employee first',
 } as const;

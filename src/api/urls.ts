@@ -15,11 +15,19 @@ export const EMPLOYEE_DETAIL = (id: number) => `employees/${id}`;
 
 // Turnstile attendance
 export const TURNSTILE_ATTENDANCE_EVENTS = 'turnstile-attendance-events';
+// Turnstile locations (name/address/coords) — fallback catalog for the event
+// map when the event's nested location ref carries no coordinates (older API).
+export const LOCATIONS_LIST = 'locations';
 
 // Time-tracking (Учёт времени) — read-only mobile surfaces.
 // The "monthly tabel grid": one row per employee with an attendance.calendar
 // {date -> status code} map. We request our own employee_id for "my tabel".
 export const TURNSTILE_ATTENDANCE_NORMALIZED = 'turnstile-attendance-events/normalized';
+// TODAY's branch roster by category (present/late/absent/leave/trip/day-off…) —
+// the web employee dashboard's source. Branch-scoped, NOT narrowed to "own
+// people" for a regular employee (unlike /normalized), so a plain employee
+// sees their whole branch exactly like on the web.
+export const DASHBOARD_EMPLOYEES_BY_CATEGORY = 'dashboard/employees-by-category';
 // Navbatchilik (duty roster), read-only on mobile. /my is truly self-scoped;
 // {pk}/members is the effective (dept-expanded) roster; work-schedule-days are
 // the actual day/shift rows — branch-scoped server-side since backend `f9c79f0`
@@ -162,6 +170,9 @@ export const LETTER_APPROVE_GUVOHNOMA = (id: number) => `letters/${id}/approve-g
 // confirm-return sets is_trip_confirmed which unblocks the report stage; its
 // manage rights are branch-scoped (see isBranchHr).
 export const LETTER_TRIP_MOVEMENTS = (id: number) => `letters/${id}/trip-movements`;
+// Safar davridagi tabel + turniket eventlari (web TripAttendancePanel) —
+// «keldi/ketdi» xulosasining ortidagi dalil.
+export const LETTER_TRIP_ATTENDANCE = (id: number) => `letters/${id}/trip-attendance`;
 // Safarga "mashina kerak" belgisi. Hujjat MATNIGA tegmaydi, shu bois safar
 // yuborilgandan keyin ham ishlaydi (BFD rad etsa xodim qayta so'ray oladi).
 export const LETTER_TRIP_VEHICLE = (id: number) => `letters/${id}/vehicle`;

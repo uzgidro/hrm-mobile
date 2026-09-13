@@ -13,6 +13,8 @@ import type { ThemeColors } from '@/theme/palettes';
 import { AttendanceEvent } from '@/types';
 import { Icon } from '@/components/Icon';
 import { AttendanceEventRow } from '@/components/AttendanceEventRow';
+import { locationsCatalogQuery } from '@/utils/attendance';
+import { resolveEmployeeBranchId } from '@/utils/branch';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { MonthNavigator } from '@/components/MonthNavigator';
@@ -67,6 +69,8 @@ export default function EmployeeCalendarScreen() {
   const { data: employee } = useQuery(employeeDetailQuery(employeeId));
 
   const { data: events = [], refetch } = useQuery(employeeAttendanceQuery(employeeId, monthKey));
+  // Coordinates for the event map (fallback when the event ref lacks them).
+  const { data: locations } = useQuery(locationsCatalogQuery(resolveEmployeeBranchId(employee) ?? undefined));
 
   const onRefresh = useCallback(async () => { setRefreshing(true); await refetch(); setRefreshing(false); }, [refetch]);
 
@@ -192,6 +196,7 @@ export default function EmployeeCalendarScreen() {
               <AttendanceEventRow
                 key={ev.id}
                 event={ev}
+                locations={locations}
                 showBorder={i < selectedEvents.length - 1}
               />
             ))
