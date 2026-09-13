@@ -64,4 +64,8 @@ export default {
   nameRequired: 'Исм-шариф киритилиши шарт',
   untilBeforeFrom: 'Кетиш вақти келиш вақтидан кейин бўлиши керак',
   dateUnbounded: 'Чекланмаган',
+  modeExternal: 'Ташқи меҳмон',
+  modeEmployee: 'Тизимдаги ходим',
+  pickEmployee: 'Ходимни танланг',
+  pickEmployeeFirst: 'Аввал тизимдаги ходимни танланг',
 } as const;

@@ -25,6 +25,9 @@ import {
   validateVisitorPhoto,
   type VisitorPayload,
 } from '../api/mutations';
+import { PickerModal } from '@/components/PickerModal';
+import { employeeOptionsSearchQuery, type EmployeeOptionRow } from '@/utils/employees';
+import { useQuery } from '@tanstack/react-query';
 
 export default function MehmonFormScreen() {
   const { t } = useTranslation();
@@ -51,6 +54,30 @@ export default function MehmonFormScreen() {
   const [validFrom, setValidFrom] = useState<string | null>(isEdit ? null : dayjs().toISOString());
   const [validUntil, setValidUntil] = useState<string | null>(isEdit ? null : dayjs().add(1, 'day').toISOString());
   const [picker, setPicker] = useState<null | 'from' | 'until'>(null);
+  // Web AddGuestDrawer parity: a guest may be a SYSTEM EMPLOYEE from another
+  // branch — pick them from the organisation-wide options list; name / org /
+  // position / photo are copied (the server copies the photo from the
+  // employee record via `source_employee_id`). Create mode only.
+  const [mode, setMode] = useState<'external' | 'employee'>('external');
+  const [sourceEmployee, setSourceEmployee] = useState<EmployeeOptionRow | null>(null);
+  const [empPickerOpen, setEmpPickerOpen] = useState(false);
+  const [empSearch, setEmpSearch] = useState('');
+  const { data: empOptions = [], isFetching: empLoading } = useQuery({
+    ...employeeOptionsSearchQuery(empSearch),
+    enabled: !isEdit && mode === 'employee',
+  });
+  const pickSourceEmployee = (id: number) => {
+    const emp = empOptions.find((e) => e.id === id);
+    setEmpPickerOpen(false);
+    if (!emp) return;
+    setSourceEmployee(emp);
+    setLegalName(emp.legal_name ?? '');
+    setOrgName(emp.organization_name ?? '');
+    setJobPosition(emp.job_position_name ?? '');
+    setPhotoBase64('');
+    setPhotoPreview(emp.photo_path ?? '');
+    setError('');
+  };
   const [photoBase64, setPhotoBase64] = useState('');   // new picked photo (data URI) to upload
   const [photoPreview, setPhotoPreview] = useState('');  // uri shown in the avatar
   const [existingPhoto, setExistingPhoto] = useState(''); // current server photo (edit)
@@ -106,6 +133,10 @@ export default function MehmonFormScreen() {
       Alert.alert(t('common.errorTitle'), t('visitors.untilBeforeFrom'));
       return;
     }
+    if (!isEdit && mode === 'employee' && !sourceEmployee) {
+      Alert.alert(t('common.errorTitle'), t('visitors.pickEmployeeFirst'));
+      return;
+    }
     setLoading(true);
     const orgBranchId =
       resolveEmployeeBranchId(user?.employee);
@@ -121,6 +152,7 @@ export default function MehmonFormScreen() {
     if (validFrom) payload.valid_from = validFrom;
     if (validUntil) payload.valid_until = validUntil;
     if (!isEdit && orgBranchId) payload.organization_branch_id = orgBranchId;
+    if (!isEdit && mode === 'employee' && sourceEmployee) payload.source_employee_id = sourceEmployee.id;
     if (photoBase64) payload.photo_base64 = photoBase64; // only send when a new photo is picked
     try {
       if (isEdit) {
@@ -147,6 +179,32 @@ export default function MehmonFormScreen() {
         <LoadingView />
       ) : (
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          {!isEdit && (
+            <View style={styles.modeRow}>
+              {(['external', 'employee'] as const).map((m) => (
+                <TouchableOpacity
+                  key={m}
+                  style={[styles.modeTab, mode === m && styles.modeTabActive]}
+                  onPress={() => setMode(m)}
+                  activeOpacity={0.8}
+                  testID={`visitor-mode-${m}`}
+                >
+                  <Text style={[styles.modeTabText, mode === m && styles.modeTabTextActive]}>
+                    {t(m === 'external' ? 'visitors.modeExternal' : 'visitors.modeEmployee')}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+          {!isEdit && mode === 'employee' && (
+            <TouchableOpacity style={styles.empPick} onPress={() => setEmpPickerOpen(true)} activeOpacity={0.8}>
+              <Icon name="users" size={18} color={colors.primary} />
+              <Text style={[styles.empPickText, !sourceEmployee && { color: colors.textMuted }]} numberOfLines={1}>
+                {sourceEmployee?.legal_name || t('visitors.pickEmployee')}
+              </Text>
+              <Icon name="chevronRight" size={18} color={colors.textMuted} />
+            </TouchableOpacity>
+          )}
           {/* Rasm */}
           <View style={styles.photoRow}>
             <TouchableOpacity style={styles.photoCircle} onPress={pickPhoto} activeOpacity={0.8}>
@@ -228,6 +286,21 @@ export default function MehmonFormScreen() {
         </ScrollView>
       )}
 
+      <PickerModal
+        visible={empPickerOpen}
+        title={t('visitors.modeEmployee')}
+        options={empOptions.map((e) => ({
+          value: e.id,
+          label: e.legal_name ?? '',
+          subLabel: [e.job_position_name, e.organization_name].filter(Boolean).join(' · '),
+          photo: e.photo_path,
+        }))}
+        loading={empLoading}
+        onSearchChange={setEmpSearch}
+        selected={sourceEmployee?.id ?? null}
+        onSelect={pickSourceEmployee}
+        onClose={() => setEmpPickerOpen(false)}
+      />
       <DateTimePickerModal
         visible={picker === 'from'}
         value={validFrom}
@@ -248,6 +321,13 @@ export default function MehmonFormScreen() {
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
+    modeRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
+    modeTab: { flex: 1, paddingVertical: 10, borderRadius: 12, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, alignItems: 'center' },
+    modeTabActive: { backgroundColor: c.primary, borderColor: c.primary },
+    modeTabText: { fontSize: 13, fontWeight: '700', color: c.textSecondary },
+    modeTabTextActive: { color: c.onPrimary },
+    empPick: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 12, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, marginBottom: 12 },
+    empPickText: { flex: 1, fontSize: 14, fontWeight: '600', color: c.text },
     content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 24 },
 
     photoRow: { flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 18 },

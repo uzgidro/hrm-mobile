@@ -14,6 +14,8 @@ export interface VisitorPayload {
   valid_until?: string;
   organization_branch_id?: number;
   photo_base64?: string;
+  /** Tizimdagi xodim — server ism/rasmni xodim yozuvidan ko'chiradi. */
+  source_employee_id?: number;
 }
 
 // ── Request functions (pure data access; unit-testable without React) ────────

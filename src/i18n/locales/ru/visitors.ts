@@ -66,4 +66,8 @@ export default {
   nameRequired: 'Необходимо указать Ф.И.О',
   untilBeforeFrom: 'Время ухода должно быть позже времени прихода',
   dateUnbounded: 'Без ограничения',
+  modeExternal: 'Внешний гость',
+  modeEmployee: 'Сотрудник системы',
+  pickEmployee: 'Выберите сотрудника',
+  pickEmployeeFirst: 'Сначала выберите сотрудника системы',
 } as const;

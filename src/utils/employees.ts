@@ -199,3 +199,21 @@ export function subordinateIdsQuery(myId?: number) {
     staleTime: 10 * 60 * 1000,
   });
 }
+
+// Server-searched picker page: `/employees/options?search=` (100 rows, the
+// backend's cap) — for pickers that pass `onSearchChange` to PickerModal.
+// Without a query the first 100 alphabetically are shown; typing narrows on
+// the server (Cyrillic/Latin folded), so the 15-request full download is gone.
+export function employeeOptionsSearchQuery(search: string, orgBranchId?: number) {
+  return queryOptions({
+    queryKey: ['employee-options', 'search', orgBranchId ?? null, search] as const,
+    queryFn: () =>
+      apiClient
+        .get<{ items: EmployeeOptionRow[] }>(EMPLOYEE_OPTIONS, {
+          params: { size: 100, page: 1, ...(orgBranchId ? { organization_branch_id: orgBranchId } : {}), ...(search ? { search } : {}) },
+        })
+        .then((r) => r.data?.items ?? []),
+    staleTime: 2 * 60 * 1000,
+    placeholderData: (prev) => prev,
+  });
+}
