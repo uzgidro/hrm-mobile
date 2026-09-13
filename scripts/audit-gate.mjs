@@ -42,6 +42,11 @@ const ALLOW = {
   // backported to 3.x/4.x, which these consumers require. Revisit when eslint /
   // @expo/cli / istanbul move to js-yaml 5.
   'GHSA-5p4m-2wfm-xmqj': 'js-yaml (eslint/@expo-cli/jest-coverage, build-time only) — omap quadratic CPU; fix only in 5.x, consumers pin 3.x/4.x',
+  // 2026-09-13: a second js-yaml advisory on the same 3.x/4.x consumers —
+  // `maxTotalMergeKeys` does not bound CPU for empty merge sources. Same
+  // situation: fixed only in 5.x, eslint / @expo/cli / istanbul pin 3.x/4.x;
+  // lint/CLI/test only, never in the shipped bundle.
+  'GHSA-2883-xcg3-v3hh': 'js-yaml (eslint/@expo-cli/jest-coverage, build-time only) — merge-key CPU; fix only in 5.x, consumers pin 3.x/4.x',
 };
 
 const BLOCKING = new Set(['high', 'critical']);
