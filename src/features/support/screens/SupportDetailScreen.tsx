@@ -14,11 +14,12 @@ import { ScreenHeader } from '@/components/ScreenHeader';
 import { ModalCard } from '@/components/ModalCard';
 import { confirm } from '@/lib/confirm';
 import { getApiErrorMessage } from '@/api/errors';
-import { ticketStatusKey, ticketPriorityKey, canRateTicket } from '@/utils/supportStatus';
+import { ticketStatusKey, ticketPriorityKey, canRateTicket, canTakeTicket, canDoneTicket } from '@/utils/supportStatus';
+import { isSiteMasterAdmin } from '@/utils/roles';
 import { KEYBOARD_BEHAVIOR } from '@/utils/keyboard';
 import { ticketDetailQuery } from '../api/queries';
 import { TicketChat } from '../components/TicketChat';
-import { useRateTicket, useReopenTicket } from '../api/mutations';
+import { useRateTicket, useReopenTicket, useTakeTicket, useDoneTicket } from '../api/mutations';
 
 export default function SupportDetailScreen() {
   const { t } = useTranslation();
@@ -32,6 +33,8 @@ export default function SupportDetailScreen() {
   const { data: ticket, isLoading, isError, refetch } = useQuery(ticketDetailQuery(ticketId));
   const rateM = useRateTicket(ticketId);
   const reopenM = useReopenTicket(ticketId);
+  const takeM = useTakeTicket(ticketId);
+  const doneM = useDoneTicket(ticketId);
 
   const [rateOpen, setRateOpen] = useState(false);
   const [rating, setRating] = useState(5);
@@ -45,7 +48,29 @@ export default function SupportDetailScreen() {
   }
 
   const isCreator = ticket.created_by_id === employeeId;
-  const canRate = canRateTicket(ticket, isCreator);
+  const isMasterAdmin = isSiteMasterAdmin(user);
+  const canRate = canRateTicket(ticket, isCreator, isMasterAdmin);
+  // AKT side (web SupportTicketsPage parity): take an open ticket / finish mine.
+  const canTake = canTakeTicket(ticket, user?.akt_branch_ids);
+  const canDone = canDoneTicket(ticket, employeeId, isMasterAdmin);
+  const busy = rateM.isPending || reopenM.isPending || takeM.isPending || doneM.isPending;
+
+  const onTake = () =>
+    takeM.mutate(undefined, {
+      onSuccess: () => { Alert.alert(t('support.takeDone'), ''); refetch(); },
+    });
+  const onDone = async () => {
+    const ok = await confirm({
+      title: t('support.markDone'),
+      message: t('support.markDoneConfirm'),
+      confirmLabel: t('support.statusDone'),
+      cancelLabel: t('common.cancel'),
+    });
+    if (!ok) return;
+    doneM.mutate(undefined, {
+      onSuccess: () => { Alert.alert(t('support.markDoneDone'), ''); refetch(); },
+    });
+  };
 
   const submitRate = () => {
     setRateOpen(false);
@@ -102,10 +127,41 @@ export default function SupportDetailScreen() {
           <View style={styles.card}>
             {!!ticket.uge_number && <KV k={t('support.fieldUge')} v={ticket.uge_number} />}
             {!!ticket.room_number && <KV k={t('support.fieldRoom')} v={ticket.room_number} />}
+            {/* Web parity: requester (+ internal number), rating note, participants. */}
+            {!!ticket.creator?.legal_name && (
+              <KV
+                k={t('support.creatorLabel')}
+                v={ticket.creator_internal_number ? `${ticket.creator.legal_name} · ${ticket.creator_internal_number}` : ticket.creator.legal_name}
+              />
+            )}
             <KV k={t('support.fieldAssignee')} v={ticket.assignee?.legal_name || t('support.noAssignee')} />
             {!!ticket.created_at && <KV k={t('support.fieldCreated')} v={dayjs(ticket.created_at).format('DD.MM.YYYY HH:mm')} />}
             {ticket.rating != null && <KV k={t('support.ratingLabel')} v={`${ticket.rating} / 5`} />}
+            {!!ticket.rating_note && <KV k={t('support.ratingNoteLabel')} v={ticket.rating_note} />}
+            {!!ticket.participants?.length && (
+              <KV
+                k={t('support.participantsTitle')}
+                v={ticket.participants.map((p) => p.employee?.legal_name).filter(Boolean).join(', ')}
+              />
+            )}
           </View>
+
+          {(canTake || canDone) && (
+            <View style={styles.actions}>
+              {canTake && (
+                <TouchableOpacity style={[styles.actionBtn, styles.rateBtn]} onPress={onTake} disabled={busy} activeOpacity={0.85}>
+                  <Icon name="check" size={18} color={colors.onPrimary} />
+                  <Text style={styles.rateBtnText}>{t('support.take')}</Text>
+                </TouchableOpacity>
+              )}
+              {canDone && (
+                <TouchableOpacity style={[styles.actionBtn, styles.rateBtn]} onPress={onDone} disabled={busy} activeOpacity={0.85}>
+                  <Icon name="check" size={18} color={colors.onPrimary} />
+                  <Text style={styles.rateBtnText}>{t('support.markDone')}</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
 
           {/* AKT ↔ murojaatchi yozishmasi (backendда bor edi, mobilда yo'q edi). */}
           <TicketChat ticketId={ticket.id} />

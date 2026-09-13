@@ -1,4 +1,6 @@
 import { queryOptions } from '@tanstack/react-query';
+import dayjs from 'dayjs';
+import { pagedListOptions, cleanParams, type ListParams } from '@/lib/pagedList';
 import { apiClient } from '@/api/client';
 import { unwrapList } from '@/api/response';
 import { WORK_LEAVES, WORK_LEAVE_DETAIL } from '@/api/urls';
@@ -18,40 +20,81 @@ export const leaveKeys = {
   detail: (id: number) => [...leaveKeys.all, 'detail', id] as const,
 };
 
-// My own leave requests.
+// ── Server-paged lists (30 rows, infinite scroll) ─────────────────────────────
+// WHY (audit 2026-09-13): the three lists asked for ONE page of 100/200 rows,
+// threw the envelope's `total` away and then filtered/searched in JS — so an
+// older request could never be found and HR's team list silently ended at
+// 200. Every chip is now a server param (`workLeavesServerParams`).
+export type LeaveStatusFilter = 'all' | 'pending' | 'approved' | 'rejected';
+export type IncomingFilter = 'all' | 'action' | 'approved' | 'rejected';
+
+export interface LeavesListParams {
+  scope: 'mine' | 'assigned' | 'team';
+  employeeId?: number;
+  status?: LeaveStatusFilter | IncomingFilter;
+  search?: string;
+  /** Team list: `YYYY-MM` — overlap window, i.e. leaves touching that month. */
+  month?: string;
+  /** Team list role scope (`workLeaveAllScopeParams`). */
+  user?: User | null;
+  branchId?: number | null;
+}
+
+/**
+ * • status chips → backend `status` GROUPS (`pending` = pending+yuborildi,
+ *   `approved` = approved+signed+tasdiqlangan, `rejected` = rejected+rad_etilgan
+ *   — `services/work_leave.py::_STATUS_GROUPS`, the same grouping
+ *   `leaveStatusGroup` does in JS).
+ * • incoming "action" = pending AND I have not signed yet →
+ *   `status=pending&signer=false`; "approved" = ones I already signed →
+ *   `signer=true` (the old JS rule was `approved || alreadySigned`).
+ * • month → `date_from/date_to` (backend overlap: end ≥ from AND start ≤ to).
+ * • search → name / type / description (backend 2026-09-13).
+ */
+export function workLeavesServerParams(p: LeavesListParams): ListParams {
+  const out: ListParams = { search: p.search?.trim() || undefined };
+  if (p.scope === 'mine') {
+    out.employee_id = p.employeeId;
+    out.status = p.status === 'all' ? undefined : p.status;
+  } else if (p.scope === 'assigned') {
+    out.assigned_signer = true;
+    if (p.status === 'action') { out.status = 'pending'; out.signer = false; }
+    else if (p.status === 'approved') out.signer = true;
+    else if (p.status === 'rejected') out.status = 'rejected';
+  } else {
+    const scope = workLeaveAllScopeParams(p.user, p.branchId);
+    for (const [k, v] of Object.entries(scope)) {
+      // `department_ids` is an array — serialised as repeated keys by the client.
+      out[k] = v as ListParams[string];
+    }
+    out.status = p.status === 'all' ? undefined : p.status;
+    if (p.month) {
+      const start = dayjs(`${p.month}-01`);
+      out.date_from = start.format('YYYY-MM-DD');
+      out.date_to = start.endOf('month').format('YYYY-MM-DD');
+    }
+  }
+  return out;
+}
+
+export function leavesListQuery(params: LeavesListParams) {
+  return pagedListOptions<WorkLeave>({
+    queryKey: [...leaveKeys.all, 'list', params.scope, cleanParams(workLeavesServerParams(params))] as const,
+    url: WORK_LEAVES,
+    params: workLeavesServerParams(params),
+    staleTime: 30 * 1000,
+    refetchInterval: params.scope === 'assigned' ? 60 * 1000 : undefined,
+  });
+}
+
+// Kept for callers that only need "my leaves" as a plain array (dashboard
+// prefetch / calendars); the screens use `leavesListQuery`.
 export function myLeavesQuery(employeeId?: number) {
   return queryOptions({
     queryKey: leaveKeys.list('mine', employeeId),
     queryFn: () =>
       apiClient
         .get(WORK_LEAVES, { params: { employee_id: employeeId, size: 100 } })
-        .then((r) => unwrapList<WorkLeave>(r.data)),
-  });
-}
-
-// Leaves assigned to me to sign.
-export function assignedLeavesQuery(employeeId?: number) {
-  return queryOptions({
-    queryKey: leaveKeys.list('assigned', employeeId),
-    queryFn: () =>
-      apiClient
-        .get(WORK_LEAVES, { params: { assigned_signer: true, size: 200 } })
-        .then((r) => unwrapList<WorkLeave>(r.data)),
-  });
-}
-
-// Team / "all" leaves — ROLE-SCOPED. `workLeaveAllScopeParams` sends the same
-// narrowing the web does (assigned_signer / department_ids / branch), so a
-// regular employee only sees requests assigned to them to sign. The backend
-// enforces the same bound server-side since `6cd1fe3`, so this is now about
-// showing the right queue rather than being the only thing preventing a leak.
-export function teamLeavesQuery(user?: User | null, branchId?: number | null) {
-  const scope = workLeaveAllScopeParams(user, branchId);
-  return queryOptions({
-    queryKey: [...leaveKeys.list('team'), branchId ?? null, scope] as const,
-    queryFn: () =>
-      apiClient
-        .get(WORK_LEAVES, { params: { ...scope, size: 200 } })
         .then((r) => unwrapList<WorkLeave>(r.data)),
   });
 }

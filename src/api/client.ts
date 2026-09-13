@@ -17,6 +17,11 @@ export const REQUEST_TIMEOUT_MS = 30000;
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
+  // FastAPI reads a `List[int]` query param as repeated keys
+  // (`department_ids=1&department_ids=2`); axios' default writes
+  // `department_ids[]=1`, which the server silently ignores — the department
+  // head's work-leave scope was never applied. `indexes: null` = repeat the key.
+  paramsSerializer: { indexes: null },
   timeout: REQUEST_TIMEOUT_MS,
   headers: { 'Content-Type': 'application/json' },
 });

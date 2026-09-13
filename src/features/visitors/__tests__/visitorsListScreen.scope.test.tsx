@@ -35,7 +35,7 @@ describe('VisitorsListScreen — filial parametri', () => {
         organization_branches: [{ id: 4, name: 'A' }, { id: 9, name: 'B' }],
       },
     });
-    expect(params).toEqual({});
+    expect(params).toEqual({ page: 1, size: 30 });
   });
 
   it('buxgalter (employee-like, multi-org) uchun ham yuborilmaydi', async () => {
@@ -46,7 +46,7 @@ describe('VisitorsListScreen — filial parametri', () => {
         organization_branches: [{ id: 4, name: 'A' }, { id: 9, name: 'B' }],
       },
     });
-    expect(params).toEqual({});
+    expect(params).toEqual({ page: 1, size: 30 });
   });
 
   it("kadr uchun O'Z filiali yuboriladi (webdagi tanlangan filial ekvivalenti)", async () => {
@@ -57,6 +57,6 @@ describe('VisitorsListScreen — filial parametri', () => {
         organization_branches: [{ id: 4, name: 'A' }],
       },
     });
-    expect(params).toEqual({ organization_branch_id: 4 });
+    expect(params).toEqual({ organization_branch_id: 4, page: 1, size: 30 });
   });
 });

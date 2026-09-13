@@ -41,7 +41,11 @@ describe('VisitorsListScreen (tablet-landscape split)', () => {
 
   it('phone/portrait: renders the plain list (no split, both cards visible)', async () => {
     (useWindowDimensions as jest.Mock).mockReturnValue(PHONE_PORTRAIT);
-    mock.onGet(VISITORS_LIST).reply(200, VISITORS);
+    // Qidiruv SERVERDA (2026-09-13): mock `search` parametriga qarab filtrlaydi.
+    mock.onGet(VISITORS_LIST).reply((cfg) => {
+      const q = String(cfg.params?.search ?? '').toLowerCase();
+      return [200, VISITORS.filter((v) => !q || v.legal_name.toLowerCase().includes(q))];
+    });
 
     const { findByText, queryByText } = await renderWithProviders(<VisitorsListScreen />);
 
@@ -54,7 +58,11 @@ describe('VisitorsListScreen (tablet-landscape split)', () => {
 
   it('tablet landscape: renders SplitLayout with the first visitor auto-selected in the detail pane', async () => {
     (useWindowDimensions as jest.Mock).mockReturnValue(TABLET_LANDSCAPE);
-    mock.onGet(VISITORS_LIST).reply(200, VISITORS);
+    // Qidiruv SERVERDA (2026-09-13): mock `search` parametriga qarab filtrlaydi.
+    mock.onGet(VISITORS_LIST).reply((cfg) => {
+      const q = String(cfg.params?.search ?? '').toLowerCase();
+      return [200, VISITORS.filter((v) => !q || v.legal_name.toLowerCase().includes(q))];
+    });
     mock.onGet(new RegExp('visitors/1')).reply(200, { id: 1, legal_name: 'First Visitor', is_active: true });
 
     const { findAllByText } = await renderWithProviders(<VisitorsListScreen />);
@@ -73,7 +81,11 @@ describe('VisitorsListScreen (tablet-landscape split)', () => {
 
   it('tablet landscape: tapping a different row updates the detail pane instead of navigating', async () => {
     (useWindowDimensions as jest.Mock).mockReturnValue(TABLET_LANDSCAPE);
-    mock.onGet(VISITORS_LIST).reply(200, VISITORS);
+    // Qidiruv SERVERDA (2026-09-13): mock `search` parametriga qarab filtrlaydi.
+    mock.onGet(VISITORS_LIST).reply((cfg) => {
+      const q = String(cfg.params?.search ?? '').toLowerCase();
+      return [200, VISITORS.filter((v) => !q || v.legal_name.toLowerCase().includes(q))];
+    });
     mock.onGet(new RegExp('visitors/1')).reply(200, { id: 1, legal_name: 'First Visitor', is_active: true });
     mock.onGet(new RegExp('visitors/2')).reply(200, { id: 2, legal_name: 'Second Visitor', is_active: true });
 
@@ -100,7 +112,11 @@ describe('VisitorsListScreen (tablet-landscape split)', () => {
 
   it('tablet landscape: re-anchors selectedId when the selected visitor falls out of `filtered` (e.g. search)', async () => {
     (useWindowDimensions as jest.Mock).mockReturnValue(TABLET_LANDSCAPE);
-    mock.onGet(VISITORS_LIST).reply(200, VISITORS);
+    // Qidiruv SERVERDA (2026-09-13): mock `search` parametriga qarab filtrlaydi.
+    mock.onGet(VISITORS_LIST).reply((cfg) => {
+      const q = String(cfg.params?.search ?? '').toLowerCase();
+      return [200, VISITORS.filter((v) => !q || v.legal_name.toLowerCase().includes(q))];
+    });
     mock.onGet(new RegExp('visitors/1')).reply(200, { id: 1, legal_name: 'First Visitor', is_active: true });
     mock.onGet(new RegExp('visitors/2')).reply(200, { id: 2, legal_name: 'Second Visitor', is_active: true });
 

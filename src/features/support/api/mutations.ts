@@ -1,9 +1,12 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
+import { invalidateAfterAction } from '@/lib/invalidateAfterAction';
 import {
   SUPPORT_TICKETS,
   SUPPORT_TICKET_RATE,
   SUPPORT_TICKET_REOPEN,
+  SUPPORT_TICKET_TAKE,
+  SUPPORT_TICKET_DONE,
   SUPPORT_TICKET_MESSAGES,
   SUPPORT_TICKET_READ,
 } from '@/api/urls';
@@ -54,12 +57,23 @@ export function reopenTicket(id: number): Promise<unknown> {
   return apiClient.post(SUPPORT_TICKET_REOPEN(id)).then((r) => r.data);
 }
 
+// AKT side (2026-09-13). Both are body-less POSTs; the server checks
+// "AKT for this branch + status open" / "assignee (or master-admin) +
+// status in_progress" and answers 404/400 otherwise.
+export function takeTicket(id: number): Promise<unknown> {
+  return apiClient.post(SUPPORT_TICKET_TAKE(id)).then((r) => r.data);
+}
+
+export function doneTicket(id: number): Promise<unknown> {
+  return apiClient.post(SUPPORT_TICKET_DONE(id)).then((r) => r.data);
+}
+
 export function useCreateTicket() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (args: { form: CreateTicketForm; files?: PickedFile[] }) =>
       createTicket(args.form, args.files),
-    onSuccess: () => qc.invalidateQueries({ queryKey: supportKeys.all }),
+    onSuccess: () => invalidateAfterAction(qc, supportKeys.all),
   });
 }
 
@@ -71,7 +85,7 @@ export function useRateTicket(id: number) {
     // bitta xato uchun HAM toast, HAM bloklovchi Alert ko'rardi.
     meta: { skipErrorToast: true },
     mutationFn: (form: RateTicketForm) => rateTicket(id, form),
-    onSuccess: () => qc.invalidateQueries({ queryKey: supportKeys.all }),
+    onSuccess: () => invalidateAfterAction(qc, supportKeys.all),
   });
 }
 
@@ -83,7 +97,23 @@ export function useReopenTicket(id: number) {
     // bitta xato uchun HAM toast, HAM bloklovchi Alert ko'rardi.
     meta: { skipErrorToast: true },
     mutationFn: () => reopenTicket(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: supportKeys.all }),
+    onSuccess: () => invalidateAfterAction(qc, supportKeys.all),
+  });
+}
+
+export function useTakeTicket(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => takeTicket(id),
+    onSuccess: () => invalidateAfterAction(qc, supportKeys.all),
+  });
+}
+
+export function useDoneTicket(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => doneTicket(id),
+    onSuccess: () => invalidateAfterAction(qc, supportKeys.all),
   });
 }
 

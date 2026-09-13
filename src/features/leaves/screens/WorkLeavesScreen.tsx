@@ -1,9 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
-  TouchableOpacity, RefreshControl,
+  TouchableOpacity,
 } from 'react-native';
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
@@ -16,20 +16,20 @@ import { hasSupervisor } from '@/utils/roles';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader, HeaderAction } from '@/components/ScreenHeader';
-import { LoadingView, EmptyState } from '@/components/StateViews';
+import { PagedList } from '@/components/PagedList';
+import { useDebouncedValue } from '@/lib/useDebouncedValue';
+import { menuBadgesQuery } from '@/lib/menuBadges';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { SearchBox } from '@/components/SearchBox';
 import { WorkLeave } from '@/types';
 import { leaveStatusGroup, leaveStatusKind } from '@/utils/leaveStatus';
 import { statusColor } from '@/utils/orderStatus';
-import { myLeavesQuery, assignedLeavesQuery } from '../api/queries';
+import { leavesListQuery, type IncomingFilter } from '../api/queries';
 import { leaveTypeLabel } from '../components/LeaveTypeSheet';
 
 type StatusFilter = 'all' | 'pending' | 'approved' | 'rejected';
 
 function isPendingStatus(s: string) { return leaveStatusGroup(s) === 'pending'; }
-function isApprovedStatus(s: string) { return leaveStatusGroup(s) === 'approved'; }
-function isRejectedStatus(s: string) { return leaveStatusGroup(s) === 'rejected'; }
 
 function statusMeta(status: string, c: ThemeColors, t: TFunction) {
   const group = leaveStatusGroup(status);
@@ -48,7 +48,7 @@ const MY_FILTERS: { key: StatusFilter; labelKey: string }[] = [
   { key: 'rejected', labelKey: 'leaves.statusRejected' },
 ];
 
-const INCOMING_FILTERS: { key: 'all' | 'action' | 'approved' | 'rejected'; labelKey: string }[] = [
+const INCOMING_FILTERS: { key: IncomingFilter; labelKey: string }[] = [
   { key: 'all', labelKey: 'common.all' },
   { key: 'action', labelKey: 'leaves.statusPending' },
   { key: 'approved', labelKey: 'leaves.statusApproved' },
@@ -114,62 +114,24 @@ export default function WorkLeavesScreen() {
   const cols = bp.isTablet ? (bp.isLandscape ? 3 : 2) : 1;
 
   const [myFilter, setMyFilter] = useState<StatusFilter>('all');
-  const [incomingFilter, setIncomingFilter] = useState<'all' | 'action' | 'approved' | 'rejected'>('action');
+  const [incomingFilter, setIncomingFilter] = useState<IncomingFilter>('action');
   const [search, setSearch] = useState('');
-  const matchesSearch = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return (l: { employee?: { legal_name?: string }; type?: string | null; description?: string | null }) =>
-      !q ||
-      (l.employee?.legal_name?.toLowerCase().includes(q) ?? false) ||
-      (l.type?.toLowerCase().includes(q) ?? false) ||
-      (l.description?.toLowerCase().includes(q) ?? false);
-  }, [search]);
+  const debouncedSearch = useDebouncedValue(search);
 
-  const { data: myLeaves = [], isLoading: myLoading, refetch: myRefetch, isFetching: myFetching } =
-    useQuery({
-      ...myLeavesQuery(employeeId),
-      enabled: !!employeeId && !isSupervisor,
-      staleTime: 2 * 60 * 1000,
-    });
+  // One server-paged list per role; chips/search are server params
+  // (`workLeavesServerParams`).
+  const query = useInfiniteQuery({
+    ...leavesListQuery(
+      isSupervisor
+        ? { scope: 'assigned', status: incomingFilter, search: debouncedSearch }
+        : { scope: 'mine', employeeId, status: myFilter, search: debouncedSearch },
+    ),
+    enabled: !!employeeId,
+  });
 
-  const { data: allLeaves = [], isLoading: allLoading, refetch: allRefetch, isFetching: allFetching } =
-    useQuery({
-      ...assignedLeavesQuery(employeeId),
-      enabled: !!employeeId && isSupervisor,
-      staleTime: 30 * 1000,
-      refetchInterval: 60 * 1000,
-    });
-
-  const isLoading = isSupervisor ? allLoading : myLoading;
-  const isFetching = isSupervisor ? allFetching : myFetching;
-  const refetch = isSupervisor ? allRefetch : myRefetch;
-
-  const filteredMyLeaves = useMemo(() => {
-    const base = (myFilter === 'all' ? myLeaves : myLeaves.filter((l) => {
-      if (myFilter === 'pending') return isPendingStatus(l.status);
-      if (myFilter === 'approved') return isApprovedStatus(l.status);
-      if (myFilter === 'rejected') return isRejectedStatus(l.status);
-      return true;
-    })).filter(matchesSearch);
-    return [...base].sort((a, b) => (b.created_at ?? String(b.id)).localeCompare(a.created_at ?? String(a.id)));
-  }, [myLeaves, myFilter, matchesSearch]);
-
-  const filteredIncoming = useMemo(() => {
-    const base = allLeaves.filter((l) => {
-      if (incomingFilter === 'all') return true;
-      const alreadySigned = l.signers?.some((s) => s.id === employeeId);
-      if (incomingFilter === 'action') return isPendingStatus(l.status) && !alreadySigned;
-      if (incomingFilter === 'approved') return isApprovedStatus(l.status) || alreadySigned;
-      if (incomingFilter === 'rejected') return isRejectedStatus(l.status);
-      return true;
-    }).filter(matchesSearch);
-    return [...base].sort((a, b) => (b.created_at ?? String(b.id)).localeCompare(a.created_at ?? String(a.id)));
-  }, [allLeaves, incomingFilter, employeeId, matchesSearch]);
-
-  const pendingCount = useMemo(
-    () => allLeaves.filter((l) => isPendingStatus(l.status) && !l.signers?.some((s) => s.id === employeeId)).length,
-    [allLeaves, employeeId]
-  );
+  // "Kutilmoqda" count = the server's menu-badge number (same as the tab bar).
+  const { data: badges } = useQuery(menuBadgesQuery());
+  const pendingCount = badges?.leaves ?? 0;
 
   const filters = isSupervisor ? INCOMING_FILTERS : MY_FILTERS;
   const activeFilter = isSupervisor ? incomingFilter : myFilter;
@@ -197,7 +159,7 @@ export default function WorkLeavesScreen() {
               <TouchableOpacity
                 key={f.key}
                 style={[styles.filterTab, active && styles.filterTabActive]}
-                onPress={() => isSupervisor ? setIncomingFilter(f.key as any) : setMyFilter(f.key as any)}
+                onPress={() => isSupervisor ? setIncomingFilter(f.key as IncomingFilter) : setMyFilter(f.key as StatusFilter)}
                 activeOpacity={0.7}
               >
                 <Text style={[styles.filterTabText, active && styles.filterTabTextActive]}>
@@ -214,49 +176,24 @@ export default function WorkLeavesScreen() {
       </View>
 
       <View style={{ flex: 1 }}>
-        {isLoading ? (
-          <LoadingView />
-        ) : (
-          <ScrollView
-            contentContainerStyle={styles.content}
-            showsVerticalScrollIndicator={false}
-            refreshControl={<RefreshControl refreshing={isFetching && !isLoading} onRefresh={refetch} tintColor={colors.primaryLight} />}
-          >
-            {isSupervisor ? (
-              filteredIncoming.length === 0 ? (
-                <EmptyState
-                  icon="checklist"
-                  title={incomingFilter === 'action' ? t('leaves.emptyPending') : t('leaves.emptyLeaves')}
-                />
-              ) : (
-                <View style={cols > 1 ? styles.wrapRow : undefined}>
-                  {filteredIncoming.map((leave) => {
-                    const alreadySigned = leave.signers?.some((s) => s.id === employeeId);
-                    const actionNeeded = isPendingStatus(leave.status) && !alreadySigned;
-                    return (
-                      <View key={leave.id} style={cols > 1 ? { flexBasis: `${100 / cols - 2}%`, flexGrow: 1 } : undefined}>
-                        <LeaveCard leave={leave} showEmployee actionNeeded={actionNeeded} styles={styles} colors={colors} />
-                      </View>
-                    );
-                  })}
-                </View>
-              )
-            ) : (
-              filteredMyLeaves.length === 0 ? (
-                <EmptyState icon="checklist" title={t('leaves.emptyLeaves')} />
-              ) : (
-                <View style={cols > 1 ? styles.wrapRow : undefined}>
-                  {filteredMyLeaves.map((leave) => (
-                    <View key={leave.id} style={cols > 1 ? { flexBasis: `${100 / cols - 2}%`, flexGrow: 1 } : undefined}>
-                      <LeaveCard leave={leave} styles={styles} colors={colors} />
-                    </View>
-                  ))}
-                </View>
-              )
-            )}
-            <View style={{ height: 80 }} />
-          </ScrollView>
-        )}
+        <PagedList
+          query={query}
+          keyExtractor={(l) => String(l.id)}
+          numColumns={cols}
+          columnWrapperStyle={cols > 1 ? styles.wrapRow : undefined}
+          contentContainerStyle={styles.content}
+          emptyIcon="checklist"
+          emptyTitle={isSupervisor && incomingFilter === 'action' ? t('leaves.emptyPending') : t('leaves.emptyLeaves')}
+          renderItem={(leave) => {
+            const alreadySigned = leave.signers?.some((s) => s.id === employeeId);
+            const actionNeeded = isSupervisor && isPendingStatus(leave.status) && !alreadySigned;
+            return (
+              <View style={cols > 1 ? { flex: 1 / cols } : undefined}>
+                <LeaveCard leave={leave} showEmployee={isSupervisor} actionNeeded={actionNeeded} styles={styles} colors={colors} />
+              </View>
+            );
+          }}
+        />
       </View>
     </Screen>
   );
@@ -272,8 +209,8 @@ const makeStyles = (c: ThemeColors) =>
     filterTabText: { fontSize: 13, color: c.textSecondary, fontWeight: '600' },
     filterTabTextActive: { color: c.onPrimary },
 
-    content: { paddingHorizontal: 16, paddingTop: 8 },
-    wrapRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+    content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 80 },
+    wrapRow: { gap: 12 },
 
     card: { backgroundColor: c.card, borderRadius: 16, borderWidth: 1, borderColor: c.cardBorder, padding: 14, marginBottom: 10, gap: 6 },
     cardHighlight: { borderColor: c.warning, backgroundColor: c.warningSoft },

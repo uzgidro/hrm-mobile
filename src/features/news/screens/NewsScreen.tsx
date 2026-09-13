@@ -1,13 +1,10 @@
-import { memo, useCallback, useMemo } from 'react';
-import {
-  View, Text, FlatList, StyleSheet, RefreshControl,
-  type ListRenderItem,
-} from 'react-native';
-import { useQuery } from '@tanstack/react-query';
+import { memo, useMemo, useState } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import { useAuthStore } from '@/store/authStore';
-import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
+import { useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { useBreakpoint } from '@/utils/responsive';
 import type { NewsPost } from '@/types';
@@ -15,7 +12,9 @@ import { ScreenHeader, HeaderAction } from '@/components/ScreenHeader';
 import { Screen } from '@/components/Screen';
 import { router } from 'expo-router';
 import { isNewsManager } from '@/utils/roles';
-import { LoadingView, EmptyState } from '@/components/StateViews';
+import { PagedList } from '@/components/PagedList';
+import { SearchBox } from '@/components/SearchBox';
+import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { newsListQuery, newsBranchesQuery } from '../api/queries';
 
@@ -61,13 +60,14 @@ export default function NewsScreen() {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const branchId = user?.employee?.department?.organization_branch_id;
-  const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const bp = useBreakpoint();
   const cols = bp.isTablet ? (bp.isLandscape ? 3 : 2) : 1;
   const canManage = isNewsManager(user);
 
-  const { data: news = [], isLoading, refetch, isFetching } = useQuery(newsListQuery(branchId));
+  const [search, setSearch] = useState('');
+  const debouncedSearch = useDebouncedValue(search);
+  const query = useInfiniteQuery(newsListQuery(branchId, debouncedSearch));
   // Filial nomlari — yangilik qaysi filialga yo'naltirilganini yozish uchun
   // (ro'yxat javobida faqat `organization_branch_id` bor). Forma ham shu
   // keshdan foydalanadi.
@@ -77,56 +77,43 @@ export default function NewsScreen() {
     [branches],
   );
 
-  const renderItem = useCallback<ListRenderItem<NewsPost>>(
-    ({ item }) => (
-      <NewsCard
-        item={item}
-        styles={styles}
-        grid={cols > 1}
-        branchName={item.organization_branch_id != null
-          ? branchNameById.get(Number(item.organization_branch_id))
-          : undefined}
-      />
-    ),
-    [styles, cols, branchNameById],
-  );
-
-  const keyExtractor = useCallback((item: NewsPost) => String(item.id), []);
-
   return (
     <Screen edges={['top']}>
       <ScreenHeader
         title={t('news.title')}
         right={canManage ? <HeaderAction icon="plus" onPress={() => router.push('/create-news')} /> : undefined}
       />
-      {isLoading ? (
-        <LoadingView />
-      ) : (
-        <FlatList
-          data={news}
-          key={cols}
-          numColumns={cols}
-          columnWrapperStyle={cols > 1 ? styles.gridRow : undefined}
-          renderItem={renderItem}
-          keyExtractor={keyExtractor}
-          contentContainerStyle={styles.content}
-          showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={isFetching && !isLoading} onRefresh={refetch} tintColor={colors.primary} />}
-          ListEmptyComponent={
-            <EmptyState
-              icon="news"
-              title={t('news.empty')}
-              message={t('news.emptyMessage')}
-            />
-          }
-        />
-      )}
+      <View style={styles.searchWrap}>
+        <SearchBox value={search} onChangeText={setSearch} placeholder={t('news.searchPlaceholder')} />
+      </View>
+      <PagedList
+        query={query}
+        keyExtractor={(item) => String(item.id)}
+        numColumns={cols}
+        columnWrapperStyle={cols > 1 ? styles.gridRow : undefined}
+        contentContainerStyle={styles.content}
+        emptyIcon="news"
+        emptyTitle={search ? t('common.notFound') : t('news.empty')}
+        emptyMessage={search ? undefined : t('news.emptyMessage')}
+        hideCount
+        renderItem={(item) => (
+          <NewsCard
+            item={item}
+            styles={styles}
+            grid={cols > 1}
+            branchName={item.organization_branch_id != null
+              ? branchNameById.get(Number(item.organization_branch_id))
+              : undefined}
+          />
+        )}
+      />
     </Screen>
   );
 }
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
+    searchWrap: { paddingHorizontal: 16, paddingBottom: 8 },
     content: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 32 },
     gridRow: { gap: 12 },
 

@@ -50,4 +50,19 @@ export default {
   reopenConfirmMessage: 'Подтверждаете переоткрытие обращения?',
   reopenDone: 'Переоткрыто',
   actionError: 'Не удалось выполнить действие',
+
+  // ── AKT navbati / qidiruv (2026-09-13) ──
+  tabMine: 'Мои',
+  tabQueue: 'Очередь',
+  searchPlaceholder: 'Описание, UGE или кабинет...',
+  filterAll: 'Все',
+  take: 'Принять',
+  takeDone: 'Заявка принята',
+  markDone: 'Отметить выполненной',
+  markDoneConfirm: 'Отметить заявку выполненной?',
+  markDoneDone: 'Заявка завершена',
+  creatorLabel: 'Заявитель',
+  unreadMessages: 'Новых сообщений: {{count}}',
+  ratingNoteLabel: 'Комментарий к оценке',
+  participantsTitle: 'Участники',
 } as const;

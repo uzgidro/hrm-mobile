@@ -50,4 +50,19 @@ export default {
   reopenConfirmMessage: 'Мурожаатни қайта очишни тасдиқлайсизми?',
   reopenDone: 'Қайта очилди',
   actionError: 'Амални бажариб бўлмади',
+
+  // ── AKT navbati / qidiruv (2026-09-13) ──
+  tabMine: 'Менинг',
+  tabQueue: 'Навбат',
+  searchPlaceholder: 'Тавсиф, UGE ёки хона...',
+  filterAll: 'Барчаси',
+  take: 'Қабул қилиш',
+  takeDone: 'Мурожаат қабул қилинди',
+  markDone: 'Бажарилди деб белгилаш',
+  markDoneConfirm: 'Мурожаат бажарилди деб белгилансинми?',
+  markDoneDone: 'Мурожаат якунланди',
+  creatorLabel: 'Мурожаатчи',
+  unreadMessages: '{{count}} та янги хабар',
+  ratingNoteLabel: 'Баҳо изоҳи',
+  participantsTitle: 'Иштирокчилар',
 } as const;

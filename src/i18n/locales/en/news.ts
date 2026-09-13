@@ -1,6 +1,7 @@
 // English translation of the news feature strings.
 // See uz-Latn/news.ts for the meaning of each key.
 export default {
+  searchPlaceholder: 'Search news...',
   title: 'News',
 
   allEmployees: 'To all employees',

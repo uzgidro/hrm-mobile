@@ -1,9 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
-  RefreshControl, FlatList,
 } from 'react-native';
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';
 import dayjs from 'dayjs';
@@ -16,7 +15,9 @@ import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader, HeaderAction } from '@/components/ScreenHeader';
 import { SplitLayout } from '@/components/SplitLayout';
-import { LoadingView, EmptyState } from '@/components/StateViews';
+import { EmptyState } from '@/components/StateViews';
+import { PagedList, usePagedRows } from '@/components/PagedList';
+import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { visitorsListQuery } from '../api/queries';
 import { VisitorDetailView } from '../components/VisitorDetailView';
@@ -51,17 +52,10 @@ export default function MehmonlarScreen() {
     user?.employee?.department?.organization_branch_id;
   const orgBranchId = skipBranchParam ? undefined : ownBranchId;
 
-  const { data: visitors = [], isLoading, refetch, isFetching } = useQuery(visitorsListQuery(orgBranchId));
-
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return visitors;
-    return visitors.filter((v) =>
-      (v.legal_name ?? '').toLowerCase().includes(q) ||
-      (v.organization_name ?? '').toLowerCase().includes(q) ||
-      (v.host_employee_name ?? '').toLowerCase().includes(q)
-    );
-  }, [visitors, search]);
+  const debouncedSearch = useDebouncedValue(search);
+  // Server-paged + server search (name / organisation / host).
+  const query = useInfiniteQuery(visitorsListQuery(orgBranchId, debouncedSearch));
+  const { rows: filtered, total } = usePagedRows(query);
 
   // Auto-select the first row when entering split with nothing selected yet
   // (so the detail pane isn't blank on first tablet-landscape render); clear
@@ -89,7 +83,7 @@ export default function MehmonlarScreen() {
           Guests → back = Modules; as a cold tab it lands on Home). */}
       <ScreenHeader
         title={t('visitors.listTitle')}
-        count={visitors.length}
+        count={total ?? 0}
         onBack={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
         right={<HeaderAction icon="plus" onPress={() => router.push('/mehmon-form')} />}
       />
@@ -110,63 +104,56 @@ export default function MehmonlarScreen() {
         )}
       </View>
 
-      {isLoading ? (
-        <LoadingView />
-      ) : (
-        <FlatList
-          data={filtered}
-          key={cols}
-          numColumns={cols}
-          columnWrapperStyle={cols > 1 ? styles.gridRow : undefined}
-          keyExtractor={(v) => String(v.id)}
-          contentContainerStyle={styles.content}
-          showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={isFetching && !isLoading} onRefresh={refetch} tintColor={colors.primary} />}
-          renderItem={({ item }) => {
-            const active = item.is_active !== false;
-            return (
-              <TouchableOpacity
-                style={[styles.card, cols > 1 && styles.cardGrid, split && item.id === selectedId && styles.cardSelected]}
-                activeOpacity={0.8}
-                onPress={
-                  split
-                    ? () => setSelectedId(item.id)
-                    : () => router.push({ pathname: '/mehmon-detail', params: { id: String(item.id) } })
-                }
-              >
-                <EmployeeAvatar emp={item} size={48} />
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.name} numberOfLines={1}>{item.legal_name || t('visitors.nameFallback')}</Text>
-                  {!!(item.organization_name || item.job_position) && (
-                    <Text style={styles.sub} numberOfLines={1}>
-                      {[item.organization_name, item.job_position].filter(Boolean).join(' · ')}
-                    </Text>
-                  )}
-                  {!!item.host_employee_name && (
-                    <View style={styles.hostRow}>
-                      <Icon name="user" size={12} color={colors.textMuted} />
-                      <Text style={styles.host} numberOfLines={1}>{item.host_employee_name}</Text>
-                    </View>
-                  )}
-                </View>
-                <View style={styles.right}>
-                  <View style={[styles.badge, { backgroundColor: active ? colors.successSoft : colors.errorSoft }]}>
-                    <Text style={[styles.badgeText, { color: active ? colors.success : colors.error }]}>
-                      {active ? t('visitors.statusActive') : t('visitors.statusInactive')}
-                    </Text>
+      <PagedList
+        query={query}
+        keyExtractor={(v) => String(v.id)}
+        numColumns={cols}
+        columnWrapperStyle={cols > 1 ? styles.gridRow : undefined}
+        contentContainerStyle={styles.content}
+        emptyIcon="guest"
+        emptyTitle={search ? t('visitors.emptySearch') : t('visitors.emptyList')}
+        hideCount
+        renderItem={(item) => {
+          const active = item.is_active !== false;
+          return (
+            <TouchableOpacity
+              style={[styles.card, cols > 1 && styles.cardGrid, split && item.id === selectedId && styles.cardSelected]}
+              activeOpacity={0.8}
+              onPress={
+                split
+                  ? () => setSelectedId(item.id)
+                  : () => router.push({ pathname: '/mehmon-detail', params: { id: String(item.id) } })
+              }
+            >
+              <EmployeeAvatar emp={item} size={48} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.name} numberOfLines={1}>{item.legal_name || t('visitors.nameFallback')}</Text>
+                {!!(item.organization_name || item.job_position) && (
+                  <Text style={styles.sub} numberOfLines={1}>
+                    {[item.organization_name, item.job_position].filter(Boolean).join(' · ')}
+                  </Text>
+                )}
+                {!!item.host_employee_name && (
+                  <View style={styles.hostRow}>
+                    <Icon name="user" size={12} color={colors.textMuted} />
+                    <Text style={styles.host} numberOfLines={1}>{item.host_employee_name}</Text>
                   </View>
-                  {!!item.valid_until && (
-                    <Text style={styles.validText}>{dayjs(item.valid_until).format('DD.MM.YYYY')}</Text>
-                  )}
+                )}
+              </View>
+              <View style={styles.right}>
+                <View style={[styles.badge, { backgroundColor: active ? colors.successSoft : colors.errorSoft }]}>
+                  <Text style={[styles.badgeText, { color: active ? colors.success : colors.error }]}>
+                    {active ? t('visitors.statusActive') : t('visitors.statusInactive')}
+                  </Text>
                 </View>
-              </TouchableOpacity>
-            );
-          }}
-          ListEmptyComponent={
-            <EmptyState icon="guest" title={search ? t('visitors.emptySearch') : t('visitors.emptyList')} />
-          }
-        />
-      )}
+                {!!item.valid_until && (
+                  <Text style={styles.validText}>{dayjs(item.valid_until).format('DD.MM.YYYY')}</Text>
+                )}
+              </View>
+            </TouchableOpacity>
+          );
+        }}
+      />
     </>
   );
 

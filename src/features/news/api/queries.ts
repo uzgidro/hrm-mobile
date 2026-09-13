@@ -1,4 +1,5 @@
 import { queryOptions } from '@tanstack/react-query';
+import { pagedListOptions } from '@/lib/pagedList';
 import { apiClient } from '@/api/client';
 import { NEWS_POSTS, ORGANIZATION_BRANCHES } from '@/api/urls';
 import type { NewsPost } from '@/types';
@@ -14,23 +15,19 @@ interface NewsBranchOption {
 // invalidation all reference one source of truth.
 export const newsKeys = {
   all: ['news'] as const,
-  list: (orgBranchId?: number) => [...newsKeys.all, 'list', orgBranchId ?? null] as const,
+  list: (orgBranchId?: number, search?: string) =>
+    [...newsKeys.all, 'list', orgBranchId ?? null, search ?? null] as const,
   detail: (id: number) => [...newsKeys.all, 'detail', id] as const,
 };
 
-export function newsListQuery(orgBranchId?: number) {
-  return queryOptions({
-    queryKey: newsKeys.list(orgBranchId),
-    queryFn: () =>
-      apiClient
-        .get(NEWS_POSTS, {
-          params: orgBranchId ? { organization_branch_id: orgBranchId } : {},
-        })
-        .then((r) => {
-          const d = r.data;
-          // The API returns either a bare array or a { items } envelope.
-          return (Array.isArray(d) ? d : (d?.items ?? [])) as NewsPost[];
-        }),
+// Server-paged (30) with server search over title/description (backend
+// `apply_search`, folded) — web v1 searched the same two columns in JS; the
+// mobile list had no search at all.
+export function newsListQuery(orgBranchId?: number, search?: string) {
+  return pagedListOptions<NewsPost>({
+    queryKey: newsKeys.list(orgBranchId, search?.trim() || undefined),
+    url: NEWS_POSTS,
+    params: { organization_branch_id: orgBranchId, search: search?.trim() || undefined },
   });
 }
 

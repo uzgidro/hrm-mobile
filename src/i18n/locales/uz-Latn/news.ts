@@ -5,6 +5,7 @@
 // arrive from the backend and are rendered verbatim — only chrome (screen title,
 // empty state, and the author / "all employees" fallbacks) is localized here.
 export default {
+  searchPlaceholder: 'Yangiliklarni qidirish...',
   title: 'Yangiliklar',
 
   // Fallbacks when a post carries no author / no target branch

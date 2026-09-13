@@ -50,4 +50,19 @@ export default {
   reopenConfirmMessage: 'Confirm reopening the ticket?',
   reopenDone: 'Reopened',
   actionError: 'Could not perform the action',
+
+  // ── AKT navbati / qidiruv (2026-09-13) ──
+  tabMine: 'Mine',
+  tabQueue: 'Queue',
+  searchPlaceholder: 'Description, UGE or room...',
+  filterAll: 'All',
+  take: 'Take',
+  takeDone: 'Ticket taken',
+  markDone: 'Mark as done',
+  markDoneConfirm: 'Mark this ticket as done?',
+  markDoneDone: 'Ticket completed',
+  creatorLabel: 'Requester',
+  unreadMessages: '{{count}} new messages',
+  ratingNoteLabel: 'Rating note',
+  participantsTitle: 'Participants',
 } as const;

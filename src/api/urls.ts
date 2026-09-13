@@ -85,8 +85,9 @@ export const PHONE_DIRECTORY = 'employees/phone-directory';
 // ATAYLAB filialga bog'liq — ular `EMPLOYEES_LIST` da qoladi.
 export const EMPLOYEE_OPTIONS = 'employees/options';
 
-// Departments
+// Departments / job positions — filter-chip catalogs for the employees list.
 export const DEPARTMENTS_LIST = 'departments';
+export const JOB_POSITIONS_LIST = 'job-positions';
 
 // Push notifications
 export const PUSH_TOKENS = 'push-tokens';
@@ -276,6 +277,11 @@ export const SUPPORT_TICKETS = 'support-tickets';
 export const SUPPORT_TICKET_DETAIL = (id: number) => `support-tickets/${id}`;
 export const SUPPORT_TICKET_RATE = (id: number) => `support-tickets/${id}/rate`;
 export const SUPPORT_TICKET_REOPEN = (id: number) => `support-tickets/${id}/reopen`;
+// AKT NAVBATI (2026-09-13): the specialist takes an open ticket (assignee =
+// me, in_progress) and marks it done. Web SupportTicketsPage had both; the
+// app only had the employee side (create / rate / reopen / chat).
+export const SUPPORT_TICKET_TAKE = (id: number) => `support-tickets/${id}/take`;
+export const SUPPORT_TICKET_DONE = (id: number) => `support-tickets/${id}/done`;
 // Ticket ichidagi YOZISHMA (AKT ↔ murojaatchi) va o'qilgan belgisi.
 export const SUPPORT_TICKET_MESSAGES = (id: number) => `support-tickets/${id}/messages`;
 export const SUPPORT_TICKET_READ = (id: number) => `support-tickets/${id}/read`;

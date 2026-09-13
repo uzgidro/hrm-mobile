@@ -58,4 +58,19 @@ export default {
   reopenConfirmMessage: 'Murojaatni qayta ochishni tasdiqlaysizmi?',
   reopenDone: 'Qayta ochildi',
   actionError: "Amalni bajarib bo'lmadi",
+
+  // ── AKT navbati / qidiruv (2026-09-13) ──
+  tabMine: 'Mening',
+  tabQueue: 'Navbat',
+  searchPlaceholder: 'Tavsif, UGE yoki xona...',
+  filterAll: 'Barchasi',
+  take: 'Qabul qilish',
+  takeDone: 'Murojaat qabul qilindi',
+  markDone: 'Bajarildi deb belgilash',
+  markDoneConfirm: 'Murojaat bajarildi deb belgilansinmi?',
+  markDoneDone: 'Murojaat yakunlandi',
+  creatorLabel: 'Murojaatchi',
+  unreadMessages: '{{count}} ta yangi xabar',
+  ratingNoteLabel: 'Baho izohi',
+  participantsTitle: 'Ishtirokchilar',
 } as const;

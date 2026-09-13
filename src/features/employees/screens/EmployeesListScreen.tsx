@@ -1,10 +1,9 @@
 import { useState, useMemo } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity,
-  FlatList, ScrollView,
+  View, Text, StyleSheet, TouchableOpacity, ScrollView,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useAuthStore } from '@/store/authStore';
 import { usePrefsStore } from '@/store/prefsStore';
@@ -14,13 +13,14 @@ import { useBreakpoint } from '@/utils/responsive';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
-import { LoadingView, EmptyState } from '@/components/StateViews';
+import { PagedList, usePagedRows } from '@/components/PagedList';
 import { AccessDenied } from '@/components/AccessDenied';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { FilterChip } from '@/components/FilterChip';
 import { SearchBox } from '@/components/SearchBox';
+import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { canAccessPage } from '@/utils/roles';
-import { employeesListQuery } from '../api/queries';
+import { employeesPagedQuery, departmentsQuery, jobPositionsQuery } from '@/utils/employees';
 
 export default function EmployeesListScreen() {
   const { t } = useTranslation();
@@ -35,42 +35,31 @@ export default function EmployeesListScreen() {
     user?.employee?.organization_branches?.[0]?.id ??
     user?.employee?.department?.organization_branch_id;
   const [search, setSearch] = useState('');
-  const [deptFilter, setDeptFilter] = useState<string>('all');
-  const [posFilter, setPosFilter] = useState<string>('all');
+  const debouncedSearch = useDebouncedValue(search);
+  const [deptFilter, setDeptFilter] = useState<number | 'all'>('all');
+  const [posFilter, setPosFilter] = useState<number | 'all'>('all');
 
-  const { data, isLoading } = useQuery(employeesListQuery(orgBranchId));
+  // Server-paged: chips → department_id / job_position_id, "only my team" →
+  // supervisor_id, search → server (name/position/department, folded).
+  const query = useInfiniteQuery(employeesPagedQuery({
+    branchId: orgBranchId,
+    departmentId: deptFilter,
+    jobPositionId: posFilter,
+    supervisorId: onlySubordinates && myId ? myId : undefined,
+    search: debouncedSearch,
+  }));
+  const { total } = usePagedRows(query);
 
-  const employees = useMemo(() => {
-    const list = data?.items ?? [];
-    return onlySubordinates && myId ? list.filter((e) => e.supervisor_id === myId) : list;
-  }, [data?.items, onlySubordinates, myId]);
-
-  const deptOptions = useMemo(() => {
-    const set = new Set<string>();
-    for (const e of employees) { const n = e.department?.name; if (n) set.add(n); }
-    return Array.from(set).sort((a, b) => a.localeCompare(b, 'uz'));
-  }, [employees]);
-  const posOptions = useMemo(() => {
-    const set = new Set<string>();
-    for (const e of employees) { const n = e.job_position?.name; if (n) set.add(n); }
-    return Array.from(set).sort((a, b) => a.localeCompare(b, 'uz'));
-  }, [employees]);
-
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return employees.filter((e) => {
-      if (deptFilter !== 'all' && e.department?.name !== deptFilter) return false;
-      if (posFilter !== 'all' && e.job_position?.name !== posFilter) return false;
-      if (!q) return true;
-      return (
-        e.legal_name.toLowerCase().includes(q) ||
-        (e.job_position?.name?.toLowerCase().includes(q) ?? false) ||
-        (e.department?.name?.toLowerCase().includes(q) ?? false)
-      );
-    });
-  }, [employees, search, deptFilter, posFilter]);
-
-  const totalLabel = onlySubordinates ? employees.length : (data?.total ?? 0);
+  const { data: departments = [] } = useQuery(departmentsQuery(orgBranchId));
+  const { data: positions = [] } = useQuery(jobPositionsQuery(orgBranchId));
+  const deptOptions = useMemo(
+    () => [...departments].sort((a, b) => a.name.localeCompare(b.name, 'uz')),
+    [departments],
+  );
+  const posOptions = useMemo(
+    () => [...positions].sort((a, b) => a.name.localeCompare(b.name, 'uz')),
+    [positions],
+  );
 
   if (!canAccessPage(user, 'employees')) {
     return <AccessDenied title={t('employees.accessTitle')} />;
@@ -80,7 +69,7 @@ export default function EmployeesListScreen() {
     <Screen edges={['top', 'bottom']}>
       <ScreenHeader
         title={onlySubordinates ? t('employees.subordinatesTitle') : t('employees.listTitle')}
-        count={totalLabel}
+        count={total ?? 0}
       />
 
       <View style={styles.searchWrapper}>
@@ -93,7 +82,7 @@ export default function EmployeesListScreen() {
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
               <FilterChip label={t('employees.filterAllDepartments')} active={deptFilter === 'all'} onPress={() => setDeptFilter('all')} styles={styles} />
               {deptOptions.map((d) => (
-                <FilterChip key={d} label={d} active={deptFilter === d} onPress={() => setDeptFilter(d)} styles={styles} />
+                <FilterChip key={d.id} label={d.name} active={deptFilter === d.id} onPress={() => setDeptFilter(d.id)} styles={styles} />
               ))}
             </ScrollView>
           )}
@@ -101,44 +90,38 @@ export default function EmployeesListScreen() {
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
               <FilterChip label={t('employees.filterAllPositions')} active={posFilter === 'all'} onPress={() => setPosFilter('all')} styles={styles} subtle />
               {posOptions.map((p) => (
-                <FilterChip key={p} label={p} active={posFilter === p} onPress={() => setPosFilter(p)} styles={styles} subtle />
+                <FilterChip key={p.id} label={p.name} active={posFilter === p.id} onPress={() => setPosFilter(p.id)} styles={styles} subtle />
               ))}
             </ScrollView>
           )}
         </View>
       )}
 
-      {isLoading ? (
-        <LoadingView />
-      ) : (
-        <FlatList
-          data={filtered}
-          key={cols}
-          numColumns={cols}
-          columnWrapperStyle={cols > 1 ? styles.gridRow : undefined}
-          keyExtractor={(item) => String(item.id)}
-          contentContainerStyle={styles.list}
-          showsVerticalScrollIndicator={false}
-          ItemSeparatorComponent={cols > 1 ? undefined : () => <View style={styles.separator} />}
-          renderItem={({ item: emp }) => (
-            <TouchableOpacity
-              style={[styles.empRow, cols > 1 && styles.empRowGrid]}
-              onPress={() => router.push({ pathname: '/profile-detail', params: { id: emp.id } })}
-              activeOpacity={0.7}
-            >
-              <EmployeeAvatar emp={emp} size={48} />
-              <View style={styles.empInfo}>
-                <Text style={styles.empName} numberOfLines={1}>{emp.legal_name}</Text>
-                <Text style={styles.empSub} numberOfLines={1}>{emp.job_position?.name ?? emp.department?.name ?? '—'}</Text>
-              </View>
-              <Icon name="chevronRight" size={20} color={colors.textMuted} />
-            </TouchableOpacity>
-          )}
-          ListEmptyComponent={
-            <EmptyState icon="users" title={search ? t('employees.notFound') : t('employees.empty')} />
-          }
-        />
-      )}
+      <PagedList
+        query={query}
+        keyExtractor={(item) => String(item.id)}
+        numColumns={cols}
+        columnWrapperStyle={cols > 1 ? styles.gridRow : undefined}
+        contentContainerStyle={styles.list}
+        ItemSeparatorComponent={cols > 1 ? undefined : () => <View style={styles.separator} />}
+        emptyIcon="users"
+        emptyTitle={search ? t('employees.notFound') : t('employees.empty')}
+        hideCount
+        renderItem={(emp) => (
+          <TouchableOpacity
+            style={[styles.empRow, cols > 1 && styles.empRowGrid]}
+            onPress={() => router.push({ pathname: '/profile-detail', params: { id: emp.id } })}
+            activeOpacity={0.7}
+          >
+            <EmployeeAvatar emp={emp} size={48} />
+            <View style={styles.empInfo}>
+              <Text style={styles.empName} numberOfLines={1}>{emp.legal_name}</Text>
+              <Text style={styles.empSub} numberOfLines={1}>{emp.job_position?.name ?? emp.department?.name ?? '—'}</Text>
+            </View>
+            <Icon name="chevronRight" size={20} color={colors.textMuted} />
+          </TouchableOpacity>
+        )}
+      />
     </Screen>
   );
 }
@@ -161,7 +144,7 @@ const makeStyles = (c: ThemeColors) =>
     chipSubtleText: { fontSize: 12, fontWeight: '600', color: c.textSecondary },
     chipSubtleTextActive: { color: c.primary },
 
-    list: { paddingTop: 4, paddingBottom: 32 },
+    list: { paddingHorizontal: 0, paddingTop: 4, paddingBottom: 32 },
     separator: { height: 1, backgroundColor: c.cardBorder, marginLeft: 76 },
 
     empRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 12, backgroundColor: c.bg },

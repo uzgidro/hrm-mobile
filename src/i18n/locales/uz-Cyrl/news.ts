@@ -1,6 +1,7 @@
 // Cyrillic transliteration of the news feature strings.
 // See uz-Latn/news.ts for the meaning of each key.
 export default {
+  searchPlaceholder: 'Янгиликларни қидириш...',
   title: 'Янгиликлар',
 
   allEmployees: 'Барча ходимларга',

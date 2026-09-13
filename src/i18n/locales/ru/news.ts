@@ -1,6 +1,7 @@
 // Russian translation of the news feature strings.
 // See uz-Latn/news.ts for the meaning of each key.
 export default {
+  searchPlaceholder: 'Поиск новостей...',
   title: 'Новости',
 
   allEmployees: 'Всем сотрудникам',

@@ -1,9 +1,9 @@
 import { useState, useMemo } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
-  TouchableOpacity, RefreshControl,
+  TouchableOpacity,
 } from 'react-native';
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
@@ -14,13 +14,14 @@ import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader, HeaderAction } from '@/components/ScreenHeader';
-import { LoadingView, EmptyState } from '@/components/StateViews';
+import { PagedList } from '@/components/PagedList';
+import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { SearchBox } from '@/components/SearchBox';
 import { monthName } from '@/i18n/dates';
 import { leaveStatusGroup, leaveStatusKind } from '@/utils/leaveStatus';
 import { statusColor } from '@/utils/orderStatus';
-import { teamLeavesQuery } from '../api/queries';
+import { leavesListQuery } from '../api/queries';
 import { leaveTypeLabel } from '../components/LeaveTypeSheet';
 
 function statusMeta(status: string, c: ThemeColors, t: TFunction) {
@@ -32,9 +33,6 @@ function statusMeta(status: string, c: ThemeColors, t: TFunction) {
 }
 
 type StatusGroup = 'all' | 'pending' | 'approved' | 'rejected';
-function statusGroup(s?: string | null): Exclude<StatusGroup, 'all'> {
-  return leaveStatusGroup(s ?? undefined);
-}
 const STATUS_CHIPS: { key: StatusGroup; labelKey: string }[] = [
   { key: 'all', labelKey: 'leaves.filterAll' },
   { key: 'pending', labelKey: 'leaves.statusPending' },
@@ -56,27 +54,14 @@ export default function TeamLeavesScreen() {
   const [search, setSearch] = useState('');
   const [statusF, setStatusF] = useState<StatusGroup>('all');
 
-  const { data: allLeaves = [], isLoading, refetch, isFetching } = useQuery({
-    ...teamLeavesQuery(user, orgBranchId),
+  const debouncedSearch = useDebouncedValue(search);
+  // Server-paged; month → date_from/date_to (leaves TOUCHING the month, the
+  // backend overlap window), status group + search → server params.
+  const month = dayjs().year(selectedYear).month(selectedMonth).format('YYYY-MM');
+  const query = useInfiniteQuery({
+    ...leavesListQuery({ scope: 'team', user, branchId: orgBranchId, status: statusF, search: debouncedSearch, month }),
     staleTime: 2 * 60 * 1000,
   });
-
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return allLeaves
-      .filter((l) => {
-        const d = dayjs(l.created_at ?? l.start_date);
-        if (d.month() !== selectedMonth || d.year() !== selectedYear) return false;
-        if (statusF !== 'all' && statusGroup(l.status) !== statusF) return false;
-        if (!q) return true;
-        return (
-          (l.employee?.legal_name?.toLowerCase().includes(q) ?? false) ||
-          (l.type?.toLowerCase().includes(q) ?? false) ||
-          (l.description?.toLowerCase().includes(q) ?? false)
-        );
-      })
-      .sort((a, b) => (b.created_at ?? String(b.id)).localeCompare(a.created_at ?? String(a.id)));
-  }, [allLeaves, selectedMonth, selectedYear, search, statusF]);
 
   const monthOptions = useMemo(() => {
     const result = [];
@@ -126,56 +111,48 @@ export default function TeamLeavesScreen() {
       </View>
 
       <View style={{ flex: 1 }}>
-        {isLoading ? (
-          <LoadingView />
-        ) : (
-          <ScrollView
-            contentContainerStyle={styles.content}
-            showsVerticalScrollIndicator={false}
-            refreshControl={<RefreshControl refreshing={isFetching && !isLoading} onRefresh={refetch} tintColor={colors.primaryLight} />}
-          >
-            {filtered.length === 0 ? (
-              <EmptyState icon="checklist" title={t('leaves.emptyLeaves')} />
-            ) : (
-              filtered.map((leave) => {
-                const st = statusMeta(leave.status, colors, t);
-                const sameDay = dayjs(leave.start_date).format('DD.MM.YYYY') === dayjs(leave.end_date).format('DD.MM.YYYY');
-                return (
-                  <TouchableOpacity key={leave.id} style={styles.card}
-                    onPress={() => router.push({ pathname: '/leave-detail', params: { id: leave.id } })} activeOpacity={0.8}>
-                    {leave.employee && (
-                      <View style={styles.empRow}>
-                        <EmployeeAvatar emp={leave.employee} size={30} />
-                        <Text style={styles.empName} numberOfLines={1}>{leave.employee.legal_name}</Text>
-                      </View>
-                    )}
-                    <View style={styles.cardTop}>
-                      <Text style={styles.categoryName} numberOfLines={1}>{leave.type ? leaveTypeLabel(t, leave.type) : t('leaves.typeFallback')}</Text>
-                      <View style={[styles.badge, { backgroundColor: st.bg }]}>
-                        <Text style={[styles.badgeText, { color: st.fg }]}>{st.label}</Text>
-                      </View>
-                    </View>
-                    <View style={styles.dateRow}>
-                      <Icon name="calendar" size={14} color={colors.textMuted} />
-                      {sameDay ? (
-                        <Text style={styles.dateText}>
-                          {dayjs(leave.start_date).format('DD.MM.YYYY')} {dayjs(leave.start_date).format('HH:mm')} – {dayjs(leave.end_date).format('HH:mm')}
-                        </Text>
-                      ) : (
-                        <Text style={styles.dateText}>
-                          {dayjs(leave.start_date).format('DD.MM.YYYY HH:mm')} – {dayjs(leave.end_date).format('DD.MM.YYYY HH:mm')}
-                        </Text>
-                      )}
-                    </View>
-                    {leave.description ? <Text style={styles.comment} numberOfLines={2}>{leave.description}</Text> : null}
-                    {leave.created_at ? <Text style={styles.createdAt}>{t('leaves.createdAtPrefix', { date: dayjs(leave.created_at).format('DD.MM.YYYY HH:mm') })}</Text> : null}
-                  </TouchableOpacity>
-                );
-              })
-            )}
-            <View style={{ height: 32 }} />
-          </ScrollView>
-        )}
+        <PagedList
+          query={query}
+          keyExtractor={(l) => String(l.id)}
+          contentContainerStyle={styles.content}
+          emptyIcon="checklist"
+          emptyTitle={t('leaves.emptyLeaves')}
+          renderItem={(leave) => {
+            const st = statusMeta(leave.status, colors, t);
+            const sameDay = dayjs(leave.start_date).format('DD.MM.YYYY') === dayjs(leave.end_date).format('DD.MM.YYYY');
+            return (
+              <TouchableOpacity style={styles.card}
+                onPress={() => router.push({ pathname: '/leave-detail', params: { id: leave.id } })} activeOpacity={0.8}>
+                {leave.employee && (
+                  <View style={styles.empRow}>
+                    <EmployeeAvatar emp={leave.employee} size={30} />
+                    <Text style={styles.empName} numberOfLines={1}>{leave.employee.legal_name}</Text>
+                  </View>
+                )}
+                <View style={styles.cardTop}>
+                  <Text style={styles.categoryName} numberOfLines={1}>{leave.type ? leaveTypeLabel(t, leave.type) : t('leaves.typeFallback')}</Text>
+                  <View style={[styles.badge, { backgroundColor: st.bg }]}>
+                    <Text style={[styles.badgeText, { color: st.fg }]}>{st.label}</Text>
+                  </View>
+                </View>
+                <View style={styles.dateRow}>
+                  <Icon name="calendar" size={14} color={colors.textMuted} />
+                  {sameDay ? (
+                    <Text style={styles.dateText}>
+                      {dayjs(leave.start_date).format('DD.MM.YYYY')} {dayjs(leave.start_date).format('HH:mm')} – {dayjs(leave.end_date).format('HH:mm')}
+                    </Text>
+                  ) : (
+                    <Text style={styles.dateText}>
+                      {dayjs(leave.start_date).format('DD.MM.YYYY HH:mm')} – {dayjs(leave.end_date).format('DD.MM.YYYY HH:mm')}
+                    </Text>
+                  )}
+                </View>
+                {leave.description ? <Text style={styles.comment} numberOfLines={2}>{leave.description}</Text> : null}
+                {leave.created_at ? <Text style={styles.createdAt}>{t('leaves.createdAtPrefix', { date: dayjs(leave.created_at).format('DD.MM.YYYY HH:mm') })}</Text> : null}
+              </TouchableOpacity>
+            );
+          }}
+        />
       </View>
     </Screen>
   );
@@ -197,7 +174,7 @@ const makeStyles = (c: ThemeColors) =>
     monthChipText: { fontSize: 13, color: c.textSecondary, fontWeight: '600' },
     monthChipTextActive: { color: c.onPrimary },
 
-    content: { paddingHorizontal: 16, paddingTop: 10 },
+    content: { paddingHorizontal: 16, paddingTop: 10, paddingBottom: 32 },
 
     card: { backgroundColor: c.card, borderRadius: 16, borderWidth: 1, borderColor: c.cardBorder, padding: 14, marginBottom: 10, gap: 6 },
     empRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 },
