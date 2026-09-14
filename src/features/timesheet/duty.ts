@@ -1,4 +1,5 @@
 import type { NavbatchilikShift, WorkScheduleDay } from '@/types';
+import { trimTime, timeRange } from '@/utils/timeText';
 import type { ThemeColors } from '@/theme/palettes';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -26,7 +27,6 @@ export function shiftColor(index: number, c: ThemeColors): string {
 
 // Time helpers moved to `@/utils/timeText` (shared with dashboard/employees);
 // re-exported so existing imports keep working.
-import { trimTime, timeRange } from '@/utils/timeText';
 export { trimTime, timeRange };
 
 interface DutyDayMeta {
