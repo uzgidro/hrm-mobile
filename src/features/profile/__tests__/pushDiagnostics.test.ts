@@ -15,6 +15,11 @@ describe('push diagnostics requests', () => {
     expect(r.tokens[0].token_tail).toBe('abc123');
   });
 
+  it('normalises an empty / malformed body (smoke: bo\'sh API javobi)', async () => {
+    mock.onGet(PUSH_TOKENS_ME).reply(200, []);
+    await expect(fetchMyPushTokens()).resolves.toEqual({ count: 0, tokens: [] });
+  });
+
   it('sends the self-test with an empty body and returns the device count', async () => {
     mock.onPost(PUSH_TOKENS_TEST).reply((cfg) => {
       expect(cfg.data).toBeUndefined();

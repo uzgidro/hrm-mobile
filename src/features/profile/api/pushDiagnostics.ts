@@ -15,7 +15,12 @@ export interface ServerPushTokens {
 }
 
 export function fetchMyPushTokens(): Promise<ServerPushTokens> {
-  return apiClient.get<ServerPushTokens>(PUSH_TOKENS_ME).then((r) => r.data);
+  return apiClient.get<Partial<ServerPushTokens> | null>(PUSH_TOKENS_ME).then((r) => {
+    // Normalise so an unexpected shape (empty body, bare array) can never
+    // crash the diagnostics screen — the one screen that must always render.
+    const tokens = Array.isArray(r.data?.tokens) ? r.data.tokens : [];
+    return { count: typeof r.data?.count === 'number' ? r.data.count : tokens.length, tokens };
+  });
 }
 
 export function sendTestPush(): Promise<{ ok: boolean; tokens: number }> {
