@@ -78,4 +78,5 @@ export default {
   pushTestSent_one: 'Sent ({{count}} device) — should arrive within seconds',
   pushTestSent_other: 'Sent ({{count}} devices) — should arrive within seconds',
   pushTestHint: 'The test goes to every device registered for you. If nothing arrives, fix the red link above (no permission — enable it in Settings; no token — update the app from the store).',
+  pushServerUnknown: 'The server does not support this check yet',
 } as const;

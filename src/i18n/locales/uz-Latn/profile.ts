@@ -94,4 +94,5 @@ export default {
   pushTestSent_one: 'Yuborildi ({{count}} ta qurilma) — bir necha soniyada kelishi kerak',
   pushTestSent_other: 'Yuborildi ({{count}} ta qurilma) — bir necha soniyada kelishi kerak',
   pushTestHint: "Sinov xabari serverdagi barcha qurilmalaringizga yuboriladi. Kelmasa — yuqoridagi qizil bo'g'inni tuzating (ruxsat yo'q bo'lsa Sozlamalardan yoqing, token yo'q bo'lsa ilovani do'kondan yangilang).",
+  pushServerUnknown: "Server hali bu tekshiruvni qo'llamaydi",
 } as const;

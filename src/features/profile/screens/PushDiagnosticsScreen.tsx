@@ -42,7 +42,10 @@ export default function PushDiagnosticsScreen() {
       setServer(await fetchMyPushTokens());
       setServerError(null);
     } catch (e) {
-      setServerError(getApiErrorMessage(e, t('errors.refreshFailed')));
+      // A 404 means the backend predates this route (not "no devices"):
+      // say so instead of painting the link red.
+      const status = (e as { response?: { status?: number } })?.response?.status;
+      setServerError(status === 404 ? t('profile.pushServerUnknown') : getApiErrorMessage(e, t('errors.refreshFailed')));
     }
   }, [t]);
 
