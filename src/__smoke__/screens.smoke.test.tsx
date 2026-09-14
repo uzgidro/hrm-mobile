@@ -82,6 +82,7 @@ const SCREENS: [string, () => any][] = [
   ['orders/OrdersListScreen', () => require('@/features/orders/screens/OrdersListScreen')],
   ['profile/ProfileEditScreen', () => require('@/features/profile/screens/ProfileEditScreen')],
   ['profile/ProfileScreen', () => require('@/features/profile/screens/ProfileScreen')],
+  ['profile/PushDiagnosticsScreen', () => require('@/features/profile/screens/PushDiagnosticsScreen')],
   ['projects/CardDetailScreen', () => require('@/features/projects/screens/CardDetailScreen')],
   ['projects/ProjectDetailScreen', () => require('@/features/projects/screens/ProjectDetailScreen')],
   ['projects/ProjectFormScreen', () => require('@/features/projects/screens/ProjectFormScreen')],

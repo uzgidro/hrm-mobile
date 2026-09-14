@@ -99,6 +99,24 @@ export async function requestNotificationPermissions(): Promise<boolean> {
   }
 }
 
+/** Current OS permission ('granted' | 'denied' | 'undetermined' | 'unavailable')
+ *  without prompting — for the diagnostics screen. */
+export async function getNotificationPermissionStatus(): Promise<string> {
+  const N = getNotifications();
+  if (!N || !Device.isDevice) return 'unavailable';
+  try {
+    const { status } = await N.getPermissionsAsync();
+    return status;
+  } catch {
+    return 'unavailable';
+  }
+}
+
+/** The token this device last registered with the backend (null = none yet). */
+export function getRegisteredToken(): string | null {
+  return registeredToken;
+}
+
 export async function getExpoPushToken(): Promise<string | null> {
   const N = getNotifications();
   try {

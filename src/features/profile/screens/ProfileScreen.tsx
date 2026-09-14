@@ -214,6 +214,27 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           )}
 
+          {/* Push diagnostics: permission / device token / server registration /
+              self-test — so a "notification did not arrive" report can be
+              checked on the phone instead of guessed at. */}
+          <TouchableOpacity
+            style={[styles.menuItem, styles.menuItemBorder]}
+            onPress={() => router.push('/push-diagnostics')}
+            activeOpacity={0.7}
+            testID="profile-push-diagnostics"
+          >
+            <View style={styles.menuItemLeft}>
+              <View style={styles.menuIcon}><Icon name="bell" size={18} color={colors.textSecondary} /></View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.menuLabel}>{t('profile.pushDiagnostics')}</Text>
+                <Text style={styles.menuHint}>{t('profile.pushDiagnosticsHint')}</Text>
+              </View>
+            </View>
+            <View style={styles.menuChevron}>
+              <Icon name="chevronRight" size={18} color={colors.textMuted} />
+            </View>
+          </TouchableOpacity>
+
           {isNative && (
             <TouchableOpacity
               style={[styles.menuItem, styles.menuItemBorder]}
