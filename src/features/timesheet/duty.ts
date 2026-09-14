@@ -24,19 +24,10 @@ export function shiftColor(index: number, c: ThemeColors): string {
   return c[shiftColorKey(index)];
 }
 
-// 'HH:MM:SS' | 'HH:MM' -> 'HH:MM' (the backend stores times with seconds).
-export function trimTime(t?: string | null): string {
-  if (!t) return '';
-  return t.length >= 5 ? t.slice(0, 5) : t;
-}
-
-// 'HH:MM – HH:MM' range for a shift or a schedule day; '' when unset.
-export function timeRange(start?: string | null, end?: string | null): string {
-  const a = trimTime(start);
-  const b = trimTime(end);
-  if (!a && !b) return '';
-  return `${a || '—'} – ${b || '—'}`;
-}
+// Time helpers moved to `@/utils/timeText` (shared with dashboard/employees);
+// re-exported so existing imports keep working.
+import { trimTime, timeRange } from '@/utils/timeText';
+export { trimTime, timeRange };
 
 interface DutyDayMeta {
   /** shift name to display ('K'/'T'/custom); null for a day off */

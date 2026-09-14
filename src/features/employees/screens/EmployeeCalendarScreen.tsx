@@ -3,6 +3,7 @@ import {
   View, Text, ScrollView, TouchableOpacity,
   StyleSheet, RefreshControl,
 } from 'react-native';
+import { timeRange } from '@/utils/timeText';
 import Svg, { Circle } from 'react-native-svg';
 import dayjs from 'dayjs';
 import { useQuery } from '@tanstack/react-query';
@@ -172,12 +173,12 @@ export default function EmployeeCalendarScreen() {
             <View style={styles.cardTitleRow}><Icon name="chart" size={16} color={colors.textSecondary} /><Text style={styles.cardTitle}>{t('employees.scheduleTitle')}</Text></View>
             <View style={styles.scheduleRow}>
               <View style={styles.scheduleItem}>
-                <Text style={styles.scheduleValue}>{employee.working_hours_start} - {employee.working_hours_end}</Text>
+                <Text style={styles.scheduleValue}>{timeRange(employee.working_hours_start, employee.working_hours_end)}</Text>
                 <Text style={styles.scheduleLabel}>{t('employees.workDay')}</Text>
               </View>
               {employee.lunch_start_time && (
                 <View style={styles.scheduleItem}>
-                  <Text style={styles.scheduleValue}>{employee.lunch_start_time} - {employee.lunch_end_time}</Text>
+                  <Text style={styles.scheduleValue}>{timeRange(employee.lunch_start_time, employee.lunch_end_time)}</Text>
                   <Text style={styles.scheduleLabel}>{t('employees.break')}</Text>
                 </View>
               )}

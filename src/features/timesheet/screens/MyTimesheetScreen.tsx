@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl,
 } from 'react-native';
+import { timeRange } from '@/utils/timeText';
 import dayjs from 'dayjs';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -178,12 +179,12 @@ export default function MyTimesheetScreen() {
               <Text style={styles.cardTitle}>{t('timesheet.scheduleTitle')}</Text>
               <View style={styles.scheduleRow}>
                 <View style={styles.scheduleItem}>
-                  <Text style={styles.scheduleValue}>{row.working_hours_start} - {row.working_hours_end}</Text>
+                  <Text style={styles.scheduleValue}>{timeRange(row.working_hours_start, row.working_hours_end)}</Text>
                   <Text style={styles.scheduleLabel}>{t('timesheet.workDay')}</Text>
                 </View>
                 {row.lunch_start_time && (
                   <View style={styles.scheduleItem}>
-                    <Text style={styles.scheduleValue}>{row.lunch_start_time} - {row.lunch_end_time}</Text>
+                    <Text style={styles.scheduleValue}>{timeRange(row.lunch_start_time, row.lunch_end_time)}</Text>
                     <Text style={styles.scheduleLabel}>{t('timesheet.break')}</Text>
                   </View>
                 )}
