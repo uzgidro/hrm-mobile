@@ -162,6 +162,9 @@ describe('OrdersListScreen', () => {
   }, 15000);
 
   it('tablet landscape: re-anchors selectedId when the selected order falls out of `filtered` (e.g. switching tabs)', async () => {
+    // Landing tab is "Menda" only when the menu badge says something waits
+    // (2026-09-14); this scenario starts there.
+    mock.onGet(new RegExp('menu-badges')).reply(200, { orders: 1 });
     mockWindowDimensions = TABLET_LANDSCAPE;
     // Order 1: pending_approval with the test employee (99) as the assigned
     // approver signer -> needsMyAction true (shows under "action"), but NOT

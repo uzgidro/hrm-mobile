@@ -39,7 +39,9 @@ export default function OrdersListScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { t } = useTranslation();
-  const [tab, setTab] = useState<OrdersTab>('action');
+  // Landing tab: "Menda" only when the menu badge says something waits for
+  // me, otherwise "Barchasi" (web default) — see LettersListScreen.
+  const [tabChoice, setTabChoice] = useState<OrdersTab | null>(null);
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebouncedValue(search);
   const [categoryFilter, setCategoryFilter] = useState<number | 'all'>('all');
@@ -49,15 +51,17 @@ export default function OrdersListScreen() {
   const split = bp.isTablet && bp.isLandscape;
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
+  // Same server number the tab bar shows.
+  const { data: badges } = useQuery(menuBadgesQuery());
+  const actionCount = badges?.orders ?? 0;
+  const tab: OrdersTab = tabChoice ?? (actionCount > 0 ? 'action' : 'all');
+  const setTab = setTabChoice;
+
   // Server-paged; tab/chips/search are server params (see `ordersListServerParams`).
   const query = useInfiniteQuery(
     ordersListQuery({ tab, categoryId: categoryFilter, status: statusFilter, search: debouncedSearch, employeeId }),
   );
   const { rows: orders } = usePagedRows(query);
-
-  // Same server number the tab bar shows.
-  const { data: badges } = useQuery(menuBadgesQuery());
-  const actionCount = badges?.orders ?? 0;
 
   const { data: categories = [] } = useQuery(allOrderCategoriesQuery());
   const categoryOptions = useMemo(
