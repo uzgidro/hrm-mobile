@@ -101,6 +101,9 @@ export const JOB_POSITIONS_LIST = 'job-positions';
 
 // Push notifications
 export const PUSH_TOKENS = 'push-tokens';
+// Push diagnostics (2026-09-14): the caller's registered devices + a self-test send.
+export const PUSH_TOKENS_ME = 'push-tokens/me';
+export const PUSH_TOKENS_TEST = 'push-tokens/test';
 
 // Visitors (Mehmonlar)
 export const VISITORS_LIST = 'visitors';

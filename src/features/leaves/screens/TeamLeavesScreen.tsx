@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react';
 import {
-  View, Text, ScrollView, StyleSheet,
+  View, Text, StyleSheet,
   TouchableOpacity,
 } from 'react-native';
+import { ChipScroll } from '@/components/ChipScroll';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import dayjs from 'dayjs';
@@ -81,7 +82,7 @@ export default function TeamLeavesScreen() {
       />
 
       <View style={styles.monthFilterWrapper}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.monthRow}>
+        <ChipScroll contentContainerStyle={styles.monthRow}>
           {monthOptions.map((m) => {
             const active = selectedMonth === m.month && selectedYear === m.year;
             return (
@@ -90,7 +91,7 @@ export default function TeamLeavesScreen() {
               </TouchableOpacity>
             );
           })}
-        </ScrollView>
+        </ChipScroll>
       </View>
 
       <View style={styles.searchWrap}>
@@ -98,7 +99,7 @@ export default function TeamLeavesScreen() {
       </View>
 
       <View style={styles.statusFilterWrapper}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.statusRow}>
+        <ChipScroll contentContainerStyle={styles.statusRow}>
           {STATUS_CHIPS.map((s) => {
             const active = statusF === s.key;
             return (
@@ -107,13 +108,15 @@ export default function TeamLeavesScreen() {
               </TouchableOpacity>
             );
           })}
-        </ScrollView>
+        </ChipScroll>
       </View>
 
       <View style={{ flex: 1 }}>
         <PagedList
           query={query}
           keyExtractor={(l) => String(l.id)}
+          filtersActive={!!search.trim() || statusF !== 'all'}
+          onClearFilters={() => { setSearch(''); setStatusF('all'); }}
           contentContainerStyle={styles.content}
           emptyIcon="checklist"
           emptyTitle={t('leaves.emptyLeaves')}

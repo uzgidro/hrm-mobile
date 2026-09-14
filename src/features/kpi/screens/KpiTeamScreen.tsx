@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, RefreshControl, FlatList, ScrollView,
-} from 'react-native';
+  View, Text, StyleSheet, TouchableOpacity, RefreshControl, FlatList, } from 'react-native';
+import { ChipScroll } from '@/components/ChipScroll';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';
@@ -59,7 +59,7 @@ export default function KpiTeamScreen() {
           <View style={styles.searchWrap}>
             <SearchBox value={search} onChangeText={setSearch} placeholder={t('kpi.teamSearchPlaceholder')} />
           </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+          <ChipScroll contentContainerStyle={styles.chipRow}>
             {STATUS_CHIPS.map((s) => {
               const active = statusF === s.key;
               return (
@@ -68,7 +68,7 @@ export default function KpiTeamScreen() {
                 </TouchableOpacity>
               );
             })}
-          </ScrollView>
+          </ChipScroll>
         </>
       )}
 

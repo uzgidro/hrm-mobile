@@ -3,6 +3,7 @@ import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, Image,
   Platform,
 } from 'react-native';
+import { timeRange } from '@/utils/timeText';
 import dayjs from 'dayjs';
 import type { AttendanceEvent } from '@/types';
 import { router } from 'expo-router';
@@ -212,7 +213,7 @@ export default function HomeScreen() {
                 <Text style={styles.cardTitle}>{t('dashboard.scheduleTitle')}</Text>
               </View>
               {employee?.working_hours_start && (
-                <Text style={styles.scheduleTime}>{employee.working_hours_start} – {employee.working_hours_end}</Text>
+                <Text style={styles.scheduleTime}>{timeRange(employee.working_hours_start, employee.working_hours_end)}</Text>
               )}
             </View>
             <View style={styles.attendanceRow}>

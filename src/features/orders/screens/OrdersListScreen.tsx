@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  View, Text, ScrollView, StyleSheet,
+  View, Text, StyleSheet,
   TouchableOpacity,
 } from 'react-native';
+import { ChipScroll } from '@/components/ChipScroll';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -38,7 +39,9 @@ export default function OrdersListScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { t } = useTranslation();
-  const [tab, setTab] = useState<OrdersTab>('action');
+  // Landing tab: "Menda" only when the menu badge says something waits for
+  // me, otherwise "Barchasi" (web default) — see LettersListScreen.
+  const [tabChoice, setTabChoice] = useState<OrdersTab | null>(null);
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebouncedValue(search);
   const [categoryFilter, setCategoryFilter] = useState<number | 'all'>('all');
@@ -48,15 +51,17 @@ export default function OrdersListScreen() {
   const split = bp.isTablet && bp.isLandscape;
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
+  // Same server number the tab bar shows.
+  const { data: badges } = useQuery(menuBadgesQuery());
+  const actionCount = badges?.orders ?? 0;
+  const tab: OrdersTab = tabChoice ?? (actionCount > 0 ? 'action' : 'all');
+  const setTab = setTabChoice;
+
   // Server-paged; tab/chips/search are server params (see `ordersListServerParams`).
   const query = useInfiniteQuery(
     ordersListQuery({ tab, categoryId: categoryFilter, status: statusFilter, search: debouncedSearch, employeeId }),
   );
   const { rows: orders } = usePagedRows(query);
-
-  // Same server number the tab bar shows.
-  const { data: badges } = useQuery(menuBadgesQuery());
-  const actionCount = badges?.orders ?? 0;
 
   const { data: categories = [] } = useQuery(allOrderCategoriesQuery());
   const categoryOptions = useMemo(
@@ -116,23 +121,25 @@ export default function OrdersListScreen() {
       </View>
 
       {categoryOptions.length > 0 && (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+        <ChipScroll contentContainerStyle={styles.chipRow}>
           <FilterChip label={t('orders.filterAllCategories')} active={categoryFilter === 'all'} onPress={() => setCategoryFilter('all')} styles={styles} />
           {categoryOptions.map((c) => (
             <FilterChip key={c.id} label={c.name} active={categoryFilter === c.id} onPress={() => setCategoryFilter(c.id)} styles={styles} />
           ))}
-        </ScrollView>
+        </ChipScroll>
       )}
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+      <ChipScroll contentContainerStyle={styles.chipRow}>
         <FilterChip label={t('orders.filterAllStatuses')} active={statusFilter === 'all'} onPress={() => setStatusFilter('all')} styles={styles} subtle />
         {statusOptions.map((s) => (
           <FilterChip key={s.value} label={s.label} active={statusFilter === s.value} onPress={() => setStatusFilter(s.value)} styles={styles} subtle />
         ))}
-      </ScrollView>
+      </ChipScroll>
 
       <PagedList
         query={query}
+        filtersActive={!!search.trim() || categoryFilter !== 'all' || statusFilter !== 'all'}
+        onClearFilters={() => { setSearch(''); setCategoryFilter('all'); setStatusFilter('all'); }}
         keyExtractor={(o) => String(o.id)}
         emptyIcon="doc"
         emptyTitle={tab === 'action' ? t('orders.emptyAction') : t('orders.emptyAll')}

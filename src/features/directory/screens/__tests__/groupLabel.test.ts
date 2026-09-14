@@ -14,6 +14,9 @@ describe('groupLabel', () => {
   it('same department → no header', () => {
     expect(groupLabel(e({ department_name: 'Kadrlar', branch_id: 1 }), e({ department_name: 'Kadrlar', branch_id: 1 }), name)).toBeNull();
   });
+  it('single-branch scope never names the branch', () => {
+    expect(groupLabel(e({ department_name: 'Kadrlar', branch_id: 1 }), undefined, name, false)).toBe('Kadrlar');
+  });
   it('branch change is named even for the same department name', () => {
     expect(groupLabel(e({ department_name: 'Kadrlar', branch_id: 2 }), e({ department_name: 'Kadrlar', branch_id: 1 }), name)).toBe('Filial B · Kadrlar');
   });

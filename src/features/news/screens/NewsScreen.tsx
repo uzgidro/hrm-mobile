@@ -110,6 +110,8 @@ export default function NewsScreen() {
       <PagedList
         query={query}
         keyExtractor={(item) => String(item.id)}
+        filtersActive={!!search.trim()}
+        onClearFilters={() => setSearch('')}
         numColumns={cols}
         columnWrapperStyle={cols > 1 ? styles.gridRow : undefined}
         contentContainerStyle={styles.content}

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { ChipScroll } from '@/components/ChipScroll';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';
@@ -77,15 +78,17 @@ export default function SupportListScreen() {
       <View style={styles.searchWrap}>
         <SearchBox value={search} onChangeText={setSearch} placeholder={t('support.searchPlaceholder')} />
       </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+      <ChipScroll contentContainerStyle={styles.chipRow}>
         {STATUS_CHIPS.map((c) => (
           <FilterChip key={c.key} label={t(c.labelKey)} active={status === c.key} onPress={() => setStatus(c.key)} styles={styles} subtle />
         ))}
-      </ScrollView>
+      </ChipScroll>
 
       <PagedList
         query={query}
         keyExtractor={(x) => String(x.id)}
+        filtersActive={!!search.trim() || status !== 'all'}
+        onClearFilters={() => { setSearch(''); setStatus('all'); }}
         contentContainerStyle={styles.content}
         emptyIcon="help"
         emptyTitle={t('support.empty')}

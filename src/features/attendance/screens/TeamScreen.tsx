@@ -16,7 +16,7 @@ import { usePrefsStore } from '@/store/prefsStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Employee, WorkLeave, EmployeeBirthday } from '@/types';
-import { canAccessPage } from '@/utils/roles';
+import { canAccessPage, hasSupervisor } from '@/utils/roles';
 import type { RosterEmployee } from '@/utils/attendanceRoster';
 import { useDayRoster } from '@/lib/useDayRoster';
 import { leaveStatusGroup } from '@/utils/leaveStatus';
@@ -270,9 +270,14 @@ export default function TeamScreen() {
               );
             })
           )}
-          <TouchableOpacity style={styles.primaryBtn} onPress={() => router.push('/create-leave')}>
-            <Text style={styles.primaryBtnText}>{t('attendance.createRequest')}</Text>
-          </TouchableOpacity>
+          {/* Web parity (RequestPermissionPage.canCreatePermission): only someone
+              WITH a supervisor can file a request — a top-level manager has
+              nobody to send it to, and /work-leaves hides its FAB for them. */}
+          {hasSupervisor(user) && (
+            <TouchableOpacity style={styles.primaryBtn} onPress={() => router.push('/create-leave')}>
+              <Text style={styles.primaryBtnText}>{t('attendance.createRequest')}</Text>
+            </TouchableOpacity>
+          )}
         </SectionCard>
 
         <SectionCard icon="users" title={t('attendance.teamTitle')} rightLabel={canAccessPage(user, 'employees') ? t('common.all') : undefined} onRightPress={() => router.push('/employees-list')} loading={rosterQ.isLoading} colors={colors} styles={styles}>

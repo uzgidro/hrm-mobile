@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  View, Text, ScrollView, StyleSheet, TouchableOpacity,
+  View, Text, StyleSheet, TouchableOpacity,
 } from 'react-native';
+import { ChipScroll } from '@/components/ChipScroll';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -41,7 +42,10 @@ export default function LettersListScreen() {
   const employeeId = user?.employee?.id;
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const [tab, setTab] = useState<LettersTab>('action');
+  // Landing tab: "Menda" only when something actually waits for me (the
+  // menu-badge number), otherwise "Barchasi" (web default) — an empty "Menda"
+  // on open read as "the filters are broken" (user screenshot 2026-09-14).
+  const [tabChoice, setTabChoice] = useState<LettersTab | null>(null);
   const bp = useBreakpoint();
   const split = bp.isTablet && bp.isLandscape;
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -56,6 +60,8 @@ export default function LettersListScreen() {
   // not a JS count over the loaded page.
   const { data: badges } = useQuery(menuBadgesQuery());
   const actionCount = badges?.letters ?? 0;
+  const tab: LettersTab = tabChoice ?? (actionCount > 0 ? 'action' : 'all');
+  const setTab = setTabChoice;
 
   const statusOptions = useMemo(() => letterStatusOptions(typeFilter), [typeFilter]);
   // A status chip that does not exist for the picked type reads as "all"
@@ -114,7 +120,7 @@ export default function LettersListScreen() {
         <SearchBox value={search} onChangeText={setSearch} placeholder={t('letters.searchPlaceholder')} />
       </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+      <ChipScroll contentContainerStyle={styles.chipRow}>
         {TYPE_FILTERS.map((tf) => (
           <FilterChip
             key={tf}
@@ -124,18 +130,20 @@ export default function LettersListScreen() {
             styles={styles}
           />
         ))}
-      </ScrollView>
+      </ChipScroll>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+      <ChipScroll contentContainerStyle={styles.chipRow}>
         <FilterChip label={t('letters.filterAllStatuses')} active={effectiveStatus === 'all'} onPress={() => setStatusFilter('all')} styles={styles} subtle />
         {statusOptions.map((s) => (
           <FilterChip key={s.value} label={s.label} active={effectiveStatus === s.value} onPress={() => setStatusFilter(s.value)} styles={styles} subtle />
         ))}
-      </ScrollView>
+      </ChipScroll>
 
       <PagedList
         query={query}
         keyExtractor={(l) => String(l.id)}
+        filtersActive={!!search.trim() || typeFilter !== 'all' || effectiveStatus !== 'all'}
+        onClearFilters={() => { setSearch(''); setTypeFilter('all'); setStatusFilter('all'); }}
         emptyIcon="mail"
         emptyTitle={tab === 'action' ? t('letters.emptyAction') : t('letters.empty')}
         renderItem={(l) => (

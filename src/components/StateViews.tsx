@@ -24,10 +24,15 @@ export function EmptyState({
   title,
   message,
   icon = 'inbox',
+  actionLabel,
+  onAction,
 }: {
   title: string;
   message?: string;
   icon?: IconName;
+  /** Optional one-tap way out (e.g. "clear filters" when a filtered list is empty). */
+  actionLabel?: string;
+  onAction?: () => void;
 }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -38,6 +43,11 @@ export function EmptyState({
       </View>
       <Text style={styles.title}>{title}</Text>
       {!!message && <Text style={styles.dim}>{message}</Text>}
+      {!!onAction && !!actionLabel && (
+        <Pressable onPress={onAction} style={styles.retry} hitSlop={8} testID="empty-action">
+          <Text style={styles.retryText}>{actionLabel}</Text>
+        </Pressable>
+      )}
     </View>
   );
 }

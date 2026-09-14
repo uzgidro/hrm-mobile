@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, Linking, ScrollView, Modal,
+  View, Text, StyleSheet, TouchableOpacity, Linking, Modal,
 } from 'react-native';
+import { ChipScroll } from '@/components/ChipScroll';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
@@ -84,6 +85,9 @@ export default function PhoneDirectoryScreen() {
 
   const dial = (phone: string) => Linking.openURL(`tel:${phone.replace(/\s+/g, '')}`);
   const branchName = (id?: number | null) => branches.find((b) => b.id === id)?.name ?? null;
+  // Branch named in headers only when the list spans several branches
+  // ("all system branches"); a single-branch scope already says which one.
+  const multiBranch = scope === 'system' && systemBranchId == null;
 
   /* IKKI RAQAMLI TANLOV (foydalanuvchi so'rovi 2026-09-07).
    *
@@ -118,14 +122,14 @@ export default function PhoneDirectoryScreen() {
               onPress={() => { setScopeChoice('system'); setBranchChoice(null); }} styles={styles} />
           </View>
           {scope === 'system' && systemBranches.length > 0 && (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.branchRow}>
+            <ChipScroll contentContainerStyle={styles.branchRow}>
               <BranchChip label={t('directory.allBranches')} active={systemBranchId == null}
                 onPress={() => setBranchChoice(null)} styles={styles} />
               {systemBranches.map((b) => (
                 <BranchChip key={b.id} label={b.name} active={systemBranchId === b.id}
                   onPress={() => setBranchChoice(b.id)} styles={styles} />
               ))}
-            </ScrollView>
+            </ChipScroll>
           )}
         </View>
       )}
@@ -133,6 +137,9 @@ export default function PhoneDirectoryScreen() {
       <PagedList
         query={query}
         keyExtractor={(item) => String(item.id)}
+        filtersActive={isSearching}
+        onClearFilters={() => setSearch('')}
+        countStyle={styles.listCount}
         numColumns={cols}
         columnWrapperStyle={cols > 1 ? styles.gridRow : undefined}
         contentContainerStyle={styles.list}
@@ -145,8 +152,8 @@ export default function PhoneDirectoryScreen() {
                 header wherever the department (or branch, in the "all
                 branches" scope) changes reproduces the web's grouping. Not in
                 the grid (multi-column rows) and not for search hits. */}
-            {cols === 1 && !isSearching && groupLabel(item, rows[index - 1], branchName) ? (
-              <Text style={styles.groupHeader} numberOfLines={1}>{groupLabel(item, rows[index - 1], branchName)}</Text>
+            {cols === 1 && !isSearching && groupLabel(item, rows[index - 1], branchName, multiBranch) ? (
+              <Text style={styles.groupHeader} numberOfLines={2}>{groupLabel(item, rows[index - 1], branchName, multiBranch)}</Text>
             ) : null}
             <DirectoryRow entry={item} styles={styles} colors={colors} onPress={onPhonePress} t={t} grid={cols > 1} />
           </>
@@ -173,12 +180,13 @@ export function groupLabel(
   cur: PhoneDirectoryEntry,
   prev: PhoneDirectoryEntry | undefined,
   branchName: (id?: number | null) => string | null,
+  multiBranch = true,
 ): string | null {
   const branchChanged = !prev || prev.branch_id !== cur.branch_id;
   const deptChanged = !prev || prev.department_name !== cur.department_name;
   if (!branchChanged && !deptChanged) return null;
   const dept = cur.department_name || '—';
-  const br = branchChanged ? branchName(cur.branch_id) : null;
+  const br = multiBranch && branchChanged ? branchName(cur.branch_id) : null;
   return br ? `${br} · ${dept}` : dept;
 }
 
@@ -320,8 +328,9 @@ const makeStyles = (c: ThemeColors) =>
     branchChipTextActive: { color: c.primary },
 
     list: { paddingHorizontal: 0, paddingTop: 4, paddingBottom: 32 },
+    listCount: { paddingHorizontal: 16 },
     separator: { height: 1, backgroundColor: c.cardBorder, marginLeft: 76 },
-    groupHeader: { fontSize: 12, fontWeight: '800', color: c.textMuted, textTransform: 'uppercase', letterSpacing: 0.4, paddingHorizontal: 4, paddingTop: 14, paddingBottom: 6 },
+    groupHeader: { fontSize: 12, fontWeight: '800', color: c.textMuted, textTransform: 'uppercase', letterSpacing: 0.4, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 6 },
     gridRow: { gap: 12, paddingHorizontal: 16 },
 
     row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 12, backgroundColor: c.bg },

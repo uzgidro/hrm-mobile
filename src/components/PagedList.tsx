@@ -6,7 +6,7 @@
 // Screens keep their own header/tabs/search above it; pass those through
 // `header` when they should scroll with the rows.
 import { useMemo, type ReactElement, type ReactNode } from 'react';
-import { ActivityIndicator, FlatList, type FlatListProps, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, type FlatListProps, RefreshControl, StyleSheet, type StyleProp, Text, type TextStyle, View } from 'react-native';
 import type { UseInfiniteQueryResult, InfiniteData } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
@@ -30,6 +30,13 @@ interface Props<T> extends Pick<FlatListProps<T>, 'numColumns' | 'columnWrapperS
   header?: ReactNode;
   /** Hide the "N / total" caption (e.g. inside a split master pane). */
   hideCount?: boolean;
+  /** Extra style for the caption (a list with edge-to-edge rows re-adds the gutter). */
+  countStyle?: StyleProp<TextStyle>;
+  /** When the screen has a search/chip filter active, the empty state says
+   *  "nothing matches" and offers to clear it instead of the module's generic
+   *  "nothing here" (which read as "the filters are broken"). */
+  filtersActive?: boolean;
+  onClearFilters?: () => void;
   /** Called with the flattened rows whenever they change (split-view selection). */
   onRows?: (rows: T[]) => void;
 }
@@ -42,7 +49,8 @@ export function usePagedRows<T>(query: Query<T>): { rows: T[]; total: number | u
 }
 
 export function PagedList<T>({
-  query, renderItem, keyExtractor, emptyTitle, emptyMessage, emptyIcon = 'inbox', header, hideCount,
+  query, renderItem, keyExtractor, emptyTitle, emptyMessage, emptyIcon = 'inbox', header, hideCount, countStyle,
+  filtersActive, onClearFilters,
   numColumns, columnWrapperStyle, contentContainerStyle, ItemSeparatorComponent,
 }: Props<T>) {
   const { t } = useTranslation();
@@ -87,7 +95,7 @@ export function PagedList<T>({
         <>
           {header}
           {!hideCount && total != null && rows.length > 0 && (
-            <Text style={styles.count} accessibilityRole="text">
+            <Text style={[styles.count, countStyle]} accessibilityRole="text">
               {t('common.listCount', { shown: rows.length, total })}
             </Text>
           )}
@@ -95,7 +103,17 @@ export function PagedList<T>({
       }
       ListEmptyComponent={
         <View style={styles.emptyWrap}>
-          <EmptyState icon={emptyIcon} title={emptyTitle} message={emptyMessage} />
+          {filtersActive ? (
+            <EmptyState
+              icon="search"
+              title={t('common.noMatch')}
+              message={t('common.noMatchHint')}
+              actionLabel={onClearFilters ? t('common.clearFilters') : undefined}
+              onAction={onClearFilters}
+            />
+          ) : (
+            <EmptyState icon={emptyIcon} title={emptyTitle} message={emptyMessage} />
+          )}
         </View>
       }
       ListFooterComponent={

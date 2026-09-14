@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import {
-  View, Text, ScrollView, StyleSheet,
+  View, Text, StyleSheet,
   TouchableOpacity,
 } from 'react-native';
+import { ChipScroll } from '@/components/ChipScroll';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import dayjs from 'dayjs';
@@ -152,7 +153,7 @@ export default function WorkLeavesScreen() {
       />
 
       <View style={styles.filterWrapper}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
+        <ChipScroll contentContainerStyle={styles.filterRow}>
           {filters.map((f) => {
             const active = activeFilter === f.key;
             return (
@@ -168,7 +169,7 @@ export default function WorkLeavesScreen() {
               </TouchableOpacity>
             );
           })}
-        </ScrollView>
+        </ChipScroll>
       </View>
 
       <View style={styles.searchWrap}>
@@ -179,6 +180,8 @@ export default function WorkLeavesScreen() {
         <PagedList
           query={query}
           keyExtractor={(l) => String(l.id)}
+          filtersActive={!!search.trim() || (isSupervisor ? incomingFilter !== 'action' : myFilter !== 'all')}
+          onClearFilters={() => { setSearch(''); setIncomingFilter('action'); setMyFilter('all'); }}
           numColumns={cols}
           columnWrapperStyle={cols > 1 ? styles.wrapRow : undefined}
           contentContainerStyle={styles.content}

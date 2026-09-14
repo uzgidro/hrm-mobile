@@ -20,4 +20,7 @@ export default {
   draftFoundTitle: 'Есть несохранённый черновик',
   draftFoundMessage: 'Текст, введённый в прошлый раз, сохранён',
   draftRestore: 'Восстановить',
+  noMatch: 'По фильтру ничего не найдено',
+  noMatchHint: 'Измените поиск или выбранные фильтры',
+  clearFilters: 'Сбросить фильтры',
 } as const;

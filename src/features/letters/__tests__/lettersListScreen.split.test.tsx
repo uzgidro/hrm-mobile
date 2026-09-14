@@ -77,6 +77,9 @@ describe('LettersListScreen (tablet-landscape split)', () => {
   }, 15000);
 
   it('re-anchors selectedId when the selected letter falls out of `sorted` (e.g. switching tabs)', async () => {
+    // Landing tab is "Menda" only when the menu badge says something waits
+    // (2026-09-14); this scenario starts there.
+    mock.onGet(new RegExp('menu-badges')).reply(200, { letters: 1 });
     (useWindowDimensions as jest.Mock).mockReturnValue(TABLET_LANDSCAPE);
     //  • id 1 — `action_required` (mening amalim kutilmoqda), lekin muallifi men EMASman;
     //  • id 2 — men yozganman (`creator_employee_id`), amal kutilmayapti.
