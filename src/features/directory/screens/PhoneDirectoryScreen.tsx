@@ -137,6 +137,8 @@ export default function PhoneDirectoryScreen() {
       <PagedList
         query={query}
         keyExtractor={(item) => String(item.id)}
+        filtersActive={isSearching}
+        onClearFilters={() => setSearch('')}
         countStyle={styles.listCount}
         numColumns={cols}
         columnWrapperStyle={cols > 1 ? styles.gridRow : undefined}

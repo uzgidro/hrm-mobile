@@ -107,6 +107,8 @@ export default function MehmonlarScreen() {
       <PagedList
         query={query}
         keyExtractor={(v) => String(v.id)}
+        filtersActive={!!search.trim()}
+        onClearFilters={() => setSearch('')}
         numColumns={cols}
         columnWrapperStyle={cols > 1 ? styles.gridRow : undefined}
         contentContainerStyle={styles.content}

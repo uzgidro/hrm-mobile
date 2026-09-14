@@ -142,6 +142,8 @@ export default function LettersListScreen() {
       <PagedList
         query={query}
         keyExtractor={(l) => String(l.id)}
+        filtersActive={!!search.trim() || typeFilter !== 'all' || effectiveStatus !== 'all'}
+        onClearFilters={() => { setSearch(''); setTypeFilter('all'); setStatusFilter('all'); }}
         emptyIcon="mail"
         emptyTitle={tab === 'action' ? t('letters.emptyAction') : t('letters.empty')}
         renderItem={(l) => (

@@ -22,4 +22,7 @@ export default {
   draftFoundTitle: 'Saqlanmagan qoralama bor',
   draftFoundMessage: 'Oxirgi safar yozgan matningiz saqlab qolingan',
   draftRestore: 'Tiklash',
+  noMatch: 'Filtrga mos yozuv topilmadi',
+  noMatchHint: "Qidiruv yoki tanlangan filtrlarni o'zgartirib ko'ring",
+  clearFilters: 'Filtrlarni tozalash',
 } as const;

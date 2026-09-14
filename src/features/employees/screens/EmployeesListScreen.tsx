@@ -100,6 +100,8 @@ export default function EmployeesListScreen() {
       <PagedList
         query={query}
         keyExtractor={(item) => String(item.id)}
+        filtersActive={!!search.trim() || deptFilter !== 'all' || posFilter !== 'all'}
+        onClearFilters={() => { setSearch(''); setDeptFilter('all'); setPosFilter('all'); }}
         numColumns={cols}
         columnWrapperStyle={cols > 1 ? styles.gridRow : undefined}
         contentContainerStyle={styles.list}

@@ -20,4 +20,7 @@ export default {
   draftFoundTitle: 'Unsaved draft found',
   draftFoundMessage: 'The text you typed last time was kept',
   draftRestore: 'Restore',
+  noMatch: 'Nothing matches the filters',
+  noMatchHint: 'Try changing the search or the selected filters',
+  clearFilters: 'Clear filters',
 } as const;

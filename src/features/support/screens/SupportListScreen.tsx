@@ -87,6 +87,8 @@ export default function SupportListScreen() {
       <PagedList
         query={query}
         keyExtractor={(x) => String(x.id)}
+        filtersActive={!!search.trim() || status !== 'all'}
+        onClearFilters={() => { setSearch(''); setStatus('all'); }}
         contentContainerStyle={styles.content}
         emptyIcon="help"
         emptyTitle={t('support.empty')}

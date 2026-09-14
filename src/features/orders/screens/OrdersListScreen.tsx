@@ -138,6 +138,8 @@ export default function OrdersListScreen() {
 
       <PagedList
         query={query}
+        filtersActive={!!search.trim() || categoryFilter !== 'all' || statusFilter !== 'all'}
+        onClearFilters={() => { setSearch(''); setCategoryFilter('all'); setStatusFilter('all'); }}
         keyExtractor={(o) => String(o.id)}
         emptyIcon="doc"
         emptyTitle={tab === 'action' ? t('orders.emptyAction') : t('orders.emptyAll')}

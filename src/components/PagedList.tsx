@@ -32,6 +32,11 @@ interface Props<T> extends Pick<FlatListProps<T>, 'numColumns' | 'columnWrapperS
   hideCount?: boolean;
   /** Extra style for the caption (a list with edge-to-edge rows re-adds the gutter). */
   countStyle?: StyleProp<TextStyle>;
+  /** When the screen has a search/chip filter active, the empty state says
+   *  "nothing matches" and offers to clear it instead of the module's generic
+   *  "nothing here" (which read as "the filters are broken"). */
+  filtersActive?: boolean;
+  onClearFilters?: () => void;
   /** Called with the flattened rows whenever they change (split-view selection). */
   onRows?: (rows: T[]) => void;
 }
@@ -45,6 +50,7 @@ export function usePagedRows<T>(query: Query<T>): { rows: T[]; total: number | u
 
 export function PagedList<T>({
   query, renderItem, keyExtractor, emptyTitle, emptyMessage, emptyIcon = 'inbox', header, hideCount, countStyle,
+  filtersActive, onClearFilters,
   numColumns, columnWrapperStyle, contentContainerStyle, ItemSeparatorComponent,
 }: Props<T>) {
   const { t } = useTranslation();
@@ -97,7 +103,17 @@ export function PagedList<T>({
       }
       ListEmptyComponent={
         <View style={styles.emptyWrap}>
-          <EmptyState icon={emptyIcon} title={emptyTitle} message={emptyMessage} />
+          {filtersActive ? (
+            <EmptyState
+              icon="search"
+              title={t('common.noMatch')}
+              message={t('common.noMatchHint')}
+              actionLabel={onClearFilters ? t('common.clearFilters') : undefined}
+              onAction={onClearFilters}
+            />
+          ) : (
+            <EmptyState icon={emptyIcon} title={emptyTitle} message={emptyMessage} />
+          )}
         </View>
       }
       ListFooterComponent={

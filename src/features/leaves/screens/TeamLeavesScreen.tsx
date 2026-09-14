@@ -115,6 +115,8 @@ export default function TeamLeavesScreen() {
         <PagedList
           query={query}
           keyExtractor={(l) => String(l.id)}
+          filtersActive={!!search.trim() || statusF !== 'all'}
+          onClearFilters={() => { setSearch(''); setStatusF('all'); }}
           contentContainerStyle={styles.content}
           emptyIcon="checklist"
           emptyTitle={t('leaves.emptyLeaves')}

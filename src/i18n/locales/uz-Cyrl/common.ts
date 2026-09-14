@@ -20,4 +20,7 @@ export default {
   draftFoundTitle: 'Сақланмаган қоралама бор',
   draftFoundMessage: 'Охирги сафар ёзган матнингиз сақлаб қолинган',
   draftRestore: 'Тиклаш',
+  noMatch: 'Филтрга мос ёзув топилмади',
+  noMatchHint: 'Қидирув ёки танланган филтрларни ўзгартириб кўринг',
+  clearFilters: 'Филтрларни тозалаш',
 } as const;

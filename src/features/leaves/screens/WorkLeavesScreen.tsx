@@ -180,6 +180,8 @@ export default function WorkLeavesScreen() {
         <PagedList
           query={query}
           keyExtractor={(l) => String(l.id)}
+          filtersActive={!!search.trim() || (isSupervisor ? incomingFilter !== 'action' : myFilter !== 'all')}
+          onClearFilters={() => { setSearch(''); setIncomingFilter('action'); setMyFilter('all'); }}
           numColumns={cols}
           columnWrapperStyle={cols > 1 ? styles.wrapRow : undefined}
           contentContainerStyle={styles.content}
