@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  View, Text, ScrollView, StyleSheet,
+  View, Text, StyleSheet,
   TouchableOpacity,
 } from 'react-native';
+import { ChipScroll } from '@/components/ChipScroll';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -116,20 +117,20 @@ export default function OrdersListScreen() {
       </View>
 
       {categoryOptions.length > 0 && (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+        <ChipScroll contentContainerStyle={styles.chipRow}>
           <FilterChip label={t('orders.filterAllCategories')} active={categoryFilter === 'all'} onPress={() => setCategoryFilter('all')} styles={styles} />
           {categoryOptions.map((c) => (
             <FilterChip key={c.id} label={c.name} active={categoryFilter === c.id} onPress={() => setCategoryFilter(c.id)} styles={styles} />
           ))}
-        </ScrollView>
+        </ChipScroll>
       )}
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+      <ChipScroll contentContainerStyle={styles.chipRow}>
         <FilterChip label={t('orders.filterAllStatuses')} active={statusFilter === 'all'} onPress={() => setStatusFilter('all')} styles={styles} subtle />
         {statusOptions.map((s) => (
           <FilterChip key={s.value} label={s.label} active={statusFilter === s.value} onPress={() => setStatusFilter(s.value)} styles={styles} subtle />
         ))}
-      </ScrollView>
+      </ChipScroll>
 
       <PagedList
         query={query}

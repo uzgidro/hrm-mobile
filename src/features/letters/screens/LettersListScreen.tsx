@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  View, Text, ScrollView, StyleSheet, TouchableOpacity,
+  View, Text, StyleSheet, TouchableOpacity,
 } from 'react-native';
+import { ChipScroll } from '@/components/ChipScroll';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -114,7 +115,7 @@ export default function LettersListScreen() {
         <SearchBox value={search} onChangeText={setSearch} placeholder={t('letters.searchPlaceholder')} />
       </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+      <ChipScroll contentContainerStyle={styles.chipRow}>
         {TYPE_FILTERS.map((tf) => (
           <FilterChip
             key={tf}
@@ -124,14 +125,14 @@ export default function LettersListScreen() {
             styles={styles}
           />
         ))}
-      </ScrollView>
+      </ChipScroll>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+      <ChipScroll contentContainerStyle={styles.chipRow}>
         <FilterChip label={t('letters.filterAllStatuses')} active={effectiveStatus === 'all'} onPress={() => setStatusFilter('all')} styles={styles} subtle />
         {statusOptions.map((s) => (
           <FilterChip key={s.value} label={s.label} active={effectiveStatus === s.value} onPress={() => setStatusFilter(s.value)} styles={styles} subtle />
         ))}
-      </ScrollView>
+      </ChipScroll>
 
       <PagedList
         query={query}

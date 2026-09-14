@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, ScrollView,
-} from 'react-native';
+  View, Text, StyleSheet, TouchableOpacity, } from 'react-native';
+import { ChipScroll } from '@/components/ChipScroll';
 import { useTranslation } from 'react-i18next';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -79,20 +79,20 @@ export default function EmployeesListScreen() {
       {(deptOptions.length > 1 || posOptions.length > 1) && (
         <View style={styles.filtersWrap}>
           {deptOptions.length > 1 && (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+            <ChipScroll contentContainerStyle={styles.chipRow}>
               <FilterChip label={t('employees.filterAllDepartments')} active={deptFilter === 'all'} onPress={() => setDeptFilter('all')} styles={styles} />
               {deptOptions.map((d) => (
                 <FilterChip key={d.id} label={d.name} active={deptFilter === d.id} onPress={() => setDeptFilter(d.id)} styles={styles} />
               ))}
-            </ScrollView>
+            </ChipScroll>
           )}
           {posOptions.length > 1 && (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+            <ChipScroll contentContainerStyle={styles.chipRow}>
               <FilterChip label={t('employees.filterAllPositions')} active={posFilter === 'all'} onPress={() => setPosFilter('all')} styles={styles} subtle />
               {posOptions.map((p) => (
                 <FilterChip key={p.id} label={p.name} active={posFilter === p.id} onPress={() => setPosFilter(p.id)} styles={styles} subtle />
               ))}
-            </ScrollView>
+            </ChipScroll>
           )}
         </View>
       )}

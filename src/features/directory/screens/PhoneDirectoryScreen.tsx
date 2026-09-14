@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, Linking, ScrollView, Modal,
+  View, Text, StyleSheet, TouchableOpacity, Linking, Modal,
 } from 'react-native';
+import { ChipScroll } from '@/components/ChipScroll';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
@@ -118,14 +119,14 @@ export default function PhoneDirectoryScreen() {
               onPress={() => { setScopeChoice('system'); setBranchChoice(null); }} styles={styles} />
           </View>
           {scope === 'system' && systemBranches.length > 0 && (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.branchRow}>
+            <ChipScroll contentContainerStyle={styles.branchRow}>
               <BranchChip label={t('directory.allBranches')} active={systemBranchId == null}
                 onPress={() => setBranchChoice(null)} styles={styles} />
               {systemBranches.map((b) => (
                 <BranchChip key={b.id} label={b.name} active={systemBranchId === b.id}
                   onPress={() => setBranchChoice(b.id)} styles={styles} />
               ))}
-            </ScrollView>
+            </ChipScroll>
           )}
         </View>
       )}
