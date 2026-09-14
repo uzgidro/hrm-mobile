@@ -1,4 +1,3 @@
-import '../src/services/notifications'; // side effect: sets the foreground notification handler
 import { useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
 import { Stack, router, type Href } from 'expo-router';
@@ -12,6 +11,7 @@ import { useLockStore } from '../src/store/lockStore';
 import { createAppQueryClient } from '../src/lib/queryClient';
 import { wireQueryFocusToAppState } from '../src/lib/queryFocus';
 import { ThemeProvider, useTheme } from '../src/theme/ThemeProvider';
+// Importing the service also installs the foreground notification handler (side effect).
 import { addNotificationListeners } from '../src/services/notifications';
 import { useAuthBootstrap } from '../src/auth/useAuthBootstrap';
 import { useAppLock } from '../src/auth/useAppLock';

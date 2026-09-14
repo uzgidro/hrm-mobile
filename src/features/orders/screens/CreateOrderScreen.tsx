@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
   ScrollView, ActivityIndicator, Alert,
@@ -162,11 +162,13 @@ export default function CreateOrderScreen() {
   const showNumberStatus = numberFieldShown && actNumber.trim() !== '';
 
   // ── Options ──────────────────────────────────────────────────────────────────
-  const empOption = (e: Employee): PickerOption => ({
+  // Stable per language so the memoised option lists below re-map on a
+  // language switch (the fallback label is translated) and on nothing else.
+  const empOption = useCallback((e: Employee): PickerOption => ({
     value: e.id, label: e.legal_name || t('status.unknown'), subLabel: employeeSubLabel(e), photo: e.photo_path ?? null,
-  });
-  const employeeOptions = useMemo(() => (empData?.items ?? []).map(empOption), [empData]);
-  const leadershipOptions = useMemo(() => leadership.map(empOption), [leadership]);
+  }), [t]);
+  const employeeOptions = useMemo(() => (empData?.items ?? []).map(empOption), [empData, empOption]);
+  const leadershipOptions = useMemo(() => leadership.map(empOption), [leadership, empOption]);
   const categoryOptions = useMemo<PickerOption[]>(
     () => categories.map((c) => ({ value: c.id, label: translateCategory(c.name) })),
     [categories]
