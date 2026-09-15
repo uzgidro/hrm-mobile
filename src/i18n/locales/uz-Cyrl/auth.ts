@@ -13,4 +13,13 @@ export default {
   loginError: 'Кириш хатоси',
   invalidCredentials: "Логин ёки парол нотўғри",
   oneIdError: 'OneID орқали киришда хатолик юз берди',
+
+  // Adaptive CAPTCHA + throttle (2026-09-15)
+  captchaLabel: 'Текширув',
+  captchaPlaceholder: 'Расмдаги белгилар',
+  captchaHint: 'Бир неча нотўғри уринишдан сўнг расмдаги белгиларни киритиш талаб қилинади.',
+  captchaRefresh: 'Бошқа расм',
+  captchaRequired: 'Расмдаги белгиларни киритинг',
+  captchaInvalid: 'Расмдаги белгилар нотўғри — янги расм бўйича қайта киритинг',
+  tooManyAttempts: 'Жуда кўп уриниш. Бир неча дақиқадан сўнг қайта урининг',
 } as const;

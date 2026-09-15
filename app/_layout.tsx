@@ -21,6 +21,7 @@ import { ToastHost } from '../src/components/ToastHost';
 import { ConfirmHost } from '../src/components/ConfirmHost';
 import UpdatingOverlay from '../src/components/UpdatingOverlay';
 import LockOverlay from '../src/features/security/components/LockOverlay';
+import PasswordGateOverlay from '../src/features/security/components/PasswordGateOverlay';
 import { useOtaGateStore } from '../src/store/otaGateStore';
 
 const queryClient = createAppQueryClient();
@@ -32,6 +33,9 @@ function ThemedNavigation() {
   const isLoading = useAuthStore((s) => s.isLoading);
   const lockStatus = useLockStore((s) => s.status);
   const otaGatePhase = useOtaGateStore((s) => s.phase);
+  // Password rotation gate: the server says the password MUST be changed
+  // (`/auth/me`, or a 403 `password_expired` caught by the api client).
+  const passwordMustChange = useAuthStore((s) => !!s.user?.password_must_change);
 
   // Resolve the session at launch (seeds the store, drives the native splash).
   // Routing is declarative below via Stack.Protected on isAuthenticated.
@@ -151,6 +155,8 @@ function ThemedNavigation() {
       {/* Global confirm dialogs (logout, delete, reject, update) rendered once
           here so imperative confirm() works from hooks and services too. */}
       <ConfirmHost />
+      {/* Password rotation: below the PIN gate (unlock first), above the app. */}
+      {isAuthenticated && passwordMustChange && <PasswordGateOverlay />}
       {/* Above everything (incl. toasts): the PIN gate covers the whole app. */}
       {lockVisible && <LockOverlay />}
       {/* Above the PIN gate too: there is no native splash configured (no

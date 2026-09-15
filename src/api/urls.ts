@@ -4,6 +4,10 @@ import { Env } from '../config/env';
 
 export const AUTH_LOGIN = 'auth/login';
 export const USER_INFO = 'auth/me';
+/** Self-hosted image CAPTCHA for the login form (backend core/captcha.py). */
+export const AUTH_CAPTCHA = 'auth/captcha';
+/** Own password change — works for every account type (no employee row needed). */
+export const AUTH_ME_PASSWORD = 'auth/me/password';
 
 // OneID (YaIT) SSO — mobile flow. SSO_LOGIN is opened in the system browser
 // (not called via apiClient); SSO_EXCHANGE trades the one-time code for tokens.

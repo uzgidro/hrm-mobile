@@ -13,4 +13,13 @@ export default {
   loginError: 'Sign-in error',
   invalidCredentials: 'Invalid username or password',
   oneIdError: 'Could not sign in with OneID',
+
+  // Adaptive CAPTCHA + throttle (2026-09-15)
+  captchaLabel: 'Verification',
+  captchaPlaceholder: 'Characters from the image',
+  captchaHint: 'After a few failed attempts you must type the characters shown in the image.',
+  captchaRefresh: 'Another image',
+  captchaRequired: 'Type the characters from the image',
+  captchaInvalid: 'The characters are wrong — try again with the new image',
+  tooManyAttempts: 'Too many attempts. Try again in a few minutes',
 } as const;

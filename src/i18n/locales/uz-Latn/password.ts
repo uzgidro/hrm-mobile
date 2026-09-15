@@ -1,0 +1,31 @@
+// Password strength meter and the mandatory password-change gate
+// (PasswordGateOverlay). uz-Latn is the source of truth; the other three
+// locales expose the same key set (parity test).
+export default {
+  strength: 'Parol kuchi',
+  level_weak: 'Kuchsiz',
+  level_medium: 'O\'rtacha',
+  level_strong: 'Kuchli',
+  ruleLength: 'Kamida 8 ta belgi',
+  ruleUpper: 'Katta harf (A–Z)',
+  ruleLower: 'Kichik harf (a–z)',
+  ruleDigit: 'Raqam (0–9)',
+  ruleNoLogin: 'Login parol ichida bo\'lmasin',
+  ruleNotCommon: 'Juda oddiy parol',
+  strongHint: 'Kuchli bo\'lishi uchun 12+ belgi yoki maxsus belgi (!, #, %…) qo\'shing.',
+  notStrongEnough: 'Parol talabga javob bermaydi — ro\'yxatdagi shartlarni bajaring',
+  mismatch: 'Parollar mos kelmadi',
+  current: 'Joriy parol',
+  new: 'Yangi parol',
+  confirm: 'Yangi parolni takrorlang',
+  currentRequired: 'Joriy parolni kiriting',
+  currentWrong: 'Joriy parol noto\'g\'ri',
+  reused: 'Bu parol yaqinda ishlatilgan — oldingi parollardan farq qiladigan yangi parol tanlang',
+  mustChangeTitle: 'Parolni almashtirish shart',
+  mustChangeExpired: 'Parolingiz 6 oydan beri almashtirilmagan. Xavfsizlik talabiga ko\'ra davom etishdan oldin yangi parol o\'rnating.',
+  mustChangeTemporary: 'Sizga vaqtinchalik parol berilgan. Davom etishdan oldin o\'zingizning parolingizni o\'rnating.',
+  changedRelogin: 'Parol almashtirildi. Yangi parol bilan qayta kiring.',
+  save: 'Parolni saqlash',
+  logout: 'Tizimdan chiqish',
+  toggleShow: 'Parolni ko\'rsatish/yashirish',
+} as const;
