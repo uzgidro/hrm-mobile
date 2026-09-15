@@ -86,6 +86,21 @@ apiClient.interceptors.response.use(
       // Refresh failed → tokens are no longer usable.
       await clearTokens();
     }
+    // Password rotation (2026-09-15): the server refuses EVERY route with this
+    // code once the password is past its window. Raise the flag on the cached
+    // user so the root layout shows the mandatory change screen right away,
+    // instead of every screen failing quietly until the next /auth/me.
+    if (error.response?.status === 403 && error.response?.data?.code === 'password_expired') {
+      try {
+        const { useAuthStore } = await import('../store/authStore');
+        const { user } = useAuthStore.getState();
+        if (user && !user.password_must_change) {
+          useAuthStore.getState().setUser({ ...user, password_must_change: true, password_expired: true });
+        }
+      } catch {
+        /* never let the gate break error propagation */
+      }
+    }
     return Promise.reject(error);
   }
 );

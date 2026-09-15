@@ -13,4 +13,13 @@ export default {
   loginError: 'Ошибка входа',
   invalidCredentials: 'Неверный логин или пароль',
   oneIdError: 'Не удалось войти через OneID',
+
+  // Adaptive CAPTCHA + throttle (2026-09-15)
+  captchaLabel: 'Проверка',
+  captchaPlaceholder: 'Символы с картинки',
+  captchaHint: 'После нескольких неудачных попыток требуется ввести символы с картинки.',
+  captchaRefresh: 'Другая картинка',
+  captchaRequired: 'Введите символы с картинки',
+  captchaInvalid: 'Символы с картинки неверны — введите по новой картинке',
+  tooManyAttempts: 'Слишком много попыток. Повторите через несколько минут',
 } as const;

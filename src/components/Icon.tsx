@@ -61,7 +61,8 @@ export type IconName =
   | 'fingerprint'
   | 'help'
   | 'backspace'
-  | 'mapPin';
+  | 'mapPin'
+  | 'refresh';
 
 type Props = {
   name: IconName;
@@ -334,6 +335,16 @@ function render(name: IconName, p: any) {
         <>
           <Line x1="6" y1="6" x2="18" y2="18" {...p} />
           <Line x1="18" y1="6" x2="6" y2="18" {...p} />
+        </>
+      );
+    case 'refresh':
+      // Circular arrow (lucide "refresh-cw" shape) — "another CAPTCHA image".
+      return (
+        <>
+          <Path d="M21 12a9 9 0 0 1-15.5 6.2L3 16" {...p} />
+          <Path d="M3 12a9 9 0 0 1 15.5-6.2L21 8" {...p} />
+          <Polyline points="21 3 21 8 16 8" {...p} />
+          <Polyline points="3 21 3 16 8 16" {...p} />
         </>
       );
     case 'check':

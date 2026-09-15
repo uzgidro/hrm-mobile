@@ -15,4 +15,13 @@ export default {
   loginError: 'Kirish xatosi',
   invalidCredentials: "Login yoki parol noto'g'ri",
   oneIdError: "OneID orqali kirishda xatolik yuz berdi",
+
+  // Adaptive CAPTCHA + throttle (2026-09-15)
+  captchaLabel: 'Tekshiruv',
+  captchaPlaceholder: 'Rasmdagi belgilar',
+  captchaHint: 'Bir necha noto\'g\'ri urinishdan so\'ng rasmdagi belgilarni kiritish talab qilinadi.',
+  captchaRefresh: 'Boshqa rasm',
+  captchaRequired: 'Rasmdagi belgilarni kiriting',
+  captchaInvalid: 'Rasmdagi belgilar noto\'g\'ri — yangi rasm bo\'yicha qayta kiriting',
+  tooManyAttempts: 'Juda ko\'p urinish. Bir necha daqiqadan so\'ng qayta urining',
 } as const;

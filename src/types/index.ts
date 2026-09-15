@@ -31,6 +31,17 @@ export interface User {
   // available_actions bayrog'i YO'Q.
   director_branch_ids?: number[];
   deputy_branch_ids?: number[];
+  /** Login the person types (e-mail). Used to keep it out of a new password. */
+  username?: string;
+  /**
+   * Password rotation (`/auth/me`, 2026-09-15). `password_must_change` = the
+   * server refuses every route but the change-password ones (403
+   * `password_expired`) — the root layout covers the app with the mandatory
+   * change screen (`features/security/components/PasswordGateOverlay`).
+   */
+  password_expired?: boolean;
+  password_must_change?: boolean;
+  password_days_left?: number | null;
 }
 
 export interface Employee {

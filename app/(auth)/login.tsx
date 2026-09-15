@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
   StyleSheet, KeyboardAvoidingView, Platform,
-  ActivityIndicator, Alert, Modal, Pressable,
+  ActivityIndicator, Alert, Modal, Pressable, Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Constants from 'expo-constants';
@@ -13,7 +13,7 @@ import { useAuthStore } from '../../src/store/authStore';
 import { useLangStore } from '../../src/store/langStore';
 import { setupPushNotifications } from '../../src/auth/push';
 import { loginWithOneId } from '../../src/auth/oneid';
-import { AUTH_LOGIN, USER_INFO } from '../../src/api/urls';
+import { AUTH_LOGIN, AUTH_CAPTCHA, USER_INFO } from '../../src/api/urls';
 import { useTheme, useThemedStyles } from '../../src/theme/ThemeProvider';
 import type { ThemeColors } from '../../src/theme/palettes';
 import { Icon } from '../../src/components/Icon';
@@ -27,7 +27,28 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [showPass, setShowPass] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
+  // Adaptive CAPTCHA (self-hosted on the API, core/captcha.py). Nobody sees it
+  // on a clean login; after a few wrong passwords the server answers 401 with
+  // `params.captcha_required` (or the code `captcha_required`) and from then
+  // on every attempt carries a solved image. Each image is single-use, so a
+  // failed attempt always fetches a fresh one.
+  const [captcha, setCaptcha] = useState<{ id: string; image: string } | null>(null);
+  const [captchaAnswer, setCaptchaAnswer] = useState('');
+  const [captchaBusy, setCaptchaBusy] = useState(false);
   const { login } = useAuthStore();
+
+  const loadCaptcha = async () => {
+    setCaptchaBusy(true);
+    setCaptchaAnswer('');
+    try {
+      const { data } = await apiClient.get<{ captcha_id: string; image: string }>(AUTH_CAPTCHA);
+      setCaptcha({ id: data.captcha_id, image: data.image });
+    } catch {
+      setCaptcha(null);
+    } finally {
+      setCaptchaBusy(false);
+    }
+  };
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { t } = useTranslation();
@@ -39,11 +60,19 @@ export default function LoginScreen() {
       Alert.alert(t('common.errorTitle'), t('auth.credentialsRequired'));
       return;
     }
+    if (captcha && !captchaAnswer.trim()) {
+      Alert.alert(t('common.errorTitle'), t('auth.captchaRequired'));
+      return;
+    }
     setLoading(true);
     try {
       const formData = new URLSearchParams();
       formData.append('username', username.trim());
       formData.append('password', password.trim());
+      if (captcha) {
+        formData.append('captcha_id', captcha.id);
+        formData.append('captcha_answer', captchaAnswer.trim());
+      }
 
       const { data } = await apiClient.post(AUTH_LOGIN, formData.toString(), {
         headers: {
@@ -65,10 +94,28 @@ export default function LoginScreen() {
       // never blocks or breaks the login flow.
       void setupPushNotifications();
     } catch (e: unknown) {
-      const err = e as { response?: { data?: { detail?: string | { msg: string }[] } } };
-      const detail = err?.response?.data?.detail;
-      const msg = Array.isArray(detail) ? detail[0]?.msg : (detail || t('auth.invalidCredentials'));
-      Alert.alert(t('auth.loginError'), typeof msg === 'string' ? msg : t('errors.generic'));
+      const err = e as {
+        response?: { data?: { detail?: string | { msg: string }[]; code?: string; params?: { captcha_required?: boolean } } };
+      };
+      const data = err?.response?.data;
+      const code = data?.code;
+      if (code === 'captcha_required' || code === 'captcha_invalid' || data?.params?.captcha_required) {
+        // The previous image was consumed by this attempt — always a fresh one.
+        void loadCaptcha();
+      }
+      if (code === 'captcha_required') {
+        Alert.alert(t('auth.loginError'), t('auth.captchaRequired'));
+      } else if (code === 'captcha_invalid') {
+        Alert.alert(t('auth.loginError'), t('auth.captchaInvalid'));
+      } else if (code === 'too_many_login_attempts') {
+        Alert.alert(t('auth.loginError'), t('auth.tooManyAttempts'));
+      } else if (code === 'invalid_credentials') {
+        Alert.alert(t('auth.loginError'), t('auth.invalidCredentials'));
+      } else {
+        const detail = data?.detail;
+        const msg = Array.isArray(detail) ? detail[0]?.msg : (detail || t('auth.invalidCredentials'));
+        Alert.alert(t('auth.loginError'), typeof msg === 'string' ? msg : t('errors.generic'));
+      }
     } finally {
       setLoading(false);
     }
@@ -174,6 +221,39 @@ export default function LoginScreen() {
             </View>
           </View>
 
+          {captcha && (
+            <View style={styles.inputWrapper}>
+              <Text style={styles.label}>{t('auth.captchaLabel')}</Text>
+              <View style={styles.captchaRow}>
+                <Image
+                  source={{ uri: captcha.image }}
+                  style={styles.captchaImage}
+                  resizeMode="contain"
+                  accessibilityLabel={t('auth.captchaLabel')}
+                />
+                <TouchableOpacity
+                  style={styles.eyeBtn}
+                  onPress={loadCaptcha}
+                  disabled={captchaBusy}
+                  accessibilityLabel={t('auth.captchaRefresh')}
+                >
+                  {captchaBusy ? <ActivityIndicator color={colors.textMuted} /> : <Icon name="refresh" size={20} color={colors.textMuted} />}
+                </TouchableOpacity>
+              </View>
+              <TextInput
+                style={[styles.input, styles.captchaInput]}
+                value={captchaAnswer}
+                onChangeText={setCaptchaAnswer}
+                placeholder={t('auth.captchaPlaceholder')}
+                placeholderTextColor={colors.textMuted}
+                autoCapitalize="characters"
+                autoCorrect={false}
+                maxLength={8}
+              />
+              <Text style={styles.captchaHint}>{t('auth.captchaHint')}</Text>
+            </View>
+          )}
+
           <TouchableOpacity
             style={[styles.loginBtn, loading && styles.loginBtnDisabled]}
             onPress={handleLogin}
@@ -251,6 +331,11 @@ const makeStyles = (c: ThemeColors) =>
       paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, color: c.text, marginBottom: 0,
     },
     passwordRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    captchaRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    // The PNG is 168×56; keep its aspect so the glyphs stay readable.
+    captchaImage: { flex: 1, height: 52, borderRadius: 12, backgroundColor: '#F5F7FA', borderWidth: 1, borderColor: c.cardBorder },
+    captchaInput: { letterSpacing: 4, textTransform: 'uppercase' },
+    captchaHint: { fontSize: 11, color: c.textMuted },
     eyeBtn: { width: 52, height: 52, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
     eyeText: { fontSize: 18 },
 
