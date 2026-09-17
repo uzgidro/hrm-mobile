@@ -85,6 +85,8 @@ export default {
   fleetFallback: 'Автопарк',
   workspaceDeleted: 'Лойиҳа ўчирилди',
   zoomOrganizerChanged: 'Zoom ташкилотчиси ўзгарди',
+  zoomLiveStarted: 'Zoom йиғилиши бошланди',
+  zoomRecordingReady: 'Zoom ёзуви тайёр',
   medicalFallback: 'Тиббий кўрик',
   pendingActionDigest: 'Сизни кутаётган ҳужжатлар',
   channelName: 'Билдиришномалар',

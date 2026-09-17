@@ -370,6 +370,10 @@ const NOTIF_META: Record<string, { titleKey: string; icon: IconName }> = {
   driver_trip_created: { titleKey: 'notifications.driverTripCreated', icon: 'briefcase' },
   workspace_deleted: { titleKey: 'notifications.workspaceDeleted', icon: 'close' },
   zoom_organizer_changed: { titleKey: 'notifications.zoomOrganizerChanged', icon: 'phone' },
+  // 2026-09-17: yig'ilish Zoom'da boshlandi (HRM'dan «Boshlash» bosilmagan)
+  // va bulut yozuvi tayyor — ikkalasi ham Zoom sahifasiga olib boradi.
+  zoom_live_started: { titleKey: 'notifications.zoomLiveStarted', icon: 'phone' },
+  zoom_recording_ready: { titleKey: 'notifications.zoomRecordingReady', icon: 'phone' },
   // Kunlik yig'ma: "sizni N ta hujjat kutmoqda".
   pending_action_digest: { titleKey: 'notifications.pendingActionDigest', icon: 'bell' },
   work_leave_requested: { titleKey: 'notifications.workLeaveRequested', icon: 'calendar' },

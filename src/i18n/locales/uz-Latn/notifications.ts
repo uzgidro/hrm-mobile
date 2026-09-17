@@ -97,6 +97,8 @@ export default {
   fleetFallback: 'Avtopark',
   workspaceDeleted: 'Loyiha o\'chirildi',
   zoomOrganizerChanged: 'Zoom tashkilotchisi o\'zgardi',
+  zoomLiveStarted: 'Zoom yig\'ilishi boshlandi',
+  zoomRecordingReady: 'Zoom yozuvi tayyor',
   medicalFallback: 'Tibbiy ko\'rik',
   pendingActionDigest: 'Sizni kutayotgan hujjatlar',
   // Android bildirishnoma kanali nomi (tizim sozlamalarida ko'rinadi)
