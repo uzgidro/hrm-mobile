@@ -85,6 +85,8 @@ export default {
   fleetFallback: 'Автопарк',
   workspaceDeleted: 'Проект удалён',
   zoomOrganizerChanged: 'Организатор Zoom изменён',
+  zoomLiveStarted: 'Zoom-встреча началась',
+  zoomRecordingReady: 'Запись Zoom готова',
   medicalFallback: 'Медосмотр',
   pendingActionDigest: 'Документы ждут вас',
   channelName: 'Уведомления',

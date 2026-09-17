@@ -85,6 +85,8 @@ export default {
   fleetFallback: 'Fleet',
   workspaceDeleted: 'Project deleted',
   zoomOrganizerChanged: 'Zoom organizer changed',
+  zoomLiveStarted: 'Zoom meeting started',
+  zoomRecordingReady: 'Zoom recording ready',
   medicalFallback: 'Medical check-up',
   pendingActionDigest: 'Documents awaiting you',
   channelName: 'Notifications',
