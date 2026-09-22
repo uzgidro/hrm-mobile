@@ -4,6 +4,7 @@ export default {
 
   // Server `code` -> text. `src/api/errors.ts` looks these up BEFORE falling
   // back to the server's own sentence, which is always Uzbek.
+  attendance_period_locked: 'Давомат даври ёпилган — аввал даврни очинг',
   forbidden: 'Ruxsat yo\'q',
   not_authorized: 'Bu amalga ruxsatingiz yo\'q',
   extension_not_later: 'Янги қайтиш санаси жорий санадан кейин бўлиши керак',

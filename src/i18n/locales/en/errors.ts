@@ -4,6 +4,7 @@ export default {
 
   // Server `code` -> text. `src/api/errors.ts` looks these up BEFORE falling
   // back to the server's own sentence, which is always Uzbek.
+  attendance_period_locked: 'The attendance period is closed — reopen it first',
   forbidden: 'Access denied',
   not_authorized: 'You are not allowed to do this',
   extension_not_later: 'The new return date must be later than the current one',
