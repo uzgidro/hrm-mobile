@@ -112,4 +112,10 @@ export default {
   supportTicketReopened: 'Ticket reopened',
   workspaceMemberRemoved: 'Removed from project',
   employeeAssignmentAdded: 'Concurrent post assigned',
+  serviceRequest: 'Interactive service',
+  transferCreated: 'Branch transfer',
+  transferRejected: 'Transfer rejected',
+  vacancy: 'Vacancy',
+  vacancyApplication: 'Vacancy application',
+  learningCourseAssigned: 'Course assigned',
 } as const;

@@ -112,4 +112,10 @@ export default {
   supportTicketReopened: 'Заявка открыта повторно',
   workspaceMemberRemoved: 'Вас исключили из проекта',
   employeeAssignmentAdded: 'Назначено внутреннее совместительство',
+  serviceRequest: 'Интерактивная услуга',
+  transferCreated: 'Перевод в филиал',
+  transferRejected: 'Перевод отклонён',
+  vacancy: 'Вакансия',
+  vacancyApplication: 'Заявка на вакансию',
+  learningCourseAssigned: 'Назначен курс',
 } as const;

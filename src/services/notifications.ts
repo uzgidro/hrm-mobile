@@ -388,6 +388,14 @@ const NOTIF_META: Record<string, { titleKey: string; icon: IconName }> = {
   work_leave_requested: { titleKey: 'notifications.workLeaveRequested', icon: 'calendar' },
   work_leave_signed: { titleKey: 'notifications.workLeaveSigned', icon: 'check' },
   work_leave_rejected: { titleKey: 'notifications.workLeaveRejected', icon: 'close' },
+  // 2026-09-22: types the live base carries that fell through to the generic
+  // «Bildirishnoma» — measured on TEST (service requests alone: 117 rows).
+  service_request: { titleKey: 'notifications.serviceRequest', icon: 'help' },
+  employee_transfer_created: { titleKey: 'notifications.transferCreated', icon: 'briefcase' },
+  employee_transfer_rejected: { titleKey: 'notifications.transferRejected', icon: 'close' },
+  vacancy: { titleKey: 'notifications.vacancy', icon: 'briefcase' },
+  vacancy_application: { titleKey: 'notifications.vacancyApplication', icon: 'briefcase' },
+  learning_course_assigned: { titleKey: 'notifications.learningCourseAssigned', icon: 'checklist' },
 };
 
 // Human-readable title + icon for an in-app notification, derived from its
@@ -422,5 +430,12 @@ export function notificationMeta(type: string): { title: string; icon: IconName 
     return { title: i18n.t('notifications.fleetFallback'), icon: 'briefcase' };
   if (t.startsWith('medical'))
     return { title: i18n.t('notifications.medicalFallback'), icon: 'clock' };
+  if (t.startsWith('service_request'))
+    return { title: i18n.t('notifications.serviceRequest'), icon: 'help' };
+  if (t.startsWith('employee_transfer'))
+    return { title: i18n.t('notifications.transferCreated'), icon: 'briefcase' };
+  if (t.startsWith('vacancy')) return { title: i18n.t('notifications.vacancy'), icon: 'briefcase' };
+  if (t.startsWith('learning'))
+    return { title: i18n.t('notifications.learningCourseAssigned'), icon: 'checklist' };
   return { title: i18n.t('notifications.generic'), icon: 'bell' };
 }

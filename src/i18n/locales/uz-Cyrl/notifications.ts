@@ -112,4 +112,10 @@ export default {
   supportTicketReopened: 'Мурожаат қайта очилди',
   workspaceMemberRemoved: 'Лойиҳадан чиқарилдингиз',
   employeeAssignmentAdded: 'Ички ўриндошлик бириктирилди',
+  serviceRequest: 'Интерактив хизмат',
+  transferCreated: 'Филиалга ўтказиш',
+  transferRejected: 'Ўтказиш рад этилди',
+  vacancy: 'Вакансия',
+  vacancyApplication: 'Вакансияга ариза',
+  learningCourseAssigned: 'Курс бириктирилди',
 } as const;

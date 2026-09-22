@@ -129,4 +129,10 @@ export default {
   supportTicketReopened: 'Murojaat qayta ochildi',
   workspaceMemberRemoved: 'Loyihadan chiqarildingiz',
   employeeAssignmentAdded: "Ichki o'rindoshlik biriktirildi",
+  serviceRequest: 'Interaktiv xizmat',
+  transferCreated: "Filialga o'tkazish",
+  transferRejected: "O'tkazish rad etildi",
+  vacancy: 'Vakansiya',
+  vacancyApplication: 'Vakansiyaga ariza',
+  learningCourseAssigned: 'Kurs biriktirildi',
 } as const;
