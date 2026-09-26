@@ -19,6 +19,8 @@ export const EMPLOYEE_DETAIL = (id: number) => `employees/${id}`;
 
 // Turnstile attendance
 export const TURNSTILE_ATTENDANCE_EVENTS = 'turnstile-attendance-events';
+// The day folded per person on the server (first/last pass) — see utils/attendance.ts.
+export const TURNSTILE_DAY_BOARD = 'turnstile-attendance-events/day-board';
 // Turnstile locations (name/address/coords) — fallback catalog for the event
 // map when the event's nested location ref carries no coordinates (older API).
 export const LOCATIONS_LIST = 'locations';

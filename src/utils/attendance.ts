@@ -1,6 +1,6 @@
 import { queryOptions } from '@tanstack/react-query';
 import { apiClient } from '../api/client';
-import { TURNSTILE_ATTENDANCE_EVENTS, TURNSTILE_ATTENDANCE_NORMALIZED, DASHBOARD_EMPLOYEES_BY_CATEGORY, LOCATIONS_LIST } from '../api/urls';
+import { TURNSTILE_ATTENDANCE_EVENTS, TURNSTILE_DAY_BOARD, TURNSTILE_ATTENDANCE_NORMALIZED, DASHBOARD_EMPLOYEES_BY_CATEGORY, LOCATIONS_LIST } from '../api/urls';
 import { unwrapList } from '../api/response';
 import { AttendanceEvent, EmployeeAttendance, EmployeeCategories, TurnstileLocation } from '../types';
 import { mapWithConcurrency } from './concurrency';
@@ -17,10 +17,39 @@ interface AttendancePage { items: AttendanceEvent[]; total: number }
 // rows) as a "fallback". Both are gone: one bounded, branch-scoped request.
 const EVENTS_LIMIT = 5000;
 
+interface DayBoard {
+  people: { employee_id: number; entry_id: number | null; exit_id: number | null; last_id: number; first_id?: number | null }[];
+  events: AttendanceEvent[];
+}
+
+// The roster only needs each person's FIRST and LAST pass of the day
+// (`indexEvents`). `/day-board` folds the day on the server and sends just
+// those passes — for a busy branch day ~1.5 MB of full rows became a few KB,
+// and a day past 5000 passes is no longer cut (the cut-off people read as
+// absent). A server that predates the endpoint answers 404/405/422: fall back
+// to the raw feed so an OTA that lands before the backend release still works.
 export async function fetchAllAttendanceEvents(
   date: string,
   orgBranchId?: number,
 ): Promise<AttendancePage> {
+  try {
+    const params: Record<string, unknown> = { day: date, latest: 0 };
+    if (orgBranchId) params.organization_branch_id = orgBranchId;
+    const res = await apiClient.get<DayBoard>(TURNSTILE_DAY_BOARD, { params });
+    const byId = new Map(res.data.events.map((e) => [e.id, e]));
+    const items: AttendanceEvent[] = [];
+    for (const p of res.data.people) {
+      const seen = new Set<number>();
+      for (const id of [p.first_id, p.entry_id, p.exit_id, p.last_id]) {
+        const ev = id != null ? byId.get(id) : undefined;
+        if (ev && !seen.has(ev.id)) { seen.add(ev.id); items.push(ev); }
+      }
+    }
+    return { items, total: items.length };
+  } catch (e) {
+    const status = (e as { response?: { status?: number } })?.response?.status;
+    if (status !== 404 && status !== 405 && status !== 422) throw e;
+  }
   const params: Record<string, unknown> = { date_from: date, date_to: date, limit: EVENTS_LIMIT };
   if (orgBranchId) params.organization_branch_id = orgBranchId;
   const res = await apiClient.get(TURNSTILE_ATTENDANCE_EVENTS, { params });

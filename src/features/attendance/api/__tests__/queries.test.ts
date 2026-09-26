@@ -1,6 +1,6 @@
 import MockAdapter from 'axios-mock-adapter';
 import { apiClient } from '@/api/client';
-import { TURNSTILE_ATTENDANCE_EVENTS, WORK_LEAVES } from '@/api/urls';
+import { TURNSTILE_ATTENDANCE_EVENTS, TURNSTILE_DAY_BOARD, WORK_LEAVES } from '@/api/urls';
 import { attendanceQueryKey } from '@/utils/attendance';
 import { attendanceKeys, dayAttendanceQuery, teamLeavesQuery } from '../queries';
 
@@ -31,13 +31,24 @@ describe('dayAttendanceQuery', () => {
     expect(dayAttendanceQuery('2026-07-06', 3).staleTime).toBe(3 * 60 * 1000);
   });
 
-  it('fetches the day events via fetchAllAttendanceEvents (branch-scoped, single page)', async () => {
+  it('fetches the day via /day-board (branch-scoped) and flattens it to events', async () => {
+    const events = [{ id: 1, employee_id: 9, happen_time: '2026-07-06T09:00:00' }, { id: 2, employee_id: 9, happen_time: '2026-07-06T18:00:00' }]
+    mock.onGet(TURNSTILE_DAY_BOARD).reply(200, {
+      people: [{ employee_id: 9, first_id: 1, entry_id: 1, exit_id: 2, last_id: 2 }],
+      events,
+    });
+    const data = await (dayAttendanceQuery('2026-07-06', 3).queryFn as () => Promise<{ items: unknown[]; total: number }>)();
+    expect(data).toEqual({ items: events, total: 2 });
+    expect(mock.history.get[0].params).toMatchObject({ day: '2026-07-06', organization_branch_id: 3 });
+  });
+
+  it('falls back to the raw feed (date range + branch + limit) on an older server', async () => {
     const items = [{ id: 1 }, { id: 2 }];
+    mock.onGet(TURNSTILE_DAY_BOARD).reply(404);
     mock.onGet(TURNSTILE_ATTENDANCE_EVENTS).reply(200, { items, total: 2 });
     const data = await (dayAttendanceQuery('2026-07-06', 3).queryFn as () => Promise<{ items: unknown[]; total: number }>)();
     expect(data).toEqual({ items, total: 2 });
-    // date range + branch filter forwarded to the paginated helper.
-    expect(mock.history.get[0].params).toMatchObject({
+    expect(mock.history.get[1].params).toMatchObject({
       date_from: '2026-07-06',
       date_to: '2026-07-06',
       organization_branch_id: 3,

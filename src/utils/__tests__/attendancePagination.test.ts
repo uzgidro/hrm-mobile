@@ -1,6 +1,6 @@
 import MockAdapter from 'axios-mock-adapter';
 import { apiClient } from '../../api/client';
-import { TURNSTILE_ATTENDANCE_EVENTS, TURNSTILE_ATTENDANCE_NORMALIZED } from '../../api/urls';
+import { TURNSTILE_ATTENDANCE_EVENTS, TURNSTILE_DAY_BOARD, TURNSTILE_ATTENDANCE_NORMALIZED } from '../../api/urls';
 import { fetchAllAttendanceEvents, fetchDayRoster, rosterQueryKey, dayRosterQuery } from '../attendance';
 
 const DATE = '2026-07-06';
@@ -11,25 +11,43 @@ afterEach(() => { mock.restore(); });
 
 const rows = (start: number, count: number) => Array.from({ length: count }, (_, i) => ({ id: start + i }));
 
-describe('fetchAllAttendanceEvents — one bounded, branch-scoped request', () => {
-  it('sends date window + limit (the route has no page/size) and reads a bare array', async () => {
-    mock.onGet(TURNSTILE_ATTENDANCE_EVENTS).reply(200, rows(1, 40));
+describe('fetchAllAttendanceEvents — the day board, raw feed only as a fallback', () => {
+  const ev = (id: number, employee_id: number, t: string) => ({ id, employee_id, happen_time: `${DATE}T${t}:00` });
+
+  it('asks /day-board for the day and flattens each person to first/entry/exit/last (deduplicated)', async () => {
+    mock.onGet(TURNSTILE_DAY_BOARD).reply(200, {
+      people: [
+        { employee_id: 5, first_id: 1, entry_id: 1, exit_id: 3, last_id: 3 },
+        { employee_id: 6, first_id: 4, entry_id: null, exit_id: 4, last_id: 4 },
+      ],
+      events: [ev(1, 5, '08:55'), ev(3, 5, '18:02'), ev(4, 6, '09:30')],
+    });
     const result = await fetchAllAttendanceEvents(DATE, 7);
     expect(mock.history.get).toHaveLength(1);
-    expect(mock.history.get[0].params).toEqual({ date_from: DATE, date_to: DATE, limit: 5000, organization_branch_id: 7 });
+    expect(mock.history.get[0].params).toEqual({ day: DATE, latest: 0, organization_branch_id: 7 });
+    expect(result.items.map((e) => e.id)).toEqual([1, 3, 4]);
+    expect(result.total).toBe(3);
+  });
+
+  it('falls back to the raw feed on a server without the endpoint (404)', async () => {
+    mock.onGet(TURNSTILE_DAY_BOARD).reply(404);
+    mock.onGet(TURNSTILE_ATTENDANCE_EVENTS).reply(200, rows(1, 40));
+    const result = await fetchAllAttendanceEvents(DATE, 7);
+    expect(mock.history.get).toHaveLength(2);
+    expect(mock.history.get[1].params).toEqual({ date_from: DATE, date_to: DATE, limit: 5000, organization_branch_id: 7 });
     expect(result).toEqual({ items: rows(1, 40), total: 40 });
   });
 
-  it('does NOT fall back to an unscoped organisation-wide fetch when the branch has no events', async () => {
-    mock.onGet(TURNSTILE_ATTENDANCE_EVENTS).reply(200, []);
-    const result = await fetchAllAttendanceEvents(DATE, 7);
-    expect(mock.history.get).toHaveLength(1);
-    expect(result.items).toEqual([]);
-  });
-
-  it('accepts an { items } envelope too', async () => {
+  it('fallback accepts an { items } envelope too', async () => {
+    mock.onGet(TURNSTILE_DAY_BOARD).reply(404);
     mock.onGet(TURNSTILE_ATTENDANCE_EVENTS).reply(200, { items: rows(1, 3), total: 3 });
     expect((await fetchAllAttendanceEvents(DATE)).items).toHaveLength(3);
+  });
+
+  it('does NOT swallow real failures (500) into the fallback', async () => {
+    mock.onGet(TURNSTILE_DAY_BOARD).reply(500);
+    await expect(fetchAllAttendanceEvents(DATE, 7)).rejects.toBeTruthy();
+    expect(mock.history.get).toHaveLength(1);
   });
 });
 
