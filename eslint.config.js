@@ -3,6 +3,11 @@
 // in a later wave once features/ exists.
 const expoConfig = require('eslint-config-expo/flat');
 
+// v3 «Tomchi × v2»: ranglar faqat useTheme() tokenlaridan. src/ui da xato,
+// features/app da (eski ekranlar ko'chirilguncha) ogohlantirish.
+const HEX_SELECTOR = 'Literal[value=/^#[0-9a-fA-F]{3,8}$/]';
+const HEX_MESSAGE = 'Hex rang literal — useTheme() tokenidan foydalaning (v3 dizayn tili).';
+
 module.exports = [
   ...expoConfig,
   {
@@ -30,6 +35,23 @@ module.exports = [
       // decomposition and auth-rewrite waves — surface as warnings, not blockers.
       'react-hooks/static-components': 'warn',
       'react-hooks/set-state-in-effect': 'warn',
+    },
+  },
+  {
+    files: ['src/ui/**/*.{ts,tsx}'],
+    ignores: ['src/ui/mascot/**'],
+    rules: {
+      'no-restricted-syntax': ['error', { selector: HEX_SELECTOR, message: HEX_MESSAGE }],
+    },
+  },
+  {
+    files: ['src/features/**/*.{ts,tsx}', 'app/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-syntax': ['warn', { selector: HEX_SELECTOR, message: HEX_MESSAGE }],
+      'no-restricted-imports': [
+        'warn',
+        { paths: [{ name: '@/constants', importNames: ['COLORS'], message: 'COLORS eskirgan — useTheme().' }] },
+      ],
     },
   },
 ];
