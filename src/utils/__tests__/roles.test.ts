@@ -11,7 +11,12 @@ import {
   isAccounting,
   isDashboardViewer,
   isHR,
-  isSingleRoleHR,
+  isKpiAdmin,
+  canManageKpi,
+  isNazoratchi,
+  isMonitoringOperator,
+  getRoleKey,
+  setNavOverrides,
   isDeputy,
   isLeadership,
   isKPP,
@@ -81,7 +86,7 @@ const ALL_PAGES: PageKey[] = [
   'home', 'orders', 'letters', 'guests', 'projects',
   'employees', 'attendance', 'requests', 'documents', 'kpi',
   'timesheet', 'assistant', 'salary', 'team', 'birthdays', 'news', 'notifications', 'profile',
-  'directory',
+  'support', 'chairman', 'directory', 'terminals', 'duty', 'holidays',
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -359,25 +364,43 @@ describe('isHR', () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// isSingleRoleHR
+// Web v2 role additions: kpi_admin (stacked flag), nazoratchi, monitoring
 // ─────────────────────────────────────────────────────────────────────────────
-describe('isSingleRoleHR', () => {
-  it('true only when the sole role is hr', () => {
-    expect(isSingleRoleHR(hrSingleUser)).toBe(true);
+describe('web v2 role helpers', () => {
+  it('is_kpi_admin stacks on top of the primary role (even on a plain employee)', () => {
+    const plainKpiAdmin: User = { id: 3, type: 'employee', employee: makeEmployee({ is_kpi_admin: true }) };
+    expect(getMultiOrgRoles(plainKpiAdmin.employee)).toEqual(['kpi_admin']);
+    expect(isKpiAdmin(plainKpiAdmin)).toBe(true);
+    expect(canManageKpi(plainKpiAdmin)).toBe(true);
+    // The primary role stays first — getMultiOrgRole keeps answering 'hr'.
+    const hrKpi = multiOrgUser('hr');
+    hrKpi.employee!.is_kpi_admin = true;
+    expect(getMultiOrgRoles(hrKpi.employee)).toEqual(['hr', 'kpi_admin']);
+    expect(getMultiOrgRole(hrKpi)).toBe('hr');
+    expect(canManageKpi(regularUser)).toBe(false);
   });
 
-  it('false when hr is combined with other roles', () => {
-    expect(isSingleRoleHR(hrMultiUser)).toBe(false);
+  it('nazoratchi is employee-like (keeps the personal pages)', () => {
+    const n = multiOrgUser('nazoratchi');
+    expect(isNazoratchi(n)).toBe(true);
+    expect(isEmployeeLike(n)).toBe(true);
+    expect(getRoleKey(n)).toBe('nazoratchi');
   });
 
-  it('false for non-hr and empty', () => {
-    expect(isSingleRoleHR(kppUser)).toBe(false);
-    expect(isSingleRoleHR(regularUser)).toBe(false);
-    expect(isSingleRoleHR(null)).toBe(false);
+  it('monitoring_operator is the same role as monitoring', () => {
+    expect(isMonitoringOperator(multiOrgUser('monitoring'))).toBe(true);
+    expect(isMonitoringOperator(multiOrgUser('monitoring_operator'))).toBe(true);
+    expect(getRoleKey(multiOrgUser('monitoring_operator'))).toBe('monitoring');
+    expect(isMonitoringOperator(regularUser)).toBe(false);
   });
 
-  it('true when hr passed as a single-element array', () => {
-    expect(isSingleRoleHR(multiOrgUser(['hr']))).toBe(true);
+  it('getRoleKey classifies accounts that have no multi-org role', () => {
+    expect(getRoleKey(regularUser)).toBe('employee');
+    expect(getRoleKey(masterAdminUser)).toBe('masterAdmin');
+    expect(getRoleKey({ id: 4, type: 'admin' as User['type'] })).toBe('admin');
+    expect(getRoleKey({ id: 5, type: 'guest' })).toBe('guest');
+    expect(getRoleKey({ id: 6, type: 'kpp' })).toBe('kpp');
+    expect(getRoleKey({ id: 7, type: 'monitoring-operator' })).toBe('monitoring');
   });
 });
 
@@ -487,8 +510,13 @@ describe('branch-leader devonxona helpers', () => {
     expect(isBranchDevonxona(regularUser, 5)).toBe(false);
   });
 
-  it('canActAsChancellery: global role acts anywhere; branch devonxona only on its branches', () => {
+  it('canActAsChancellery: global role only on its own branches (web v2); branch devonxona only on its branches', () => {
+    // No branch known for the global devonxona -> not restricted.
     expect(canActAsChancellery(chancelleryUser, 123)).toBe(true);
+    const branchBound = multiOrgUser('chancellery');
+    branchBound.employee!.department = { id: 1, name: 'Devonxona', organization_branch_id: 5 } as never;
+    expect(canActAsChancellery(branchBound, 5)).toBe(true);
+    expect(canActAsChancellery(branchBound, 8)).toBe(false);
     expect(canActAsChancellery(branchDevonxona, 5)).toBe(true);
     expect(canActAsChancellery(branchDevonxona, 8)).toBe(false);
     expect(canActAsChancellery(regularUser, 5)).toBe(false);
@@ -559,228 +587,115 @@ describe('canAccessChairmanTasks', () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// canAccessPage — the truth table
+// canAccessPage — web v2 module catalogue (navConfig.ts MODULES, defaultRoles)
 // ─────────────────────────────────────────────────────────────────────────────
-describe('canAccessPage', () => {
-  // Expected boolean per page, derived by reading the code logic.
+describe('canAccessPage (web v2 defaults)', () => {
   type Row = Record<PageKey, boolean>;
+  // Pages every signed-in employee-type account gets (audience ALL, no gate).
+  const base = {
+    home: true, orders: true, letters: true, guests: true, projects: true, requests: true,
+    documents: true, news: true, directory: true, salary: true, birthdays: true,
+    notifications: true, profile: true,
+  };
+  const row = (r: Partial<Row>): Row => ({
+    ...base,
+    employees: false, attendance: false, timesheet: false, kpi: true, assistant: false,
+    team: false, support: true, chairman: false, terminals: false, duty: false, holidays: false,
+    ...r,
+  }) as Row;
 
   const expected: Record<string, { user: User | null | undefined; row: Row }> = {
-    regular: {
-      // kpi_enabled: the backend closes /kpi/* for anyone outside the head
-      // branch, so a head-branch employee carries the flag to keep kpi: true.
-      user: { ...regularUser, kpi_enabled: true },
-      row: {
-        home: true, orders: true, letters: true, guests: true, projects: true,
-        employees: false, attendance: true, requests: true, documents: true, kpi: true, assistant: false, timesheet: true,
-        salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
-        chairman: false, directory: true, terminals: false,
-      },
-    },
-    hrSingle: {
-      user: { ...hrSingleUser, kpi_enabled: true },
-      row: {
-        home: true, orders: true, letters: true, guests: true, projects: false,
-        employees: true, attendance: true, requests: true, documents: true, kpi: true, assistant: true, timesheet: true,
-        salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
-        chairman: false, directory: true, terminals: false,
-      },
-    },
-    hrMulti: {
-      user: { ...hrMultiUser, kpi_enabled: true }, // ['hr','deputy']
-      row: {
-        home: true, orders: true, letters: true, guests: true, projects: true,
-        employees: true, attendance: true, requests: true, documents: true, kpi: true, assistant: true, timesheet: true,
-        salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
-        chairman: false, directory: true, terminals: false,
-      },
-    },
-    kpp: {
-      user: kppUser,
-      row: {
-        home: true, orders: false, letters: false, guests: true, projects: false,
-        employees: false, attendance: false, requests: false, documents: false, kpi: false, assistant: false, timesheet: false,
-        salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
-        chairman: false, directory: true, terminals: false,
-      },
-    },
-    chancellery: {
-      user: chancelleryUser,
-      row: {
-        home: true, orders: true, letters: true, guests: true, projects: true,
-        employees: false, attendance: false, requests: false, documents: false, kpi: false, assistant: false, timesheet: false,
-        salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
-        chairman: false, directory: true, terminals: false,
-      },
-    },
-    kanselariya: {
-      user: kanselariyaUser,
-      row: {
-        home: true, orders: true, letters: true, guests: true, projects: true,
-        employees: false, attendance: false, requests: false, documents: false, kpi: false, assistant: false, timesheet: false,
-        salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
-        chairman: false, directory: true, terminals: false,
-      },
-    },
+    regular: { user: regularUser, row: row({ timesheet: true }) },
+    // HR: org attendance + staff + holidays + duty; v2 gives HR no «my attendance».
+    hr: { user: hrSingleUser, row: row({ employees: true, attendance: true, assistant: true, duty: true, holidays: true }) },
+    // KPP as a multi-org EMPLOYEE role (not a post account) is in ALL.
+    kpp: { user: kppUser, row: row({ timesheet: true }) },
+    chancellery: { user: chancelleryUser, row: row({ timesheet: true }) },
+    kanselariya: { user: kanselariyaUser, row: row({ timesheet: true }) },
     ministr: {
-      user: { ...ministrUser, kpi_enabled: true },
-      row: {
-        home: true, orders: true, letters: true, guests: true, projects: true,
-        employees: true, attendance: true, requests: true, documents: true, kpi: true, assistant: true, timesheet: true,
-        salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
-        chairman: true, directory: true, terminals: false,
-      },
+      user: ministrUser,
+      row: row({ employees: true, attendance: true, timesheet: true, assistant: true, chairman: true, duty: true }),
     },
-    deputy: {
-      user: { ...deputyUser, kpi_enabled: true },
-      row: {
-        home: true, orders: true, letters: true, guests: true, projects: true,
-        employees: true, attendance: true, requests: true, documents: true, kpi: true, assistant: true, timesheet: true,
-        salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
-        chairman: false, directory: true, terminals: false,
-      },
-    },
-    accounting: {
-      // Buxgalter = employee-like: sees the full regular-employee surface,
-      // NOT the employees directory. Same row as `regular` (web parity).
-      user: { ...accountingUser, kpi_enabled: true },
-      row: {
-        home: true, orders: true, letters: true, guests: true, projects: true,
-        employees: false, attendance: true, requests: true, documents: true, kpi: true, assistant: false, timesheet: true,
-        salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
-        chairman: false, directory: true, terminals: false,
-      },
-    },
-    dashboard: {
-      // Kuzatuvchi (dashboard) = employee-like: same regular-employee surface,
-      // NOT the employees directory. Same row as `regular` (web parity).
-      user: { ...dashboardUser, kpi_enabled: true },
-      row: {
-        home: true, orders: true, letters: true, guests: true, projects: true,
-        employees: false, attendance: true, requests: true, documents: true, kpi: true, assistant: false, timesheet: true,
-        salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
-        chairman: false, directory: true, terminals: false,
-      },
-    },
+    deputy: { user: deputyUser, row: row({ employees: true, attendance: true, timesheet: true, assistant: true }) },
+    accounting: { user: accountingUser, row: row({ attendance: true, timesheet: true }) },
+    dashboard: { user: dashboardUser, row: row({ timesheet: true }) },
+    nazoratchi: { user: multiOrgUser('nazoratchi'), row: row({ attendance: true }) },
     masterAdmin: {
-      user: { ...masterAdminUser, kpi_enabled: true },
-      row: {
-        home: true, orders: true, letters: true, guests: true, projects: true,
-        employees: true, attendance: true, requests: true, documents: true, kpi: true, assistant: true, timesheet: true,
-        salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
-        chairman: true, directory: true, terminals: false,
-      },
+      user: masterAdminUser,
+      row: row({
+        employees: true, attendance: true, assistant: true, chairman: true, terminals: true, duty: true, holidays: true,
+      }),
     },
-    secretariat: {
-      user: { ...secretariatUser, kpi_enabled: true }, // is_secretariat only affects the chairman-agenda page
-      row: {
-        home: true, orders: true, letters: true, guests: true, projects: true,
-        employees: false, attendance: true, requests: true, documents: true, kpi: true, assistant: false, timesheet: true,
-        salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
-        chairman: true, directory: true, terminals: false,
-      },
-    },
-    nullUser: {
-      user: null,
-      row: {
-        home: true, orders: true, letters: true, guests: true, projects: true,
-        employees: false, attendance: true, requests: true, documents: true, kpi: false, assistant: false, timesheet: true,
-        salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
-        chairman: false, directory: true, terminals: false,
-      },
-    },
-    undefinedUser: {
-      user: undefined,
-      row: {
-        home: true, orders: true, letters: true, guests: true, projects: true,
-        employees: false, attendance: true, requests: true, documents: true, kpi: false, assistant: false, timesheet: true,
-        salary: true, team: true, birthdays: true, news: true, notifications: true, profile: true, support: true,
-        chairman: false, directory: true, terminals: false,
-      },
-    },
+    secretariat: { user: secretariatUser, row: row({ timesheet: true, chairman: true }) },
+    lineManager: { user: { ...regularUser, is_line_manager: true }, row: row({ timesheet: true, team: true }) },
   };
 
-  Object.entries(expected).forEach(([label, { user, row }]) => {
+  Object.entries(expected).forEach(([label, { user, row: r }]) => {
     describe(label, () => {
       ALL_PAGES.forEach((page) => {
-        it(`${page} => ${row[page]}`, () => {
-          expect(canAccessPage(user, page)).toBe(row[page]);
+        it(`${page} => ${r[page]}`, () => {
+          expect(canAccessPage(user, page)).toBe(r[page]);
         });
       });
     });
   });
 
-  it('unknown page keys fall through to the default (true)', () => {
-    expect(canAccessPage(kppUser, 'nonexistent' as PageKey)).toBe(true);
+  it('kpi hides only where the branch has it OFF (kpi_enabled === false)', () => {
+    expect(canAccessPage({ ...regularUser, kpi_enabled: false }, 'kpi')).toBe(false);
+    expect(canAccessPage({ ...regularUser, kpi_enabled: true }, 'kpi')).toBe(true);
+    expect(canAccessPage(regularUser, 'kpi')).toBe(true);
   });
 
-  it('kpp passed as array still blocks documents/attendance', () => {
-    const u = multiOrgUser(['kpp']);
-    expect(canAccessPage(u, 'orders')).toBe(false);
-    expect(canAccessPage(u, 'letters')).toBe(false);
-    expect(canAccessPage(u, 'attendance')).toBe(false);
-    expect(canAccessPage(u, 'requests')).toBe(false);
-    expect(canAccessPage(u, 'projects')).toBe(false);
-    expect(canAccessPage(u, 'documents')).toBe(false);
-    expect(canAccessPage(u, 'kpi')).toBe(false);
-    expect(canAccessPage(u, 'timesheet')).toBe(false);
+  it('a post/kiosk account gets the post screens only', () => {
+    const post: User = { id: 20, type: 'kpp' };
+    expect(ALL_PAGES.filter((p) => canAccessPage(post, p))).toEqual(['home', 'guests', 'notifications', 'profile', 'directory']);
   });
 
-  it('kanselariya spelling blocks attendance/requests/documents like chancellery', () => {
-    expect(canAccessPage(kanselariyaUser, 'attendance')).toBe(false);
-    expect(canAccessPage(kanselariyaUser, 'requests')).toBe(false);
-    expect(canAccessPage(kanselariyaUser, 'documents')).toBe(false);
-    expect(canAccessPage(kanselariyaUser, 'kpi')).toBe(false);
-    expect(canAccessPage(kanselariyaUser, 'timesheet')).toBe(false);
+  it('a branch admin account gets the system screens only', () => {
+    const admin: User = { id: 21, type: 'admin' as User['type'] };
+    expect(ALL_PAGES.filter((p) => canAccessPage(admin, p))).toEqual(['assistant', 'salary', 'birthdays', 'notifications', 'profile', 'terminals']);
   });
 
-  it('a plain employee can access the timesheet', () => {
-    expect(canAccessPage(regularUser, 'timesheet')).toBe(true);
+  it('an AKT employee reaches terminals as a system admin', () => {
+    expect(canAccessPage({ ...regularUser, akt_branch_ids: [3] }, 'terminals')).toBe(true);
+  });
+
+  it('duty follows membership / department roster', () => {
+    expect(canAccessPage({ ...regularUser, is_navbatchi: true }, 'duty')).toBe(true);
+    expect(canAccessPage({ ...regularUser, is_navbatchi_viewer: true }, 'duty')).toBe(true);
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// canAccessPage — KPI flag gate (strict: no kpi_enabled => hidden)
-// The backend closes /kpi/* behind require_kpi_enabled (403 kpi_not_enabled)
-// for anyone outside the head branch, so the tile is hidden unless the flag is
-// present. Mirrors the web's navConfig `needsKpi` pruning.
-// ─────────────────────────────────────────────────────────────────────────────
-describe('canAccessPage kpi flag gate', () => {
-  it('a head-branch user WITH kpi_enabled sees kpi', () => {
-    expect(canAccessPage(multiOrgUser('hr', { kpi_enabled: true }), 'kpi')).toBe(true);
+describe('canAccessPage — master-admin overrides (nav.modules)', () => {
+  afterEach(() => setNavOverrides(undefined));
+
+  it('a switched-off module is hidden for everyone', () => {
+    expect(canAccessPage(regularUser, 'projects', { projects: { enabled: false } })).toBe(false);
   });
 
-  it('the same user WITHOUT the flag is denied kpi', () => {
-    expect(canAccessPage(multiOrgUser('hr'), 'kpi')).toBe(false);
+  it('a saved role list replaces the default audience', () => {
+    expect(canAccessPage(regularUser, 'employees', { employees: { roles: ['employee'] } })).toBe(true);
+    expect(canAccessPage(hrSingleUser, 'orders', { orders: { roles: ['masterAdmin'] } })).toBe(false);
   });
 
-  it('a regular employee without the flag is denied kpi', () => {
-    expect(canAccessPage(regularUser, 'kpi')).toBe(false);
+  it('a branch list limits the module to those branches (user branch outside -> hidden)', () => {
+    const inBranch3: User = {
+      ...regularUser,
+      employee: makeEmployee({ primary_organization_branch_id: 3 }),
+    };
+    expect(canAccessPage(inBranch3, 'news', { news: { branches: [3] } })).toBe(true);
+    expect(canAccessPage(inBranch3, 'news', { news: { branches: [7] } })).toBe(false);
   });
 
-  it('a master-admin without the flag is still denied kpi (flag is required)', () => {
-    expect(canAccessPage(masterAdminUser, 'kpi')).toBe(false);
+  it('the stored overrides are the default argument once loaded', () => {
+    setNavOverrides({ news: { enabled: false } });
+    expect(canAccessPage(regularUser, 'news')).toBe(false);
+    setNavOverrides(undefined);
+    expect(canAccessPage(regularUser, 'news')).toBe(true);
   });
 
-  it('kpp / chancellery stay denied even with the flag', () => {
-    expect(canAccessPage(multiOrgUser('kpp', { kpi_enabled: true }), 'kpi')).toBe(false);
-    expect(canAccessPage(multiOrgUser('chancellery', { kpi_enabled: true }), 'kpi')).toBe(false);
-  });
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// canAccessPage — phone directory is open to everyone (a company phone book,
-// no PII; the backend serves it to any authenticated role without scoping).
-// ─────────────────────────────────────────────────────────────────────────────
-describe('canAccessPage directory', () => {
-  it('is visible to every role, including KPP and chancellery', () => {
-    for (const u of [regularUser, hrSingleUser, kppUser, chancelleryUser, masterAdminUser]) {
-      expect(canAccessPage(u, 'directory')).toBe(true);
-    }
-  });
-  it('is visible even for a null/undefined user', () => {
-    expect(canAccessPage(null, 'directory')).toBe(true);
-    expect(canAccessPage(undefined, 'directory')).toBe(true);
+  it('gates no setting may override still apply (KPI off in the branch)', () => {
+    expect(canAccessPage({ ...regularUser, kpi_enabled: false }, 'kpi', { kpi: { roles: ['employee'] } })).toBe(false);
   });
 });
 

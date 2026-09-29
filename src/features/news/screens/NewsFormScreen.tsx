@@ -5,6 +5,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { FormInput } from '@/components/FormInput';
@@ -116,11 +117,11 @@ export default function NewsFormScreen() {
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     content: { paddingHorizontal: 16, paddingBottom: 32 },
-    label: { fontSize: 13, fontWeight: '600', color: c.textSecondary, marginBottom: 8, marginTop: 8 },
-    selector: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: c.card, borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 14, paddingVertical: 13 },
-    selectorText: { fontSize: 14, color: c.text },
+    label: { fontSize: 13, ...ff('700'), color: c.textSecondary, marginBottom: 8, marginTop: 8 },
+    selector: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: c.card, borderRadius: 12, borderWidth: 2, borderColor: c.cardBorder, paddingHorizontal: 14, paddingVertical: 13 },
+    selectorText: { fontSize: 14, color: c.text, ...ff('700') },
     selectorPlaceholder: { color: c.textMuted },
-    clearBranch: { fontSize: 12, color: c.primary, marginTop: 6 },
-    submitBtn: { marginTop: 20, backgroundColor: c.primary, borderRadius: 14, paddingVertical: 15, alignItems: 'center' },
-    submitText: { color: c.onPrimary, fontSize: 15, fontWeight: '700' },
+    clearBranch: { fontSize: 12, color: c.primary, marginTop: 6, ...ff('700') },
+    submitBtn: { marginTop: 20, backgroundColor: c.primary, borderRadius: 14, paddingVertical: 15, alignItems: 'center', borderBottomWidth: 4, borderBottomColor: c.primaryShadow },
+    submitText: { color: c.onPrimary, fontSize: 15, ...ff('800') },
   });

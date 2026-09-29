@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { Icon, IconName } from '@/components/Icon';
 import { LoadingView, ErrorState } from '@/components/StateViews';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
@@ -194,29 +195,29 @@ const makeStyles = (c: ThemeColors) =>
     },
     backBtn: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center' },
     titleRow: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, paddingLeft: 2 },
-    headerTitle: { fontSize: 19, fontWeight: '800', color: c.text, flexShrink: 1 },
+    headerTitle: { fontSize: 19, ...ff('900'), color: c.text, flexShrink: 1 },
     rightSlot: { minWidth: 38, alignItems: 'flex-end', justifyContent: 'center' },
     headerAction: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
 
     content: { paddingHorizontal: 16, paddingBottom: 24 },
 
     hero: { alignItems: 'center', paddingVertical: 8, marginBottom: 12 },
-    name: { fontSize: 20, fontWeight: '800', color: c.text, marginTop: 12, textAlign: 'center' },
-    sub: { fontSize: 13, color: c.textSecondary, marginTop: 4, textAlign: 'center' },
+    name: { fontSize: 20, ...ff('900'), color: c.text, marginTop: 12, textAlign: 'center' },
+    sub: { fontSize: 13, color: c.textSecondary, marginTop: 4, textAlign: 'center', ...ff('700') },
     badge: { marginTop: 10, paddingHorizontal: 12, paddingVertical: 5, borderRadius: 10 },
-    badgeText: { fontSize: 12, fontWeight: '700' },
+    badgeText: { fontSize: 12, ...ff('800') },
 
-    qrCard: { backgroundColor: c.card, borderRadius: 16, borderWidth: 1, borderColor: c.cardBorder, padding: 16, alignItems: 'center', marginBottom: 12, gap: 10 },
+    qrCard: { backgroundColor: c.card, borderRadius: 16, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder, padding: 16, alignItems: 'center', marginBottom: 12, gap: 10 },
     qr: { width: 180, height: 180, backgroundColor: '#fff', borderRadius: 8 },
-    cardNo: { fontSize: 13, color: c.textSecondary, fontWeight: '600' },
+    cardNo: { fontSize: 13, color: c.textSecondary, ...ff('700') },
     qrActions: { flexDirection: 'row', gap: 10, alignSelf: 'stretch', marginTop: 4 },
     qrBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 11, borderRadius: 12, backgroundColor: c.primarySoft, borderWidth: 1, borderColor: c.primary },
-    qrBtnText: { fontSize: 14, fontWeight: '700', color: c.primary },
+    qrBtnText: { fontSize: 14, ...ff('800'), color: c.primary },
 
-    sectionLabel: { fontSize: 12, fontWeight: '700', color: c.textMuted, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 8, marginLeft: 4 },
-    card: { backgroundColor: c.card, borderRadius: 16, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 14, marginBottom: 12 },
+    sectionLabel: { fontSize: 12, ...ff('800'), color: c.textMuted, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 8, marginLeft: 4 },
+    card: { backgroundColor: c.card, borderRadius: 16, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder, paddingHorizontal: 14, marginBottom: 12 },
     row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 13, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.cardBorder },
     rowIcon: { width: 26, alignItems: 'center' },
-    rowLabel: { fontSize: 11, color: c.textMuted },
-    rowValue: { fontSize: 14, color: c.text, fontWeight: '600', marginTop: 1 },
+    rowLabel: { fontSize: 11, color: c.textMuted, ...ff('700') },
+    rowValue: { fontSize: 14, color: c.text, ...ff('700'), marginTop: 1 },
   });

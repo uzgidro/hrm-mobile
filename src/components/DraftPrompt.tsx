@@ -5,6 +5,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { Icon } from './Icon';
 
 export function DraftPrompt({ visible, onRestore, onDiscard }: {
@@ -37,8 +38,8 @@ const makeStyles = (c: ThemeColors) =>
       flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: 16, marginBottom: 10,
       padding: 12, borderRadius: 12, backgroundColor: c.primarySoft, borderWidth: 1, borderColor: c.primary,
     },
-    title: { fontSize: 13, fontWeight: '700', color: c.text },
-    msg: { fontSize: 12, color: c.textSecondary, marginTop: 2 },
+    title: { fontSize: 13, ...ff('800'), color: c.text },
+    msg: { fontSize: 12, color: c.textSecondary, marginTop: 2, ...ff('700') },
     btn: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, backgroundColor: c.primary },
-    btnText: { fontSize: 12, fontWeight: '700', color: c.onPrimary },
+    btnText: { fontSize: 12, ...ff('800'), color: c.onPrimary },
   });

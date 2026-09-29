@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocalSearchParams } from 'expo-router';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { AttendanceEvent } from '@/types';
 import { Icon } from '@/components/Icon';
 import { AttendanceEventRow } from '@/components/AttendanceEventRow';
@@ -34,23 +35,27 @@ const DonutChart = memo(function DonutChart({ attended, total, size = 160, c }: 
   const circumference = 2 * Math.PI * radius;
   const cx = size / 2;
   const cy = size / 2;
-  const rotate = `rotate(-90, ${cx}, ${cy})`;
+  // Arcs start at 12 o'clock by turning the whole Svg (an SVG `transform`
+  // becomes an invalid `transform-origin` DOM prop on web).
+  const turn = { transform: [{ rotate: '-90deg' }] };
   const attendedDash = total > 0 ? circumference * (attended / total) : 0;
   const missedDash = total > 0 ? circumference * ((total - attended) / total) : 0;
 
   return (
+    <View style={turn}>
     <Svg width={size} height={size}>
       <Circle cx={cx} cy={cy} r={radius} fill="none" stroke={c.cardBorder} strokeWidth={strokeWidth} />
       {attendedDash > 0 && (
         <Circle cx={cx} cy={cy} r={radius} fill="none" stroke={c.success} strokeWidth={strokeWidth}
-          strokeDasharray={`${attendedDash} ${circumference - attendedDash}`} strokeDashoffset={0} strokeLinecap="round" transform={rotate} />
+          strokeDasharray={`${attendedDash} ${circumference - attendedDash}`} strokeDashoffset={0} strokeLinecap="round" />
       )}
       {missedDash > 0 && (
         <Circle cx={cx} cy={cy} r={radius} fill="none" stroke={c.absent} strokeWidth={strokeWidth}
-          strokeDasharray={`${missedDash} ${circumference - missedDash}`} strokeDashoffset={-attendedDash} strokeLinecap="round" transform={rotate} />
+          strokeDasharray={`${missedDash} ${circumference - missedDash}`} strokeDashoffset={-attendedDash} strokeLinecap="round" />
       )}
       <Circle cx={cx} cy={cy} r={radius - strokeWidth - 4} fill={c.card} />
     </Svg>
+    </View>
   );
 });
 
@@ -238,13 +243,13 @@ const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     content: { paddingHorizontal: 16, paddingBottom: 32 },
 
-    card: { backgroundColor: c.card, borderRadius: 16, padding: 16, marginTop: 12, borderWidth: 1, borderColor: c.cardBorder },
+    card: { backgroundColor: c.card, borderRadius: 16, padding: 16, marginTop: 12, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder },
     cardTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 },
-    cardIcon: { fontSize: 16 },
-    cardTitle: { fontSize: 15, fontWeight: '700', color: c.text, flex: 1 },
+    cardIcon: { fontSize: 16, ...ff('700') },
+    cardTitle: { fontSize: 15, ...ff('800'), color: c.text, flex: 1 },
 
     weekRow: { flexDirection: 'row', marginBottom: 8 },
-    weekDayLabel: { flex: 1, textAlign: 'center', fontSize: 12, color: c.textMuted, fontWeight: '600' },
+    weekDayLabel: { flex: 1, textAlign: 'center', fontSize: 12, color: c.textMuted, ...ff('700') },
 
     calendarGrid: { flexDirection: 'row', flexWrap: 'wrap' },
     dayCell: { width: '14.28%', aspectRatio: 1, alignItems: 'center', justifyContent: 'center', padding: 2 },
@@ -253,36 +258,36 @@ const makeStyles = (c: ThemeColors) =>
     dayCellToday: { backgroundColor: c.primary, borderRadius: 10 },
     dayCellSelected: { borderWidth: 2, borderColor: c.primaryLight, borderRadius: 10 },
 
-    dayText: { fontSize: 14, fontWeight: '600', color: c.text },
+    dayText: { fontSize: 14, ...ff('700'), color: c.text },
     dayTextWeekend: { color: c.primaryLight },
     dayTextAbsent: { color: c.error },
-    dayTextToday: { color: '#fff', fontWeight: '800' },
-    dayTextSelected: { color: c.primaryLight, fontWeight: '800' },
+    dayTextToday: { color: '#fff', ...ff('900') },
+    dayTextSelected: { color: c.primaryLight, ...ff('900') },
 
     entryExitRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8 },
     entryExitItem: { flex: 1, alignItems: 'center', gap: 6 },
-    entryExitTime: { fontSize: 22, fontWeight: '700', color: c.text, letterSpacing: 1 },
-    entryExitLabel: { fontSize: 12, color: c.textMuted, fontWeight: '500' },
+    entryExitTime: { fontSize: 22, ...ff('800'), color: c.text, letterSpacing: 1 },
+    entryExitLabel: { fontSize: 12, color: c.textMuted, ...ff('700') },
     entryExitDivider: { width: 1, height: 36, backgroundColor: c.cardBorder, marginHorizontal: 16 },
 
     scheduleRow: { flexDirection: 'row', gap: 20 },
     scheduleItem: { flex: 1 },
-    scheduleValue: { fontSize: 16, fontWeight: '700', color: c.text },
-    scheduleLabel: { fontSize: 12, color: c.textMuted, marginTop: 4 },
+    scheduleValue: { fontSize: 16, ...ff('800'), color: c.text },
+    scheduleLabel: { fontSize: 12, color: c.textMuted, marginTop: 4, ...ff('700') },
 
-    emptyText: { color: c.textMuted, textAlign: 'center', paddingVertical: 20, fontSize: 14 },
-    eventRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
-    eventTime: { fontSize: 14, fontWeight: '700', color: c.text, width: 44 },
-    eventDir: { fontSize: 13, color: c.textSecondary },
+    emptyText: { color: c.textMuted, textAlign: 'center', paddingVertical: 20, fontSize: 14, ...ff('700') },
+    eventRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8, borderBottomWidth: 2, borderBottomColor: c.cardBorder },
+    eventTime: { fontSize: 14, ...ff('800'), color: c.text, width: 44 },
+    eventDir: { fontSize: 13, color: c.textSecondary, ...ff('700') },
 
     statsRow: { flexDirection: 'row', alignItems: 'center', gap: 20, paddingVertical: 8 },
     donutWrapper: { width: 160, height: 160, alignItems: 'center', justifyContent: 'center' },
-    donutCenter: { position: 'absolute', fontSize: 28, fontWeight: '800', color: c.text },
+    donutCenter: { position: 'absolute', fontSize: 28, ...ff('900'), color: c.text },
     statsLegend: { flex: 1, gap: 16 },
     legendItem: { gap: 4 },
     legendDot: { width: 10, height: 10, borderRadius: 5 },
-    legendText: { fontSize: 18, fontWeight: '700', color: c.text },
-    legendLabel: { fontSize: 12, color: c.textSecondary },
-    hoursText: { fontSize: 22, fontWeight: '700', color: c.text, marginTop: 12 },
-    hoursLabel: { fontSize: 12, color: c.textMuted, marginTop: 2 },
+    legendText: { fontSize: 18, ...ff('800'), color: c.text },
+    legendLabel: { fontSize: 12, color: c.textSecondary, ...ff('700') },
+    hoursText: { fontSize: 22, ...ff('800'), color: c.text, marginTop: 12 },
+    hoursLabel: { fontSize: 12, color: c.textMuted, marginTop: 2, ...ff('700') },
   });

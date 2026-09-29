@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
@@ -129,22 +130,22 @@ const makeStyles = (c: ThemeColors) =>
     content: { paddingHorizontal: 16, paddingBottom: 32 },
 
     tabsRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingTop: 12 },
-    tab: { flex: 1, paddingVertical: 10, borderRadius: 10, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, alignItems: 'center' },
+    tab: { flex: 1, paddingVertical: 10, borderRadius: 10, backgroundColor: c.card, borderWidth: 2, borderColor: c.cardBorder, alignItems: 'center' },
     tabActive: { backgroundColor: c.primarySoft, borderColor: c.primaryLight },
-    tabText: { fontSize: 13, fontWeight: '600', color: c.textSecondary, paddingHorizontal: 8 },
+    tabText: { fontSize: 13, ...ff('700'), color: c.textSecondary, paddingHorizontal: 8 },
     tabTextActive: { color: c.primaryLight },
 
-    card: { backgroundColor: c.card, borderRadius: 16, padding: 14, marginTop: 12, borderWidth: 1, borderColor: c.cardBorder },
+    card: { backgroundColor: c.card, borderRadius: 16, padding: 14, marginTop: 12, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder },
     rowTop: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 },
-    rowTitle: { flex: 1, fontSize: 15, fontWeight: '700', color: c.text },
+    rowTitle: { flex: 1, fontSize: 15, ...ff('800'), color: c.text },
     badges: { flexDirection: 'row', gap: 6 },
     badge: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
-    badgeText: { fontSize: 11, fontWeight: '700' },
+    badgeText: { fontSize: 11, ...ff('800') },
     rowDates: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 },
-    rowDatesText: { fontSize: 13, color: c.textSecondary },
-    rowDatesStrong: { fontWeight: '700', color: c.text, flex: 1 },
+    rowDatesText: { fontSize: 13, color: c.textSecondary, ...ff('700') },
+    rowDatesStrong: { ...ff('800'), color: c.text, flex: 1 },
 
     memberRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 7, marginTop: 4 },
-    memberRowBorder: { borderBottomWidth: 1, borderBottomColor: c.cardBorder },
-    memberName: { flex: 1, fontSize: 14, fontWeight: '600', color: c.text },
+    memberRowBorder: { borderBottomWidth: 2, borderBottomColor: c.cardBorder },
+    memberName: { flex: 1, fontSize: 14, ...ff('700'), color: c.text },
   });

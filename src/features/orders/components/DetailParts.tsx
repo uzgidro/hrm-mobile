@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { Icon } from '@/components/Icon';
 
 // Small presentational pieces of the decree detail screen, split out so the
@@ -52,15 +53,15 @@ const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     header: {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-      paddingHorizontal: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: c.cardBorder,
+      paddingHorizontal: 12, paddingVertical: 12, borderBottomWidth: 2, borderBottomColor: c.cardBorder,
     },
     backBtn: { width: 40, height: 40, justifyContent: 'center' },
-    headerTitle: { fontSize: 17, fontWeight: '700', color: c.text },
+    headerTitle: { fontSize: 17, ...ff('800'), color: c.text },
 
-    section: { backgroundColor: c.card, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: c.cardBorder },
-    sectionTitle: { fontSize: 12, fontWeight: '800', color: c.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 },
+    section: { backgroundColor: c.card, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 2, borderColor: c.cardBorder },
+    sectionTitle: { fontSize: 12, ...ff('900'), color: c.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 },
 
     kvRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, gap: 12 },
-    kvKey: { fontSize: 13, color: c.textMuted, flex: 1 },
-    kvVal: { fontSize: 13, color: c.text, fontWeight: '600', flex: 2, textAlign: 'right' },
+    kvKey: { fontSize: 13, color: c.textMuted, flex: 1, ...ff('700') },
+    kvVal: { fontSize: 13, color: c.text, ...ff('700'), flex: 2, textAlign: 'right' },
   });

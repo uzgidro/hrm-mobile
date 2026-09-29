@@ -9,6 +9,8 @@ import React from 'react';
 import { View, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 import type { ThemeColors } from '../theme/palettes';
+import { ff } from '../theme/typography';
+import { NO_WEB_OUTLINE } from '../theme/web';
 import { Icon } from './Icon';
 
 export function SearchBox({
@@ -54,12 +56,12 @@ const makeStyles = (c: ThemeColors) =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: 8,
-      backgroundColor: c.card,
-      borderRadius: 12,
-      borderWidth: 1,
+      backgroundColor: c.inputBg,
+      borderRadius: 14,
+      borderWidth: 2,
       borderColor: c.cardBorder,
       paddingHorizontal: 12,
-      height: 44,
+      height: 46,
     },
-    searchInput: { flex: 1, color: c.text, fontSize: 14 },
+    searchInput: { flex: 1, color: c.text, fontSize: 15, ...NO_WEB_OUTLINE, ...ff('700') },
   });

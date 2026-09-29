@@ -2,6 +2,7 @@ import { View, Text, TouchableOpacity, Switch, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { Icon } from '@/components/Icon';
 import { Selector } from './FormParts';
 
@@ -76,15 +77,15 @@ export function ApproversEditor({
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    fieldLabel: { fontSize: 13, fontWeight: '700', color: c.textSecondary, marginBottom: 8 },
-    errorText: { marginTop: 6, fontSize: 12, color: c.error, fontWeight: '600' },
+    fieldLabel: { fontSize: 13, ...ff('800'), color: c.textSecondary, marginBottom: 8 },
+    errorText: { marginTop: 6, fontSize: 12, color: c.error, ...ff('700') },
     approversHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 22, marginBottom: 8 },
     addApproverBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: c.primarySoft, paddingHorizontal: 14, paddingVertical: 7, borderRadius: 14 },
-    addApproverText: { color: c.primary, fontSize: 12, fontWeight: '700' },
-    emptyApprovers: { color: c.textMuted, fontSize: 13 },
-    approverCard: { backgroundColor: c.card, borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder, padding: 10, marginBottom: 8, gap: 8 },
+    addApproverText: { color: c.primary, fontSize: 12, ...ff('800') },
+    emptyApprovers: { color: c.textMuted, fontSize: 13, ...ff('700') },
+    approverCard: { backgroundColor: c.card, borderRadius: 12, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder, padding: 10, marginBottom: 8, gap: 8 },
     approverRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     removeApprover: { width: 40, height: 44, backgroundColor: c.errorSoft, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
     editRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 2 },
-    editLabel: { fontSize: 12, color: c.textSecondary },
+    editLabel: { fontSize: 12, color: c.textSecondary, ...ff('700') },
   });

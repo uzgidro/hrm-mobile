@@ -5,6 +5,7 @@ import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { ModalCard } from '@/components/ModalCard';
 import type { Letter, BusinessTripMovement, User } from '@/types';
 import { Icon } from '@/components/Icon';
@@ -311,19 +312,19 @@ export function TripMovementsSection({
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     confirmedBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
-    selfFinishHint: { fontSize: 12, color: c.textMuted, marginTop: 10, lineHeight: 17 },
-    editDateLink: { fontSize: 12, fontWeight: '600', color: c.primaryLight },
-    editHint: { fontSize: 12, color: c.textMuted, lineHeight: 17 },
+    selfFinishHint: { fontSize: 12, color: c.textMuted, marginTop: 10, lineHeight: 17, ...ff('700') },
+    editDateLink: { fontSize: 12, ...ff('700'), color: c.primaryLight },
+    editHint: { fontSize: 12, color: c.textMuted, lineHeight: 17, ...ff('700') },
     selfFinishBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: c.success, borderRadius: 12, paddingVertical: 12, marginTop: 8 },
-    confirmedText: { fontSize: 13, color: c.success, fontWeight: '600' },
-    empty: { color: c.textMuted, fontSize: 14, paddingVertical: 4 },
-    row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, borderTopWidth: 1, borderTopColor: c.cardBorder },
+    confirmedText: { fontSize: 13, color: c.success, ...ff('700') },
+    empty: { color: c.textMuted, fontSize: 14, paddingVertical: 4, ...ff('700') },
+    row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, borderTopWidth: 2, borderTopColor: c.cardBorder },
     dot: { width: 8, height: 8, borderRadius: 4 },
-    rowTitle: { fontSize: 14, fontWeight: '600', color: c.text },
-    rowNote: { fontSize: 12, color: c.textMuted, marginTop: 2 },
-    rowDate: { fontSize: 12, color: c.textMuted, fontWeight: '600' },
-    faceId: { fontSize: 11, color: c.primary, fontWeight: '700' },
-    confirmBtn: { marginTop: 12, backgroundColor: c.primary, borderRadius: 12, paddingVertical: 13, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
-    confirmBtnText: { color: c.onPrimary, fontSize: 14, fontWeight: '700' },
-    input: { backgroundColor: c.bg, borderRadius: 10, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, color: c.text },
+    rowTitle: { fontSize: 14, ...ff('700'), color: c.text },
+    rowNote: { fontSize: 12, color: c.textMuted, marginTop: 2, ...ff('700') },
+    rowDate: { fontSize: 12, color: c.textMuted, ...ff('700') },
+    faceId: { fontSize: 11, color: c.primary, ...ff('800') },
+    confirmBtn: { marginTop: 12, backgroundColor: c.primary, borderRadius: 12, paddingVertical: 13, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderBottomWidth: 4, borderBottomColor: c.primaryShadow },
+    confirmBtnText: { color: c.onPrimary, fontSize: 14, ...ff('800') },
+    input: { backgroundColor: c.bg, borderRadius: 10, borderWidth: 2, borderColor: c.cardBorder, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, color: c.text, ...ff('700') },
   });

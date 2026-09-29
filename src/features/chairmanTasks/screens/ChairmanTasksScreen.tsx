@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import type { ChairmanTask } from '@/types';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
@@ -116,12 +117,12 @@ const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     monthBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 8 },
     monthBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-    monthLabel: { fontSize: 16, fontWeight: '700', color: c.text },
+    monthLabel: { fontSize: 16, ...ff('800'), color: c.text },
     content: { paddingHorizontal: 16, paddingBottom: 24 },
-    dayHeader: { fontSize: 13, fontWeight: '700', color: c.textSecondary, marginTop: 16, marginBottom: 8, backgroundColor: c.bg },
-    card: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, marginBottom: 8, backgroundColor: c.card, borderRadius: 14, borderWidth: 1, borderColor: c.cardBorder },
+    dayHeader: { fontSize: 13, ...ff('800'), color: c.textSecondary, marginTop: 16, marginBottom: 8, backgroundColor: c.bg },
+    card: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, marginBottom: 8, backgroundColor: c.card, borderRadius: 14, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder },
     colorBar: { width: 4, alignSelf: 'stretch', borderRadius: 2 },
-    taskTitle: { fontSize: 15, fontWeight: '700', color: c.text },
-    taskTime: { fontSize: 12, color: c.primary, fontWeight: '600', marginTop: 2 },
-    taskParticipants: { fontSize: 12, color: c.textMuted, marginTop: 2 },
+    taskTitle: { fontSize: 15, ...ff('800'), color: c.text },
+    taskTime: { fontSize: 12, color: c.primary, ...ff('700'), marginTop: 2 },
+    taskParticipants: { fontSize: 12, color: c.textMuted, marginTop: 2, ...ff('700') },
   });

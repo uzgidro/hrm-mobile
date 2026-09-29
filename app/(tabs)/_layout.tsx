@@ -11,36 +11,38 @@ import { canAccessPage } from '../../src/utils/roles';
 import { useBreakpoint } from '../../src/utils/responsive';
 import { NavRail } from '../../src/components/NavRail';
 import { menuBadgesQuery } from '../../src/features/notifications/api/queries';
+import { ff } from '../../src/theme/typography';
+import { useNavSettings } from '../../src/lib/navSettings';
+
+// Dizayn «I · Tomchi»: har bir tabning o'z rangi bor (Asosiy — ko'k, Buyruqlar —
+// to'q sariq, Xatlar — yashil, Modullar — binafsha). Faol tab yumshoq fonli
+// ramkada; yozuvlar ko'rinmaydi, lekin ekran o'quvchiga aytiladi.
+const TAB_TINT: Record<string, string> = {
+  home: '#1CB0F6',
+  orders: '#FF9600',
+  mail: '#2BC155',
+  grid: '#CE82FF',
+};
 
 function TabIcon({
-  focused, name, label, colors, badge,
-}: { focused: boolean; name: IconName; label: string; colors: ThemeColors; badge?: number }) {
+  focused, name, colors, badge,
+}: { focused: boolean; name: IconName; colors: ThemeColors; badge?: number }) {
+  const tint = TAB_TINT[name] ?? colors.tabBarActive;
   return (
-    <View style={styles.wrap}>
-      <View style={[styles.pill, focused && { backgroundColor: colors.tabBarActiveBg }]}>
-        <Icon
-          name={name}
-          size={22}
-          color={focused ? colors.tabBarActive : colors.tabBarInactive}
-          strokeWidth={focused ? 2.2 : 1.9}
-        />
-        {/* Amal kutayotgan hujjatlar soni — web chap menyusidagi qizil raqam
-            (backend notifications/menu-badges). */}
-        {!!badge && badge > 0 && (
-          <View style={[styles.badge, { backgroundColor: colors.error, borderColor: colors.tabBar }]}>
-            <Text style={styles.badgeText}>{badge > 9 ? '9+' : badge}</Text>
-          </View>
-        )}
-      </View>
-      <Text
-        style={[
-          styles.label,
-          { color: focused ? colors.tabBarActive : colors.tabBarInactive, fontWeight: focused ? '700' : '500' },
-        ]}
-        numberOfLines={1}
-      >
-        {label}
-      </Text>
+    <View
+      style={[
+        styles.box,
+        focused && { backgroundColor: colors.tabBarActiveBg, borderColor: colors.tabBarActiveBorder },
+      ]}
+    >
+      <Icon name={name} size={26} color={tint} strokeWidth={focused ? 2.4 : 2.1} />
+      {/* Amal kutayotgan hujjatlar soni — web chap menyusidagi qizil raqam
+          (backend notifications/menu-badges). */}
+      {!!badge && badge > 0 && (
+        <View style={[styles.badge, { backgroundColor: colors.error, borderColor: colors.tabBar }]}>
+          <Text style={[styles.badgeText, ff('900')]}>{badge > 9 ? '9+' : badge}</Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -53,6 +55,8 @@ export default function TabsLayout() {
   const bp = useBreakpoint();
   const useRail = bp.isTablet;
   const { data: menuBadges } = useQuery(menuBadgesQuery());
+  // Re-render the tab hrefs once the master admin's module matrix arrives.
+  useNavSettings();
 
   return (
     <View style={{ flex: 1, flexDirection: 'row' }}>
@@ -71,8 +75,8 @@ export default function TabsLayout() {
               : {
                   backgroundColor: colors.tabBar,
                   borderTopColor: colors.tabBarBorder,
-                  borderTopWidth: 1,
-                  height: 60 + insets.bottom,
+                  borderTopWidth: 2,
+                  height: 68 + insets.bottom,
                   paddingBottom: insets.bottom,
                   paddingTop: 8,
                   elevation: 0,
@@ -82,14 +86,15 @@ export default function TabsLayout() {
         >
           <Tabs.Screen
             name="index"
-            options={{ tabBarButtonTestID: 'tab-home', tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="home" label={t('modules.labels.home')} colors={colors} /> }}
+            options={{ tabBarButtonTestID: 'tab-home', tabBarAccessibilityLabel: t('modules.labels.home'), tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="home" colors={colors} /> }}
           />
           <Tabs.Screen
             name="orders"
             options={{
               href: canAccessPage(user, 'orders') ? undefined : null,
               tabBarButtonTestID: 'tab-orders',
-              tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="orders" label={t('modules.labels.orders')} colors={colors} badge={menuBadges?.orders} />,
+              tabBarAccessibilityLabel: t('modules.labels.orders'),
+              tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="orders" colors={colors} badge={menuBadges?.orders} />,
             }}
           />
           <Tabs.Screen
@@ -97,12 +102,13 @@ export default function TabsLayout() {
             options={{
               href: canAccessPage(user, 'letters') ? undefined : null,
               tabBarButtonTestID: 'tab-letters',
-              tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="mail" label={t('modules.labels.letters')} colors={colors} badge={menuBadges?.letters} />,
+              tabBarAccessibilityLabel: t('modules.labels.letters'),
+              tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="mail" colors={colors} badge={menuBadges?.letters} />,
             }}
           />
           <Tabs.Screen
             name="modules"
-            options={{ tabBarButtonTestID: 'tab-modules', tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="grid" label={t('modules.labels.modules')} colors={colors} /> }}
+            options={{ tabBarButtonTestID: 'tab-modules', tabBarAccessibilityLabel: t('modules.labels.modules'), tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="grid" colors={colors} /> }}
           />
           {/* Mehmonlar va Profil — bottom bardan olib tashlandi; Modullar plitkasi
               orqali ochiladi (bar-less tab + header chevron + backBehavior history). */}
@@ -115,12 +121,13 @@ export default function TabsLayout() {
 }
 
 const styles = StyleSheet.create({
-  wrap: { alignItems: 'center', gap: 3, width: 64 },
-  pill: { width: 46, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
-  label: { fontSize: 10.5 },
+  box: {
+    width: 60, height: 50, borderRadius: 14, borderWidth: 2, borderColor: 'transparent',
+    alignItems: 'center', justifyContent: 'center',
+  },
   badge: {
-    position: 'absolute', top: -2, right: 4, minWidth: 16, height: 16, borderRadius: 8,
+    position: 'absolute', top: 1, right: 5, minWidth: 17, height: 17, borderRadius: 9,
     borderWidth: 1.5, paddingHorizontal: 4, alignItems: 'center', justifyContent: 'center',
   },
-  badgeText: { color: '#fff', fontSize: 9.5, fontWeight: '800' },
+  badgeText: { color: '#fff', fontSize: 10 },
 });

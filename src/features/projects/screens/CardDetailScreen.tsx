@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
@@ -214,46 +215,46 @@ const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 24 },
 
-    card: { backgroundColor: c.card, borderRadius: 16, padding: 16, marginTop: 12, borderWidth: 1, borderColor: c.cardBorder },
+    card: { backgroundColor: c.card, borderRadius: 16, padding: 16, marginTop: 12, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder },
     statusPill: { alignSelf: 'flex-start', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, marginBottom: 10 },
-    statusText: { fontSize: 12, fontWeight: '800', color: '#fff' },
-    title: { fontSize: 18, fontWeight: '800', color: c.text },
-    description: { fontSize: 14, color: c.textSecondary, marginTop: 8, lineHeight: 20 },
+    statusText: { fontSize: 12, ...ff('900'), color: '#fff' },
+    title: { fontSize: 18, ...ff('900'), color: c.text },
+    description: { fontSize: 14, color: c.textSecondary, marginTop: 8, lineHeight: 20, ...ff('700') },
 
     datesRow: { flexDirection: 'row', gap: 16, marginTop: 12 },
     dateItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-    dateText: { fontSize: 13, color: c.textSecondary, fontWeight: '600' },
+    dateText: { fontSize: 13, color: c.textSecondary, ...ff('700') },
 
     labelsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 12 },
     labelChip: { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
-    labelText: { fontSize: 12, fontWeight: '700', color: '#fff' },
+    labelText: { fontSize: 12, ...ff('800'), color: '#fff' },
 
     sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
-    sectionTitle: { fontSize: 15, fontWeight: '700', color: c.text },
-    emptyText: { color: c.textMuted, fontSize: 14, paddingVertical: 4 },
+    sectionTitle: { fontSize: 15, ...ff('800'), color: c.text },
+    emptyText: { color: c.textMuted, fontSize: 14, paddingVertical: 4, ...ff('700') },
 
     memberRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6 },
     avatar: { width: 32, height: 32, borderRadius: 16, backgroundColor: c.bg },
     avatarFallback: { alignItems: 'center', justifyContent: 'center' },
-    memberName: { flex: 1, fontSize: 14, fontWeight: '600', color: c.text },
+    memberName: { flex: 1, fontSize: 14, ...ff('700'), color: c.text },
 
-    fileRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, borderTopWidth: 1, borderTopColor: c.cardBorder },
-    fileName: { flex: 1, fontSize: 14, color: c.text, fontWeight: '500' },
+    fileRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, borderTopWidth: 2, borderTopColor: c.cardBorder },
+    fileName: { flex: 1, fontSize: 14, color: c.text, ...ff('700') },
 
-    commentRow: { paddingVertical: 8, borderTopWidth: 1, borderTopColor: c.cardBorder },
-    commentAuthor: { fontSize: 13, fontWeight: '700', color: c.text },
-    commentText: { fontSize: 14, color: c.textSecondary, marginTop: 2, lineHeight: 19 },
-    commentDate: { fontSize: 11, color: c.textMuted, marginTop: 4 },
+    commentRow: { paddingVertical: 8, borderTopWidth: 2, borderTopColor: c.cardBorder },
+    commentAuthor: { fontSize: 13, ...ff('800'), color: c.text },
+    commentText: { fontSize: 14, color: c.textSecondary, marginTop: 2, lineHeight: 19, ...ff('700') },
+    commentDate: { fontSize: 11, color: c.textMuted, marginTop: 4, ...ff('700') },
 
-    commentComposer: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginTop: 12, borderTopWidth: 1, borderTopColor: c.cardBorder, paddingTop: 12 },
-    commentInput: { flex: 1, minHeight: 40, maxHeight: 120, backgroundColor: c.bg, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, fontSize: 14, color: c.text },
-    commentSendBtn: { width: 40, height: 40, borderRadius: 10, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' },
+    commentComposer: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginTop: 12, borderTopWidth: 2, borderTopColor: c.cardBorder, paddingTop: 12 },
+    commentInput: { flex: 1, minHeight: 40, maxHeight: 120, backgroundColor: c.bg, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, fontSize: 14, color: c.text, ...ff('700') },
+    commentSendBtn: { width: 40, height: 40, borderRadius: 10, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center', borderBottomWidth: 4, borderBottomColor: c.primaryShadow },
     commentSendBtnDisabled: { opacity: 0.5 },
 
-    actionBar: { position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', gap: 10, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 24, backgroundColor: c.card, borderTopWidth: 1, borderTopColor: c.cardBorder },
+    actionBar: { position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', gap: 10, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 24, backgroundColor: c.card, borderTopWidth: 2, borderTopColor: c.cardBorder },
     actionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 48, borderRadius: 12 },
     completeBtn: { backgroundColor: c.present },
-    uncompleteBtn: { backgroundColor: c.bg, borderWidth: 1, borderColor: c.cardBorder },
+    uncompleteBtn: { backgroundColor: c.bg, borderWidth: 2, borderColor: c.cardBorder },
     rejectBtn: { backgroundColor: c.errorSoft },
-    actionBtnText: { fontSize: 15, fontWeight: '700', color: '#fff' },
+    actionBtnText: { fontSize: 15, ...ff('800'), color: '#fff' },
   });

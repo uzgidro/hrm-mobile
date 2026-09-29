@@ -66,12 +66,16 @@ describe('CreateLeaveScreen (tablet two-column pairing)', () => {
     expect(endHalf.props.style).toBeUndefined();
   });
 
-  it('keeps type/supervisor/comment as single full-width fields on tablet (not paired)', async () => {
+  it('keeps type/comment full-width and names the server-routed approver (web v2)', async () => {
     (useWindowDimensions as jest.Mock).mockReturnValue(TABLET_LANDSCAPE);
+    mock.onGet('work-leaves/my-approvers').reply(200, [{ id: 2, legal_name: 'Supervisor Name', via: 'supervisor' }]);
+    mock.onGet('work-leaves/rules').reply(200, { max_days_back: 3, exempt: false });
+    mock.onGet('dictionaries/leave_request_reasons/options').reply(200, []);
     const { findByText } = await renderWithProviders(<CreateLeaveScreen />);
 
     expect(await findByText("So'rov turi *")).toBeTruthy();
-    expect(await findByText('Rahbar (Tasdiqlovchi)')).toBeTruthy();
-    expect(await findByText('Izoh (ixtiyoriy)')).toBeTruthy();
+    expect(await findByText('Izoh *')).toBeTruthy();
+    expect(await findByText("So'rov bevosita rahbaringizga yuboriladi: Supervisor Name")).toBeTruthy();
+    expect(await findByText("So'rovni ko'pi bilan 3 kun orqaga yozish mumkin.")).toBeTruthy();
   });
 });

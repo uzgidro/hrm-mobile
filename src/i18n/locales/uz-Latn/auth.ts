@@ -24,4 +24,11 @@ export default {
   captchaRequired: 'Rasmdagi belgilarni kiriting',
   captchaInvalid: 'Rasmdagi belgilar noto\'g\'ri — yangi rasm bo\'yicha qayta kiriting',
   tooManyAttempts: 'Juda ko\'p urinish. Bir necha daqiqadan so\'ng qayta urining',
+  // Tomchi maskoti kirish ekranidagi pufakchada — kayfiyatga qarab.
+  tomchiIdle: 'Salom! Men Tomchi. Keling, ish kunini boshlaymiz!',
+  tomchiWatching: 'Loginingizni diqqat bilan kuzatyapman…',
+  tomchiShy: "Parolingizga qaramayman, xotirjam bo'ling!",
+  tomchiPeek: "Faqat bitta ko'z bilan… hech kimga aytmayman!",
+  tomchiSad: "Voy! Nimadir noto'g'ri. Yana bir urinib ko'ramiz?",
+  tomchiHappy: "Zo'r! Xush kelibsiz!",
 } as const;

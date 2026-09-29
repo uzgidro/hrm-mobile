@@ -11,6 +11,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Icon } from './Icon';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 import type { ThemeColors } from '../theme/palettes';
+import { ff } from '@/theme/typography';
 
 export type ChipItem = { value: number; label: string };
 
@@ -61,16 +62,16 @@ const makeStyles = (c: ThemeColors) =>
       alignItems: 'center',
       gap: 6,
       backgroundColor: c.primarySoft,
-      borderWidth: 1,
+      borderWidth: 2,
       borderColor: c.cardBorder,
       borderRadius: 999,
       paddingVertical: 5,
       paddingHorizontal: 10,
       maxWidth: '100%',
     },
-    chipText: { fontSize: 12, color: c.text, flexShrink: 1 },
+    chipText: { fontSize: 12, color: c.text, flexShrink: 1, ...ff('700') },
     chipClose: { marginLeft: 2 },
-    empty: { fontSize: 12, color: c.textMuted, marginTop: 6 },
+    empty: { fontSize: 12, color: c.textMuted, marginTop: 6, ...ff('700') },
   });
 
 export default SelectedChips;

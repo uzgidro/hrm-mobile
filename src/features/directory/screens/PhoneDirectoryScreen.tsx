@@ -9,6 +9,7 @@ import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { useBreakpoint } from '@/utils/responsive';
 import { findExecutiveBranchId, resolveEmployeeBranchId } from '@/utils/branch';
 import { Icon } from '@/components/Icon';
@@ -306,51 +307,51 @@ const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     searchWrapper: {
       paddingHorizontal: 16, paddingVertical: 10, flexShrink: 0,
-      borderBottomWidth: 1, borderBottomColor: c.cardBorder,
+      borderBottomWidth: 2, borderBottomColor: c.cardBorder,
     },
 
-    filterWrapper: { paddingBottom: 4, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
+    filterWrapper: { paddingBottom: 4, borderBottomWidth: 2, borderBottomColor: c.cardBorder },
     scopeRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingBottom: 8 },
     scopeChip: {
       flex: 1, paddingVertical: 9, borderRadius: 12, alignItems: 'center',
-      backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder,
+      backgroundColor: c.card, borderWidth: 2, borderColor: c.cardBorder,
     },
     scopeChipActive: { backgroundColor: c.primary, borderColor: c.primary },
-    scopeChipText: { fontSize: 13, fontWeight: '700', color: c.textSecondary },
+    scopeChipText: { fontSize: 13, ...ff('800'), color: c.textSecondary },
     scopeChipTextActive: { color: c.onPrimary },
     branchRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingBottom: 8, alignItems: 'center' },
     branchChip: {
       paddingHorizontal: 12, paddingVertical: 7, borderRadius: 16,
-      backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, maxWidth: 220,
+      backgroundColor: c.card, borderWidth: 2, borderColor: c.cardBorder, maxWidth: 220,
     },
     branchChipActive: { backgroundColor: c.primarySoft, borderColor: c.primary },
-    branchChipText: { fontSize: 12, fontWeight: '600', color: c.textSecondary },
+    branchChipText: { fontSize: 12, ...ff('700'), color: c.textSecondary },
     branchChipTextActive: { color: c.primary },
 
     list: { paddingHorizontal: 0, paddingTop: 4, paddingBottom: 32 },
     listCount: { paddingHorizontal: 16 },
     separator: { height: 1, backgroundColor: c.cardBorder, marginLeft: 76 },
-    groupHeader: { fontSize: 12, fontWeight: '800', color: c.textMuted, textTransform: 'uppercase', letterSpacing: 0.4, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 6 },
+    groupHeader: { fontSize: 12, ...ff('900'), color: c.textMuted, textTransform: 'uppercase', letterSpacing: 0.4, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 6 },
     gridRow: { gap: 12, paddingHorizontal: 16 },
 
     row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 12, backgroundColor: c.bg },
     rowGrid: {
       flex: 1, paddingHorizontal: 12, marginHorizontal: 0, marginBottom: 12,
-      borderRadius: 14, borderWidth: 1, borderColor: c.cardBorder,
+      borderRadius: 14, borderWidth: 2, borderColor: c.cardBorder,
     },
     info: { flex: 1 },
-    name: { fontSize: 14, fontWeight: '700', color: c.text },
-    sub: { fontSize: 12, color: c.textMuted, marginTop: 2 },
+    name: { fontSize: 14, ...ff('800'), color: c.text },
+    sub: { fontSize: 12, color: c.textMuted, marginTop: 2, ...ff('700') },
     phoneBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: c.primarySoft, paddingHorizontal: 10, paddingVertical: 7, borderRadius: 10 },
-    phoneText: { fontSize: 13, fontWeight: '700', color: c.primary },
-    noPhone: { fontSize: 12, color: c.textMuted },
+    phoneText: { fontSize: 13, ...ff('800'), color: c.primary },
+    noPhone: { fontSize: 12, color: c.textMuted, ...ff('700') },
     // "2" belgisi — qatorda ikkinchi raqam borligini bildiradi, aks holda
     // foydalanuvchi bosish tanlov ochishini bilmaydi.
     phoneBadge: {
       minWidth: 16, height: 16, borderRadius: 8, paddingHorizontal: 4,
       backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center',
     },
-    phoneBadgeText: { fontSize: 10, fontWeight: '800', color: c.onPrimary },
+    phoneBadgeText: { fontSize: 10, ...ff('900'), color: c.onPrimary },
 
     // Tanlov oynasi — o'lchamlari `ModalCard` bilan bir xil (radius 18,
     // padding 20, gap 10, paddingHorizontal 24), shunda ilova ichida
@@ -358,21 +359,21 @@ const makeStyles = (c: ThemeColors) =>
     pickerOverlay: { flex: 1, backgroundColor: c.overlay, justifyContent: 'center', paddingHorizontal: 24 },
     pickerCard: {
       backgroundColor: c.card, borderRadius: 18, padding: 20, gap: 10,
-      borderWidth: 1, borderColor: c.cardBorder,
+      borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder,
     },
-    pickerTitle: { fontSize: 16, fontWeight: '700', color: c.text },
-    pickerHint: { fontSize: 12, color: c.textMuted },
+    pickerTitle: { fontSize: 16, ...ff('800'), color: c.text },
+    pickerHint: { fontSize: 12, color: c.textMuted, ...ff('700') },
     pickerItem: {
       flexDirection: 'row', alignItems: 'center', gap: 12,
       paddingVertical: 12, paddingHorizontal: 14, borderRadius: 12,
       backgroundColor: c.primarySoft,
     },
     pickerItemText: { flex: 1, gap: 2 },
-    pickerLabel: { fontSize: 11, color: c.textMuted, fontWeight: '600' },
-    pickerNumber: { fontSize: 16, fontWeight: '700', color: c.primary },
+    pickerLabel: { fontSize: 11, color: c.textMuted, ...ff('700') },
+    pickerNumber: { fontSize: 16, ...ff('800'), color: c.primary },
     pickerCancel: {
       paddingVertical: 12, borderRadius: 12, alignItems: 'center',
-      backgroundColor: c.bg, borderWidth: 1, borderColor: c.cardBorder, marginTop: 4,
+      backgroundColor: c.bg, borderWidth: 2, borderColor: c.cardBorder, marginTop: 4,
     },
-    pickerCancelText: { color: c.text, fontSize: 14, fontWeight: '600' },
+    pickerCancelText: { color: c.text, fontSize: 14, ...ff('700') },
   });

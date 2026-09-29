@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import type { HikDevice } from '@/types';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
@@ -149,23 +150,23 @@ const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     content: { paddingHorizontal: 16, paddingTop: 12, gap: 12 },
     statRow: { flexDirection: 'row', gap: 10 },
-    stat: { flex: 1, backgroundColor: c.card, borderRadius: 16, borderWidth: 1, borderColor: c.cardBorder, paddingVertical: 14, alignItems: 'center' },
-    statValue: { fontSize: 22, fontWeight: '800' },
-    statLabel: { fontSize: 12, color: c.textMuted, marginTop: 2 },
-    card: { backgroundColor: c.card, borderRadius: 16, borderWidth: 1, borderColor: c.cardBorder, padding: 16 },
-    cardTitle: { fontSize: 14, fontWeight: '700', color: c.text, marginBottom: 10 },
+    stat: { flex: 1, backgroundColor: c.card, borderRadius: 16, borderWidth: 2, borderColor: c.cardBorder, paddingVertical: 14, alignItems: 'center' },
+    statValue: { fontSize: 22, ...ff('900') },
+    statLabel: { fontSize: 12, color: c.textMuted, marginTop: 2, ...ff('700') },
+    card: { backgroundColor: c.card, borderRadius: 16, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder, padding: 16 },
+    cardTitle: { fontSize: 14, ...ff('800'), color: c.text, marginBottom: 10 },
     enrollRow: { flexDirection: 'row', gap: 10 },
     enrollItem: { flex: 1, alignItems: 'center' },
-    enrollValue: { fontSize: 18, fontWeight: '700' },
-    filterBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 11, borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder, backgroundColor: c.card },
+    enrollValue: { fontSize: 18, ...ff('800') },
+    filterBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 11, borderRadius: 12, borderWidth: 2, borderColor: c.cardBorder, backgroundColor: c.card },
     filterBtnOn: { backgroundColor: c.error, borderColor: c.error },
-    filterText: { fontSize: 13, fontWeight: '600', color: c.text },
+    filterText: { fontSize: 13, ...ff('700'), color: c.text },
     filterTextOn: { color: c.onPrimary },
     device: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 11 },
-    deviceBorder: { borderBottomWidth: 1, borderBottomColor: c.cardBorder },
+    deviceBorder: { borderBottomWidth: 2, borderBottomColor: c.cardBorder },
     dot: { width: 10, height: 10, borderRadius: 5 },
-    deviceName: { fontSize: 14, fontWeight: '600', color: c.text },
-    deviceMeta: { fontSize: 12, color: c.textMuted, marginTop: 2 },
-    offlineSince: { fontSize: 12, color: c.error, marginTop: 2 },
-    state: { fontSize: 12, fontWeight: '700' },
+    deviceName: { fontSize: 14, ...ff('700'), color: c.text },
+    deviceMeta: { fontSize: 12, color: c.textMuted, marginTop: 2, ...ff('700') },
+    offlineSince: { fontSize: 12, color: c.error, marginTop: 2, ...ff('700') },
+    state: { fontSize: 12, ...ff('800') },
   });

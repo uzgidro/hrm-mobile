@@ -2,6 +2,8 @@
 import { View, Text, TextInput, StyleSheet } from 'react-native';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 import type { ThemeColors } from '../theme/palettes';
+import { ff } from '../theme/typography';
+import { NO_WEB_OUTLINE } from '../theme/web';
 
 export function FormInput({
   label, value, onChangeText, placeholder, required, multiline, keyboardType, error,
@@ -40,13 +42,14 @@ export function FormInput({
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     wrap: { marginBottom: 14 },
-    label: { fontSize: 13, color: c.textSecondary, fontWeight: '600', marginBottom: 6 },
-    req: { color: c.error, fontWeight: '800' },
+    label: { fontSize: 13, color: c.textSecondary, marginBottom: 6, ...ff('800') },
+    req: { color: c.error, ...ff('900') },
     input: {
-      minHeight: 46, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder,
-      borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: c.text,
+      minHeight: 48, backgroundColor: c.inputBg, borderWidth: 2, borderColor: c.cardBorder,
+      borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: c.text,
+      ...NO_WEB_OUTLINE, ...ff('700'),
     },
     multiline: { minHeight: 96, textAlignVertical: 'top' },
     inputError: { borderColor: c.error },
-    errorText: { fontSize: 12, color: c.error, marginTop: 4 },
+    errorText: { fontSize: 12, color: c.error, marginTop: 4, ...ff('700') },
   });

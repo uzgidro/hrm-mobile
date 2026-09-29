@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { ChipScroll } from '@/components/ChipScroll';
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';
 import dayjs from 'dayjs';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader, HeaderAction } from '@/components/ScreenHeader';
 import { PagedList } from '@/components/PagedList';
@@ -16,7 +17,10 @@ import { FilterChip } from '@/components/FilterChip';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { canMonitorTerminals } from '@/utils/roles';
 import { ticketStatusKey, ticketStatusKind, ticketPriorityKey, type StatusKind } from '@/utils/supportStatus';
-import { ticketsListQuery, type SupportScope, type SupportStatusFilter } from '../api/queries';
+import {
+  ticketsListQuery, supportSummaryQuery,
+  type SupportScope, type SupportSort, type SupportStatusFilter, type SupportSummary,
+} from '../api/queries';
 
 const statusColors = (kind: StatusKind, c: ThemeColors): { bg: string; fg: string } => {
   switch (kind) {
@@ -27,11 +31,12 @@ const statusColors = (kind: StatusKind, c: ThemeColors): { bg: string; fg: strin
   }
 };
 
-const STATUS_CHIPS: { key: SupportStatusFilter; labelKey: string }[] = [
-  { key: 'all', labelKey: 'support.filterAll' },
-  { key: 'open', labelKey: 'support.statusOpen' },
-  { key: 'in_progress', labelKey: 'support.statusInProgress' },
-  { key: 'done', labelKey: 'support.statusDone' },
+// Each chip carries its folder count from support-tickets/summary (web v2).
+const STATUS_CHIPS: { key: SupportStatusFilter; labelKey: string; count: keyof SupportSummary }[] = [
+  { key: 'all', labelKey: 'support.filterAll', count: 'all' },
+  { key: 'open', labelKey: 'support.statusOpen', count: 'new' },
+  { key: 'in_progress', labelKey: 'support.statusInProgress', count: 'taken' },
+  { key: 'done', labelKey: 'support.statusDone', count: 'done' },
 ];
 
 export default function SupportListScreen() {
@@ -47,16 +52,20 @@ export default function SupportListScreen() {
   const [scope, setScope] = useState<SupportScope>(hasQueue ? 'queue' : 'mine');
   const [status, setStatus] = useState<SupportStatusFilter>('all');
   const [search, setSearch] = useState('');
+  const [sort, setSort] = useState<SupportSort>('recent');
   const debouncedSearch = useDebouncedValue(search);
 
-  const query = useInfiniteQuery(ticketsListQuery({ scope, status, search: debouncedSearch }));
+  const query = useInfiniteQuery(ticketsListQuery({ scope, status, search: debouncedSearch, sort }));
+  const { data: summary } = useQuery(supportSummaryQuery(scope, debouncedSearch));
+  // No AKT specialist in the branch → the server refuses new tickets (web v2 hides the button).
+  const canCreate = summary?.can_create !== false;
 
   return (
     <Screen edges={['top']}>
       <ScreenHeader
         title={t('support.title')}
         onBack={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
-        right={<HeaderAction icon="plus" onPress={() => router.push('/texnik-yordam-form')} />}
+        right={canCreate ? <HeaderAction icon="plus" onPress={() => router.push('/texnik-yordam-form')} /> : undefined}
       />
       {hasQueue ? (
         <View style={styles.tabsRow}>
@@ -79,9 +88,25 @@ export default function SupportListScreen() {
         <SearchBox value={search} onChangeText={setSearch} placeholder={t('support.searchPlaceholder')} />
       </View>
       <ChipScroll contentContainerStyle={styles.chipRow}>
-        {STATUS_CHIPS.map((c) => (
-          <FilterChip key={c.key} label={t(c.labelKey)} active={status === c.key} onPress={() => setStatus(c.key)} styles={styles} subtle />
-        ))}
+        {STATUS_CHIPS.map((c) => {
+          const n = summary?.[c.count];
+          return (
+            <FilterChip
+              key={c.key}
+              label={typeof n === 'number' ? `${t(c.labelKey)} · ${n}` : t(c.labelKey)}
+              active={status === c.key}
+              onPress={() => setStatus(c.key)}
+              styles={styles}
+              subtle
+            />
+          );
+        })}
+        <FilterChip
+          label={t('support.sortPriority')}
+          active={sort === 'priority'}
+          onPress={() => setSort(sort === 'priority' ? 'recent' : 'priority')}
+          styles={styles}
+        />
       </ChipScroll>
 
       <PagedList
@@ -134,32 +159,38 @@ export default function SupportListScreen() {
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    subtitle: { fontSize: 13, color: c.textMuted, paddingHorizontal: 16, marginBottom: 8 },
+    subtitle: { fontSize: 13.5, color: c.textSecondary, paddingHorizontal: 16, marginBottom: 8, ...ff('700') },
     tabsRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingBottom: 10 },
-    tab: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder },
-    tabActive: { backgroundColor: c.primary, borderColor: c.primary },
-    tabText: { fontSize: 13, fontWeight: '700', color: c.textSecondary },
-    tabTextActive: { color: c.onPrimary },
+    tab: {
+      paddingHorizontal: 16, paddingVertical: 8, borderRadius: 14, backgroundColor: c.card,
+      borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder,
+    },
+    tabActive: { backgroundColor: c.primarySoft, borderColor: c.tabBarActiveBorder },
+    tabText: { fontSize: 13.5, color: c.textSecondary, ...ff('900') },
+    tabTextActive: { color: c.primaryLight },
     searchWrap: { paddingHorizontal: 16, paddingBottom: 8 },
     chipRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingBottom: 10, alignItems: 'center' },
-    chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 18, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder },
-    chipActive: { backgroundColor: c.primary, borderColor: c.primary },
-    chipText: { fontSize: 13, fontWeight: '700', color: c.textSecondary },
-    chipTextActive: { color: c.onPrimary },
-    chipSubtle: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 14, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder },
-    chipSubtleActive: { backgroundColor: c.primarySoft, borderColor: c.primary },
-    chipSubtleText: { fontSize: 12, fontWeight: '600', color: c.textSecondary },
-    chipSubtleTextActive: { color: c.primary },
+    chip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 14, backgroundColor: c.card, borderWidth: 2, borderColor: c.cardBorder },
+    chipActive: { backgroundColor: c.warningSoft, borderColor: c.warning },
+    chipText: { fontSize: 13, color: c.textSecondary, ...ff('800') },
+    chipTextActive: { color: c.warning },
+    chipSubtle: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 14, backgroundColor: c.card, borderWidth: 2, borderColor: c.cardBorder },
+    chipSubtleActive: { backgroundColor: c.primarySoft, borderColor: c.tabBarActiveBorder },
+    chipSubtleText: { fontSize: 13, color: c.textSecondary, ...ff('800') },
+    chipSubtleTextActive: { color: c.primaryLight },
     badges: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-    unread: { minWidth: 18, height: 18, borderRadius: 9, backgroundColor: c.error, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
-    unreadText: { fontSize: 10, fontWeight: '800', color: '#fff' },
+    unread: { minWidth: 20, height: 20, borderRadius: 10, backgroundColor: c.error, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 5 },
+    unreadText: { fontSize: 11, color: '#fff', ...ff('900') },
     content: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 24 },
-    card: { padding: 14, marginBottom: 10, backgroundColor: c.card, borderRadius: 14, borderWidth: 1, borderColor: c.cardBorder },
+    card: {
+      padding: 14, marginBottom: 10, backgroundColor: c.card, borderRadius: 16,
+      borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder,
+    },
     cardTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
-    priority: { fontSize: 13, fontWeight: '700', color: c.textSecondary },
-    badge: { paddingHorizontal: 9, paddingVertical: 3, borderRadius: 8 },
-    badgeText: { fontSize: 11, fontWeight: '700' },
-    desc: { fontSize: 14, color: c.text, lineHeight: 20 },
+    priority: { fontSize: 13, color: c.textSecondary, ...ff('900') },
+    badge: { paddingHorizontal: 9, paddingVertical: 4, borderRadius: 10 },
+    badgeText: { fontSize: 11, letterSpacing: 0.3, ...ff('900') },
+    desc: { fontSize: 15, color: c.text, lineHeight: 21, ...ff('700') },
     cardMeta: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 },
-    metaText: { fontSize: 12, color: c.textMuted },
+    metaText: { fontSize: 12.5, color: c.textMuted, ...ff('700') },
   });

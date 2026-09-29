@@ -92,6 +92,8 @@ export default {
 
   // Notifications SCREEN chrome — see uz-Latn/notifications.ts.
   screenTitle: 'Билдиришномалар',
+  filterAll: 'Барчаси',
+  filterUnread: 'Ўқилмаганлар',
   markAllRead: "Ўқилди",
   empty: "Билдиришномалар йўқ",
   loadMore: 'Яна кўрсатиш',

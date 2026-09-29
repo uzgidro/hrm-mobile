@@ -10,6 +10,7 @@ import { resolveEmployeeBranchId } from '@/utils/branch';
 import { usePrefsStore } from '@/store/prefsStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { type AttendanceStatus } from '@/utils/attendanceRoster';
 import { useDayRoster } from '@/lib/useDayRoster';
 import { getApiErrorMessage } from '@/api/errors';
@@ -118,22 +119,22 @@ export default function AttendanceDetailScreen() {
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     navBtns: { flexDirection: 'row', gap: 6 },
-    navBtn: { width: 34, height: 34, borderRadius: 8, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, alignItems: 'center', justifyContent: 'center' },
+    navBtn: { width: 34, height: 34, borderRadius: 8, backgroundColor: c.card, borderWidth: 2, borderColor: c.cardBorder, alignItems: 'center', justifyContent: 'center' },
     navBtnDisabled: { opacity: 0.35 },
-    navArrow: { fontSize: 20, color: c.text, fontWeight: '600', lineHeight: 24 },
+    navArrow: { fontSize: 20, color: c.text, ...ff('700'), lineHeight: 24 },
     navArrowDisabled: { color: c.textMuted },
 
     content: { paddingHorizontal: 16, paddingTop: 16 },
     filterNotice: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: c.primarySoft, borderRadius: 12, paddingVertical: 10, paddingHorizontal: 14, marginBottom: 12 },
-    filterNoticeText: { fontSize: 13, color: c.primaryLight, fontWeight: '600' },
+    filterNoticeText: { fontSize: 13, color: c.primaryLight, ...ff('700') },
 
-    chartCard: { backgroundColor: c.card, borderRadius: 16, borderWidth: 1, borderColor: c.cardBorder, marginBottom: 14, paddingVertical: 16 },
+    chartCard: { backgroundColor: c.card, borderRadius: 16, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder, marginBottom: 14, paddingVertical: 16 },
 
     // Single roster card (replaces the three status sections). Row rendering
     // itself is the shared <RosterRow/> (src/components/RosterRow.tsx).
-    rosterCard: { backgroundColor: c.card, borderRadius: 16, borderWidth: 1, borderColor: c.cardBorder, marginBottom: 14, overflow: 'hidden' },
-    rosterHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
-    rosterTitle: { fontSize: 15, fontWeight: '700', color: c.text },
-    linkText: { fontSize: 13, color: c.primaryLight, fontWeight: '600' },
-    emptySection: { color: c.textMuted, fontSize: 13, paddingHorizontal: 16, paddingVertical: 12 },
+    rosterCard: { backgroundColor: c.card, borderRadius: 16, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder, marginBottom: 14, overflow: 'hidden' },
+    rosterHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 2, borderBottomColor: c.cardBorder },
+    rosterTitle: { fontSize: 15, ...ff('800'), color: c.text },
+    linkText: { fontSize: 13, color: c.primaryLight, ...ff('700') },
+    emptySection: { color: c.textMuted, fontSize: 13, paddingHorizontal: 16, paddingVertical: 12, ...ff('700') },
   });

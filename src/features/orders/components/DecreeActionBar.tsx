@@ -2,6 +2,7 @@ import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'rea
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import type { DecreePermissions } from '@/utils/orderStatus';
 
 // The bottom action bar of the decree detail. Which buttons appear is decided
@@ -106,11 +107,11 @@ const makeStyles = (c: ThemeColors) =>
     actionBar: {
       position: 'absolute', left: 0, right: 0, bottom: 0,
       flexDirection: 'row', gap: 10, padding: 16, paddingBottom: 28,
-      backgroundColor: c.card, borderTopWidth: 1, borderTopColor: c.cardBorder,
+      backgroundColor: c.card, borderTopWidth: 2, borderTopColor: c.cardBorder,
     },
     actBtn: { flex: 1, paddingVertical: 15, borderRadius: 13, alignItems: 'center' },
     actApprove: { backgroundColor: c.primary },
-    actApproveText: { color: c.onPrimary, fontSize: 15, fontWeight: '700' },
+    actApproveText: { color: c.onPrimary, fontSize: 15, ...ff('800') },
     actReject: { backgroundColor: c.errorSoft, borderWidth: 1, borderColor: c.error },
-    actRejectText: { color: c.error, fontSize: 15, fontWeight: '700' },
+    actRejectText: { color: c.error, fontSize: 15, ...ff('800') },
   });

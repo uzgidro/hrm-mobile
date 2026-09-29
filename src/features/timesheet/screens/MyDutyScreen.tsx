@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
@@ -234,43 +235,43 @@ const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     content: { paddingHorizontal: 16, paddingBottom: 32 },
 
-    card: { backgroundColor: c.card, borderRadius: 16, padding: 16, marginTop: 12, borderWidth: 1, borderColor: c.cardBorder },
-    cardTitle: { fontSize: 15, fontWeight: '700', color: c.text, marginBottom: 10 },
-    sectionLabel: { fontSize: 12, fontWeight: '700', color: c.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 12, marginBottom: 8 },
-    emptyText: { color: c.textMuted, fontSize: 14, paddingVertical: 8 },
+    card: { backgroundColor: c.card, borderRadius: 16, padding: 16, marginTop: 12, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder },
+    cardTitle: { fontSize: 15, ...ff('800'), color: c.text, marginBottom: 10 },
+    sectionLabel: { fontSize: 12, ...ff('800'), color: c.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 12, marginBottom: 8 },
+    emptyText: { color: c.textMuted, fontSize: 14, paddingVertical: 8, ...ff('700') },
 
-    dayRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderTopWidth: 1, borderTopColor: c.cardBorder },
+    dayRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderTopWidth: 2, borderTopColor: c.cardBorder },
     dayDateCol: { width: 64 },
-    dayDate: { fontSize: 14, fontWeight: '700', color: c.text },
-    dayWeekday: { fontSize: 11, color: c.textMuted, marginTop: 1 },
+    dayDate: { fontSize: 14, ...ff('800'), color: c.text },
+    dayWeekday: { fontSize: 11, color: c.textMuted, marginTop: 1, ...ff('700') },
     chip: { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5 },
-    chipText: { fontSize: 12, fontWeight: '800', color: '#fff' },
-    dayTime: { flex: 1, textAlign: 'right', fontSize: 13, color: c.textSecondary },
+    chipText: { fontSize: 12, ...ff('900'), color: '#fff' },
+    dayTime: { flex: 1, textAlign: 'right', fontSize: 13, color: c.textSecondary, ...ff('700') },
 
     tabsRow: { flexDirection: 'row', gap: 8, marginTop: 12 },
-    tab: { flex: 1, paddingVertical: 10, borderRadius: 10, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, alignItems: 'center' },
+    tab: { flex: 1, paddingVertical: 10, borderRadius: 10, backgroundColor: c.card, borderWidth: 2, borderColor: c.cardBorder, alignItems: 'center' },
     tabActive: { backgroundColor: c.primarySoft, borderColor: c.primaryLight },
-    tabText: { fontSize: 13, fontWeight: '600', color: c.textSecondary, paddingHorizontal: 8 },
+    tabText: { fontSize: 13, ...ff('700'), color: c.textSecondary, paddingHorizontal: 8 },
     tabTextActive: { color: c.primaryLight },
 
     shiftsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
     shiftChip: { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6 },
     shiftDot: { width: 8, height: 8, borderRadius: 4 },
-    shiftName: { fontSize: 13, fontWeight: '700', color: c.text },
-    shiftTime: { fontSize: 12, color: c.textSecondary },
+    shiftName: { fontSize: 13, ...ff('800'), color: c.text },
+    shiftTime: { fontSize: 12, color: c.textSecondary, ...ff('700') },
 
     weekdaysRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-    weekdayPill: { backgroundColor: c.bg, borderWidth: 1, borderColor: c.cardBorder, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5 },
-    weekdayPillText: { fontSize: 12, fontWeight: '600', color: c.textSecondary },
+    weekdayPill: { backgroundColor: c.bg, borderWidth: 2, borderColor: c.cardBorder, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5 },
+    weekdayPillText: { fontSize: 12, ...ff('700'), color: c.textSecondary },
 
     memberBlock: { paddingVertical: 8 },
     memberRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-    memberRowBorder: { borderBottomWidth: 1, borderBottomColor: c.cardBorder },
+    memberRowBorder: { borderBottomWidth: 2, borderBottomColor: c.cardBorder },
     memberInfo: { flex: 1 },
-    memberName: { fontSize: 14, fontWeight: '600', color: c.text },
-    memberSub: { fontSize: 12, color: c.textMuted, marginTop: 1 },
+    memberName: { fontSize: 14, ...ff('700'), color: c.text },
+    memberSub: { fontSize: 12, color: c.textMuted, marginTop: 1, ...ff('700') },
     memberDaysRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8, marginLeft: 50 },
     dayPill: { flexDirection: 'row', alignItems: 'center', gap: 5, borderWidth: 1, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
-    dayPillDate: { fontSize: 11, fontWeight: '600', color: c.textSecondary },
+    dayPillDate: { fontSize: 11, ...ff('700'), color: c.textSecondary },
     dayPillDot: { width: 6, height: 6, borderRadius: 3 },
   });

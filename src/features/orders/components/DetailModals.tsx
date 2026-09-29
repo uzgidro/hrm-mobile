@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { parseDdMmYyyy } from '@/lib/dateText';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { ModalCard } from '@/components/ModalCard';
 
 // The reject-reason and register (act-number) modals of the decree detail. Both
@@ -161,20 +162,19 @@ const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     pickRow: {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-      gap: 12, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: c.cardBorder,
+      gap: 12, paddingVertical: 10, borderBottomWidth: 2, borderBottomColor: c.cardBorder,
     },
-    pickLabel: { fontSize: 13, color: c.textSecondary },
-    pickValue: { fontSize: 14, color: c.text, fontWeight: '600', flexShrink: 1, textAlign: 'right' },
-    pickPlaceholder: { fontSize: 14, color: c.textMuted, flexShrink: 1, textAlign: 'right' },
+    pickLabel: { fontSize: 13, color: c.textSecondary, ...ff('700') },
+    pickValue: { fontSize: 14, color: c.text, ...ff('700'), flexShrink: 1, textAlign: 'right' },
+    pickPlaceholder: { fontSize: 14, color: c.textMuted, flexShrink: 1, textAlign: 'right', ...ff('700') },
     permRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12 },
     checkbox: {
-      width: 20, height: 20, borderRadius: 6, borderWidth: 1.5, borderColor: c.cardBorder,
+      width: 20, height: 20, borderRadius: 6, borderWidth: 2, borderColor: c.cardBorder,
     },
     // Qiymatlar ASL holicha (faqat `marginBottom` ketdi — endi oralarni
     // `ModalCard` ning `gap` i beradi).
     modalInput: {
-      backgroundColor: c.bg, borderWidth: 1, borderColor: c.cardBorder, borderRadius: 12,
-      padding: 12, fontSize: 15, color: c.text, minHeight: 48, textAlignVertical: 'top',
-    },
+      backgroundColor: c.bg, borderWidth: 2, borderColor: c.cardBorder, borderRadius: 12,
+      padding: 12, fontSize: 15, color: c.text, minHeight: 48, textAlignVertical: 'top', ...ff('700') },
     modalInputError: { borderColor: c.error },
   });

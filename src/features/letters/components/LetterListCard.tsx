@@ -4,6 +4,7 @@ import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import type { Letter } from '@/types';
 import { letterDisplayNumber, letterStatusMeta, letterTypeLabel, statusColor } from '@/utils/letterStatus';
 
@@ -79,17 +80,17 @@ export function LetterListCard({
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    card: { backgroundColor: c.card, borderRadius: 16, padding: 16, marginBottom: 10, borderWidth: 1, borderColor: c.cardBorder, gap: 8 },
+    card: { backgroundColor: c.card, borderRadius: 16, padding: 16, marginBottom: 10, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder, gap: 8 },
     cardAction: { borderColor: c.warning },
     unseenDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: c.primary },
     cardSelected: { borderColor: c.primary, borderWidth: 2 },
     cardTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-    cardType: { flex: 1, fontSize: 15, fontWeight: '700', color: c.text },
+    cardType: { flex: 1, fontSize: 15, ...ff('800'), color: c.text },
     badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
-    badgeText: { fontSize: 11, fontWeight: '700' },
-    cardDesc: { fontSize: 13, color: c.textSecondary, lineHeight: 18 },
+    badgeText: { fontSize: 11, ...ff('800') },
+    cardDesc: { fontSize: 13, color: c.textSecondary, lineHeight: 18, ...ff('700') },
     cardMeta: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
-    cardMetaText: { fontSize: 12, color: c.textMuted, flexShrink: 1 },
+    cardMetaText: { fontSize: 12, color: c.textMuted, flexShrink: 1, ...ff('700') },
     actionTag: { alignSelf: 'flex-start', backgroundColor: c.warningSoft, borderRadius: 7, paddingHorizontal: 9, paddingVertical: 4 },
-    actionTagText: { fontSize: 11, fontWeight: '700', color: c.warning },
+    actionTagText: { fontSize: 11, ...ff('800'), color: c.warning },
   });

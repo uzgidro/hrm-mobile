@@ -30,4 +30,9 @@ export default {
     approved: 'Tasdiqlangan',
     rejected: 'Rad etildi',
   },
+  // Tomchi salomi (dizayn I) va smena progressi.
+  tomchiHello: 'Salom, {{name}}!',
+  tomchiCameIn: 'Bugun {{time}} da keldingiz.',
+  tomchiNotYet: 'Bugun hali kelish qayd etilmagan.',
+  worked: '{{h}} soat {{m}} daqiqa',
 } as const;

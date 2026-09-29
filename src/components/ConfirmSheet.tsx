@@ -11,6 +11,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Animated, Modal, Pressable, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { Icon, type IconName } from '@/components/Icon';
 import { useBreakpoint } from '@/utils/responsive';
 
@@ -136,22 +137,21 @@ const makeStyles = (c: ThemeColors) =>
       justifyContent: 'center',
       marginBottom: 20,
     },
-    title: { fontSize: 19, fontWeight: '800', color: c.text, textAlign: 'center' },
+    title: { fontSize: 19, ...ff('900'), color: c.text, textAlign: 'center' },
     message: {
       fontSize: 14,
       color: c.textSecondary,
       textAlign: 'center',
       lineHeight: 20,
       marginTop: 8,
-      marginBottom: 24,
-    },
+      marginBottom: 24, ...ff('700') },
     confirmBtn: {
       borderRadius: 14,
       paddingVertical: 16,
       alignItems: 'center',
       alignSelf: 'stretch',
     },
-    confirmText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+    confirmText: { color: '#fff', fontSize: 16, ...ff('800') },
     cancelBtn: { paddingVertical: 14, alignItems: 'center', alignSelf: 'stretch', marginTop: 4 },
-    cancelText: { color: c.textSecondary, fontSize: 15, fontWeight: '600' },
+    cancelText: { color: c.textSecondary, fontSize: 15, ...ff('700') },
   });

@@ -27,12 +27,12 @@ describe('notificationKeys', () => {
 describe('notificationsListQuery', () => {
   it('carries the list key with the employee id and always revalidates on mount', () => {
     const opts = notificationsListQuery(7);
-    expect(opts.queryKey).toEqual(['notifications', 'list', 7, 100]);
+    expect(opts.queryKey).toEqual(['notifications', 'list', 7, 100, 'all']);
     expect(opts.refetchOnMount).toBe('always');
   });
 
   it('uses null for an undefined employee id', () => {
-    expect(notificationsListQuery().queryKey).toEqual(['notifications', 'list', null, 100]);
+    expect(notificationsListQuery().queryKey).toEqual(['notifications', 'list', null, 100, 'all']);
   });
 
   it('returns a bare array response as-is', async () => {
@@ -58,5 +58,21 @@ describe('notificationsListQuery', () => {
     mock.onGet(NOTIFICATIONS_LIST).reply(200, []);
     await (notificationsListQuery(3).queryFn as () => Promise<unknown[]>)();
     expect(mock.history.get[0].url).toBe(NOTIFICATIONS_LIST);
+  });
+});
+
+describe('notificationsListQuery unread filter (backend is_read)', () => {
+  it('asks the server for unread only and keys the view separately', async () => {
+    mock.onGet(NOTIFICATIONS_LIST).reply(200, [{ id: 3, is_read: false }]);
+    const q = notificationsListQuery(7, 100, true);
+    expect(q.queryKey).toEqual(['notifications', 'list', 7, 100, 'unread']);
+    await (q.queryFn as () => Promise<unknown>)();
+    expect(mock.history.get[0].params).toEqual({ limit: 100, is_read: false });
+  });
+
+  it('the default view sends no is_read', async () => {
+    mock.onGet(NOTIFICATIONS_LIST).reply(200, []);
+    await (notificationsListQuery(7).queryFn as () => Promise<unknown>)();
+    expect(mock.history.get[0].params).toEqual({ limit: 100 });
   });
 });

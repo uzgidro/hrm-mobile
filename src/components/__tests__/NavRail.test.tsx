@@ -16,18 +16,20 @@ describe('NavRail', () => {
     expect(getByText('Asosiy')).toBeTruthy(); // modules.labels.home uz-Latn
   });
 
+  // Web v2: a KPP POST account (type 'kpp', no employee card) gets the post
+  // screens only — home, phone directory, guests.
   it('hides items the role cannot access (web-parity)', async () => {
     useAuthStore.setState({
-      user: { type: 'employee', employee: { id: 2, is_multi_org_user: true, multi_org_employee_role: 'kpp' } } as any,
+      user: { type: 'kpp' } as any,
       isAuthenticated: true,
     } as any);
     const { queryByText } = await renderWithProviders(<NavRail />);
     expect(queryByText('Hujjatlar')).toBeNull(); // KPP has no documents nav
   });
 
-  it('hides Orders and Letters from the PRIMARY row for KPP (web-parity, mirrors bottom-tab href gating)', async () => {
+  it('hides Orders and Letters from the PRIMARY row for a KPP post account (web-parity, mirrors bottom-tab href gating)', async () => {
     useAuthStore.setState({
-      user: { type: 'employee', employee: { id: 2, is_multi_org_user: true, multi_org_employee_role: 'kpp' } } as any,
+      user: { type: 'kpp' } as any,
       isAuthenticated: true,
     } as any);
     const { queryByText, getByText } = await renderWithProviders(<NavRail />);

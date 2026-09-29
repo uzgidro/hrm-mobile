@@ -56,6 +56,7 @@ export default {
   tabQueue: 'Очередь',
   searchPlaceholder: 'Описание, UGE или кабинет...',
   filterAll: 'Все',
+  sortPriority: 'Сначала важные',
   take: 'Принять',
   takeDone: 'Заявка принята',
   markDone: 'Отметить выполненной',

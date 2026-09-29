@@ -9,6 +9,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import type { Dayjs } from 'dayjs';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { monthName } from '@/i18n/dates';
 import { Icon } from './Icon';
 
@@ -38,6 +39,6 @@ export function MonthNavigator({
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     monthNav: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-    navBtn: { width: 40, height: 40, backgroundColor: c.bg, borderRadius: 10, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: c.cardBorder },
-    monthTitle: { fontSize: 16, fontWeight: '700', color: c.text },
+    navBtn: { width: 40, height: 40, backgroundColor: c.bg, borderRadius: 10, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: c.cardBorder },
+    monthTitle: { fontSize: 16, ...ff('800'), color: c.text },
   });

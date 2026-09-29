@@ -82,6 +82,22 @@ describe('apiClient interceptors', () => {
     expect(protectedHits).toBeGreaterThanOrEqual(4); // 3 initial 401s + retries
   });
 
+  it('sends the refresh token in the JSON body, never in the URL (it would land in access logs)', async () => {
+    let seenUrl = '';
+    let seenBody: unknown;
+    refreshMock.onPost(/\/auth\/refresh/).reply((config) => {
+      seenUrl = String(config.url) + JSON.stringify(config.params ?? {});
+      seenBody = JSON.parse(config.data);
+      return [200, { access_token: 'new-access' }];
+    });
+    appMock.onGet('protected').reply((config) =>
+      config.headers?.Authorization === 'Bearer old-access' ? [401] : [200, { ok: true }]);
+
+    await apiClient.get('protected');
+    expect(seenBody).toEqual({ refresh_token: 'refresh-1' });
+    expect(seenUrl).not.toContain('refresh-1');
+  });
+
   it('clears tokens when refresh fails', async () => {
     refreshMock.onPost(/\/auth\/refresh/).reply(401);
     appMock.onGet('protected').reply(401);

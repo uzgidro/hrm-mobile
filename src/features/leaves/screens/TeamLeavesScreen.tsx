@@ -12,6 +12,7 @@ import type { TFunction } from 'i18next';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader, HeaderAction } from '@/components/ScreenHeader';
@@ -163,33 +164,33 @@ export default function TeamLeavesScreen() {
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    monthFilterWrapper: { flexShrink: 0, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
+    monthFilterWrapper: { flexShrink: 0, borderBottomWidth: 2, borderBottomColor: c.cardBorder },
     searchWrap: { paddingHorizontal: 16, paddingTop: 10, flexShrink: 0 },
     statusFilterWrapper: { flexShrink: 0 },
     statusRow: { paddingHorizontal: 16, paddingVertical: 10, gap: 8, flexDirection: 'row', alignItems: 'center' },
-    statusChip: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 16, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder },
+    statusChip: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 16, backgroundColor: c.card, borderWidth: 2, borderColor: c.cardBorder },
     statusChipActive: { backgroundColor: c.primary, borderColor: c.primary },
-    statusChipText: { fontSize: 12, fontWeight: '700', color: c.textSecondary },
+    statusChipText: { fontSize: 12, ...ff('800'), color: c.textSecondary },
     statusChipTextActive: { color: c.onPrimary },
     monthRow: { paddingHorizontal: 16, paddingVertical: 10, gap: 8, flexDirection: 'row', alignItems: 'center' },
-    monthChip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder },
+    monthChip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, backgroundColor: c.card, borderWidth: 2, borderColor: c.cardBorder },
     monthChipActive: { backgroundColor: c.primary, borderColor: c.primary },
-    monthChipText: { fontSize: 13, color: c.textSecondary, fontWeight: '600' },
+    monthChipText: { fontSize: 13, color: c.textSecondary, ...ff('700') },
     monthChipTextActive: { color: c.onPrimary },
 
     content: { paddingHorizontal: 16, paddingTop: 10, paddingBottom: 32 },
 
-    card: { backgroundColor: c.card, borderRadius: 16, borderWidth: 1, borderColor: c.cardBorder, padding: 14, marginBottom: 10, gap: 6 },
+    card: { backgroundColor: c.card, borderRadius: 16, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder, padding: 14, marginBottom: 10, gap: 6 },
     empRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 },
-    empName: { flex: 1, fontSize: 13, color: c.textSecondary, fontWeight: '600' },
+    empName: { flex: 1, fontSize: 13, color: c.textSecondary, ...ff('700') },
 
     cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    categoryName: { fontSize: 15, fontWeight: '700', color: c.text, flex: 1, marginRight: 8 },
+    categoryName: { fontSize: 15, ...ff('800'), color: c.text, flex: 1, marginRight: 8 },
     badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
-    badgeText: { fontSize: 12, fontWeight: '700' },
+    badgeText: { fontSize: 12, ...ff('800') },
     dateRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-    dateIcon: { fontSize: 13 },
-    dateText: { fontSize: 13, color: c.textSecondary, flex: 1 },
-    comment: { fontSize: 13, color: c.textMuted, lineHeight: 18 },
-    createdAt: { fontSize: 11, color: c.textMuted },
+    dateIcon: { fontSize: 13, ...ff('700') },
+    dateText: { fontSize: 13, color: c.textSecondary, flex: 1, ...ff('700') },
+    comment: { fontSize: 13, color: c.textMuted, lineHeight: 18, ...ff('700') },
+    createdAt: { fontSize: 11, color: c.textMuted, ...ff('700') },
   });

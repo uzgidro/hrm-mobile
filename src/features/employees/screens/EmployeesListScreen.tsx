@@ -10,6 +10,7 @@ import { resolveEmployeeBranchId } from '@/utils/branch';
 import { usePrefsStore } from '@/store/prefsStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { useBreakpoint } from '@/utils/responsive';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
@@ -132,18 +133,18 @@ const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     searchWrapper: {
       paddingHorizontal: 16, paddingVertical: 10, flexShrink: 0,
-      borderBottomWidth: 1, borderBottomColor: c.cardBorder,
+      borderBottomWidth: 2, borderBottomColor: c.cardBorder,
     },
 
-    filtersWrap: { paddingTop: 8, flexShrink: 0, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
+    filtersWrap: { paddingTop: 8, flexShrink: 0, borderBottomWidth: 2, borderBottomColor: c.cardBorder },
     chipRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingBottom: 8, alignItems: 'center' },
-    chip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 16, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, maxWidth: 240 },
+    chip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 16, backgroundColor: c.card, borderWidth: 2, borderColor: c.cardBorder, maxWidth: 240 },
     chipActive: { backgroundColor: c.primary, borderColor: c.primary },
-    chipText: { fontSize: 12, fontWeight: '700', color: c.textSecondary },
+    chipText: { fontSize: 12, ...ff('800'), color: c.textSecondary },
     chipTextActive: { color: c.onPrimary },
-    chipSubtle: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 14, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, maxWidth: 240 },
+    chipSubtle: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 14, backgroundColor: c.card, borderWidth: 2, borderColor: c.cardBorder, maxWidth: 240 },
     chipSubtleActive: { backgroundColor: c.primarySoft, borderColor: c.primary },
-    chipSubtleText: { fontSize: 12, fontWeight: '600', color: c.textSecondary },
+    chipSubtleText: { fontSize: 12, ...ff('700'), color: c.textSecondary },
     chipSubtleTextActive: { color: c.primary },
 
     list: { paddingHorizontal: 0, paddingTop: 4, paddingBottom: 32 },
@@ -151,9 +152,9 @@ const makeStyles = (c: ThemeColors) =>
 
     empRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 12, backgroundColor: c.bg },
     gridRow: { gap: 12, paddingHorizontal: 16 },
-    empRowGrid: { flex: 1, marginHorizontal: 0, borderRadius: 14, borderWidth: 1, borderColor: c.cardBorder },
+    empRowGrid: { flex: 1, marginHorizontal: 0, borderRadius: 14, borderWidth: 2, borderColor: c.cardBorder },
     empInfo: { flex: 1 },
-    empName: { fontSize: 14, fontWeight: '700', color: c.text },
-    empSub: { fontSize: 12, color: c.textMuted, marginTop: 2 },
-    arrowIcon: { fontSize: 22, color: c.textMuted },
+    empName: { fontSize: 14, ...ff('800'), color: c.text },
+    empSub: { fontSize: 12, color: c.textMuted, marginTop: 2, ...ff('700') },
+    arrowIcon: { fontSize: 22, color: c.textMuted, ...ff('700') },
   });

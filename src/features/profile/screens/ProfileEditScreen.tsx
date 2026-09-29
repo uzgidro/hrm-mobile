@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
@@ -261,34 +262,32 @@ const makeStyles = (c: ThemeColors) =>
 
     content: { paddingHorizontal: 16, paddingTop: 16 },
     noteRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginBottom: 14 },
-    noteText: { flex: 1, fontSize: 12, color: c.textMuted, lineHeight: 17 },
+    noteText: { flex: 1, fontSize: 12, color: c.textMuted, lineHeight: 17, ...ff('700') },
 
     card: {
       backgroundColor: c.card, borderRadius: 18, padding: 16, marginBottom: 12,
-      borderWidth: 1, borderColor: c.cardBorder,
+      borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder,
     },
-    cardTitle: { fontSize: 13, fontWeight: '800', color: c.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 14 },
+    cardTitle: { fontSize: 13, ...ff('900'), color: c.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 14 },
 
-    label: { fontSize: 12, fontWeight: '600', color: c.textSecondary, marginBottom: 6 },
+    label: { fontSize: 12, ...ff('700'), color: c.textSecondary, marginBottom: 6 },
     input: {
-      backgroundColor: c.bg, borderWidth: 1, borderColor: c.cardBorder, borderRadius: 12,
-      paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: c.text,
-    },
+      backgroundColor: c.bg, borderWidth: 2, borderColor: c.cardBorder, borderRadius: 12,
+      paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: c.text, ...ff('700') },
     inputMultiline: { minHeight: 64, textAlignVertical: 'top' },
     row2: { flexDirection: 'row', gap: 12 },
 
     chipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
     chip: {
       paddingHorizontal: 14, paddingVertical: 9, borderRadius: 20,
-      backgroundColor: c.bg, borderWidth: 1, borderColor: c.cardBorder,
+      backgroundColor: c.bg, borderWidth: 2, borderColor: c.cardBorder,
     },
     chipActive: { backgroundColor: c.primarySoft, borderColor: c.primary },
-    chipText: { fontSize: 13, color: c.textSecondary, fontWeight: '600' },
-    chipTextActive: { color: c.primaryLight, fontWeight: '700' },
+    chipText: { fontSize: 13, color: c.textSecondary, ...ff('700') },
+    chipTextActive: { color: c.primaryLight, ...ff('800') },
 
     saveBtn: {
       backgroundColor: c.primary, borderRadius: 14, paddingVertical: 16,
-      alignItems: 'center', marginTop: 4,
-    },
-    saveBtnText: { color: c.onPrimary, fontSize: 16, fontWeight: '700' },
+      alignItems: 'center', marginTop: 4, borderBottomWidth: 4, borderBottomColor: c.primaryShadow },
+    saveBtnText: { color: c.onPrimary, fontSize: 16, ...ff('800') },
   });

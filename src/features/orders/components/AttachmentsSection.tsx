@@ -8,6 +8,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert, Linking, ActivityIndic
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import type { OrderAct } from '@/types';
 import { Icon } from '@/components/Icon';
 import { Section } from './DetailParts';
@@ -92,6 +93,6 @@ const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 },
     nameBtn: { flex: 1 },
-    name: { fontSize: 14, color: c.primaryLight },
+    name: { fontSize: 14, color: c.primaryLight, ...ff('700') },
     nameDisabled: { color: c.textMuted },
   });

@@ -7,29 +7,31 @@ import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
-import { useAuthStore } from '@/store/authStore';
-import { apiClient } from '@/api/client';
-import { EMPLOYEE_DETAIL } from '@/api/urls';
 import { getApiErrorMessage } from '@/api/errors';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
-import { Employee } from '@/types';
+import { ff } from '@/theme/typography';
+import { NO_WEB_OUTLINE } from '@/theme/web';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
-import { PickerModal } from '@/components/PickerModal';
+import { ChunkyButton } from '@/components/ChunkyButton';
 import { useBreakpoint } from '@/utils/responsive';
 import { useCreateLeave, type CreateLeavePayload } from '../api/mutations';
-import { leaveSupervisorsQuery } from '../api/queries';
-import { supervisorOptions } from '../utils';
+import { leaveApproversQuery, leaveReasonsQuery, leaveRulesQuery } from '../api/queries';
+import { approverNotice, earliestLeaveStart, leaveReasonOptions } from '../utils';
 import { LeaveDateTimePicker } from '../components/LeaveDateTimePicker';
 import { LeaveTypeSheet, LEAVE_TYPES, leaveTypeLabel } from '../components/LeaveTypeSheet';
 import { KeyboardAvoider } from '@/components/KeyboardAvoider';
-import { resolveEmployeeBranchId } from '@/utils/branch';
 
+// Web v2 parity (RequestPermissionPage CreateLeaveModal): routing is NOT a
+// choice. The request goes to the requester's direct supervisor (else the
+// department head, else HR) — decided server-side, so the payload carries no
+// assigned_signer_ids. Picking signers by hand let people route around their
+// own manager. The form only names the approver (work-leaves/my-approvers),
+// states the backdating limit (work-leaves/rules) and offers HR's reason list
+// (dictionaries/leave_request_reasons).
 export default function CreateLeaveScreen() {
-  const { user } = useAuthStore();
-  const employeeId = user?.employee?.id;
   const { colors } = useTheme();
   const s = useThemedStyles(makeS);
   const { t } = useTranslation();
@@ -45,41 +47,27 @@ export default function CreateLeaveScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [showTypeSheet, setShowTypeSheet] = useState(false);
   const [activePicker, setActivePicker] = useState<'start' | 'end' | null>(null);
-  const [showSupervisorPicker, setShowSupervisorPicker] = useState(false);
-  const [pickedSupervisorId, setPickedSupervisorId] = useState<number | null>(null);
 
-  const { data: employeeFull, isLoading: supervisorLoading } = useQuery<Employee>({
-    queryKey: ['employee-full', employeeId],
-    queryFn: () => apiClient.get<Employee>(EMPLOYEE_DETAIL(employeeId!)).then((r) => r.data),
-    enabled: !!employeeId,
-    staleTime: 10 * 60 * 1000,
-  });
+  const approversQ = useQuery(leaveApproversQuery());
+  const { data: rules } = useQuery(leaveRulesQuery());
+  const { data: reasonRows } = useQuery(leaveReasonsQuery());
 
-  const assignedSupervisor: Employee | undefined = employeeFull?.supervisor ?? user?.employee?.supervisor;
-  // No pre-assigned supervisor → the user must PICK one (web parity: the drawer
-  // loads employees only in that case). Roster is fetched lazily via `enabled`.
-  const needsPick = !supervisorLoading && !assignedSupervisor;
-  const branchId =
-    resolveEmployeeBranchId(user?.employee);
-  const { data: roster, isLoading: rosterLoading } = useQuery(
-    leaveSupervisorsQuery(branchId, needsPick),
-  );
-  const options = useMemo(() => supervisorOptions(roster?.items, employeeId), [roster, employeeId]);
-  const pickedSupervisor = useMemo(
-    () => roster?.items?.find((e) => e.id === pickedSupervisorId),
-    [roster, pickedSupervisorId],
-  );
-
-  // Effective signer id: the assigned supervisor, else the picked one.
-  const effectiveSupervisorId = assignedSupervisor?.id ?? pickedSupervisorId ?? undefined;
+  const reasons = useMemo(() => leaveReasonOptions(reasonRows, LEAVE_TYPES), [reasonRows]);
+  const notice = approverNotice(approversQ.data);
+  const earliest = earliestLeaveStart(rules);
+  const maxBack = earliest ? rules!.max_days_back : null;
 
   const handleSubmit = useCallback(async () => {
-    if (endDate.isBefore(startDate) || endDate.isSame(startDate)) {
+    if (!endDate.isAfter(startDate)) {
       Alert.alert(t('common.errorTitle'), t('leaves.endMustBeAfterStart'));
       return;
     }
-    if (!effectiveSupervisorId) {
-      Alert.alert(t('common.errorTitle'), t('leaves.supervisorRequired'));
+    if (!description.trim()) {
+      Alert.alert(t('common.errorTitle'), t('leaves.descRequired'));
+      return;
+    }
+    if (earliest && startDate.isBefore(earliest)) {
+      Alert.alert(t('common.errorTitle'), t('leaves.tooFarBack', { count: maxBack ?? 0 }));
       return;
     }
     setSubmitting(true);
@@ -88,8 +76,7 @@ export default function CreateLeaveScreen() {
         type: leaveType,
         start_date: startDate.toISOString(),
         end_date: endDate.toISOString(),
-        description: description.trim() || undefined,
-        assigned_signer_ids: [effectiveSupervisorId],
+        description: description.trim(),
       };
       await createLeaveMut.mutateAsync(payload);
       Alert.alert(t('common.success'), t('leaves.createdSuccess'), [{ text: t('common.ok'), onPress: () => router.back() }]);
@@ -98,7 +85,7 @@ export default function CreateLeaveScreen() {
     } finally {
       setSubmitting(false);
     }
-  }, [leaveType, startDate, endDate, description, effectiveSupervisorId, createLeaveMut, t]);
+  }, [leaveType, startDate, endDate, description, earliest, maxBack, createLeaveMut, t]);
 
   const diffMin = endDate.diff(startDate, 'minute');
   const durationText = (() => {
@@ -112,6 +99,13 @@ export default function CreateLeaveScreen() {
       mins > 0 && t('leaves.durationMinutes', { count: mins }),
     ].filter(Boolean).join(' ');
   })();
+
+  const routeText =
+    notice.kind === 'supervisor'
+      ? t('leaves.routeToSupervisor', { name: notice.names })
+      : notice.kind === 'department_head'
+        ? t('leaves.routeToHead', { name: notice.names })
+        : t('leaves.routeToNobody');
 
   return (
     <Screen edges={['top', 'bottom']} maxWidth={600}>
@@ -159,94 +153,96 @@ export default function CreateLeaveScreen() {
           <View style={s.durationRow}><Icon name="clock" size={16} color={colors.primaryLight} /><Text style={s.durationText}>{durationText}</Text></View>
         )}
         {diffMin <= 0 && endDate.isValid() && <Text style={s.errorText}>{t('leaves.endBeforeStart')}</Text>}
-
-        <Text style={s.label}>{t('leaves.supervisorLabel')}</Text>
-        {supervisorLoading ? (
-          <View style={s.supervisorCard}><ActivityIndicator size="small" color={colors.primaryLight} /></View>
-        ) : assignedSupervisor ? (
-          // Pre-assigned supervisor — read-only (locked).
-          <View style={s.supervisorCard}>
-            <View style={s.supervisorAvatar}><Text style={s.supervisorAvatarText}>{(assignedSupervisor.legal_name || 'X').charAt(0)}</Text></View>
-            <View style={s.supervisorInfo}>
-              <Text style={s.supervisorName}>{assignedSupervisor.legal_name}</Text>
-              <Text style={s.supervisorSub} numberOfLines={1}>{assignedSupervisor.job_position?.name ?? assignedSupervisor.department?.name ?? '—'}</Text>
-            </View>
-            <Icon name="lock" size={14} color={colors.textMuted} />
-          </View>
-        ) : (
-          // No supervisor assigned — pick one (web parity).
-          <TouchableOpacity style={s.supervisorCard} onPress={() => setShowSupervisorPicker(true)} activeOpacity={0.7} disabled={rosterLoading}>
-            {pickedSupervisor ? (
-              <>
-                <View style={s.supervisorAvatar}><Text style={s.supervisorAvatarText}>{(pickedSupervisor.legal_name || 'X').charAt(0)}</Text></View>
-                <View style={s.supervisorInfo}>
-                  <Text style={s.supervisorName}>{pickedSupervisor.legal_name}</Text>
-                  <Text style={s.supervisorSub} numberOfLines={1}>{pickedSupervisor.job_position?.name ?? pickedSupervisor.department?.name ?? '—'}</Text>
-                </View>
-                <Icon name="chevronRight" size={20} color={colors.textMuted} />
-              </>
-            ) : (
-              <>
-                <Text style={s.noSupervisorText}>{t('leaves.pickSupervisor')}</Text>
-                {rosterLoading ? <ActivityIndicator size="small" color={colors.primaryLight} /> : <Icon name="chevronRight" size={20} color={colors.textMuted} />}
-              </>
-            )}
-          </TouchableOpacity>
+        {earliest && startDate.isBefore(earliest) && (
+          <Text style={s.errorText}>{t('leaves.tooFarBack', { count: maxBack ?? 0 })}</Text>
         )}
 
         <Text style={s.label}>{t('leaves.commentLabel')}</Text>
-        <TextInput style={s.textarea} placeholder={t('leaves.commentPlaceholder')} placeholderTextColor={colors.textMuted} value={description} onChangeText={setDescription} multiline numberOfLines={4} textAlignVertical="top" />
+        <TextInput
+          style={s.textarea}
+          placeholder={t('leaves.commentPlaceholder')}
+          placeholderTextColor={colors.textMuted}
+          value={description}
+          onChangeText={setDescription}
+          multiline
+          numberOfLines={4}
+          textAlignVertical="top"
+          testID="leave-description"
+        />
 
-        <TouchableOpacity style={[s.submitBtn, (submitting || diffMin <= 0) && s.submitBtnDisabled]} onPress={handleSubmit} disabled={submitting || diffMin <= 0} activeOpacity={0.85}>
-          {submitting ? <ActivityIndicator color="#fff" size="small" /> : <Text style={s.submitBtnText}>{t('common.send')}</Text>}
-        </TouchableOpacity>
+        {/* Routing notice — who the request goes to (not a choice, web v2). */}
+        <View style={s.routeCard} testID="leave-route-notice">
+          <View style={s.routeIcon}><Icon name="users" size={18} color={colors.primaryLight} /></View>
+          <View style={{ flex: 1, gap: 4 }}>
+            {approversQ.isLoading ? (
+              <ActivityIndicator size="small" color={colors.primaryLight} style={{ alignSelf: 'flex-start' }} />
+            ) : (
+              <Text style={s.routeText}>{routeText}</Text>
+            )}
+            {maxBack != null && <Text style={s.routeHint}>{t('leaves.backHint', { count: maxBack })}</Text>}
+          </View>
+        </View>
+
+        <ChunkyButton
+          label={t('common.send')}
+          onPress={handleSubmit}
+          loading={submitting}
+          disabled={diffMin <= 0}
+          style={s.submitBtn}
+          testID="leave-submit"
+        />
 
         <View style={{ height: 32 }} />
       </ScrollView>
       </KeyboardAvoider>
 
-      <LeaveTypeSheet visible={showTypeSheet} selected={leaveType} onSelect={setLeaveType} onClose={() => setShowTypeSheet(false)} />
+      <LeaveTypeSheet
+        visible={showTypeSheet}
+        selected={leaveType}
+        options={reasons}
+        onSelect={setLeaveType}
+        onClose={() => setShowTypeSheet(false)}
+      />
       <LeaveDateTimePicker visible={activePicker === 'start'} title={t('leaves.startPickerTitle')} value={startDate}
+        minDate={earliest ?? undefined}
         onConfirm={(v) => { setStartDate(v); if (v.isAfter(endDate)) setEndDate(v.add(1, 'hour')); }} onClose={() => setActivePicker(null)} />
       <LeaveDateTimePicker visible={activePicker === 'end'} title={t('leaves.endPickerTitle')} value={endDate} minDate={startDate} onConfirm={setEndDate} onClose={() => setActivePicker(null)} />
-      <PickerModal
-        visible={showSupervisorPicker}
-        title={t('leaves.pickSupervisorTitle')}
-        options={options}
-        loading={rosterLoading}
-        selected={pickedSupervisorId}
-        onClose={() => setShowSupervisorPicker(false)}
-        onSelect={(v) => { setPickedSupervisorId(v); setShowSupervisorPicker(false); }}
-      />
     </Screen>
   );
 }
 
 const makeS = (c: ThemeColors) =>
   StyleSheet.create({
-    content: { paddingHorizontal: 16, paddingTop: 20 },
-    label: { fontSize: 13, fontWeight: '600', color: c.textSecondary, marginBottom: 6, marginTop: 18 },
-    selector: { flexDirection: 'row', alignItems: 'center', backgroundColor: c.card, borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 14, paddingVertical: 14 },
-    selectorText: { flex: 1, fontSize: 14, color: c.text, fontWeight: '500' },
+    content: { paddingHorizontal: 16, paddingTop: 12 },
+    label: { fontSize: 13, letterSpacing: 0.3, color: c.textSecondary, marginBottom: 6, marginTop: 18, ...ff('900') },
+    selector: {
+      flexDirection: 'row', alignItems: 'center', backgroundColor: c.inputBg, borderRadius: 16,
+      borderWidth: 2, borderColor: c.cardBorder, paddingHorizontal: 14, minHeight: 52,
+    },
+    selectorText: { flex: 1, fontSize: 15, color: c.text, ...ff('700') },
     dateTimeRow: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6 },
-    dateTimeText: { fontSize: 14, color: c.text, fontWeight: '500' },
+    dateTimeText: { fontSize: 15, color: c.text, ...ff('700') },
 
     // Task 21: 2-column pairing for short fields on tablet (bp.isTablet).
     fieldRow: { flexDirection: 'row', gap: 12 },
     fieldHalf: { flex: 1 },
     durationRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8, paddingHorizontal: 2 },
-    durationText: { fontSize: 13, color: c.primaryLight, fontWeight: '600' },
-    errorText: { fontSize: 12, color: c.error, marginTop: 6, paddingHorizontal: 2 },
-    supervisorCard: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: c.card, borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 14, paddingVertical: 14, minHeight: 56 },
-    supervisorAvatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: c.primarySoft, alignItems: 'center', justifyContent: 'center' },
-    supervisorAvatarText: { fontSize: 17, fontWeight: '700', color: c.primaryLight },
-    supervisorInfo: { flex: 1 },
-    supervisorName: { fontSize: 14, fontWeight: '600', color: c.text },
-    supervisorSub: { fontSize: 12, color: c.textMuted, marginTop: 2 },
-    noSupervisorText: { flex: 1, fontSize: 14, color: c.textMuted, fontStyle: 'italic' },
-    supervisorHint: { fontSize: 12, color: c.textMuted, marginTop: 6, paddingHorizontal: 2, fontStyle: 'italic' },
-    textarea: { backgroundColor: c.card, borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 14, paddingVertical: 12, color: c.text, fontSize: 14, minHeight: 100 },
-    submitBtn: { backgroundColor: c.primary, borderRadius: 14, paddingVertical: 16, alignItems: 'center', marginTop: 24 },
-    submitBtnDisabled: { opacity: 0.5 },
-    submitBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+    durationText: { fontSize: 13, color: c.primaryLight, ...ff('800') },
+    errorText: { fontSize: 13, color: c.error, marginTop: 6, paddingHorizontal: 2, ...ff('700') },
+    textarea: {
+      backgroundColor: c.inputBg, borderRadius: 16, borderWidth: 2, borderColor: c.cardBorder,
+      paddingHorizontal: 14, paddingVertical: 12, color: c.text, fontSize: 15, minHeight: 104,
+      ...NO_WEB_OUTLINE, ...ff('700'),
+    },
+    routeCard: {
+      flexDirection: 'row', gap: 12, marginTop: 18, padding: 14, borderRadius: 16,
+      borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder, backgroundColor: c.card,
+    },
+    routeIcon: {
+      width: 36, height: 36, borderRadius: 12, backgroundColor: c.primarySoft,
+      alignItems: 'center', justifyContent: 'center',
+    },
+    routeText: { fontSize: 14, lineHeight: 19, color: c.text, ...ff('700') },
+    routeHint: { fontSize: 13, lineHeight: 18, color: c.textSecondary, ...ff('700') },
+    submitBtn: { marginTop: 22 },
   });

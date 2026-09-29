@@ -11,10 +11,12 @@ import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../store/authStore';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 import type { ThemeColors } from '../theme/palettes';
+import { ff } from '@/theme/typography';
 import { Icon, type IconName } from './Icon';
 import { buildNavSections, type NavItem } from '../utils/navItems';
 import { canAccessPage, hasSupervisor, type PageKey } from '../utils/roles';
 import { useShellBadges } from '@/features/dashboard/api/queries';
+import { useNavSettings } from '../lib/navSettings';
 
 const RAIL_COLLAPSED_WIDTH = 88;
 const RAIL_EXPANDED_WIDTH = 260;
@@ -49,17 +51,21 @@ export function NavRail() {
   // Both counts from the menu-badges poll the app already makes — see
   // `useShellBadges` for what this replaced (two more 60 s polls).
   const { pendingCount, unreadCount } = useShellBadges(employee?.id, isSupervisor);
+  // Web v2 module matrix (nav.modules) — canAccessPage reads it once loaded.
+  const navOverrides = useNavSettings();
 
   const sections = useMemo(
     () => buildNavSections(t, { user, employee, pendingCount, unreadCount }),
-    [t, user, employee, pendingCount, unreadCount]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [t, user, employee, pendingCount, unreadCount, navOverrides]
   );
 
   // Same web-parity filter buildNavSections already applies to the section
   // items — an item without `access` (home, modules) always shows.
   const primary = useMemo(
     () => PRIMARY.filter((item) => !item.access || canAccessPage(user, item.access)),
-    [user]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [user, navOverrides]
   );
 
   const isActive = (route: string) => pathname === route || pathname === route.replace('/(tabs)', '');
@@ -210,17 +216,17 @@ const makeStyles = (c: ThemeColors) =>
       borderRadius: 9, minWidth: 16, height: 16, alignItems: 'center', justifyContent: 'center',
       paddingHorizontal: 3, borderWidth: 1.5, borderColor: c.tabBar,
     },
-    badgeText: { fontSize: 8, fontWeight: '800', color: '#fff' },
+    badgeText: { fontSize: 8, ...ff('900'), color: '#fff' },
 
-    rowLabel: { fontSize: 13, fontWeight: '600', color: c.tabBarInactive, flexShrink: 1 },
-    rowLabelCollapsed: { fontSize: 9.5, fontWeight: '600', color: c.tabBarInactive, textAlign: 'center', alignSelf: 'stretch' },
-    rowLabelActive: { color: c.tabBarActive, fontWeight: '700' },
+    rowLabel: { fontSize: 13, ...ff('700'), color: c.tabBarInactive, flexShrink: 1 },
+    rowLabelCollapsed: { fontSize: 9.5, ...ff('700'), color: c.tabBarInactive, textAlign: 'center', alignSelf: 'stretch' },
+    rowLabelActive: { color: c.tabBarActive, ...ff('800') },
 
     divider: { height: 1, backgroundColor: c.tabBarBorder, marginVertical: 12, marginHorizontal: 8 },
 
     section: { marginBottom: 8 },
     sectionLabel: {
-      fontSize: 11, fontWeight: '700', color: c.textMuted,
+      fontSize: 11, ...ff('800'), color: c.textMuted,
       textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6, marginLeft: 10, marginTop: 4,
     },
   });

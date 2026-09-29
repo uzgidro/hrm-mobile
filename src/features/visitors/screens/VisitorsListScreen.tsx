@@ -2,13 +2,17 @@ import { useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
 } from 'react-native';
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';
 import dayjs from 'dayjs';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
+import { NO_WEB_OUTLINE } from '@/theme/web';
+import { TONES } from '@/theme/tones';
+import { StatFilterTiles, type StatTile } from '@/components/StatFilterTiles';
 import { useBreakpoint } from '@/utils/responsive';
 import { isEmployeeLike, isKPP } from '@/utils/roles';
 import { Icon } from '@/components/Icon';
@@ -19,7 +23,7 @@ import { EmptyState } from '@/components/StateViews';
 import { PagedList, usePagedRows } from '@/components/PagedList';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
-import { visitorsListQuery } from '../api/queries';
+import { visitorsListQuery, visitorsSummaryQuery, type VisitorFilter } from '../api/queries';
 import { VisitorDetailView } from '../components/VisitorDetailView';
 import { resolveEmployeeBranchId } from '@/utils/branch';
 
@@ -38,6 +42,8 @@ export default function MehmonlarScreen() {
   // Task 10 2-column grid unchanged.
   const cols = split ? 1 : bp.isTablet ? (bp.isLandscape ? 3 : 2) : 1;
   const [search, setSearch] = useState('');
+  // Web v2 GuestsPage: the stat tiles are also the filters (server-side).
+  const [filter, setFilter] = useState<VisitorFilter>('all');
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
   // FILIAL parametri — web GuestsTable bilan bir xil qoida: ko'p filialli
@@ -54,8 +60,16 @@ export default function MehmonlarScreen() {
 
   const debouncedSearch = useDebouncedValue(search);
   // Server-paged + server search (name / organisation / host).
-  const query = useInfiniteQuery(visitorsListQuery(orgBranchId, debouncedSearch));
+  const query = useInfiniteQuery(visitorsListQuery(orgBranchId, debouncedSearch, filter));
   const { rows: filtered, total } = usePagedRows(query);
+  const { data: summary } = useQuery(visitorsSummaryQuery(orgBranchId, debouncedSearch));
+  const tiles: StatTile<VisitorFilter>[] = [
+    { key: 'all', label: t('visitors.statTotal'), value: summary?.total, icon: 'users', tone: TONES[3] },
+    { key: 'active', label: t('visitors.statActive'), value: summary?.active, icon: 'check', tone: TONES[1] },
+    { key: 'today', label: t('visitors.statToday'), value: summary?.today, icon: 'calendar', tone: TONES[0] },
+    { key: 'never', label: t('visitors.statNever'), value: summary?.never, icon: 'close', tone: TONES[2] },
+  ];
+  const filtersActive = !!search.trim() || filter !== 'all';
 
   // Auto-select the first row when entering split with nothing selected yet
   // (so the detail pane isn't blank on first tablet-landscape render); clear
@@ -104,16 +118,25 @@ export default function MehmonlarScreen() {
         )}
       </View>
 
+      <View style={styles.tiles}>
+        <StatFilterTiles
+          tiles={tiles}
+          active={filter}
+          onSelect={(k) => setFilter(k === filter ? 'all' : k)}
+          testID="visitor-tiles"
+        />
+      </View>
+
       <PagedList
         query={query}
         keyExtractor={(v) => String(v.id)}
-        filtersActive={!!search.trim()}
-        onClearFilters={() => setSearch('')}
+        filtersActive={filtersActive}
+        onClearFilters={() => { setSearch(''); setFilter('all'); }}
         numColumns={cols}
         columnWrapperStyle={cols > 1 ? styles.gridRow : undefined}
         contentContainerStyle={styles.content}
         emptyIcon="guest"
-        emptyTitle={search ? t('visitors.emptySearch') : t('visitors.emptyList')}
+        emptyTitle={filtersActive ? t('visitors.emptySearch') : t('visitors.emptyList')}
         hideCount
         renderItem={(item) => {
           const active = item.is_active !== false;
@@ -178,25 +201,26 @@ const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     searchWrap: {
       flexDirection: 'row', alignItems: 'center', gap: 8,
-      marginHorizontal: 16, marginBottom: 8, paddingHorizontal: 12, height: 44,
-      backgroundColor: c.card, borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder,
+      marginHorizontal: 16, marginBottom: 10, paddingHorizontal: 14, height: 48,
+      backgroundColor: c.inputBg, borderRadius: 16, borderWidth: 2, borderColor: c.cardBorder,
     },
-    searchInput: { flex: 1, fontSize: 14, color: c.text, paddingVertical: 0 },
+    searchInput: { flex: 1, fontSize: 15, color: c.text, paddingVertical: 0, ...NO_WEB_OUTLINE, ...ff('700') },
+    tiles: { paddingHorizontal: 16, marginBottom: 10 },
 
     content: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 24 },
     card: {
       flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, marginBottom: 10,
-      backgroundColor: c.card, borderRadius: 14, borderWidth: 1, borderColor: c.cardBorder,
+      backgroundColor: c.card, borderRadius: 16, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder,
     },
     gridRow: { gap: 12 },
     cardGrid: { flex: 1 },
-    cardSelected: { borderColor: c.primary, borderWidth: 1.5 },
-    name: { fontSize: 15, fontWeight: '700', color: c.text },
-    sub: { fontSize: 12, color: c.textSecondary, marginTop: 2 },
+    cardSelected: { borderColor: c.tabBarActiveBorder, backgroundColor: c.primarySoft },
+    name: { fontSize: 15, color: c.text, ...ff('800') },
+    sub: { fontSize: 13, color: c.textSecondary, marginTop: 2, ...ff('700') },
     hostRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 },
-    host: { fontSize: 12, color: c.textMuted, flex: 1 },
+    host: { fontSize: 12.5, color: c.textMuted, flex: 1, ...ff('700') },
     right: { alignItems: 'flex-end', gap: 6 },
-    badge: { paddingHorizontal: 9, paddingVertical: 3, borderRadius: 8 },
-    badgeText: { fontSize: 11, fontWeight: '700' },
-    validText: { fontSize: 11, color: c.textMuted },
+    badge: { paddingHorizontal: 9, paddingVertical: 4, borderRadius: 10 },
+    badgeText: { fontSize: 11, letterSpacing: 0.3, ...ff('900') },
+    validText: { fontSize: 11.5, color: c.textMuted, ...ff('700') },
   });

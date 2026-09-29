@@ -6,6 +6,7 @@ import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { ModalCard } from '@/components/ModalCard';
 import type { Letter, LetterSigner } from '@/types';
 import { Icon } from '@/components/Icon';
@@ -179,16 +180,16 @@ export function AgreementSection({
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, borderTopWidth: 1, borderTopColor: c.cardBorder },
-    name: { fontSize: 14, fontWeight: '600', color: c.text },
-    comment: { fontSize: 12, color: c.textMuted, marginTop: 2 },
-    state: { fontSize: 12, fontWeight: '600' },
+    row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, borderTopWidth: 2, borderTopColor: c.cardBorder },
+    name: { fontSize: 14, ...ff('700'), color: c.text },
+    comment: { fontSize: 12, color: c.textMuted, marginTop: 2, ...ff('700') },
+    state: { fontSize: 12, ...ff('700') },
     btnRow: { flexDirection: 'row', gap: 10, marginTop: 12 },
     btn: { flex: 1, paddingVertical: 12, borderRadius: 12, alignItems: 'center' },
     btnWide: { marginTop: 10 },
     btnAgree: { backgroundColor: c.primary },
-    btnAgreeText: { color: c.onPrimary, fontSize: 14, fontWeight: '700' },
+    btnAgreeText: { color: c.onPrimary, fontSize: 14, ...ff('800') },
     btnDecline: { backgroundColor: c.errorSoft },
-    btnDeclineText: { color: c.error, fontSize: 14, fontWeight: '700' },
-    input: { minHeight: 90, borderWidth: 1, borderColor: c.cardBorder, borderRadius: 10, padding: 12, color: c.text, fontSize: 14 },
+    btnDeclineText: { color: c.error, fontSize: 14, ...ff('800') },
+    input: { minHeight: 90, borderWidth: 2, borderColor: c.cardBorder, borderRadius: 10, padding: 12, color: c.text, fontSize: 14, ...ff('700') },
   });

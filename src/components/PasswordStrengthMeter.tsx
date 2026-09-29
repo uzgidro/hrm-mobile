@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { checkPassword } from '@/lib/passwordStrength';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { Icon } from '@/components/Icon';
 
 export function PasswordStrengthMeter({ value, username }: { value: string; username?: string | null }) {
@@ -54,9 +55,9 @@ const makeStyles = (c: ThemeColors) =>
     meterRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 4 },
     segments: { flex: 1, flexDirection: 'row', gap: 4 },
     segment: { flex: 1, height: 5, borderRadius: 3 },
-    level: { fontSize: 12, fontWeight: '700' },
+    level: { fontSize: 12, ...ff('800') },
     rule: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-    ruleText: { fontSize: 12, color: c.text },
+    ruleText: { fontSize: 12, color: c.text, ...ff('700') },
     ruleDone: { color: c.textMuted, textDecorationLine: 'line-through' },
-    hint: { fontSize: 11, color: c.textMuted, marginTop: 2 },
+    hint: { fontSize: 11, color: c.textMuted, marginTop: 2, ...ff('700') },
   });

@@ -7,6 +7,9 @@ import {
   workLeavesServerParams,
   leavesListQuery,
   leaveDetailQuery,
+  leaveApproversQuery,
+  leaveRulesQuery,
+  leaveReasonsQuery,
 } from '../queries';
 
 let mock: MockAdapter;
@@ -119,5 +122,25 @@ describe('leaveDetailQuery', () => {
     mock.onGet(WORK_LEAVE_DETAIL(42)).reply(200, { id: 42, type: 'Ta\'til' });
     const data = await (leaveDetailQuery(42).queryFn as unknown as () => Promise<{ id: number }>)();
     expect(data.id).toBe(42);
+  });
+});
+
+describe('create-form queries (web v2 parity)', () => {
+  it('my-approvers / rules / reasons hit their endpoints and live under stable keys', async () => {
+    mock.onGet('work-leaves/my-approvers').reply(200, [{ id: 3, legal_name: 'Karimov A', via: 'supervisor' }]);
+    mock.onGet('work-leaves/rules').reply(200, { max_days_back: 3, exempt: false });
+    mock.onGet('dictionaries/leave_request_reasons/options').reply(200, [{ id: 1, name: 'Kasal' }]);
+
+    const a = leaveApproversQuery();
+    expect(a.queryKey).toEqual(['work-leaves', 'my-approvers']);
+    expect(await (a.queryFn as () => Promise<unknown>)()).toEqual([{ id: 3, legal_name: 'Karimov A', via: 'supervisor' }]);
+
+    const r = leaveRulesQuery();
+    expect(r.queryKey).toEqual(['work-leaves', 'rules']);
+    expect(await (r.queryFn as () => Promise<unknown>)()).toEqual({ max_days_back: 3, exempt: false });
+
+    const d = leaveReasonsQuery();
+    expect(d.queryKey).toEqual(['dictionaries', 'options', 'leave_request_reasons']);
+    expect(await (d.queryFn as () => Promise<unknown>)()).toEqual([{ id: 1, name: 'Kasal' }]);
   });
 });

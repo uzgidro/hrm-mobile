@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { useBreakpoint } from '@/utils/responsive';
 import { ScreenHeader, HeaderAction } from '@/components/ScreenHeader';
 import { Icon } from '@/components/Icon';
@@ -95,21 +96,21 @@ const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     content: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 24 },
 
-    card: { backgroundColor: c.card, borderRadius: 16, borderWidth: 1, borderColor: c.cardBorder, padding: 16, marginBottom: 12 },
+    card: { backgroundColor: c.card, borderRadius: 16, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder, padding: 16, marginBottom: 12 },
     gridRow: { gap: 12 },
     cardGrid: { flex: 1 },
     cardTop: { flexDirection: 'row', alignItems: 'center', gap: 12 },
     iconWrap: { width: 44, height: 44, borderRadius: 13, backgroundColor: c.primarySoft, alignItems: 'center', justifyContent: 'center' },
-    name: { flex: 1, fontSize: 16, fontWeight: '700', color: c.text },
-    desc: { fontSize: 13, color: c.textSecondary, lineHeight: 19, marginTop: 10 },
+    name: { flex: 1, fontSize: 16, ...ff('800'), color: c.text },
+    desc: { fontSize: 13, color: c.textSecondary, lineHeight: 19, marginTop: 10, ...ff('700') },
 
     metaRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 14 },
     stats: { flexDirection: 'row', gap: 14 },
     stat: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    statText: { fontSize: 13, color: c.textSecondary, fontWeight: '600' },
+    statText: { fontSize: 13, color: c.textSecondary, ...ff('700') },
 
     avatars: { flexDirection: 'row', alignItems: 'center' },
     av: { width: 26, height: 26, borderRadius: 13, backgroundColor: c.skeleton, borderWidth: 2, borderColor: c.card },
     avMore: { backgroundColor: c.cardBorder, alignItems: 'center', justifyContent: 'center' },
-    avMoreText: { fontSize: 9, fontWeight: '700', color: c.textSecondary },
+    avMoreText: { fontSize: 9, ...ff('800'), color: c.textSecondary },
   });

@@ -6,6 +6,10 @@ export default {
   nameFallback: 'Посетитель',
   statusActive: 'Активен',
   statusInactive: 'Неактивен',
+  statTotal: 'Всего гостей',
+  statActive: 'Активный пропуск',
+  statToday: 'Пришли сегодня',
+  statNever: 'Ни разу не были',
   emptySearch: 'Ничего не найдено',
   emptyList: 'Посетителей нет',
 

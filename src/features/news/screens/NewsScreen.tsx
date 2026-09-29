@@ -6,6 +6,7 @@ import dayjs from 'dayjs';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { useBreakpoint } from '@/utils/responsive';
 import type { NewsPost } from '@/types';
 import { ScreenHeader, HeaderAction } from '@/components/ScreenHeader';
@@ -142,16 +143,16 @@ const makeStyles = (c: ThemeColors) =>
     content: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 32 },
     gridRow: { gap: 12 },
 
-    card: { backgroundColor: c.card, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: c.cardBorder },
+    card: { backgroundColor: c.card, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder },
     cardGrid: { flex: 1 },
     cardAction: { padding: 6, borderRadius: 8 },
     cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
     authorInfo: { flex: 1 },
-    newsDate: { fontSize: 12, color: c.textMuted, marginTop: 2 },
+    newsDate: { fontSize: 12, color: c.textMuted, marginTop: 2, ...ff('700') },
 
-    newsTitle: { fontSize: 16, fontWeight: '700', color: c.text, lineHeight: 23, marginBottom: 8 },
-    newsDesc: { fontSize: 13, color: c.textSecondary, lineHeight: 20, marginBottom: 10 },
+    newsTitle: { fontSize: 16, ...ff('800'), color: c.text, lineHeight: 23, marginBottom: 8 },
+    newsDesc: { fontSize: 13, color: c.textSecondary, lineHeight: 20, marginBottom: 10, ...ff('700') },
 
     tagWrapper: { marginTop: 4, alignSelf: 'flex-start', backgroundColor: c.primarySoft, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
-    tag: { fontSize: 12, color: c.primary, fontWeight: '600' },
+    tag: { fontSize: 12, color: c.primary, ...ff('700') },
   });

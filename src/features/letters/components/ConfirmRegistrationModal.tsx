@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { ModalCard } from '@/components/ModalCard';
 import { getApiErrorMessage } from '@/api/errors';
 import { DateTimePickerModal } from '@/components/DateTimePicker';
@@ -135,18 +136,17 @@ export function ConfirmRegistrationModal({
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    fieldLabel: { fontSize: 12, fontWeight: '700', color: c.textSecondary, marginBottom: 6 },
+    fieldLabel: { fontSize: 12, ...ff('800'), color: c.textSecondary, marginBottom: 6 },
     numberRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 14 },
     modalInput: {
-      backgroundColor: c.bg, borderWidth: 1, borderColor: c.cardBorder, borderRadius: 12,
-      paddingHorizontal: 12, paddingVertical: 12, fontSize: 15, color: c.text, minHeight: 48,
-    },
+      backgroundColor: c.bg, borderWidth: 2, borderColor: c.cardBorder, borderRadius: 12,
+      paddingHorizontal: 12, paddingVertical: 12, fontSize: 15, color: c.text, minHeight: 48, ...ff('700') },
     numberInput: { flex: 1 },
     availPill: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-    availText: { fontSize: 13, fontWeight: '700' },
+    availText: { fontSize: 13, ...ff('800') },
     dateField: {
-      backgroundColor: c.bg, borderWidth: 1, borderColor: c.cardBorder, borderRadius: 12,
+      backgroundColor: c.bg, borderWidth: 2, borderColor: c.cardBorder, borderRadius: 12,
       paddingHorizontal: 12, paddingVertical: 14, marginBottom: 18,
     },
-    dateText: { fontSize: 15, color: c.text, fontWeight: '600' },
+    dateText: { fontSize: 15, color: c.text, ...ff('700') },
   });

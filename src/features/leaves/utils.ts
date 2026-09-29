@@ -3,10 +3,10 @@
 // like the web dashboard (web parity is a hard constraint). Kept as a pure
 // function (no React) so it is unit-testable — screens call it, never re-derive
 // the rules inline.
+import dayjs, { type Dayjs } from 'dayjs';
 import type { WorkLeave, Employee } from '@/types';
-import { getMultiOrgRoles, employeeSubLabel } from '@/utils/roles';
+import { getMultiOrgRoles } from '@/utils/roles';
 import { isPendingCode, isApprovedCode, isRejectedCode } from '@/utils/leaveStatus';
-import type { PickerOption } from '@/components/PickerModal';
 
 // Permission gating uses the exact-membership checks from leaveStatus.ts, NOT
 // leaveStatusGroup() — leaveStatusGroup() deliberately defaults an
@@ -116,22 +116,40 @@ export function canDeleteLeave(
   return signers.length === 0;
 }
 
+// ── Create form (web v2 RequestPermissionPage parity) ─────────────────────────
+
 /**
- * Build supervisor picker options from the employee roster, EXCLUDING the
- * requester themselves (you can't be your own approver). Mirrors the web's
- * RequestPermissionDrawer, which filters self out of the supervisor SelectField.
- * Pure so it is unit-testable.
+ * Earliest allowed start for a request, or null when unrestricted (rules not
+ * loaded yet, or the user is exempt — HR/admins record facts after the event).
+ * Same rule as the server: start-of-today minus `max_days_back` days.
  */
-export function supervisorOptions(
-  employees: Employee[] | undefined,
-  selfEmployeeId: number | undefined,
-): PickerOption[] {
-  return (employees ?? [])
-    .filter((e) => e.id !== selfEmployeeId)
-    .map((e) => ({
-      value: e.id,
-      label: e.legal_name || '—',
-      subLabel: employeeSubLabel(e),
-      photo: e.photo_path ?? null,
-    }));
+export function earliestLeaveStart(
+  rules: { max_days_back: number; exempt: boolean } | undefined,
+  now: Dayjs = dayjs(),
+): Dayjs | null {
+  if (!rules || rules.exempt) return null;
+  return now.startOf('day').subtract(Math.max(0, rules.max_days_back), 'day');
+}
+
+/**
+ * Reason choices: HR's dictionary names (trimmed, de-duplicated, in order), or
+ * the built-in fallback when the dictionary is empty or unreachable — the field
+ * must never be left without a choice.
+ */
+export function leaveReasonOptions(rows: { name?: string | null }[] | undefined, fallback: readonly string[]): string[] {
+  const seen = new Set<string>();
+  for (const r of rows ?? []) {
+    const n = (r.name ?? '').trim();
+    if (n) seen.add(n);
+  }
+  return seen.size ? [...seen] : [...fallback];
+}
+
+/** What the routing notice says: who gets the request, or that HR will. */
+export function approverNotice(
+  approvers: { legal_name?: string | null; via?: string }[] | undefined,
+): { kind: 'supervisor' | 'department_head' | 'nobody'; names: string } {
+  const names = (approvers ?? []).map((a) => (a.legal_name ?? '').trim()).filter(Boolean).join(', ');
+  if (!names) return { kind: 'nobody', names: '' };
+  return { kind: approvers?.[0]?.via === 'department_head' ? 'department_head' : 'supervisor', names };
 }

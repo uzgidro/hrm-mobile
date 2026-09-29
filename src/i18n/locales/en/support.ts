@@ -56,6 +56,7 @@ export default {
   tabQueue: 'Queue',
   searchPlaceholder: 'Description, UGE or room...',
   filterAll: 'All',
+  sortPriority: "Urgent first",
   take: 'Take',
   takeDone: 'Ticket taken',
   markDone: 'Mark as done',

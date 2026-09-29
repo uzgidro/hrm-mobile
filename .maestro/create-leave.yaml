@@ -8,23 +8,30 @@ appId: uz.uzgidro.hrm
 - assertVisible: 'Bugungi jadval'
 
 # Open the leave-request form via the dashboard "So'rov yaratish" button.
-- tapOn: "So'rov yaratish"
+- tapOn:
+    id: 'home-create-leave'
 - assertVisible: "So'rov yuborish"
 
 # The form fields (from the decomposed screen) are all present.
 - assertVisible: "So'rov turi *"
 - assertVisible: 'Boshlanish *'
 - assertVisible: 'Tugash *'
-- assertVisible: 'Rahbar (Tasdiqlovchi)'
-- assertVisible: "Izoh (ixtiyoriy)"
-- assertVisible: 'Yuborish'
+- assertVisible: 'Izoh *'
+# Web v2: no approver picker — a notice names who the request goes to.
+- assertVisible:
+    id: 'leave-route-notice'
+- assertVisible:
+    id: 'leave-submit'
 
-# Open the extracted LeaveTypeSheet and pick a preset.
+# Open the LeaveTypeSheet. Its list comes from HR's reason dictionary, so
+# type a custom reason instead of relying on a particular entry existing.
 - tapOn:
     below: "So'rov turi *"
 - assertVisible: "So'rov turini tanlang"
-- tapOn: "Kasallik"
-- assertVisible: 'Kasallik'
+- tapOn: "Yoki o'zingiz yozing..."
+- inputText: 'E2E sabab'
+- tapOn: 'OK'
+- assertVisible: 'E2E sabab'
 
 # Open the extracted LeaveDateTimePicker and close it without changes.
 - tapOn:
@@ -32,7 +39,7 @@ appId: uz.uzgidro.hrm
 - assertVisible: 'Tayyor'
 - tapOn: 'Bekor'
 
-# Fill the optional comment (proves the textarea works).
+# Fill the (now required) comment — proves the textarea works.
 - tapOn: 'Sababni qisqacha yozing...'
 - inputText: 'E2E smoke'
 - assertVisible: 'E2E smoke'

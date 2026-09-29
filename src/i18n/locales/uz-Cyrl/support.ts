@@ -56,6 +56,7 @@ export default {
   tabQueue: 'Навбат',
   searchPlaceholder: 'Тавсиф, UGE ёки хона...',
   filterAll: 'Барчаси',
+  sortPriority: 'Аввал муҳимлари',
   take: 'Қабул қилиш',
   takeDone: 'Мурожаат қабул қилинди',
   markDone: 'Бажарилди деб белгилаш',

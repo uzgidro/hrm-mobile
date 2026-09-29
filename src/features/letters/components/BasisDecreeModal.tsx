@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { getApiErrorMessage } from '@/api/errors';
 import { DatePickerModal } from '@/components/DatePicker';
 import { ModalCard } from '@/components/ModalCard';
@@ -118,8 +119,8 @@ export function BasisDecreeModal({
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    label: { fontSize: 12, color: c.textMuted },
-    input: { borderWidth: 1, borderColor: c.cardBorder, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 12, color: c.text, fontSize: 14, justifyContent: 'center' },
-    inputText: { color: c.text, fontSize: 14 },
-    inputPlaceholder: { color: c.textMuted, fontSize: 14 },
+    label: { fontSize: 12, color: c.textMuted, ...ff('700') },
+    input: { borderWidth: 2, borderColor: c.cardBorder, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 12, color: c.text, fontSize: 14, justifyContent: 'center', ...ff('700') },
+    inputText: { color: c.text, fontSize: 14, ...ff('700') },
+    inputPlaceholder: { color: c.textMuted, fontSize: 14, ...ff('700') },
   });

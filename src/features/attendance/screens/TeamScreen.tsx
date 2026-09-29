@@ -15,6 +15,7 @@ import { resolveEmployeeBranchId } from '@/utils/branch';
 import { usePrefsStore } from '@/store/prefsStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { Employee, WorkLeave, EmployeeBirthday } from '@/types';
 import { canAccessPage, hasSupervisor } from '@/utils/roles';
 import type { RosterEmployee } from '@/utils/attendanceRoster';
@@ -48,7 +49,9 @@ const DonutChart = React.memo(function DonutChart({ total, present, late, onLeav
   const R = 62;
   const stroke = 22;
   const circ = 2 * Math.PI * R;
-  const rotate = `rotate(-90, ${cx}, ${cy})`;
+  // Arcs start at 12 o'clock by turning the whole Svg (an SVG `transform`
+  // becomes an invalid `transform-origin` DOM prop on web).
+  const turn = { transform: [{ rotate: '-90deg' }] };
 
   const segments = [
     { value: present, color: c.present },
@@ -67,6 +70,7 @@ const DonutChart = React.memo(function DonutChart({ total, present, late, onLeav
 
   return (
     <View style={styles.chartWrapper}>
+      <View style={turn}>
       <Svg width={size} height={size}>
         <G>
           <Circle cx={cx} cy={cy} r={R} fill="none" stroke={c.cardBorder} strokeWidth={stroke} />
@@ -76,11 +80,11 @@ const DonutChart = React.memo(function DonutChart({ total, present, late, onLeav
               fill="none" stroke={arc.color} strokeWidth={stroke}
               strokeDasharray={`${arc.dash} ${circ - arc.dash}`}
               strokeDashoffset={-arc.offset}
-              transform={rotate}
             />
           ))}
         </G>
       </Svg>
+      </View>
       <View style={styles.chartCenter}>
         <Text style={styles.chartTotal}>{total}</Text>
       </View>
@@ -333,53 +337,53 @@ const makeStyles = (c: ThemeColors) =>
     content: { paddingHorizontal: 16, paddingTop: 16 },
 
     filterNotice: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: c.primarySoft, borderRadius: 12, paddingVertical: 10, paddingHorizontal: 14, marginBottom: 12 },
-    filterNoticeText: { fontSize: 13, color: c.primaryLight, fontWeight: '600' },
+    filterNoticeText: { fontSize: 13, color: c.primaryLight, ...ff('700') },
 
-    card: { backgroundColor: c.card, borderRadius: 18, borderWidth: 1, borderColor: c.cardBorder, marginBottom: 14, overflow: 'hidden' },
+    card: { backgroundColor: c.card, borderRadius: 18, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder, marginBottom: 14, overflow: 'hidden' },
     cardHeader: {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-      paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: c.cardBorder,
+      paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 2, borderBottomColor: c.cardBorder,
     },
     cardTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    cardIcon: { fontSize: 16 },
-    cardTitle: { fontSize: 15, fontWeight: '700', color: c.text },
-    linkText: { fontSize: 13, color: c.primaryLight, fontWeight: '600' },
+    cardIcon: { fontSize: 16, ...ff('700') },
+    cardTitle: { fontSize: 15, ...ff('800'), color: c.text },
+    linkText: { fontSize: 13, color: c.primaryLight, ...ff('700') },
     sectionLoading: { paddingVertical: 32, alignItems: 'center' },
 
     chartRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
     chartWrapper: { position: 'relative', width: 160, height: 160, alignItems: 'center', justifyContent: 'center' },
     chartCenter: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
-    chartTotal: { fontSize: 28, fontWeight: '800', color: c.text },
+    chartTotal: { fontSize: 28, ...ff('900'), color: c.text },
     legend: { flex: 1, paddingLeft: 20, gap: 12 },
     legendItem: { flexDirection: 'row', alignItems: 'center', gap: 10 },
     legendDot: { width: 12, height: 12, borderRadius: 6 },
-    legendCount: { fontSize: 18, fontWeight: '700', color: c.text },
-    legendLabel: { fontSize: 11, color: c.textSecondary, marginTop: 1 },
+    legendCount: { fontSize: 18, ...ff('800'), color: c.text },
+    legendLabel: { fontSize: 11, color: c.textSecondary, marginTop: 1, ...ff('700') },
 
-    primaryBtn: { margin: 16, marginTop: 8, backgroundColor: c.primary, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
-    primaryBtnText: { color: c.onPrimary, fontSize: 15, fontWeight: '700' },
+    primaryBtn: { margin: 16, marginTop: 8, backgroundColor: c.primary, borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderBottomWidth: 4, borderBottomColor: c.primaryShadow },
+    primaryBtnText: { color: c.onPrimary, fontSize: 15, ...ff('800') },
 
     leaveRow: {
       flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 12,
-      borderBottomWidth: 1, borderBottomColor: c.cardBorder,
+      borderBottomWidth: 2, borderBottomColor: c.cardBorder,
     },
     leaveInfo: { flex: 1 },
-    leaveCat: { fontSize: 14, fontWeight: '700', color: c.text, marginBottom: 2 },
-    leaveDate: { fontSize: 12, color: c.textSecondary, marginBottom: 2 },
-    leaveEmployee: { fontSize: 12, color: c.textMuted },
-    leaveStatus: { fontSize: 12, fontWeight: '700' },
+    leaveCat: { fontSize: 14, ...ff('800'), color: c.text, marginBottom: 2 },
+    leaveDate: { fontSize: 12, color: c.textSecondary, marginBottom: 2, ...ff('700') },
+    leaveEmployee: { fontSize: 12, color: c.textMuted, ...ff('700') },
+    leaveStatus: { fontSize: 12, ...ff('800') },
 
     empRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 12 },
-    empRowBorder: { borderBottomWidth: 1, borderBottomColor: c.cardBorder },
+    empRowBorder: { borderBottomWidth: 2, borderBottomColor: c.cardBorder },
     empInfo: { flex: 1 },
-    empName: { fontSize: 14, fontWeight: '700', color: c.text },
-    empPosition: { fontSize: 12, color: c.textMuted, marginTop: 2 },
-    arrowIcon: { fontSize: 22, color: c.textMuted },
+    empName: { fontSize: 14, ...ff('800'), color: c.text },
+    empPosition: { fontSize: 12, color: c.textMuted, marginTop: 2, ...ff('700') },
+    arrowIcon: { fontSize: 22, color: c.textMuted, ...ff('700') },
 
     bdayRight: { alignItems: 'flex-end' },
-    bdayDate: { fontSize: 13, fontWeight: '600', color: c.textSecondary },
+    bdayDate: { fontSize: 13, ...ff('700'), color: c.textSecondary },
     bdayTodayRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
-    bdayToday: { fontSize: 11, color: c.warning },
+    bdayToday: { fontSize: 11, color: c.warning, ...ff('700') },
 
-    emptyText: { color: c.textMuted, fontSize: 14, paddingHorizontal: 16, paddingVertical: 12 },
+    emptyText: { color: c.textMuted, fontSize: 14, paddingHorizontal: 16, paddingVertical: 12, ...ff('700') },
   });

@@ -4,10 +4,11 @@
 // feature, so neither has to cross-import the other (see
 // `src/features/README.md`).
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import Svg, { Circle, G } from 'react-native-svg';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import type { AttendanceStatus } from '@/utils/attendanceRoster';
 
 export function sectionColor(key: AttendanceStatus, c: ThemeColors) {
@@ -39,7 +40,9 @@ export const AttendanceDonut = React.memo(function AttendanceDonut({
   const R = size * (68 / 180);
   const stroke = size * (24 / 180);
   const circ = 2 * Math.PI * R;
-  const rotate = `rotate(-90, ${cx}, ${cy})`;
+  // Arcs start at 12 o'clock: the whole Svg is turned -90° by its wrapper View
+  // (an SVG `transform` becomes an invalid `transform-origin` DOM prop on web).
+  const turn = { transform: [{ rotate: '-90deg' }] };
 
   const allSegs: { value: number; color: string; key: AttendanceStatus }[] = [
     { value: present, color: c.present, key: 'present' },
@@ -65,24 +68,30 @@ export const AttendanceDonut = React.memo(function AttendanceDonut({
   ].filter((it) => it.count > 0 || it.key === 'absent');
 
   const handleFilter = (key: AttendanceStatus) => onFilter(activeFilter === key ? null : key);
+  // react-native-svg on web forwards touch-responder props to the DOM <circle>
+  // (React warns «Unknown event handler property»). There the legend alone
+  // filters; on device a tap on the arc does too.
+  const arcPress = (key: AttendanceStatus) => (Platform.OS === 'web' ? undefined : () => handleFilter(key));
 
   return (
     <View style={styles.outer}>
       <View style={[styles.wrapper, { width: size, height: size }]}>
+        <View style={turn}>
         <Svg width={size} height={size}>
           <G>
             <Circle cx={cx} cy={cy} r={R} fill="none" stroke={c.cardBorder} strokeWidth={stroke} />
             {arcs.map((arc, i) => (
               <Circle key={i} cx={cx} cy={cy} r={R} fill="none" stroke={arc.color}
                 strokeWidth={activeFilter === null || activeFilter === arc.key ? stroke : stroke * 0.6}
-                strokeDasharray={`${arc.dash} ${circ - arc.dash}`} strokeDashoffset={-arc.offset} transform={rotate}
-                opacity={activeFilter === null || activeFilter === arc.key ? 1 : 0.3} onPress={() => handleFilter(arc.key)} />
+                strokeDasharray={`${arc.dash} ${circ - arc.dash}`} strokeDashoffset={-arc.offset}
+                opacity={activeFilter === null || activeFilter === arc.key ? 1 : 0.3} onPress={arcPress(arc.key)} />
             ))}
           </G>
         </Svg>
+        </View>
         <View style={styles.center}>
-          <Text style={[styles.total, { color: c.text }]}>{activeFilter ? (allSegs.find((s) => s.key === activeFilter)?.value ?? total) : total}</Text>
-          {activeFilter && <Text style={[styles.filterLabel, { color: c.textMuted }]}>{t('attendance.clearFilter')}</Text>}
+          <Text style={[styles.total, ff('900'), { color: c.text }]}>{activeFilter ? (allSegs.find((s) => s.key === activeFilter)?.value ?? total) : total}</Text>
+          {activeFilter && <Text style={[styles.filterLabel, ff('700'), { color: c.textMuted }]}>{t('attendance.clearFilter')}</Text>}
         </View>
       </View>
       <View style={styles.legend}>
@@ -94,8 +103,8 @@ export const AttendanceDonut = React.memo(function AttendanceDonut({
               onPress={() => handleFilter(it.key)} activeOpacity={0.7}>
               <View style={[styles.legendDot, { backgroundColor: it.color, opacity: !activeFilter || isActive ? 1 : 0.35 }]} />
               <View style={{ opacity: !activeFilter || isActive ? 1 : 0.4 }}>
-                <Text style={[styles.legendCount, { color: c.text }]}>{it.count}</Text>
-                <Text style={[styles.legendLabel, { color: c.textSecondary }]}>{it.label}</Text>
+                <Text style={[styles.legendCount, ff('900'), { color: c.text }]}>{it.count}</Text>
+                <Text style={[styles.legendLabel, ff('700'), { color: c.textSecondary }]}>{it.label}</Text>
               </View>
             </TouchableOpacity>
           );
@@ -109,11 +118,11 @@ const styles = StyleSheet.create({
   outer: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16 },
   wrapper: { position: 'relative', alignItems: 'center', justifyContent: 'center' },
   center: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
-  total: { fontSize: 30, fontWeight: '800' },
+  total: { fontSize: 30 },
   filterLabel: { fontSize: 9, marginTop: 2 },
   legend: { flex: 1, paddingLeft: 20, gap: 12 },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   legendDot: { width: 13, height: 13, borderRadius: 7 },
-  legendCount: { fontSize: 20, fontWeight: '700' },
+  legendCount: { fontSize: 20 },
   legendLabel: { fontSize: 12, marginTop: 1 },
 });

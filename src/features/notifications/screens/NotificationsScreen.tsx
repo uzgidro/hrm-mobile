@@ -12,6 +12,7 @@ import { getApiErrorMessage } from '@/api/errors';
 import { routeForNotification, notificationMeta } from '@/services/notifications';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { useBreakpoint } from '@/utils/responsive';
 import type { Notification } from '@/types';
 import { Icon } from '@/components/Icon';
@@ -57,8 +58,9 @@ export default function NotificationsScreen() {
   const [selected, setSelected] = useState<Target>(null);
 
   const [limit, setLimit] = useState(NOTIFICATIONS_PAGE);
+  const [unreadOnly, setUnreadOnly] = useState(false);
   const { data: items = [], isLoading, isError, error, refetch, isFetching } = useQuery(
-    notificationsListQuery(user?.employee?.id, limit)
+    notificationsListQuery(user?.employee?.id, limit, unreadOnly)
   );
   const canLoadMore = items.length >= limit && limit < NOTIFICATIONS_MAX;
 
@@ -134,6 +136,28 @@ export default function NotificationsScreen() {
           ) : undefined
         }
       />
+
+      <View style={styles.filterRow}>
+        {([false, true] as const).map((only) => {
+          const on = unreadOnly === only;
+          const label = only
+            ? `${t('notifications.filterUnread')}${unread > 0 ? ` · ${unread}` : ''}`
+            : t('notifications.filterAll');
+          return (
+            <TouchableOpacity
+              key={String(only)}
+              style={[styles.filterTab, on && styles.filterTabOn]}
+              onPress={() => { setUnreadOnly(only); setLimit(NOTIFICATIONS_PAGE); }}
+              activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityState={{ selected: on }}
+              testID={only ? 'notif-filter-unread' : 'notif-filter-all'}
+            >
+              <Text style={[styles.filterText, on && styles.filterTextOn]}>{label}</Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
 
       {isLoading ? (
         <LoadingView />
@@ -215,11 +239,19 @@ function targetEquals(a: Target, b: Target): boolean {
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
+    filterRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingBottom: 10 },
+    filterTab: {
+      paddingHorizontal: 16, paddingVertical: 8, borderRadius: 14, backgroundColor: c.card,
+      borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder,
+    },
+    filterTabOn: { backgroundColor: c.primarySoft, borderColor: c.tabBarActiveBorder },
+    filterText: { fontSize: 13.5, color: c.textSecondary, ...ff('900') },
+    filterTextOn: { color: c.primaryLight },
     content: { padding: 16, gap: 10 },
-    moreBtn: { alignSelf: 'center', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 18, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, marginTop: 4 },
-    moreText: { fontSize: 13, fontWeight: '700', color: c.primary },
+    moreBtn: { alignSelf: 'center', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 18, backgroundColor: c.card, borderWidth: 2, borderColor: c.cardBorder, marginTop: 4 },
+    moreText: { fontSize: 13, ...ff('800'), color: c.primary },
     gridRow: { gap: 12 },
-    card: { flexDirection: 'row', gap: 12, backgroundColor: c.card, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: c.cardBorder },
+    card: { flexDirection: 'row', gap: 12, backgroundColor: c.card, borderRadius: 14, padding: 14, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder },
     cardGrid: { flex: 1 },
     cardUnread: { borderColor: c.primary, backgroundColor: c.primarySoft },
     cardSelected: { borderColor: c.primary, borderWidth: 2 },
@@ -227,7 +259,7 @@ const makeStyles = (c: ThemeColors) =>
     iconWrapUnread: { backgroundColor: c.card },
     titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: c.primary },
-    title: { fontSize: 14, fontWeight: '700', color: c.text, flexShrink: 1 },
-    body: { fontSize: 13, color: c.textSecondary, marginTop: 4, lineHeight: 18 },
-    date: { fontSize: 11, color: c.textMuted, marginTop: 6 },
+    title: { fontSize: 14, ...ff('800'), color: c.text, flexShrink: 1 },
+    body: { fontSize: 13, color: c.textSecondary, marginTop: 4, lineHeight: 18, ...ff('700') },
+    date: { fontSize: 11, color: c.textMuted, marginTop: 6, ...ff('700') },
   });

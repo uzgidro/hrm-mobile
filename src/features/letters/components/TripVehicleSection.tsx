@@ -10,6 +10,7 @@ import { View, Text, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator 
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import type { Letter, User } from '@/types';
 import { Icon } from '@/components/Icon';
 import { isSiteMasterAdmin } from '@/utils/roles';
@@ -107,16 +108,15 @@ const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     actions: { marginTop: 10, gap: 8 },
     input: {
-      backgroundColor: c.bg, borderWidth: 1, borderColor: c.cardBorder, borderRadius: 10,
+      backgroundColor: c.bg, borderWidth: 2, borderColor: c.cardBorder, borderRadius: 10,
       paddingHorizontal: 12, paddingVertical: 10, color: c.text, fontSize: 14, minHeight: 60,
-      textAlignVertical: 'top',
-    },
+      textAlignVertical: 'top', ...ff('700') },
     btn: {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
       borderRadius: 12, paddingVertical: 12,
     },
     btnPrimary: { backgroundColor: c.primary },
-    btnPrimaryText: { color: c.onPrimary, fontSize: 14, fontWeight: '700' },
-    btnGhost: { backgroundColor: c.bg, borderWidth: 1, borderColor: c.cardBorder },
-    btnGhostText: { color: c.textSecondary, fontSize: 14, fontWeight: '600' },
+    btnPrimaryText: { color: c.onPrimary, fontSize: 14, ...ff('800') },
+    btnGhost: { backgroundColor: c.bg, borderWidth: 2, borderColor: c.cardBorder },
+    btnGhostText: { color: c.textSecondary, fontSize: 14, ...ff('700') },
   });

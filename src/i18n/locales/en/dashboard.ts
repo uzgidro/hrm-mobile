@@ -21,4 +21,8 @@ export default {
     approved: 'Approved',
     rejected: 'Rejected',
   },
+  tomchiHello: 'Hi, {{name}}!',
+  tomchiCameIn: 'You arrived at {{time}} today.',
+  tomchiNotYet: 'No arrival recorded yet today.',
+  worked: '{{h}}h {{m}}m',
 } as const;

@@ -8,6 +8,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Linking, Platform, ScrollView
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { Icon, type IconName } from '@/components/Icon';
@@ -171,19 +172,19 @@ function Row({ icon, tone, label, value, styles, colors }: {
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 40 },
-    intro: { fontSize: 13, color: c.textSecondary, lineHeight: 19, marginBottom: 12 },
-    card: { backgroundColor: c.card, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: c.cardBorder, gap: 14, marginBottom: 16 },
+    intro: { fontSize: 13, color: c.textSecondary, lineHeight: 19, marginBottom: 12, ...ff('700') },
+    card: { backgroundColor: c.card, borderRadius: 16, padding: 16, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder, gap: 14, marginBottom: 16 },
     row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
     rowIcon: { width: 34, height: 34, borderRadius: 10, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-    rowLabel: { fontSize: 12, color: c.textMuted, fontWeight: '600' },
-    rowValue: { fontSize: 14, fontWeight: '700', marginTop: 2 },
-    devices: { fontSize: 12, color: c.textMuted },
+    rowLabel: { fontSize: 12, color: c.textMuted, ...ff('700') },
+    rowValue: { fontSize: 14, ...ff('800'), marginTop: 2 },
+    devices: { fontSize: 12, color: c.textMuted, ...ff('700') },
     linkBtn: { alignSelf: 'flex-start', marginLeft: 46, marginTop: -6 },
-    linkText: { fontSize: 13, fontWeight: '700', color: c.primary },
-    btn: { paddingVertical: 14, borderRadius: 14, alignItems: 'center', backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, marginBottom: 10 },
+    linkText: { fontSize: 13, ...ff('800'), color: c.primary },
+    btn: { paddingVertical: 14, borderRadius: 14, alignItems: 'center', backgroundColor: c.card, borderWidth: 2, borderColor: c.cardBorder, marginBottom: 10 },
     btnPrimary: { backgroundColor: c.primary, borderColor: c.primary },
     btnDisabled: { opacity: 0.6 },
-    btnText: { fontSize: 14, fontWeight: '700', color: c.text },
-    btnPrimaryText: { fontSize: 14, fontWeight: '700', color: c.onPrimary },
-    hint: { fontSize: 12, color: c.textMuted, textAlign: 'center', lineHeight: 18 },
+    btnText: { fontSize: 14, ...ff('800'), color: c.text },
+    btnPrimaryText: { fontSize: 14, ...ff('800'), color: c.onPrimary },
+    hint: { fontSize: 12, color: c.textMuted, textAlign: 'center', lineHeight: 18, ...ff('700') },
   });

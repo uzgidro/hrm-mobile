@@ -7,6 +7,7 @@ import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import type { SupportTicketMessage } from '@/types';
 import { Icon } from '@/components/Icon';
 import { getApiErrorMessage } from '@/api/errors';
@@ -101,20 +102,19 @@ export function TicketChat({ ticketId }: { ticketId: number }) {
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    card: { backgroundColor: c.card, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: c.cardBorder, gap: 8 },
-    sectionTitle: { fontSize: 14, fontWeight: '700', color: c.text, marginBottom: 2 },
-    empty: { fontSize: 13, color: c.textMuted, paddingVertical: 8 },
-    system: { fontSize: 12, color: c.textMuted, textAlign: 'center', paddingVertical: 6 },
-    msg: { paddingVertical: 8, borderTopWidth: 1, borderTopColor: c.cardBorder },
+    card: { backgroundColor: c.card, borderRadius: 16, padding: 16, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder, gap: 8 },
+    sectionTitle: { fontSize: 14, ...ff('800'), color: c.text, marginBottom: 2 },
+    empty: { fontSize: 13, color: c.textMuted, paddingVertical: 8, ...ff('700') },
+    system: { fontSize: 12, color: c.textMuted, textAlign: 'center', paddingVertical: 6, ...ff('700') },
+    msg: { paddingVertical: 8, borderTopWidth: 2, borderTopColor: c.cardBorder },
     msgHead: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
-    author: { fontSize: 13, fontWeight: '600', color: c.text },
-    time: { fontSize: 11, color: c.textMuted },
-    body: { fontSize: 14, color: c.textSecondary, marginTop: 3, lineHeight: 20 },
+    author: { fontSize: 13, ...ff('700'), color: c.text },
+    time: { fontSize: 11, color: c.textMuted, ...ff('700') },
+    body: { fontSize: 14, color: c.textSecondary, marginTop: 3, lineHeight: 20, ...ff('700') },
     composer: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginTop: 6 },
     input: {
-      flex: 1, minHeight: 42, maxHeight: 120, borderWidth: 1, borderColor: c.cardBorder,
-      borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, color: c.text, fontSize: 14,
-    },
-    sendBtn: { width: 42, height: 42, borderRadius: 12, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' },
+      flex: 1, minHeight: 42, maxHeight: 120, borderWidth: 2, borderColor: c.cardBorder,
+      borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, color: c.text, fontSize: 14, ...ff('700') },
+    sendBtn: { width: 42, height: 42, borderRadius: 12, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center', borderBottomWidth: 4, borderBottomColor: c.primaryShadow },
     sendBtnOff: { opacity: 0.4 },
   });

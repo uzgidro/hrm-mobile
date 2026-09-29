@@ -4,6 +4,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 import type { ThemeColors } from '../theme/palettes';
+import { ff } from '@/theme/typography';
 import { Icon } from './Icon';
 
 export type PickedFile = { uri: string; name: string; mimeType?: string };
@@ -56,22 +57,22 @@ export function AttachmentField({
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     wrap: { marginTop: 16 },
-    label: { fontSize: 13, fontWeight: '700', color: c.textSecondary, marginBottom: 8 },
+    label: { fontSize: 13, ...ff('800'), color: c.textSecondary, marginBottom: 8 },
     fileRow: {
       flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8,
-      backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10,
+      backgroundColor: c.card, borderWidth: 2, borderColor: c.cardBorder, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10,
     },
-    fileName: { flex: 1, fontSize: 13, color: c.text },
+    fileName: { flex: 1, fontSize: 13, color: c.text, ...ff('700') },
     existingRow: {
       flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6,
-      backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, borderRadius: 10,
+      backgroundColor: c.card, borderWidth: 2, borderColor: c.cardBorder, borderRadius: 10,
       paddingHorizontal: 12, paddingVertical: 10, opacity: 0.8,
     },
-    existingName: { flex: 1, fontSize: 13, color: c.textSecondary },
-    existingHint: { fontSize: 11, color: c.textMuted, marginBottom: 8 },
+    existingName: { flex: 1, fontSize: 13, color: c.textSecondary, ...ff('700') },
+    existingHint: { fontSize: 11, color: c.textMuted, marginBottom: 8, ...ff('700') },
     addBtn: {
       flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start',
       backgroundColor: c.primarySoft, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 9,
     },
-    addText: { fontSize: 13, color: c.primary, fontWeight: '700' },
+    addText: { fontSize: 13, color: c.primary, ...ff('800') },
   });

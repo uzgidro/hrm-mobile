@@ -12,15 +12,18 @@ env:
     # Only drive the login form when credentials were supplied AND the login
     # button is on screen.
     when:
-      visible: 'Kirish'
+      visible:
+        id: 'login-submit'
       true: ${USERNAME != ""}
     commands:
-      - tapOn: 'Username yoki email'
+      - tapOn:
+          id: 'login-username'
       - inputText: ${USERNAME}
       - tapOn:
-          below: 'Parol'
+          id: 'login-password'
       - inputText: ${PASSWORD}
-      - tapOn: 'Kirish'
+      - tapOn:
+          id: 'login-submit'
 
 # Either way we should be authenticated — the dashboard schedule card shows.
 - assertVisible: 'Bugungi jadval'

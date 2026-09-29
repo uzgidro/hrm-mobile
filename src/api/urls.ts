@@ -6,6 +6,8 @@ export const AUTH_LOGIN = 'auth/login';
 export const USER_INFO = 'auth/me';
 /** Self-hosted image CAPTCHA for the login form (backend core/captcha.py). */
 export const AUTH_CAPTCHA = 'auth/captcha';
+/** Revokes the server session (and its refresh token). Public — works with an expired access token. */
+export const AUTH_LOGOUT = 'auth/logout';
 /** Own password change — works for every account type (no employee row needed). */
 export const AUTH_ME_PASSWORD = 'auth/me/password';
 
@@ -66,6 +68,14 @@ export const WORK_LEAVES = 'work-leaves';
 export const WORK_LEAVE_DETAIL = (id: number) => `work-leaves/${id}`;
 export const WORK_LEAVE_SIGN = (id: number) => `work-leaves/${id}/sign`;
 export const WORK_LEAVE_REJECT = (id: number) => `work-leaves/${id}/reject`;
+/** Who a request of mine goes to (supervisor, else department head) — web v2 form. */
+export const WORK_LEAVES_MY_APPROVERS = 'work-leaves/my-approvers';
+/** Form limits the server enforces: `{ max_days_back, exempt }`. */
+export const WORK_LEAVES_RULES = 'work-leaves/rules';
+/** Active entries of an HR-managed dictionary (e.g. `leave_request_reasons`). */
+export const DICTIONARY_OPTIONS = (code: string) => `dictionaries/${code}/options`;
+/** System settings (`{ values, schema }`); `values['nav.modules']` is the web v2 module matrix. */
+export const SYSTEM_SETTINGS = 'system-settings';
 
 // News
 export const NEWS_POSTS = 'news-posts';
@@ -111,6 +121,8 @@ export const PUSH_TOKENS_TEST = 'push-tokens/test';
 
 // Visitors (Mehmonlar)
 export const VISITORS_LIST = 'visitors';
+/** `{ total, active, today, never }` — the guest-book stat tiles (web v2). */
+export const VISITORS_SUMMARY = 'visitors/summary';
 export const VISITOR_DETAIL = (id: number) => `visitors/${id}`;
 export const EMPLOYEE_VALIDATE_PHOTO = 'employees/me/validate-photo';
 
@@ -310,6 +322,8 @@ export const KPI_BONUSES = 'kpi/bonuses';
 // image/video attachments). Employees create + see their own; AKT specialists
 // take/done; the creator rates/reopens.
 export const SUPPORT_TICKETS = 'support-tickets';
+/** Inbox folder counts `{ all, new, taken, done, unread, can_create }` (web v2). */
+export const SUPPORT_TICKETS_SUMMARY = 'support-tickets/summary';
 export const SUPPORT_TICKET_DETAIL = (id: number) => `support-tickets/${id}`;
 export const SUPPORT_TICKET_RATE = (id: number) => `support-tickets/${id}/rate`;
 export const SUPPORT_TICKET_REOPEN = (id: number) => `support-tickets/${id}/reopen`;

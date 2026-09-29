@@ -2,6 +2,9 @@
 // See uz-Latn/modules.ts for the meaning of each key.
 export default {
   screenTitle: 'Модули',
+  searchPlaceholder: 'Поиск модуля',
+  searchEmpty: 'Такой модуль не найден',
+  searchClear: 'Очистить поиск',
 
   sections: {
     activity: 'Активность',

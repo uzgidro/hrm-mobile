@@ -9,6 +9,7 @@ import dayjs from 'dayjs';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { FormInput } from '@/components/FormInput';
 import { Icon } from '@/components/Icon';
@@ -322,35 +323,35 @@ export default function MehmonFormScreen() {
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     modeRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
-    modeTab: { flex: 1, paddingVertical: 10, borderRadius: 12, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, alignItems: 'center' },
+    modeTab: { flex: 1, paddingVertical: 10, borderRadius: 12, backgroundColor: c.card, borderWidth: 2, borderColor: c.cardBorder, alignItems: 'center' },
     modeTabActive: { backgroundColor: c.primary, borderColor: c.primary },
-    modeTabText: { fontSize: 13, fontWeight: '700', color: c.textSecondary },
+    modeTabText: { fontSize: 13, ...ff('800'), color: c.textSecondary },
     modeTabTextActive: { color: c.onPrimary },
-    empPick: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 12, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, marginBottom: 12 },
-    empPickText: { flex: 1, fontSize: 14, fontWeight: '600', color: c.text },
+    empPick: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 12, backgroundColor: c.card, borderWidth: 2, borderColor: c.cardBorder, marginBottom: 12 },
+    empPickText: { flex: 1, fontSize: 14, ...ff('700'), color: c.text },
     content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 24 },
 
     photoRow: { flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 18 },
-    photoCircle: { width: 80, height: 80, borderRadius: 40, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+    photoCircle: { width: 80, height: 80, borderRadius: 40, backgroundColor: c.card, borderWidth: 2, borderColor: c.cardBorder, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
     photoImg: { width: 80, height: 80, borderRadius: 40 },
     photoLoading: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center' },
-    photoBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start', backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 9 },
-    photoBtnText: { fontSize: 13, fontWeight: '700', color: c.text },
-    photoHint: { fontSize: 11, color: c.textMuted, marginTop: 8 },
+    photoBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start', backgroundColor: c.card, borderWidth: 2, borderColor: c.cardBorder, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 9 },
+    photoBtnText: { fontSize: 13, ...ff('800'), color: c.text },
+    photoHint: { fontSize: 11, color: c.textMuted, marginTop: 8, ...ff('700') },
 
-    dateGroupLabel: { fontSize: 13, color: c.textSecondary, fontWeight: '600', marginBottom: 8, marginTop: 2 },
+    dateGroupLabel: { fontSize: 13, color: c.textSecondary, ...ff('700'), marginBottom: 8, marginTop: 2 },
     dateRow: { flexDirection: 'row', gap: 12 },
 
     // Task 21: 2-column pairing for short fields on tablet (bp.isTablet).
     fieldRow: { flexDirection: 'row', gap: 12 },
     fieldHalf: { flex: 1 },
-    dateField: { flex: 1, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, borderRadius: 12, padding: 12 },
-    dateLabel: { fontSize: 11, color: c.textMuted, marginBottom: 6 },
+    dateField: { flex: 1, backgroundColor: c.card, borderWidth: 2, borderColor: c.cardBorder, borderRadius: 12, padding: 12 },
+    dateLabel: { fontSize: 11, color: c.textMuted, marginBottom: 6, ...ff('700') },
     dateValueRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
-    dateValue: { fontSize: 14, color: c.text, fontWeight: '600' },
-    dateTime: { fontSize: 14, color: c.textSecondary, fontWeight: '600' },
-    hint: { fontSize: 11, color: c.textMuted, marginTop: 8 },
+    dateValue: { fontSize: 14, color: c.text, ...ff('700') },
+    dateTime: { fontSize: 14, color: c.textSecondary, ...ff('700') },
+    hint: { fontSize: 11, color: c.textMuted, marginTop: 8, ...ff('700') },
 
-    saveBtn: { flexDirection: 'row', gap: 8, backgroundColor: c.primary, borderRadius: 14, paddingVertical: 15, alignItems: 'center', justifyContent: 'center', marginTop: 22 },
-    saveText: { color: c.onPrimary, fontSize: 16, fontWeight: '700' },
+    saveBtn: { flexDirection: 'row', gap: 8, backgroundColor: c.primary, borderRadius: 14, paddingVertical: 15, alignItems: 'center', justifyContent: 'center', marginTop: 22, borderBottomWidth: 4, borderBottomColor: c.primaryShadow },
+    saveText: { color: c.onPrimary, fontSize: 16, ...ff('800') },
   });

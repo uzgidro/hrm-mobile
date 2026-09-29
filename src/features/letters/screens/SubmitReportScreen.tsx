@@ -9,6 +9,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import dayjs from 'dayjs';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { LoadingView } from '@/components/StateViews';
@@ -236,9 +237,9 @@ export default function SubmitReportScreen() {
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    submitBtn: { minWidth: 80, height: 38, borderRadius: 10, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14 },
+    submitBtn: { minWidth: 80, height: 38, borderRadius: 10, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14, borderBottomWidth: 4, borderBottomColor: c.primaryShadow },
     submitBtnDisabled: { opacity: 0.5 },
-    submitBtnText: { color: c.onPrimary, fontWeight: '700', fontSize: 14 },
+    submitBtnText: { color: c.onPrimary, ...ff('800'), fontSize: 14 },
 
     content: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 24 },
 
@@ -246,12 +247,11 @@ const makeStyles = (c: ThemeColors) =>
       marginTop: 16, backgroundColor: c.errorSoft, borderRadius: 14, padding: 14,
       borderWidth: 1, borderColor: c.error,
     },
-    returnedTitle: { fontSize: 13, fontWeight: '700', color: c.error, marginBottom: 4 },
-    returnedText: { fontSize: 13, color: c.text, lineHeight: 19 },
+    returnedTitle: { fontSize: 13, ...ff('800'), color: c.error, marginBottom: 4 },
+    returnedText: { fontSize: 13, color: c.text, lineHeight: 19, ...ff('700') },
 
     input: {
-      backgroundColor: c.card, borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder,
-      paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: c.text,
-    },
+      backgroundColor: c.card, borderRadius: 12, borderWidth: 2, borderColor: c.cardBorder,
+      paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: c.text, ...ff('700') },
     textArea: { minHeight: 140 },
   });

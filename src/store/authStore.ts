@@ -3,6 +3,7 @@ import { storage } from '../api/storage';
 import { setAccessToken, setRefreshToken, clearTokens } from '../api/authToken';
 import { useLockStore } from './lockStore';
 import { teardownPushNotifications } from '../auth/push';
+import { revokeServerSession } from '../auth/session';
 import { User } from '../types';
 
 const USER_CACHE_KEY = 'cached_user';
@@ -44,6 +45,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     // employee who logged out, so the next notification for them woke up a
     // phone that now belongs to someone else. Never blocks logout.
     await teardownPushNotifications();
+    // Revoke the server session while the tokens still exist (web parity).
+    await revokeServerSession();
     await clearTokens();
     await storage.deleteItem(USER_CACHE_KEY);
     // Wipe the PIN/biometrics footprint so the next user can't inherit a lock.

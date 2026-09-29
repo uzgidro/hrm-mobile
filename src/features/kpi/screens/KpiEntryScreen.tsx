@@ -8,6 +8,7 @@ import dayjs from 'dayjs';
 import { useLocalSearchParams } from 'expo-router';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
@@ -366,97 +367,91 @@ const makeStyles = (c: ThemeColors) =>
     content: { paddingHorizontal: 16, paddingTop: 8 },
 
     card: {
-      backgroundColor: c.card, borderRadius: 16, borderWidth: 1, borderColor: c.cardBorder,
+      backgroundColor: c.card, borderRadius: 16, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder,
       padding: 16, marginBottom: 18,
     },
-    fieldLabel: { fontSize: 10.5, color: c.textMuted, textTransform: 'uppercase', letterSpacing: 0.4 },
-    indicatorName: { fontSize: 14.5, fontWeight: '700', color: c.text, lineHeight: 20, marginTop: 4 },
+    fieldLabel: { fontSize: 10.5, color: c.textMuted, textTransform: 'uppercase', letterSpacing: 0.4, ...ff('700') },
+    indicatorName: { fontSize: 14.5, ...ff('800'), color: c.text, lineHeight: 20, marginTop: 4 },
     summaryRow: { flexDirection: 'row', gap: 16, marginTop: 12 },
     summaryCell: { minWidth: 70 },
-    summaryValue: { fontSize: 14, fontWeight: '700', color: c.text, marginTop: 3 },
+    summaryValue: { fontSize: 14, ...ff('800'), color: c.text, marginTop: 3 },
 
     confirmedRow: {
       flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-      marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: c.cardBorder,
+      marginTop: 14, paddingTop: 12, borderTopWidth: 2, borderTopColor: c.cardBorder,
     },
-    confirmedLabel: { fontSize: 12.5, color: c.textSecondary },
-    confirmedValue: { fontSize: 14, fontWeight: '800', color: c.primary },
+    confirmedLabel: { fontSize: 12.5, color: c.textSecondary, ...ff('700') },
+    confirmedValue: { fontSize: 14, ...ff('900'), color: c.primary },
 
     lockedNote: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12 },
-    lockedText: { fontSize: 12, color: c.textMuted },
+    lockedText: { fontSize: 12, color: c.textMuted, ...ff('700') },
 
     sectionLabel: {
-      fontSize: 12, fontWeight: '700', color: c.textMuted,
+      fontSize: 12, ...ff('800'), color: c.textMuted,
       textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 10, marginLeft: 2,
     },
 
     addCard: {
-      backgroundColor: c.card, borderRadius: 14, borderWidth: 1, borderColor: c.cardBorder,
+      backgroundColor: c.card, borderRadius: 14, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder,
       padding: 12, marginBottom: 12, gap: 8,
     },
     addInput: {
       minHeight: 40, paddingHorizontal: 12, paddingVertical: 8,
-      backgroundColor: c.bg, borderRadius: 10, borderWidth: 1, borderColor: c.cardBorder,
-      fontSize: 14, color: c.text,
-    },
+      backgroundColor: c.bg, borderRadius: 10, borderWidth: 2, borderColor: c.cardBorder,
+      fontSize: 14, color: c.text, ...ff('700') },
     addRow: { flexDirection: 'row', gap: 8 },
     scoreInput: {
       flex: 1, minHeight: 44, paddingHorizontal: 12, paddingVertical: 10,
-      backgroundColor: c.bg, borderRadius: 10, borderWidth: 1, borderColor: c.cardBorder,
-      fontSize: 14, color: c.text,
-    },
+      backgroundColor: c.bg, borderRadius: 10, borderWidth: 2, borderColor: c.cardBorder,
+      fontSize: 14, color: c.text, ...ff('700') },
     inputInvalid: { borderColor: c.error },
     addBtn: {
       width: 44, height: 44, borderRadius: 10, backgroundColor: c.primary,
-      alignItems: 'center', justifyContent: 'center',
-    },
+      alignItems: 'center', justifyContent: 'center', borderBottomWidth: 4, borderBottomColor: c.primaryShadow },
 
     taskCard: {
-      backgroundColor: c.card, borderRadius: 14, borderWidth: 1, borderColor: c.cardBorder,
+      backgroundColor: c.card, borderRadius: 14, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder,
       padding: 14, marginBottom: 10,
     },
-    taskName: { fontSize: 14, color: c.text, lineHeight: 19 },
-    taskSub: { fontSize: 12, color: c.textMuted, marginTop: 2 },
+    taskName: { fontSize: 14, color: c.text, lineHeight: 19, ...ff('700') },
+    taskSub: { fontSize: 12, color: c.textMuted, marginTop: 2, ...ff('700') },
     editInput: {
       backgroundColor: c.bg, borderRadius: 10, borderWidth: 1, borderColor: c.primary,
-      paddingHorizontal: 10, paddingVertical: 8, fontSize: 14, color: c.text,
-    },
+      paddingHorizontal: 10, paddingVertical: 8, fontSize: 14, color: c.text, ...ff('700') },
     taskMeta: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10 },
-    taskScore: { fontSize: 14, fontWeight: '800', color: c.text, minWidth: 40 },
+    taskScore: { fontSize: 14, ...ff('900'), color: c.text, minWidth: 40 },
     taskScoreEditable: { color: c.primary },
     statusPill: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 8, maxWidth: 150 },
-    statusPillText: { fontSize: 11, fontWeight: '700' },
+    statusPillText: { fontSize: 11, ...ff('800') },
     taskActions: { flexDirection: 'row', gap: 4, marginLeft: 'auto' },
     taskActionBtn: {
       width: 32, height: 32, borderRadius: 9, alignItems: 'center', justifyContent: 'center',
-      backgroundColor: c.bg, borderWidth: 1, borderColor: c.cardBorder,
+      backgroundColor: c.bg, borderWidth: 2, borderColor: c.cardBorder,
     },
 
     gradePanel: {
-      marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: c.cardBorder, gap: 8,
+      marginTop: 12, paddingTop: 12, borderTopWidth: 2, borderTopColor: c.cardBorder, gap: 8,
     },
     gradeInput: {
       backgroundColor: c.bg, borderRadius: 10, borderWidth: 1, borderColor: c.primary,
-      paddingHorizontal: 10, paddingVertical: 8, fontSize: 14, color: c.text,
-    },
+      paddingHorizontal: 10, paddingVertical: 8, fontSize: 14, color: c.text, ...ff('700') },
     gradeActions: { flexDirection: 'row', gap: 8 },
     gradeSaveBtn: {
-      flex: 1, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: c.primary,
-    },
-    gradeSaveText: { color: c.onPrimary, fontWeight: '700', fontSize: 14 },
+      flex: 1, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: c.primary, borderBottomWidth: 4, borderBottomColor: c.primaryShadow },
+    gradeSaveText: { color: c.onPrimary, ...ff('800'), fontSize: 14 },
     gradeCancelBtn: {
       paddingHorizontal: 16, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center',
-      backgroundColor: c.bg, borderWidth: 1, borderColor: c.cardBorder,
+      backgroundColor: c.bg, borderWidth: 2, borderColor: c.cardBorder,
     },
-    gradeCancelText: { color: c.textSecondary, fontWeight: '600', fontSize: 14 },
+    gradeCancelText: { color: c.textSecondary, ...ff('700'), fontSize: 14 },
 
     bonusCard: {
-      backgroundColor: c.card, borderRadius: 14, borderWidth: 1, borderColor: c.cardBorder,
+      backgroundColor: c.card, borderRadius: 14, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder,
       paddingHorizontal: 14,
     },
     bonusRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12 },
-    bonusRowBorder: { borderTopWidth: 1, borderTopColor: c.cardBorder },
-    bonusName: { flex: 1, fontSize: 13.5, color: c.text, lineHeight: 18 },
-    bonusPercent: { fontSize: 14, fontWeight: '800', color: c.primary, minWidth: 48, textAlign: 'right' },
-    bonusAmount: { fontSize: 13, color: c.textMuted, minWidth: 40, textAlign: 'right' },
+    bonusRowBorder: { borderTopWidth: 2, borderTopColor: c.cardBorder },
+    bonusName: { flex: 1, fontSize: 13.5, color: c.text, lineHeight: 18, ...ff('700') },
+    bonusPercent: { fontSize: 14, ...ff('900'), color: c.primary, minWidth: 48, textAlign: 'right' },
+    bonusAmount: { fontSize: 13, color: c.textMuted, minWidth: 40, textAlign: 'right', ...ff('700') },
   });

@@ -8,6 +8,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 import type { ThemeColors } from '../theme/palettes';
+import { ff } from '../theme/typography';
 import { Icon, IconName } from './Icon';
 
 export function ScreenHeader({
@@ -87,6 +88,8 @@ export function HeaderAction({
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: colors.primarySoft,
+        borderWidth: 2,
+        borderColor: colors.tabBarActiveBorder,
       }}
     >
       <Icon name={icon} size={20} color={color ?? colors.primary} />
@@ -106,14 +109,14 @@ const makeStyles = (c: ThemeColors) =>
     backBtn: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center' },
     titleCol: { flex: 1, justifyContent: 'center', paddingLeft: 2 },
     titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    title: { fontSize: 19, fontWeight: '800', color: c.text, flexShrink: 1 },
-    subtitle: { fontSize: 12, color: c.textSecondary, marginTop: 2 },
+    title: { fontSize: 20, color: c.text, flexShrink: 1, ...ff('900') },
+    subtitle: { fontSize: 12.5, color: c.textSecondary, marginTop: 1, ...ff('700') },
     countBadge: {
-      backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, borderRadius: 10,
+      backgroundColor: c.card, borderWidth: 2, borderColor: c.cardBorder, borderRadius: 10,
       paddingHorizontal: 7, paddingVertical: 1, minWidth: 20, alignItems: 'center',
     },
     countBadgeAttention: { backgroundColor: c.warning, borderWidth: 0 },
-    countBadgeText: { fontSize: 12, fontWeight: '800', color: c.textMuted },
+    countBadgeText: { fontSize: 12, color: c.textMuted, ...ff('900') },
     countBadgeTextAttention: { color: '#fff' },
     rightSlot: { minWidth: 38, alignItems: 'flex-end', justifyContent: 'center' },
   });

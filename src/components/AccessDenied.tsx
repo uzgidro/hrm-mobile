@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 import type { ThemeColors } from '../theme/palettes';
+import { ff } from '@/theme/typography';
 import { ScreenHeader } from './ScreenHeader';
 import { Icon } from './Icon';
 
@@ -28,7 +29,7 @@ const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     safe: { flex: 1, backgroundColor: c.bg },
     center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10, paddingBottom: 60 },
-    iconWrap: { width: 64, height: 64, borderRadius: 32, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
-    title: { fontSize: 18, fontWeight: '700', color: c.text },
-    text: { fontSize: 14, color: c.textSecondary },
+    iconWrap: { width: 64, height: 64, borderRadius: 32, backgroundColor: c.card, borderWidth: 2, borderColor: c.cardBorder, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
+    title: { fontSize: 18, ...ff('800'), color: c.text },
+    text: { fontSize: 14, color: c.textSecondary, ...ff('700') },
   });

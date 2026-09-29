@@ -11,15 +11,13 @@ const ctx = (user: User | null, extra: Partial<{ pendingCount: number; unreadCou
 });
 
 const employeeUser = { type: 'employee', employee: { id: 1, is_multi_org_user: false } } as unknown as User;
-const kppUser = {
-  type: 'employee',
-  employee: { id: 2, is_multi_org_user: true, multi_org_employee_role: 'kpp' },
-} as unknown as User;
+// Web v2: a KPP POST account (no employee card) gets the post screens only.
+const kppUser = { type: 'kpp' } as unknown as User;
 
 describe('buildNavSections', () => {
   it('drops items the role cannot access (web-parity via canAccessPage)', () => {
     const keys = flattenNavItems(buildNavSections(t, ctx(kppUser))).map((i) => i.key);
-    expect(keys).not.toContain('documents'); // KPP has no documents nav
+    expect(keys).not.toContain('documents'); // a post account has no documents nav
     expect(keys).toContain('guests');
     expect(keys).toContain('directory');
   });

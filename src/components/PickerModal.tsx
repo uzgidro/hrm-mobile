@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 import type { ThemeColors } from '../theme/palettes';
+import { ff } from '@/theme/typography';
 import { Icon } from './Icon';
 import { useBreakpoint } from '../utils/responsive';
 import { KeyboardAvoider } from './KeyboardAvoider';
@@ -171,24 +172,24 @@ const makeStyles = (c: ThemeColors) =>
       width: '100%', maxWidth: 520, borderRadius: 24,
       borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '80%',
     },
-    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
-    title: { fontSize: 16, fontWeight: '700', color: c.text, flex: 1, marginRight: 8 },
-    close: { fontSize: 18, color: c.textMuted },
+    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 2, borderBottomColor: c.cardBorder },
+    title: { fontSize: 16, ...ff('800'), color: c.text, flex: 1, marginRight: 8 },
+    close: { fontSize: 18, color: c.textMuted, ...ff('700') },
     searchWrap: { paddingHorizontal: 16, paddingVertical: 12 },
-    search: { backgroundColor: c.bg, borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, color: c.text },
-    row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 18, paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
+    search: { backgroundColor: c.bg, borderRadius: 12, borderWidth: 2, borderColor: c.cardBorder, paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, color: c.text, ...ff('700') },
+    row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 18, paddingVertical: 11, borderBottomWidth: 2, borderBottomColor: c.cardBorder },
     rowActive: { backgroundColor: c.primarySoft },
     // Locked rows stay readable but visibly inert (see `disabledValues`).
     rowLocked: { opacity: 0.55 },
     photo: { width: 38, height: 38, borderRadius: 19, backgroundColor: c.skeleton },
     photoPlaceholder: { width: 38, height: 38, borderRadius: 19, backgroundColor: c.primarySoft, alignItems: 'center', justifyContent: 'center' },
-    photoInitial: { color: c.primary, fontWeight: '700', fontSize: 15 },
-    label: { fontSize: 14, fontWeight: '600', color: c.text },
+    photoInitial: { color: c.primary, ...ff('800'), fontSize: 15 },
+    label: { fontSize: 14, ...ff('700'), color: c.text },
     labelActive: { color: c.primary },
-    subLabel: { fontSize: 12, color: c.textMuted, marginTop: 2 },
-    check: { fontSize: 18, color: c.primary, fontWeight: '800' },
+    subLabel: { fontSize: 12, color: c.textMuted, marginTop: 2, ...ff('700') },
+    check: { fontSize: 18, color: c.primary, ...ff('900') },
     empty: { alignItems: 'center', paddingTop: 36 },
-    emptyText: { color: c.textMuted, fontSize: 14 },
-    doneBtn: { marginHorizontal: 16, marginTop: 10, backgroundColor: c.primary, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
-    doneText: { color: c.onPrimary, fontSize: 15, fontWeight: '700' },
+    emptyText: { color: c.textMuted, fontSize: 14, ...ff('700') },
+    doneBtn: { marginHorizontal: 16, marginTop: 10, backgroundColor: c.primary, borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderBottomWidth: 4, borderBottomColor: c.primaryShadow },
+    doneText: { color: c.onPrimary, fontSize: 15, ...ff('800') },
   });

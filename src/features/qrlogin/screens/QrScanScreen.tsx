@@ -11,6 +11,7 @@ import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
@@ -213,34 +214,33 @@ const makeStyles = (c: ThemeColors) =>
     },
     bottomBar: { padding: 20, gap: 10, backgroundColor: c.bg },
     center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 14 },
-    hint: { fontSize: 14, color: c.textSecondary, textAlign: 'center', lineHeight: 20 },
-    doneText: { fontSize: 16, fontWeight: '700', color: c.text, marginTop: 8 },
+    hint: { fontSize: 14, color: c.textSecondary, textAlign: 'center', lineHeight: 20, ...ff('700') },
+    doneText: { fontSize: 16, ...ff('800'), color: c.text, marginTop: 8 },
 
     confirmWrap: { flex: 1, padding: 16, justifyContent: 'center' },
     card: {
       backgroundColor: c.card,
       borderRadius: 18,
-      borderWidth: 1,
+      borderWidth: 2, borderBottomWidth: 4,
       borderColor: c.cardBorder,
       padding: 20,
       gap: 10,
     },
-    cardTitle: { fontSize: 17, fontWeight: '700', color: c.text },
-    cardBody: { fontSize: 13, color: c.textSecondary, lineHeight: 19, marginBottom: 4 },
+    cardTitle: { fontSize: 17, ...ff('800'), color: c.text },
+    cardBody: { fontSize: 13, color: c.textSecondary, lineHeight: 19, marginBottom: 4, ...ff('700') },
     infoRow: { flexDirection: 'row', gap: 10, alignItems: 'flex-start' },
-    infoLabel: { fontSize: 13, color: c.textMuted, width: 84 },
-    infoValue: { fontSize: 13, color: c.text, flex: 1 },
+    infoLabel: { fontSize: 13, color: c.textMuted, width: 84, ...ff('700') },
+    infoValue: { fontSize: 13, color: c.text, flex: 1, ...ff('700') },
 
     primaryBtn: {
       backgroundColor: c.primary,
       borderRadius: 12,
       paddingVertical: 14,
       alignItems: 'center',
-      marginTop: 10,
-    },
+      marginTop: 10, borderBottomWidth: 4, borderBottomColor: c.primaryShadow },
     btnDisabled: { opacity: 0.7 },
-    primaryBtnText: { color: c.onPrimary, fontSize: 15, fontWeight: '700' },
+    primaryBtnText: { color: c.onPrimary, fontSize: 15, ...ff('800') },
     ghostBtn: { borderRadius: 12, paddingVertical: 12, alignItems: 'center' },
-    ghostBtnText: { color: c.textSecondary, fontSize: 14, fontWeight: '600' },
-    error: { fontSize: 13, color: c.error, textAlign: 'center' },
+    ghostBtnText: { color: c.textSecondary, fontSize: 14, ...ff('700') },
+    error: { fontSize: 13, color: c.error, textAlign: 'center', ...ff('700') },
   });

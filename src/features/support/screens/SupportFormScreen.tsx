@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import type { PickedFile } from '@/components/AttachmentField';
 import { AttachmentField } from '@/components/AttachmentField';
 import { FormInput } from '@/components/FormInput';
@@ -128,12 +129,12 @@ export default function SupportFormScreen() {
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     content: { paddingHorizontal: 16, paddingBottom: 32, gap: 4 },
-    label: { fontSize: 13, fontWeight: '600', color: c.textSecondary, marginBottom: 8, marginTop: 4 },
+    label: { fontSize: 13, ...ff('700'), color: c.textSecondary, marginBottom: 8, marginTop: 4 },
     chips: { flexDirection: 'row', gap: 8, marginBottom: 12 },
-    chip: { flex: 1, paddingVertical: 10, borderRadius: 12, alignItems: 'center', backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder },
+    chip: { flex: 1, paddingVertical: 10, borderRadius: 12, alignItems: 'center', backgroundColor: c.card, borderWidth: 2, borderColor: c.cardBorder },
     chipActive: { backgroundColor: c.primarySoft, borderColor: c.primary },
-    chipText: { fontSize: 13, fontWeight: '600', color: c.textSecondary },
+    chipText: { fontSize: 13, ...ff('700'), color: c.textSecondary },
     chipTextActive: { color: c.primary },
-    submitBtn: { marginTop: 16, backgroundColor: c.primary, borderRadius: 14, paddingVertical: 15, alignItems: 'center' },
-    submitText: { color: c.onPrimary, fontSize: 15, fontWeight: '700' },
+    submitBtn: { marginTop: 16, backgroundColor: c.primary, borderRadius: 14, paddingVertical: 15, alignItems: 'center', borderBottomWidth: 4, borderBottomColor: c.primaryShadow },
+    submitText: { color: c.onPrimary, fontSize: 15, ...ff('800') },
   });

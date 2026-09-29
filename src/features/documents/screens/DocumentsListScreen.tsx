@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { router, useFocusEffect } from 'expo-router';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { useBreakpoint } from '@/utils/responsive';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
@@ -222,28 +223,28 @@ const makeStyles = (c: ThemeColors) =>
     searchWrap: {
       flexDirection: 'row', alignItems: 'center', gap: 8,
       marginHorizontal: 16, marginBottom: 8, paddingHorizontal: 12, height: 44,
-      backgroundColor: c.card, borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder,
+      backgroundColor: c.card, borderRadius: 12, borderWidth: 2, borderColor: c.cardBorder,
     },
-    searchInput: { flex: 1, fontSize: 14, color: c.text, paddingVertical: 0 },
+    searchInput: { flex: 1, fontSize: 14, color: c.text, paddingVertical: 0, ...ff('700') },
 
     content: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 24, flexGrow: 1 },
     gridRow: { gap: 12 },
     card: {
       flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, marginBottom: 10,
-      backgroundColor: c.card, borderRadius: 14, borderWidth: 1, borderColor: c.cardBorder,
+      backgroundColor: c.card, borderRadius: 14, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder,
     },
     cardGrid: { flex: 1 },
     iconWrap: {
       width: 44, height: 44, borderRadius: 12,
-      alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: c.cardBorder,
+      alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: c.cardBorder,
     },
-    name: { fontSize: 15, fontWeight: '700', color: c.text },
+    name: { fontSize: 15, ...ff('800'), color: c.text },
     nameMuted: { color: c.textSecondary },
-    sub: { fontSize: 12, color: c.textMuted, marginTop: 2 },
+    sub: { fontSize: 12, color: c.textMuted, marginTop: 2, ...ff('700') },
     right: { flexDirection: 'row', alignItems: 'center', gap: 6 },
     pill: {
       paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8,
       backgroundColor: c.primarySoft,
     },
-    pillText: { fontSize: 10.5, fontWeight: '700', color: c.primary },
+    pillText: { fontSize: 10.5, ...ff('800'), color: c.primary },
   });

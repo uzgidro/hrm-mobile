@@ -11,6 +11,7 @@ import type { TFunction } from 'i18next';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
@@ -273,49 +274,49 @@ const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     content: { paddingHorizontal: 16, paddingTop: 16 },
 
-    empCard: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: c.card, borderRadius: 16, borderWidth: 1, borderColor: c.cardBorder, padding: 14, marginBottom: 10 },
+    empCard: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: c.card, borderRadius: 16, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder, padding: 14, marginBottom: 10 },
     empInfo: { flex: 1 },
-    empName: { fontSize: 15, fontWeight: '700', color: c.text },
-    empSub: { fontSize: 12, color: c.textMuted, marginTop: 2 },
+    empName: { fontSize: 15, ...ff('800'), color: c.text },
+    empSub: { fontSize: 12, color: c.textMuted, marginTop: 2, ...ff('700') },
     badge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10 },
-    badgeText: { fontSize: 12, fontWeight: '700' },
+    badgeText: { fontSize: 12, ...ff('800') },
 
-    infoCard: { backgroundColor: c.card, borderRadius: 16, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 16, paddingVertical: 4, marginBottom: 10 },
+    infoCard: { backgroundColor: c.card, borderRadius: 16, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder, paddingHorizontal: 16, paddingVertical: 4, marginBottom: 10 },
     infoRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingVertical: 13, gap: 12 },
-    infoLabel: { fontSize: 13, color: c.textMuted, flex: 1 },
-    infoValue: { fontSize: 13, fontWeight: '600', color: c.text, flex: 1.5, textAlign: 'right' },
+    infoLabel: { fontSize: 13, color: c.textMuted, flex: 1, ...ff('700') },
+    infoValue: { fontSize: 13, ...ff('700'), color: c.text, flex: 1.5, textAlign: 'right' },
     divider: { height: 1, backgroundColor: c.cardBorder },
 
     rejectionCard: { backgroundColor: c.errorSoft, borderRadius: 14, borderWidth: 1, borderColor: c.error, padding: 14, marginBottom: 10 },
-    rejectionLabel: { fontSize: 12, fontWeight: '600', color: c.error, marginBottom: 6 },
-    rejectionText: { fontSize: 14, color: c.text, lineHeight: 20 },
+    rejectionLabel: { fontSize: 12, ...ff('700'), color: c.error, marginBottom: 6 },
+    rejectionText: { fontSize: 14, color: c.text, lineHeight: 20, ...ff('700') },
 
-    signersCard: { backgroundColor: c.card, borderRadius: 16, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 14, paddingTop: 12, paddingBottom: 4, marginBottom: 10 },
-    signersTitle: { fontSize: 13, fontWeight: '700', color: c.textSecondary, marginBottom: 12 },
-    signerRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingBottom: 12, marginBottom: 8, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
+    signersCard: { backgroundColor: c.card, borderRadius: 16, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder, paddingHorizontal: 14, paddingTop: 12, paddingBottom: 4, marginBottom: 10 },
+    signersTitle: { fontSize: 13, ...ff('800'), color: c.textSecondary, marginBottom: 12 },
+    signerRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingBottom: 12, marginBottom: 8, borderBottomWidth: 2, borderBottomColor: c.cardBorder },
     signerInfo: { flex: 1 },
-    signerName: { fontSize: 13, fontWeight: '600', color: c.text },
-    signerSub: { fontSize: 11, color: c.textMuted, marginTop: 2 },
+    signerName: { fontSize: 13, ...ff('700'), color: c.text },
+    signerSub: { fontSize: 11, color: c.textMuted, marginTop: 2, ...ff('700') },
     signerStatus: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
-    signerStatusText: { fontSize: 11, fontWeight: '700' },
+    signerStatusText: { fontSize: 11, ...ff('800') },
 
     actionRow: { flexDirection: 'row', gap: 10, marginTop: 8 },
     rejectBtn: { flex: 1, borderRadius: 14, paddingVertical: 15, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: c.error },
-    rejectBtnText: { color: c.error, fontSize: 15, fontWeight: '700' },
+    rejectBtnText: { color: c.error, fontSize: 15, ...ff('800') },
     approveBtn: { flex: 1, borderRadius: 14, paddingVertical: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: c.success },
-    approveBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+    approveBtnText: { color: '#fff', fontSize: 15, ...ff('800') },
 
     deleteBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 14, paddingVertical: 15, marginTop: 10, borderWidth: 1.5, borderColor: c.error },
-    deleteBtnText: { color: c.error, fontSize: 15, fontWeight: '700' },
+    deleteBtnText: { color: c.error, fontSize: 15, ...ff('800') },
 
     overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: c.overlay },
     sheet: { position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: c.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 16, paddingBottom: 32 },
     handle: { width: 40, height: 4, backgroundColor: c.cardBorder, borderRadius: 2, alignSelf: 'center', marginTop: 12, marginBottom: 16 },
-    sheetTitle: { fontSize: 17, fontWeight: '700', color: c.text, marginBottom: 12 },
-    sheetInput: { backgroundColor: c.bg, borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 14, paddingVertical: 12, color: c.text, fontSize: 14, minHeight: 100, marginBottom: 16 },
+    sheetTitle: { fontSize: 17, ...ff('800'), color: c.text, marginBottom: 12 },
+    sheetInput: { backgroundColor: c.bg, borderRadius: 12, borderWidth: 2, borderColor: c.cardBorder, paddingHorizontal: 14, paddingVertical: 12, color: c.text, fontSize: 14, minHeight: 100, marginBottom: 16, ...ff('700') },
     btnRow: { flexDirection: 'row', gap: 10 },
-    cancelBtn: { flex: 1, borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: c.cardBorder },
-    cancelBtnText: { color: c.textMuted, fontSize: 15, fontWeight: '600' },
+    cancelBtn: { flex: 1, borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 2, borderColor: c.cardBorder },
+    cancelBtnText: { color: c.textMuted, fontSize: 15, ...ff('700') },
     confirmBtn: { flex: 1, borderRadius: 12, paddingVertical: 14, alignItems: 'center', backgroundColor: c.error },
-    confirmBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+    confirmBtnText: { color: '#fff', fontSize: 15, ...ff('800') },
   });

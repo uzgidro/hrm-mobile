@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader, HeaderAction } from '@/components/ScreenHeader';
@@ -289,15 +290,15 @@ const makeStyles = (c: ThemeColors) =>
 
     headerBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
 
-    sessionsPanel: { borderBottomWidth: 1, borderBottomColor: c.cardBorder, backgroundColor: c.card, paddingVertical: 8, maxHeight: 260 },
-    sessionsTitle: { fontSize: 12, fontWeight: '700', color: c.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, paddingHorizontal: 16, marginBottom: 4 },
-    sessionsEmpty: { fontSize: 13, color: c.textMuted, paddingHorizontal: 16, paddingVertical: 8 },
+    sessionsPanel: { borderBottomWidth: 2, borderBottomColor: c.cardBorder, backgroundColor: c.card, paddingVertical: 8, maxHeight: 260 },
+    sessionsTitle: { fontSize: 12, ...ff('800'), color: c.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, paddingHorizontal: 16, marginBottom: 4 },
+    sessionsEmpty: { fontSize: 13, color: c.textMuted, paddingHorizontal: 16, paddingVertical: 8, ...ff('700') },
     sessionsList: { maxHeight: 210 },
     sessionRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 8 },
     sessionRowActive: { backgroundColor: c.primarySoft },
     sessionNameBtn: { flex: 1 },
-    sessionName: { fontSize: 14, color: c.text },
-    sessionNameActive: { color: c.primaryLight, fontWeight: '700' },
+    sessionName: { fontSize: 14, color: c.text, ...ff('700') },
+    sessionNameActive: { color: c.primaryLight, ...ff('800') },
     sessionDelete: { paddingLeft: 12 },
 
     listContent: { paddingHorizontal: 12, paddingVertical: 12 },
@@ -306,18 +307,17 @@ const makeStyles = (c: ThemeColors) =>
     rowAssistant: { justifyContent: 'flex-start' },
     bubble: { maxWidth: '86%', borderRadius: 16, paddingHorizontal: 14, paddingVertical: 10 },
     bubbleUser: { backgroundColor: c.primary, borderBottomRightRadius: 4 },
-    bubbleAssistant: { backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, borderBottomLeftRadius: 4 },
-    bubbleText: { fontSize: 14.5, lineHeight: 21, color: c.text },
+    bubbleAssistant: { backgroundColor: c.card, borderWidth: 2, borderColor: c.cardBorder, borderBottomLeftRadius: 4 },
+    bubbleText: { fontSize: 14.5, lineHeight: 21, color: c.text, ...ff('700') },
     bubbleTextUser: { color: c.onPrimary },
-    thinking: { fontSize: 14, color: c.textMuted, fontStyle: 'italic' },
+    thinking: { fontSize: 14, color: c.textMuted, fontStyle: 'italic', ...ff('700') },
 
     composer: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingHorizontal: 12, paddingTop: 8 },
     input: {
-      flex: 1, minHeight: 44, maxHeight: 130, borderRadius: 14, borderWidth: 1, borderColor: c.cardBorder,
-      backgroundColor: c.card, color: c.text, paddingHorizontal: 14, paddingTop: 11, paddingBottom: 11, fontSize: 14.5,
-    },
-    sendBtn: { width: 44, height: 44, borderRadius: 14, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' },
+      flex: 1, minHeight: 44, maxHeight: 130, borderRadius: 14, borderWidth: 2, borderColor: c.cardBorder,
+      backgroundColor: c.card, color: c.text, paddingHorizontal: 14, paddingTop: 11, paddingBottom: 11, fontSize: 14.5, ...ff('700') },
+    sendBtn: { width: 44, height: 44, borderRadius: 14, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center', borderBottomWidth: 4, borderBottomColor: c.primaryShadow },
     sendBtnDisabled: { opacity: 0.4 },
     stopBtn: { backgroundColor: c.error },
-    disclaimer: { fontSize: 11, color: c.textMuted, textAlign: 'center', paddingVertical: 6, paddingHorizontal: 16 },
+    disclaimer: { fontSize: 11, color: c.textMuted, textAlign: 'center', paddingVertical: 6, paddingHorizontal: 16, ...ff('700') },
   });

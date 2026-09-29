@@ -6,6 +6,9 @@
 // (web parity: codes stay codes).
 export default {
   screenTitle: 'Modullar',
+  searchPlaceholder: 'Modul qidirish',
+  searchEmpty: 'Bunday modul topilmadi',
+  searchClear: 'Qidiruvni tozalash',
 
   // Section headers
   sections: {

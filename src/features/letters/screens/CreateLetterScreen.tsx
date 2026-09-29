@@ -16,6 +16,7 @@ import { type PickerOption } from '@/components/PickerModal';
 import { AttachmentField, type PickedFile } from '@/components/AttachmentField';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import type { Employee } from '@/types';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
@@ -482,9 +483,9 @@ export default function CreateLetterScreen() {
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    createBtn: { backgroundColor: c.primary, paddingHorizontal: 18, paddingVertical: 9, borderRadius: 20, minWidth: 84, alignItems: 'center' },
+    createBtn: { backgroundColor: c.primary, paddingHorizontal: 18, paddingVertical: 9, borderRadius: 20, minWidth: 84, alignItems: 'center', borderBottomWidth: 4, borderBottomColor: c.primaryShadow },
     createBtnDisabled: { opacity: 0.6 },
-    createBtnText: { color: c.onPrimary, fontWeight: '700', fontSize: 14 },
+    createBtnText: { color: c.onPrimary, ...ff('800'), fontSize: 14 },
     content: { paddingHorizontal: 16, paddingTop: 4 },
 
     // The type/date 2-column pairing went away with the letter-date field; the

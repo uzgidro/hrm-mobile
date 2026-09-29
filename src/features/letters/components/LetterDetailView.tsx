@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { Icon } from '@/components/Icon';
 import { LoadingView, ErrorState } from '@/components/StateViews';
 import { confirm } from '@/lib/confirm';
@@ -659,62 +660,60 @@ const makeStyles = (c: ThemeColors) =>
     safe: { flex: 1, backgroundColor: c.bg },
     embeddedRoot: { flex: 1, backgroundColor: c.bg },
     content: { paddingHorizontal: 16, paddingTop: 14 },
-    card: { backgroundColor: c.card, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: c.cardBorder, gap: 8 },
+    card: { backgroundColor: c.card, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder, gap: 8 },
     badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
-    badgeText: { fontSize: 12, fontWeight: '700' },
-    bigTitle: { fontSize: 18, fontWeight: '800', color: c.text },
-    subMeta: { fontSize: 13, color: c.textMuted },
+    badgeText: { fontSize: 12, ...ff('800') },
+    bigTitle: { fontSize: 18, ...ff('900'), color: c.text },
+    subMeta: { fontSize: 13, color: c.textMuted, ...ff('700') },
     docBtn: { marginTop: 6, backgroundColor: c.primarySoft, borderRadius: 12, paddingVertical: 13, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
-    docBtnText: { color: c.primary, fontSize: 14, fontWeight: '700' },
-    bodyText: { fontSize: 14, color: c.text, lineHeight: 21 },
+    docBtnText: { color: c.primary, fontSize: 14, ...ff('800') },
+    bodyText: { fontSize: 14, color: c.text, lineHeight: 21, ...ff('700') },
     warnCard: { backgroundColor: c.warningSoft, borderRadius: 14, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: c.warning },
-    warnText: { fontSize: 13, color: c.text, lineHeight: 19 },
-    manualEditNote: { fontSize: 12, color: c.warning, paddingHorizontal: 16, paddingBottom: 8 },
+    warnText: { fontSize: 13, color: c.text, lineHeight: 19, ...ff('700') },
+    manualEditNote: { fontSize: 12, color: c.warning, paddingHorizontal: 16, paddingBottom: 8, ...ff('700') },
     rejectCard: { backgroundColor: c.errorSoft, borderRadius: 14, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: c.error },
-    rejectTitle: { fontSize: 13, fontWeight: '700', color: c.error, marginBottom: 4 },
-    rejectText: { fontSize: 13, color: c.text, lineHeight: 19 },
+    rejectTitle: { fontSize: 13, ...ff('800'), color: c.error, marginBottom: 4 },
+    rejectText: { fontSize: 13, color: c.text, lineHeight: 19, ...ff('700') },
 
     submitTripBtn: {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-      backgroundColor: c.primary, borderRadius: 12, paddingVertical: 14, marginBottom: 12,
-    },
-    submitTripText: { color: c.onPrimary, fontSize: 14, fontWeight: '700' },
+      backgroundColor: c.primary, borderRadius: 12, paddingVertical: 14, marginBottom: 12, borderBottomWidth: 4, borderBottomColor: c.primaryShadow },
+    submitTripText: { color: c.onPrimary, fontSize: 14, ...ff('800') },
     approveBtn: {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
       backgroundColor: c.success, borderRadius: 12, paddingVertical: 14, marginBottom: 12,
     },
-    approveText: { color: c.onPrimary, fontSize: 14, fontWeight: '700' },
+    approveText: { color: c.onPrimary, fontSize: 14, ...ff('800') },
     reportBody: { marginTop: 8 },
-    reportBodyLabel: { fontSize: 12, color: c.textMuted, marginBottom: 4 },
+    reportBodyLabel: { fontSize: 12, color: c.textMuted, marginBottom: 4, ...ff('700') },
     reportActions: { flexDirection: 'row', gap: 10, marginBottom: 12 },
     reportBtn: {
       flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-      backgroundColor: c.primary, borderRadius: 12, paddingVertical: 14,
-    },
+      backgroundColor: c.primary, borderRadius: 12, paddingVertical: 14, borderBottomWidth: 4, borderBottomColor: c.primaryShadow },
     reportResetBtn: { flex: 0, paddingHorizontal: 18, backgroundColor: c.errorSoft, borderWidth: 1, borderColor: c.error },
-    reportBtnText: { color: c.onPrimary, fontSize: 14, fontWeight: '700' },
+    reportBtnText: { color: c.onPrimary, fontSize: 14, ...ff('800') },
 
     warnBtn: {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
       backgroundColor: c.warningSoft, borderWidth: 1, borderColor: c.warning,
       borderRadius: 12, paddingVertical: 14, marginBottom: 12,
     },
-    warnBtnText: { color: c.warning, fontSize: 14, fontWeight: '700' },
+    warnBtnText: { color: c.warning, fontSize: 14, ...ff('800') },
     dangerBtn: {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
       backgroundColor: c.errorSoft, borderWidth: 1, borderColor: c.error,
       borderRadius: 12, paddingVertical: 14, marginBottom: 12,
     },
-    dangerBtnText: { color: c.error, fontSize: 14, fontWeight: '700' },
+    dangerBtnText: { color: c.error, fontSize: 14, ...ff('800') },
     editBtn: {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
       backgroundColor: c.primarySoft, borderRadius: 12, paddingVertical: 14, marginBottom: 12,
     },
-    editBtnText: { color: c.primary, fontSize: 14, fontWeight: '700' },
+    editBtnText: { color: c.primary, fontSize: 14, ...ff('800') },
     inlineBtn: {
       alignSelf: 'flex-end', marginTop: 4, backgroundColor: c.primarySoft,
       borderRadius: 9, paddingHorizontal: 14, paddingVertical: 7,
     },
-    inlineBtnText: { color: c.primary, fontSize: 12, fontWeight: '700' },
+    inlineBtnText: { color: c.primary, fontSize: 12, ...ff('800') },
 
   });

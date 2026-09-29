@@ -2,6 +2,9 @@
 // See uz-Latn/modules.ts for the meaning of each key.
 export default {
   screenTitle: 'Modules',
+  searchPlaceholder: 'Search modules',
+  searchEmpty: 'No such module',
+  searchClear: 'Clear search',
 
   sections: {
     activity: 'Activity',

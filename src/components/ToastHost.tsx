@@ -7,6 +7,7 @@ import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 import type { ThemeColors } from '../theme/palettes';
+import { ff } from '@/theme/typography';
 import { Icon, type IconName } from './Icon';
 import {
   subscribeToasts,
@@ -99,7 +100,7 @@ const makeStyles = (c: ThemeColors) =>
       gap: 10,
       backgroundColor: c.cardElevated,
       borderRadius: 12,
-      borderWidth: 1,
+      borderWidth: 2, borderBottomWidth: 4,
       borderColor: c.cardBorder,
       borderLeftWidth: 3,
       paddingVertical: 10,
@@ -117,6 +118,6 @@ const makeStyles = (c: ThemeColors) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    message: { flex: 1, fontSize: 13.5, lineHeight: 18, color: c.text, fontWeight: '500' },
+    message: { flex: 1, fontSize: 13.5, lineHeight: 18, color: c.text, ...ff('700') },
     close: { padding: 2 },
   });

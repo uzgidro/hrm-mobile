@@ -11,6 +11,7 @@ import { useAuthStore } from '@/store/authStore';
 import { usePrefsStore } from '@/store/prefsStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { monthName } from '@/i18n/dates';
 import { useBreakpoint } from '@/utils/responsive';
 import { Icon } from '@/components/Icon';
@@ -116,7 +117,7 @@ export default function BirthdaysScreen() {
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    searchWrapper: { paddingHorizontal: 16, paddingVertical: 10, flexShrink: 0, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
+    searchWrapper: { paddingHorizontal: 16, paddingVertical: 10, flexShrink: 0, borderBottomWidth: 2, borderBottomColor: c.cardBorder },
 
     list: { paddingTop: 4, paddingBottom: 32 },
     separator: { height: 1, backgroundColor: c.cardBorder, marginLeft: 76 },
@@ -125,18 +126,18 @@ const makeStyles = (c: ThemeColors) =>
     empRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 12, backgroundColor: c.bg },
     empRowGrid: {
       flex: 1, marginHorizontal: 0, marginBottom: 12,
-      borderRadius: 14, borderWidth: 1, borderColor: c.cardBorder,
+      borderRadius: 14, borderWidth: 2, borderColor: c.cardBorder,
     },
     empInfo: { flex: 1, gap: 2 },
     nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
-    empName: { fontSize: 14, fontWeight: '700', color: c.text, flexShrink: 1 },
-    empSub: { fontSize: 12, color: c.textMuted },
+    empName: { fontSize: 14, ...ff('800'), color: c.text, flexShrink: 1 },
+    empSub: { fontSize: 12, color: c.textMuted, ...ff('700') },
     birthDateRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    birthDate: { fontSize: 12, color: c.textSecondary },
+    birthDate: { fontSize: 12, color: c.textSecondary, ...ff('700') },
     birthDateToday: { color: c.warning },
     yearLabel: { color: c.textMuted },
     todayBadgeRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    todayBadge: { fontSize: 11, color: c.warning, fontWeight: '700' },
-    soonBadge: { fontSize: 11, color: c.primaryLight, fontWeight: '700', backgroundColor: c.primarySoft, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8 },
-    arrowIcon: { fontSize: 22, color: c.textMuted },
+    todayBadge: { fontSize: 11, color: c.warning, ...ff('800') },
+    soonBadge: { fontSize: 11, color: c.primaryLight, ...ff('800'), backgroundColor: c.primarySoft, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8 },
+    arrowIcon: { fontSize: 22, color: c.textMuted, ...ff('700') },
   });

@@ -14,6 +14,7 @@ import {
 } from '@/api/urls';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { ErrorState } from '@/components/StateViews';
 
@@ -111,6 +112,6 @@ const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     safe: { flex: 1, backgroundColor: c.bg },
     center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, backgroundColor: c.bg },
-    hint: { fontSize: 14, color: c.textMuted },
+    hint: { fontSize: 14, color: c.textMuted, ...ff('700') },
     webview: { flex: 1, backgroundColor: '#fff' },
   });

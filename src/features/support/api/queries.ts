@@ -1,7 +1,7 @@
 import { queryOptions } from '@tanstack/react-query';
 import { pagedListOptions, cleanParams, type ListParams } from '@/lib/pagedList';
 import { apiClient } from '@/api/client';
-import { SUPPORT_TICKETS, SUPPORT_TICKET_DETAIL, SUPPORT_TICKET_MESSAGES } from '@/api/urls';
+import { SUPPORT_TICKETS, SUPPORT_TICKETS_SUMMARY, SUPPORT_TICKET_DETAIL, SUPPORT_TICKET_MESSAGES } from '@/api/urls';
 import type { SupportTicket, SupportTicketMessage } from '@/types';
 
 // Hierarchical query keys. `all` = ['support-tickets'] so any mutation can
@@ -16,10 +16,14 @@ export const supportKeys = {
 export type SupportScope = 'mine' | 'queue';
 export type SupportStatusFilter = 'all' | 'open' | 'in_progress' | 'done';
 
+/** Server-side order (backend 2026-09-26): newest first, or urgent first. */
+export type SupportSort = 'recent' | 'priority';
+
 export interface SupportListParams {
   scope: SupportScope;
   status?: SupportStatusFilter;
   search?: string;
+  sort?: SupportSort;
 }
 
 /**
@@ -32,6 +36,8 @@ export function supportListServerParams(p: SupportListParams): ListParams {
     mine: p.scope === 'mine' ? true : undefined,
     status: p.status === 'all' ? undefined : p.status,
     search: p.search?.trim() || undefined,
+    // 'recent' is the server default — only the non-default order is sent.
+    sort: p.sort === 'priority' ? 'priority' : undefined,
   };
 }
 
@@ -43,6 +49,29 @@ export function ticketsListQuery(params: SupportListParams) {
     params: supportListServerParams(params),
     refetchOnMount: 'always',
     refetchInterval: params.scope === 'queue' ? 60 * 1000 : undefined,
+  });
+}
+
+export type SupportSummary = {
+  all: number;
+  new: number;
+  taken: number;
+  done: number;
+  unread: number;
+  /** false = the branch has no AKT specialist; undefined on an older server (= allowed). */
+  can_create?: boolean;
+};
+
+/** Folder counts for the status chips — same scope and search as the list (web v2). */
+export function supportSummaryQuery(scope: SupportScope, search?: string) {
+  const q = search?.trim() || undefined;
+  return queryOptions({
+    queryKey: [...supportKeys.all, 'summary', scope, q ?? null] as const,
+    queryFn: () =>
+      apiClient
+        .get<SupportSummary>(SUPPORT_TICKETS_SUMMARY, { params: { mine: scope === 'mine' ? true : undefined, search: q } })
+        .then((r) => r.data),
+    refetchOnMount: 'always',
   });
 }
 

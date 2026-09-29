@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { AttendanceEventRow } from '@/components/AttendanceEventRow';
 import { locationsCatalogQuery } from '@/utils/attendance';
 import { resolveEmployeeBranchId } from '@/utils/branch';
@@ -264,32 +265,32 @@ const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     content: { paddingHorizontal: 16, paddingBottom: 32 },
 
-    card: { backgroundColor: c.card, borderRadius: 16, padding: 16, marginTop: 12, borderWidth: 1, borderColor: c.cardBorder },
-    cardTitle: { fontSize: 15, fontWeight: '700', color: c.text, marginBottom: 12 },
+    card: { backgroundColor: c.card, borderRadius: 16, padding: 16, marginTop: 12, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder },
+    cardTitle: { fontSize: 15, ...ff('800'), color: c.text, marginBottom: 12 },
 
     // Day detail — Вход/Выход, График работы, Журнал (mirrors EmployeeCalendarScreen).
     entryExitRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8 },
     entryExitItem: { flex: 1, alignItems: 'center', gap: 6 },
-    entryExitTime: { fontSize: 22, fontWeight: '700', color: c.text, letterSpacing: 1 },
-    entryExitLabel: { fontSize: 12, color: c.textMuted, fontWeight: '500' },
+    entryExitTime: { fontSize: 22, ...ff('800'), color: c.text, letterSpacing: 1 },
+    entryExitLabel: { fontSize: 12, color: c.textMuted, ...ff('700') },
     entryExitDivider: { width: 1, height: 36, backgroundColor: c.cardBorder, marginHorizontal: 16 },
     scheduleRow: { flexDirection: 'row', gap: 20 },
     scheduleItem: { flex: 1 },
-    scheduleValue: { fontSize: 16, fontWeight: '700', color: c.text },
-    scheduleLabel: { fontSize: 12, color: c.textMuted, marginTop: 4 },
-    emptyText: { color: c.textMuted, textAlign: 'center', paddingVertical: 20, fontSize: 14 },
-    eventRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
-    eventTime: { fontSize: 14, fontWeight: '700', color: c.text, width: 44 },
-    eventDir: { fontSize: 13, color: c.textSecondary },
+    scheduleValue: { fontSize: 16, ...ff('800'), color: c.text },
+    scheduleLabel: { fontSize: 12, color: c.textMuted, marginTop: 4, ...ff('700') },
+    emptyText: { color: c.textMuted, textAlign: 'center', paddingVertical: 20, fontSize: 14, ...ff('700') },
+    eventRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8, borderBottomWidth: 2, borderBottomColor: c.cardBorder },
+    eventTime: { fontSize: 14, ...ff('800'), color: c.text, width: 44 },
+    eventDir: { fontSize: 13, color: c.textSecondary, ...ff('700') },
 
     weekRow: { flexDirection: 'row', marginBottom: 8 },
-    weekDayLabel: { flex: 1, textAlign: 'center', fontSize: 12, color: c.textMuted, fontWeight: '600' },
+    weekDayLabel: { flex: 1, textAlign: 'center', fontSize: 12, color: c.textMuted, ...ff('700') },
 
     calendarGrid: { flexDirection: 'row', flexWrap: 'wrap' },
     dayCell: { width: `${100 / 7}%`, aspectRatio: 0.9, alignItems: 'center', justifyContent: 'center', borderRadius: 10 },
     dayCellToday: { borderWidth: 1, borderColor: c.primaryLight },
     dayCellSelected: { backgroundColor: c.primarySoft },
-    dayText: { fontSize: 14, fontWeight: '600', color: c.text },
+    dayText: { fontSize: 14, ...ff('700'), color: c.text },
     dayTextWeekend: { color: c.textMuted },
     dayTextSelected: { color: c.primaryLight },
     dayDot: { width: 6, height: 6, borderRadius: 3, marginTop: 3 },
@@ -297,21 +298,21 @@ const makeStyles = (c: ThemeColors) =>
 
     dayDetailRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
     letterBadge: { minWidth: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 },
-    letterBadgeText: { fontSize: 15, fontWeight: '800', color: '#fff' },
-    dayDetailLabel: { fontSize: 15, fontWeight: '700', color: c.text },
-    dayDetailDate: { fontSize: 12, color: c.textSecondary, marginTop: 2 },
-    lateText: { fontSize: 12, fontWeight: '700', color: c.warning },
+    letterBadgeText: { fontSize: 15, ...ff('900'), color: '#fff' },
+    dayDetailLabel: { fontSize: 15, ...ff('800'), color: c.text },
+    dayDetailDate: { fontSize: 12, color: c.textSecondary, marginTop: 2, ...ff('700') },
+    lateText: { fontSize: 12, ...ff('800'), color: c.warning },
 
     statsRow: { flexDirection: 'row' },
     statItem: { flex: 1, alignItems: 'center' },
-    statValue: { fontSize: 22, fontWeight: '800' },
-    statLabel: { fontSize: 12, color: c.textSecondary, marginTop: 4 },
-    hoursRow: { alignItems: 'center', marginTop: 14, paddingTop: 14, borderTopWidth: 1, borderTopColor: c.cardBorder },
-    hoursValue: { fontSize: 18, fontWeight: '800', color: c.text },
-    hoursLabel: { fontSize: 12, color: c.textSecondary, marginTop: 2 },
+    statValue: { fontSize: 22, ...ff('900') },
+    statLabel: { fontSize: 12, color: c.textSecondary, marginTop: 4, ...ff('700') },
+    hoursRow: { alignItems: 'center', marginTop: 14, paddingTop: 14, borderTopWidth: 2, borderTopColor: c.cardBorder },
+    hoursValue: { fontSize: 18, ...ff('900'), color: c.text },
+    hoursLabel: { fontSize: 12, color: c.textSecondary, marginTop: 2, ...ff('700') },
 
     legendRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6 },
     legendDot: { width: 10, height: 10, borderRadius: 5 },
-    legendLetter: { width: 28, fontSize: 13, fontWeight: '800', color: c.text },
-    legendLabel: { flex: 1, fontSize: 13, color: c.textSecondary },
+    legendLetter: { width: 28, fontSize: 13, ...ff('900'), color: c.text },
+    legendLabel: { flex: 1, fontSize: 13, color: c.textSecondary, ...ff('700') },
   });

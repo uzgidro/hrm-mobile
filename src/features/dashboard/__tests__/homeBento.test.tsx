@@ -17,6 +17,11 @@ import HomeScreen from '../screens/HomeScreen';
 // doesn't pull in expo-router's untranspiled ESM navigation internals.
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 
+const HR_USER = {
+  type: 'employee',
+  employee: { id: 1, legal_name: 'Test User', supervisor: null, is_multi_org_user: true, multi_org_employee_role: 'hr' },
+} as any;
+
 describe('HomeScreen (bento tiles present)', () => {
   beforeEach(() => {
     useAuthStore.setState({
@@ -37,11 +42,17 @@ describe('HomeScreen (bento tiles present)', () => {
     expect(getByText("Kiruvchi so'rovlar")).toBeTruthy();
   });
 
-  it('renders the Davomat (attendance) content block header before the requests card', async () => {
+  it('renders the Davomat (attendance) content block header for HR', async () => {
+    // Web v2: org-wide attendance belongs to HR / leadership / accounting /
+    // monitoring / nazoratchi (navConfig `attendance` module).
+    useAuthStore.setState({ user: HR_USER, isAuthenticated: true } as any);
     const { getByText } = await renderWithProviders(<HomeScreen />);
-    // Same label as the Modules grid (modules.labels.attendance, uz-Latn "Davomat").
-    // A plain employee is not KPP/chancellery, so canAccessPage('attendance') is true.
     expect(getByText('Davomat')).toBeTruthy();
+  });
+
+  it('a plain employee does not get the org attendance block (web v2: own day only)', async () => {
+    const { queryByText } = await renderWithProviders(<HomeScreen />);
+    expect(queryByText('Davomat')).toBeNull();
   });
 });
 
@@ -49,10 +60,7 @@ describe('HomeScreen (attendance content block renders the module content, not j
   let mock: MockAdapter;
 
   beforeEach(() => {
-    useAuthStore.setState({
-      user: { type: 'employee', employee: { id: 1, legal_name: 'Test User', supervisor: null } } as any,
-      isAuthenticated: true,
-    } as any);
+    useAuthStore.setState({ user: HR_USER, isAuthenticated: true } as any);
     mock = new MockAdapter(apiClient);
     // TODAY's roster comes from the branch category endpoint (web employee
     // dashboard source) since 2026-09-13; /normalized serves past days only.

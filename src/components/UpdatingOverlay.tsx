@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { useOtaGateStore } from '@/store/otaGateStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 
 export default function UpdatingOverlay() {
   const { t } = useTranslation();
@@ -54,8 +55,8 @@ const makeStyles = (c: ThemeColors) =>
       justifyContent: 'center',
       marginBottom: 16,
     },
-    logoText: { fontSize: 30, fontWeight: '800', color: '#fff' },
-    appName: { fontSize: 23, fontWeight: '800', color: c.text },
+    logoText: { fontSize: 30, ...ff('900'), color: '#fff' },
+    appName: { fontSize: 23, ...ff('900'), color: c.text },
     spinner: { marginBottom: 16 },
-    message: { fontSize: 14, color: c.textSecondary, textAlign: 'center' },
+    message: { fontSize: 14, color: c.textSecondary, textAlign: 'center', ...ff('700') },
   });

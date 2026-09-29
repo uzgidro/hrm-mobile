@@ -8,6 +8,7 @@ import { router } from 'expo-router';
 import dayjs from 'dayjs';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { useBreakpoint } from '@/utils/responsive';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
@@ -153,32 +154,32 @@ export default function KpiTeamScreen() {
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     content: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 24, flexGrow: 1 },
-    periodNote: { fontSize: 12, color: c.textMuted, marginBottom: 10, marginLeft: 2 },
+    periodNote: { fontSize: 12, color: c.textMuted, marginBottom: 10, marginLeft: 2, ...ff('700') },
     gridRow: { gap: 12 },
 
     searchWrap: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4 },
     chipRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingVertical: 8, alignItems: 'center' },
-    chip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 16, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder },
+    chip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 16, backgroundColor: c.card, borderWidth: 2, borderColor: c.cardBorder },
     chipActive: { backgroundColor: c.primary, borderColor: c.primary },
-    chipText: { fontSize: 12, fontWeight: '700', color: c.textSecondary },
+    chipText: { fontSize: 12, ...ff('800'), color: c.textSecondary },
     chipTextActive: { color: c.onPrimary },
 
     card: {
       flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, marginBottom: 10,
-      backgroundColor: c.card, borderRadius: 14, borderWidth: 1, borderColor: c.cardBorder,
+      backgroundColor: c.card, borderRadius: 14, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder,
     },
     cardGrid: { flex: 1 },
-    name: { fontSize: 15, fontWeight: '700', color: c.text },
-    sub: { fontSize: 12, color: c.textSecondary, marginTop: 2 },
+    name: { fontSize: 15, ...ff('800'), color: c.text },
+    sub: { fontSize: 12, color: c.textSecondary, marginTop: 2, ...ff('700') },
     metaRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 5, flexWrap: 'wrap' },
-    metaText: { fontSize: 11.5, color: c.textMuted },
+    metaText: { fontSize: 11.5, color: c.textMuted, ...ff('700') },
     pendingBadge: {
       backgroundColor: c.warningSoft, borderRadius: 6, paddingHorizontal: 7, paddingVertical: 2,
     },
-    pendingBadgeText: { fontSize: 10.5, fontWeight: '700', color: c.warning },
+    pendingBadgeText: { fontSize: 10.5, ...ff('800'), color: c.warning },
     doneRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-    doneText: { fontSize: 10.5, fontWeight: '600', color: c.success },
+    doneText: { fontSize: 10.5, ...ff('700'), color: c.success },
 
     right: { alignItems: 'flex-end', gap: 4 },
-    result: { fontSize: 16, fontWeight: '800' },
+    result: { fontSize: 16, ...ff('900') },
   });

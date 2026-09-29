@@ -22,4 +22,10 @@ export default {
   captchaRequired: 'Type the characters from the image',
   captchaInvalid: 'The characters are wrong — try again with the new image',
   tooManyAttempts: 'Too many attempts. Try again in a few minutes',
+  tomchiIdle: "Hi! I'm Tomchi. Let's start the workday!",
+  tomchiWatching: "I'm watching your username closely…",
+  tomchiShy: "I won't look at your password, promise!",
+  tomchiPeek: "Just one eye… I won't tell anyone!",
+  tomchiSad: "Oops! Something's wrong. Shall we try again?",
+  tomchiHappy: 'Great! Welcome aboard!',
 } as const;

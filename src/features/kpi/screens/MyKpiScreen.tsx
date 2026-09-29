@@ -8,6 +8,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import dayjs from 'dayjs';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { Icon, type IconName } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader, HeaderAction } from '@/components/ScreenHeader';
@@ -280,45 +281,45 @@ const makeStyles = (c: ThemeColors) =>
     content: { paddingHorizontal: 16, paddingTop: 8 },
 
     card: {
-      backgroundColor: c.card, borderRadius: 16, borderWidth: 1, borderColor: c.cardBorder,
+      backgroundColor: c.card, borderRadius: 16, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder,
       padding: 16, marginBottom: 18,
     },
     profileRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-    name: { fontSize: 16, fontWeight: '800', color: c.text },
-    sub: { fontSize: 12, color: c.textSecondary, marginTop: 2 },
+    name: { fontSize: 16, ...ff('900'), color: c.text },
+    sub: { fontSize: 12, color: c.textSecondary, marginTop: 2, ...ff('700') },
 
     infoGrid: {
-      marginTop: 14, paddingTop: 14, borderTopWidth: 1, borderTopColor: c.cardBorder, gap: 10,
+      marginTop: 14, paddingTop: 14, borderTopWidth: 2, borderTopColor: c.cardBorder, gap: 10,
     },
     infoRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
     infoIcon: {
       width: 28, height: 28, borderRadius: 14, backgroundColor: c.primarySoft,
       alignItems: 'center', justifyContent: 'center',
     },
-    infoLabel: { fontSize: 10.5, color: c.textMuted },
-    infoValue: { fontSize: 13, color: c.text, marginTop: 1 },
+    infoLabel: { fontSize: 10.5, color: c.textMuted, ...ff('700') },
+    infoValue: { fontSize: 13, color: c.text, marginTop: 1, ...ff('700') },
 
     gaugeWrap: { alignItems: 'center', marginTop: 16 },
 
-    periodBlock: { marginTop: 16, paddingTop: 14, borderTopWidth: 1, borderTopColor: c.cardBorder },
+    periodBlock: { marginTop: 16, paddingTop: 14, borderTopWidth: 2, borderTopColor: c.cardBorder },
     periodTitle: {
-      fontSize: 11, fontWeight: '700', color: c.textMuted,
+      fontSize: 11, ...ff('800'), color: c.textMuted,
       textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8,
     },
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
     chip: {
       height: 30, paddingHorizontal: 12, borderRadius: 8, justifyContent: 'center',
-      backgroundColor: c.bg, borderWidth: 1, borderColor: c.cardBorder,
+      backgroundColor: c.bg, borderWidth: 2, borderColor: c.cardBorder,
     },
-    chipText: { fontSize: 12, fontWeight: '600', color: c.textSecondary },
+    chipText: { fontSize: 12, ...ff('700'), color: c.textSecondary },
 
     sectionLabel: {
-      fontSize: 12, fontWeight: '700', color: c.textMuted,
+      fontSize: 12, ...ff('800'), color: c.textMuted,
       textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 10, marginLeft: 2,
     },
 
     entryCard: {
-      backgroundColor: c.card, borderRadius: 14, borderWidth: 1, borderColor: c.cardBorder,
+      backgroundColor: c.card, borderRadius: 14, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder,
       padding: 14, marginBottom: 10,
     },
     entryPenalty: { borderColor: c.errorSoft, backgroundColor: c.errorSoft },
@@ -327,26 +328,26 @@ const makeStyles = (c: ThemeColors) =>
       backgroundColor: c.errorSoft, borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2,
       borderWidth: 1, borderColor: c.error,
     },
-    penaltyBadgeText: { fontSize: 9.5, fontWeight: '800', color: c.error },
-    entryName: { flex: 1, fontSize: 14, fontWeight: '700', color: c.text, lineHeight: 19 },
-    entryDates: { fontSize: 11.5, color: c.textMuted, marginTop: 4 },
+    penaltyBadgeText: { fontSize: 9.5, ...ff('900'), color: c.error },
+    entryName: { flex: 1, fontSize: 14, ...ff('800'), color: c.text, lineHeight: 19 },
+    entryDates: { fontSize: 11.5, color: c.textMuted, marginTop: 4, ...ff('700') },
     entryBottom: { flexDirection: 'row', alignItems: 'flex-end', gap: 14, marginTop: 10 },
     metric: { minWidth: 44 },
-    metricLabel: { fontSize: 10, color: c.textMuted, textTransform: 'uppercase' },
-    metricValue: { fontSize: 14, fontWeight: '700', color: c.text, marginTop: 2 },
+    metricLabel: { fontSize: 10, color: c.textMuted, textTransform: 'uppercase', ...ff('700') },
+    metricValue: { fontSize: 14, ...ff('800'), color: c.text, marginTop: 2 },
     statusPill: {
       marginLeft: 'auto', paddingHorizontal: 9, paddingVertical: 4, borderRadius: 8,
     },
-    statusPillText: { fontSize: 11, fontWeight: '700' },
+    statusPillText: { fontSize: 11, ...ff('800') },
 
     totalsCard: {
-      backgroundColor: c.card, borderRadius: 14, borderWidth: 1, borderColor: c.cardBorder,
+      backgroundColor: c.card, borderRadius: 14, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder,
       paddingHorizontal: 14, paddingVertical: 8, marginTop: 4,
     },
     totalRow: {
       flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 6,
     },
-    totalLabel: { fontSize: 13, color: c.textSecondary },
-    totalValue: { fontSize: 14, fontWeight: '700', color: c.text },
-    totalBold: { fontWeight: '800', color: c.text, fontSize: 15 },
+    totalLabel: { fontSize: 13, color: c.textSecondary, ...ff('700') },
+    totalValue: { fontSize: 14, ...ff('800'), color: c.text },
+    totalBold: { ...ff('900'), color: c.text, fontSize: 15 },
   });

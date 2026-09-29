@@ -2,6 +2,9 @@
 // See uz-Latn/modules.ts for the meaning of each key.
 export default {
   screenTitle: 'Модуллар',
+  searchPlaceholder: 'Модул қидириш',
+  searchEmpty: 'Бундай модул топилмади',
+  searchClear: 'Қидирувни тозалаш',
 
   sections: {
     activity: 'Фаолият',

@@ -64,6 +64,7 @@ export default {
   tabQueue: 'Navbat',
   searchPlaceholder: 'Tavsif, UGE yoki xona...',
   filterAll: 'Barchasi',
+  sortPriority: 'Avval muhimlari',
   take: 'Qabul qilish',
   takeDone: 'Murojaat qabul qilindi',
   markDone: 'Bajarildi deb belgilash',

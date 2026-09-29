@@ -21,4 +21,8 @@ export default {
     approved: 'Подтверждён',
     rejected: 'Отклонён',
   },
+  tomchiHello: 'Привет, {{name}}!',
+  tomchiCameIn: 'Сегодня вы пришли в {{time}}.',
+  tomchiNotYet: 'Сегодня приход ещё не отмечен.',
+  worked: '{{h}} ч {{m}} мин',
 } as const;

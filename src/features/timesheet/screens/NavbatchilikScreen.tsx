@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import MyDutyScreen from './MyDutyScreen';
@@ -56,8 +57,8 @@ export default function NavbatchilikScreen() {
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     tabsRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingTop: 12 },
-    tab: { flex: 1, paddingVertical: 10, borderRadius: 10, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, alignItems: 'center' },
+    tab: { flex: 1, paddingVertical: 10, borderRadius: 10, backgroundColor: c.card, borderWidth: 2, borderColor: c.cardBorder, alignItems: 'center' },
     tabActive: { backgroundColor: c.primarySoft, borderColor: c.primaryLight },
-    tabText: { fontSize: 13, fontWeight: '600', color: c.textSecondary },
+    tabText: { fontSize: 13, ...ff('700'), color: c.textSecondary },
     tabTextActive: { color: c.primary },
   });

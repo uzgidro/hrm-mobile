@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { SplitLayout } from '@/components/SplitLayout';
@@ -174,7 +175,7 @@ export default function OrdersListScreen() {
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
-    title: { flex: 1, fontSize: 26, fontWeight: '800', color: c.text },
+    title: { flex: 1, fontSize: 26, ...ff('900'), color: c.text },
     fab: {
       width: 42, height: 42, borderRadius: 14,
       backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center',
@@ -184,24 +185,24 @@ const makeStyles = (c: ThemeColors) =>
     tab: {
       flexDirection: 'row', alignItems: 'center', gap: 6,
       paddingHorizontal: 16, paddingVertical: 9, borderRadius: 22,
-      backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder,
+      backgroundColor: c.card, borderWidth: 2, borderColor: c.cardBorder,
     },
     tabActive: { backgroundColor: c.primary, borderColor: c.primary },
-    tabText: { fontSize: 13, fontWeight: '700', color: c.textSecondary },
+    tabText: { fontSize: 13, ...ff('800'), color: c.textSecondary },
     tabTextActive: { color: c.onPrimary },
     tabBadge: { backgroundColor: c.warning, borderRadius: 9, minWidth: 18, height: 18, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
-    tabBadgeText: { fontSize: 10, fontWeight: '800', color: '#fff' },
+    tabBadgeText: { fontSize: 10, ...ff('900'), color: '#fff' },
 
 
 
     searchWrap: { paddingHorizontal: 16, paddingBottom: 10 },
     chipRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingBottom: 10, alignItems: 'center' },
-    chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 18, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder },
+    chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 18, backgroundColor: c.card, borderWidth: 2, borderColor: c.cardBorder },
     chipActive: { backgroundColor: c.primary, borderColor: c.primary },
-    chipText: { fontSize: 13, fontWeight: '700', color: c.textSecondary },
+    chipText: { fontSize: 13, ...ff('800'), color: c.textSecondary },
     chipTextActive: { color: c.onPrimary },
-    chipSubtle: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 14, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder },
+    chipSubtle: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 14, backgroundColor: c.card, borderWidth: 2, borderColor: c.cardBorder },
     chipSubtleActive: { backgroundColor: c.primarySoft, borderColor: c.primary },
-    chipSubtleText: { fontSize: 12, fontWeight: '600', color: c.textSecondary },
+    chipSubtleText: { fontSize: 12, ...ff('700'), color: c.textSecondary },
     chipSubtleTextActive: { color: c.primary },
   });

@@ -42,6 +42,15 @@ export interface User {
   password_expired?: boolean;
   password_must_change?: boolean;
   password_days_left?: number | null;
+  /** Heads a department or has anyone reporting to them (server `scoping.is_line_manager`). Gates «Mening jamoam». */
+  is_line_manager?: boolean;
+  /** May view (not edit) a duty roster — web v2 `canSeeDuty`. */
+  is_navbatchi_viewer?: boolean;
+  /** Branches where this user keeps the fleet / approves cars (web v2 `canSeeFleet`). */
+  transport_branch_ids?: number[];
+  transport_approver_branch_ids?: number[];
+  /** Branches where this user is the designated accountant (Tabel). */
+  accounting_branch_ids?: number[];
 }
 
 export interface Employee {
@@ -61,6 +70,8 @@ export interface Employee {
   department?: { id: number; name: string; organization_branch_id?: number; has_navbatchilik?: boolean };
   is_multi_org_user?: boolean;
   multi_org_employee_role?: string | string[];
+  /** Verifix «Администратор КПЭ» — a separate flag that stacks on the primary role (web v2). */
+  is_kpi_admin?: boolean;
   organization_branches?: OrganizationBranch[];
   // Xodimga ATAYLAB belgilangan asosiy filial. `organization_branches` M2M
   // ro'yxati TARTIBSIZ (backend join tartibi), shuning uchun "qaysi filial"

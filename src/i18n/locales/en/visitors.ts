@@ -6,6 +6,10 @@ export default {
   nameFallback: 'Visitor',
   statusActive: 'Active',
   statusInactive: 'Inactive',
+  statTotal: 'All guests',
+  statActive: 'Active pass',
+  statToday: 'Came today',
+  statNever: 'Never came',
   emptySearch: 'Nothing found',
   emptyList: 'No visitors',
 

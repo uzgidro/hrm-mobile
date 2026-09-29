@@ -4,6 +4,7 @@ import dayjs, { Dayjs } from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { useThemedStyles } from '../theme/ThemeProvider';
 import type { ThemeColors } from '../theme/palettes';
+import { ff } from '@/theme/typography';
 import { monthName, weekdayNameShort } from '@/i18n/dates';
 import { useBreakpoint } from '../utils/responsive';
 import { buildMonthCells, WEEK_DAY_INDEXES } from '../utils/calendarGrid';
@@ -65,22 +66,22 @@ const makeDp = (c: ThemeColors) =>
       width: '100%', maxWidth: 420, borderRadius: 24,
       borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '80%',
     },
-    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
-    title: { fontSize: 16, fontWeight: '700', color: c.text },
-    cancelText: { fontSize: 14, color: c.textSecondary },
-    confirmText: { fontSize: 14, color: c.primary, fontWeight: '700' },
+    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18, paddingVertical: 16, borderBottomWidth: 2, borderBottomColor: c.cardBorder },
+    title: { fontSize: 16, ...ff('800'), color: c.text },
+    cancelText: { fontSize: 14, color: c.textSecondary, ...ff('700') },
+    confirmText: { fontSize: 14, color: c.primary, ...ff('800') },
     monthNav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 24, paddingTop: 14 },
     navBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-    navText: { fontSize: 18, color: c.text },
-    monthLabel: { fontSize: 15, fontWeight: '700', color: c.text },
+    navText: { fontSize: 18, color: c.text, ...ff('700') },
+    monthLabel: { fontSize: 15, ...ff('800'), color: c.text },
     weekRow: { flexDirection: 'row', paddingHorizontal: 12, paddingTop: 10 },
-    weekDay: { flex: 1, textAlign: 'center', fontSize: 11, color: c.textMuted, fontWeight: '600' },
+    weekDay: { flex: 1, textAlign: 'center', fontSize: 11, color: c.textMuted, ...ff('700') },
     grid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 12, paddingTop: 6 },
     cell: { width: `${100 / 7}%`, aspectRatio: 1.15, alignItems: 'center', justifyContent: 'center' },
     cellToday: { borderWidth: 1, borderColor: c.primary, borderRadius: 12 },
     cellSel: { backgroundColor: c.primary, borderRadius: 12, borderColor: c.primary },
-    cellText: { fontSize: 14, color: c.text },
-    cellTextToday: { color: c.primary, fontWeight: '700' },
+    cellText: { fontSize: 14, color: c.text, ...ff('700') },
+    cellTextToday: { color: c.primary, ...ff('800') },
     cellTextSel: { color: c.onPrimary },
     cellDis: { opacity: 0.3 },
   });

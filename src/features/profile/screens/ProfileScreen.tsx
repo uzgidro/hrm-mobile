@@ -10,6 +10,7 @@ import { useLockStore } from '@/store/lockStore';
 import { authenticateBiometric } from '@/auth/biometrics';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import type { ThemeMode } from '@/theme/ThemeProvider';
 import { Icon, IconName } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
@@ -296,29 +297,29 @@ const makeStyles = (c: ThemeColors) =>
     content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 40 },
 
     sectionLabel: {
-      fontSize: 12, fontWeight: '700', color: c.textMuted,
+      fontSize: 12, ...ff('800'), color: c.textMuted,
       textTransform: 'uppercase', letterSpacing: 0.6,
       marginTop: 8, marginBottom: 8, marginLeft: 4,
     },
 
     card: {
       backgroundColor: c.card, borderRadius: 16, padding: 16,
-      marginBottom: 12, borderWidth: 1, borderColor: c.cardBorder,
+      marginBottom: 12, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder,
     },
 
     userRow: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 16 },
-    userName: { fontSize: 18, fontWeight: '800', color: c.text },
-    userRole: { fontSize: 13, color: c.textSecondary, marginTop: 2 },
+    userName: { fontSize: 18, ...ff('900'), color: c.text },
+    userRole: { fontSize: 13, color: c.textSecondary, marginTop: 2, ...ff('700') },
 
     userActions: { flexDirection: 'row', gap: 10 },
     actionBtn: {
       flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
       gap: 8, paddingVertical: 12, borderRadius: 12,
-      backgroundColor: c.bg, borderWidth: 1, borderColor: c.cardBorder,
+      backgroundColor: c.bg, borderWidth: 2, borderColor: c.cardBorder,
     },
-    actionBtnText: { fontSize: 13, fontWeight: '700', color: c.textSecondary },
+    actionBtnText: { fontSize: 13, ...ff('800'), color: c.textSecondary },
     actionBtnPrimary: { backgroundColor: c.primary, borderColor: c.primary },
-    actionBtnPrimaryText: { fontSize: 13, fontWeight: '700', color: c.onPrimary },
+    actionBtnPrimaryText: { fontSize: 13, ...ff('800'), color: c.onPrimary },
 
     orgRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
     orgIcon: {
@@ -326,41 +327,41 @@ const makeStyles = (c: ThemeColors) =>
       backgroundColor: c.primarySoft, alignItems: 'center', justifyContent: 'center',
     },
     orgInfo: { flex: 1 },
-    orgName: { fontSize: 15, fontWeight: '700', color: c.text },
-    orgBranch: { fontSize: 12, color: c.textMuted, marginTop: 2 },
+    orgName: { fontSize: 15, ...ff('800'), color: c.text },
+    orgBranch: { fontSize: 12, color: c.textMuted, marginTop: 2, ...ff('700') },
 
     segmentRow: { flexDirection: 'row', gap: 8 },
     segment: {
       flex: 1, alignItems: 'center', gap: 6, paddingVertical: 12, borderRadius: 12,
-      backgroundColor: c.bg, borderWidth: 1, borderColor: c.cardBorder,
+      backgroundColor: c.bg, borderWidth: 2, borderColor: c.cardBorder,
     },
     segmentActive: { backgroundColor: c.primarySoft, borderColor: c.primary },
-    segmentText: { fontSize: 12, fontWeight: '600', color: c.textSecondary },
-    segmentTextActive: { color: c.primary, fontWeight: '800' },
+    segmentText: { fontSize: 12, ...ff('700'), color: c.textSecondary },
+    segmentTextActive: { color: c.primary, ...ff('900') },
 
     // 2×2 grid for the 4 languages (a single row of 4 is too cramped).
     langGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
     langOption: {
       width: '48%', flexGrow: 1, flexDirection: 'row', alignItems: 'center',
       justifyContent: 'center', gap: 8, paddingVertical: 12, borderRadius: 12,
-      backgroundColor: c.bg, borderWidth: 1, borderColor: c.cardBorder,
+      backgroundColor: c.bg, borderWidth: 2, borderColor: c.cardBorder,
     },
 
     menuItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14 },
-    menuItemBorder: { borderBottomWidth: 1, borderBottomColor: c.cardBorder },
+    menuItemBorder: { borderBottomWidth: 2, borderBottomColor: c.cardBorder },
     menuItemLeft: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
     menuIcon: { width: 26, alignItems: 'center' },
-    menuLabel: { fontSize: 15, color: c.text, fontWeight: '600' },
-    menuHint: { fontSize: 11, color: c.textMuted, marginTop: 2 },
-    menuValue: { fontSize: 14, color: c.textSecondary, fontWeight: '500' },
+    menuLabel: { fontSize: 15, color: c.text, ...ff('700') },
+    menuHint: { fontSize: 11, color: c.textMuted, marginTop: 2, ...ff('700') },
+    menuValue: { fontSize: 14, color: c.textSecondary, ...ff('700') },
     menuChevron: { marginLeft: 8 },
 
     logoutBtn: {
       flexDirection: 'row', gap: 8, backgroundColor: c.errorSoft, borderRadius: 14, paddingVertical: 15,
       alignItems: 'center', justifyContent: 'center', marginTop: 8, borderWidth: 1, borderColor: c.error,
     },
-    logoutText: { color: c.error, fontSize: 16, fontWeight: '700' },
+    logoutText: { color: c.error, fontSize: 16, ...ff('800') },
 
-    version: { textAlign: 'center', color: c.textMuted, fontSize: 12, marginTop: 16 },
-    otaBuild: { textAlign: 'center', color: c.textMuted, fontSize: 11, marginTop: 2 },
+    version: { textAlign: 'center', color: c.textMuted, fontSize: 12, marginTop: 16, ...ff('700') },
+    otaBuild: { textAlign: 'center', color: c.textMuted, fontSize: 11, marginTop: 2, ...ff('700') },
   });

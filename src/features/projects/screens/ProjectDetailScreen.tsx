@@ -10,6 +10,7 @@ import dayjs from 'dayjs';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { useBreakpoint } from '@/utils/responsive';
 import { ScreenHeader, HeaderAction } from '@/components/ScreenHeader';
 import { Icon } from '@/components/Icon';
@@ -262,52 +263,52 @@ const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     content: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 24 },
 
-    card: { backgroundColor: c.card, borderRadius: 16, borderWidth: 1, borderColor: c.cardBorder, padding: 16, marginBottom: 12 },
-    desc: { fontSize: 14, color: c.textSecondary, lineHeight: 20 },
+    card: { backgroundColor: c.card, borderRadius: 16, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder, padding: 16, marginBottom: 12 },
+    desc: { fontSize: 14, color: c.textSecondary, lineHeight: 20, ...ff('700') },
 
-    sectionLabel: { fontSize: 12, fontWeight: '700', color: c.textMuted, textTransform: 'uppercase', letterSpacing: 0.6, marginLeft: 4 },
+    sectionLabel: { fontSize: 12, ...ff('800'), color: c.textMuted, textTransform: 'uppercase', letterSpacing: 0.6, marginLeft: 4 },
     colHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, marginTop: 4 },
     addColBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: c.primarySoft, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6 },
-    addColText: { fontSize: 13, color: c.primary, fontWeight: '700' },
+    addColText: { fontSize: 13, color: c.primary, ...ff('800') },
 
     memberWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-    memberChip: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: c.bg, borderRadius: 20, paddingVertical: 4, paddingHorizontal: 4, paddingRight: 12, borderWidth: 1, borderColor: c.cardBorder },
-    memberName: { fontSize: 12, color: c.text, fontWeight: '600', maxWidth: 130 },
+    memberChip: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: c.bg, borderRadius: 20, paddingVertical: 4, paddingHorizontal: 4, paddingRight: 12, borderWidth: 2, borderColor: c.cardBorder },
+    memberName: { fontSize: 12, color: c.text, ...ff('700'), maxWidth: 130 },
 
     // Tablet-landscape board row: tracks sit side by side and scroll
     // horizontally instead of stacking full-width down the screen.
     boardRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingBottom: 12 },
 
-    column: { backgroundColor: c.card, borderRadius: 16, borderWidth: 1, borderColor: c.cardBorder, padding: 12, marginBottom: 12 },
+    column: { backgroundColor: c.card, borderRadius: 16, borderWidth: 2, borderColor: c.cardBorder, padding: 12, marginBottom: 12 },
     // Fixed, wider track width so 2-3+ columns are visible at once on a
     // landscape tablet without shrinking to fit the whole board.
     columnLandscape: { width: 320, marginBottom: 0 },
     columnHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
     colDot: { width: 10, height: 10, borderRadius: 5 },
-    columnName: { flex: 1, fontSize: 15, fontWeight: '700', color: c.text },
-    columnCount: { fontSize: 12, fontWeight: '700', color: c.textMuted, backgroundColor: c.bg, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2 },
+    columnName: { flex: 1, fontSize: 15, ...ff('800'), color: c.text },
+    columnCount: { fontSize: 12, ...ff('800'), color: c.textMuted, backgroundColor: c.bg, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2 },
 
-    taskCard: { flexDirection: 'row', gap: 10, backgroundColor: c.bg, borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder, padding: 12, marginTop: 8 },
+    taskCard: { flexDirection: 'row', gap: 10, backgroundColor: c.bg, borderRadius: 12, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder, padding: 12, marginTop: 8 },
     taskDone: { opacity: 0.7 },
     checkbox: { width: 22, height: 22, borderRadius: 7, borderWidth: 2, borderColor: c.cardBorder, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
     checkboxOn: { backgroundColor: c.success, borderColor: c.success },
-    taskTitle: { fontSize: 14, fontWeight: '600', color: c.text },
+    taskTitle: { fontSize: 14, ...ff('700'), color: c.text },
     taskTitleDone: { textDecorationLine: 'line-through', color: c.textSecondary },
-    taskDesc: { fontSize: 12, color: c.textSecondary, lineHeight: 17, marginTop: 4 },
+    taskDesc: { fontSize: 12, color: c.textSecondary, lineHeight: 17, marginTop: 4, ...ff('700') },
     taskMeta: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 8 },
-    taskDate: { fontSize: 12, color: c.textMuted },
+    taskDate: { fontSize: 12, color: c.textMuted, ...ff('700') },
 
-    addCardBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, marginTop: 8, borderRadius: 10, borderWidth: 1, borderColor: c.cardBorder, borderStyle: 'dashed' },
-    addCardText: { fontSize: 13, color: c.textSecondary, fontWeight: '600' },
+    addCardBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, marginTop: 8, borderRadius: 10, borderWidth: 2, borderColor: c.cardBorder, borderStyle: 'dashed' },
+    addCardText: { fontSize: 13, color: c.textSecondary, ...ff('700') },
 
     modalOverlay: { flex: 1, backgroundColor: c.overlay, justifyContent: 'center', paddingHorizontal: 28 },
     modalCard: { backgroundColor: c.card, borderRadius: 18, padding: 18 },
-    modalTitle: { fontSize: 17, fontWeight: '800', color: c.text, marginBottom: 14 },
-    modalInput: { minHeight: 46, backgroundColor: c.bg, borderWidth: 1, borderColor: c.cardBorder, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: c.text, marginBottom: 10 },
+    modalTitle: { fontSize: 17, ...ff('900'), color: c.text, marginBottom: 14 },
+    modalInput: { minHeight: 46, backgroundColor: c.bg, borderWidth: 2, borderColor: c.cardBorder, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: c.text, marginBottom: 10, ...ff('700') },
     modalMultiline: { minHeight: 80, textAlignVertical: 'top' },
     modalActions: { flexDirection: 'row', gap: 10, marginTop: 4 },
-    modalCancel: { flex: 1, paddingVertical: 13, borderRadius: 12, backgroundColor: c.bg, borderWidth: 1, borderColor: c.cardBorder, alignItems: 'center' },
-    modalCancelText: { fontSize: 15, fontWeight: '700', color: c.textSecondary },
+    modalCancel: { flex: 1, paddingVertical: 13, borderRadius: 12, backgroundColor: c.bg, borderWidth: 2, borderColor: c.cardBorder, alignItems: 'center' },
+    modalCancelText: { fontSize: 15, ...ff('800'), color: c.textSecondary },
     modalSave: { flex: 1, paddingVertical: 13, borderRadius: 12, backgroundColor: c.primary, alignItems: 'center' },
-    modalSaveText: { fontSize: 15, fontWeight: '700', color: c.onPrimary },
+    modalSaveText: { fontSize: 15, ...ff('800'), color: c.onPrimary },
   });

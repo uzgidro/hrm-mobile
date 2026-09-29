@@ -7,6 +7,7 @@ import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { getApiErrorMessage } from '@/api/errors';
 import { orderCommentsQuery, orderHistoryQuery } from '../api/queries';
 import { useAddOrderComment } from '../api/mutations';
@@ -120,21 +121,20 @@ export function CommentsSection({ orderId }: { orderId: number }) {
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    empty: { fontSize: 13, color: c.textMuted },
-    row: { paddingVertical: 8, borderTopWidth: 1, borderTopColor: c.cardBorder, gap: 4 },
+    empty: { fontSize: 13, color: c.textMuted, ...ff('700') },
+    row: { paddingVertical: 8, borderTopWidth: 2, borderTopColor: c.cardBorder, gap: 4 },
     rowHead: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
-    author: { fontSize: 13, fontWeight: '700', color: c.text, flexShrink: 1 },
-    date: { fontSize: 11, color: c.textMuted },
-    text: { fontSize: 13, color: c.text, lineHeight: 19 },
-    historyNote: { fontSize: 12, color: c.textMuted },
+    author: { fontSize: 13, ...ff('800'), color: c.text, flexShrink: 1 },
+    date: { fontSize: 11, color: c.textMuted, ...ff('700') },
+    text: { fontSize: 13, color: c.text, lineHeight: 19, ...ff('700') },
+    historyNote: { fontSize: 12, color: c.textMuted, ...ff('700') },
     // The previous wording, struck through, so the change reads at a glance.
     historyOld: { textDecorationLine: 'line-through' as const, opacity: 0.7 },
     composer: { marginTop: 12, gap: 8 },
     input: {
-      minHeight: 72, borderWidth: 1, borderColor: c.cardBorder, borderRadius: 10,
-      padding: 12, color: c.text, fontSize: 14,
-    },
-    sendBtn: { alignSelf: 'flex-end', backgroundColor: c.primary, borderRadius: 10, paddingHorizontal: 20, paddingVertical: 11 },
+      minHeight: 72, borderWidth: 2, borderColor: c.cardBorder, borderRadius: 10,
+      padding: 12, color: c.text, fontSize: 14, ...ff('700') },
+    sendBtn: { alignSelf: 'flex-end', backgroundColor: c.primary, borderRadius: 10, paddingHorizontal: 20, paddingVertical: 11, borderBottomWidth: 4, borderBottomColor: c.primaryShadow },
     sendBtnDisabled: { opacity: 0.5 },
-    sendText: { color: c.onPrimary, fontSize: 14, fontWeight: '700' },
+    sendText: { color: c.onPrimary, fontSize: 14, ...ff('800') },
   });

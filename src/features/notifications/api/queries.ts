@@ -32,11 +32,13 @@ export { menuBadgesQuery, type MenuBadges, MENU_BADGES_KEY } from '@/lib/menuBad
 export const NOTIFICATIONS_PAGE = 100;
 export const NOTIFICATIONS_MAX = 500;
 
-export function notificationsListQuery(employeeId?: number, limit: number = NOTIFICATIONS_PAGE) {
+// `unreadOnly` → the server filters (`is_read=false`, backend 2026-09-26), so the
+// unread view is not limited to whatever the first page happened to hold.
+export function notificationsListQuery(employeeId?: number, limit: number = NOTIFICATIONS_PAGE, unreadOnly = false) {
   return queryOptions({
-    queryKey: [...notificationKeys.list(employeeId), limit] as const,
+    queryKey: [...notificationKeys.list(employeeId), limit, unreadOnly ? 'unread' : 'all'] as const,
     queryFn: () =>
-      apiClient.get(NOTIFICATIONS_LIST, { params: { limit } }).then((r) => {
+      apiClient.get(NOTIFICATIONS_LIST, { params: { limit, ...(unreadOnly ? { is_read: false } : {}) } }).then((r) => {
         const d = r.data;
         // The API returns either a bare array or a { items } envelope.
         return (Array.isArray(d) ? d : (d?.items ?? [])) as Notification[];

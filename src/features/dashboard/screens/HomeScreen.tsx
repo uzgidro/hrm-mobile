@@ -19,6 +19,10 @@ import type { ThemeColors } from '@/theme/palettes';
 import { monthName, weekdayName } from '@/i18n/dates';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
+import { ChunkyButton } from '@/components/ChunkyButton';
+import { Tomchi } from '@/components/mascot/Tomchi';
+import { ff } from '@/theme/typography';
+import { useNavSettings } from '@/lib/navSettings';
 import { AttendanceDonut } from '@/components/AttendanceDonut';
 import { RosterRow } from '@/components/RosterRow';
 import { useBreakpoint } from '@/utils/responsive';
@@ -35,6 +39,7 @@ import {
   useShellBadges,
   prefetchHomeData,
 } from '../api/queries';
+import { givenName, shiftProgress } from '../utils/shiftProgress';
 
 // Fixed height for the roster block so the home page itself doesn't grow
 // unbounded — the list scrolls internally instead. ~4.5 rows on a phone.
@@ -42,10 +47,10 @@ const ROSTER_MAX_HEIGHT = 280;
 
 function statusInfo(status: string, c: ThemeColors, t: TFunction) {
   const group = leaveStatusGroup(status);
-  const { fg } = statusColor(leaveStatusKind(status), c);
-  if (group === 'approved') return { label: t('dashboard.status.approved'), color: fg };
-  if (group === 'rejected') return { label: t('dashboard.status.rejected'), color: fg };
-  return { label: t('dashboard.status.pending'), color: fg };
+  const { fg, bg } = statusColor(leaveStatusKind(status), c);
+  if (group === 'approved') return { label: t('dashboard.status.approved'), color: fg, bg };
+  if (group === 'rejected') return { label: t('dashboard.status.rejected'), color: fg, bg };
+  return { label: t('dashboard.status.pending'), color: fg, bg };
 }
 
 export default function HomeScreen() {
@@ -57,6 +62,8 @@ export default function HomeScreen() {
   const styles = useThemedStyles(makeStyles);
   const bp = useBreakpoint();
   const isSupervisor = !hasSupervisor(user);
+  // Subscribes to the web v2 module matrix so the gates below follow it.
+  useNavSettings();
   const canSeeNotificationsTile = canAccessPage(user, 'notifications');
   const canSeeAttendanceContent = canAccessPage(user, 'attendance');
   const onlySubordinates = usePrefsStore((s) => s.onlySubordinates);
@@ -144,6 +151,13 @@ export default function HomeScreen() {
   const sortedToday = [...todayEvents].sort((a, b) => dayjs(a.happen_time).diff(dayjs(b.happen_time)));
   const entry = sortedToday[0];
   const exit = sortedToday.length > 1 ? sortedToday[sortedToday.length - 1] : undefined;
+  const shift = shiftProgress(entry?.happen_time, exit?.happen_time, employee?.working_hours_start, employee?.working_hours_end);
+  const greeting = [
+    t('dashboard.tomchiHello', { name: givenName(employee?.legal_name) || t('dashboard.userFallback') }),
+    entry
+      ? t('dashboard.tomchiCameIn', { time: dayjs(entry.happen_time).format('HH:mm') })
+      : t('dashboard.tomchiNotYet'),
+  ].join(' ');
 
   const assistantFab = canAccessPage(user, 'assistant') ? (
     // LLM assistant FAB — web BotButton parity. Client gate only (the
@@ -202,6 +216,15 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* Tomchi greets with today's arrival (design I). */}
+        <View style={styles.greetRow}>
+          <Tomchi mood="idle" size={84} />
+          <View style={styles.bubble}>
+            <View style={styles.bubbleTail} />
+            <Text style={styles.bubbleText}>{greeting}</Text>
+          </View>
+        </View>
+
         {/* On tablet the three tiles bento-wrap 2-per-row; on phone this View
             gets no style (undefined) so the cards stack exactly as before. */}
         <View style={bp.isTablet ? styles.bento : undefined}>
@@ -233,6 +256,18 @@ export default function HomeScreen() {
                 <Text style={styles.attendanceLbl}>{t('dashboard.checkOut')}</Text>
               </View>
             </View>
+            {shift && (
+              <View style={styles.shiftBlock}>
+                <View style={styles.track}>
+                  <View style={[styles.fill, { width: `${Math.max(shift.pct, 6)}%` }]}>
+                    <View style={styles.fillShine} />
+                  </View>
+                </View>
+                <Text style={styles.shiftText}>
+                  {t('dashboard.worked', { h: Math.floor(shift.workedMin / 60), m: shift.workedMin % 60 })} · {shift.pct}%
+                </Text>
+              </View>
+            )}
           </View>
 
           {/* Davomat (attendance) content block — the module's own donut +
@@ -303,7 +338,7 @@ export default function HomeScreen() {
                 )}
               </View>
               <TouchableOpacity onPress={() => router.push('/work-leaves')} hitSlop={8}>
-                <Text style={styles.linkText}>{t('common.all')}</Text>
+                <Text style={styles.linkText}>{t('common.all').toLocaleUpperCase()}</Text>
               </TouchableOpacity>
             </View>
 
@@ -323,7 +358,7 @@ export default function HomeScreen() {
                         <Text style={styles.leaveDate}>{dayjs(leave.start_date).format('D MMM, HH:mm')} – {dayjs(leave.end_date).format('HH:mm')}</Text>
                       </View>
                       <View style={{ alignItems: 'flex-end', gap: 4 }}>
-                        <Text style={[styles.leaveStatus, { color: st.color }]}>{st.label}</Text>
+                        <Text style={[styles.pill, { color: st.color, backgroundColor: st.bg }]}>{st.label.toLocaleUpperCase()}</Text>
                         {needsAction && <Text style={styles.actionHint}>{t('dashboard.actionNeeded')}</Text>}
                       </View>
                     </TouchableOpacity>
@@ -343,7 +378,7 @@ export default function HomeScreen() {
                         <Text style={styles.leaveName}>{leave.type || t('dashboard.leaveRequestFallback')}</Text>
                         <Text style={styles.leaveDate}>{dayjs(leave.start_date).format('D MMM YYYY, HH:mm')}-{dayjs(leave.end_date).format('HH:mm')}</Text>
                       </View>
-                      <Text style={[styles.leaveStatus, { color: st.color }]}>{st.label}</Text>
+                      <Text style={[styles.pill, { color: st.color, backgroundColor: st.bg }]}>{st.label.toLocaleUpperCase()}</Text>
                     </TouchableOpacity>
                   );
                 })
@@ -351,10 +386,13 @@ export default function HomeScreen() {
             )}
 
             {!isSupervisor && (
-              <TouchableOpacity style={styles.createBtn} onPress={() => router.push('/create-leave')} activeOpacity={0.85}>
-                <Icon name="plus" size={18} color={colors.onPrimary} />
-                <Text style={styles.createBtnText}>{t('dashboard.createRequest')}</Text>
-              </TouchableOpacity>
+              <ChunkyButton
+                label={t('dashboard.createRequest')}
+                icon="plus"
+                onPress={() => router.push('/create-leave')}
+                style={styles.createBtn}
+                testID="home-create-leave"
+              />
             )}
           </View>
 
@@ -408,28 +446,53 @@ const makeStyles = (c: ThemeColors) =>
     scroll: { flex: 1 },
     content: { paddingHorizontal: 16, paddingBottom: 32 },
 
-    headerRow: { flexDirection: 'row', alignItems: 'center', paddingTop: 16, marginBottom: 18, gap: 12 },
+    headerRow: { flexDirection: 'row', alignItems: 'center', paddingTop: 16, marginBottom: 8, gap: 12 },
     avatarWrap: { width: 48, height: 48 },
-    avatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' },
-    avatarImg: { width: 48, height: 48, borderRadius: 24, backgroundColor: c.skeleton },
-    avatarText: { color: c.onPrimary, fontSize: 17, fontWeight: '800' },
-    greeting: { fontSize: 12, color: c.textMuted, fontWeight: '500' },
-    userName: { fontSize: 18, fontWeight: '800', color: c.text, marginTop: 2 },
-    bellBtn: { width: 44, height: 44, borderRadius: 14, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, alignItems: 'center', justifyContent: 'center' },
-    bellBadge: { position: 'absolute', top: 7, right: 7, backgroundColor: c.warning, borderRadius: 9, minWidth: 16, height: 16, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3, borderWidth: 1.5, borderColor: c.card },
-    bellBadgeText: { fontSize: 9, fontWeight: '800', color: '#fff' },
+    avatar: {
+      width: 48, height: 48, borderRadius: 24, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center',
+      borderBottomWidth: 3, borderBottomColor: c.primaryShadow,
+    },
+    avatarImg: { width: 48, height: 48, borderRadius: 24, backgroundColor: c.skeleton, borderWidth: 2, borderColor: c.cardBorder },
+    avatarText: { color: c.onPrimary, fontSize: 17, ...ff('900') },
+    greeting: { fontSize: 12.5, color: c.textSecondary, ...ff('700') },
+    userName: { fontSize: 18, color: c.text, marginTop: 1, ...ff('900') },
+    bellBtn: {
+      width: 44, height: 44, borderRadius: 14, backgroundColor: c.card,
+      borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder, alignItems: 'center', justifyContent: 'center',
+    },
+    bellBadge: {
+      position: 'absolute', top: 2, right: 2, backgroundColor: c.error, borderRadius: 9, minWidth: 18, height: 18,
+      alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3, borderWidth: 2, borderColor: c.card,
+    },
+    bellBadgeText: { fontSize: 10, color: '#fff', ...ff('900') },
+
+    // Tomchi + speech bubble (design I home greeting).
+    greetRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 14 },
+    bubble: {
+      flex: 1, borderRadius: 16, borderWidth: 2, borderColor: c.cardBorder, backgroundColor: c.bg,
+      paddingVertical: 11, paddingHorizontal: 14,
+    },
+    bubbleTail: {
+      position: 'absolute', left: -8, top: '50%', marginTop: -6, width: 13, height: 13, backgroundColor: c.bg,
+      borderLeftWidth: 2, borderBottomWidth: 2, borderColor: c.cardBorder, transform: [{ rotate: '45deg' }],
+    },
+    bubbleText: { fontSize: 15, lineHeight: 20, color: c.text, ...ff('700') },
 
     // Tablet-only 2-column bento wrapper for the schedule/requests/notifications
     // tiles (Task 8). On phone this is never applied (`bp.isTablet` gates its
     // use at the call site) so the cards keep stacking full-width via `card`'s
-    // own marginBottom, byte-identical to the pre-bento layout.
+    // own marginBottom.
     bento: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
     // Two tiles per row on tablet: ~half the row minus the gap. flexGrow lets a
     // lone trailing tile (odd tile count) stretch to fill the row instead of
     // leaving a half-empty gap.
     bentoTile: { flexGrow: 1, flexBasis: '48%', marginBottom: 0 },
 
-    card: { backgroundColor: c.card, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: c.cardBorder },
+    // Design I card: 2px outline with a 4px bottom «lip».
+    card: {
+      backgroundColor: c.card, borderRadius: 16, padding: 14, marginBottom: 14,
+      borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder,
+    },
 
     // Attendance content block (donut + roster). Reuses `card` chrome but
     // drops its own padding (`attendanceCard`) so the tappable header row and
@@ -437,46 +500,58 @@ const makeStyles = (c: ThemeColors) =>
     attendanceCard: { padding: 0, overflow: 'hidden' },
     attendanceHeaderRow: {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-      paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: c.cardBorder,
+      paddingHorizontal: 14, paddingVertical: 13, borderBottomWidth: 2, borderBottomColor: c.cardBorder,
     },
     rosterLoading: { paddingVertical: 40, alignItems: 'center' },
     rosterHeader: {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-      paddingHorizontal: 16, paddingVertical: 12, borderTopWidth: 1, borderTopColor: c.cardBorder,
+      paddingHorizontal: 14, paddingVertical: 12, borderTopWidth: 2, borderTopColor: c.cardBorder,
     },
-    rosterTitle: { fontSize: 14, fontWeight: '700', color: c.text },
+    rosterTitle: { fontSize: 14, color: c.text, ...ff('800') },
     // Fixed max height + its own scroll (ROSTER_MAX_HEIGHT) so the roster
     // never grows the home page unbounded — it scrolls inside this block.
     rosterScroll: { maxHeight: ROSTER_MAX_HEIGHT },
-    cardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
+    cardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
     cardTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    cardTitle: { fontSize: 15, fontWeight: '700', color: c.text },
-    scheduleTime: { fontSize: 13, color: c.textSecondary },
-    linkText: { fontSize: 13, color: c.primary, fontWeight: '700' },
-    inlineBadge: { backgroundColor: c.warning, borderRadius: 8, paddingHorizontal: 6, paddingVertical: 1, minWidth: 18, alignItems: 'center' },
-    inlineBadgeText: { fontSize: 11, fontWeight: '700', color: '#fff' },
+    cardTitle: { fontSize: 16, color: c.text, ...ff('900') },
+    scheduleTime: { fontSize: 14, color: c.textSecondary, ...ff('800') },
+    linkText: { fontSize: 14, letterSpacing: 0.4, color: c.primaryLight, ...ff('900') },
+    inlineBadge: { backgroundColor: c.error, borderRadius: 9, paddingHorizontal: 6, paddingVertical: 1, minWidth: 20, alignItems: 'center' },
+    inlineBadgeText: { fontSize: 11, color: '#fff', ...ff('900') },
 
     attendanceRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 4 },
     attendanceItem: { flex: 1, alignItems: 'center', gap: 6 },
     attIcon: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
-    attendanceTime: { fontSize: 24, fontWeight: '800', color: c.text, letterSpacing: 1 },
-    attendanceLbl: { fontSize: 11, color: c.textMuted },
-    attendanceDivider: { width: 1, height: 56, backgroundColor: c.cardBorder, marginHorizontal: 16 },
+    attendanceTime: { fontSize: 26, color: c.text, letterSpacing: 1, ...ff('900') },
+    attendanceLbl: { fontSize: 12, color: c.textSecondary, ...ff('700') },
+    attendanceDivider: { width: 2, height: 56, backgroundColor: c.cardBorder, marginHorizontal: 16 },
 
-    emptyText: { color: c.textMuted, textAlign: 'center', paddingVertical: 20, fontSize: 14 },
+    // «Bugungi smena» progress: chunky green bar with a highlight stripe.
+    shiftBlock: { marginTop: 12, gap: 8 },
+    track: { height: 18, borderRadius: 9, backgroundColor: c.cardBorder, overflow: 'hidden' },
+    fill: { height: 18, borderRadius: 9, backgroundColor: c.success, paddingTop: 4, paddingHorizontal: 8 },
+    fillShine: { height: 5, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.4)' },
+    shiftText: { fontSize: 13, color: c.success, textAlign: 'right', ...ff('800') },
 
-    leaveRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
-    leaveInfo: { flex: 1, gap: 3 },
-    leaveName: { fontSize: 14, fontWeight: '600', color: c.text },
-    leaveDate: { fontSize: 12, color: c.textSecondary },
-    leaveStatus: { fontSize: 12, fontWeight: '700', marginLeft: 8, marginTop: 2 },
-    actionHint: { fontSize: 10, color: c.warning, fontWeight: '600' },
+    emptyText: { color: c.textSecondary, textAlign: 'center', paddingVertical: 20, fontSize: 14, ...ff('700') },
 
-    createBtn: { flexDirection: 'row', gap: 8, backgroundColor: c.primary, borderRadius: 12, paddingVertical: 14, alignItems: 'center', justifyContent: 'center', marginTop: 14 },
-    assistantFab: {
-      position: 'absolute', right: 16, bottom: 20, width: 56, height: 56, borderRadius: 28,
-      backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center',
-      elevation: 6, shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 8, shadowOffset: { width: 0, height: 4 },
+    leaveRow: {
+      flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8,
+      paddingVertical: 10, borderTopWidth: 2, borderTopColor: c.cardBorder,
     },
-    createBtnText: { color: c.onPrimary, fontSize: 15, fontWeight: '700' },
+    leaveInfo: { flex: 1, gap: 2 },
+    leaveName: { fontSize: 15, color: c.text, ...ff('800') },
+    leaveDate: { fontSize: 13, color: c.textSecondary, ...ff('700') },
+    pill: {
+      fontSize: 11, letterSpacing: 0.4, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 10,
+      overflow: 'hidden', ...ff('900'),
+    },
+    actionHint: { fontSize: 11, color: c.warning, ...ff('800') },
+
+    createBtn: { marginTop: 14 },
+    assistantFab: {
+      position: 'absolute', right: 16, bottom: 20, width: 58, height: 58, borderRadius: 18,
+      backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center',
+      borderBottomWidth: 4, borderBottomColor: c.primaryShadow,
+    },
   });

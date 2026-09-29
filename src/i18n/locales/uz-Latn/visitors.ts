@@ -9,6 +9,11 @@ export default {
   nameFallback: 'Mehmon',
   statusActive: 'Aktiv',
   statusInactive: 'Nofaol',
+  // Web v2 statistika plitkalari (filtr ham).
+  statTotal: 'Jami mehmonlar',
+  statActive: 'Faol ruxsatnoma',
+  statToday: 'Bugun kelganlar',
+  statNever: 'Hech kelmagan',
   emptySearch: 'Hech narsa topilmadi',
   emptyList: "Mehmonlar yo'q",
 

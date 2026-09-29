@@ -4,6 +4,10 @@ export default {
   nameFallback: 'Меҳмон',
   statusActive: 'Актив',
   statusInactive: 'Нофаол',
+  statTotal: 'Жами меҳмонлар',
+  statActive: 'Фаол рухсатнома',
+  statToday: 'Бугун келганлар',
+  statNever: 'Ҳеч келмаган',
   emptySearch: 'Ҳеч нарса топилмади',
   emptyList: 'Меҳмонлар йўқ',
 

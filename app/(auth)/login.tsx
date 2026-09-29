@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
-  StyleSheet, KeyboardAvoidingView, Platform,
+  StyleSheet, KeyboardAvoidingView, Platform, ScrollView,
   ActivityIndicator, Alert, Modal, Pressable, Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -16,10 +16,26 @@ import { loginWithOneId } from '../../src/auth/oneid';
 import { AUTH_LOGIN, AUTH_CAPTCHA, USER_INFO } from '../../src/api/urls';
 import { useTheme, useThemedStyles } from '../../src/theme/ThemeProvider';
 import type { ThemeColors } from '../../src/theme/palettes';
+import { ff } from '../../src/theme/typography';
+import { NO_WEB_OUTLINE } from '../../src/theme/web';
 import { Icon } from '../../src/components/Icon';
 import { Flag } from '../../src/components/Flag';
+import { ChunkyButton } from '../../src/components/ChunkyButton';
+import { Tomchi } from '../../src/components/mascot/Tomchi';
+import { caretRatio, moodForLogin, type TomchiMood } from '../../src/components/mascot/tomchiPose';
 import { LANGUAGES, LANGUAGE_FLAG, LANGUAGE_NATIVE_NAME } from '../../src/i18n/locales';
 import { User } from '../../src/types';
+
+// Tomchi's speech bubble line for each mood ('loading' never shows here).
+const BUBBLE_KEY: Record<TomchiMood, string> = {
+  idle: 'auth.tomchiIdle',
+  watching: 'auth.tomchiWatching',
+  shy: 'auth.tomchiShy',
+  peek: 'auth.tomchiPeek',
+  sad: 'auth.tomchiSad',
+  happy: 'auth.tomchiHappy',
+  loading: 'auth.tomchiIdle',
+};
 
 export default function LoginScreen() {
   const [username, setUsername] = useState('');
@@ -27,6 +43,10 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [showPass, setShowPass] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
+  // Tomchi maskoti: qaysi maydon fokusda va oxirgi urinish natijasi. Xato
+  // foydalanuvchi yana yoza boshlaganda o'chadi (maskot xafa turib qolmaydi).
+  const [focused, setFocused] = useState<'username' | 'password' | null>(null);
+  const [result, setResult] = useState<'success' | 'error' | null>(null);
   // Adaptive CAPTCHA (self-hosted on the API, core/captcha.py). Nobody sees it
   // on a clean login; after a few wrong passwords the server answers 401 with
   // `params.captcha_required` (or the code `captcha_required`) and from then
@@ -84,6 +104,7 @@ export default function LoginScreen() {
       const meRes = await apiClient.get<User>(USER_INFO, {
         headers: { Authorization: `Bearer ${data.access_token}` },
       });
+      setResult('success');
       // login() sets isAuthenticated → the Stack.Protected guard in the root
       // layout redirects to (tabs) automatically; no imperative navigation.
       await login(data.access_token, data.refresh_token, meRes.data);
@@ -94,6 +115,7 @@ export default function LoginScreen() {
       // never blocks or breaks the login flow.
       void setupPushNotifications();
     } catch (e: unknown) {
+      setResult('error');
       const err = e as {
         response?: { data?: { detail?: string | { msg: string }[]; code?: string; params?: { captcha_required?: boolean } } };
       };
@@ -129,32 +151,149 @@ export default function LoginScreen() {
       if (!res) return;
       // Same seam as the form login: login() flips isAuthenticated and the
       // Stack.Protected guard navigates; then register the push token.
+      setResult('success');
       await login(res.access_token, res.refresh_token, res.user);
       void setupPushNotifications();
     } catch {
+      setResult('error');
       Alert.alert(t('auth.loginError'), t('auth.oneIdError'));
     } finally {
       setLoading(false);
     }
   };
 
+  const mood = moodForLogin({ focused, passwordVisible: showPass, result });
+  const ota = getRunningOtaInfo();
+  const otaLabel =
+    ota.kind === 'ota'
+      ? t('ota.otaBuild', { date: ota.date ?? '', id: ota.shortId ?? '' })
+      : t('ota.embeddedBuild');
+
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      {/* Language dropdown up top: the login screen is the first thing a user
-          sees, before the profile switcher is reachable. A single compact chip
-          keeps it out of the way; tapping opens the 4-language list. */}
-      <SafeAreaView edges={['top']}>
-        <View style={styles.langBar}>
-          <TouchableOpacity
-            style={styles.langButton}
-            onPress={() => setLangOpen(true)}
-            activeOpacity={0.7}
-          >
-            <Flag code={LANGUAGE_FLAG[language]} size={20} />
-            <Text style={styles.langButtonText}>{LANGUAGE_NATIVE_NAME[language]}</Text>
-            <Icon name="chevronRight" size={16} color={colors.textMuted} />
-          </TouchableOpacity>
-        </View>
+      <SafeAreaView edges={['top', 'bottom']} style={styles.flex}>
+        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+          {/* Logo + language chip. The login screen is the first thing a user
+              sees, before the profile switcher is reachable; tapping the chip
+              opens the 4-language list. */}
+          <View style={styles.topBar}>
+            <Image source={require('../../assets/icon.png')} style={styles.logo} accessibilityLabel={t('auth.appName')} />
+            <TouchableOpacity style={styles.langButton} onPress={() => setLangOpen(true)} activeOpacity={0.7}>
+              <Flag code={LANGUAGE_FLAG[language]} size={20} />
+              <Text style={styles.langButtonText}>{LANGUAGE_NATIVE_NAME[language].toLocaleUpperCase()}</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Tomchi follows the form: watches the username caret, covers its
+              eyes over a hidden password, peeks when it is shown. */}
+          <View style={styles.hero}>
+            <Tomchi mood={mood} lookX={focused === 'username' ? caretRatio(username) : 0.5} size={132} />
+            <View style={styles.bubble} accessibilityLiveRegion="polite">
+              <View style={styles.bubbleTail} />
+              <Text style={styles.bubbleText}>{t(BUBBLE_KEY[mood])}</Text>
+            </View>
+          </View>
+
+          <Text style={styles.appName}>{t('auth.appName')}</Text>
+          <Text style={styles.appSubtitle}>{t('auth.appSubtitle')}</Text>
+
+          <View style={styles.form}>
+            <View style={styles.inputWrapper}>
+              <Text style={styles.label}>{t('auth.usernameLabel').toLocaleUpperCase()}</Text>
+              <TextInput
+                style={[styles.input, focused === 'username' && styles.inputFocused]}
+                value={username}
+                onChangeText={(v) => { setUsername(v); setResult(null); }}
+                onFocus={() => setFocused('username')}
+                onBlur={() => setFocused(null)}
+                placeholder={t('auth.usernamePlaceholder')}
+                placeholderTextColor={colors.textMuted}
+                autoCapitalize="none"
+                autoCorrect={false}
+                testID="login-username"
+              />
+            </View>
+
+            <View style={styles.inputWrapper}>
+              <Text style={styles.label}>{t('auth.passwordLabel').toLocaleUpperCase()}</Text>
+              <View style={[styles.passwordBox, focused === 'password' && styles.inputFocused]}>
+                <TextInput
+                  style={styles.passwordInput}
+                  value={password}
+                  onChangeText={(v) => { setPassword(v); setResult(null); }}
+                  onFocus={() => setFocused('password')}
+                  onBlur={() => setFocused(null)}
+                  placeholder="••••••••"
+                  placeholderTextColor={colors.textMuted}
+                  secureTextEntry={!showPass}
+                  autoCapitalize="none"
+                  testID="login-password"
+                />
+                <TouchableOpacity style={styles.eyeBtn} onPress={() => setShowPass(!showPass)} accessibilityRole="button">
+                  <Icon name={showPass ? 'eyeOff' : 'eye'} size={22} color={colors.textMuted} />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {captcha && (
+              <View style={styles.inputWrapper}>
+                <Text style={styles.label}>{t('auth.captchaLabel').toLocaleUpperCase()}</Text>
+                <View style={styles.captchaRow}>
+                  <Image
+                    source={{ uri: captcha.image }}
+                    style={styles.captchaImage}
+                    resizeMode="contain"
+                    accessibilityLabel={t('auth.captchaLabel')}
+                  />
+                  <TouchableOpacity
+                    style={styles.captchaRefresh}
+                    onPress={loadCaptcha}
+                    disabled={captchaBusy}
+                    accessibilityLabel={t('auth.captchaRefresh')}
+                  >
+                    {captchaBusy ? <ActivityIndicator color={colors.textMuted} /> : <Icon name="refresh" size={20} color={colors.textMuted} />}
+                  </TouchableOpacity>
+                </View>
+                <TextInput
+                  style={[styles.input, styles.captchaInput]}
+                  value={captchaAnswer}
+                  onChangeText={setCaptchaAnswer}
+                  placeholder={t('auth.captchaPlaceholder')}
+                  placeholderTextColor={colors.textMuted}
+                  autoCapitalize="characters"
+                  autoCorrect={false}
+                  maxLength={8}
+                />
+                <Text style={styles.captchaHint}>{t('auth.captchaHint')}</Text>
+              </View>
+            )}
+
+            <ChunkyButton
+              label={t('auth.loginButton')}
+              onPress={handleLogin}
+              loading={loading}
+              style={styles.loginBtn}
+              testID="login-submit"
+            />
+
+            {/* OneID (YaIT) SSO — native only; the web SPA has its own OneID flow. */}
+            {Platform.OS !== 'web' && (
+              <ChunkyButton
+                label={t('auth.oneIdButton')}
+                onPress={handleOneId}
+                disabled={loading}
+                variant="outline"
+                icon="idcard"
+                testID="login-oneid"
+              />
+            )}
+          </View>
+
+          <View style={styles.footer}>
+            <Text style={styles.version}>O&apos;zbekgidroenergo · v{Constants.expoConfig?.version ?? '1.0.0'}</Text>
+            <Text style={styles.otaBuild}>{otaLabel}</Text>
+          </View>
+        </ScrollView>
       </SafeAreaView>
 
       <Modal visible={langOpen} transparent animationType="fade" onRequestClose={() => setLangOpen(false)}>
@@ -180,113 +319,6 @@ export default function LoginScreen() {
           </View>
         </Pressable>
       </Modal>
-      <View style={styles.inner}>
-        <View style={styles.logoWrapper}>
-          <View style={styles.logoCircle}>
-            <Text style={styles.logoText}>HR</Text>
-          </View>
-          <Text style={styles.appName}>{t('auth.appName')}</Text>
-          <Text style={styles.appSubtitle}>{t('auth.appSubtitle')}</Text>
-        </View>
-
-        <View style={styles.form}>
-          <View style={styles.inputWrapper}>
-            <Text style={styles.label}>{t('auth.usernameLabel')}</Text>
-            <TextInput
-              style={styles.input}
-              value={username}
-              onChangeText={setUsername}
-              placeholder={t('auth.usernamePlaceholder')}
-              placeholderTextColor={colors.textMuted}
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-          </View>
-
-          <View style={styles.inputWrapper}>
-            <Text style={styles.label}>{t('auth.passwordLabel')}</Text>
-            <View style={styles.passwordRow}>
-              <TextInput
-                style={[styles.input, { flex: 1, marginBottom: 0 }]}
-                value={password}
-                onChangeText={setPassword}
-                placeholder="••••••••"
-                placeholderTextColor={colors.textMuted}
-                secureTextEntry={!showPass}
-                autoCapitalize="none"
-              />
-              <TouchableOpacity style={styles.eyeBtn} onPress={() => setShowPass(!showPass)}>
-                <Icon name={showPass ? 'eyeOff' : 'eye'} size={20} color={colors.textMuted} />
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {captcha && (
-            <View style={styles.inputWrapper}>
-              <Text style={styles.label}>{t('auth.captchaLabel')}</Text>
-              <View style={styles.captchaRow}>
-                <Image
-                  source={{ uri: captcha.image }}
-                  style={styles.captchaImage}
-                  resizeMode="contain"
-                  accessibilityLabel={t('auth.captchaLabel')}
-                />
-                <TouchableOpacity
-                  style={styles.eyeBtn}
-                  onPress={loadCaptcha}
-                  disabled={captchaBusy}
-                  accessibilityLabel={t('auth.captchaRefresh')}
-                >
-                  {captchaBusy ? <ActivityIndicator color={colors.textMuted} /> : <Icon name="refresh" size={20} color={colors.textMuted} />}
-                </TouchableOpacity>
-              </View>
-              <TextInput
-                style={[styles.input, styles.captchaInput]}
-                value={captchaAnswer}
-                onChangeText={setCaptchaAnswer}
-                placeholder={t('auth.captchaPlaceholder')}
-                placeholderTextColor={colors.textMuted}
-                autoCapitalize="characters"
-                autoCorrect={false}
-                maxLength={8}
-              />
-              <Text style={styles.captchaHint}>{t('auth.captchaHint')}</Text>
-            </View>
-          )}
-
-          <TouchableOpacity
-            style={[styles.loginBtn, loading && styles.loginBtnDisabled]}
-            onPress={handleLogin}
-            disabled={loading}
-            activeOpacity={0.85}
-          >
-            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.loginBtnText}>{t('auth.loginButton')}</Text>}
-          </TouchableOpacity>
-
-          {/* OneID (YaIT) SSO — native only; the web SPA has its own OneID flow. */}
-          {Platform.OS !== 'web' && (
-            <TouchableOpacity
-              style={[styles.oneIdBtn, loading && styles.loginBtnDisabled]}
-              onPress={handleOneId}
-              disabled={loading}
-              activeOpacity={0.85}
-            >
-              <Icon name="idcard" size={18} color={colors.primary} />
-              <Text style={styles.oneIdBtnText}>{t('auth.oneIdButton')}</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-
-        <Text style={styles.version}>v{Constants.expoConfig?.version ?? '1.0.0'}</Text>
-        {(() => {
-          const ota = getRunningOtaInfo();
-          const label =
-            ota.kind === 'ota'
-              ? t('ota.otaBuild', { date: ota.date ?? '', id: ota.shortId ?? '' })
-              : t('ota.embeddedBuild');
-          return <Text style={styles.otaBuild}>{label}</Text>;
-        })()}
-      </View>
     </KeyboardAvoidingView>
   );
 }
@@ -294,63 +326,71 @@ export default function LoginScreen() {
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     container: { flex: 1, backgroundColor: c.bg },
-    inner: { flex: 1, justifyContent: 'center', paddingHorizontal: 24 },
+    flex: { flex: 1 },
+    scroll: { flexGrow: 1, paddingHorizontal: 20, paddingTop: 8, paddingBottom: 16 },
 
-    // Compact language chip (top-right) that opens the dropdown.
-    langBar: { flexDirection: 'row', justifyContent: 'flex-end', paddingHorizontal: 16, paddingTop: 8 },
+    topBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    logo: { width: 44, height: 44, borderRadius: 12, borderWidth: 2, borderColor: c.cardBorder },
     langButton: {
-      flexDirection: 'row', alignItems: 'center', gap: 8,
-      paddingVertical: 7, paddingLeft: 10, paddingRight: 8, borderRadius: 10,
-      borderWidth: 1, borderColor: c.cardBorder, backgroundColor: c.card,
+      flexDirection: 'row', alignItems: 'center', gap: 8, height: 40, paddingHorizontal: 12,
+      borderRadius: 12, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder,
     },
-    langButtonText: { fontSize: 13, fontWeight: '600', color: c.text },
+    langButtonText: { fontSize: 13, letterSpacing: 0.6, color: c.textSecondary, ...ff('900') },
 
     // Dropdown menu.
     langBackdrop: { flex: 1, backgroundColor: c.overlay, paddingTop: 60, paddingHorizontal: 16, alignItems: 'flex-end' },
     langMenu: {
-      backgroundColor: c.card, borderRadius: 14, borderWidth: 1, borderColor: c.cardBorder,
-      paddingVertical: 6, minWidth: 200, shadowColor: c.shadow, shadowOpacity: 0.2,
-      shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 6,
+      backgroundColor: c.cardElevated, borderRadius: 16, borderWidth: 2, borderColor: c.cardBorder,
+      paddingVertical: 6, minWidth: 210,
     },
     langItem: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 14 },
     langItemActive: { backgroundColor: c.primarySoft },
-    langItemText: { flex: 1, fontSize: 15, fontWeight: '500', color: c.text },
-    langItemTextActive: { color: c.primary, fontWeight: '700' },
+    langItemText: { flex: 1, fontSize: 15, color: c.text, ...ff('700') },
+    langItemTextActive: { color: c.primaryLight, ...ff('900') },
 
-    logoWrapper: { alignItems: 'center', marginBottom: 48 },
-    logoCircle: { width: 84, height: 84, borderRadius: 26, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
-    logoText: { fontSize: 30, fontWeight: '800', color: '#fff' },
-    appName: { fontSize: 23, fontWeight: '800', color: c.text, marginBottom: 4 },
-    appSubtitle: { fontSize: 13, color: c.textSecondary },
-
-    form: { gap: 16 },
-    inputWrapper: { gap: 8 },
-    label: { fontSize: 13, fontWeight: '600', color: c.textSecondary },
-    input: {
-      backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, borderRadius: 12,
-      paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, color: c.text, marginBottom: 0,
+    hero: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginTop: 18 },
+    bubble: {
+      flex: 1, marginBottom: 36, borderRadius: 16, borderWidth: 2, borderColor: c.cardBorder,
+      paddingVertical: 12, paddingHorizontal: 14, backgroundColor: c.bg,
     },
-    passwordRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    // Rotated square peeking out of the bubble's left edge, toward Tomchi.
+    bubbleTail: {
+      position: 'absolute', left: -8, bottom: 16, width: 14, height: 14, backgroundColor: c.bg,
+      borderLeftWidth: 2, borderBottomWidth: 2, borderColor: c.cardBorder, transform: [{ rotate: '45deg' }],
+    },
+    bubbleText: { fontSize: 15, lineHeight: 20, color: c.text, ...ff('700') },
+
+    appName: { fontSize: 30, letterSpacing: -0.4, color: c.text, marginTop: 14, ...ff('900') },
+    appSubtitle: { fontSize: 15, color: c.textSecondary, marginTop: 2, ...ff('700') },
+
+    form: { gap: 14, marginTop: 22 },
+    inputWrapper: { gap: 6 },
+    label: { fontSize: 13, letterSpacing: 0.6, color: c.textSecondary, ...ff('900') },
+    input: {
+      height: 52, backgroundColor: c.inputBg, borderWidth: 2, borderColor: c.cardBorder, borderRadius: 16,
+      paddingHorizontal: 16, fontSize: 16, color: c.text, ...NO_WEB_OUTLINE, ...ff('700'),
+    },
+    inputFocused: { borderColor: c.primaryLight },
+    passwordBox: {
+      height: 52, flexDirection: 'row', alignItems: 'center', backgroundColor: c.inputBg,
+      borderWidth: 2, borderColor: c.cardBorder, borderRadius: 16, paddingLeft: 16,
+    },
+    passwordInput: { flex: 1, height: '100%', fontSize: 16, color: c.text, ...NO_WEB_OUTLINE, ...ff('700') },
+    eyeBtn: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
+
     captchaRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     // The PNG is 168×56; keep its aspect so the glyphs stay readable.
-    captchaImage: { flex: 1, height: 52, borderRadius: 12, backgroundColor: '#F5F7FA', borderWidth: 1, borderColor: c.cardBorder },
-    captchaInput: { letterSpacing: 4, textTransform: 'uppercase' },
-    captchaHint: { fontSize: 11, color: c.textMuted },
-    eyeBtn: { width: 52, height: 52, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-    eyeText: { fontSize: 18 },
-
-    loginBtn: { backgroundColor: c.primary, borderRadius: 12, paddingVertical: 16, alignItems: 'center', marginTop: 8 },
-    loginBtnDisabled: { opacity: 0.7 },
-    loginBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-
-    // OneID: outline secondary button distinct from the primary password login.
-    oneIdBtn: {
-      flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-      backgroundColor: c.card, borderWidth: 1, borderColor: c.primary,
-      borderRadius: 12, paddingVertical: 15,
+    captchaImage: { flex: 1, height: 52, borderRadius: 16, backgroundColor: '#F5F7FA', borderWidth: 2, borderColor: c.cardBorder },
+    captchaRefresh: {
+      width: 52, height: 52, borderRadius: 16, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder,
+      alignItems: 'center', justifyContent: 'center',
     },
-    oneIdBtnText: { color: c.primary, fontSize: 15, fontWeight: '700' },
+    captchaInput: { letterSpacing: 4, textTransform: 'uppercase' },
+    captchaHint: { fontSize: 12, color: c.textMuted, ...ff('600') },
 
-    version: { textAlign: 'center', color: c.textMuted, fontSize: 12, marginTop: 32 },
-    otaBuild: { textAlign: 'center', color: c.textMuted, fontSize: 11, marginTop: 2 },
+    loginBtn: { marginTop: 8 },
+
+    footer: { marginTop: 'auto', paddingTop: 28, alignItems: 'center' },
+    version: { color: c.textMuted, fontSize: 12, ...ff('700') },
+    otaBuild: { color: c.textMuted, fontSize: 11, marginTop: 2, ...ff('600') },
   });

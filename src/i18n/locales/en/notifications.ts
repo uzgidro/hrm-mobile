@@ -92,6 +92,8 @@ export default {
 
   // Notifications SCREEN chrome — see uz-Latn/notifications.ts.
   screenTitle: 'Notifications',
+  filterAll: 'All',
+  filterUnread: 'Unread',
   markAllRead: 'Read',
   empty: 'No notifications',
   loadMore: 'Show more',

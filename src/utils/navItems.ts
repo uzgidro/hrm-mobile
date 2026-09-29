@@ -30,7 +30,7 @@ type NavContext = {
 };
 
 export function buildNavSections(t: TFunction, ctx: NavContext): NavSection[] {
-  const { user, employee, pendingCount, unreadCount, menuBadges } = ctx;
+  const { user, pendingCount, unreadCount, menuBadges } = ctx;
 
   const raw: NavSection[] = [
     {
@@ -38,15 +38,11 @@ export function buildNavSections(t: TFunction, ctx: NavContext): NavSection[] {
       items: [
         { key: 'attendance', icon: 'clock', label: t('modules.labels.attendance'), route: '/attendance-detail', access: 'attendance' },
         { key: 'timesheet', icon: 'calendar', label: t('modules.labels.timesheet'), route: '/tabel', access: 'timesheet' },
-        // Web parity (navConfig.js): a single Navbatchilik entry (its screen
-        // hosts both the list and the grid via tabs). Pruned unless dept-level
-        // duty or group membership.
-        ...(user?.is_navbatchi || employee?.department?.has_navbatchilik
-          ? [
-              { key: 'navbatchilik', icon: 'clock' as IconName, label: t('modules.labels.navbatchilik'), route: '/navbatchilik', access: 'timesheet' as PageKey },
-            ]
-          : []),
-        { key: 'holidays', icon: 'sun', label: t('modules.labels.holidays'), route: '/bayramlar', access: 'timesheet' },
+        // Web v2 navConfig: one Navbatchilik entry (its screen hosts both the
+        // list and the grid via tabs), gated by canSeeDuty (member / viewer /
+        // department roster / HR / master) through the 'duty' module.
+        { key: 'navbatchilik', icon: 'clock', label: t('modules.labels.navbatchilik'), route: '/navbatchilik', access: 'duty' },
+        { key: 'holidays', icon: 'sun', label: t('modules.labels.holidays'), route: '/bayramlar', access: 'holidays' },
         { key: 'assistant', icon: 'target', label: t('modules.labels.assistant'), route: '/assistant', access: 'assistant' },
         { key: 'requests', icon: 'checklist', label: t('modules.labels.requests'), route: '/work-leaves', access: 'requests', badge: pendingCount },
         { key: 'chairman', icon: 'calendar', label: t('modules.labels.chairman'), route: '/chairman-tasks', access: 'chairman' },

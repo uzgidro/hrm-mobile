@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { Icon } from '@/components/Icon';
 
 // Labeled form section for the create-order screen. `error` renders the
@@ -80,19 +81,19 @@ export function Selector({
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     field: { marginTop: 16 },
-    fieldLabel: { fontSize: 13, fontWeight: '700', color: c.textSecondary, marginBottom: 8 },
+    fieldLabel: { fontSize: 13, ...ff('800'), color: c.textSecondary, marginBottom: 8 },
     req: { color: c.error },
 
-    selector: { flexDirection: 'row', alignItems: 'center', backgroundColor: c.card, borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 14, paddingVertical: 13, gap: 8 },
-    selectorText: { flex: 1, fontSize: 14, color: c.text, fontWeight: '500' },
-    selectorPlaceholder: { flex: 1, fontSize: 14, color: c.textMuted },
-    errorText: { marginTop: 6, fontSize: 12, color: c.error, fontWeight: '600' },
+    selector: { flexDirection: 'row', alignItems: 'center', backgroundColor: c.card, borderRadius: 12, borderWidth: 2, borderColor: c.cardBorder, paddingHorizontal: 14, paddingVertical: 13, gap: 8 },
+    selectorText: { flex: 1, fontSize: 14, color: c.text, ...ff('700') },
+    selectorPlaceholder: { flex: 1, fontSize: 14, color: c.textMuted, ...ff('700') },
+    errorText: { marginTop: 6, fontSize: 12, color: c.error, ...ff('700') },
 
     docRow: {
       flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8,
-      backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, borderRadius: 10,
+      backgroundColor: c.card, borderWidth: 2, borderColor: c.cardBorder, borderRadius: 10,
       paddingHorizontal: 12, paddingVertical: 10,
     },
-    docName: { flex: 1, fontSize: 13, color: c.text },
-    docNote: { fontSize: 12, color: c.textMuted },
+    docName: { flex: 1, fontSize: 13, color: c.text, ...ff('700') },
+    docNote: { fontSize: 12, color: c.textMuted, ...ff('700') },
   });

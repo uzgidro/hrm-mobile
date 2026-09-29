@@ -3,6 +3,7 @@ import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { Icon } from '@/components/Icon';
 import type { OrderAct } from '@/types';
 import { Section } from './DetailParts';
@@ -118,17 +119,17 @@ export function DetailSections({ order }: { order: OrderAct }) {
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     noticeCard: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: c.errorSoft, borderRadius: 12, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: c.error },
-    noticeText: { flex: 1, fontSize: 13, color: c.error, fontWeight: '600' },
+    noticeText: { flex: 1, fontSize: 13, color: c.error, ...ff('700') },
     chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 16, paddingBottom: 12 },
     chip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 14, backgroundColor: c.primarySoft },
-    chipText: { fontSize: 12, fontWeight: '600', color: c.primary },
+    chipText: { fontSize: 12, ...ff('700'), color: c.primary },
     fileRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingVertical: 10 },
-    fileName: { flex: 1, fontSize: 13, color: c.primary, fontWeight: '600' },
+    fileName: { flex: 1, fontSize: 13, color: c.primary, ...ff('700') },
     signerRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 },
     signerDot: { width: 10, height: 10, borderRadius: 5 },
-    signerName: { fontSize: 14, color: c.text, fontWeight: '600' },
-    signerType: { fontSize: 11, color: c.textMuted, marginTop: 1 },
-    signerStatus: { fontSize: 12, fontWeight: '600' },
+    signerName: { fontSize: 14, color: c.text, ...ff('700') },
+    signerType: { fontSize: 11, color: c.textMuted, marginTop: 1, ...ff('700') },
+    signerStatus: { fontSize: 12, ...ff('700') },
     signerStatusRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
 
   });

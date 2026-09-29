@@ -8,6 +8,7 @@ import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import type { AttendanceEvent, TurnstileLocation } from '@/types';
 import { Icon } from '@/components/Icon';
 import {
@@ -144,31 +145,31 @@ export function AttendanceEventRow({
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10 },
-    rowBorder: { borderBottomWidth: 1, borderBottomColor: c.cardBorder },
-    time: { fontSize: 14, fontWeight: '700', color: c.text, width: 46 },
+    rowBorder: { borderBottomWidth: 2, borderBottomColor: c.cardBorder },
+    time: { fontSize: 14, ...ff('800'), color: c.text, width: 46 },
     dirBadge: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
     texts: { flex: 1 },
-    dir: { fontSize: 13, fontWeight: '600', color: c.text },
-    place: { fontSize: 12, color: c.textMuted, marginTop: 1 },
+    dir: { fontSize: 13, ...ff('700'), color: c.text },
+    place: { fontSize: 12, color: c.textMuted, marginTop: 1, ...ff('700') },
     thumb: { width: 38, height: 38, borderRadius: 8, backgroundColor: c.cardBorder },
     thumbEmpty: { alignItems: 'center', justifyContent: 'center' },
 
     overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center', padding: 18 },
-    card: { width: '100%', maxHeight: '86%', backgroundColor: c.card, borderRadius: 18, borderWidth: 1, borderColor: c.cardBorder, overflow: 'hidden' },
-    cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
-    cardTitle: { fontSize: 15, fontWeight: '700', color: c.text },
-    cardDate: { fontSize: 12, color: c.textMuted, marginTop: 2 },
+    card: { width: '100%', maxHeight: '86%', backgroundColor: c.card, borderRadius: 18, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder, overflow: 'hidden' },
+    cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 2, borderBottomColor: c.cardBorder },
+    cardTitle: { fontSize: 15, ...ff('800'), color: c.text },
+    cardDate: { fontSize: 12, color: c.textMuted, marginTop: 2, ...ff('700') },
     cardBody: { padding: 16, gap: 14 },
     photo: { width: '100%', height: 220, borderRadius: 12, backgroundColor: c.cardBorder },
     photoEmpty: { alignItems: 'center', justifyContent: 'center' },
-    mutedText: { fontSize: 13, color: c.textMuted },
+    mutedText: { fontSize: 13, color: c.textMuted, ...ff('700') },
     placeBlock: { gap: 2 },
-    placeLabel: { fontSize: 11, color: c.textMuted, textTransform: 'uppercase', letterSpacing: 0.4 },
-    placeName: { fontSize: 15, fontWeight: '700', color: c.text },
-    address: { fontSize: 12, color: c.textSecondary, lineHeight: 17 },
-    mapWrap: { height: 180, borderRadius: 12, overflow: 'hidden', borderWidth: 1, borderColor: c.cardBorder },
+    placeLabel: { fontSize: 11, color: c.textMuted, textTransform: 'uppercase', letterSpacing: 0.4, ...ff('700') },
+    placeName: { fontSize: 15, ...ff('800'), color: c.text },
+    address: { fontSize: 12, color: c.textSecondary, lineHeight: 17, ...ff('700') },
+    mapWrap: { height: 180, borderRadius: 12, overflow: 'hidden', borderWidth: 2, borderColor: c.cardBorder },
     map: { flex: 1, backgroundColor: c.bg },
     pin: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
-    mapBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 11, borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder },
-    mapBtnText: { fontSize: 13, fontWeight: '600', color: c.primaryLight },
+    mapBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 11, borderRadius: 12, borderWidth: 2, borderColor: c.cardBorder },
+    mapBtnText: { fontSize: 13, ...ff('700'), color: c.primaryLight },
   });

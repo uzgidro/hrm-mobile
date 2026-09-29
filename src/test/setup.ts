@@ -64,3 +64,13 @@ jest.mock('expo-local-authentication', () => ({
 jest.mock('expo-localization', () => ({
   getLocales: jest.fn(() => [{ languageTag: 'uz-UZ', languageCode: 'uz', textDirection: 'ltr' }]),
 }));
+
+// react-native-reanimated (Tomchi maskoti) — worklets native moduli jest'da
+// yo'q, shuning uchun kutubxonalarning o'z rasmiy mock'lari ishlatiladi.
+jest.mock('react-native-worklets', () => require('react-native-worklets/src/mock'));
+// Mock'da `useReducedMotion` yo'q; `true` qaytarsak Tomchi takrorlanuvchi
+// animatsiya/taymerlarni umuman ishga tushirmaydi — testlar deterministik.
+jest.mock('react-native-reanimated', () => ({
+  ...require('react-native-reanimated/mock'),
+  useReducedMotion: () => true,
+}));

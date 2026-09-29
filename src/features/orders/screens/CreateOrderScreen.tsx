@@ -15,6 +15,7 @@ import { type PickerOption } from '@/components/PickerModal';
 import { AttachmentField, type PickedFile } from '@/components/AttachmentField';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import type { Employee } from '@/types';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
@@ -434,16 +435,16 @@ export default function CreateOrderScreen() {
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    createBtn: { backgroundColor: c.primary, paddingHorizontal: 18, paddingVertical: 9, borderRadius: 20, minWidth: 84, alignItems: 'center' },
+    createBtn: { backgroundColor: c.primary, paddingHorizontal: 18, paddingVertical: 9, borderRadius: 20, minWidth: 84, alignItems: 'center', borderBottomWidth: 4, borderBottomColor: c.primaryShadow },
     createBtnDisabled: { opacity: 0.6 },
-    createBtnText: { color: c.onPrimary, fontWeight: '700', fontSize: 14 },
+    createBtnText: { color: c.onPrimary, ...ff('800'), fontSize: 14 },
 
     content: { paddingHorizontal: 16, paddingTop: 4 },
 
-    input: { backgroundColor: c.card, borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: c.text },
-    availability: { marginTop: 6, fontSize: 12, fontWeight: '600' },
+    input: { backgroundColor: c.card, borderRadius: 12, borderWidth: 2, borderColor: c.cardBorder, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: c.text, ...ff('700') },
+    availability: { marginTop: 6, fontSize: 12, ...ff('700') },
 
-    textArea: { backgroundColor: c.card, borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: c.text, minHeight: 80 },
+    textArea: { backgroundColor: c.card, borderRadius: 12, borderWidth: 2, borderColor: c.cardBorder, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: c.text, minHeight: 80, ...ff('700') },
 
     // Task 21: 2-column pairing for short fields on tablet (bp.isTablet).
     fieldRow: { flexDirection: 'row', gap: 12 },

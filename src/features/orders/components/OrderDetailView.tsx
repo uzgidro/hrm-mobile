@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import type { Employee } from '@/types';
 import { Icon } from '@/components/Icon';
 import { LoadingView, ErrorState } from '@/components/StateViews';
@@ -420,24 +421,24 @@ const makeStyles = (c: ThemeColors) =>
 
     content: { paddingHorizontal: 16, paddingTop: 14 },
 
-    card: { backgroundColor: c.card, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: c.cardBorder, gap: 8 },
+    card: { backgroundColor: c.card, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder, gap: 8 },
     badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
-    badgeText: { fontSize: 12, fontWeight: '700' },
-    bigTitle: { fontSize: 18, fontWeight: '800', color: c.text },
-    subMeta: { fontSize: 13, color: c.textMuted },
+    badgeText: { fontSize: 12, ...ff('800') },
+    bigTitle: { fontSize: 18, ...ff('900'), color: c.text },
+    subMeta: { fontSize: 13, color: c.textMuted, ...ff('700') },
     docBtn: { marginTop: 6, backgroundColor: c.primarySoft, borderRadius: 12, paddingVertical: 13, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
-    docBtnText: { color: c.primary, fontSize: 14, fontWeight: '700' },
+    docBtnText: { color: c.primary, fontSize: 14, ...ff('800') },
     famBtn: { backgroundColor: c.primarySoft, borderRadius: 12, paddingVertical: 13, marginBottom: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
-    famBtnText: { color: c.primary, fontSize: 14, fontWeight: '700' },
+    famBtnText: { color: c.primary, fontSize: 14, ...ff('800') },
 
-    bodyText: { fontSize: 14, color: c.text, lineHeight: 21 },
+    bodyText: { fontSize: 14, color: c.text, lineHeight: 21, ...ff('700') },
 
     rejectCard: { backgroundColor: c.errorSoft, borderRadius: 14, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: c.error },
-    rejectTitle: { fontSize: 13, fontWeight: '700', color: c.error, marginBottom: 4 },
+    rejectTitle: { fontSize: 13, ...ff('800'), color: c.error, marginBottom: 4 },
     editBtn: {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
       backgroundColor: c.primarySoft, borderRadius: 12, paddingVertical: 14, marginBottom: 12,
     },
-    editBtnText: { color: c.primary, fontSize: 14, fontWeight: '700' },
-    rejectText: { fontSize: 13, color: c.text, lineHeight: 19 },
+    editBtnText: { color: c.primary, fontSize: 14, ...ff('800') },
+    rejectText: { fontSize: 13, color: c.text, lineHeight: 19, ...ff('700') },
   });

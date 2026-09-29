@@ -11,6 +11,7 @@ import type { UseInfiniteQueryResult, InfiniteData } from '@tanstack/react-query
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { flattenPages, pagesTotal, type PageOut } from '@/lib/pagedList';
 import { getApiErrorMessage } from '@/api/errors';
 import { EmptyState, ErrorState, LoadingView } from './StateViews';
@@ -131,7 +132,7 @@ const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     content: { paddingHorizontal: 16, paddingTop: 4 },
     contentEmpty: { flexGrow: 1 },
-    count: { fontSize: 12, color: c.textMuted, paddingBottom: 8, paddingHorizontal: 2 },
+    count: { fontSize: 12, color: c.textMuted, paddingBottom: 8, paddingHorizontal: 2, ...ff('700') },
     emptyWrap: { flex: 1, paddingTop: 40 },
     footer: { paddingVertical: 16 },
     footerPad: { height: 24 },

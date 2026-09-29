@@ -1,7 +1,7 @@
 import MockAdapter from 'axios-mock-adapter';
 import { apiClient } from '@/api/client';
 import { VISITORS_LIST, VISITOR_DETAIL } from '@/api/urls';
-import { visitorKeys, visitorsListQuery, visitorDetailQuery } from '../queries';
+import { visitorKeys, visitorsListQuery, visitorDetailQuery, visitorsSummaryQuery, visitorFilterParams } from '../queries';
 
 let mock: MockAdapter;
 beforeEach(() => {
@@ -12,8 +12,9 @@ afterEach(() => mock.restore());
 describe('visitorKeys', () => {
   it('builds a hierarchical key tree so `all` is a prefix of list and detail', () => {
     expect(visitorKeys.all).toEqual(['visitors']);
-    expect(visitorKeys.list(5)).toEqual(['visitors', 'list', 5, null]);
-    expect(visitorKeys.list(undefined, 'ali')).toEqual(['visitors', 'list', null, 'ali']);
+    expect(visitorKeys.list(5)).toEqual(['visitors', 'list', 5, null, 'all']);
+    expect(visitorKeys.list(undefined, 'ali', 'today')).toEqual(['visitors', 'list', null, 'ali', 'today']);
+    expect(visitorKeys.summary(5, 'ali')).toEqual(['visitors', 'summary', 5, 'ali']);
     expect(visitorKeys.detail(9)).toEqual(['visitors', 'detail', 9]);
     // all is a prefix of both → invalidating it matches list and detail
     expect(visitorKeys.detail(9).slice(0, 1)).toEqual(visitorKeys.all);
@@ -25,7 +26,7 @@ describe('visitorsListQuery (server-paged, server search)', () => {
   type PageFn = (ctx: { pageParam: number }) => Promise<{ items: unknown[] }>;
 
   it('carries the list key with branch + search', () => {
-    expect(visitorsListQuery(7, ' ali ').queryKey).toEqual(['visitors', 'list', 7, 'ali']);
+    expect(visitorsListQuery(7, ' ali ').queryKey).toEqual(['visitors', 'list', 7, 'ali', 'all']);
   });
 
   it('returns a bare array response as one page', async () => {
@@ -48,6 +49,31 @@ describe('visitorsListQuery (server-paged, server search)', () => {
     mock.resetHistory();
     await (visitorsListQuery().queryFn as unknown as PageFn)({ pageParam: 1 });
     expect(mock.history.get[0].params).toEqual({ page: 1, size: 30 });
+  });
+});
+
+describe('visitor filters (web v2 stat tiles, server-side)', () => {
+  type PageFn = (ctx: { pageParam: number }) => Promise<{ items: unknown[] }>;
+
+  it('maps each tile to the backend params', () => {
+    expect(visitorFilterParams('all')).toEqual({});
+    expect(visitorFilterParams('active')).toEqual({ is_active: true });
+    expect(visitorFilterParams('today')).toEqual({ visit: 'today' });
+    expect(visitorFilterParams('yesterday')).toEqual({ visit: 'yesterday' });
+    expect(visitorFilterParams('never')).toEqual({ visit: 'never' });
+  });
+
+  it('sends the filter with the list request', async () => {
+    mock.onGet(VISITORS_LIST).reply(200, []);
+    await (visitorsListQuery(undefined, undefined, 'never').queryFn as unknown as PageFn)({ pageParam: 1 });
+    expect(mock.history.get[0].params).toEqual({ visit: 'never', page: 1, size: 30 });
+  });
+
+  it('summary uses the same scope and search as the list', async () => {
+    mock.onGet('visitors/summary').reply(200, { total: 9, active: 4, today: 2, never: 3 });
+    const data = await (visitorsSummaryQuery(3, ' uge ').queryFn as () => Promise<unknown>)();
+    expect(data).toEqual({ total: 9, active: 4, today: 2, never: 3 });
+    expect(mock.history.get[0].params).toEqual({ organization_branch_id: 3, search: 'uge' });
   });
 });
 

@@ -109,6 +109,8 @@ export default {
   // notification service; these keys are the on-screen list UI. Kept in the same
   // namespace on purpose (the screen renders these titles).
   screenTitle: 'Bildirishnomalar',
+  filterAll: 'Barchasi',
+  filterUnread: "O'qilmaganlar",
   markAllRead: "O'qildi",
   empty: "Bildirishnomalar yo'q",
   loadMore: "Yana ko'rsatish",

@@ -6,6 +6,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { Icon } from '@/components/Icon';
 import { PIN_LENGTH } from '@/auth/lockPolicy';
 
@@ -154,13 +155,12 @@ export function PinPad({
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     container: { alignItems: 'center' },
-    title: { fontSize: 20, fontWeight: '700', color: c.text, textAlign: 'center' },
+    title: { fontSize: 20, ...ff('800'), color: c.text, textAlign: 'center' },
     subtitle: {
       fontSize: 14,
       color: c.textSecondary,
       textAlign: 'center',
-      marginTop: 8,
-    },
+      marginTop: 8, ...ff('700') },
     dots: {
       flexDirection: 'row',
       justifyContent: 'center',
@@ -178,8 +178,7 @@ const makeStyles = (c: ThemeColors) =>
       fontSize: 13,
       color: c.error,
       textAlign: 'center',
-      marginTop: 4,
-    },
+      marginTop: 4, ...ff('700') },
     keypad: { marginTop: 32, gap: 18 },
     keyRow: {
       flexDirection: 'row',
@@ -193,5 +192,5 @@ const makeStyles = (c: ThemeColors) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    keyText: { fontSize: 28, fontWeight: '500', color: c.text },
+    keyText: { fontSize: 28, ...ff('700'), color: c.text },
   });

@@ -1,25 +1,25 @@
 // Shared loading / empty / error placeholders, replacing the ~27 hand-rolled
 // inline ActivityIndicator + "nothing here" blocks scattered across screens.
 // All three centre themselves in the available space and read the theme.
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+//
+// Dizayn «I · Tomchi»: har uchala holatni maskot boshqaradi — yuklanishda
+// sakraydi (loading), bo'sh ro'yxatda kutib turadi (idle), xatoda xafa (sad).
+import { StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 import type { ThemeColors } from '../theme/palettes';
+import { ff } from '../theme/typography';
 import { Icon, type IconName } from './Icon';
+import { Tomchi } from './mascot/Tomchi';
+import { TomchiLoader } from './mascot/TomchiLoader';
+import { ChunkyButton } from './ChunkyButton';
 
-// Full-area spinner. Use while a screen's primary query is loading.
+// Full-area loader. Use while a screen's primary query is loading.
 export function LoadingView({ label }: { label?: string }) {
-  const { colors } = useTheme();
-  const styles = useThemedStyles(makeStyles);
-  return (
-    <View style={styles.center}>
-      <ActivityIndicator size="large" color={colors.primaryLight} />
-      {!!label && <Text style={styles.dim}>{label}</Text>}
-    </View>
-  );
+  return <TomchiLoader label={label} size={88} />;
 }
 
-// Empty-list placeholder. `icon` defaults to the inbox glyph.
+// Empty-list placeholder. `icon` names what is empty (badge on the mascot).
 export function EmptyState({
   title,
   message,
@@ -38,15 +38,22 @@ export function EmptyState({
   const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.center}>
-      <View style={styles.iconWrap}>
-        <Icon name={icon} size={28} color={colors.textMuted} />
+      <View>
+        <Tomchi mood="idle" size={92} />
+        <View style={styles.badge}>
+          <Icon name={icon} size={16} color={colors.textMuted} />
+        </View>
       </View>
       <Text style={styles.title}>{title}</Text>
       {!!message && <Text style={styles.dim}>{message}</Text>}
       {!!onAction && !!actionLabel && (
-        <Pressable onPress={onAction} style={styles.retry} hitSlop={8} testID="empty-action">
-          <Text style={styles.retryText}>{actionLabel}</Text>
-        </Pressable>
+        <ChunkyButton
+          label={actionLabel}
+          onPress={onAction}
+          variant="outline"
+          style={styles.action}
+          testID="empty-action"
+        />
       )}
     </View>
   );
@@ -62,20 +69,15 @@ export function ErrorState({
   message?: string;
   onRetry?: () => void;
 }) {
-  const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { t } = useTranslation();
   return (
     <View style={styles.center}>
-      <View style={[styles.iconWrap, { backgroundColor: colors.errorSoft }]}>
-        <Icon name="close" size={26} color={colors.error} />
-      </View>
+      <Tomchi mood="sad" size={92} />
       <Text style={styles.title}>{title ?? t('errors.generic')}</Text>
       {!!message && <Text style={styles.dim}>{message}</Text>}
       {!!onRetry && (
-        <Pressable onPress={onRetry} style={styles.retry} hitSlop={8}>
-          <Text style={styles.retryText}>{t('common.retry')}</Text>
-        </Pressable>
+        <ChunkyButton label={t('common.retry')} onPress={onRetry} style={styles.action} />
       )}
     </View>
   );
@@ -90,25 +92,20 @@ const makeStyles = (c: ThemeColors) =>
       gap: 8,
       padding: 24,
     },
-    iconWrap: {
-      width: 60,
-      height: 60,
-      borderRadius: 30,
+    badge: {
+      position: 'absolute',
+      right: -2,
+      bottom: 8,
+      width: 32,
+      height: 32,
+      borderRadius: 16,
       backgroundColor: c.card,
-      borderWidth: 1,
+      borderWidth: 2,
       borderColor: c.cardBorder,
       alignItems: 'center',
       justifyContent: 'center',
-      marginBottom: 4,
     },
-    title: { fontSize: 16, fontWeight: '700', color: c.text, textAlign: 'center' },
-    dim: { fontSize: 13.5, color: c.textSecondary, textAlign: 'center', lineHeight: 19 },
-    retry: {
-      marginTop: 10,
-      paddingVertical: 9,
-      paddingHorizontal: 20,
-      borderRadius: 10,
-      backgroundColor: c.primary,
-    },
-    retryText: { color: c.onPrimary, fontWeight: '700', fontSize: 14 },
+    title: { fontSize: 17, color: c.text, textAlign: 'center', ...ff('900') },
+    dim: { fontSize: 14, color: c.textSecondary, textAlign: 'center', lineHeight: 20, ...ff('700') },
+    action: { marginTop: 10, minWidth: 180 },
   });

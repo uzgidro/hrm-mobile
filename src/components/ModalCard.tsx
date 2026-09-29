@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 import { KeyboardAvoider } from './KeyboardAvoider';
 import type { ThemeColors } from '../theme/palettes';
+import { ff } from '@/theme/typography';
 
 /**
  * Ilova bo'ylab YAGONA dialog-oyna: overlay + karta + sarlavha + (ixtiyoriy
@@ -109,21 +110,21 @@ const makeStyles = (c: ThemeColors) =>
     overlay: { flex: 1, backgroundColor: c.overlay, justifyContent: 'center', paddingHorizontal: 24 },
     card: {
       backgroundColor: c.card, borderRadius: 18, padding: 20, gap: 10,
-      borderWidth: 1, borderColor: c.cardBorder,
+      borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder,
     },
-    title: { fontSize: 16, fontWeight: '700', color: c.text },
-    hint: { fontSize: 12, color: c.textMuted },
+    title: { fontSize: 16, ...ff('800'), color: c.text },
+    hint: { fontSize: 12, color: c.textMuted, ...ff('700') },
     btns: { flexDirection: 'row', gap: 10, marginTop: 4 },
     cancel: {
       flex: 1, paddingVertical: 12, borderRadius: 12, alignItems: 'center',
-      backgroundColor: c.bg, borderWidth: 1, borderColor: c.cardBorder,
+      backgroundColor: c.bg, borderWidth: 2, borderColor: c.cardBorder,
     },
-    cancelText: { color: c.text, fontSize: 14, fontWeight: '600' },
+    cancelText: { color: c.text, fontSize: 14, ...ff('700') },
     submit: {
       flex: 1, paddingVertical: 12, borderRadius: 12, alignItems: 'center',
       justifyContent: 'center', backgroundColor: c.primary,
     },
     submitDestructive: { backgroundColor: c.error },
     submitDisabled: { opacity: 0.5 },
-    submitText: { color: c.onPrimary, fontSize: 14, fontWeight: '700' },
+    submitText: { color: c.onPrimary, fontSize: 14, ...ff('800') },
   });

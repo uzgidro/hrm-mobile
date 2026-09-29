@@ -19,4 +19,8 @@ export default {
     approved: 'Тасдиқланган',
     rejected: 'Рад этилди',
   },
+  tomchiHello: 'Салом, {{name}}!',
+  tomchiCameIn: 'Бугун {{time}} да келдингиз.',
+  tomchiNotYet: 'Бугун ҳали келиш қайд этилмаган.',
+  worked: '{{h}} соат {{m}} дақиқа',
 } as const;

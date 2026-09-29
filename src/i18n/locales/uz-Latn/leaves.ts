@@ -19,12 +19,19 @@ export default {
   typeLabel: "So'rov turi *",
   startLabel: 'Boshlanish *',
   endLabel: 'Tugash *',
-  supervisorLabel: 'Rahbar (Tasdiqlovchi)',
-  commentLabel: 'Izoh (ixtiyoriy)',
+  commentLabel: 'Izoh *',
   commentPlaceholder: 'Sababni qisqacha yozing...',
-  pickSupervisor: 'Rahbarni tanlang',
-  pickSupervisorTitle: 'Rahbarni tanlash',
-  supervisorRequired: "Iltimos, tasdiqlovchi rahbarni tanlang",
+  // Web v2: so'rov yo'nalishi serverda hal qilinadi — forma faqat kimga
+  // borishini aytadi; orqaga yozish chegarasi rules'dan keladi.
+  routeLabel: 'Kimga boradi',
+  routeToSupervisor: "So'rov bevosita rahbaringizga yuboriladi: {{name}}",
+  routeToHead: "So'rov bo'lim boshlig'ingizga yuboriladi: {{name}}",
+  routeToNobody: "Bevosita rahbar va bo'lim boshlig'i biriktirilmagan — so'rovni kadrlar bo'limi ko'rib chiqadi",
+  backHint_one: "So'rovni ko'pi bilan {{count}} kun orqaga yozish mumkin.",
+  backHint_other: "So'rovni ko'pi bilan {{count}} kun orqaga yozish mumkin.",
+  tooFarBack_one: "So'rovni ko'pi bilan {{count}} kun orqaga yozish mumkin — boshlanish sanasini o'zgartiring.",
+  tooFarBack_other: "So'rovni ko'pi bilan {{count}} kun orqaga yozish mumkin — boshlanish sanasini o'zgartiring.",
+  descRequired: 'Izoh kiritilishi shart',
   endBeforeStart: "Tugash vaqti boshlanishdan keyin bo'lishi kerak",
 
   // ── Date-time picker ────────────────────────────────────────────────────────

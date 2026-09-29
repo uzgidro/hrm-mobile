@@ -7,6 +7,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { FormInput } from '@/components/FormInput';
 import { Icon } from '@/components/Icon';
@@ -208,18 +209,18 @@ const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 24 },
 
-    label: { fontSize: 13, color: c.textSecondary, fontWeight: '600', marginBottom: 6 },
+    label: { fontSize: 13, color: c.textSecondary, ...ff('700'), marginBottom: 6 },
     memberPick: {
       flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 46,
-      backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, borderRadius: 12, paddingHorizontal: 14,
+      backgroundColor: c.card, borderWidth: 2, borderColor: c.cardBorder, borderRadius: 12, paddingHorizontal: 14,
     },
-    memberPickText: { flex: 1, fontSize: 15, color: c.text },
+    memberPickText: { flex: 1, fontSize: 15, color: c.text, ...ff('700') },
 
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 },
-    chip: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, borderRadius: 20, paddingVertical: 4, paddingLeft: 4, paddingRight: 10 },
-    chipName: { fontSize: 12, color: c.text, fontWeight: '600', maxWidth: 130 },
+    chip: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: c.card, borderWidth: 2, borderColor: c.cardBorder, borderRadius: 20, paddingVertical: 4, paddingLeft: 4, paddingRight: 10 },
+    chipName: { fontSize: 12, color: c.text, ...ff('700'), maxWidth: 130 },
 
-    hint: { fontSize: 11, color: c.textMuted, marginTop: 10 },
-    saveBtn: { flexDirection: 'row', gap: 8, backgroundColor: c.primary, borderRadius: 14, paddingVertical: 15, alignItems: 'center', justifyContent: 'center', marginTop: 18 },
-    saveText: { color: c.onPrimary, fontSize: 16, fontWeight: '700' },
+    hint: { fontSize: 11, color: c.textMuted, marginTop: 10, ...ff('700') },
+    saveBtn: { flexDirection: 'row', gap: 8, backgroundColor: c.primary, borderRadius: 14, paddingVertical: 15, alignItems: 'center', justifyContent: 'center', marginTop: 18, borderBottomWidth: 4, borderBottomColor: c.primaryShadow },
+    saveText: { color: c.onPrimary, fontSize: 16, ...ff('800') },
   });

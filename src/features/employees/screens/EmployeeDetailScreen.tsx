@@ -10,6 +10,7 @@ import { useAuthStore } from '@/store/authStore';
 import { isDeputy, isMasterAdmin, isHR } from '@/utils/roles';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { WorkExperience, Education } from '@/types';
 import { Icon, type IconName } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
@@ -218,39 +219,38 @@ const makeStyles = (c: ThemeColors) =>
 
     avatarCard: {
       alignItems: 'center', paddingVertical: 24, backgroundColor: c.card,
-      borderRadius: 18, borderWidth: 1, borderColor: c.cardBorder, marginBottom: 12,
+      borderRadius: 18, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder, marginBottom: 12,
     },
     avatarWrap: { marginBottom: 12 },
-    fullName: { fontSize: 19, fontWeight: '800', color: c.text, marginBottom: 4, textAlign: 'center' },
-    position: { fontSize: 13, color: c.primaryLight, fontWeight: '600', marginBottom: 2 },
-    department: { fontSize: 12, color: c.textMuted },
+    fullName: { fontSize: 19, ...ff('900'), color: c.text, marginBottom: 4, textAlign: 'center' },
+    position: { fontSize: 13, color: c.primaryLight, ...ff('700'), marginBottom: 2 },
+    department: { fontSize: 12, color: c.textMuted, ...ff('700') },
 
     attendanceBtn: {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-      gap: 10, backgroundColor: c.primary, borderRadius: 14, paddingVertical: 14, marginBottom: 12,
-    },
-    attendanceBtnIcon: { fontSize: 18 },
-    attendanceBtnText: { fontSize: 15, fontWeight: '700', color: c.onPrimary },
+      gap: 10, backgroundColor: c.primary, borderRadius: 14, paddingVertical: 14, marginBottom: 12, borderBottomWidth: 4, borderBottomColor: c.primaryShadow },
+    attendanceBtnIcon: { fontSize: 18, ...ff('700') },
+    attendanceBtnText: { fontSize: 15, ...ff('800'), color: c.onPrimary },
 
     section: {
-      backgroundColor: c.card, borderRadius: 18, borderWidth: 1, borderColor: c.cardBorder,
+      backgroundColor: c.card, borderRadius: 18, borderWidth: 2, borderColor: c.cardBorder,
       marginBottom: 12, overflow: 'hidden',
     },
     sectionHeader: {
       flexDirection: 'row', alignItems: 'center', gap: 10,
-      paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: c.cardBorder,
+      paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 2, borderBottomColor: c.cardBorder,
     },
-    sectionEmoji: { fontSize: 16 },
-    sectionTitle: { fontSize: 14, fontWeight: '700', color: c.text },
+    sectionEmoji: { fontSize: 16, ...ff('700') },
+    sectionTitle: { fontSize: 14, ...ff('800'), color: c.text },
     sectionBody: { paddingHorizontal: 16, paddingVertical: 4 },
 
     infoRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingVertical: 11, gap: 12 },
-    infoLabel: { fontSize: 13, color: c.textMuted, flex: 1 },
-    infoValue: { fontSize: 13, fontWeight: '600', color: c.text, flex: 2, textAlign: 'right' },
+    infoLabel: { fontSize: 13, color: c.textMuted, flex: 1, ...ff('700') },
+    infoValue: { fontSize: 13, ...ff('700'), color: c.text, flex: 2, textAlign: 'right' },
     divider: { height: 1, backgroundColor: c.cardBorder },
 
     historyItem: { paddingVertical: 12 },
-    historyTitle: { fontSize: 14, fontWeight: '700', color: c.text, marginBottom: 3 },
-    historySubtitle: { fontSize: 13, color: c.textSecondary, marginBottom: 4 },
-    historyDate: { fontSize: 12, color: c.textMuted },
+    historyTitle: { fontSize: 14, ...ff('800'), color: c.text, marginBottom: 3 },
+    historySubtitle: { fontSize: 13, color: c.textSecondary, marginBottom: 4, ...ff('700') },
+    historyDate: { fontSize: 12, color: c.textMuted, ...ff('700') },
   });

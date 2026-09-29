@@ -19,6 +19,7 @@ import { getApiErrorMessage } from '@/api/errors';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { Icon } from '@/components/Icon';
 import { PasswordStrengthMeter } from '@/components/PasswordStrengthMeter';
 import { checkPassword } from '@/lib/passwordStrength';
@@ -145,24 +146,23 @@ const makeStyles = (c: ThemeColors) =>
       alignSelf: 'center', width: 72, height: 72, borderRadius: 24,
       backgroundColor: c.primarySoft, alignItems: 'center', justifyContent: 'center', marginBottom: 16,
     },
-    title: { fontSize: 22, fontWeight: '800', color: c.text, textAlign: 'center', marginBottom: 8 },
-    subtitle: { fontSize: 14, color: c.textSecondary, textAlign: 'center', lineHeight: 20, marginBottom: 24 },
+    title: { fontSize: 22, ...ff('900'), color: c.text, textAlign: 'center', marginBottom: 8 },
+    subtitle: { fontSize: 14, color: c.textSecondary, textAlign: 'center', lineHeight: 20, marginBottom: 24, ...ff('700') },
     form: { gap: 8 },
-    label: { fontSize: 13, fontWeight: '600', color: c.textSecondary, marginTop: 6 },
+    label: { fontSize: 13, ...ff('700'), color: c.textSecondary, marginTop: 6 },
     input: {
-      backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, borderRadius: 12,
-      paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, color: c.text,
-    },
+      backgroundColor: c.card, borderWidth: 2, borderColor: c.cardBorder, borderRadius: 12,
+      paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, color: c.text, ...ff('700') },
     row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     grow: { flex: 1 },
     eyeBtn: {
-      width: 52, height: 52, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder,
+      width: 52, height: 52, backgroundColor: c.card, borderWidth: 2, borderColor: c.cardBorder,
       borderRadius: 12, alignItems: 'center', justifyContent: 'center',
     },
-    error: { color: c.error, fontSize: 13, marginTop: 4 },
-    primaryBtn: { backgroundColor: c.primary, borderRadius: 12, paddingVertical: 16, alignItems: 'center', marginTop: 12 },
-    primaryBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+    error: { color: c.error, fontSize: 13, marginTop: 4, ...ff('700') },
+    primaryBtn: { backgroundColor: c.primary, borderRadius: 12, paddingVertical: 16, alignItems: 'center', marginTop: 12, borderBottomWidth: 4, borderBottomColor: c.primaryShadow },
+    primaryBtnText: { color: '#fff', fontSize: 16, ...ff('800') },
     disabled: { opacity: 0.7 },
     ghostBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 12 },
-    ghostBtnText: { color: c.textSecondary, fontSize: 14, fontWeight: '600' },
+    ghostBtnText: { color: c.textSecondary, fontSize: 14, ...ff('700') },
   });

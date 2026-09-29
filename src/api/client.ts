@@ -43,10 +43,12 @@ async function refreshAccessToken(): Promise<string | null> {
   const refreshToken = await getRefreshToken();
   if (!refreshToken) return null;
   try {
+    // JSON body, not a query param: a URL lands in proxy/access logs, so the
+    // backend reads cookie → body → query, in that order (audit F16/H10).
     const { data } = await axios.post(
       `${API_BASE_URL}/auth/refresh`,
-      null,
-      { params: { refresh_token: refreshToken }, timeout: 20000 }
+      { refresh_token: refreshToken },
+      { timeout: 20000 }
     );
     if (data?.access_token) {
       await setAccessToken(data.access_token);

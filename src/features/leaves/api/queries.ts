@@ -3,8 +3,9 @@ import dayjs from 'dayjs';
 import { pagedListOptions, cleanParams, type ListParams } from '@/lib/pagedList';
 import { apiClient } from '@/api/client';
 import { unwrapList } from '@/api/response';
-import { WORK_LEAVES, WORK_LEAVE_DETAIL } from '@/api/urls';
-import { employeesListQuery } from '@/utils/employees';
+import {
+  WORK_LEAVES, WORK_LEAVE_DETAIL, WORK_LEAVES_MY_APPROVERS, WORK_LEAVES_RULES, DICTIONARY_OPTIONS,
+} from '@/api/urls';
 import { workLeaveAllScopeParams } from '@/utils/workLeaveScope';
 import type { User, WorkLeave } from '@/types';
 
@@ -110,14 +111,35 @@ export function leaveDetailQuery(id: number) {
   });
 }
 
-// Candidate supervisors to pick when the employee has no supervisor pre-assigned
-// (web parity: RequestPermissionDrawer loads employees only then). Reuses the
-// SHARED roster helper + key so the cache is shared with the employees/team
-// screens — do NOT fork this into a leaves-specific key. `enabled` lets the
-// screen load it only when a pick is actually needed.
-export function leaveSupervisorsQuery(orgBranchId?: number, enabled = true) {
+// ── Create-form data (web v2 RequestPermissionPage parity) ────────────────────
+// The request is routed server-side (no assigned_signer_ids): the form only
+// NAMES the approver, states the backdating limit and offers HR's reason list.
+export type LeaveApprover = { id: number; legal_name: string; job_position_name?: string | null; via: 'supervisor' | 'department_head' };
+export type LeaveRules = { max_days_back: number; exempt: boolean };
+export type DictionaryOption = { id: number; name: string };
+
+export function leaveApproversQuery() {
   return queryOptions({
-    ...employeesListQuery(orgBranchId),
-    enabled,
+    queryKey: [...leaveKeys.all, 'my-approvers'] as const,
+    queryFn: () => apiClient.get<LeaveApprover[]>(WORK_LEAVES_MY_APPROVERS).then((r) => r.data ?? []),
+    staleTime: 5 * 60_000,
+  });
+}
+
+export function leaveRulesQuery() {
+  return queryOptions({
+    queryKey: [...leaveKeys.all, 'rules'] as const,
+    queryFn: () => apiClient.get<LeaveRules>(WORK_LEAVES_RULES).then((r) => r.data),
+    staleTime: 5 * 60_000,
+  });
+}
+
+/** «Ruxsat so'rovi sabablari» — HR keeps this list in step with how the org words it. */
+export function leaveReasonsQuery() {
+  return queryOptions({
+    queryKey: ['dictionaries', 'options', 'leave_request_reasons'] as const,
+    queryFn: () =>
+      apiClient.get<DictionaryOption[]>(DICTIONARY_OPTIONS('leave_request_reasons')).then((r) => r.data ?? []),
+    staleTime: 10 * 60_000,
   });
 }

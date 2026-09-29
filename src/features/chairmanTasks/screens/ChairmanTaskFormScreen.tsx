@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import type { ChairmanTask } from '@/types';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
@@ -151,6 +152,6 @@ const makeStyles = (c: ThemeColors) =>
     colors: { flexDirection: 'row', gap: 12, marginTop: 12, marginBottom: 4 },
     colorDot: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
     colorDotActive: { borderWidth: 3, borderColor: c.text },
-    submitBtn: { marginTop: 20, backgroundColor: c.primary, borderRadius: 14, paddingVertical: 15, alignItems: 'center' },
-    submitText: { color: c.onPrimary, fontSize: 15, fontWeight: '700' },
+    submitBtn: { marginTop: 20, backgroundColor: c.primary, borderRadius: 14, paddingVertical: 15, alignItems: 'center', borderBottomWidth: 4, borderBottomColor: c.primaryShadow },
+    submitText: { color: c.onPrimary, fontSize: 15, ...ff('800') },
   });

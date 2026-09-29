@@ -3,6 +3,7 @@ import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import type { PickerOption } from '@/components/PickerModal';
 import { useBreakpoint } from '@/utils/responsive';
 import { Field, Selector } from './FormParts';
@@ -248,22 +249,22 @@ const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     vehicleBox: {
       marginTop: 16, padding: 14, borderRadius: 12,
-      borderWidth: 1, borderColor: c.cardBorder, backgroundColor: c.card, gap: 10,
+      borderWidth: 2, borderColor: c.cardBorder, backgroundColor: c.card, gap: 10,
     },
-    vehicleTitle: { fontSize: 13, fontWeight: '700', color: c.textSecondary },
+    vehicleTitle: { fontSize: 13, ...ff('800'), color: c.textSecondary },
     vehicleModes: { flexDirection: 'row', gap: 8 },
     vehicleMode: {
       paddingHorizontal: 16, paddingVertical: 9, borderRadius: 10,
-      borderWidth: 1, borderColor: c.cardBorder, backgroundColor: c.bg,
+      borderWidth: 2, borderColor: c.cardBorder, backgroundColor: c.bg,
     },
     vehicleModeActive: { backgroundColor: c.primary, borderColor: c.primary },
-    vehicleModeText: { fontSize: 13, color: c.textSecondary, fontWeight: '600' },
+    vehicleModeText: { fontSize: 13, color: c.textSecondary, ...ff('700') },
     vehicleModeTextActive: { color: c.onPrimary },
-    vehicleHint: { fontSize: 11, color: c.textMuted, lineHeight: 16 },
-    input: { backgroundColor: c.card, borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: c.text },
-    textArea: { backgroundColor: c.card, borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: c.text, minHeight: 100 },
+    vehicleHint: { fontSize: 11, color: c.textMuted, lineHeight: 16, ...ff('700') },
+    input: { backgroundColor: c.card, borderRadius: 12, borderWidth: 2, borderColor: c.cardBorder, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: c.text, ...ff('700') },
+    textArea: { backgroundColor: c.card, borderRadius: 12, borderWidth: 2, borderColor: c.cardBorder, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: c.text, minHeight: 100, ...ff('700') },
     hintBox: { marginTop: 14, backgroundColor: c.primarySoft, borderRadius: 10, padding: 12 },
-    hintText: { fontSize: 12, color: c.textSecondary, lineHeight: 17 },
+    hintText: { fontSize: 12, color: c.textSecondary, lineHeight: 17, ...ff('700') },
 
     // Task 21: 2-column pairing for short fields on tablet (bp.isTablet).
     fieldRow: { flexDirection: 'row', gap: 12 },

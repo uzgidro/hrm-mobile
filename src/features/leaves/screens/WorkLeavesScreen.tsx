@@ -12,6 +12,7 @@ import type { TFunction } from 'i18next';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { useBreakpoint } from '@/utils/responsive';
 import { hasSupervisor } from '@/utils/roles';
 import { Icon } from '@/components/Icon';
@@ -204,40 +205,40 @@ export default function WorkLeavesScreen() {
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    filterWrapper: { flexShrink: 0, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
+    filterWrapper: { flexShrink: 0, borderBottomWidth: 2, borderBottomColor: c.cardBorder },
     searchWrap: { paddingHorizontal: 16, paddingVertical: 10, flexShrink: 0 },
     filterRow: { paddingHorizontal: 16, paddingVertical: 10, gap: 8, flexDirection: 'row', alignItems: 'center' },
-    filterTab: { paddingHorizontal: 16, paddingVertical: 7, borderRadius: 20, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder },
+    filterTab: { paddingHorizontal: 16, paddingVertical: 7, borderRadius: 20, backgroundColor: c.card, borderWidth: 2, borderColor: c.cardBorder },
     filterTabActive: { backgroundColor: c.primary, borderColor: c.primary },
-    filterTabText: { fontSize: 13, color: c.textSecondary, fontWeight: '600' },
+    filterTabText: { fontSize: 13, color: c.textSecondary, ...ff('700') },
     filterTabTextActive: { color: c.onPrimary },
 
     content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 80 },
     wrapRow: { gap: 12 },
 
-    card: { backgroundColor: c.card, borderRadius: 16, borderWidth: 1, borderColor: c.cardBorder, padding: 14, marginBottom: 10, gap: 6 },
+    card: { backgroundColor: c.card, borderRadius: 16, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder, padding: 14, marginBottom: 10, gap: 6 },
     cardHighlight: { borderColor: c.warning, backgroundColor: c.warningSoft },
     actionBadgeRow: { flexDirection: 'row' },
     actionBadge: { backgroundColor: c.warningSoft, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
-    actionBadgeText: { fontSize: 11, fontWeight: '700', color: c.warning },
+    actionBadgeText: { fontSize: 11, ...ff('800'), color: c.warning },
 
     empRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    empName: { flex: 1, fontSize: 13, color: c.textSecondary, fontWeight: '600' },
+    empName: { flex: 1, fontSize: 13, color: c.textSecondary, ...ff('700') },
 
     cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    categoryName: { fontSize: 15, fontWeight: '700', color: c.text, flex: 1, marginRight: 8 },
+    categoryName: { fontSize: 15, ...ff('800'), color: c.text, flex: 1, marginRight: 8 },
     badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
-    badgeText: { fontSize: 12, fontWeight: '700' },
+    badgeText: { fontSize: 12, ...ff('800') },
     dateRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-    dateIcon: { fontSize: 13 },
-    dateText: { fontSize: 13, color: c.textSecondary, flex: 1 },
-    comment: { fontSize: 13, color: c.textMuted, lineHeight: 18 },
-    createdAt: { fontSize: 11, color: c.textMuted },
+    dateIcon: { fontSize: 13, ...ff('700') },
+    dateText: { fontSize: 13, color: c.textSecondary, flex: 1, ...ff('700') },
+    comment: { fontSize: 13, color: c.textMuted, lineHeight: 18, ...ff('700') },
+    createdAt: { fontSize: 11, color: c.textMuted, ...ff('700') },
 
     fab: {
       position: 'absolute', bottom: 24, right: 20, width: 56, height: 56, borderRadius: 28,
       backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center',
       shadowColor: c.shadow, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8, elevation: 8,
     },
-    fabText: { fontSize: 24, color: c.onPrimary, fontWeight: '400' },
+    fabText: { fontSize: 24, color: c.onPrimary, ...ff('600') },
   });

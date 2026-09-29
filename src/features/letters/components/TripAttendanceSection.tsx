@@ -8,6 +8,7 @@ import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import type { Letter } from '@/types';
 import { tabelCodeMeta, tabelCodeColor } from '@/utils/tabelCodes';
 import { Section } from './DetailParts';
@@ -76,13 +77,13 @@ const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 16, paddingBottom: 10 },
     chip: { flexGrow: 1, minWidth: 70, borderRadius: 12, borderWidth: 1, paddingVertical: 8, paddingHorizontal: 10, alignItems: 'center', backgroundColor: c.bg },
-    chipValue: { fontSize: 18, fontWeight: '800' },
-    chipLabel: { fontSize: 11, color: c.textMuted, marginTop: 2 },
-    dayRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingVertical: 8, borderTopWidth: 1, borderTopColor: c.cardBorder },
-    dayDate: { width: 46, fontSize: 13, fontWeight: '700', color: c.text },
+    chipValue: { fontSize: 18, ...ff('900') },
+    chipLabel: { fontSize: 11, color: c.textMuted, marginTop: 2, ...ff('700') },
+    dayRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingVertical: 8, borderTopWidth: 2, borderTopColor: c.cardBorder },
+    dayDate: { width: 46, fontSize: 13, ...ff('800'), color: c.text },
     statusPill: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, maxWidth: 130 },
-    statusText: { fontSize: 11, fontWeight: '700' },
-    dayTimes: { flex: 1, fontSize: 12, color: c.textSecondary, textAlign: 'right' },
+    statusText: { fontSize: 11, ...ff('800') },
+    dayTimes: { flex: 1, fontSize: 12, color: c.textSecondary, textAlign: 'right', ...ff('700') },
     moreBtn: { alignSelf: 'center', paddingVertical: 10 },
-    moreText: { fontSize: 13, fontWeight: '700', color: c.primary },
+    moreText: { fontSize: 13, ...ff('800'), color: c.primary },
   });

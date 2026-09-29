@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
+import { ff } from '@/theme/typography';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { MonthNavigator } from '@/components/MonthNavigator';
@@ -258,21 +259,21 @@ const makeStyles = (c: ThemeColors) =>
     content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 32 },
 
     tabsRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
-    tab: { flex: 1, paddingVertical: 10, borderRadius: 10, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, alignItems: 'center' },
+    tab: { flex: 1, paddingVertical: 10, borderRadius: 10, backgroundColor: c.card, borderWidth: 2, borderColor: c.cardBorder, alignItems: 'center' },
     tabActive: { backgroundColor: c.primarySoft, borderColor: c.primaryLight },
-    tabText: { fontSize: 13, fontWeight: '600', color: c.textSecondary, paddingHorizontal: 8 },
+    tabText: { fontSize: 13, ...ff('700'), color: c.textSecondary, paddingHorizontal: 8 },
     tabTextActive: { color: c.primaryLight },
 
-    hint: { color: c.textMuted, fontSize: 14, paddingVertical: 12, textAlign: 'center' },
+    hint: { color: c.textMuted, fontSize: 14, paddingVertical: 12, textAlign: 'center', ...ff('700') },
 
-    gridScroll: { backgroundColor: c.card, borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder, overflow: 'hidden' },
+    gridScroll: { backgroundColor: c.card, borderRadius: 12, borderWidth: 2, borderColor: c.cardBorder, overflow: 'hidden' },
     gridRow: { flexDirection: 'row', alignItems: 'stretch' },
     headerCell: { backgroundColor: c.bg, height: ROW_HEIGHT },
-    nameCell: { width: NAME_COL_WIDTH, height: ROW_HEIGHT, paddingHorizontal: 8, paddingVertical: 8, justifyContent: 'center', borderRightWidth: 1, borderRightColor: c.cardBorder, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
-    nameText: { fontSize: 12, fontWeight: '600', color: c.text },
-    gridHeaderText: { fontSize: 12, fontWeight: '700', color: c.textSecondary, textAlign: 'center' },
+    nameCell: { width: NAME_COL_WIDTH, height: ROW_HEIGHT, paddingHorizontal: 8, paddingVertical: 8, justifyContent: 'center', borderRightWidth: 2, borderRightColor: c.cardBorder, borderBottomWidth: 2, borderBottomColor: c.cardBorder },
+    nameText: { fontSize: 12, ...ff('700'), color: c.text },
+    gridHeaderText: { fontSize: 12, ...ff('800'), color: c.textSecondary, textAlign: 'center' },
     weekendText: { color: c.primaryLight },
-    dayCell: { width: CELL_WIDTH, height: ROW_HEIGHT, alignItems: 'center', justifyContent: 'center', paddingVertical: 6, borderRightWidth: 1, borderRightColor: c.cardBorder, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
+    dayCell: { width: CELL_WIDTH, height: ROW_HEIGHT, alignItems: 'center', justifyContent: 'center', paddingVertical: 6, borderRightWidth: 2, borderRightColor: c.cardBorder, borderBottomWidth: 2, borderBottomColor: c.cardBorder },
     cellChip: { minWidth: 28, borderRadius: 6, paddingHorizontal: 4, paddingVertical: 3, alignItems: 'center' },
-    cellChipText: { fontSize: 9, fontWeight: '800', color: '#fff' },
+    cellChipText: { fontSize: 9, ...ff('900'), color: '#fff' },
   });
