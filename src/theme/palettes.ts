@@ -1,143 +1,200 @@
-// Shared color palette shape used across the whole app.
-// Both light and dark palettes implement the exact same keys so any
-// screen can switch instantly by reading from the active theme.
+// «Tomchi × v2» (2026-09-29). Yuzalar / siyoh / semantika — web v2
+// `src/styles/theme.css` dan AYNAN (paritet: qiymatni o'zgartirsangiz webda ham
+// o'zgartiring). Tomchi qo'shimchalari: `drop` (maskot ko'ki — havola / info /
+// ikkinchi darajali interaktiv), `logo`, `brandLip` (bosiladigan elementning
+// pastki «labi»).
+//
+// Eski kalitlar (primary, card, text, …) — ALIAS: eski ekranlar v3 to'lqinlarida
+// ko'chirilguncha yashaydi, oxirida o'chiriladi. Yangi kodda faqat yangi nomlar.
 
-export type ThemeColors = {
-  // surfaces
+type Core = {
   bg: string;
-  card: string;
-  cardElevated: string;
-  cardBorder: string;
-  overlay: string;
-  inputBg: string; // filled text-field background (design I)
-  // brand
-  primary: string;
-  primaryLight: string;
-  primarySoft: string; // translucent brand tint for chips/badges
-  primaryShadow: string; // the 3D «lip» under a primary button (design I)
-  hero: string;        // hero / summary banner background
-  heroText: string;    // text on the hero banner
-  // text
-  text: string;
-  textSecondary: string;
-  textMuted: string;
-  onPrimary: string;
-  // status
+  surface: string;
+  surface2: string;
+  elevated: string;
+  border: string;
+  borderStrong: string;
+  fg: string;
+  fgMuted: string;
+  fgSubtle: string;
+  fgOnBrand: string;
+  brand: string;
+  brandStrong: string;
+  brandSoft: string;
+  brandDeep: string;
+  brandLip: string;
+  accent: string;
   success: string;
   successSoft: string;
-  error: string;
-  errorSoft: string;
+  successMark: string;
   warning: string;
   warningSoft: string;
+  warningMark: string;
+  danger: string;
+  dangerSoft: string;
+  dangerMark: string;
   info: string;
-  // navigation (themed bar: light in light mode, dark in dark mode)
-  tabBar: string;
-  tabBarBorder: string;
-  tabBarActive: string;
-  tabBarInactive: string;
-  tabBarActiveBg: string; // soft pill behind the active tab
-  tabBarActiveBorder: string; // outline of the active tab box
-  // calendar / attendance
-  present: string;
-  absent: string;
-  weekend: string;
-  today: string;
-  // misc
+  infoSoft: string;
+  chart1: string;
+  chart2: string;
+  chart3: string;
+  chart4: string;
+  chart5: string;
+  chart6: string;
+  ring: string;
+  drop: string;
+  dropSoft: string;
+  logo: string;
+  overlay: string;
   skeleton: string;
   shadow: string;
 };
 
-// ── Dizayn «I · Tomchi» (2026-09-28 tanlandi) ────────────────────────────────
-// Duolingo uslubi: oq (tungi — to'q dengiz) yuza, kulrang 2px chegara bilan
-// ajraladigan kartalar, pastki «lab»li qalin tugmalar. Brend ko'k — logotipdagi
-// #0283DE, maskot tomchisi #1CB0F6; yashil — logotipdagi #0AC341 oilasi.
-const LOGO_BLUE = '#0283DE';
-const DROP_BLUE = '#1CB0F6';
-
-export const lightColors: ThemeColors = {
-  bg: '#FFFFFF',
-  card: '#FFFFFF',
-  cardElevated: '#FFFFFF',
-  cardBorder: '#E5E5E5',
-  overlay: 'rgba(0,0,0,0.45)',
-  inputBg: '#F7F7F7',
-
-  primary: LOGO_BLUE,
-  primaryLight: '#1482C8',
-  primarySoft: '#DDF4FF',
-  primaryShadow: '#0062A8',
-  hero: LOGO_BLUE,
-  heroText: '#FFFFFF',
-
-  text: '#3C3C3C',
-  textSecondary: '#6B6B6B',
-  textMuted: '#A0A0A0',
-  onPrimary: '#FFFFFF',
-
-  success: '#2BC155',
-  successSoft: '#E3F8E8',
-  error: '#FF4B4B',
-  errorSoft: '#FFE5E5',
-  warning: '#FF9600',
-  warningSoft: '#FFF1DA',
-  info: DROP_BLUE,
-
-  tabBar: '#FFFFFF',
-  tabBarBorder: '#E5E5E5',
-  tabBarActive: DROP_BLUE,
-  tabBarInactive: '#A0A0A0',
-  tabBarActiveBg: '#DDF4FF',
-  tabBarActiveBorder: '#84D8FF',
-
-  present: '#2BC155',
-  absent: '#FF4B4B',
-  weekend: '#F0F0F0',
-  today: DROP_BLUE,
-
-  skeleton: '#F0F0F0',
-  shadow: '#000000',
+type Legacy = {
+  card: string;
+  cardElevated: string;
+  cardBorder: string;
+  inputBg: string;
+  primary: string;
+  primaryLight: string;
+  primarySoft: string;
+  primaryShadow: string;
+  hero: string;
+  heroText: string;
+  text: string;
+  textSecondary: string;
+  textMuted: string;
+  onPrimary: string;
+  error: string;
+  errorSoft: string;
+  tabBar: string;
+  tabBarBorder: string;
+  tabBarActive: string;
+  tabBarInactive: string;
+  tabBarActiveBg: string;
+  tabBarActiveBorder: string;
+  present: string;
+  absent: string;
+  weekend: string;
+  today: string;
 };
 
-export const darkColors: ThemeColors = {
-  bg: '#131F24',
-  card: '#131F24',
-  cardElevated: '#1F2F36',
-  cardBorder: '#37464F',
+export type ThemeColors = Core & Legacy;
+
+function withLegacy(c: Core): ThemeColors {
+  return {
+    ...c,
+    card: c.surface,
+    cardElevated: c.elevated,
+    cardBorder: c.border,
+    inputBg: c.surface2,
+    primary: c.brand,
+    primaryLight: c.brandStrong,
+    primarySoft: c.brandSoft,
+    primaryShadow: c.brandLip,
+    hero: c.brand,
+    heroText: c.fgOnBrand,
+    text: c.fg,
+    textSecondary: c.fgMuted,
+    textMuted: c.fgSubtle,
+    onPrimary: c.fgOnBrand,
+    error: c.danger,
+    errorSoft: c.dangerSoft,
+    tabBar: c.surface,
+    tabBarBorder: c.border,
+    tabBarActive: c.brandStrong,
+    tabBarInactive: c.fgSubtle,
+    tabBarActiveBg: c.brandSoft,
+    tabBarActiveBorder: c.brandSoft,
+    present: c.successMark,
+    absent: c.dangerMark,
+    weekend: c.surface2,
+    today: c.brand,
+  };
+}
+
+export const lightColors: ThemeColors = withLegacy({
+  bg: '#F2F3FA',
+  surface: '#FFFFFF',
+  surface2: '#F3F3F5',
+  elevated: '#FFFFFF',
+  border: '#E7E8EA',
+  borderStrong: '#D9D9DE',
+  fg: '#23244A',
+  fgMuted: '#4A4C6E',
+  fgSubtle: '#5D5F84',
+  fgOnBrand: '#FFFFFF',
+  brand: '#7958FF',
+  brandStrong: '#6247D9',
+  brandSoft: '#F2EFFF',
+  brandDeep: '#523ABA',
+  brandLip: '#523ABA',
+  accent: '#895B13',
+  success: '#117243',
+  successSoft: '#E3F4EC',
+  successMark: '#18A15E',
+  warning: '#89540A',
+  warningSoft: '#FBF1E2',
+  warningMark: '#E09420',
+  danger: '#BB2929',
+  dangerSoft: '#FBE9E9',
+  dangerMark: '#E05252',
+  info: '#15699C',
+  infoSoft: '#E4F1F9',
+  chart1: '#18A15E',
+  chart2: '#E09420',
+  chart3: '#E05252',
+  chart4: '#7C5CFF',
+  chart5: '#1B87C9',
+  chart6: '#6E7191',
+  ring: '#7C5CFF',
+  drop: '#1CB0F6',
+  dropSoft: '#DDF4FF',
+  logo: '#0283DE',
+  overlay: 'rgba(35,36,74,0.45)',
+  skeleton: '#ECECF2',
+  shadow: '#23244A',
+});
+
+export const darkColors: ThemeColors = withLegacy({
+  bg: '#131430',
+  surface: '#1B1D3E',
+  surface2: '#222446',
+  elevated: '#191A38',
+  border: '#2A2C52',
+  borderStrong: '#3A3C68',
+  fg: '#EAEAF4',
+  fgMuted: '#A6A8C6',
+  fgSubtle: '#9193B7',
+  fgOnBrand: '#FFFFFF',
+  brand: '#7959FC',
+  brandStrong: '#A99BFF',
+  brandSoft: '#2B275D',
+  brandDeep: '#5B41CC',
+  brandLip: '#5B41CC',
+  accent: '#FFB648',
+  success: '#5FE39C',
+  successSoft: '#233549',
+  successMark: '#5FE39C',
+  warning: '#FFC876',
+  warningSoft: '#39313F',
+  warningMark: '#FFB648',
+  danger: '#FF9B9B',
+  dangerSoft: '#392946',
+  dangerMark: '#FF7A7A',
+  info: '#57C8FF',
+  infoSoft: '#223255',
+  chart1: '#5FE39C',
+  chart2: '#FFB648',
+  chart3: '#FF7A7A',
+  chart4: '#7C5CFF',
+  chart5: '#57C8FF',
+  chart6: '#6E7191',
+  ring: '#7C5CFF',
+  drop: '#49C0F8',
+  dropSoft: '#1B3452',
+  logo: '#1899D6',
   overlay: 'rgba(0,0,0,0.6)',
-  inputBg: '#1F2F36',
-
-  primary: '#1899D6',
-  primaryLight: '#49C0F8',
-  primarySoft: 'rgba(28,176,246,0.15)',
-  primaryShadow: '#1172A3',
-  hero: '#1899D6',
-  heroText: '#FFFFFF',
-
-  text: '#F1F7FB',
-  textSecondary: '#A9BAC3',
-  textMuted: '#6E818B',
-  onPrimary: '#FFFFFF',
-
-  success: '#3DD16A',
-  successSoft: 'rgba(43,193,85,0.16)',
-  error: '#FF6B6B',
-  errorSoft: 'rgba(255,75,75,0.16)',
-  warning: '#FFAB33',
-  warningSoft: 'rgba(255,150,0,0.16)',
-  info: '#49C0F8',
-
-  tabBar: '#131F24',
-  tabBarBorder: '#37464F',
-  tabBarActive: '#49C0F8',
-  tabBarInactive: '#6E818B',
-  tabBarActiveBg: 'rgba(28,176,246,0.15)',
-  tabBarActiveBorder: '#1F6F99',
-
-  present: '#3DD16A',
-  absent: '#FF6B6B',
-  weekend: '#1F2F36',
-  today: '#49C0F8',
-
-  skeleton: '#1F2F36',
+  skeleton: '#222446',
   shadow: '#000000',
-};
+});
