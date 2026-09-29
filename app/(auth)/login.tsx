@@ -21,8 +21,8 @@ import { NO_WEB_OUTLINE } from '../../src/theme/web';
 import { Icon } from '../../src/components/Icon';
 import { Flag } from '../../src/components/Flag';
 import { ChunkyButton } from '../../src/components/ChunkyButton';
-import { Tomchi } from '../../src/components/mascot/Tomchi';
-import { caretRatio, moodForLogin, type TomchiMood } from '../../src/components/mascot/tomchiPose';
+import { Tomchi } from '../../src/ui/mascot/Tomchi';
+import { caretRatio, moodForLogin, type TomchiMood } from '../../src/ui/mascot/tomchiPose';
 import { LANGUAGES, LANGUAGE_FLAG, LANGUAGE_NATIVE_NAME } from '../../src/i18n/locales';
 import { User } from '../../src/types';
 
