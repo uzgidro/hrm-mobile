@@ -25,4 +25,6 @@ export default {
   noMatch: 'Filtrga mos yozuv topilmadi',
   noMatchHint: "Qidiruv yoki tanlangan filtrlarni o'zgartirib ko'ring",
   clearFilters: 'Filtrlarni tozalash',
+  clear: 'Tozalash',
+  close: 'Yopish',
 } as const;

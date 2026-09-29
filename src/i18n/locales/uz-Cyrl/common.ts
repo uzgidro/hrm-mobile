@@ -23,4 +23,6 @@ export default {
   noMatch: 'Филтрга мос ёзув топилмади',
   noMatchHint: 'Қидирув ёки танланган филтрларни ўзгартириб кўринг',
   clearFilters: 'Филтрларни тозалаш',
+  clear: 'Тозалаш',
+  close: 'Ёпиш',
 } as const;

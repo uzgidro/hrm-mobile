@@ -23,4 +23,6 @@ export default {
   noMatch: 'Nothing matches the filters',
   noMatchHint: 'Try changing the search or the selected filters',
   clearFilters: 'Clear filters',
+  clear: 'Clear',
+  close: 'Close',
 } as const;

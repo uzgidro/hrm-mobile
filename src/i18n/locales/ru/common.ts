@@ -23,4 +23,6 @@ export default {
   noMatch: 'По фильтру ничего не найдено',
   noMatchHint: 'Измените поиск или выбранные фильтры',
   clearFilters: 'Сбросить фильтры',
+  clear: 'Очистить',
+  close: 'Закрыть',
 } as const;

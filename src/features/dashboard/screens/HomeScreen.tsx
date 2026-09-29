@@ -20,7 +20,7 @@ import { monthName, weekdayName } from '@/i18n/dates';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { ChunkyButton } from '@/components/ChunkyButton';
-import { Tomchi } from '@/components/mascot/Tomchi';
+import { Tomchi } from '@/ui/mascot/Tomchi';
 import { ff } from '@/theme/typography';
 import { useNavSettings } from '@/lib/navSettings';
 import { AttendanceDonut } from '@/components/AttendanceDonut';

@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/react-native';
 import { renderWithProviders } from '@/test/renderWithProviders';
-import { TomchiLoader } from '../mascot/TomchiLoader';
+import { TomchiLoader } from '@/ui/mascot/TomchiLoader';
 
 describe('TomchiLoader', () => {
   it('yuklanish holatini progressbar sifatida e\'lon qiladi va matnni ko\'rsatadi', async () => {

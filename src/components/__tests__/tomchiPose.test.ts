@@ -8,7 +8,7 @@ import {
   lookXToPupilDX,
   moodForLogin,
   tomchiPose,
-} from '../mascot/tomchiPose';
+} from '@/ui/mascot/tomchiPose';
 
 // Tomchi maskoti login ekranida foydalanuvchiga "javob beradi": login yozilganda
 // ko'zi kursorni kuzatadi, parol yashirin bo'lsa qo'li bilan ko'zini yopadi,
