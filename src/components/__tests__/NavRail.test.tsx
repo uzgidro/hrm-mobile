@@ -3,6 +3,8 @@ import { renderWithProviders } from '../../test/renderWithProviders';
 import { NavRail } from '../NavRail';
 import { useAuthStore } from '../../store/authStore';
 
+// v3: NavRail = planshetdagi tab bar — `visibleTabs` (asosiy qator) + v2 katalogi
+// bo'limlari (canAccessPage orqali) bitta manbadan.
 describe('NavRail', () => {
   beforeEach(() => {
     useAuthStore.setState({
@@ -11,32 +13,25 @@ describe('NavRail', () => {
     } as any);
   });
 
-  it('renders the Home destination label for an authenticated user', async () => {
-    const { getByText } = await renderWithProviders(<NavRail />);
-    expect(getByText('Asosiy')).toBeTruthy(); // modules.labels.home uz-Latn
+  it('xodim uchun asosiy tablar', async () => {
+    const { getByTestId } = await renderWithProviders(<NavRail />);
+    expect(getByTestId('rail-index')).toBeTruthy();
+    expect(getByTestId('rail-documents')).toBeTruthy();
+    expect(getByTestId('rail-modules')).toBeTruthy();
   });
 
-  // Web v2: a KPP POST account (type 'kpp', no employee card) gets the post
-  // screens only — home, phone directory, guests.
-  it('hides items the role cannot access (web-parity)', async () => {
-    useAuthStore.setState({
-      user: { type: 'kpp' } as any,
-      isAuthenticated: true,
-    } as any);
-    const { queryByText } = await renderWithProviders(<NavRail />);
-    expect(queryByText('Hujjatlar')).toBeNull(); // KPP has no documents nav
+  it("KPP post akkaunti: faqat Post va Profil, hujjatlar yo'q (web-parity)", async () => {
+    useAuthStore.setState({ user: { type: 'kpp' } as any, isAuthenticated: true } as any);
+    const { queryByTestId, getByTestId } = await renderWithProviders(<NavRail />);
+    expect(getByTestId('rail-post')).toBeTruthy();
+    expect(getByTestId('rail-profile')).toBeTruthy();
+    expect(queryByTestId('rail-index')).toBeNull();
+    expect(queryByTestId('rail-documents')).toBeNull();
   });
 
-  it('hides Orders and Letters from the PRIMARY row for a KPP post account (web-parity, mirrors bottom-tab href gating)', async () => {
-    useAuthStore.setState({
-      user: { type: 'kpp' } as any,
-      isAuthenticated: true,
-    } as any);
-    const { queryByText, getByText } = await renderWithProviders(<NavRail />);
-    // KPP still gets Home (always accessible) but not Orders/Letters, same as
-    // canAccessPage(user, 'orders'|'letters') = false gates the phone bottom tab.
-    expect(getByText('Asosiy')).toBeTruthy(); // modules.labels.home uz-Latn
-    expect(queryByText('Buyruqlar')).toBeNull(); // modules.labels.orders uz-Latn
-    expect(queryByText('Xatlar')).toBeNull(); // modules.labels.letters uz-Latn
+  it("katalog bo'limidagi ruxsatsiz modul chiqmaydi", async () => {
+    const { queryByTestId, getByTestId } = await renderWithProviders(<NavRail />);
+    expect(getByTestId('rail-mod-news')).toBeTruthy();
+    expect(queryByTestId('rail-mod-employees')).toBeNull();
   });
 });

@@ -222,19 +222,19 @@ export function routeForNotification(data: any): string | null {
   if (visitorId) return `/mehmon-detail?id=${visitorId}`;
   if (newsId != null) return '/news';
 
-  if (type.startsWith('order_act')) return '/(tabs)/orders';
-  if (type.startsWith('business_trip')) return '/(tabs)/letters';
+  if (type.startsWith('order_act')) return '/documents?seg=orders';
+  if (type.startsWith('business_trip')) return '/documents?seg=letters';
   // Safar bilan bog'liq YANGI turlar (2026-08-19). Ular `letter_id` bilan
   // keladi va yuqoridagi umumiy tarmoqdan o'tadi; id kelmagan (in-app) qatorda
   // xatlar ro'yxatiga tushamiz — 'business_trip' prefiksi ularga to'g'ri kelmaydi.
-  if (type.startsWith('trip_')) return '/(tabs)/letters';
+  if (type.startsWith('trip_')) return '/documents?seg=letters';
   if (type.startsWith('hr_order')) return '/work-leaves';
   if (type.startsWith('visitor')) return '/(tabs)/mehmonlar';
   if (type.startsWith('support_ticket')) return '/texnik-yordam';
   if (type.startsWith('news')) return '/news';
   if (type.startsWith('kpi')) return '/kpi';
   if (type.startsWith('work_leave')) return '/work-leaves';
-  if (type.startsWith('letter')) return '/(tabs)/letters';
+  if (type.startsWith('letter')) return '/documents?seg=letters';
   if (type.startsWith('card') || type.startsWith('workspace')) return '/loyihalar';
   // Both screens exist on mobile; these used to return null (tap did nothing).
   if (type.startsWith('navbatchilik')) return '/navbatchilik';

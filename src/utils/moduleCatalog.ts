@@ -47,10 +47,10 @@ export const CATALOG: CatalogEntry[] = [
   e('health', 'health', '/sogliq-korigi', 'check', 'pink', 'stats'),
   e('registrationStatus', 'registrationStatus', '/registratsiya-holati', 'idcard', 'drop', 'main'),
 
-  e('orders', 'orders', '/(tabs)/orders', 'orders', 'orange', 'documents'),
+  e('orders', 'orders', '/documents?seg=orders', 'orders', 'orange', 'documents'),
   e('orderTypes', 'orderTypes', '/buyruq-turlari', 'checklist', 'orange', 'documents'),
   e('tempOrders', 'tempOrders', '/vaqtinchalik-buyruqlar', 'clock', 'orange', 'documents'),
-  e('letters', 'letters', '/(tabs)/letters', 'mail', 'green', 'documents'),
+  e('letters', 'letters', '/documents?seg=letters', 'mail', 'green', 'documents'),
   e('documents', 'documents', '/hujjatlar', 'folder', 'drop', 'documents'),
 
   e('employees', 'employees', '/employees-list', 'idcard', 'violet', 'stats'),

@@ -31,6 +31,7 @@ import chairman from './chairman';
 import directory from './directory';
 import qrLogin from './qrLogin';
 import password from './password';
+import tabs from './tabs';
 
 export default {
   common,
@@ -64,4 +65,5 @@ export default {
   directory,
   qrLogin,
   password,
+  tabs,
 } as const;

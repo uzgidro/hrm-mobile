@@ -174,7 +174,7 @@ describe('yangi bildirishnoma turlari (2026-08-19)', () => {
     );
     // In-app qatorda letter_id bo'lmasligi mumkin — xatlar ro'yxatiga tushamiz
     // ('business_trip' prefiksi bu turlarga to'g'ri kelmaydi).
-    expect(routeForNotification({ notification_type: 'trip_self_finished' })).toBe('/(tabs)/letters');
+    expect(routeForNotification({ notification_type: 'trip_self_finished' })).toBe('/documents?seg=letters');
   });
 
   it('mehmon / texnik yordam / buyruq muddati turlari o\'z ekraniga boradi', () => {
@@ -208,7 +208,7 @@ describe("routeForNotification — loyiha / texnik yordam / xat", () => {
 
   it("xat turlari uchun zaxira yo'nalish — bildirgi va arizalar ro'yxati", () => {
     expect(routeForNotification({ type: 'letter_registered', letter_id: 4 })).toBe('/letter-detail?id=4');
-    expect(routeForNotification({ type: 'letter_agreement_requested' })).toBe('/(tabs)/letters');
+    expect(routeForNotification({ type: 'letter_agreement_requested' })).toBe('/documents?seg=letters');
   });
 });
 
@@ -224,5 +224,25 @@ describe('notificationMeta — nomsiz qolgan oilalar', () => {
   it("eng ko'p uchraydigan turlar aniq sarlavhaga ega", () => {
     expect(notificationMeta('letter_agreement_requested').title).toBe("Kelishuv so'raldi");
     expect(notificationMeta('pending_action_digest').title).toBe('Sizni kutayotgan hujjatlar');
+  });
+});
+
+describe("routeForNotification — v3 yo'llari mavjud", () => {
+  it('buyruq bildirishnomasi Hujjatlar tabining Buyruqlar segmentiga', () => {
+    expect(routeForNotification({ type: 'order_act_created' })).toBe('/documents?seg=orders');
+  });
+  it("qaytarilgan har bir yo'l app/ da fayl sifatida bor", () => {
+    const fs = require('fs') as typeof import('fs');
+    const path = require('path') as typeof import('path');
+    const root = path.join(__dirname, '../../..');
+    const types = ['order_act_x', 'business_trip_x', 'trip_x', 'hr_order_x', 'visitor_x', 'support_ticket_x',
+      'news_x', 'kpi_x', 'work_leave_x', 'letter_x', 'card_x', 'navbatchilik_x', 'employee_assignment_x'];
+    for (const type of types) {
+      const r = routeForNotification({ type });
+      expect(r).toBeTruthy();
+      const clean = String(r).replace(/^\//, '').replace(/\?.*$/, '');
+      const ok = [`app/${clean}.tsx`, `app/(tabs)/${clean}.tsx`].some((p) => fs.existsSync(path.join(root, p)));
+      expect({ type, route: r, ok }).toEqual({ type, route: r, ok: true });
+    }
   });
 });

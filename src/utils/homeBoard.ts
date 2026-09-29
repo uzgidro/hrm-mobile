@@ -16,7 +16,7 @@ import {
   isMonitoringOperator,
   isNazoratchi,
   isSeparateAccount,
-} from '@/utils/roles';
+} from './roles';
 
 export type HomeBoard = 'monitoring' | 'post' | 'leader' | 'employee';
 
