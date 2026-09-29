@@ -94,3 +94,21 @@ describe('gridTileWidth', () => {
     expect(GRID_GAP).toBe(12);
   });
 });
+
+describe('sizeClass (v3)', () => {
+  it.each<[number, number, string, number, boolean, boolean]>([
+    [390, 844, 'compact', 1, false, false],
+    [599, 900, 'compact', 1, false, false],
+    [844, 390, 'medium', 2, true, false], // telefon landshaft
+    [600, 960, 'medium', 2, true, false], // kichik planshet portret
+    [1023, 768, 'medium', 2, true, false],
+    [1024, 768, 'expanded', 3, true, true],
+    [1366, 1024, 'expanded', 3, true, true],
+  ])('%i×%i → %s', (w, h, cls, cols, rail, md) => {
+    const bp = resolveBreakpoint(w, h);
+    expect(bp.sizeClass).toBe(cls);
+    expect(bp.bentoColumns).toBe(cols);
+    expect(bp.useRail).toBe(rail);
+    expect(bp.masterDetail).toBe(md);
+  });
+});

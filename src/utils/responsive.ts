@@ -17,7 +17,23 @@ type Breakpoint = {
   contentMaxWidth: number;
   /** Column count for tile/card grids (modules, employees, …). */
   gridColumns: number;
+  /** v3 o'lcham sinfi — ENI bo'yicha (orientatsiyadan qat'i nazar). */
+  sizeClass: SizeClass;
+  /** Bosh sahifa bento ustunlari: compact 1, medium 2, expanded 3. */
+  bentoColumns: 1 | 2 | 3;
+  /** Pastki tab bar o'rniga yon NavRail. */
+  useRail: boolean;
+  /** Ro'yxat + tafsilot yonma-yon. */
+  masterDetail: boolean;
 };
+
+export type SizeClass = 'compact' | 'medium' | 'expanded';
+
+export function sizeClassFor(width: number): SizeClass {
+  if (width >= 1024) return 'expanded';
+  if (width >= 600) return 'medium';
+  return 'compact';
+}
 
 export function resolveBreakpoint(width: number, height: number): Breakpoint {
   const shortestSide = Math.min(width, height);
@@ -40,7 +56,21 @@ export function resolveBreakpoint(width: number, height: number): Breakpoint {
   // Never exceed the real width (small tablets, split panes, web narrow windows).
   const contentMaxWidth = Math.min(maxWidth, width);
 
-  return { width, height, isTablet, isLandscape, contentMaxWidth, gridColumns };
+  const sizeClass = sizeClassFor(width);
+  const bentoColumns = sizeClass === 'expanded' ? 3 : sizeClass === 'medium' ? 2 : 1;
+
+  return {
+    width,
+    height,
+    isTablet,
+    isLandscape,
+    contentMaxWidth,
+    gridColumns,
+    sizeClass,
+    bentoColumns,
+    useRail: sizeClass !== 'compact',
+    masterDetail: sizeClass === 'expanded',
+  };
 }
 
 export function useBreakpoint(): Breakpoint {
