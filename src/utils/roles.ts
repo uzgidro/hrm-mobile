@@ -339,7 +339,13 @@ export type PageKey =
   | 'employees' | 'attendance' | 'requests' | 'documents' | 'kpi'
   | 'timesheet' | 'assistant' | 'salary' | 'team' | 'birthdays' | 'news'
   | 'notifications' | 'profile' | 'support' | 'chairman' | 'directory' | 'terminals'
-  | 'duty' | 'holidays';
+  | 'duty' | 'holidays'
+  // v3: web v2 katalogining qolgan modullari (ekranlari to'lqinlarda — `ready`).
+  | 'services' | 'zoom' | 'vehicles' | 'ijro' | 'workPlan' | 'medical' | 'health'
+  | 'registrationStatus' | 'orderTypes' | 'tempOrders' | 'staffPositions' | 'structure'
+  | 'responsibles' | 'hrQuality' | 'trainings' | 'learning' | 'inspections' | 'reports'
+  | 'dictionaries' | 'tabelSettings' | 'monitoring' | 'kpp' | 'videoGuide' | 'users'
+  | 'registrations' | 'auditLog' | 'branches' | 'turnstiles' | 'customFields' | 'sysHealth' | 'lms';
 
 /** Web v2 `RoleKey` — the key a module's audience is written in. */
 export type RoleKey =
@@ -399,9 +405,32 @@ type ModuleDef = {
   gates?: ModuleGate[];
   /** Also open to a system admin (admin account / AKT employee), web SYSTEM_ADMIN_KEYS. */
   systemAdmin?: boolean;
+  /**
+   * v3: mobil ekrani bormi. `false` — modul HECH KIMGA ko'rinmaydi (singan havola
+   * bo'lmasin); tegishli to'lqin ekranni qurgach `true` bo'ladi. Default `true`.
+   */
+  ready?: boolean;
 };
 
 const needsEmployee: ModuleGate = (u) => !!u?.employee?.id || isSiteMasterAdmin(u);
+// v2 navConfig darvozalari (needsMedical / needsHealth / needsReports / needsFleet).
+const needsMedical: ModuleGate = (u) => u?.medical_enabled === true;
+const needsHealth: ModuleGate = (u) => !!u?.nurse_branch_ids?.length || isSiteMasterAdmin(u);
+const needsFleet: ModuleGate = (u) =>
+  isSiteMasterAdmin(u) || !!u?.transport_branch_ids?.length || !!u?.transport_approver_branch_ids?.length;
+
+/** v2 `canSeeReports` — modul darvozasi (server `services/reports/access.py` bilan bir xil). */
+export function reportsGate(user?: User | null): boolean {
+  return (
+    isMasterAdmin(user) ||
+    user?.type === 'admin' ||
+    isHR(user) ||
+    isDeputy(user) ||
+    isAccounting(user) ||
+    isKpiAdmin(user) ||
+    !!user?.is_line_manager
+  );
+}
 
 /**
  * ⚠️ THE MODULE CATALOGUE — copied from web v2 `navConfig.ts` MODULES, keyed by
@@ -435,7 +464,50 @@ const MODULE_FOR_PAGE: Partial<Record<PageKey, ModuleDef>> = {
   requests: { key: 'requestPermission', defaultRoles: ALL },
   holidays: { key: 'holidays', defaultRoles: ADMIN_HR },
   terminals: { key: 'hik', defaultRoles: ADMIN_ONLY, systemAdmin: true },
+
+  // ── v3: qolgan v2 modullari. `ready: false` — ekran hali yo'q (W2–W6). ──
+  services: { key: 'services', defaultRoles: [...ALL, 'guest'], ready: false },
+  zoom: { key: 'zoom', defaultRoles: ALL, ready: false },
+  vehicles: { key: 'vehicles', defaultRoles: ALL, gates: [needsFleet], ready: false },
+  ijro: { key: 'ijro', defaultRoles: ALL, ready: false },
+  workPlan: { key: 'workPlan', defaultRoles: ADMIN_HR_LEAD, ready: false },
+  medical: { key: 'medical', defaultRoles: ALL, gates: [needsMedical], ready: false },
+  health: { key: 'health', defaultRoles: ALL, gates: [needsHealth], ready: false },
+  registrationStatus: { key: 'registrationStatus', defaultRoles: ['guest'], ready: false },
+  orderTypes: { key: 'orderTypes', defaultRoles: ADMIN_HR, ready: false },
+  tempOrders: { key: 'tempOrders', defaultRoles: ADMIN_HR, ready: false },
+  staffPositions: { key: 'staffPositions', defaultRoles: ADMIN_HR_LEAD, ready: false },
+  structure: { key: 'structure', defaultRoles: ALL, ready: false },
+  responsibles: { key: 'responsibles', defaultRoles: ADMIN_HR, ready: false },
+  hrQuality: { key: 'hrQuality', defaultRoles: ADMIN_HR, ready: false },
+  trainings: { key: 'trainings', defaultRoles: ALL, ready: false },
+  learning: { key: 'learning', defaultRoles: ALL, ready: false },
+  inspections: { key: 'inspections', defaultRoles: ADMIN_HR_LEAD, ready: false },
+  reports: {
+    key: 'reports',
+    defaultRoles: ['masterAdmin', 'ministr', 'deputy', 'hr', 'accounting', 'employee'],
+    gates: [reportsGate],
+    ready: false,
+  },
+  dictionaries: { key: 'dictionaries', defaultRoles: ALL, ready: false },
+  tabelSettings: { key: 'tabelSettings', defaultRoles: ADMIN_HR, ready: false },
+  monitoring: { key: 'monitoring', defaultRoles: ['masterAdmin', 'monitoring'], ready: false },
+  kpp: { key: 'kpp', defaultRoles: ['kpp', 'masterAdmin'], ready: false },
+  videoGuide: { key: 'videoGuide', defaultRoles: ALL, ready: false },
+  users: { key: 'users', defaultRoles: ADMIN_ONLY, ready: false },
+  registrations: { key: 'registrations', defaultRoles: ADMIN_ONLY, systemAdmin: true, ready: false },
+  auditLog: { key: 'auditLog', defaultRoles: ADMIN_ONLY, ready: false },
+  branches: { key: 'branches', defaultRoles: ADMIN_ONLY, systemAdmin: true, ready: false },
+  turnstiles: { key: 'turnstiles', defaultRoles: ADMIN_ONLY, systemAdmin: true, ready: false },
+  customFields: { key: 'customFields', defaultRoles: ADMIN_ONLY, systemAdmin: true, ready: false },
+  sysHealth: { key: 'sysHealth', defaultRoles: ADMIN_ONLY, ready: false },
+  lms: { key: 'lms', defaultRoles: ADMIN_ONLY, ready: false },
 };
+
+/** v3: modulning mobil ekrani bormi (katalogda `ready !== false`). Katalogda yo'q sahifa — tayyor. */
+export function isModuleReady(key: PageKey): boolean {
+  return MODULE_FOR_PAGE[key]?.ready !== false;
+}
 
 /** Saved shape of the `nav.modules` system setting. Absent module or field = default. */
 export type NavModuleOverrides = Record<
@@ -452,8 +524,11 @@ export function setNavOverrides(next: NavModuleOverrides | undefined): void {
   navOverrides = next;
 }
 
-/** Post/kiosk accounts get the post screens only (web POST_ACCOUNT_KEYS). */
-const POST_ACCOUNT_PAGES: PageKey[] = ['home', 'directory', 'guests'];
+/** Post/kiosk accounts get the post screens only (web POST_ACCOUNT_KEYS): the shared
+ *  ones plus the ONE watch screen this post works on (kpp → kpp, else monitoring). */
+function postAccountPages(user: User | null | undefined): PageKey[] {
+  return ['home', 'directory', 'guests', user?.type === 'kpp' ? 'kpp' : 'monitoring'];
+}
 
 /** Whether the given user may see a page. Mirrors web v2 getNavForUser. */
 export function canAccessPage(
@@ -467,6 +542,7 @@ export function canAccessPage(
     return isMasterAdmin(user) || user?.type === 'admin' || isHR(user) || isDeputy(user);
   }
   const mod = MODULE_FOR_PAGE[key];
+  if (mod?.ready === false) return false;
   // Mobile-only personal pages (salary, birthdays, notifications, profile).
   if (!mod) return !isSeparateAccount(user) || key === 'notifications' || key === 'profile';
 
@@ -475,7 +551,7 @@ export function canAccessPage(
   const systemAdmin = !!mod.systemAdmin && canMonitorTerminals(user);
   // A pure `admin` account has no employee card: system screens only.
   if (isBranchAdmin(user)) return systemAdmin;
-  if (isSeparateAccount(user)) return POST_ACCOUNT_PAGES.includes(key);
+  if (isSeparateAccount(user)) return postAccountPages(user).includes(key);
   const audience = (cfg?.roles ?? mod.defaultRoles) as string[];
   if (!audience.includes(getRoleKey(user)) && !systemAdmin) return false;
   // Branch-scoped module: an empty list means everywhere.

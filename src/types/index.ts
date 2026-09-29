@@ -44,6 +44,10 @@ export interface User {
   password_days_left?: number | null;
   /** Heads a department or has anyone reporting to them (server `scoping.is_line_manager`). Gates «Mening jamoam». */
   is_line_manager?: boolean;
+  /** Filialda tibbiy ko'rik moduli yoqilgan (auth/me) — v2 needsMedical. */
+  medical_enabled?: boolean;
+  /** Hamshira sifatida biriktirilgan filiallar (auth/me) — v2 needsHealth. */
+  nurse_branch_ids?: number[];
   /** May view (not edit) a duty roster — web v2 `canSeeDuty`. */
   is_navbatchi_viewer?: boolean;
   /** Branches where this user keeps the fleet / approves cars (web v2 `canSeeFleet`). */
