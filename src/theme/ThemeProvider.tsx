@@ -16,7 +16,7 @@ interface ThemeContextValue {
   mode: ThemeMode;
   setMode: (mode: ThemeMode) => void;
   isDark: boolean;
-  /** Nunito loaded — `ff()` now returns the real family (styles rebuild on flip). */
+  /** Nunito + Inter loaded — `ff()` now returns the real family (styles rebuild on flip). */
   fontsReady: boolean;
 }
 
@@ -27,7 +27,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [mode, setModeState] = useState<ThemeMode>('system');
   const [fontsReady, setFontsReady] = useState(fontsAreReady());
 
-  // Nunito (dizayn I). Best-effort: yuklanmasa ilova tizim shriftida ishlayveradi.
+  // Nunito + Inter (v3 «Tomchi × v2»). Best-effort: yuklanmasa ilova tizim shriftida ishlayveradi.
   useEffect(() => {
     if (fontsReady) return;
     let alive = true;
