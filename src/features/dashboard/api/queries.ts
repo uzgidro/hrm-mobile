@@ -302,3 +302,15 @@ export function overdueSummaryQuery(branchId: number | undefined) {
     retry: false,
   });
 }
+
+/** Tug'ilgan kunlar — prefetchHomeData va birthdays feature bilan BIR XIL kalit (umumiy kesh). */
+export function homeBirthdaysQuery(branchId: number | undefined) {
+  return queryOptions({
+    queryKey: ['birthdays', 'list', branchId ?? null] as const,
+    queryFn: () =>
+      apiClient
+        .get(EMPLOYEES_BIRTHDAYS, { params: branchParams(branchId) })
+        .then((r) => (Array.isArray(r.data) ? r.data : unwrapList<EmployeeBirthday>(r.data)) as EmployeeBirthday[]),
+    staleTime: 60 * 60 * 1000,
+  });
+}

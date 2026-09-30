@@ -76,8 +76,15 @@ export type BoardRow = {
   note?: string | null;
 };
 
+type DirectionLike = Pick<BoardEvent, 'direction_type' | 'check_in_out_type' | 'turnstile'>;
+
+/** Chiqish voqeasimi (v1/v2 qoidasi; noma'lum — kirish). */
+export function isExitEvent(e: { direction_type?: string | null; check_in_out_type?: number | null; turnstile?: { acs_dev_name?: string } | null }): boolean {
+  return eventType(e as DirectionLike) === 2;
+}
+
 /** entry=1, exit=2 — v1/v2 yo'nalish aniqlash (noma'lum → kirish). */
-function eventType(e: BoardEvent): 1 | 2 {
+function eventType(e: DirectionLike): 1 | 2 {
   if (e.direction_type === 'entrance' || e.check_in_out_type === 1) return 1;
   if (e.direction_type === 'exit' || e.check_in_out_type === 2) return 2;
   const dev = (e.turnstile?.acs_dev_name || '').toLowerCase();
