@@ -7,7 +7,15 @@ import {
   NOTIFICATIONS_LIST,
   TURNSTILE_ATTENDANCE_EVENTS,
   EMPLOYEES_BIRTHDAYS,
+  TURNSTILE_DAY_BOARD,
+  DASHBOARD_EMPLOYEES_BY_CATEGORY,
+  DASHBOARD_EMPLOYEE_COUNT,
+  DASHBOARD_AGE_STATS,
+  DASHBOARD_NATIONALITY_STATS,
+  DASHBOARD_JOB_POSITION_STATS,
+  DASHBOARD_OVERDUE_TASKS,
 } from '@/api/urls';
+import type { DayBoard, EmployeesByCategory } from '../utils/attendanceBoard';
 import { fetchAllAttendanceEvents, attendanceQueryKey, dayRosterQuery } from '@/utils/attendance';
 import { leaveStatusGroup } from '@/utils/leaveStatus';
 import { menuBadgesQuery } from '@/features/notifications/api/queries';
@@ -190,5 +198,107 @@ export function prefetchHomeData(
         })
         .then((r) => r.data as EmployeeBirthday[]),
     staleTime: 60 * 60 * 1000,
+  });
+}
+
+// ── v3 board so'rovlari (web v2 `useDashboard` / `useEmployeeStats` / `useOverdueSummary`) ──
+// Hammasi `['dashboard', …]` ostida — pull-to-refresh `dashboardKeys.all` ni invalidatsiya qiladi.
+export const dashboardKeys = {
+  all: ['dashboard'] as const,
+  day: (branchId: number | undefined, day: string) => ['dashboard', 'day-board', branchId ?? null, day] as const,
+  categories: (branchId: number | undefined) => ['dashboard', 'categories', branchId ?? null] as const,
+  composition: (branchId: number | undefined) => ['dashboard', 'composition', branchId ?? null] as const,
+  overdue: (branchId: number | undefined) => ['dashboard', 'overdue', branchId ?? null] as const,
+};
+
+const branchParams = (branchId: number | undefined) => (branchId ? { organization_branch_id: branchId } : {});
+
+/** Kunlik taxta — v2: cross-branch voqealar lentaga kiradi, lenta cheklanmagan (latest: -1). */
+export function boardDayQuery(branchId: number | undefined, day: string) {
+  return queryOptions({
+    queryKey: dashboardKeys.day(branchId, day),
+    queryFn: () =>
+      apiClient
+        .get<DayBoard>(TURNSTILE_DAY_BOARD, {
+          params: { ...branchParams(branchId), day, include_cross_branch: true, latest: -1 },
+        })
+        .then((r) => r.data),
+    staleTime: 60 * 1000,
+  });
+}
+
+export function boardCategoriesQuery(branchId: number | undefined) {
+  return queryOptions({
+    queryKey: dashboardKeys.categories(branchId),
+    queryFn: () =>
+      apiClient
+        .get<EmployeesByCategory>(DASHBOARD_EMPLOYEES_BY_CATEGORY, { params: branchParams(branchId) })
+        .then((r) => r.data ?? {}),
+    staleTime: 60 * 1000,
+  });
+}
+
+export type Composition = {
+  total: number;
+  gender: { male: number; female: number; unknown: number };
+  age: { key: string; value: number }[];
+  nationality: { key: string; value: number }[];
+  positions: { label: string; count: number }[];
+};
+
+/**
+ * «Xodimlar tarkibi» kartasi — v2 DemographicsPanel manbalari. To'rt so'rov
+ * parallel; bittasi yiqilsa o'sha bo'lim bo'sh qoladi, karta butunlay emas.
+ */
+export function compositionQuery(branchId: number | undefined) {
+  return queryOptions({
+    queryKey: dashboardKeys.composition(branchId),
+    queryFn: async (): Promise<Composition> => {
+      const params = { params: branchParams(branchId) };
+      const [count, age, nat, pos] = await Promise.allSettled([
+        apiClient.get(DASHBOARD_EMPLOYEE_COUNT, params),
+        apiClient.get(DASHBOARD_AGE_STATS, params),
+        apiClient.get(DASHBOARD_NATIONALITY_STATS, params),
+        apiClient.get(DASHBOARD_JOB_POSITION_STATS, params),
+      ]);
+      const val = <T,>(r: PromiseSettledResult<{ data: T }>): T | undefined =>
+        r.status === 'fulfilled' ? r.value.data : undefined;
+      const c = val<{ total_count?: number; gender_stats?: { male?: number; female?: number; unknown?: number } }>(count);
+      const g = c?.gender_stats ?? {};
+      const gender = { male: g.male ?? 0, female: g.female ?? 0, unknown: g.unknown ?? 0 };
+      const ageStats = val<{ stats?: Record<string, number> }>(age)?.stats ?? {};
+      const nats = val<{ nationality?: string | null; count: number }[]>(nat) ?? [];
+      const posRows = val<{ job_position_name?: string | null; count: number }[]>(pos) ?? [];
+      return {
+        total: c?.total_count ?? gender.male + gender.female + gender.unknown,
+        gender,
+        age: Object.entries(ageStats)
+          .map(([key, v]) => ({ key, value: Number(v) }))
+          .filter((x) => x.value > 0)
+          .sort((a, b) => b.value - a.value),
+        nationality: nats
+          .filter((n) => n.count > 0)
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 6)
+          .map((n) => ({ key: n.nationality || 'Unknown', value: n.count })),
+        positions: posRows
+          .filter((p) => p.count > 0)
+          .sort((a, b) => b.count - a.count)
+          .map((p) => ({ label: p.job_position_name ?? '—', count: p.count })),
+      };
+    },
+    staleTime: 10 * 60 * 1000,
+  });
+}
+
+export type OverdueSummary = { total?: number; by_department?: { department_name: string; count: number }[] };
+
+export function overdueSummaryQuery(branchId: number | undefined) {
+  return queryOptions({
+    queryKey: dashboardKeys.overdue(branchId),
+    queryFn: () =>
+      apiClient.get<OverdueSummary>(DASHBOARD_OVERDUE_TASKS, { params: branchParams(branchId) }).then((r) => r.data),
+    staleTime: 5 * 60 * 1000,
+    retry: false,
   });
 }

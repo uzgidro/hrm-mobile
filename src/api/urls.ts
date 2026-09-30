@@ -340,3 +340,12 @@ export const SUPPORT_TICKET_READ = (id: number) => `support-tickets/${id}/read`;
 export const HIK_MONITORING_SUMMARY = 'hik-monitoring/summary';
 export const HIK_MONITORING_DEVICES = 'hik-monitoring/devices';
 export const ONLYOFFICE_SERVER_URL = Env.onlyOfficeUrl;
+
+// ── v3 bosh sahifa (web v2 nocturne boardlari bilan bir xil manbalar) ─────────
+// Kunlik taxta: server tomonda xodim bo'yicha yig'ilgan kirish/chiqish + lenta.
+export const TURNSTILE_DAY_BOARD = 'turnstile-attendance-events/day-board';
+export const DASHBOARD_EMPLOYEE_COUNT = 'dashboard/employee-count';
+export const DASHBOARD_AGE_STATS = 'dashboard/age-stats';
+export const DASHBOARD_NATIONALITY_STATS = 'dashboard/nationality-stats';
+export const DASHBOARD_JOB_POSITION_STATS = 'dashboard/job-position-stats';
+export const DASHBOARD_OVERDUE_TASKS = 'dashboard/overdue-tasks';
