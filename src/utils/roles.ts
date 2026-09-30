@@ -492,7 +492,7 @@ const MODULE_FOR_PAGE: Partial<Record<PageKey, ModuleDef>> = {
   dictionaries: { key: 'dictionaries', defaultRoles: ALL, ready: false },
   tabelSettings: { key: 'tabelSettings', defaultRoles: ADMIN_HR, ready: false },
   monitoring: { key: 'monitoring', defaultRoles: ['masterAdmin', 'monitoring'], ready: false },
-  kpp: { key: 'kpp', defaultRoles: ['kpp', 'masterAdmin'], ready: false },
+  kpp: { key: 'kpp', defaultRoles: ['kpp', 'masterAdmin'] },
   videoGuide: { key: 'videoGuide', defaultRoles: ALL, ready: false },
   users: { key: 'users', defaultRoles: ADMIN_ONLY, ready: false },
   registrations: { key: 'registrations', defaultRoles: ADMIN_ONLY, systemAdmin: true, ready: false },

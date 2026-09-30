@@ -27,4 +27,5 @@ export default {
   clearFilters: 'Filtrlarni tozalash',
   clear: 'Tozalash',
   close: 'Yopish',
+  back: 'Orqaga',
 } as const;

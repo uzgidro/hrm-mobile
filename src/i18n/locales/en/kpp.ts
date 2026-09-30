@@ -1,0 +1,22 @@
+// KPP posti (web v2 KppPage) matnlari.
+export default {
+  title: 'Checkpoint post',
+  entered: 'In',
+  exited: 'Out',
+  searchGuest: 'Search guests…',
+  noGuests: 'No guests found',
+  todayPasses: "Today's passes",
+  noPasses: 'No passes today',
+  noPassesHint: 'A guest passing the turnstile shows up here.',
+  all: 'All',
+  today: 'Today',
+  yesterday: 'Yesterday',
+  noVisit: 'No visit recorded',
+  noVisitShort: 'No visit',
+  noOrganization: 'No organization',
+  host: 'Host',
+  visits_one: '{{count}} visit',
+  visits_other: '{{count}} visits',
+  guests: 'Guests',
+  clearSelection: 'Clear selection',
+} as const;

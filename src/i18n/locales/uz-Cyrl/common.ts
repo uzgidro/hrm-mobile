@@ -25,4 +25,5 @@ export default {
   clearFilters: 'Филтрларни тозалаш',
   clear: 'Тозалаш',
   close: 'Ёпиш',
+  back: 'Орқага',
 } as const;

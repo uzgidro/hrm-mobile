@@ -25,4 +25,5 @@ export default {
   clearFilters: 'Clear filters',
   clear: 'Clear',
   close: 'Close',
+  back: 'Back',
 } as const;

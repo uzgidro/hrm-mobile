@@ -30,6 +30,7 @@ import directory from './directory';
 import qrLogin from './qrLogin';
 import password from './password';
 import tabs from './tabs';
+import kpp from './kpp';
 
 export default {
   common,
@@ -64,4 +65,5 @@ export default {
   qrLogin,
   password,
   tabs,
+  kpp,
 } as const;

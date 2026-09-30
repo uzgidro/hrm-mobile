@@ -1,0 +1,22 @@
+// KPP posti (web v2 KppPage) matnlari.
+export default {
+  title: 'КПП пости',
+  entered: 'Кирди',
+  exited: 'Чиқди',
+  searchGuest: 'Меҳмон қидириш…',
+  noGuests: 'Меҳмон топилмади',
+  todayPasses: 'Бугунги ўтишлар',
+  noPasses: 'Бугун ўтиш йўқ',
+  noPassesHint: 'Турникетдан меҳмон ўтиши билан шу ерда кўринади.',
+  all: 'Барчаси',
+  today: 'Бугун',
+  yesterday: 'Кеча',
+  noVisit: 'Ташриф қайд этилмаган',
+  noVisitShort: 'Ташрифсиз',
+  noOrganization: 'Ташкилот кўрсатилмаган',
+  host: 'Кимга',
+  visits_one: '{{count}} ташриф',
+  visits_other: '{{count}} ташриф',
+  guests: 'Меҳмонлар',
+  clearSelection: 'Танловни бекор қилиш',
+} as const;

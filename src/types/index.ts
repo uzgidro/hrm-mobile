@@ -44,6 +44,8 @@ export interface User {
   password_days_left?: number | null;
   /** Heads a department or has anyone reporting to them (server `scoping.is_line_manager`). Gates «Mening jamoam». */
   is_line_manager?: boolean;
+  /** Kiosk (kpp / monitoring) akkauntining filiali — xodim kartasi yo'q akkauntlar uchun. */
+  organization_branch_id?: number | null;
   /** Filialda tibbiy ko'rik moduli yoqilgan (auth/me) — v2 needsMedical. */
   medical_enabled?: boolean;
   /** Hamshira sifatida biriktirilgan filiallar (auth/me) — v2 needsHealth. */

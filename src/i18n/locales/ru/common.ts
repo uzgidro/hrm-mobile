@@ -25,4 +25,5 @@ export default {
   clearFilters: 'Сбросить фильтры',
   clear: 'Очистить',
   close: 'Закрыть',
+  back: 'Назад',
 } as const;
