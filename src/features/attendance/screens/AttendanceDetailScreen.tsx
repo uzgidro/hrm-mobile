@@ -4,6 +4,8 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useLocalSearchParams } from 'expo-router';
+import { filterFromParam } from '../utils/filterParam';
 import dayjs from 'dayjs';
 import { useAuthStore } from '@/store/authStore';
 import { resolveEmployeeBranchId } from '@/utils/branch';
@@ -35,7 +37,9 @@ export default function AttendanceDetailScreen() {
     resolveEmployeeBranchId(user?.employee);
 
   const [selectedDate, setSelectedDate] = useState(dayjs().format('YYYY-MM-DD'));
-  const [sectionFilter, setSectionFilter] = useState<StatusGroup | null>(null);
+  // Bosh sahifa tile'idan (`?filter=late` …) kelsa — shu holat bilan ochiladi.
+  const { filter } = useLocalSearchParams<{ filter?: string }>();
+  const [sectionFilter, setSectionFilter] = useState<StatusGroup | null>(() => filterFromParam(filter));
   const selDay = dayjs(selectedDate);
   const isToday = selectedDate === dayjs().format('YYYY-MM-DD');
   const dateLabel = `${selDay.date()} ${monthName(selDay.month())} ${selDay.year()} (${weekdayName(selDay.day())})`;
