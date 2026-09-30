@@ -95,3 +95,16 @@ describe('PinPad', () => {
     expect(getByTestId('pin-error')).toHaveTextContent("Noto'g'ri PIN");
   });
 });
+
+describe('PinPad — v3 uslubi', () => {
+  it("raqam tugmalari a11y: button roli va raqam yorlig'i", async () => {
+    const { StyleSheet: SS } = jest.requireActual('react-native');
+    const s = await renderWithProviders(<PinPad value="" onChange={() => {}} title="PIN" />);
+    const key = s.getByTestId('pin-key-5');
+    expect(key.props.accessibilityRole).toBe('button');
+    expect(key.props.accessibilityLabel).toBe('5');
+    const face = SS.flatten(s.getByTestId('pin-face-5').props.style);
+    expect(face.height).toBeGreaterThanOrEqual(44);
+    expect(face.borderBottomWidth).toBeGreaterThan(face.borderWidth); // Tomchi labi
+  });
+});

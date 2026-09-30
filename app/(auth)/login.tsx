@@ -20,7 +20,9 @@ import { ff } from '../../src/theme/typography';
 import { NO_WEB_OUTLINE } from '../../src/theme/web';
 import { Icon } from '../../src/components/Icon';
 import { Flag } from '../../src/components/Flag';
-import { ChunkyButton } from '../../src/components/ChunkyButton';
+import { Button } from '../../src/ui/Button';
+import { LinearGradient } from 'expo-linear-gradient';
+import { gradients, radii, shadow } from '../../src/theme/tokens';
 import { Tomchi } from '../../src/ui/mascot/Tomchi';
 import { caretRatio, moodForLogin, type TomchiMood } from '../../src/ui/mascot/tomchiPose';
 import { LANGUAGES, LANGUAGE_FLAG, LANGUAGE_NATIVE_NAME } from '../../src/i18n/locales';
@@ -69,7 +71,7 @@ export default function LoginScreen() {
       setCaptchaBusy(false);
     }
   };
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { t } = useTranslation();
   const language = useLangStore((s) => s.language);
@@ -186,18 +188,23 @@ export default function LoginScreen() {
 
           {/* Tomchi follows the form: watches the username caret, covers its
               eyes over a hidden password, peeks when it is shown. */}
-          <View style={styles.hero}>
+          <LinearGradient
+            colors={[...(isDark ? gradients.heroDark : gradients.hero)]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.hero}
+          >
             <Tomchi mood={mood} lookX={focused === 'username' ? caretRatio(username) : 0.5} size={132} />
             <View style={styles.bubble} accessibilityLiveRegion="polite">
               <View style={styles.bubbleTail} />
               <Text style={styles.bubbleText}>{t(BUBBLE_KEY[mood])}</Text>
             </View>
-          </View>
+          </LinearGradient>
 
           <Text style={styles.appName}>{t('auth.appName')}</Text>
           <Text style={styles.appSubtitle}>{t('auth.appSubtitle')}</Text>
 
-          <View style={styles.form}>
+          <View style={[styles.form, shadow('md', colors)]} testID="login-card">
             <View style={styles.inputWrapper}>
               <Text style={styles.label}>{t('auth.usernameLabel').toLocaleUpperCase()}</Text>
               <TextInput
@@ -268,21 +275,25 @@ export default function LoginScreen() {
               </View>
             )}
 
-            <ChunkyButton
+            <Button
               label={t('auth.loginButton')}
               onPress={handleLogin}
               loading={loading}
+              size="lg"
+              full
               style={styles.loginBtn}
               testID="login-submit"
             />
 
             {/* OneID (YaIT) SSO — native only; the web SPA has its own OneID flow. */}
             {Platform.OS !== 'web' && (
-              <ChunkyButton
+              <Button
                 label={t('auth.oneIdButton')}
                 onPress={handleOneId}
                 disabled={loading}
-                variant="outline"
+                variant="soft"
+                size="lg"
+                full
                 icon="idcard"
                 testID="login-oneid"
               />
@@ -327,70 +338,78 @@ const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     container: { flex: 1, backgroundColor: c.bg },
     flex: { flex: 1 },
-    scroll: { flexGrow: 1, paddingHorizontal: 20, paddingTop: 8, paddingBottom: 16 },
+    scroll: { flexGrow: 1, paddingHorizontal: 20, paddingTop: 8, paddingBottom: 16, width: '100%', maxWidth: 480, alignSelf: 'center' },
 
     topBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    logo: { width: 44, height: 44, borderRadius: 12, borderWidth: 2, borderColor: c.cardBorder },
+    logo: { width: 44, height: 44, borderRadius: radii.sm },
     langButton: {
-      flexDirection: 'row', alignItems: 'center', gap: 8, height: 40, paddingHorizontal: 12,
-      borderRadius: 12, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder,
+      flexDirection: 'row', alignItems: 'center', gap: 8, height: 40, paddingHorizontal: 14,
+      borderRadius: radii.pill, backgroundColor: c.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border,
     },
-    langButtonText: { fontSize: 13, letterSpacing: 0.6, color: c.textSecondary, ...ff('900') },
+    langButtonText: { fontSize: 13, letterSpacing: 0.6, color: c.fgMuted, ...ff('700', 'text') },
 
     // Dropdown menu.
     langBackdrop: { flex: 1, backgroundColor: c.overlay, paddingTop: 60, paddingHorizontal: 16, alignItems: 'flex-end' },
     langMenu: {
-      backgroundColor: c.cardElevated, borderRadius: 16, borderWidth: 2, borderColor: c.cardBorder,
+      backgroundColor: c.elevated, borderRadius: radii.lg, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border,
       paddingVertical: 6, minWidth: 210,
     },
     langItem: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 14 },
-    langItemActive: { backgroundColor: c.primarySoft },
-    langItemText: { flex: 1, fontSize: 15, color: c.text, ...ff('700') },
-    langItemTextActive: { color: c.primaryLight, ...ff('900') },
+    langItemActive: { backgroundColor: c.brandSoft },
+    langItemText: { flex: 1, fontSize: 15, color: c.fg, ...ff('500', 'text') },
+    langItemTextActive: { color: c.brandStrong, ...ff('700', 'text') },
 
-    hero: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginTop: 18 },
+    // Binafsha→tomchi hero (v2 grad-hero) ichida Tomchi va gap pufagi.
+    hero: {
+      flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginTop: 18,
+      borderRadius: radii.xl, paddingHorizontal: 14, paddingTop: 16, overflow: 'hidden',
+    },
     bubble: {
-      flex: 1, marginBottom: 36, borderRadius: 16, borderWidth: 2, borderColor: c.cardBorder,
-      paddingVertical: 12, paddingHorizontal: 14, backgroundColor: c.bg,
+      flex: 1, marginBottom: 36, borderRadius: radii.lg,
+      paddingVertical: 12, paddingHorizontal: 14, backgroundColor: c.surface,
     },
     // Rotated square peeking out of the bubble's left edge, toward Tomchi.
     bubbleTail: {
-      position: 'absolute', left: -8, bottom: 16, width: 14, height: 14, backgroundColor: c.bg,
-      borderLeftWidth: 2, borderBottomWidth: 2, borderColor: c.cardBorder, transform: [{ rotate: '45deg' }],
+      position: 'absolute', left: -6, bottom: 16, width: 14, height: 14, backgroundColor: c.surface,
+      transform: [{ rotate: '45deg' }],
     },
-    bubbleText: { fontSize: 15, lineHeight: 20, color: c.text, ...ff('700') },
+    bubbleText: { fontSize: 15, lineHeight: 20, color: c.fg, ...ff('700') },
 
-    appName: { fontSize: 30, letterSpacing: -0.4, color: c.text, marginTop: 14, ...ff('900') },
-    appSubtitle: { fontSize: 15, color: c.textSecondary, marginTop: 2, ...ff('700') },
+    appName: { fontSize: 28, letterSpacing: -0.4, color: c.fg, marginTop: 18, ...ff('900') },
+    appSubtitle: { fontSize: 15, color: c.fgMuted, marginTop: 2, ...ff('400', 'text') },
 
-    form: { gap: 14, marginTop: 22 },
+    form: {
+      gap: 14, marginTop: 18, padding: 16, borderRadius: radii.xl,
+      backgroundColor: c.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border,
+    },
     inputWrapper: { gap: 6 },
-    label: { fontSize: 13, letterSpacing: 0.6, color: c.textSecondary, ...ff('900') },
+    label: { fontSize: 12, letterSpacing: 0.6, color: c.fgSubtle, ...ff('600', 'text') },
     input: {
-      height: 52, backgroundColor: c.inputBg, borderWidth: 2, borderColor: c.cardBorder, borderRadius: 16,
-      paddingHorizontal: 16, fontSize: 16, color: c.text, ...NO_WEB_OUTLINE, ...ff('700'),
+      height: 50, backgroundColor: c.surface2, borderWidth: 1.5, borderColor: c.surface2, borderRadius: radii.md,
+      paddingHorizontal: 14, fontSize: 16, color: c.fg, ...NO_WEB_OUTLINE, ...ff('500', 'text'),
     },
-    inputFocused: { borderColor: c.primaryLight },
+    inputFocused: { borderColor: c.brand, backgroundColor: c.surface },
     passwordBox: {
-      height: 52, flexDirection: 'row', alignItems: 'center', backgroundColor: c.inputBg,
-      borderWidth: 2, borderColor: c.cardBorder, borderRadius: 16, paddingLeft: 16,
+      height: 50, flexDirection: 'row', alignItems: 'center', backgroundColor: c.surface2,
+      borderWidth: 1.5, borderColor: c.surface2, borderRadius: radii.md, paddingLeft: 14,
     },
-    passwordInput: { flex: 1, height: '100%', fontSize: 16, color: c.text, ...NO_WEB_OUTLINE, ...ff('700') },
+    passwordInput: { flex: 1, height: '100%', fontSize: 16, color: c.fg, ...NO_WEB_OUTLINE, ...ff('500', 'text') },
     eyeBtn: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
 
     captchaRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    // The PNG is 168×56; keep its aspect so the glyphs stay readable.
-    captchaImage: { flex: 1, height: 52, borderRadius: 16, backgroundColor: '#F5F7FA', borderWidth: 2, borderColor: c.cardBorder },
+    // The PNG is 168×56; keep its aspect so the glyphs stay readable. Oq fon —
+    // captcha rasmi mavzu bilan ag'darilmaydi (v2 `on-white` yuzasi).
+    captchaImage: { flex: 1, height: 50, borderRadius: radii.md, backgroundColor: c.surface, borderWidth: 1.5, borderColor: c.border },
     captchaRefresh: {
-      width: 52, height: 52, borderRadius: 16, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder,
+      width: 50, height: 50, borderRadius: radii.md, backgroundColor: c.surface2,
       alignItems: 'center', justifyContent: 'center',
     },
     captchaInput: { letterSpacing: 4, textTransform: 'uppercase' },
-    captchaHint: { fontSize: 12, color: c.textMuted, ...ff('600') },
+    captchaHint: { fontSize: 12, color: c.fgSubtle, ...ff('400', 'text') },
 
-    loginBtn: { marginTop: 8 },
+    loginBtn: { marginTop: 6 },
 
     footer: { marginTop: 'auto', paddingTop: 28, alignItems: 'center' },
-    version: { color: c.textMuted, fontSize: 12, ...ff('700') },
-    otaBuild: { color: c.textMuted, fontSize: 11, marginTop: 2, ...ff('600') },
+    version: { color: c.fgSubtle, fontSize: 12, ...ff('500', 'text') },
+    otaBuild: { color: c.fgSubtle, fontSize: 11, marginTop: 2, ...ff('400', 'text') },
   });

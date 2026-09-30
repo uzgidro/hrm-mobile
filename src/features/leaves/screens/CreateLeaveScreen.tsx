@@ -15,7 +15,7 @@ import { NO_WEB_OUTLINE } from '@/theme/web';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
-import { ChunkyButton } from '@/components/ChunkyButton';
+import { Button } from '@/ui/Button';
 import { useBreakpoint } from '@/utils/responsive';
 import { useCreateLeave, type CreateLeavePayload } from '../api/mutations';
 import { leaveApproversQuery, leaveReasonsQuery, leaveRulesQuery } from '../api/queries';
@@ -183,11 +183,13 @@ export default function CreateLeaveScreen() {
           </View>
         </View>
 
-        <ChunkyButton
+        <Button
           label={t('common.send')}
           onPress={handleSubmit}
           loading={submitting}
           disabled={diffMin <= 0}
+          size="lg"
+          full
           style={s.submitBtn}
           testID="leave-submit"
         />

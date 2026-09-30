@@ -2,11 +2,13 @@
 // ChangePin screens. Presentational and fully controlled: the parent owns the
 // PIN string and auto-submits when it reaches maxLength. PinPad never touches a
 // store and never submits — it only reports the new value on each key press.
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { ff } from '@/theme/typography';
+import { LIP } from '@/theme/tokens';
 import { Icon } from '@/components/Icon';
 import { PIN_LENGTH } from '@/auth/lockPolicy';
 
@@ -58,8 +60,8 @@ export function PinPad({
   };
 
   const dotColor = (filled: boolean) => {
-    if (hasError) return colors.error;
-    return filled ? colors.primary : colors.cardBorder;
+    if (hasError) return colors.dangerMark;
+    return filled ? colors.brand : colors.borderStrong;
   };
 
   return (
@@ -94,71 +96,84 @@ export function PinPad({
         {DIGIT_ROWS.map((row, rowIdx) => (
           <View key={rowIdx} style={styles.keyRow}>
             {row.map((digit) => (
-              <TouchableOpacity
-                key={digit}
-                testID={`pin-key-${digit}`}
-                style={styles.key}
-                activeOpacity={0.6}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                disabled={disabled}
-                onPress={() => pressDigit(digit)}
-              >
+              <PadKey key={digit} id={digit} label={digit} disabled={disabled} onPress={() => pressDigit(digit)} styles={styles}>
                 <Text style={styles.keyText}>{digit}</Text>
-              </TouchableOpacity>
+              </PadKey>
             ))}
           </View>
         ))}
 
         <View style={styles.keyRow}>
           {onBiometric ? (
-            <TouchableOpacity
-              testID="pin-key-biometric"
-              style={styles.key}
-              activeOpacity={0.6}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              disabled={disabled}
-              onPress={onBiometric}
-            >
-              <Icon name="fingerprint" size={28} color={colors.primary} />
-            </TouchableOpacity>
+            <PadKey id="biometric" label="biometric" disabled={disabled} onPress={onBiometric} styles={styles}>
+              <Icon name="fingerprint" size={28} color={colors.brandStrong} />
+            </PadKey>
           ) : (
-            <View style={styles.key} />
+            <View style={styles.keySpacer} />
           )}
 
-          <TouchableOpacity
-            testID="pin-key-0"
-            style={styles.key}
-            activeOpacity={0.6}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            disabled={disabled}
-            onPress={() => pressDigit('0')}
-          >
+          <PadKey id="0" label="0" disabled={disabled} onPress={() => pressDigit('0')} styles={styles}>
             <Text style={styles.keyText}>0</Text>
-          </TouchableOpacity>
+          </PadKey>
 
-          <TouchableOpacity
-            testID="pin-key-backspace"
-            style={styles.key}
-            activeOpacity={0.6}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            disabled={disabled}
-            onPress={pressBackspace}
-          >
-            <Icon name="backspace" size={26} color={colors.text} />
-          </TouchableOpacity>
+          <PadKey id="backspace" label="backspace" disabled={disabled} onPress={pressBackspace} styles={styles} plain>
+            <Icon name="backspace" size={26} color={colors.fg} />
+          </PadKey>
         </View>
       </View>
     </View>
   );
 }
 
+// «Tomchi × v2» klavishi: oq yuza + 1.5px chegara + pastki lab; bosilganda tushadi.
+function PadKey({
+  id,
+  label,
+  disabled,
+  onPress,
+  children,
+  styles,
+  plain = false,
+}: {
+  id: string;
+  label: string;
+  disabled: boolean;
+  onPress: () => void;
+  children: React.ReactNode;
+  styles: ReturnType<typeof makeStyles>;
+  plain?: boolean;
+}) {
+  return (
+    <Pressable
+      testID={`pin-key-${id}`}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      hitSlop={8}
+      disabled={disabled}
+      onPress={onPress}
+    >
+      {({ pressed }) => (
+        <View
+          testID={`pin-face-${id}`}
+          style={[
+            styles.key,
+            plain ? styles.keyPlain : pressed ? styles.keyPressed : null,
+          ]}
+        >
+          {children}
+        </View>
+      )}
+    </Pressable>
+  );
+}
+
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     container: { alignItems: 'center' },
-    title: { fontSize: 20, ...ff('800'), color: c.text, textAlign: 'center' },
+    title: { fontSize: 22, ...ff('900'), color: c.fg, textAlign: 'center' },
     subtitle: {
       fontSize: 14,
-      color: c.textSecondary,
+      color: c.fgMuted,
       textAlign: 'center',
       marginTop: 8, ...ff('700') },
     dots: {
@@ -176,7 +191,7 @@ const makeStyles = (c: ThemeColors) =>
     },
     error: {
       fontSize: 13,
-      color: c.error,
+      color: c.danger,
       textAlign: 'center',
       marginTop: 4, ...ff('700') },
     keypad: { marginTop: 32, gap: 18 },
@@ -191,6 +206,13 @@ const makeStyles = (c: ThemeColors) =>
       borderRadius: 36,
       alignItems: 'center',
       justifyContent: 'center',
+      backgroundColor: c.surface,
+      borderWidth: 1.5,
+      borderBottomWidth: 1.5 + LIP,
+      borderColor: c.border,
     },
-    keyText: { fontSize: 28, ...ff('700'), color: c.text },
+    keyPressed: { borderBottomWidth: 1.5, marginTop: LIP },
+    keyPlain: { backgroundColor: 'transparent', borderWidth: 0, borderBottomWidth: 0 },
+    keySpacer: { width: 72, height: 72 },
+    keyText: { fontSize: 28, ...ff('800'), color: c.fg, fontVariant: ['tabular-nums'] },
   });
