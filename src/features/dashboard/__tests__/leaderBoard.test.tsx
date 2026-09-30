@@ -100,4 +100,13 @@ describe('LeaderBoard', () => {
     const disc = await screen.findByTestId('card-discipline');
     await waitFor(() => expect(within(disc).getByText('Kadrlar')).toBeTruthy());
   });
+
+  it("kategoriyalar xato bersa — noto'g'ri 0 o'rniga qayta urinish", async () => {
+    mock.onGet(DASHBOARD_EMPLOYEES_BY_CATEGORY).reply(500);
+    mock.onGet(DASHBOARD_EMPLOYEE_COUNT).reply(200, { total_count: 4 });
+    await renderWithProviders(<LeaderBoard />);
+    expect(await screen.findByText(i18n.t('common.retry'))).toBeTruthy();
+    expect(screen.queryByTestId('tile-absent')).toBeNull();
+  });
 });
+

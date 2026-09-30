@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeProvider';
 import { useAuthStore } from '@/store/authStore';
 import { menuBadgesQuery } from '@/lib/menuBadges';
+import { useNavSettings } from '@/lib/navSettings';
 import { monthName, weekdayName } from '@/i18n/dates';
 import { visibleCatalog } from '@/utils/moduleCatalog';
 import { moduleTint } from '@/theme/tokens';
@@ -27,6 +28,8 @@ export function HomeHeader() {
   const { colors: c, isDark, setMode } = useTheme();
   const user = useAuthStore((s) => s.user);
   const { data: badges } = useQuery(menuBadgesQuery());
+  // Modul sozlamalari (nav.modules) kelganda qidiruv natijalari yangilansin.
+  const navOverrides = useNavSettings();
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
 
@@ -39,7 +42,8 @@ export function HomeHeader() {
     const q = query.trim().toLowerCase();
     const all = visibleCatalog(user).filter((m) => m.page !== 'home');
     return q ? all.filter((m) => t(m.labelKey).toLowerCase().includes(q)) : all.slice(0, 8);
-  }, [query, user, t]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, user, t, navOverrides]);
 
   return (
     <View style={styles.row}>

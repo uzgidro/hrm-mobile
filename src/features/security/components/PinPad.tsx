@@ -43,7 +43,7 @@ export function PinPad({
   // Subscribe to language changes so the parent-supplied title/subtitle/error
   // (all localized upstream) repaint on a language switch even though this
   // presentational pad holds no strings of its own.
-  useTranslation();
+  const { t } = useTranslation();
   const styles = useThemedStyles(makeStyles);
   const { colors } = useTheme();
   const hasError = !!error;
@@ -105,7 +105,7 @@ export function PinPad({
 
         <View style={styles.keyRow}>
           {onBiometric ? (
-            <PadKey id="biometric" label="biometric" disabled={disabled} onPress={onBiometric} styles={styles}>
+            <PadKey id="biometric" label={t('security.keyBiometric')} disabled={disabled} onPress={onBiometric} styles={styles}>
               <Icon name="fingerprint" size={28} color={colors.brandStrong} />
             </PadKey>
           ) : (
@@ -116,7 +116,7 @@ export function PinPad({
             <Text style={styles.keyText}>0</Text>
           </PadKey>
 
-          <PadKey id="backspace" label="backspace" disabled={disabled} onPress={pressBackspace} styles={styles} plain>
+          <PadKey id="backspace" label={t('security.keyBackspace')} disabled={disabled} onPress={pressBackspace} styles={styles} plain>
             <Icon name="backspace" size={26} color={colors.fg} />
           </PadKey>
         </View>

@@ -93,10 +93,10 @@ export function CompositionCard({ branchId }: { branchId: number | undefined }) 
             />
             <View style={styles.sliceLegend}>
               {slices.map((s, i) => (
-                <View key={s.key} style={styles.legendItem}>
+                <View key={s.key ?? 'unknown'} style={styles.legendItem}>
                   <View style={[styles.dot, { backgroundColor: ring[i % ring.length] }]} />
                   <Text variant="caption" style={styles.flex}>
-                    {s.key}
+                    {s.key ?? t('dashboard.home.unknownGender')}
                   </Text>
                   <Text variant="caption" tone="subtle">{`${sliceTotal ? Math.round((s.value / sliceTotal) * 100) : 0}%`}</Text>
                   <Text variant="caption" style={styles.posValue}>

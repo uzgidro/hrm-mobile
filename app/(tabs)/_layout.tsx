@@ -35,7 +35,7 @@ export default function TabsLayout() {
           // Kiosk akkauntlarda birinchi tab — post / monitoring.
           initialRouteName={visible[0]}
           tabBar={(props) =>
-            useRail ? null : <TabBar {...props} visible={visible} badges={{ documents: docBadge }} />
+            useRail ? null : <TabBar {...props} visible={visible} badges={{ documents: docBadge, modules: badges?.leaves ?? 0 }} />
           }
           screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: colors.bg } }}
         >

@@ -18,7 +18,8 @@ export function useBoardDay(branchId: number | undefined) {
     rows,
     counts,
     isPending: board.isPending || categories.isPending,
-    isError: board.isError && categories.isError,
+    // Bittasi xato bersa ham hisoblagichlar noto'g'ri (0) bo'lardi — xato holati.
+    isError: board.isError || categories.isError,
     refetch: () => Promise.all([board.refetch(), categories.refetch()]),
   };
 }

@@ -72,4 +72,19 @@ describe('board so\'rovlari (v2 paritet)', () => {
     expect(r).toEqual({ total: 2, by_department: [] });
     expect(mock.history.get[0].params).toEqual({ organization_branch_id: 3 });
   });
+
+  it("tarkib: to'rttala manba xato bersa — xato (0 xodim emas)", async () => {
+    for (const u of [DASHBOARD_EMPLOYEE_COUNT, DASHBOARD_AGE_STATS, DASHBOARD_NATIONALITY_STATS, DASHBOARD_JOB_POSITION_STATS]) mock.onGet(u).reply(500);
+    await expect((compositionQuery(3).queryFn as () => Promise<unknown>)()).rejects.toBeTruthy();
+  });
+
+  it("millati yo'q yozuv kaliti null (tarjima UI da), 'Unknown' matni emas", async () => {
+    mock.onGet(DASHBOARD_EMPLOYEE_COUNT).reply(200, { total_count: 1 });
+    mock.onGet(DASHBOARD_AGE_STATS).reply(200, { stats: {} });
+    mock.onGet(DASHBOARD_NATIONALITY_STATS).reply(200, [{ nationality: null, count: 3 }]);
+    mock.onGet(DASHBOARD_JOB_POSITION_STATS).reply(200, []);
+    const r = (await (compositionQuery(3).queryFn as () => Promise<unknown>)()) as { nationality: { key: string | null }[] };
+    expect(r.nationality[0].key).toBeNull();
+  });
 });
+

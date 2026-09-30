@@ -108,3 +108,14 @@ describe('PinPad — v3 uslubi', () => {
     expect(face.borderBottomWidth).toBeGreaterThan(face.borderWidth); // Tomchi labi
   });
 });
+
+describe("PinPad — tarjima qilingan a11y yorliqlari", () => {
+  it("o'chirish va biometriya tugmalari t() orqali", async () => {
+    const i18n = jest.requireActual('@/i18n').default;
+    await i18n.changeLanguage('uz-Latn');
+    const s = await renderWithProviders(<PinPad value="" onChange={() => {}} title="PIN" onBiometric={() => {}} />);
+    expect(s.getByLabelText(i18n.t('security.keyBackspace'))).toBeTruthy();
+    expect(s.getByLabelText(i18n.t('security.keyBiometric'))).toBeTruthy();
+  });
+});
+

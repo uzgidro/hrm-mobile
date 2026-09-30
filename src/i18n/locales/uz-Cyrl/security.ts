@@ -22,4 +22,6 @@ export default {
   forceLogoutMessage: 'Хавфсизлик мақсадида тизимдан чиқарилдингиз. Қайтадан киринг.',
 
   biometricPrompt: 'Иловани очиш учун тасдиқланг',
+  keyBackspace: 'Ўчириш',
+  keyBiometric: 'Биометрик кириш',
 } as const;

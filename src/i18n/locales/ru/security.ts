@@ -23,4 +23,6 @@ export default {
   forceLogoutMessage: 'В целях безопасности вы вышли из системы. Войдите снова.',
 
   biometricPrompt: 'Подтвердите, чтобы открыть приложение',
+  keyBackspace: 'Стереть',
+  keyBiometric: 'Вход по биометрии',
 } as const;

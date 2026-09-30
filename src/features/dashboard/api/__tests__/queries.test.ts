@@ -132,3 +132,10 @@ describe('homeNotificationsQuery', () => {
   });
 });
 
+describe("homeMyLeavesQuery — xodim kartasi yo'q akkaunt", () => {
+  it("employeeId yo'q bo'lsa so'rov yoqilmaydi", () => {
+    expect(homeMyLeavesQuery(undefined).enabled).toBe(false);
+    expect(homeMyLeavesQuery(7).enabled).not.toBe(false);
+  });
+});
+

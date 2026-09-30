@@ -18,7 +18,7 @@ import {
 import type { DayBoard, EmployeesByCategory } from '../utils/attendanceBoard';
 import { fetchAllAttendanceEvents, attendanceQueryKey, dayRosterQuery } from '@/utils/attendance';
 import { leaveStatusGroup } from '@/utils/leaveStatus';
-import { menuBadgesQuery } from '@/features/notifications/api/queries';
+import { menuBadgesQuery } from '@/lib/menuBadges';
 import type { AttendanceEvent, WorkLeave, Notification, EmployeeBirthday } from '@/types';
 
 // Per-feature queryOptions factories for the home dashboard. The home tab is a
@@ -72,6 +72,8 @@ export function homeMyLeavesQuery(employeeId: number | undefined) {
       apiClient
         .get(WORK_LEAVES, { params: { employee_id: employeeId, size: 5 } })
         .then((r) => unwrapList<WorkLeave>(r.data).slice(0, 5)),
+    // Xodim kartasi yo'q akkaunt (admin, mehmon) — so'rov yo'q.
+    enabled: !!employeeId,
     staleTime: 2 * 60 * 1000,
   });
 }
@@ -247,7 +249,8 @@ export type Composition = {
   total: number;
   gender: { male: number; female: number; unknown: number };
   age: { key: string; value: number }[];
-  nationality: { key: string; value: number }[];
+  /** key null — millati ko'rsatilmagan (nomi UI da tarjima qilinadi). */
+  nationality: { key: string | null; value: number }[];
   positions: { label: string; count: number }[];
 };
 
@@ -266,6 +269,7 @@ export function compositionQuery(branchId: number | undefined) {
         apiClient.get(DASHBOARD_NATIONALITY_STATS, params),
         apiClient.get(DASHBOARD_JOB_POSITION_STATS, params),
       ]);
+      if ([count, age, nat, pos].every((r) => r.status === 'rejected')) throw (count as PromiseRejectedResult).reason;
       const val = <T,>(r: PromiseSettledResult<{ data: T }>): T | undefined =>
         r.status === 'fulfilled' ? r.value.data : undefined;
       const c = val<{ total_count?: number; gender_stats?: { male?: number; female?: number; unknown?: number } }>(count);
@@ -285,7 +289,7 @@ export function compositionQuery(branchId: number | undefined) {
           .filter((n) => n.count > 0)
           .sort((a, b) => b.count - a.count)
           .slice(0, 6)
-          .map((n) => ({ key: n.nationality || 'Unknown', value: n.count })),
+          .map((n) => ({ key: n.nationality || null, value: n.count })),
         positions: posRows
           .filter((p) => p.count > 0)
           .sort((a, b) => b.count - a.count)

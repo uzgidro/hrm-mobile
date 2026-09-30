@@ -34,4 +34,6 @@ export default {
   // ── OS biometric prompt (shown by the native biometric sheet on unlock) ─────
   biometricPrompt: 'Ilovani ochish uchun tasdiqlang',
 
+  keyBackspace: "O'chirish",
+  keyBiometric: 'Biometrik kirish',
 } as const;

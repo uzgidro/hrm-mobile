@@ -29,6 +29,9 @@ describe('homeBoardFor — v2 DashboardPage paritet', () => {
     ['filial admin akkaunti', u({ id: 1, type: 'admin' }), 'admin'],
     ['mehmon', u({ id: 1, type: 'guest' }), 'guest'],
     ['kpp roli (massiv)', multi(['kpp']), 'post'],
+    ["ko'p rol: hr + deputy", multi(['hr', 'deputy']), 'leader'],
+    // v2 isChancellery faqat ASOSIY (birinchi) rolni ko'radi — deputy birinchi bo'lsa rahbar paneli.
+    ["ko'p rol: deputy + chancellery — asosiy rol deputy (v2)", multi(['deputy', 'chancellery']), 'leader'],
     ['oddiy xodim', u({ id: 1, type: 'employee', employee: { id: 5 } }), 'employee'],
     ['null', null, 'employee'],
   ])('%s', (_n, user, board) => expect(homeBoardFor(user)).toBe(board));
