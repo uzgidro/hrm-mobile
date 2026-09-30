@@ -1,0 +1,20 @@
+// Monitoring (web v2 MonitoringPage) matnlari.
+export default {
+  title: 'Monitoring',
+  noBranch: 'No branch found for monitoring',
+  totalEmployees: 'Total employees',
+  presentToday: 'Arrived today',
+  lateToday: 'Late today',
+  absentToday: 'Absent today',
+  lateLive: 'Late arrivals (today)',
+  noLateToday: 'No late arrivals today',
+  frequentLate: 'Frequently late (month)',
+  noLate: 'No lateness recorded',
+  guestsLive: 'Guests (today)',
+  noGuests: 'No guests today',
+  lateMinutes: '+{{count}} min',
+  lateCount_one: '{{count}} time',
+  lateCount_other: '{{count}} times',
+  entered: 'In',
+  exited: 'Out',
+} as const;

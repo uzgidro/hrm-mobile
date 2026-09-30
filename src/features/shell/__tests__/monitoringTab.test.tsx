@@ -16,11 +16,17 @@ describe('Monitoring tabi', () => {
   });
   afterEach(() => mock.reset());
 
-  it("kiosk akkaunt (davomatga ruxsat yo'q) — so'rovsiz «tez orada» holati", async () => {
+  it("monitoring kiosk (filialsiz) — Monitoring ekrani, so'rovsiz «filial aniqlanmadi»", async () => {
     useAuthStore.setState({ user: { id: 1, type: 'monitoring' } as never, isAuthenticated: true } as never);
     await renderWithProviders(<MonitoringTab />);
-    expect(screen.getByText(i18n.t('tabs.monitoringSoon'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('monitoring.noBranch'))).toBeTruthy();
     // Faqat modul sozlamalari o'qiladi — davomat/roster so'rovi yo'q.
     expect(mock.history.get.map((r) => r.url).filter((u) => u !== 'system-settings')).toEqual([]);
+  });
+
+  it("monitoring moduli ham, davomat ham yo'q — «tez orada»", async () => {
+    useAuthStore.setState({ user: { id: 1, type: 'kpp' } as never, isAuthenticated: true } as never);
+    await renderWithProviders(<MonitoringTab />);
+    expect(screen.getByText(i18n.t('tabs.monitoringSoon'))).toBeTruthy();
   });
 });

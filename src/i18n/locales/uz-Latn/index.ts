@@ -33,6 +33,7 @@ import qrLogin from './qrLogin';
 import password from './password';
 import tabs from './tabs';
 import kpp from './kpp';
+import monitoring from './monitoring';
 
 export default {
   common,
@@ -68,4 +69,5 @@ export default {
   password,
   tabs,
   kpp,
+  monitoring,
 } as const;

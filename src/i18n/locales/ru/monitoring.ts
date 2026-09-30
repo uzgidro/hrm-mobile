@@ -1,0 +1,22 @@
+// Monitoring (web v2 MonitoringPage) matnlari.
+export default {
+  title: 'Мониторинг',
+  noBranch: 'Филиал для мониторинга не определён',
+  totalEmployees: 'Всего сотрудников',
+  presentToday: 'Пришли сегодня',
+  lateToday: 'Опоздали сегодня',
+  absentToday: 'Не пришли сегодня',
+  lateLive: 'Опоздавшие (сегодня)',
+  noLateToday: 'Сегодня опозданий нет',
+  frequentLate: 'Часто опаздывают (месяц)',
+  noLate: 'Опозданий не зафиксировано',
+  guestsLive: 'Гости (сегодня)',
+  noGuests: 'Сегодня гостей нет',
+  lateMinutes: '+{{count}} мин',
+  lateCount_one: '{{count}} раз',
+  lateCount_few: '{{count}} раза',
+  lateCount_many: '{{count}} раз',
+  lateCount_other: '{{count}} раза',
+  entered: 'Вошёл',
+  exited: 'Вышел',
+} as const;

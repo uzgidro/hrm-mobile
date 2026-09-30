@@ -1,0 +1,20 @@
+// Monitoring (web v2 MonitoringPage) matnlari.
+export default {
+  title: 'Мониторинг',
+  noBranch: 'Мониторинг учун филиал аниқланмади',
+  totalEmployees: 'Жами ходимлар',
+  presentToday: 'Бугун келганлар',
+  lateToday: 'Бугун кеч қолганлар',
+  absentToday: 'Бугун келмаганлар',
+  lateLive: 'Кеч қолганлар (бугун)',
+  noLateToday: 'Бугун кечикканлар йўқ',
+  frequentLate: 'Кечга қолувчилар (ой)',
+  noLate: 'Кечикиш қайд этилмаган',
+  guestsLive: 'Меҳмонлар (бугун)',
+  noGuests: 'Бугун меҳмон йўқ',
+  lateMinutes: '+{{count}} дақ',
+  lateCount_one: '{{count}} марта',
+  lateCount_other: '{{count}} марта',
+  entered: 'Кирди',
+  exited: 'Чиқди',
+} as const;
