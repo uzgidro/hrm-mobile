@@ -51,6 +51,7 @@ export default {
     weekPresent: 'Келган',
     weekLate: 'Кечикди',
     weekNone: 'Келмаган',
+    weekOff: 'Дам олиш',
     today: 'Бугун',
     birthdays: 'Туғилган кунлар',
     birthdayToday: 'Бугун!',

@@ -40,7 +40,10 @@ export function MyDayHero({
       style={styles.hero}
     >
       <View style={styles.top}>
-        <Avatar name={name} uri={photo} size={52} />
+        {/* Oq halqa — gradient ustida avatar (bosh harflar) ko'rinsin. */}
+        <View style={styles.avatarRing}>
+          <Avatar name={name} uri={photo} size={50} />
+        </View>
         <View style={styles.who}>
           <Text variant="caption" tone="onBrand" style={styles.eyebrow}>
             {t('dashboard.home.myDay')}
@@ -99,6 +102,7 @@ export function MyDayHero({
 const styles = StyleSheet.create({
   hero: { borderRadius: radii.xl, padding: 16, gap: 12, overflow: 'hidden' },
   top: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  avatarRing: { padding: 3, borderRadius: 30, backgroundColor: 'rgba(255,255,255,0.92)' },
   who: { flex: 1, minWidth: 0 },
   eyebrow: { opacity: 0.85, textTransform: 'uppercase', letterSpacing: 0.6, fontWeight: '700' },
   name: { fontSize: 19, lineHeight: 24 },

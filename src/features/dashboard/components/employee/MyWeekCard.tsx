@@ -12,11 +12,12 @@ import type { DaySummary } from '../../utils/dayTimeline';
 export function MyWeekCard({ days }: { days: DaySummary[] }) {
   const { t } = useTranslation();
   const { colors: c } = useTheme();
-  const tone = { present: 'success', late: 'warning', none: 'danger' } as const;
+  const tone = { present: 'success', late: 'warning', none: 'danger', off: 'neutral' } as const;
   const label = {
     present: t('dashboard.home.weekPresent'),
     late: t('dashboard.home.weekLate'),
     none: t('dashboard.home.weekNone'),
+    off: t('dashboard.home.weekOff'),
   };
   return (
     <Card
@@ -27,7 +28,8 @@ export function MyWeekCard({ days }: { days: DaySummary[] }) {
     >
       {days.map((d, i) => {
         const date = dayjs(d.date);
-        const bar = d.status === 'none' ? c.dangerMark : d.status === 'late' ? c.warningMark : c.successMark;
+        const bar =
+          d.status === 'none' ? c.dangerMark : d.status === 'late' ? c.warningMark : d.status === 'off' ? c.borderStrong : c.successMark;
         return (
           <View key={d.date} style={[styles.row, i > 0 && { borderTopColor: c.border, borderTopWidth: StyleSheet.hairlineWidth }]}>
             <View style={[styles.bar, { backgroundColor: bar }]} />

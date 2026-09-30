@@ -53,6 +53,7 @@ export default {
     weekPresent: 'Пришёл',
     weekLate: 'Опоздал',
     weekNone: 'Не пришёл',
+    weekOff: 'Выходной',
     today: 'Сегодня',
     birthdays: 'Дни рождения',
     birthdayToday: 'Сегодня!',

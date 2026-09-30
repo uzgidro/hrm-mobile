@@ -4,7 +4,6 @@ import React from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 import { useTheme } from '@/theme/ThemeProvider';
-import { useBreakpoint } from '@/utils/responsive';
 
 export const SCREEN_GUTTER = 16;
 export const SCREEN_MAX_WIDTH = 1280;
@@ -29,12 +28,9 @@ export function Screen({
   testID?: string;
 }) {
   const { colors: c } = useTheme();
-  const { width } = useBreakpoint();
-  const inner = [
-    styles.inner,
-    padded && styles.padded,
-    { width: Math.min(width, maxWidth) },
-  ];
+  // Kenglik KONTEYNERGA nisbatan (100% + maxWidth): planshetda NavRail yonida
+  // oyna kengligidan hisoblash kontentni rail ostiga surib kesardi.
+  const inner = [styles.inner, padded && styles.padded, { width: '100%' as const, maxWidth }];
   return (
     <SafeAreaView edges={edges} style={[styles.root, { backgroundColor: c.bg }]} testID={testID}>
       {scroll ? (

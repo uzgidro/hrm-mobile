@@ -63,6 +63,7 @@ export default {
     weekPresent: 'Kelgan',
     weekLate: 'Kechikdi',
     weekNone: 'Kelmagan',
+    weekOff: 'Dam olish',
     today: 'Bugun',
     birthdays: "Tug'ilgan kunlar",
     birthdayToday: 'Bugun!',

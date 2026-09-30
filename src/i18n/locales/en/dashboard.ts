@@ -53,6 +53,7 @@ export default {
     weekPresent: 'Present',
     weekLate: 'Late',
     weekNone: 'Absent',
+    weekOff: 'Day off',
     today: 'Today',
     birthdays: 'Birthdays',
     birthdayToday: 'Today!',

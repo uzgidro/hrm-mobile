@@ -50,11 +50,27 @@ describe('weekSummary', () => {
     expect(w.map((d) => d.date)).toEqual(['2026-09-29', '2026-09-28', '2026-09-27']);
     expect(w[0]).toMatchObject({ firstIn: '08:50', lastOut: '18:00', status: 'present' });
     expect(w[1]).toMatchObject({ firstIn: '09:20', status: 'late' });
-    expect(w[2]).toMatchObject({ firstIn: null, status: 'none' });
+    expect(w[2]).toMatchObject({ firstIn: null, status: 'off' }); // 27.09 — yakshanba
   });
 
   it('ish vaqti noma\'lum — kechikish belgilanmaydi', () => {
     const w = weekSummary([ev('11:00', 'entrance')], '2026-09-29', null, 1);
     expect(w[0].status).toBe('present');
+  });
+
+  it("dam olish kuni (shanba/yakshanba) kelinmagan bo'lsa — 'off', qizil emas", () => {
+    // 2026-09-27 — yakshanba, 2026-09-26 — shanba
+    const w = weekSummary([], '2026-09-27', '09:00', 2);
+    expect(w.map((d) => d.status)).toEqual(['off', 'off']);
+  });
+
+  it("dam olish kuni kelgan bo'lsa — present", () => {
+    const w = weekSummary([ev('10:00', 'entrance', '2026-09-27')], '2026-09-27', '09:00', 1);
+    expect(w[0].status).toBe('present');
+  });
+
+  it("ish kunida kelinmagan — none", () => {
+    // 2026-09-30 — chorshanba
+    expect(weekSummary([], '2026-09-30', '09:00', 1)[0].status).toBe('none');
   });
 });

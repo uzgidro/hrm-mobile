@@ -1,7 +1,7 @@
 import React from 'react';
 import { Text as RNText } from 'react-native';
 import { renderWithProviders, screen, fireEvent } from '@/test/renderWithProviders';
-import { EmptyState, ErrorState, LoadingView, bentoLayout, Bento, MasterDetail, SearchField } from '@/ui';
+import { EmptyState, ErrorState, LoadingView, bentoLayout, bentoColumnsFor, Bento, MasterDetail, SearchField } from '@/ui';
 
 describe('bentoLayout', () => {
   it.each<[number[], number, number[][]]>([
@@ -11,6 +11,18 @@ describe('bentoLayout', () => {
     [[3, 1], 2, [[0], [1]]], // span 3 → 2 ga qisqaradi, qator to'ladi
     [[], 3, []],
   ])('%j / %i ustun', (spans, cols, rows) => expect(bentoLayout(spans, cols)).toEqual(rows));
+});
+
+describe('bentoColumnsFor — konteyner kengligi (rail hisobga olinadi)', () => {
+  it.each([
+    [360, 1],
+    [599, 1],
+    [600, 2],
+    [760, 2], // 1024 oyna − 264 rail
+    [959, 2],
+    [960, 3],
+    [1100, 3],
+  ])('%i → %i', (w, cols) => expect(bentoColumnsFor(w)).toBe(cols));
 });
 
 describe("holat ko'rinishlari", () => {

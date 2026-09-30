@@ -52,7 +52,8 @@ export type DaySummary = {
   date: string;
   firstIn: string | null;
   lastOut: string | null;
-  status: 'present' | 'late' | 'none';
+  /** off — dam olish kuni (shanba/yakshanba) va kelinmagan; kechikish dam olish kunida hisoblanmaydi. */
+  status: 'present' | 'late' | 'none' | 'off';
 };
 
 /** Oxirgi `days` kun (bugundan orqaga). `workStart` (HH:mm) bo'lsa kechikish belgilanadi. */
@@ -63,14 +64,16 @@ export function weekSummary(events: Ev[], today: string, workStart: string | nul
     byDay.set(k, [...(byDay.get(k) ?? []), e]);
   }
   return Array.from({ length: days }, (_, i) => {
-    const date = dayjs(today).subtract(i, 'day').format('YYYY-MM-DD');
+    const d = dayjs(today).subtract(i, 'day');
+    const date = d.format('YYYY-MM-DD');
+    const weekend = d.day() === 0 || d.day() === 6;
     const t = dayTimeline(byDay.get(date) ?? []);
-    const late = !!(t.firstIn && workStart && t.firstIn > workStart.slice(0, 5));
+    const late = !weekend && !!(t.firstIn && workStart && t.firstIn > workStart.slice(0, 5));
     return {
       date,
       firstIn: t.firstIn,
       lastOut: t.lastOut,
-      status: !t.firstIn ? 'none' : late ? 'late' : 'present',
+      status: !t.firstIn ? (weekend ? 'off' : 'none') : late ? 'late' : 'present',
     };
   });
 }
