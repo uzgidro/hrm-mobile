@@ -23,6 +23,7 @@ export default {
 
   // Module tile labels (keyed by the module `key`, which is not translated)
   labels: {
+    duty: 'Navbatchilik',
     home: 'Asosiy',
     orders: 'Buyruqlar',
     letters: 'Xatlar',

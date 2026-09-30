@@ -17,6 +17,7 @@ export default {
   },
 
   labels: {
+    duty: 'Навбатчилик',
     home: 'Асосий',
     orders: 'Буйруқлар',
     letters: 'Хатлар',

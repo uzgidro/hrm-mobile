@@ -48,3 +48,12 @@ describe('primitivlar B', () => {
     expect(screen.getByTestId('p').props.accessibilityValue).toMatchObject({ now: 100 });
   });
 });
+
+describe('Donut — web mos aylantirish', () => {
+  it("-90° aylantirish Svg style transform orqali (G origin emas — web'da DOM xatosi)", async () => {
+    const { Donut } = jest.requireActual('@/ui');
+    await renderWithProviders(<Donut segments={[{ value: 1, color: 'red' }]} accessibilityLabel="d" />);
+    const style = StyleSheet.flatten(screen.getByTestId('donut-svg').props.style);
+    expect(style.transform).toEqual([{ rotate: '-90deg' }]);
+  });
+});

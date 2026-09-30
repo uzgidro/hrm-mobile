@@ -3,6 +3,7 @@ import path from 'path';
 import { canAccessPage, setNavOverrides, isModuleReady } from '../roles';
 import { visibleCatalog, catalogBySection, CATALOG } from '../moduleCatalog';
 import type { User } from '@/types';
+import i18n from '@/i18n';
 
 const u = (x: Record<string, unknown>) => x as unknown as User;
 const emp = (extra: Record<string, unknown> = {}) => u({ id: 1, type: 'employee', employee: { id: 10 }, ...extra });
@@ -92,5 +93,14 @@ describe('modul katalogi — v2 paritet', () => {
     const { reportsGate } = jest.requireActual('../roles');
     expect(reportsGate(emp())).toBe(false);
     expect(reportsGate(emp({ is_line_manager: true }))).toBe(true);
+  });
+
+  it('har katalog yozuvining nomi 4 tilda tarjima qilingan (xom kalit chiqmaydi)', async () => {
+    for (const lng of ['uz-Latn', 'uz-Cyrl', 'ru', 'en']) {
+      await i18n.changeLanguage(lng);
+      const missing = CATALOG.filter((e) => i18n.t(e.labelKey) === e.labelKey).map((e) => e.page);
+      expect({ lng, missing }).toEqual({ lng, missing: [] });
+    }
+    await i18n.changeLanguage('uz-Latn');
   });
 });

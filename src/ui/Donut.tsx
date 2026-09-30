@@ -50,8 +50,9 @@ export function Donut({
       accessibilityRole="image"
       accessibilityLabel={accessibilityLabel}
     >
-      <Svg width={size} height={size}>
-        <G rotation={-90} origin={`${mid}, ${mid}`}>
+      {/* Aylantirish Svg style orqali: <G origin> web'da noto'g'ri DOM atributi beradi. */}
+      <Svg width={size} height={size} testID="donut-svg" style={styles.rotate}>
+        <G>
           <Circle cx={mid} cy={mid} r={r} stroke={c.surface2} strokeWidth={stroke} fill="none" />
           {arcs.map((a, i) => (
             <Circle
@@ -75,5 +76,6 @@ export function Donut({
 }
 
 const styles = StyleSheet.create({
+  rotate: { transform: [{ rotate: '-90deg' }] },
   center: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, alignItems: 'center', justifyContent: 'center' },
 });

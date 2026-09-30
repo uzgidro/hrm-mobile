@@ -17,6 +17,7 @@ export default {
   },
 
   labels: {
+    duty: 'Дежурства',
     home: 'Главная',
     orders: 'Приказы',
     letters: 'Письма',
