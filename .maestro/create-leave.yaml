@@ -1,15 +1,18 @@
 # Exercises the decomposed CreateLeaveScreen: open the leave-request form from
-# the dashboard, verify every field renders, interact with the extracted
+# the dashboard (v3: «So'rovlarim» tile → So'rovlar → +), verify every field renders, interact with the extracted
 # type-sheet + date-time picker, then leave WITHOUT submitting (so no real
 # request is created). Authenticated session required.
 appId: uz.uzgidro.hrm
 ---
 - launchApp
-- assertVisible: 'Bugungi jadval'
+- assertVisible:
+    id: 'home-greeting'
 
-# Open the leave-request form via the dashboard "So'rov yaratish" button.
+# v3: bosh sahifadagi «So'rovlarim» tile'i → So'rovlar ro'yxati → «+».
 - tapOn:
-    id: 'home-create-leave'
+    id: 'stat-requests'
+- tapOn:
+    id: 'leaves-create'
 - assertVisible: "So'rov yuborish"
 
 # The form fields (from the decomposed screen) are all present.

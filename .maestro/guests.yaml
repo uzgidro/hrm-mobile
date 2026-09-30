@@ -1,14 +1,16 @@
 # Guests (Mehmonlar) flow — the migrated visitors feature. Open the list, open
 # the create-guest form, verify it renders, then back out without saving.
-# Authenticated session required. The tab is tapped by testID (set via
-# tabBarButtonTestID in app/(tabs)/_layout.tsx).
+# Authenticated session required. v3: Mehmonlar — Modullar tabidagi plitka
+# (testID module-guests, src/features/shell/screens/ModulesScreen.tsx).
 appId: uz.uzgidro.hrm
 ---
 - launchApp
 - waitForAnimationToEnd
-# Mehmonlar (guests).
+# Mehmonlar (guests) — Modullar → plitka.
 - tapOn:
-    id: 'tab-guests'
+    id: 'tab-modules'
+- tapOn:
+    id: 'module-guests'
 - waitForAnimationToEnd
 - assertVisible:
     text: 'Mehmonlar'

@@ -139,7 +139,7 @@ export default function WorkLeavesScreen() {
   const activeFilter = isSupervisor ? incomingFilter : myFilter;
 
   const fab = !isSupervisor ? (
-    <TouchableOpacity style={styles.fab} onPress={() => router.push('/create-leave')} activeOpacity={0.85}>
+    <TouchableOpacity testID="leaves-create" style={styles.fab} onPress={() => router.push('/create-leave')} activeOpacity={0.85}>
       <Icon name="plus" size={24} color={colors.onPrimary} strokeWidth={2.4} />
     </TouchableOpacity>
   ) : undefined;
