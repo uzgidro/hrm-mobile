@@ -167,3 +167,18 @@ describe('orderActNumberAvailabilityQuery', () => {
     expect(orderActNumberAvailabilityQuery(5, '125', null, true).enabled).toBe(true);
   });
 });
+
+describe('orderCommentsQuery — javob shakli', () => {
+  it("massiv bo'lmagan javob (obyekt / {items}) massivga keltiriladi — izohlar bo'limi yiqilmaydi", async () => {
+    const MockAdapter = jest.requireActual('axios-mock-adapter');
+    const { apiClient } = jest.requireActual('@/api/client');
+    const { ORDER_ACT_COMMENTS } = jest.requireActual('@/api/urls');
+    const { orderCommentsQuery } = jest.requireActual('../queries');
+    const m = new MockAdapter(apiClient);
+    m.onGet(ORDER_ACT_COMMENTS(5)).replyOnce(200, { items: [{ id: 1 }] });
+    expect(await orderCommentsQuery(5).queryFn()).toEqual([{ id: 1 }]);
+    m.onGet(ORDER_ACT_COMMENTS(5)).replyOnce(200, {});
+    expect(await orderCommentsQuery(5).queryFn()).toEqual([]);
+    m.restore();
+  });
+});

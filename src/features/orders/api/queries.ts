@@ -44,7 +44,8 @@ export function orderCommentsQuery(id: number) {
   return queryOptions({
     queryKey: orderKeys.comments(id),
     queryFn: () =>
-      apiClient.get<OrderActComment[]>(ORDER_ACT_COMMENTS(id)).then((r) => r.data ?? []),
+      // Massiv bo'lmagan javob (obyekt / {items}) bo'lsa ham massiv — izohlar bo'limi .map qiladi.
+      apiClient.get(ORDER_ACT_COMMENTS(id)).then((r) => unwrapList<OrderActComment>(r.data)),
     enabled: !!id,
     // `refetchOnMount: 'always'` EMAS (avval shunday edi): planshet split-view da
     // har bir qator bosilganda `OrderDetailView` qayta montaj bo'ladi va bu 60s

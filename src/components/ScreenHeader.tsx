@@ -2,13 +2,19 @@
 // clean back button + title, with an optional right-side action slot.
 //
 //   <ScreenHeader title="So'rovlar" right={<HeaderAction icon="plus" onPress={...} />} />
+//
+// v3 «Tomchi × v2»: 44dp dumaloq orqaga tugmasi (a11y yorlig'i bilan), sarlavha
+// Nunito (display), izoh Inter; sanoq — yumshoq pill (e'tibor — warning).
 
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Pressable, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 import type { ThemeColors } from '../theme/palettes';
 import { ff } from '../theme/typography';
+import { radii } from '../theme/tokens';
+import { Text } from '../ui/Text';
 import { Icon, IconName } from './Icon';
 
 export function ScreenHeader({
@@ -29,31 +35,37 @@ export function ScreenHeader({
   onBack?: () => void;
 }) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const styles = useThemedStyles(makeStyles);
 
   return (
     <View style={styles.header}>
-      <TouchableOpacity
+      <Pressable
         onPress={onBack ?? (() => router.back())}
-        style={styles.backBtn}
-        activeOpacity={0.7}
-        hitSlop={8}
+        accessibilityRole="button"
+        accessibilityLabel={t('common.back')}
+        hitSlop={6}
+        style={({ pressed }) => [styles.backBtn, pressed && { backgroundColor: colors.surface2 }]}
       >
-        <Icon name="chevronLeft" size={24} color={colors.text} />
-      </TouchableOpacity>
+        <Icon name="chevronLeft" size={24} color={colors.fg} />
+      </Pressable>
       <View style={styles.titleCol}>
         <View style={styles.titleRow}>
-          <Text style={styles.title} numberOfLines={1}>{title}</Text>
+          <Text variant="title" style={styles.title} numberOfLines={1} accessibilityRole="header">
+            {title}
+          </Text>
           {count != null && count > 0 && (
             <View style={[styles.countBadge, countTone === 'attention' && styles.countBadgeAttention]}>
-              <Text style={[styles.countBadgeText, countTone === 'attention' && styles.countBadgeTextAttention]}>
-                {count > 99 ? '99+' : count}
+              <Text variant="caption" style={[styles.countBadgeText, countTone === 'attention' && styles.countBadgeTextAttention]}>
+                {count > 99 ? '99+' : String(count)}
               </Text>
             </View>
           )}
         </View>
         {subtitle != null && (
-          <Text style={styles.subtitle} numberOfLines={1}>{subtitle}</Text>
+          <Text variant="caption" tone="muted" numberOfLines={1} style={styles.subtitle}>
+            {subtitle}
+          </Text>
         )}
       </View>
       <View style={styles.rightSlot}>{right ?? null}</View>
@@ -66,34 +78,36 @@ export function HeaderAction({
   onPress,
   color,
   disabled = false,
+  accessibilityLabel,
 }: {
   icon: IconName;
   onPress: () => void;
   color?: string;
   /** While a mutation is pending — blocks the double tap (delete twice, etc). */
   disabled?: boolean;
+  accessibilityLabel?: string;
 }) {
   const { colors } = useTheme();
   return (
-    <TouchableOpacity
+    <Pressable
       onPress={onPress}
       disabled={disabled}
-      activeOpacity={0.7}
-      hitSlop={8}
-      style={{
-        opacity: disabled ? 0.5 : 1,
-        width: 38,
-        height: 38,
-        borderRadius: 12,
+      hitSlop={6}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityState={{ disabled }}
+      style={({ pressed }) => ({
+        opacity: disabled ? 0.5 : pressed ? 0.75 : 1,
+        width: 44,
+        height: 44,
+        borderRadius: radii.pill,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: colors.primarySoft,
-        borderWidth: 2,
-        borderColor: colors.tabBarActiveBorder,
-      }}
+        backgroundColor: colors.brandSoft,
+      })}
     >
-      <Icon name={icon} size={20} color={color ?? colors.primary} />
-    </TouchableOpacity>
+      <Icon name={icon} size={20} color={color ?? colors.brandStrong} />
+    </Pressable>
   );
 }
 
@@ -102,21 +116,25 @@ const makeStyles = (c: ThemeColors) =>
     header: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingHorizontal: 12,
-      paddingVertical: 10,
+      paddingHorizontal: 8,
+      paddingVertical: 8,
       gap: 4,
     },
-    backBtn: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center' },
+    backBtn: { width: 44, height: 44, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
     titleCol: { flex: 1, justifyContent: 'center', paddingLeft: 2 },
     titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    title: { fontSize: 20, color: c.text, flexShrink: 1, ...ff('900') },
-    subtitle: { fontSize: 12.5, color: c.textSecondary, marginTop: 1, ...ff('700') },
+    title: { fontSize: 20, lineHeight: 26, flexShrink: 1 },
+    subtitle: { marginTop: 1 },
     countBadge: {
-      backgroundColor: c.card, borderWidth: 2, borderColor: c.cardBorder, borderRadius: 10,
-      paddingHorizontal: 7, paddingVertical: 1, minWidth: 20, alignItems: 'center',
+      backgroundColor: c.surface2,
+      borderRadius: radii.pill,
+      paddingHorizontal: 8,
+      paddingVertical: 1,
+      minWidth: 22,
+      alignItems: 'center',
     },
-    countBadgeAttention: { backgroundColor: c.warning, borderWidth: 0 },
-    countBadgeText: { fontSize: 12, color: c.textMuted, ...ff('900') },
-    countBadgeTextAttention: { color: '#fff' },
-    rightSlot: { minWidth: 38, alignItems: 'flex-end', justifyContent: 'center' },
+    countBadgeAttention: { backgroundColor: c.warningSoft },
+    countBadgeText: { color: c.fgMuted, ...ff('700', 'text') },
+    countBadgeTextAttention: { color: c.warning },
+    rightSlot: { minWidth: 44, alignItems: 'flex-end', justifyContent: 'center' },
   });
