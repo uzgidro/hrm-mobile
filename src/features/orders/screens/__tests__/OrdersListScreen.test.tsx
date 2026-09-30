@@ -83,6 +83,14 @@ describe('OrdersListScreen', () => {
     expect(queryByText('First decree, №')).toBeNull();
   });
 
+  it("embedded (v3 Hujjatlar segmenti): o'z sarlavhasi yo'q, yaratish tugmasi bor", async () => {
+    mock.onGet(ORDER_ACTS).reply(200, ORDERS);
+    mock.onGet(ORDER_ACT_CATEGORIES).reply(200, []);
+    const { queryByText, getByTestId } = await renderWithProviders(<OrdersListScreen embedded />);
+    expect(queryByText('Buyruqlar')).toBeNull();
+    expect(getByTestId('orders-create')).toBeTruthy();
+  });
+
   it('tablet landscape: renders SplitLayout with the first order auto-selected in the detail pane', async () => {
     mockWindowDimensions = TABLET_LANDSCAPE;
     mock.onGet(ORDER_ACTS).reply(200, ORDERS);

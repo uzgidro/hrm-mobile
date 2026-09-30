@@ -37,7 +37,7 @@ const TABS: { key: LettersTab; labelKey: string }[] = [
   { key: 'all', labelKey: 'common.all' },
 ];
 
-export default function LettersListScreen() {
+export default function LettersListScreen({ embedded = false }: { embedded?: boolean } = {}) {
   const { t } = useTranslation();
   const { user } = useAuthStore();
   const employeeId = user?.employee?.id;
@@ -92,8 +92,9 @@ export default function LettersListScreen() {
   const listPane = (
     <>
       <View style={styles.header}>
-        <Text style={styles.title}>{t('letters.listTitle')}</Text>
-        <TouchableOpacity style={styles.fab} onPress={() => router.push('/create-letter')} activeOpacity={0.8}>
+        {/* v3: Hujjatlar tabi segmenti ichida sarlavhani tab o'zi chizadi. */}
+        {embedded ? <View style={styles.flex1} /> : <Text style={styles.title}>{t('letters.listTitle')}</Text>}
+        <TouchableOpacity testID="letters-create" style={styles.fab} onPress={() => router.push('/create-letter')} activeOpacity={0.8}>
           <Icon name="plus" size={22} color={colors.onPrimary} strokeWidth={2.4} />
         </TouchableOpacity>
       </View>
@@ -162,7 +163,7 @@ export default function LettersListScreen() {
 
   if (split) {
     return (
-      <Screen edges={['top']} maxWidth="full">
+      <Screen edges={embedded ? [] : ['top']} maxWidth="full">
         <SplitLayout
           master={listPane}
           detail={selectedId != null ? <LetterDetailView id={selectedId} embedded /> : null}
@@ -172,13 +173,14 @@ export default function LettersListScreen() {
     );
   }
 
-  return <Screen edges={['top']}>{listPane}</Screen>;
+  return <Screen edges={embedded ? [] : ['top']}>{listPane}</Screen>;
 }
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
     title: { flex: 1, fontSize: 26, ...ff('900'), color: c.text },
+    flex1: { flex: 1 },
     fab: { width: 42, height: 42, borderRadius: 14, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' },
     tabsRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingBottom: 12 },
     tab: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 9, borderRadius: 22, backgroundColor: c.card, borderWidth: 2, borderColor: c.cardBorder },

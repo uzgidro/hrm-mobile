@@ -26,7 +26,7 @@ type Row =
   | { kind: 'folder'; folder: DocumentFolder }
   | { kind: 'file'; file: HrmFile };
 
-export default function DocumentsListScreen() {
+export default function DocumentsListScreen({ embedded = false }: { embedded?: boolean } = {}) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -95,14 +95,15 @@ export default function DocumentsListScreen() {
   );
 
   return (
-    <Screen edges={['top']}>
+    <Screen edges={embedded ? [] : ['top']}>
       {/* In a folder the chevron goes up to the root list; at the root it
           leaves the screen (back to Modules) — before, the root level had
           no back affordance at all. */}
-      <ScreenHeader
+      {/* v3: segment ichida ildizda sarlavhani tab chizadi; papkada — orqaga tugmasi kerak. */}
+      {(!embedded || openFolder) && <ScreenHeader
         title={openFolder ? (openFolder.name || t('documents.folderFallback')) : t('documents.title')}
         onBack={() => (openFolder ? goRoot() : router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
-      />
+      />}
 
       <View style={styles.searchWrap}>
         <Icon name="search" size={18} color={colors.textMuted} />

@@ -1,30 +1,37 @@
-// Smoke test for the Modules tab (app/(tabs)/modules.tsx). The grid-column
-// math is fully covered by responsive.test.ts (resolveBreakpoint) and the
-// role-filtered section/tile composition by navItems.test.ts (buildNavSections)
-// — this test only verifies the screen actually renders sections/tiles from
-// that SSOT and reacts to the breakpoint, without re-asserting either's logic.
+// v3 Modullar tabi: v2 katalogidan (visibleCatalog → canAccessPage) quriladi.
 import React from 'react';
-import { renderWithProviders } from '@/test/renderWithProviders';
+import { renderWithProviders, screen, fireEvent } from '@/test/renderWithProviders';
 import i18n from '@/i18n';
+import { useAuthStore } from '@/store/authStore';
 import ModulesScreen from '../../../../app/(tabs)/modules';
 
-// The screen only uses `router.push` from expo-router; mock it so the test
-// doesn't pull in expo-router's untranspiled ESM navigation internals.
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 
-describe('ModulesScreen', () => {
+describe('ModulesScreen (v3 katalog)', () => {
   beforeEach(async () => {
     await i18n.changeLanguage('uz-Latn');
+    useAuthStore.setState({ user: { id: 1, type: 'employee', employee: { id: 1 } } as never, isAuthenticated: true } as never);
   });
 
-  it('renders sections/tiles sourced from buildNavSections (guests is visible to every role)', async () => {
-    const { getByText } = await renderWithProviders(<ModulesScreen />);
+  it("v2 bo'limlari va ruxsat etilgan plitkalar", async () => {
+    await renderWithProviders(<ModulesScreen />);
+    expect(screen.getByText(i18n.t('modules.screenTitle'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('modules.sections.main'))).toBeTruthy();
+    expect(screen.getByTestId('module-guests')).toBeTruthy();
+    expect(screen.getByTestId('module-directory')).toBeTruthy();
+    expect(screen.queryByTestId('module-employees')).toBeNull(); // oddiy xodimga yo'q (v2)
+  });
 
-    // `guests` and `directory` are unconditionally visible (canAccessPage
-    // returns true for every role) — a stable smoke signal that the grid is
-    // populated from the shared navItems SSOT rather than an empty list.
-    expect(getByText(i18n.t('modules.labels.guests'))).toBeTruthy();
-    expect(getByText(i18n.t('modules.labels.directory'))).toBeTruthy();
-    expect(getByText(i18n.t('modules.screenTitle'))).toBeTruthy();
+  it("qidiruv plitkalarni filtrlaydi", async () => {
+    await renderWithProviders(<ModulesScreen />);
+    await fireEvent.changeText(screen.getByPlaceholderText(i18n.t('modules.searchPlaceholder')), 'mehmon');
+    expect(screen.getByTestId('module-guests')).toBeTruthy();
+    expect(screen.queryByTestId('module-directory')).toBeNull();
+  });
+
+  it("topilmasa bo'sh holat", async () => {
+    await renderWithProviders(<ModulesScreen />);
+    await fireEvent.changeText(screen.getByPlaceholderText(i18n.t('modules.searchPlaceholder')), 'zzzqqq');
+    expect(screen.getByText(i18n.t('modules.searchEmpty'))).toBeTruthy();
   });
 });
