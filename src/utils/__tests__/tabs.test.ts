@@ -47,3 +47,15 @@ describe('visibleTabs — rolga qarab', () => {
     }
   });
 });
+
+describe('tabRedirect — rol o\u2019zgarsa yashirin tabda qolmaslik', () => {
+  const { tabRedirect } = jest.requireActual('../tabs');
+  it.each<[string | undefined, string[], string | null]>([
+    ['post', ['monitoring', 'attendance', 'documents', 'modules', 'profile'], 'monitoring'],
+    ['index', ['post', 'modules', 'profile'], 'post'],
+    ['documents', ['index', 'attendance', 'documents', 'modules', 'profile'], null],
+    ['orders', ['index', 'modules', 'profile'], null], // redirect-tablar — o'zi yo'naltiradi
+    ['mehmonlar', ['index', 'modules', 'profile'], null], // barsiz ekran
+    [undefined, ['index'], null],
+  ])('%s → %s', (active, visible, expected) => expect(tabRedirect(active, visible)).toBe(expected));
+});

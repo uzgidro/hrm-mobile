@@ -37,3 +37,14 @@ export function visibleTabs(user: User | null | undefined): TabKey[] {
   tabs.push('modules', 'profile');
   return tabs;
 }
+
+/**
+ * Faol tab foydalanuvchiga ko'rinmasa (rol auth/me dan keyin o'zgardi — keshdagi
+ * foydalanuvchi bilan ochilgan tablar qotib qoladi), qaysi tabga o'tish kerak.
+ * Faqat asosiy tablar tekshiriladi; redirect-tablar (orders/letters) va barsiz
+ * ekranlar (mehmonlar) o'z yo'lini o'zi hal qiladi.
+ */
+export function tabRedirect(active: string | undefined, visible: TabKey[]): TabKey | null {
+  if (!active || !(ALL_TABS as string[]).includes(active)) return null;
+  return visible.includes(active as TabKey) ? null : (visible[0] ?? null);
+}

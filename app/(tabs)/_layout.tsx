@@ -2,16 +2,17 @@
 // (rol + v2 katalogi + nav.modules); telefonda pastki `TabBar`, planshetda (medium/
 // expanded) yon `NavRail`. Ko'rinmaydigan tablar `href: null` — deep link / push
 // yo'llari ishlashda davom etadi.
-import { Tabs } from 'expo-router';
+import { useEffect } from 'react';
+import { Tabs, router, useSegments, type Href } from 'expo-router';
 import { View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useTheme } from '@/theme/ThemeProvider';
 import { useAuthStore } from '@/store/authStore';
 import { useBreakpoint } from '@/utils/responsive';
-import { NavRail } from '@/components/NavRail';
+import { NavRail, tabRoute } from '@/components/NavRail';
 import { menuBadgesQuery } from '@/lib/menuBadges';
 import { useNavSettings } from '@/lib/navSettings';
-import { visibleTabs, ALL_TABS } from '@/utils/tabs';
+import { visibleTabs, ALL_TABS, tabRedirect } from '@/utils/tabs';
 import { TabBar } from '@/features/shell/components/TabBar';
 
 export default function TabsLayout() {
@@ -23,6 +24,15 @@ export default function TabsLayout() {
   useNavSettings();
   const visible = visibleTabs(user);
   const docBadge = (badges?.orders ?? 0) + (badges?.letters ?? 0) + (badges?.documents ?? 0);
+
+  // Rol keyinroq (auth/me) o'zgarsa — keshdagi foydalanuvchi bilan ochilgan tab
+  // endi ruxsatsiz bo'lishi mumkin: ko'rinadigan birinchi tabga o'tamiz.
+  const segments = useSegments() as string[];
+  const active = segments[0] === '(tabs)' ? (segments[1] ?? 'index') : undefined;
+  const redirectTo = tabRedirect(active, visible);
+  useEffect(() => {
+    if (redirectTo) router.replace(tabRoute(redirectTo) as Href);
+  }, [redirectTo]);
 
   return (
     <View style={{ flex: 1, flexDirection: 'row', backgroundColor: colors.bg }}>

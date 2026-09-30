@@ -44,10 +44,16 @@ export function NavRail() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [user, navOverrides],
   );
+  // Tab sifatida allaqachon chiqqan sahifalar katalog bo'limida takrorlanmaydi.
   const sections = useMemo(
-    () => catalogBySection(visibleCatalog(user).filter((m) => m.page !== 'home')),
+    () =>
+      catalogBySection(
+        visibleCatalog(user).filter(
+          (m) => m.page !== 'home' && !(m.page === 'monitoring' && tabs.includes('monitoring')) && !(m.page === 'kpp' && tabs.includes('post')),
+        ),
+      ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [user, navOverrides],
+    [user, navOverrides, tabs],
   );
   const docBadge = (badges?.orders ?? 0) + (badges?.letters ?? 0) + (badges?.documents ?? 0);
 

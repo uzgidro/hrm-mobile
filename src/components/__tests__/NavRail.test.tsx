@@ -46,3 +46,15 @@ describe('NavRail — safe area', () => {
     expect(style.paddingBottom).toBeGreaterThanOrEqual(34);
   });
 });
+
+describe('NavRail — takror yo\u2019q', () => {
+  it("tab sifatida chiqqan modul (monitoring) katalog bo'limida takrorlanmaydi", async () => {
+    useAuthStore.setState({
+      user: { type: 'employee', employee: { id: 1, is_multi_org_user: true, multi_org_employee_role: 'monitoring' } } as any,
+      isAuthenticated: true,
+    } as any);
+    const { getByTestId, queryByTestId } = await renderWithProviders(<NavRail />);
+    expect(getByTestId('rail-monitoring')).toBeTruthy();
+    expect(queryByTestId('rail-mod-monitoring')).toBeNull();
+  });
+});

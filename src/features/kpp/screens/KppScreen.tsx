@@ -137,11 +137,16 @@ export default function KppScreen({ showBack = false }: { showBack?: boolean } =
 
   const passesCard = (
     <Card
-      title={selected ? `${t('kpp.todayPasses')} · ${selected.name}` : t('kpp.todayPasses')}
+      title={t('kpp.todayPasses')}
       icon="clock"
       tint="green"
       action={selected ? { label: t('kpp.clearSelection'), onPress: () => setSelected(null) } : undefined}
     >
+      {selected && (
+        <View style={styles.selectedRow}>
+          <Badge label={selected.name} tone="brand" />
+        </View>
+      )}
       {eventsQ.isPending ? (
         <Skeleton height={120} />
       ) : events.length === 0 ? (
@@ -208,4 +213,5 @@ const styles = StyleSheet.create({
   guest: { borderRadius: radii.md, paddingHorizontal: 4 },
   right: { alignItems: 'flex-end', gap: 4 },
   time: { fontVariant: ['tabular-nums'] },
+  selectedRow: { marginBottom: 6 },
 });
