@@ -291,6 +291,14 @@ export function isBranchAdmin(user?: User | null): boolean {
   return String(user?.type) === 'admin';
 }
 
+/** Kechikish ma'lumotini ko'rishi mumkinmi — web v2 `canSeeLateness` 1:1 (asosiy rol bo'yicha). */
+export function canSeeLateness(user?: User | null): boolean {
+  if (user?.type === 'master-admin' || String(user?.type) === 'admin') return true;
+  const primary = getMultiOrgRole(user);
+  if (primary && ['hr', 'ministr', 'deputy', 'monitoring', 'dashboard'].includes(primary)) return true;
+  return !!user?.is_line_manager;
+}
+
 /** «Mening jamoam»: whoever manages people (server `scoping.is_line_manager`, on /me). */
 export function canSeeTeam(user?: User | null): boolean {
   return !!user?.is_line_manager;

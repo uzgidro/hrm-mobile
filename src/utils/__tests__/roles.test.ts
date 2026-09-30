@@ -807,3 +807,24 @@ describe('hasSupervisor', () => {
     expect(hasSupervisor(undefined)).toBe(false);
   });
 });
+
+describe('canSeeLateness (v2 auth/roles.ts)', () => {
+  const { canSeeLateness } = jest.requireActual('../roles');
+  const emp = (role?: string, extra: Record<string, unknown> = {}) => ({
+    type: 'employee',
+    employee: role ? { id: 1, is_multi_org_user: true, multi_org_employee_role: role } : { id: 1 },
+    ...extra,
+  });
+  it.each([
+    ['master-admin', { type: 'master-admin' }, true],
+    ['admin akkaunt', { type: 'admin' }, true],
+    ['hr', emp('hr'), true],
+    ['ministr', emp('ministr'), true],
+    ['deputy', emp('deputy'), true],
+    ['monitoring', emp('monitoring'), true],
+    ['kuzatuvchi', emp('dashboard'), true],
+    ['line manager', emp(undefined, { is_line_manager: true }), true],
+    ['devonxona', emp('chancellery'), false],
+    ['oddiy xodim', emp(), false],
+  ])('%s', (_n, user, expected) => expect(canSeeLateness(user)).toBe(expected));
+});

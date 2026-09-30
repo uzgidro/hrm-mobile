@@ -351,3 +351,7 @@ export const DASHBOARD_JOB_POSITION_STATS = 'dashboard/job-position-stats';
 export const DASHBOARD_OVERDUE_TASKS = 'dashboard/overdue-tasks';
 // Mehmonlarning turniket o'tishlari (KPP posti, monitoring) — v2 VISITOR_TURNSTILE_ATTENDANCE.
 export const VISITOR_TURNSTILE_ATTENDANCE = 'turnstile-attendance-events/visitors';
+// Monitoring (web v2 MonitoringPage manbalari).
+export const DASHBOARD_MAIN = 'dashboard/main';
+export const DASHBOARD_LATE_EMPLOYEES = 'dashboard/late-employees';
+export const DASHBOARD_LATE_EMPLOYEES_FREQUENT = 'dashboard/late-employees/frequent';
