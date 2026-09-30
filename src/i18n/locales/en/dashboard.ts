@@ -91,6 +91,9 @@ export default {
     overdue: 'Overdue tasks',
     overdueNone: 'No overdue tasks',
     worstDept: 'Most',
+    toggleTheme: 'Toggle theme',
+    searchTitle: 'Search',
+    searchPlaceholder: 'Type a module name',
     boardStatus: {
       present: 'Present',
       arrived: 'Arrived',

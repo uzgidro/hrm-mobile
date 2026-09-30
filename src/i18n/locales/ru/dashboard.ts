@@ -93,6 +93,9 @@ export default {
     overdue: 'Просроченные поручения',
     overdueNone: 'Просроченных поручений нет',
     worstDept: 'Больше всего',
+    toggleTheme: 'Сменить тему',
+    searchTitle: 'Поиск',
+    searchPlaceholder: 'Введите название модуля',
     boardStatus: {
       present: 'Пришёл',
       arrived: 'Пришёл',

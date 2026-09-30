@@ -89,6 +89,9 @@ export default {
     overdue: 'Муддати ўтган топшириқлар',
     overdueNone: 'Муддати ўтган топшириқ йўқ',
     worstDept: 'Энг кўп',
+    toggleTheme: 'Мавзуни алмаштириш',
+    searchTitle: 'Қидирув',
+    searchPlaceholder: 'Модул номини ёзинг',
     boardStatus: {
       present: 'Келган',
       arrived: 'Келди',

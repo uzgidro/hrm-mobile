@@ -253,10 +253,11 @@ export type HydratedBoard = {
 /** `day-board` javobi (id'lar bilan siqilgan) → xodim/turniket ulangan voqealar. */
 export function hydrateDayBoard(b: DayBoard | undefined): HydratedBoard {
   if (!b) return { entries: 0, exits: 0, maxId: null, latest: [], personEvents: [] };
-  const emps = new Map(b.employees.map((e) => [e.id, e]));
-  const gates = new Map(b.turnstiles.map((t) => [t.id, t]));
+  // Eski/qisman javob (yangi maydon yo'q) ekranni yiqitmasin.
+  const emps = new Map((b.employees ?? []).map((e) => [e.id, e]));
+  const gates = new Map((b.turnstiles ?? []).map((t) => [t.id, t]));
   const byId = new Map<number, BoardEvent>();
-  for (const e of b.events) {
+  for (const e of b.events ?? []) {
     const gate = e.turnstile_id != null ? gates.get(e.turnstile_id) : undefined;
     byId.set(e.id, {
       ...e,
@@ -267,7 +268,7 @@ export function hydrateDayBoard(b: DayBoard | undefined): HydratedBoard {
   }
   const pick = (id: number | null | undefined) => (id != null ? byId.get(id) : undefined);
   const personEvents: BoardEvent[] = [];
-  for (const p of b.people) {
+  for (const p of b.people ?? []) {
     const seen = new Set<number>();
     for (const id of [p.last_id, p.entry_id, p.exit_id]) {
       const ev = pick(id);
@@ -278,10 +279,10 @@ export function hydrateDayBoard(b: DayBoard | undefined): HydratedBoard {
     }
   }
   return {
-    entries: b.entries,
-    exits: b.exits,
+    entries: b.entries ?? 0,
+    exits: b.exits ?? 0,
     maxId: b.max_id ?? null,
-    latest: b.latest.map(pick).filter((e): e is BoardEvent => !!e),
+    latest: (b.latest ?? []).map(pick).filter((e): e is BoardEvent => !!e),
     personEvents,
   };
 }

@@ -1,0 +1,100 @@
+// Bosh sahifa headeri (v2 top bar'ning telefon shakli): salomlashuv + sana/bo'lim,
+// o'ngda qidiruv (modullar — v2 katalogidan), bildirishnomalar, mavzu.
+import React, { useMemo, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
+import dayjs from 'dayjs';
+import { router, type Href } from 'expo-router';
+import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
+import { useTheme } from '@/theme/ThemeProvider';
+import { useAuthStore } from '@/store/authStore';
+import { menuBadgesQuery } from '@/lib/menuBadges';
+import { monthName, weekdayName } from '@/i18n/dates';
+import { visibleCatalog } from '@/utils/moduleCatalog';
+import { moduleTint } from '@/theme/tokens';
+import { Icon } from '@/components/Icon';
+import { IconButton, ListRow, SearchField, Sheet, Text } from '@/ui';
+import { givenName } from '../utils/shiftProgress';
+
+export function greetingKey(hour: number): string {
+  if (hour < 12) return 'dashboard.home.greetingMorning';
+  if (hour < 18) return 'dashboard.home.greetingDay';
+  return 'dashboard.home.greetingEvening';
+}
+
+export function HomeHeader() {
+  const { t } = useTranslation();
+  const { colors: c, isDark, setMode } = useTheme();
+  const user = useAuthStore((s) => s.user);
+  const { data: badges } = useQuery(menuBadgesQuery());
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [query, setQuery] = useState('');
+
+  const now = dayjs();
+  const name = givenName(user?.employee?.legal_name) || t('dashboard.userFallback');
+  const dateLine = `${weekdayName(now.day())}, ${now.date()} ${monthName(now.month())}`;
+  const dept = user?.employee?.department?.name;
+
+  const results = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const all = visibleCatalog(user).filter((m) => m.page !== 'home');
+    return q ? all.filter((m) => t(m.labelKey).toLowerCase().includes(q)) : all.slice(0, 8);
+  }, [query, user, t]);
+
+  return (
+    <View style={styles.row}>
+      <View style={styles.text}>
+        <Text variant="title" numberOfLines={1} testID="home-greeting" accessibilityRole="header">
+          {t(greetingKey(now.hour()), { name })}
+        </Text>
+        <Text variant="caption" tone="subtle" numberOfLines={1}>
+          {dept ? `${dateLine} · ${dept}` : dateLine}
+        </Text>
+      </View>
+      <IconButton icon="search" accessibilityLabel={t('dashboard.home.searchTitle')} onPress={() => setSearchOpen(true)} />
+      <IconButton
+        icon="bell"
+        accessibilityLabel={t('modules.labels.notifications')}
+        badge={badges?.unread_notifications}
+        onPress={() => router.push('/notifications' as Href)}
+      />
+      <IconButton
+        icon={isDark ? 'sun' : 'moon'}
+        accessibilityLabel={t('dashboard.home.toggleTheme')}
+        onPress={() => setMode(isDark ? 'light' : 'dark')}
+      />
+
+      <Sheet visible={searchOpen} onClose={() => setSearchOpen(false)} title={t('dashboard.home.searchTitle')}>
+        <SearchField value={query} onChangeText={setQuery} placeholder={t('dashboard.home.searchPlaceholder')} autoFocus />
+        <View style={styles.results}>
+          {results.map((m) => {
+            const tint = moduleTint(c, m.tint);
+            return (
+              <ListRow
+                key={m.page}
+                title={t(m.labelKey)}
+                left={
+                  <View style={[styles.icon, { backgroundColor: tint.wash }]}>
+                    <Icon name={m.icon} size={18} color={tint.fg} />
+                  </View>
+                }
+                chevron
+                onPress={() => {
+                  setSearchOpen(false);
+                  router.push(m.route as Href);
+                }}
+              />
+            );
+          })}
+        </View>
+      </Sheet>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  row: { flexDirection: 'row', alignItems: 'center', gap: 2, paddingTop: 8, paddingBottom: 12 },
+  text: { flex: 1, minWidth: 0, marginRight: 4 },
+  results: { marginTop: 8 },
+  icon: { width: 34, height: 34, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+});

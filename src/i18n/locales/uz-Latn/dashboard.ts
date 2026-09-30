@@ -101,6 +101,9 @@ export default {
     overdue: "Muddati o'tgan topshiriqlar",
     overdueNone: "Muddati o'tgan topshiriq yo'q",
     worstDept: "Eng ko'p",
+    toggleTheme: 'Mavzuni almashtirish',
+    searchTitle: 'Qidiruv',
+    searchPlaceholder: 'Modul nomini yozing',
     boardStatus: {
       present: 'Kelgan',
       arrived: 'Keldi',

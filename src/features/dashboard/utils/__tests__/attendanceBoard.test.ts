@@ -124,3 +124,9 @@ describe('hydrateDayBoard', () => {
     expect(hydrateDayBoard(undefined)).toMatchObject({ entries: 0, exits: 0, latest: [], personEvents: [] });
   });
 });
+
+describe('hydrateDayBoard — eski/qisman javob', () => {
+  it("maydonlari yo'q obyekt yiqitmaydi", () => {
+    expect(hydrateDayBoard({} as DayBoard)).toMatchObject({ entries: 0, exits: 0, latest: [], personEvents: [] });
+  });
+});
