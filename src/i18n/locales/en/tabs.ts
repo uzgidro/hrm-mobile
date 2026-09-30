@@ -7,4 +7,5 @@ export default {
   profile: 'Profile',
   post: 'Post',
   monitoring: 'Monitoring',
+  monitoringSoon: 'The monitoring screen is coming soon',
 } as const;

@@ -8,6 +8,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { router, usePathname, type Href } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '../store/authStore';
 import { useTheme } from '../theme/ThemeProvider';
 import { moduleTint, radii, type ModuleTintKey } from '../theme/tokens';
@@ -32,6 +33,8 @@ export function NavRail() {
   const { t } = useTranslation();
   const pathname = usePathname();
   const { sizeClass } = useBreakpoint();
+  // Landshaft telefonda ham rail chiqadi — notch / status bar / home indicator ostida qolmasin.
+  const insets = useSafeAreaInsets();
   const [expanded, setExpanded] = useState(sizeClass === 'expanded');
   const navOverrides = useNavSettings();
   const { data: badges } = useQuery(menuBadgesQuery());
@@ -55,9 +58,16 @@ export function NavRail() {
 
   return (
     <View
+      testID="nav-rail"
       style={[
         styles.rail,
-        { backgroundColor: c.surface, borderRightColor: c.border },
+        {
+          backgroundColor: c.surface,
+          borderRightColor: c.border,
+          paddingTop: 12 + insets.top,
+          paddingBottom: insets.bottom,
+          paddingLeft: insets.left,
+        },
         { width: expanded ? RAIL_EXPANDED_WIDTH : RAIL_COLLAPSED_WIDTH },
       ]}
     >
@@ -176,7 +186,7 @@ function Row({
 }
 
 const styles = StyleSheet.create({
-  rail: { borderRightWidth: StyleSheet.hairlineWidth, paddingTop: 12 },
+  rail: { borderRightWidth: StyleSheet.hairlineWidth },
   toggle: {
     alignSelf: 'flex-end',
     width: 36,

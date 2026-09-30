@@ -37,8 +37,12 @@ describe('board so\'rovlari (v2 paritet)', () => {
       organization_branch_id: 3,
       day: '2026-09-29',
       include_cross_branch: true,
-      latest: -1,
+      latest: 20, // telefonda 8 qator chiziladi; hisoblagichlar people dan
     });
+  });
+
+  it('day-board v2 kabi 300 s da yangilanadi (60 s emas — mobil trafik)', () => {
+    expect(boardDayQuery(3, '2026-09-29').refetchInterval).toBe(300_000);
   });
 
   it('kategoriyalar: filial bo\'lmasa param yuborilmaydi', async () => {

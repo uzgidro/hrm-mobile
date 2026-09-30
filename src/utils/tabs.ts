@@ -23,9 +23,13 @@ export const TAB_META: Record<TabKey, { icon: IconName; tint: ModuleTintKey; lab
 
 export function visibleTabs(user: User | null | undefined): TabKey[] {
   const board = homeBoardFor(user);
-  if (board === 'post') return ['post', 'profile'];
-  if (board === 'monitoring') return ['monitoring', 'profile'];
-  const tabs: TabKey[] = ['index'];
+  // Post/monitoring paneli — birinchi tab o'sha ish ekrani. Qolgan tablar baribir
+  // canAccessPage bo'yicha: KPP/monitoring ROLIDAGI xodim v2'da to'liq katalogni
+  // ko'radi, kiosk akkaunt esa Modullar orqali ma'lumotnoma/mehmonlarga kiradi.
+  // Devonxona / admin / mehmon uchun Bosh sahifa yo'q (v2 ularni boshqa sahifaga
+  // yo'naltiradi) — tablar to'g'ridan-to'g'ri o'sha joydan boshlanadi.
+  const tabs: TabKey[] =
+    board === 'post' ? ['post'] : board === 'monitoring' ? ['monitoring'] : board === 'employee' || board === 'leader' ? ['index'] : [];
   if (canAccessPage(user, 'timesheet') || canAccessPage(user, 'attendance')) tabs.push('attendance');
   if (canAccessPage(user, 'orders') || canAccessPage(user, 'letters') || canAccessPage(user, 'documents')) {
     tabs.push('documents');

@@ -213,17 +213,22 @@ export const dashboardKeys = {
 
 const branchParams = (branchId: number | undefined) => (branchId ? { organization_branch_id: branchId } : {});
 
-/** Kunlik taxta — v2: cross-branch voqealar lentaga kiradi, lenta cheklanmagan (latest: -1). */
+/**
+ * Kunlik taxta — v2: cross-branch voqealar lentaga kiradi. Telefonda lentadan 8 qator
+ * chiziladi, hisoblagichlar `people` dan — shuning uchun `latest: 20` (to'liq kun emas).
+ * Yangilash v2 kabi 300 s (web'da bu soketning zaxirasi; mobil trafikni tejaydi).
+ */
 export function boardDayQuery(branchId: number | undefined, day: string) {
   return queryOptions({
     queryKey: dashboardKeys.day(branchId, day),
     queryFn: () =>
       apiClient
         .get<DayBoard>(TURNSTILE_DAY_BOARD, {
-          params: { ...branchParams(branchId), day, include_cross_branch: true, latest: -1 },
+          params: { ...branchParams(branchId), day, include_cross_branch: true, latest: 20 },
         })
         .then((r) => r.data),
     staleTime: 60 * 1000,
+    refetchInterval: 300_000,
   });
 }
 

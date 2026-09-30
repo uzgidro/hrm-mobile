@@ -47,6 +47,16 @@ describe('HomeScreen (v3)', () => {
     expect(screen.getByText('redirect:/post')).toBeTruthy();
   });
 
+  it.each<[string, Record<string, unknown>, string]>([
+    ['devonxona → Buyruqlar', { id: 1, type: 'employee', employee: { id: 7, legal_name: 'A B', is_multi_org_user: true, multi_org_employee_role: 'chancellery' } }, 'redirect:/documents?seg=orders'],
+    ['filial admin → Modullar', { id: 1, type: 'admin' }, 'redirect:/modules'],
+    ['mehmon → Profil', { id: 1, type: 'guest' }, 'redirect:/profile'],
+  ])('%s', async (_n, user, text) => {
+    setUser(user);
+    await renderWithProviders(<HomeScreen />);
+    expect(screen.getByText(text)).toBeTruthy();
+  });
+
   it("qo'ng'iroq bildirishnomalarni ochadi", async () => {
     setUser({ id: 1, type: 'employee', employee: { id: 7, legal_name: 'Ali Vali' } });
     await renderWithProviders(<HomeScreen />);

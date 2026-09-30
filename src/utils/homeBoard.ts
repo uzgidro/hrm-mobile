@@ -8,6 +8,8 @@ import {
   canSeeTeam,
   getRoleKey,
   isAccounting,
+  isAnyChancellery,
+  isBranchAdmin,
   isDashboardViewer,
   isDeputy,
   isHR,
@@ -18,10 +20,17 @@ import {
   isSeparateAccount,
 } from './roles';
 
-export type HomeBoard = 'monitoring' | 'post' | 'leader' | 'employee';
+/**
+ * chancellery → v2 `/orders` (Hujjatlar); admin → v2 `/filiallar` (hali ekran yo'q —
+ * Modullar); guest → v2 RegistrationStatusPage (hali yo'q — Profil).
+ */
+export type HomeBoard = 'monitoring' | 'post' | 'leader' | 'employee' | 'chancellery' | 'admin' | 'guest';
 
 export function homeBoardFor(user: User | null | undefined): HomeBoard {
   if (!user) return 'employee';
+  if (user.type === 'guest') return 'guest';
+  if (isAnyChancellery(user) && !isMasterAdmin(user)) return 'chancellery';
+  if (isBranchAdmin(user)) return 'admin';
   if (isSeparateAccount(user)) return getRoleKey(user) === 'kpp' ? 'post' : 'monitoring';
   if (isMonitoringOperator(user)) return 'monitoring';
   if (getRoleKey(user) === 'kpp') return 'post';

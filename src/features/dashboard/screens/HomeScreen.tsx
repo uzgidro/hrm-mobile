@@ -43,8 +43,16 @@ export default function HomeScreen() {
     }
   }, [queryClient]);
 
-  if (board === 'post') return <Redirect href={'/post' as Href} />;
-  if (board === 'monitoring') return <Redirect href={'/monitoring' as Href} />;
+  // Bosh sahifasi boshqa joyda bo'lgan rollar (v2 DashboardPage bilan bir xil yo'naltirish).
+  const elsewhere: Partial<Record<typeof board, string>> = {
+    post: '/post',
+    monitoring: '/monitoring',
+    chancellery: '/documents?seg=orders',
+    admin: '/modules', // v2 /filiallar — mobil ekrani W6 da
+    guest: '/profile', // v2 ariza holati — mobil ekrani W4 da
+  };
+  const target = elsewhere[board];
+  if (target) return <Redirect href={target as Href} />;
 
   return (
     <Screen refreshing={refreshing} onRefresh={onRefresh} testID="home-screen">

@@ -8,7 +8,7 @@ import { buildAttendanceRows, countByStatus, hydrateDayBoard } from '../../utils
 
 export function useBoardDay(branchId: number | undefined) {
   const day = dayjs().format('YYYY-MM-DD');
-  const board = useQuery({ ...boardDayQuery(branchId, day), refetchInterval: 60_000 });
+  const board = useQuery(boardDayQuery(branchId, day));
   const categories = useQuery(boardCategoriesQuery(branchId));
   const hydrated = useMemo(() => hydrateDayBoard(board.data), [board.data]);
   const rows = useMemo(() => buildAttendanceRows(hydrated.personEvents, categories.data), [hydrated, categories.data]);

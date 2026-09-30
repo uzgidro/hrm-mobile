@@ -7,4 +7,5 @@ export default {
   profile: 'Profil',
   post: 'Post',
   monitoring: 'Monitoring',
+  monitoringSoon: 'Monitoring ekrani tez orada',
 } as const;

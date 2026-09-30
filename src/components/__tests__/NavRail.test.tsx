@@ -35,3 +35,14 @@ describe('NavRail', () => {
     expect(queryByTestId('rail-mod-employees')).toBeNull();
   });
 });
+
+describe('NavRail — safe area', () => {
+  it("yuqori/chap/pastki xavfsiz chegaralarni hisobga oladi (notch ostida qolmaydi)", async () => {
+    const { StyleSheet } = jest.requireActual('react-native');
+    useAuthStore.setState({ user: { type: 'employee', employee: { id: 1 } } as any, isAuthenticated: true } as any);
+    const { getByTestId } = await renderWithProviders(<NavRail />);
+    const style = StyleSheet.flatten(getByTestId('nav-rail').props.style);
+    expect(style.paddingTop).toBeGreaterThanOrEqual(47); // test metrics: insets.top = 47
+    expect(style.paddingBottom).toBeGreaterThanOrEqual(34);
+  });
+});
