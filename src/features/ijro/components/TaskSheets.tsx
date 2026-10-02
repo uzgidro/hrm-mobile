@@ -1,0 +1,230 @@
+// Ijro topshirig'i: tafsilot oynasi (yurituvchi uchun bajarildi / qayta ochish /
+// tahrir / o'chirish) va yaratish-tahrirlash formasi (v2 TaskView + TaskForm).
+import React, { useEffect, useState } from 'react';
+import { Alert, StyleSheet, View } from 'react-native';
+import dayjs from 'dayjs';
+import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
+import { apiClient } from '@/api/client';
+import { unwrapList } from '@/api/response';
+import { EMPLOYEES_LIST } from '@/api/urls';
+import { getApiErrorMessage } from '@/api/errors';
+import { toast } from '@/lib/toast';
+import { PickerModal } from '@/components/PickerModal';
+import { DatePickerModal } from '@/components/DatePicker';
+import { FormInput } from '@/components/FormInput';
+import { Badge, Button, SelectField, Sheet, Text } from '@/ui';
+import type { Employee } from '@/types';
+import { useDeleteTask, useSaveTask, useSetTaskCompleted } from '../api/mutations';
+import { buildTaskBody, delayDays, statusOf, validateTask, type IjroTask, type TaskForm } from '../utils/ijro';
+import { STATUS_TONE } from './statusTone';
+
+export function TaskDetailSheet({
+  task,
+  canWrite,
+  onClose,
+  onEdit,
+}: {
+  task: IjroTask | null;
+  canWrite: boolean;
+  onClose: () => void;
+  onEdit: (t: IjroTask) => void;
+}) {
+  const { t } = useTranslation();
+  const setCompleted = useSetTaskCompleted();
+  const remove = useDeleteTask();
+  if (!task) return null;
+  const today = dayjs().format('YYYY-MM-DD');
+  const status = statusOf(task, today);
+  const late = delayDays(task, today);
+
+  const run = async (p: Promise<unknown>, okKey: string) => {
+    try {
+      await p;
+      toast.success(t(okKey));
+      onClose();
+    } catch (e) {
+      toast.error(getApiErrorMessage(e, t('errors.generic')));
+    }
+  };
+
+  const confirmDelete = () =>
+    Alert.alert(t('ijro.remove'), t('ijro.deleteConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('ijro.remove'), style: 'destructive', onPress: () => void run(remove.mutateAsync(task.id), 'ijro.deleted') },
+    ]);
+
+  const row = (label: string, value: string) => (
+    <View style={styles.kv}>
+      <Text variant="caption" tone="subtle">
+        {label}
+      </Text>
+      <Text variant="body">{value}</Text>
+    </View>
+  );
+
+  return (
+    <Sheet visible onClose={onClose} title={task.task_index || t('ijro.title')}>
+      <View style={styles.form}>
+        <View style={styles.badges}>
+          <Badge label={t(`ijro.status_${status}`)} tone={STATUS_TONE[status]} />
+          {late > 0 && <Badge label={t('ijro.daysLate', { count: late })} tone="danger" />}
+        </View>
+        {row(t('ijro.fieldEmployee'), task.employee?.legal_name ?? '—')}
+        {row(t('ijro.fieldTask'), task.description || '—')}
+        {row(t('ijro.fieldDeadline'), task.deadline_date ? dayjs(task.deadline_date).format('DD.MM.YYYY') : '—')}
+        {row(t('ijro.fieldDone'), task.task_completed ? dayjs(task.task_completed).format('DD.MM.YYYY') : '—')}
+        {canWrite && (
+          <View style={styles.actions}>
+            {task.task_completed ? (
+              <Button
+                label={t('ijro.reopen')}
+                variant="soft"
+                full
+                loading={setCompleted.isPending}
+                onPress={() => void run(setCompleted.mutateAsync({ id: task.id, date: null }), 'ijro.reopened')}
+              />
+            ) : (
+              <Button
+                label={t('ijro.markDone')}
+                full
+                loading={setCompleted.isPending}
+                onPress={() => void run(setCompleted.mutateAsync({ id: task.id, date: today }), 'ijro.markedDone')}
+              />
+            )}
+            <Button label={t('ijro.edit')} variant="soft" full onPress={() => onEdit(task)} />
+            <Button label={t('ijro.remove')} variant="ghost" full onPress={confirmDelete} />
+          </View>
+        )}
+      </View>
+    </Sheet>
+  );
+}
+
+function initialForm(task: IjroTask | null): TaskForm {
+  return {
+    index: task?.task_index ?? '',
+    description: task?.description ?? '',
+    employeeId: task?.employee_id ?? task?.employee?.id ?? null,
+    deadline: task?.deadline_date ?? '',
+    done: task?.task_completed ?? '',
+  };
+}
+
+export function TaskFormSheet({ task, onClose }: { task: IjroTask | null | undefined; onClose: () => void }) {
+  const { t } = useTranslation();
+  const visible = task !== undefined;
+  const [form, setForm] = useState<TaskForm>(() => initialForm(task ?? null));
+  const [employeeName, setEmployeeName] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [picker, setPicker] = useState<null | 'employee' | 'deadline' | 'done'>(null);
+  const [empSearch, setEmpSearch] = useState('');
+  const save = useSaveTask();
+
+  useEffect(() => {
+    if (visible) {
+      setForm(initialForm(task ?? null));
+      setEmployeeName(task?.employee?.legal_name ?? '');
+      setError(null);
+    }
+  }, [visible, task]);
+
+  const employees = useQuery({
+    queryKey: ['ijro', 'employee-picker', empSearch],
+    queryFn: () =>
+      apiClient
+        .get(EMPLOYEES_LIST, { params: { size: 30, ...(empSearch ? { search: empSearch } : {}) } })
+        .then((r) => unwrapList<Employee>(r.data)),
+    enabled: picker === 'employee',
+  });
+
+  const set = (p: Partial<TaskForm>) => {
+    setForm((f) => ({ ...f, ...p }));
+    setError(null);
+  };
+
+  const submit = async () => {
+    const err = validateTask(form);
+    if (err) return setError(t(`ijro.${err}`));
+    try {
+      await save.mutateAsync({ id: task?.id ?? null, body: buildTaskBody(form) });
+      toast.success(t('ijro.saved'));
+      onClose();
+    } catch (e) {
+      setError(getApiErrorMessage(e, t('errors.generic')));
+    }
+  };
+
+  return (
+    <Sheet visible={visible} onClose={onClose} title={task ? t('ijro.editTitle') : t('ijro.create')}>
+      <View style={styles.form}>
+        <FormInput label={t('ijro.fieldIndex')} value={form.index} onChangeText={(v) => set({ index: v })} required />
+        <SelectField
+          label={t('ijro.fieldEmployee')}
+          value={employeeName}
+          placeholder={t('ijro.pickEmployee')}
+          onPress={() => setPicker('employee')}
+        />
+        <FormInput label={t('ijro.fieldTask')} value={form.description} onChangeText={(v) => set({ description: v })} multiline />
+        <View style={styles.row}>
+          <View style={styles.flex}>
+            <SelectField label={t('ijro.fieldDeadline')} value={form.deadline} icon="calendar" onPress={() => setPicker('deadline')} />
+          </View>
+          <View style={styles.flex}>
+            <SelectField
+              label={t('ijro.fieldDone')}
+              value={form.done}
+              placeholder={t('ijro.doneHint')}
+              icon="calendar"
+              onPress={() => setPicker('done')}
+            />
+          </View>
+        </View>
+        {!!error && (
+          <Text variant="label" tone="danger">
+            {error}
+          </Text>
+        )}
+        <Button testID="ijro-save" label={t('common.save')} onPress={submit} loading={save.isPending} full size="lg" />
+      </View>
+
+      <PickerModal
+        visible={picker === 'employee'}
+        title={t('ijro.pickEmployee')}
+        options={(employees.data ?? []).map((e) => ({ value: e.id, label: e.legal_name }))}
+        loading={employees.isFetching}
+        selected={form.employeeId}
+        onClose={() => setPicker(null)}
+        onSearchChange={setEmpSearch}
+        onSelect={(id) => {
+          set({ employeeId: id });
+          setEmployeeName(employees.data?.find((e) => e.id === id)?.legal_name ?? '');
+          setPicker(null);
+        }}
+      />
+      <DatePickerModal
+        visible={picker === 'deadline'}
+        value={form.deadline || undefined}
+        title={t('ijro.fieldDeadline')}
+        onConfirm={(d) => set({ deadline: d })}
+        onClose={() => setPicker(null)}
+      />
+      <DatePickerModal
+        visible={picker === 'done'}
+        value={form.done || undefined}
+        title={t('ijro.fieldDone')}
+        onConfirm={(d) => set({ done: d })}
+        onClose={() => setPicker(null)}
+      />
+    </Sheet>
+  );
+}
+
+const styles = StyleSheet.create({
+  form: { gap: 12, paddingBottom: 8 },
+  badges: { flexDirection: 'row', gap: 6, flexWrap: 'wrap' },
+  kv: { gap: 2 },
+  actions: { gap: 8, marginTop: 8 },
+  row: { flexDirection: 'row', gap: 10 },
+  flex: { flex: 1 },
+});

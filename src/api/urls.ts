@@ -358,3 +358,5 @@ export const DASHBOARD_LATE_EMPLOYEES_FREQUENT = 'dashboard/late-employees/frequ
 // Vaqtinchalik buyruqlar (kadr kiritadigan ta'til/kasallik… — v2 TempOrdersPage).
 export const WORK_LEAVES_HR_LIST = 'work-leaves/hr-list';
 export const WORK_LEAVES_HR_CREATE = 'work-leaves/hr-create';
+// Ijro intizomi — topshiriqlar va muddatlar (web v2 IjroPage).
+export const TASKS_OVERDUE = 'tasks-overdue';

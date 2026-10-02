@@ -482,7 +482,7 @@ const MODULE_FOR_PAGE: Partial<Record<PageKey, ModuleDef>> = {
   services: { key: 'services', defaultRoles: [...ALL, 'guest'], ready: false },
   zoom: { key: 'zoom', defaultRoles: ALL, ready: false },
   vehicles: { key: 'vehicles', defaultRoles: ALL, gates: [needsFleet], ready: false },
-  ijro: { key: 'ijro', defaultRoles: ALL, ready: false },
+  ijro: { key: 'ijro', defaultRoles: ALL },
   workPlan: { key: 'workPlan', defaultRoles: ADMIN_HR_LEAD, ready: false },
   medical: { key: 'medical', defaultRoles: ALL, gates: [needsMedical], ready: false },
   health: { key: 'health', defaultRoles: ALL, gates: [needsHealth], ready: false },
