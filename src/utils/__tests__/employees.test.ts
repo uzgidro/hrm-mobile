@@ -214,3 +214,24 @@ describe('fetchEmployeeOptions', () => {
     expect(await fetchEmployeeOptions()).toEqual([]);
   });
 });
+
+describe('departmentsQuery / jobPositionsQuery — barcha sahifalar', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { departmentsQuery, jobPositionsQuery } = require('../employees');
+  const page = (p: number, n: number, total: number) => ({
+    items: Array.from({ length: n }, (_, i) => ({ id: (p - 1) * 500 + i + 1, name: `D${i}` })),
+    total,
+  });
+  it('bo\'limlar: 700 qator — 2 sahifa yuriladi', async () => {
+    mock.onGet('departments').reply((cfg) => [200, page(cfg.params.page, cfg.params.page === 1 ? 500 : 200, 700)]);
+    const out = await departmentsQuery(3).queryFn!({} as never);
+    expect(out).toHaveLength(700);
+    expect(mock.history.get[0].params).toMatchObject({ organization_branch_id: 3, page: 1, size: 500 });
+  });
+  it('lavozimlar: filial yo\'q — param yuborilmaydi', async () => {
+    mock.onGet('job-positions').reply(200, page(1, 2, 2));
+    const out = await jobPositionsQuery().queryFn!({} as never);
+    expect(out).toHaveLength(2);
+    expect(mock.history.get[0].params).toEqual({ page: 1, size: 500 });
+  });
+});

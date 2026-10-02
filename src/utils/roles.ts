@@ -296,6 +296,19 @@ export function canManageOrderTypes(user?: User | null): boolean {
   return isSiteMasterAdmin(user) || isBranchAdmin(user) || isHR(user) || isMinister(user);
 }
 
+/**
+ * Tashkiliy tuzilmani boshqarish (bo'limlar, lavozimlar, sxema) — web v2
+ * `auth/canManage.ts` `canManageStructure` 1:1 (backend `org_structure_scope`).
+ */
+export function canManageStructure(user?: User | null): boolean {
+  return isSiteMasterAdmin(user) || isBranchAdmin(user) || isHR(user);
+}
+
+/** Shtat jadvalini yozish va «Muammolar» — v2 `canManageStaff` (ministr EMAS: backend 403). */
+export function canManageStaff(user?: User | null): boolean {
+  return isSiteMasterAdmin(user) || isHR(user);
+}
+
 /** Kechikish ma'lumotini ko'rishi mumkinmi — web v2 `canSeeLateness` 1:1 (asosiy rol bo'yicha). */
 export function canSeeLateness(user?: User | null): boolean {
   if (user?.type === 'master-admin' || String(user?.type) === 'admin') return true;

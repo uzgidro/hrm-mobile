@@ -2,6 +2,7 @@ import { queryOptions } from '@tanstack/react-query';
 import { apiClient } from '../api/client';
 import { EMPLOYEES_LIST, EMPLOYEE_OPTIONS, DEPARTMENTS_LIST, JOB_POSITIONS_LIST } from '../api/urls';
 import { unwrapList } from '../api/response';
+import { fetchAllPages } from '../api/fetchAll';
 import { pagedListOptions, cleanParams, type ListParams } from '../lib/pagedList';
 import { Employee } from '../types';
 import { mapWithConcurrency } from './concurrency';
@@ -160,16 +161,14 @@ export function employeesPagedQuery(params: EmployeesListParams) {
   });
 }
 
-// Filter-chip catalogs (bare lists; the branch has < 100 of each).
+// Filter/picker catalogs — walked page by page (see `fetchAllPages`).
 export interface NamedRow { id: number; name: string }
 
 export function departmentsQuery(branchId?: number) {
   return queryOptions({
     queryKey: ['departments', 'catalog', branchId ?? null] as const,
-    queryFn: () =>
-      apiClient
-        .get(DEPARTMENTS_LIST, { params: branchId ? { organization_branch_id: branchId } : {} })
-        .then((r) => unwrapList<NamedRow>(r.data)),
+    // Barcha sahifalar (bosh ofisda 376 bo'lim) — birinchi sahifa bilan cheklanmaydi.
+    queryFn: () => fetchAllPages<NamedRow>(DEPARTMENTS_LIST, branchId ? { organization_branch_id: branchId } : {}),
     staleTime: 10 * 60 * 1000,
   });
 }
@@ -177,10 +176,7 @@ export function departmentsQuery(branchId?: number) {
 export function jobPositionsQuery(branchId?: number) {
   return queryOptions({
     queryKey: ['job-positions', 'catalog', branchId ?? null] as const,
-    queryFn: () =>
-      apiClient
-        .get(JOB_POSITIONS_LIST, { params: branchId ? { organization_branch_id: branchId } : {} })
-        .then((r) => unwrapList<NamedRow>(r.data)),
+    queryFn: () => fetchAllPages<NamedRow>(JOB_POSITIONS_LIST, branchId ? { organization_branch_id: branchId } : {}),
     staleTime: 10 * 60 * 1000,
   });
 }

@@ -841,3 +841,19 @@ describe('canManageOrderTypes (v2 auth/canManage.ts)', () => {
     ['oddiy xodim', emp(), false],
   ])('%s', (_n, user, expected) => expect(canManageOrderTypes(user)).toBe(expected));
 });
+
+describe('canManageStructure / canManageStaff (v2 auth/canManage + staff)', () => {
+  const { canManageStructure, canManageStaff } = jest.requireActual('../roles');
+  const emp = (role?: string) => ({ type: 'employee', employee: role ? { id: 1, is_multi_org_user: true, multi_org_employee_role: role } : { id: 1 } });
+  it.each([
+    ['master-admin', { type: 'master-admin' }, true, true],
+    ['admin akkaunt', { type: 'admin' }, true, false],
+    ['hr', emp('hr'), true, true],
+    ['ministr', emp('ministr'), false, false],
+    ['deputy', emp('deputy'), false, false],
+    ['oddiy xodim', emp(), false, false],
+  ])('%s', (_n, user, structure, staff) => {
+    expect(canManageStructure(user)).toBe(structure);
+    expect(canManageStaff(user)).toBe(staff);
+  });
+});

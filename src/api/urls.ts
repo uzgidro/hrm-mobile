@@ -360,3 +360,21 @@ export const WORK_LEAVES_HR_LIST = 'work-leaves/hr-list';
 export const WORK_LEAVES_HR_CREATE = 'work-leaves/hr-create';
 // Ijro intizomi — topshiriqlar va muddatlar (web v2 IjroPage).
 export const TASKS_OVERDUE = 'tasks-overdue';
+
+// ── W4 Xodimlar ──────────────────────────────────────────────────────────────
+export const REGISTRATION_ME = 'registrations/me';
+export const MODULE_RESPONSIBLES = 'module-responsibles';
+export const MODULE_RESPONSIBLE = (id: number) => `module-responsibles/${id}`;
+export const EMPLOYEES_QUALITY = 'employees/quality';
+export const STAFF_POSITIONS = 'staff-positions';
+export const STAFF_POSITIONS_SUMMARY = 'staff-positions/summary';
+export const STAFF_POSITIONS_ISSUES = 'staff-positions/issues';
+export const STAFF_POSITION = (id: number) => `staff-positions/${id}`;
+export const STAFF_POSITION_CHANGES = (id: number) => `staff-positions/${id}/changes`;
+export const STAFF_POSITION_CLOSE = (id: number) => `staff-positions/${id}/close`;
+export const STAFF_POSITION_REOPEN = (id: number) => `staff-positions/${id}/reopen`;
+export const HIERARCHIES = 'hierarchies';
+export const DEPARTMENT = (id: number) => `departments/${id}`;
+export const DEPARTMENT_CLOSE = (id: number) => `departments/${id}/close`;
+export const DEPARTMENT_REOPEN = (id: number) => `departments/${id}/reopen`;
+export const JOB_POSITION = (id: number) => `job-positions/${id}`;
