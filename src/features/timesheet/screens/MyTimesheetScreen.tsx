@@ -1,69 +1,54 @@
-import { useCallback, useMemo, useState } from 'react';
-import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl,
-} from 'react-native';
-import { timeRange } from '@/utils/timeText';
+// «Mening tabelim» — backend hisoblagan normallashgan kalendar ({sana → holat
+// kodi}) asosidagi shaxsiy oylik tabel (xom turniket voqealari EMAS): ta'til,
+// safar, kasallik ham ko'rinadi. Faqat ko'rish. v3: `src/ui` primitivlarida,
+// planshetda ikki ustun (kalendar + kun | xulosa + jurnal + izoh).
+import React, { useCallback, useMemo, useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 import dayjs from 'dayjs';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
-import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
-import type { ThemeColors } from '@/theme/palettes';
-import { ff } from '@/theme/typography';
-import { AttendanceEventRow } from '@/components/AttendanceEventRow';
+import { useTheme } from '@/theme/ThemeProvider';
+import { radii } from '@/theme/tokens';
+import { timeRange } from '@/utils/timeText';
 import { locationsCatalogQuery } from '@/utils/attendance';
 import { resolveEmployeeBranchId } from '@/utils/branch';
-import { Screen } from '@/components/Screen';
-import { ScreenHeader } from '@/components/ScreenHeader';
-import { MonthNavigator } from '@/components/MonthNavigator';
-import { LoadingView, ErrorState, EmptyState } from '@/components/StateViews';
+import { useBreakpoint } from '@/utils/responsive';
 import { weekdayNameShort } from '@/i18n/dates';
+import { AttendanceEventRow } from '@/components/AttendanceEventRow';
+import { MonthNavigator } from '@/components/MonthNavigator';
+import { Card, EmptyState, ErrorState, PageHeader, Screen, Skeleton, StatTile, Text } from '@/ui';
 import { myTimesheetQuery, myTimesheetEventsQuery } from '../api/queries';
 import { tabelCodeMeta, tabelCodeColor, legendCodesFor, tabelSummary, dayAttendanceDetail } from '../utils';
 
-// Weekday header, Monday-first (dayjs indexes weekdays Sunday=0).
+// Hafta sarlavhasi dushanbadan (dayjs: yakshanba = 0).
 const WEEKDAY_INDICES = [1, 2, 3, 4, 5, 6, 0];
 
-// "Мой табель" — the personal monthly tabel built from the backend-computed
-// normalized calendar ({date -> status code}), NOT from raw turnstile events.
-// Unlike the davomat calendar it also shows leaves/trips/sick days. Read-only.
 export default function MyTimesheetScreen() {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const employeeId = user?.employee?.id;
   const { colors } = useTheme();
-  const styles = useThemedStyles(makeStyles);
+  const { sizeClass } = useBreakpoint();
+  const wide = sizeClass !== 'compact';
 
   const [currentMonth, setCurrentMonth] = useState(dayjs().startOf('month'));
   const [selectedDate, setSelectedDate] = useState(dayjs().format('YYYY-MM-DD'));
-  const [refreshing, setRefreshing] = useState(false);
 
-  // Month navigation keeps the selection inside the shown month — today when
-  // navigating back to the current month, else the 1st (a stale out-of-month
-  // selection would render an empty "day status" card).
+  // Oy almashganda tanlov shu oy ichida qoladi: joriy oyda — bugun, aks holda 1-kun
+  // (oydan tashqaridagi tanlov bo'sh «kun holati» kartasini chizardi).
   const goToMonth = useCallback((m: dayjs.Dayjs) => {
     setCurrentMonth(m);
     setSelectedDate(m.isSame(dayjs(), 'month') ? dayjs().format('YYYY-MM-DD') : m.format('YYYY-MM-DD'));
   }, []);
 
   const monthKey = currentMonth.format('YYYY-MM');
-  const query = myTimesheetQuery(monthKey, employeeId);
-  const { data: row, isLoading, isError, refetch } = useQuery(query);
+  const { data: row, isPending, isError, isRefetching, refetch } = useQuery(myTimesheetQuery(monthKey, employeeId));
   const { data: locations } = useQuery(locationsCatalogQuery(resolveEmployeeBranchId(user?.employee)));
-  // Raw entry/exit events for Вход/Выход + Журнал (normalized row has no per-event
-  // times). Non-blocking: the tabel calendar renders without it.
+  // Kirish/chiqish va jurnal uchun xom voqealar — bloklamaydi, kalendar ularsiz chiziladi.
   const { data: events = [], refetch: refetchEvents } = useQuery(myTimesheetEventsQuery(monthKey, employeeId));
 
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await Promise.all([refetch(), refetchEvents()]);
-    setRefreshing(false);
-  }, [refetch, refetchEvents]);
-
   const dayDetail = useMemo(() => dayAttendanceDetail(events, selectedDate), [events, selectedDate]);
-
-  // Own useMemo so the `?? {}` fallback doesn't mint a new object every render
-  // (it feeds the memoized grid/legend deps below).
   const calendar = useMemo(() => row?.attendance?.calendar ?? {}, [row?.attendance?.calendar]);
   const lateMinutes = row?.attendance?.daily_late_minutes ?? {};
   const summary = useMemo(() => tabelSummary(row?.attendance), [row?.attendance]);
@@ -71,248 +56,246 @@ export default function MyTimesheetScreen() {
 
   const daysInMonth = currentMonth.daysInMonth();
   const firstDayOfWeek = (currentMonth.day() + 6) % 7;
-  const calendarDays = useMemo(() => {
-    const cells: ({ date: string; code?: string; isWeekend: boolean; isToday: boolean } | null)[] = [];
-    for (let i = 0; i < firstDayOfWeek; i++) cells.push(null);
+  const today = dayjs().format('YYYY-MM-DD');
+  const cells = useMemo(() => {
+    const out: ({ date: string; code?: string; weekend: boolean } | null)[] = [];
+    for (let i = 0; i < firstDayOfWeek; i++) out.push(null);
     for (let d = 1; d <= daysInMonth; d++) {
       const date = currentMonth.date(d).format('YYYY-MM-DD');
-      const dow = (currentMonth.date(d).day() + 6) % 7;
-      cells.push({
-        date,
-        code: calendar[date],
-        isWeekend: dow >= 5,
-        isToday: date === dayjs().format('YYYY-MM-DD'),
-      });
+      out.push({ date, code: calendar[date], weekend: (currentMonth.date(d).day() + 6) % 7 >= 5 });
     }
-    return cells;
+    return out;
   }, [currentMonth, firstDayOfWeek, daysInMonth, calendar]);
 
   const selectedCode = calendar[selectedDate];
   const selectedMeta = tabelCodeMeta(selectedCode);
   const selectedLate = lateMinutes[selectedDate] ?? 0;
   const hasData = Object.keys(calendar).length > 0;
+  const time = (iso?: string) => (iso ? dayjs(iso).format('HH:mm') : '--:--');
+
+  const calendarCard = (
+    <Card>
+      <MonthNavigator month={currentMonth} onChange={goToMonth} />
+      <View style={styles.weekRow}>
+        {WEEKDAY_INDICES.map((d) => (
+          <Text key={d} variant="caption" tone="subtle" style={styles.weekDay}>
+            {weekdayNameShort(d)}
+          </Text>
+        ))}
+      </View>
+      <View style={styles.grid}>
+        {cells.map((day, i) => {
+          if (!day) return <View key={`empty-${i}`} style={styles.cell} />;
+          const selected = day.date === selectedDate;
+          const dot = day.code ? tabelCodeColor(day.code, colors) : undefined;
+          return (
+            <Pressable
+              key={day.date}
+              testID={`tabel-day-${day.date}`}
+              accessibilityRole="button"
+              onPress={() => setSelectedDate(day.date)}
+              style={[
+                styles.cell,
+                day.date === today && { borderWidth: 1, borderColor: colors.brand },
+                selected && { backgroundColor: colors.brandSoft },
+              ]}
+            >
+              <Text variant="label" tone={selected ? 'brand' : day.weekend ? 'subtle' : 'fg'}>
+                {dayjs(day.date).date()}
+              </Text>
+              <View style={[styles.dot, dot ? { backgroundColor: dot } : null]} />
+            </Pressable>
+          );
+        })}
+      </View>
+    </Card>
+  );
+
+  const dayCard = hasData && (
+    <Card title={t('timesheet.dayTitle')}>
+      <View style={styles.dayRow}>
+        <View style={[styles.letter, { backgroundColor: tabelCodeColor(selectedCode, colors) }]}>
+          <Text variant="label" style={{ color: colors.fgOnBrand }}>
+            {selectedMeta.letter}
+          </Text>
+        </View>
+        <View style={styles.flex}>
+          <Text variant="label">{selectedCode ? t(selectedMeta.labelKey) : '—'}</Text>
+          <Text variant="caption" tone="muted">
+            {dayjs(selectedDate).format('D MMMM YYYY')}
+          </Text>
+        </View>
+        {selectedLate > 0 && (
+          <Text variant="caption" tone="danger">
+            {t('timesheet.lateByMinutes', { value: selectedLate })}
+          </Text>
+        )}
+      </View>
+      <View style={[styles.entryExit, { borderTopColor: colors.border }]}>
+        <View style={styles.entryItem}>
+          <Text variant="number">{time(dayDetail.firstEntry?.happen_time)}</Text>
+          <Text variant="caption" tone="muted">
+            {t('timesheet.entry')}
+          </Text>
+        </View>
+        <View style={[styles.divider, { backgroundColor: colors.border }]} />
+        <View style={styles.entryItem}>
+          <Text variant="number">{time(dayDetail.lastExit?.happen_time)}</Text>
+          <Text variant="caption" tone="muted">
+            {t('timesheet.exit')}
+          </Text>
+        </View>
+      </View>
+    </Card>
+  );
+
+  const summaryTiles = hasData && (
+    <View style={styles.tiles}>
+      {(
+        [
+          { id: 'tabel-present', label: t('timesheet.present'), value: summary.present, icon: 'check', tint: 'green' },
+          { id: 'tabel-late', label: t('timesheet.late'), value: summary.late, icon: 'clock', tint: 'amber' },
+          { id: 'tabel-absent', label: t('timesheet.absent'), value: summary.absent, icon: 'close', tint: 'pink' },
+          {
+            id: 'tabel-hours',
+            label: t('timesheet.hoursLabel'),
+            value: t('timesheet.hoursValue', { value: summary.hours }),
+            icon: 'chart',
+            tint: 'violet',
+          },
+        ] as const
+      ).map((x) => (
+        <View key={x.id} style={styles.tile}>
+          <StatTile testID={x.id} label={x.label} value={x.value} icon={x.icon} tint={x.tint} />
+        </View>
+      ))}
+    </View>
+  );
+
+  const details = hasData && (
+    <>
+      {!!row?.working_hours_start && (
+        <Card title={t('timesheet.scheduleTitle')}>
+          <View style={styles.schedule}>
+            <View style={styles.flex}>
+              <Text variant="label">{timeRange(row.working_hours_start, row.working_hours_end)}</Text>
+              <Text variant="caption" tone="muted">
+                {t('timesheet.workDay')}
+              </Text>
+            </View>
+            {!!row.lunch_start_time && (
+              <View style={styles.flex}>
+                <Text variant="label">{timeRange(row.lunch_start_time, row.lunch_end_time)}</Text>
+                <Text variant="caption" tone="muted">
+                  {t('timesheet.break')}
+                </Text>
+              </View>
+            )}
+          </View>
+        </Card>
+      )}
+      <Card title={t('timesheet.logTitle')}>
+        {dayDetail.journal.length === 0 ? (
+          <Text variant="body" tone="muted" style={styles.center}>
+            {t('timesheet.logEmpty')}
+          </Text>
+        ) : (
+          // Qatorda GES/obyekt, Face ID surati va xarita ham (AttendanceEventRow).
+          dayDetail.journal.map((ev, i) => (
+            <AttendanceEventRow
+              key={ev.id}
+              event={ev}
+              locations={locations}
+              showBorder={i < dayDetail.journal.length - 1}
+            />
+          ))
+        )}
+      </Card>
+      {legendCodes.length > 0 && (
+        <Card title={t('timesheet.legendTitle')}>
+          {legendCodes.map((code) => {
+            const meta = tabelCodeMeta(code);
+            return (
+              <View key={code} style={styles.legendRow}>
+                <View style={[styles.legendDot, { backgroundColor: tabelCodeColor(code, colors) }]} />
+                <Text variant="label" style={styles.legendLetter}>
+                  {meta.letter}
+                </Text>
+                <Text variant="body" tone="muted" style={styles.flex}>
+                  {t(meta.labelKey)}
+                </Text>
+              </View>
+            );
+          })}
+        </Card>
+      )}
+    </>
+  );
 
   return (
-    <Screen edges={['top', 'bottom']}>
-      <ScreenHeader title={t('timesheet.myTitle')} subtitle={t('timesheet.mySubtitle')} />
-
-      {isLoading ? (
-        <LoadingView />
-      ) : isError ? (
+    <Screen refreshing={isRefetching} onRefresh={() => void Promise.all([refetch(), refetchEvents()])}>
+      <PageHeader title={t('timesheet.myTitle')} subtitle={t('timesheet.mySubtitle')} />
+      {isError ? (
         <ErrorState title={t('timesheet.loadError')} onRetry={() => refetch()} />
+      ) : isPending ? (
+        <Skeleton height={320} />
       ) : (
-        <ScrollView
-          contentContainerStyle={styles.content}
-          showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primaryLight} />}
-        >
-          <View style={styles.card}>
-            <MonthNavigator month={currentMonth} onChange={goToMonth} />
-
-            <View style={styles.weekRow}>
-              {WEEKDAY_INDICES.map((d) => <Text key={d} style={styles.weekDayLabel}>{weekdayNameShort(d)}</Text>)}
-            </View>
-
-            <View style={styles.calendarGrid}>
-              {calendarDays.map((day, i) => {
-                if (!day) return <View key={`empty-${i}`} style={styles.dayCell} />;
-                const isSelected = day.date === selectedDate;
-                const color = day.code ? tabelCodeColor(day.code, colors) : undefined;
-                return (
-                  <TouchableOpacity
-                    key={day.date}
-                    style={[styles.dayCell, day.isToday && styles.dayCellToday, isSelected && styles.dayCellSelected]}
-                    onPress={() => setSelectedDate(day.date)}
-                    activeOpacity={0.75}
-                  >
-                    <Text style={[styles.dayText, day.isWeekend && styles.dayTextWeekend, isSelected && styles.dayTextSelected]}>
-                      {dayjs(day.date).date()}
-                    </Text>
-                    {color ? (
-                      <View style={[styles.dayDot, { backgroundColor: color }]} />
-                    ) : (
-                      <View style={styles.dayDotPlaceholder} />
-                    )}
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
+        <View style={[styles.columns, wide && styles.columnsWide]}>
+          <View style={[styles.col, wide && styles.colWide]}>
+            {calendarCard}
+            {!hasData && <EmptyState title={t('timesheet.empty')} />}
+            {dayCard}
           </View>
-
-          {!hasData && <EmptyState icon="calendar" title={t('timesheet.empty')} />}
-
-          {hasData && (
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>{t('timesheet.dayTitle')}</Text>
-              <View style={styles.dayDetailRow}>
-                <View style={[styles.letterBadge, { backgroundColor: tabelCodeColor(selectedCode, colors) }]}>
-                  <Text style={styles.letterBadgeText}>{selectedMeta.letter}</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.dayDetailLabel}>{selectedCode ? t(selectedMeta.labelKey) : '—'}</Text>
-                  <Text style={styles.dayDetailDate}>{dayjs(selectedDate).format('D MMMM YYYY')}</Text>
-                </View>
-                {selectedLate > 0 && (
-                  <Text style={styles.lateText}>{t('timesheet.lateByMinutes', { value: selectedLate })}</Text>
-                )}
-              </View>
-            </View>
-          )}
-
-          {hasData && (
-            <View style={styles.card}>
-              <View style={styles.entryExitRow}>
-                <View style={styles.entryExitItem}>
-                  <Text style={styles.entryExitTime}>{dayDetail.firstEntry ? dayjs(dayDetail.firstEntry.happen_time).format('HH:mm') : '--:--'}</Text>
-                  <Text style={styles.entryExitLabel}>{t('timesheet.entry')}</Text>
-                </View>
-                <View style={styles.entryExitDivider} />
-                <View style={styles.entryExitItem}>
-                  <Text style={styles.entryExitTime}>{dayDetail.lastExit ? dayjs(dayDetail.lastExit.happen_time).format('HH:mm') : '--:--'}</Text>
-                  <Text style={styles.entryExitLabel}>{t('timesheet.exit')}</Text>
-                </View>
-              </View>
-            </View>
-          )}
-
-          {hasData && row?.working_hours_start && (
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>{t('timesheet.scheduleTitle')}</Text>
-              <View style={styles.scheduleRow}>
-                <View style={styles.scheduleItem}>
-                  <Text style={styles.scheduleValue}>{timeRange(row.working_hours_start, row.working_hours_end)}</Text>
-                  <Text style={styles.scheduleLabel}>{t('timesheet.workDay')}</Text>
-                </View>
-                {row.lunch_start_time && (
-                  <View style={styles.scheduleItem}>
-                    <Text style={styles.scheduleValue}>{timeRange(row.lunch_start_time, row.lunch_end_time)}</Text>
-                    <Text style={styles.scheduleLabel}>{t('timesheet.break')}</Text>
-                  </View>
-                )}
-              </View>
-            </View>
-          )}
-
-          {hasData && (
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>{t('timesheet.logTitle')}</Text>
-              {dayDetail.journal.length === 0 ? (
-                <Text style={styles.emptyText}>{t('timesheet.logEmpty')}</Text>
-              ) : (
-                // Qator endi FAQAT vaqt+yo'nalish emas: qaysi GES/obyekt, Face ID
-                // surati va (bosilganda) xarita ham ko'rinadi — hammasi backend
-                // allaqachon yuboradigan maydonlardan (AttendanceEventRow).
-                dayDetail.journal.map((ev, i) => (
-                  <AttendanceEventRow
-                    key={ev.id}
-                    event={ev}
-                    locations={locations}
-                    showBorder={i < dayDetail.journal.length - 1}
-                  />
-                ))
-              )}
-            </View>
-          )}
-
-          {hasData && (
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>{t('timesheet.summaryTitle')}</Text>
-              <View style={styles.statsRow}>
-                <View style={styles.statItem}>
-                  <Text style={[styles.statValue, { color: colors.present }]}>{summary.present}</Text>
-                  <Text style={styles.statLabel}>{t('timesheet.present')}</Text>
-                </View>
-                <View style={styles.statItem}>
-                  <Text style={[styles.statValue, { color: colors.warning }]}>{summary.late}</Text>
-                  <Text style={styles.statLabel}>{t('timesheet.late')}</Text>
-                </View>
-                <View style={styles.statItem}>
-                  <Text style={[styles.statValue, { color: colors.error }]}>{summary.absent}</Text>
-                  <Text style={styles.statLabel}>{t('timesheet.absent')}</Text>
-                </View>
-              </View>
-              <View style={styles.hoursRow}>
-                <Text style={styles.hoursValue}>{t('timesheet.hoursValue', { value: summary.hours })}</Text>
-                <Text style={styles.hoursLabel}>{t('timesheet.hoursLabel')}</Text>
-              </View>
-            </View>
-          )}
-
-          {legendCodes.length > 0 && (
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>{t('timesheet.legendTitle')}</Text>
-              {legendCodes.map((code) => {
-                const meta = tabelCodeMeta(code);
-                return (
-                  <View key={code} style={styles.legendRow}>
-                    <View style={[styles.legendDot, { backgroundColor: tabelCodeColor(code, colors) }]} />
-                    <Text style={styles.legendLetter}>{meta.letter}</Text>
-                    <Text style={styles.legendLabel}>{t(meta.labelKey)}</Text>
-                  </View>
-                );
-              })}
-            </View>
-          )}
-
-          <View style={{ height: 32 }} />
-        </ScrollView>
+          <View style={[styles.col, wide && styles.colWide]}>
+            {summaryTiles}
+            {details}
+          </View>
+        </View>
       )}
     </Screen>
   );
 }
 
-const makeStyles = (c: ThemeColors) =>
-  StyleSheet.create({
-    content: { paddingHorizontal: 16, paddingBottom: 32 },
-
-    card: { backgroundColor: c.card, borderRadius: 16, padding: 16, marginTop: 12, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder },
-    cardTitle: { fontSize: 15, ...ff('800'), color: c.text, marginBottom: 12 },
-
-    // Day detail — Вход/Выход, График работы, Журнал (mirrors EmployeeCalendarScreen).
-    entryExitRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8 },
-    entryExitItem: { flex: 1, alignItems: 'center', gap: 6 },
-    entryExitTime: { fontSize: 22, ...ff('800'), color: c.text, letterSpacing: 1 },
-    entryExitLabel: { fontSize: 12, color: c.textMuted, ...ff('700') },
-    entryExitDivider: { width: 1, height: 36, backgroundColor: c.cardBorder, marginHorizontal: 16 },
-    scheduleRow: { flexDirection: 'row', gap: 20 },
-    scheduleItem: { flex: 1 },
-    scheduleValue: { fontSize: 16, ...ff('800'), color: c.text },
-    scheduleLabel: { fontSize: 12, color: c.textMuted, marginTop: 4, ...ff('700') },
-    emptyText: { color: c.textMuted, textAlign: 'center', paddingVertical: 20, fontSize: 14, ...ff('700') },
-    eventRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8, borderBottomWidth: 2, borderBottomColor: c.cardBorder },
-    eventTime: { fontSize: 14, ...ff('800'), color: c.text, width: 44 },
-    eventDir: { fontSize: 13, color: c.textSecondary, ...ff('700') },
-
-    weekRow: { flexDirection: 'row', marginBottom: 8 },
-    weekDayLabel: { flex: 1, textAlign: 'center', fontSize: 12, color: c.textMuted, ...ff('700') },
-
-    calendarGrid: { flexDirection: 'row', flexWrap: 'wrap' },
-    dayCell: { width: `${100 / 7}%`, aspectRatio: 0.9, alignItems: 'center', justifyContent: 'center', borderRadius: 10 },
-    dayCellToday: { borderWidth: 1, borderColor: c.primaryLight },
-    dayCellSelected: { backgroundColor: c.primarySoft },
-    dayText: { fontSize: 14, ...ff('700'), color: c.text },
-    dayTextWeekend: { color: c.textMuted },
-    dayTextSelected: { color: c.primaryLight },
-    dayDot: { width: 6, height: 6, borderRadius: 3, marginTop: 3 },
-    dayDotPlaceholder: { width: 6, height: 6, marginTop: 3 },
-
-    dayDetailRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-    letterBadge: { minWidth: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 },
-    letterBadgeText: { fontSize: 15, ...ff('900'), color: '#fff' },
-    dayDetailLabel: { fontSize: 15, ...ff('800'), color: c.text },
-    dayDetailDate: { fontSize: 12, color: c.textSecondary, marginTop: 2, ...ff('700') },
-    lateText: { fontSize: 12, ...ff('800'), color: c.warning },
-
-    statsRow: { flexDirection: 'row' },
-    statItem: { flex: 1, alignItems: 'center' },
-    statValue: { fontSize: 22, ...ff('900') },
-    statLabel: { fontSize: 12, color: c.textSecondary, marginTop: 4, ...ff('700') },
-    hoursRow: { alignItems: 'center', marginTop: 14, paddingTop: 14, borderTopWidth: 2, borderTopColor: c.cardBorder },
-    hoursValue: { fontSize: 18, ...ff('900'), color: c.text },
-    hoursLabel: { fontSize: 12, color: c.textSecondary, marginTop: 2, ...ff('700') },
-
-    legendRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6 },
-    legendDot: { width: 10, height: 10, borderRadius: 5 },
-    legendLetter: { width: 28, fontSize: 13, ...ff('900'), color: c.text },
-    legendLabel: { flex: 1, fontSize: 13, color: c.textSecondary, ...ff('700') },
-  });
+const styles = StyleSheet.create({
+  columns: { gap: 12 },
+  columnsWide: { flexDirection: 'row', alignItems: 'flex-start' },
+  col: { gap: 12 },
+  colWide: { flex: 1 },
+  flex: { flex: 1 },
+  center: { textAlign: 'center', paddingVertical: 16 },
+  weekRow: { flexDirection: 'row', marginTop: 8, marginBottom: 6 },
+  weekDay: { flex: 1, textAlign: 'center' },
+  grid: { flexDirection: 'row', flexWrap: 'wrap' },
+  cell: {
+    width: `${100 / 7}%`,
+    aspectRatio: 0.95,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radii.sm,
+  },
+  dot: { width: 6, height: 6, borderRadius: 3, marginTop: 3 },
+  dayRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  letter: {
+    minWidth: 40,
+    height: 40,
+    borderRadius: radii.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 8,
+  },
+  entryExit: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  entryItem: { flex: 1, alignItems: 'center', gap: 4 },
+  divider: { width: 1, height: 36 },
+  tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  tile: { flexBasis: '47%', flexGrow: 1 },
+  schedule: { flexDirection: 'row', gap: 20 },
+  legendRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 5 },
+  legendDot: { width: 10, height: 10, borderRadius: 5 },
+  legendLetter: { width: 28 },
+});

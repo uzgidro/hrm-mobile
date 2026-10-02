@@ -1,389 +1,286 @@
+// «Jamoam» — rahbar paneli: bugungi davomat (donut), so'nggi so'rovlar, jamoa va
+// tug'ilgan kunlar. To'rt domen: davomat + so'rovlar shu feature fabrikalaridan;
+// xodimlar `useDayRoster` (umumiy); tug'ilgan kunlar `['birthdays', 'list', branch]`
+// kalitida — BirthdaysScreen bilan bitta kesh, feature'lararo importsiz.
+// v3: `src/ui` primitivlarida; planshetda ikki ustun.
 import React, { useMemo } from 'react';
-import {
-  View, Text, ScrollView, StyleSheet,
-  TouchableOpacity, ActivityIndicator, RefreshControl,
-} from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useQueries } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';
 import dayjs from 'dayjs';
-import Svg, { Circle, G } from 'react-native-svg';
 import { apiClient } from '@/api/client';
+import { unwrapList } from '@/api/response';
 import { EMPLOYEES_BIRTHDAYS } from '@/api/urls';
 import { useAuthStore } from '@/store/authStore';
-import { resolveEmployeeBranchId } from '@/utils/branch';
 import { usePrefsStore } from '@/store/prefsStore';
-import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
-import type { ThemeColors } from '@/theme/palettes';
-import { ff } from '@/theme/typography';
-import { Employee, WorkLeave, EmployeeBirthday } from '@/types';
+import { useTheme } from '@/theme/ThemeProvider';
+import { radii } from '@/theme/tokens';
+import { resolveEmployeeBranchId } from '@/utils/branch';
+import { useBreakpoint } from '@/utils/responsive';
 import { canAccessPage, hasSupervisor } from '@/utils/roles';
-import type { RosterEmployee } from '@/utils/attendanceRoster';
 import { useDayRoster } from '@/lib/useDayRoster';
 import { leaveStatusGroup } from '@/utils/leaveStatus';
-import { Icon, IconName } from '@/components/Icon';
-import { Screen } from '@/components/Screen';
-import { ScreenHeader } from '@/components/ScreenHeader';
-import { EmployeeAvatar } from '@/components/EmployeeAvatar';
+import { Icon } from '@/components/Icon';
+import type { EmployeeBirthday, WorkLeave } from '@/types';
+import { Avatar, Badge, Button, Card, Donut, ListRow, PageHeader, Screen, Skeleton, Text, type Tone } from '@/ui';
 import { teamLeavesQuery } from '../api/queries';
 
-// This dashboard composes four domains. Attendance + leaves come from this
-// feature's own factories. Employees uses the shared `employeesListQuery`
-// factory from `@/utils/employees` — the same one the employees feature
-// re-exports — so the roster cache stays shared, without a cross-feature
-// import (the `src/features/README.md` boundary rule forbids importing another
-// feature's api/). Birthdays is keyed under the `['birthdays', 'list', orgBranchId]`
-// shape the birthdays feature's `birthdayKeys.list` produces, so the
-// BirthdaysScreen and this card share one cached feed, again without a
-// cross-feature import.
-const birthdaysListKey = (orgBranchId?: number) =>
-  ['birthdays', 'list', orgBranchId ?? null] as const;
-
-const DonutChart = React.memo(function DonutChart({ total, present, late, onLeave, c, styles }: {
-  total: number; present: number; late: number; onLeave: number; c: ThemeColors; styles: any;
-}) {
-  const absent = Math.max(0, total - present - late - onLeave);
-  const size = 160;
-  const cx = size / 2;
-  const cy = size / 2;
-  const R = 62;
-  const stroke = 22;
-  const circ = 2 * Math.PI * R;
-  // Arcs start at 12 o'clock by turning the whole Svg (an SVG `transform`
-  // becomes an invalid `transform-origin` DOM prop on web).
-  const turn = { transform: [{ rotate: '-90deg' }] };
-
-  const segments = [
-    { value: present, color: c.present },
-    { value: late, color: c.warning },
-    { value: onLeave, color: c.primaryLight },
-    { value: absent, color: c.error },
-  ].filter((s) => s.value > 0 && total > 0);
-
-  let offset = 0;
-  const arcs = segments.map((seg) => {
-    const dash = (seg.value / total) * circ;
-    const arc = { ...seg, dash, offset };
-    offset += dash;
-    return arc;
-  });
-
-  return (
-    <View style={styles.chartWrapper}>
-      <View style={turn}>
-      <Svg width={size} height={size}>
-        <G>
-          <Circle cx={cx} cy={cy} r={R} fill="none" stroke={c.cardBorder} strokeWidth={stroke} />
-          {arcs.map((arc, i) => (
-            <Circle
-              key={i} cx={cx} cy={cy} r={R}
-              fill="none" stroke={arc.color} strokeWidth={stroke}
-              strokeDasharray={`${arc.dash} ${circ - arc.dash}`}
-              strokeDashoffset={-arc.offset}
-            />
-          ))}
-        </G>
-      </Svg>
-      </View>
-      <View style={styles.chartCenter}>
-        <Text style={styles.chartTotal}>{total}</Text>
-      </View>
-    </View>
-  );
-});
-
-// Module-scope (not defined in the render body) so React keeps a stable
-// component identity across renders instead of remounting the subtree. Not
-// React.memo-wrapped: it always receives fresh `children`, so a memo compare
-// would never skip a render — only add cost.
-function SectionCard({
-  icon, title, rightLabel, onRightPress, loading, children, colors, styles,
-}: {
-  icon: IconName; title: string; rightLabel?: string; onRightPress?: () => void;
-  loading?: boolean; children: React.ReactNode; colors: ThemeColors; styles: any;
-}) {
-  return (
-    <View style={styles.card}>
-      <View style={styles.cardHeader}>
-        <View style={styles.cardTitleRow}>
-          <Icon name={icon} size={18} color={colors.textSecondary} />
-          <Text style={styles.cardTitle}>{title}</Text>
-        </View>
-        {rightLabel && (
-          <TouchableOpacity onPress={onRightPress}>
-            <Text style={styles.linkText}>{rightLabel}</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-      {loading ? (
-        <View style={styles.sectionLoading}><ActivityIndicator color={colors.primaryLight} size="small" /></View>
-      ) : children}
-    </View>
-  );
-}
+const birthdaysListKey = (orgBranchId?: number) => ['birthdays', 'list', orgBranchId ?? null] as const;
+const STATUS_TONE: Record<'pending' | 'approved' | 'rejected', Tone> = {
+  pending: 'warning',
+  approved: 'success',
+  rejected: 'danger',
+};
 
 export default function TeamScreen() {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const onlySubordinates = usePrefsStore((s) => s.onlySubordinates);
   const { colors } = useTheme();
-  const styles = useThemedStyles(makeStyles);
+  const { sizeClass } = useBreakpoint();
+  const wide = sizeClass !== 'compact';
   const myId = user?.employee?.id;
-  const orgBranchId =
-    resolveEmployeeBranchId(user?.employee);
+  const orgBranchId = resolveEmployeeBranchId(user?.employee);
   const today = dayjs().format('YYYY-MM-DD');
 
-  // Today's roster: branch categories (web employee-dashboard source) + raw
-  // events for entry times. See `useDayRoster`.
+  // Bugungi ro'yxat: filial kategoriyalari (web employee-dashboard manbai) + kirish vaqtlari uchun xom voqealar.
   const rosterQ = useDayRoster({ date: today, orgBranchId, onlySubordinates, myId });
-  const results = useQueries({
+  const [leavesQ, bDayQ] = useQueries({
     queries: [
       teamLeavesQuery(today, 20, orgBranchId),
       {
         queryKey: birthdaysListKey(orgBranchId),
         queryFn: () =>
-          apiClient.get<EmployeeBirthday[]>(EMPLOYEES_BIRTHDAYS, {
-            params: orgBranchId ? { organization_branch_id: orgBranchId } : {},
-          }).then((r) => {
-            const d = r.data as any;
-            return (Array.isArray(d) ? d : (d?.items ?? [])) as EmployeeBirthday[];
-          }),
+          apiClient
+            .get(EMPLOYEES_BIRTHDAYS, { params: orgBranchId ? { organization_branch_id: orgBranchId } : {} })
+            .then((r) => unwrapList<EmployeeBirthday>(r.data)),
         staleTime: 60 * 60 * 1000,
       },
     ],
   });
-
-  const [leavesQ, bDayQ] = results;
-  const isRefreshing = rosterQ.isFetching || results.some((r) => r.isFetching);
-  const refetchAll = () => { rosterQ.refetch(); results.forEach((r) => r.refetch()); };
+  const refreshing = rosterQ.isFetching || leavesQ.isRefetching || bDayQ.isRefetching;
+  const refetchAll = () => {
+    rosterQ.refetch();
+    void leavesQ.refetch();
+    void bDayQ.refetch();
+  };
 
   const roster = rosterQ.roster;
-  const employees: RosterEmployee[] = useMemo(() => roster.rows.map((r) => r.employee), [roster]);
-  const workLeaves: WorkLeave[] = useMemo(() => (leavesQ.data as WorkLeave[]) ?? [], [leavesQ.data]);
-  const birthdays: EmployeeBirthday[] = useMemo(() => bDayQ.data ?? [], [bDayQ.data]);
-
+  const employees = useMemo(() => roster.rows.map((r) => r.employee), [roster]);
   const empIdSet = useMemo(() => new Set(employees.map((e) => e.id)), [employees]);
-
-  const attendanceStats = useMemo(
-    () => ({
-      present: roster.counts.present,
-      late: roster.counts.late,
-      onLeave: roster.counts.onLeave,
-      total: rosterQ.total,
-    }),
-    [roster, rosterQ.total],
-  );
-
   const recentLeaves = useMemo(
     () =>
-      [...workLeaves]
+      [...((leavesQ.data as WorkLeave[] | undefined) ?? [])]
         .filter((l) => !l.employee?.id || empIdSet.has(l.employee.id))
         .sort((a, b) => (b.created_at ?? String(b.id)).localeCompare(a.created_at ?? String(a.id)))
         .slice(0, 3),
-    [workLeaves, empIdSet]
+    [leavesQ.data, empIdSet],
   );
-  const topEmployees = useMemo(() => employees.slice(0, 3), [employees]);
-  const upcomingBirthdays = useMemo(() => birthdays.slice(0, 3), [birthdays]);
+  const topEmployees = employees.slice(0, 3);
+  const birthdays = (bDayQ.data ?? []).slice(0, 3);
 
-  // Keyed by group (not raw code) — leaveStatusGroup absorbs the pending/
-  // approved/rejected code aliases so this map no longer lists all seven.
-  const STATUS_BY_GROUP: Record<'pending' | 'approved' | 'rejected', { label: string; color: string }> = useMemo(
-    () => ({
-      pending: { label: t('attendance.status.pending'), color: colors.warning },
-      approved: { label: t('attendance.status.approved'), color: colors.present },
-      rejected: { label: t('attendance.status.rejected'), color: colors.error },
-    }),
-    [colors, t]
+  const total = rosterQ.total;
+  const { present, late, onLeave } = roster.counts;
+  const absent = Math.max(0, total - present - late - onLeave);
+  const legend = [
+    { key: 'present', value: present, color: colors.success, label: t('attendance.legend.present') },
+    { key: 'late', value: late, color: colors.warning, label: t('attendance.legend.late') },
+    { key: 'onLeave', value: onLeave, color: colors.brand, label: t('attendance.legend.onLeaveTeam') },
+    { key: 'absent', value: absent, color: colors.danger, label: t('attendance.legend.absent') },
+  ];
+
+  const attendanceCard = (
+    <Card title={t('attendance.title')} icon="chart" tint="green">
+      {rosterQ.isLoading ? (
+        <Skeleton height={160} />
+      ) : (
+        <>
+          <View style={styles.chartRow}>
+            <Donut
+              segments={legend.map((l) => ({ value: l.value, color: l.color }))}
+              size={150}
+              accessibilityLabel={t('attendance.title')}
+              center={<Text variant="number">{String(total)}</Text>}
+            />
+            <View style={styles.legend}>
+              {legend
+                // Kelmaganlar har doim ko'rinadi (v1 xatti-harakati), qolganlari faqat > 0 bo'lsa.
+                .filter((l) => l.key === 'absent' || l.value > 0)
+                .map((l) => (
+                  <View key={l.key} style={styles.legendItem}>
+                    <View style={[styles.legendDot, { backgroundColor: l.color }]} />
+                    <View>
+                      <Text variant="label">{String(l.value)}</Text>
+                      <Text variant="caption" tone="muted">
+                        {l.label}
+                      </Text>
+                    </View>
+                  </View>
+                ))}
+            </View>
+          </View>
+          <Button label={t('attendance.details')} onPress={() => router.push('/attendance-detail')} full />
+        </>
+      )}
+    </Card>
+  );
+
+  const requestsCard = (
+    <Card
+      title={t('attendance.requestsTitle')}
+      icon="checklist"
+      tint="pink"
+      action={{ label: t('common.all'), onPress: () => router.push('/team-leaves') }}
+    >
+      {leavesQ.isPending ? (
+        <Skeleton height={120} />
+      ) : recentLeaves.length === 0 ? (
+        <Text variant="body" tone="muted" style={styles.empty}>
+          {t('attendance.noRequests')}
+        </Text>
+      ) : (
+        recentLeaves.map((leave) => {
+          const group = leaveStatusGroup(leave.status);
+          return (
+            <ListRow
+              key={leave.id}
+              title={leave.type ?? t('attendance.requestFallback')}
+              subtitle={`${dayjs(leave.start_date).format('D MMM YYYY, HH:mm')} – ${dayjs(leave.end_date).format('HH:mm')} · ${leave.employee?.legal_name ?? '—'}`}
+              left={<Avatar name={leave.employee?.legal_name ?? '?'} uri={leave.employee?.photo_path} size={40} />}
+              right={<Badge label={t(`attendance.status.${group}`)} tone={STATUS_TONE[group]} />}
+              onPress={() => router.push({ pathname: '/leave-detail', params: { id: leave.id } })}
+            />
+          );
+        })
+      )}
+      {/* Web pariteti (RequestPermissionPage.canCreatePermission): faqat rahbari BOR
+          xodim so'rov yubora oladi — yuqori rahbarning yuboradigan odami yo'q. */}
+      {hasSupervisor(user) && (
+        <Button
+          label={t('attendance.createRequest')}
+          variant="soft"
+          full
+          onPress={() => router.push('/create-leave')}
+          style={styles.cta}
+        />
+      )}
+    </Card>
+  );
+
+  const teamCard = (
+    <Card
+      title={t('attendance.teamTitle')}
+      icon="users"
+      tint="violet"
+      action={
+        canAccessPage(user, 'employees')
+          ? { label: t('common.all'), onPress: () => router.push('/employees-list') }
+          : undefined
+      }
+    >
+      {rosterQ.isLoading ? (
+        <Skeleton height={120} />
+      ) : topEmployees.length === 0 ? (
+        <Text variant="body" tone="muted" style={styles.empty}>
+          {t('attendance.noEmployees')}
+        </Text>
+      ) : (
+        topEmployees.map((emp) => (
+          <ListRow
+            key={emp.id}
+            title={emp.legal_name ?? '—'}
+            subtitle={emp.job_position?.name ?? emp.department?.name ?? '—'}
+            left={<Avatar name={emp.legal_name ?? '?'} uri={emp.photo_thumb_path ?? emp.photo_path} size={40} />}
+            onPress={() => router.push({ pathname: '/profile-detail', params: { id: emp.id } })}
+          />
+        ))
+      )}
+    </Card>
+  );
+
+  const birthdaysCard = (bDayQ.isPending || birthdays.length > 0) && (
+    <Card
+      title={t('attendance.birthdaysTitle')}
+      icon="cake"
+      tint="amber"
+      action={{ label: t('common.all'), onPress: () => router.push('/birthdays') }}
+    >
+      {bDayQ.isPending ? (
+        <Skeleton height={100} />
+      ) : (
+        birthdays.map((emp) => (
+          <ListRow
+            key={emp.id}
+            title={emp.legal_name}
+            subtitle={emp.job_position?.name ?? '—'}
+            left={<Avatar name={emp.legal_name} uri={emp.photo_path} size={40} />}
+            right={
+              <View style={styles.bday}>
+                <Text variant="caption" tone="muted">
+                  {emp.birth_date ? dayjs(emp.birth_date).format('D MMM') : '—'}
+                </Text>
+                {emp.days_left === 0 && (
+                  <View style={styles.bdayToday}>
+                    <Text variant="caption" tone="brand">
+                      {t('attendance.birthdayToday')}
+                    </Text>
+                    <Icon name="gift" size={14} color={colors.warning} />
+                  </View>
+                )}
+              </View>
+            }
+          />
+        ))
+      )}
+    </Card>
   );
 
   return (
-    <Screen edges={['top', 'bottom']}>
-      <ScreenHeader title={t('attendance.teamTitle')} />
-
-      <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={refetchAll} tintColor={colors.primaryLight} />}
-      >
-        {onlySubordinates && (
-          <View style={styles.filterNotice}>
-            <Icon name="users" size={16} color={colors.primaryLight} />
-            <Text style={styles.filterNoticeText}>{t('attendance.onlySubordinatesTeam')}</Text>
-          </View>
-        )}
-
-        <SectionCard icon="chart" title={t('attendance.title')} loading={rosterQ.isLoading} colors={colors} styles={styles}>
-          <View style={styles.chartRow}>
-            <DonutChart c={colors} styles={styles}
-              total={attendanceStats.total} present={attendanceStats.present}
-              late={attendanceStats.late} onLeave={attendanceStats.onLeave} />
-            <View style={styles.legend}>
-              {attendanceStats.late > 0 && (
-                <View style={styles.legendItem}>
-                  <View style={[styles.legendDot, { backgroundColor: colors.warning }]} />
-                  <View><Text style={styles.legendCount}>{attendanceStats.late}</Text><Text style={styles.legendLabel}>{t('attendance.legend.late')}</Text></View>
-                </View>
-              )}
-              <View style={styles.legendItem}>
-                <View style={[styles.legendDot, { backgroundColor: colors.error }]} />
-                <View>
-                  <Text style={styles.legendCount}>
-                    {Math.max(0, attendanceStats.total - attendanceStats.present - attendanceStats.late - attendanceStats.onLeave)}
-                  </Text>
-                  <Text style={styles.legendLabel}>{t('attendance.legend.absent')}</Text>
-                </View>
-              </View>
-              {attendanceStats.onLeave > 0 && (
-                <View style={styles.legendItem}>
-                  <View style={[styles.legendDot, { backgroundColor: colors.primaryLight }]} />
-                  <View><Text style={styles.legendCount}>{attendanceStats.onLeave}</Text><Text style={styles.legendLabel}>{t('attendance.legend.onLeaveTeam')}</Text></View>
-                </View>
-              )}
-              {attendanceStats.present > 0 && (
-                <View style={styles.legendItem}>
-                  <View style={[styles.legendDot, { backgroundColor: colors.present }]} />
-                  <View><Text style={styles.legendCount}>{attendanceStats.present}</Text><Text style={styles.legendLabel}>{t('attendance.legend.present')}</Text></View>
-                </View>
-              )}
-            </View>
-          </View>
-          <TouchableOpacity style={styles.primaryBtn} onPress={() => router.push('/attendance-detail')}>
-            <Text style={styles.primaryBtnText}>{t('attendance.details')}</Text>
-          </TouchableOpacity>
-        </SectionCard>
-
-        <SectionCard icon="checklist" title={t('attendance.requestsTitle')} rightLabel={t('common.all')} onRightPress={() => router.push('/team-leaves')} loading={leavesQ.isLoading} colors={colors} styles={styles}>
-          {recentLeaves.length === 0 ? (
-            <Text style={styles.emptyText}>{t('attendance.noRequests')}</Text>
-          ) : (
-            recentLeaves.map((leave) => {
-              const st = STATUS_BY_GROUP[leaveStatusGroup(leave.status)];
-              return (
-                <TouchableOpacity key={leave.id} style={styles.leaveRow}
-                  onPress={() => router.push({ pathname: '/leave-detail', params: { id: leave.id } })} activeOpacity={0.7}>
-                  <EmployeeAvatar emp={(leave.employee as Employee) || { id: 0, legal_name: '?' }} size={48} />
-                  <View style={styles.leaveInfo}>
-                    <Text style={styles.leaveCat} numberOfLines={1}>{leave.type ?? t('attendance.requestFallback')}</Text>
-                    <Text style={styles.leaveDate}>
-                      {dayjs(leave.start_date).format('D MMM YYYY, HH:mm')} – {dayjs(leave.end_date).format('HH:mm')}
-                    </Text>
-                    <Text style={styles.leaveEmployee} numberOfLines={1}>{leave.employee?.legal_name ?? '—'}</Text>
-                  </View>
-                  <Text style={[styles.leaveStatus, { color: st.color }]}>{st.label}</Text>
-                </TouchableOpacity>
-              );
-            })
-          )}
-          {/* Web parity (RequestPermissionPage.canCreatePermission): only someone
-              WITH a supervisor can file a request — a top-level manager has
-              nobody to send it to, and /work-leaves hides its FAB for them. */}
-          {hasSupervisor(user) && (
-            <TouchableOpacity style={styles.primaryBtn} onPress={() => router.push('/create-leave')}>
-              <Text style={styles.primaryBtnText}>{t('attendance.createRequest')}</Text>
-            </TouchableOpacity>
-          )}
-        </SectionCard>
-
-        <SectionCard icon="users" title={t('attendance.teamTitle')} rightLabel={canAccessPage(user, 'employees') ? t('common.all') : undefined} onRightPress={() => router.push('/employees-list')} loading={rosterQ.isLoading} colors={colors} styles={styles}>
-          {topEmployees.length === 0 ? (
-            <Text style={styles.emptyText}>{t('attendance.noEmployees')}</Text>
-          ) : (
-            topEmployees.map((emp, idx) => (
-              <TouchableOpacity key={emp.id}
-                style={[styles.empRow, idx < topEmployees.length - 1 && styles.empRowBorder]}
-                onPress={() => router.push({ pathname: '/profile-detail', params: { id: emp.id } })} activeOpacity={0.7}>
-                <EmployeeAvatar emp={emp} size={48} />
-                <View style={styles.empInfo}>
-                  <Text style={styles.empName} numberOfLines={1}>{emp.legal_name}</Text>
-                  <Text style={styles.empPosition} numberOfLines={1}>{emp.job_position?.name ?? emp.department?.name ?? '—'}</Text>
-                </View>
-                <Icon name="chevronRight" size={20} color={colors.textMuted} />
-              </TouchableOpacity>
-            ))
-          )}
-        </SectionCard>
-
-        {(bDayQ.isLoading || upcomingBirthdays.length > 0) && (
-          <SectionCard icon="cake" title={t('attendance.birthdaysTitle')} rightLabel={t('common.all')} onRightPress={() => router.push('/birthdays')} loading={bDayQ.isLoading} colors={colors} styles={styles}>
-            {upcomingBirthdays.map((emp, idx) => (
-              <View key={emp.id} style={[styles.empRow, idx < upcomingBirthdays.length - 1 && styles.empRowBorder]}>
-                <EmployeeAvatar emp={emp} size={48} />
-                <View style={styles.empInfo}>
-                  <Text style={styles.empName} numberOfLines={1}>{emp.legal_name}</Text>
-                  <Text style={styles.empPosition} numberOfLines={1}>{emp.job_position?.name ?? '—'}</Text>
-                </View>
-                <View style={styles.bdayRight}>
-                  <Text style={styles.bdayDate}>{emp.birth_date ? dayjs(emp.birth_date).format('D MMM') : '—'}</Text>
-                  {emp.days_left === 0 && (
-                    <View style={styles.bdayTodayRow}>
-                      <Text style={styles.bdayToday}>{t('attendance.birthdayToday')}</Text>
-                      <Icon name="gift" size={14} color={colors.warning} />
-                    </View>
-                  )}
-                </View>
-              </View>
-            ))}
-          </SectionCard>
-        )}
-
-        <View style={{ height: 32 }} />
-      </ScrollView>
+    <Screen refreshing={refreshing} onRefresh={refetchAll}>
+      <PageHeader title={t('attendance.teamTitle')} />
+      {onlySubordinates && (
+        <View style={[styles.notice, { backgroundColor: colors.brandSoft }]}>
+          <Icon name="users" size={16} color={colors.brand} />
+          <Text variant="label" tone="brand">
+            {t('attendance.onlySubordinatesTeam')}
+          </Text>
+        </View>
+      )}
+      <View style={[styles.columns, wide && styles.columnsWide]}>
+        <View style={[styles.col, wide && styles.colWide]}>
+          {attendanceCard}
+          {teamCard}
+        </View>
+        <View style={[styles.col, wide && styles.colWide]}>
+          {requestsCard}
+          {birthdaysCard}
+        </View>
+      </View>
     </Screen>
   );
 }
 
-const makeStyles = (c: ThemeColors) =>
-  StyleSheet.create({
-    content: { paddingHorizontal: 16, paddingTop: 16 },
-
-    filterNotice: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: c.primarySoft, borderRadius: 12, paddingVertical: 10, paddingHorizontal: 14, marginBottom: 12 },
-    filterNoticeText: { fontSize: 13, color: c.primaryLight, ...ff('700') },
-
-    card: { backgroundColor: c.card, borderRadius: 18, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder, marginBottom: 14, overflow: 'hidden' },
-    cardHeader: {
-      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-      paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 2, borderBottomColor: c.cardBorder,
-    },
-    cardTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    cardIcon: { fontSize: 16, ...ff('700') },
-    cardTitle: { fontSize: 15, ...ff('800'), color: c.text },
-    linkText: { fontSize: 13, color: c.primaryLight, ...ff('700') },
-    sectionLoading: { paddingVertical: 32, alignItems: 'center' },
-
-    chartRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
-    chartWrapper: { position: 'relative', width: 160, height: 160, alignItems: 'center', justifyContent: 'center' },
-    chartCenter: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
-    chartTotal: { fontSize: 28, ...ff('900'), color: c.text },
-    legend: { flex: 1, paddingLeft: 20, gap: 12 },
-    legendItem: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-    legendDot: { width: 12, height: 12, borderRadius: 6 },
-    legendCount: { fontSize: 18, ...ff('800'), color: c.text },
-    legendLabel: { fontSize: 11, color: c.textSecondary, marginTop: 1, ...ff('700') },
-
-    primaryBtn: { margin: 16, marginTop: 8, backgroundColor: c.primary, borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderBottomWidth: 4, borderBottomColor: c.primaryShadow },
-    primaryBtnText: { color: c.onPrimary, fontSize: 15, ...ff('800') },
-
-    leaveRow: {
-      flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 12,
-      borderBottomWidth: 2, borderBottomColor: c.cardBorder,
-    },
-    leaveInfo: { flex: 1 },
-    leaveCat: { fontSize: 14, ...ff('800'), color: c.text, marginBottom: 2 },
-    leaveDate: { fontSize: 12, color: c.textSecondary, marginBottom: 2, ...ff('700') },
-    leaveEmployee: { fontSize: 12, color: c.textMuted, ...ff('700') },
-    leaveStatus: { fontSize: 12, ...ff('800') },
-
-    empRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 12 },
-    empRowBorder: { borderBottomWidth: 2, borderBottomColor: c.cardBorder },
-    empInfo: { flex: 1 },
-    empName: { fontSize: 14, ...ff('800'), color: c.text },
-    empPosition: { fontSize: 12, color: c.textMuted, marginTop: 2, ...ff('700') },
-    arrowIcon: { fontSize: 22, color: c.textMuted, ...ff('700') },
-
-    bdayRight: { alignItems: 'flex-end' },
-    bdayDate: { fontSize: 13, ...ff('700'), color: c.textSecondary },
-    bdayTodayRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
-    bdayToday: { fontSize: 11, color: c.warning, ...ff('700') },
-
-    emptyText: { color: c.textMuted, fontSize: 14, paddingHorizontal: 16, paddingVertical: 12, ...ff('700') },
-  });
+const styles = StyleSheet.create({
+  notice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderRadius: radii.md,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    marginBottom: 12,
+  },
+  columns: { gap: 12 },
+  columnsWide: { flexDirection: 'row', alignItems: 'flex-start' },
+  col: { gap: 12 },
+  colWide: { flex: 1 },
+  chartRow: { flexDirection: 'row', alignItems: 'center', gap: 20, marginBottom: 12 },
+  legend: { flex: 1, gap: 10 },
+  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  legendDot: { width: 12, height: 12, borderRadius: 6 },
+  empty: { paddingVertical: 12 },
+  cta: { marginTop: 12 },
+  bday: { alignItems: 'flex-end', gap: 2 },
+  bdayToday: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+});
