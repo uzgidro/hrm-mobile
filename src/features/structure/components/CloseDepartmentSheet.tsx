@@ -1,6 +1,6 @@
 // Bo'limni qisqartirish (TZ 4.2.6 «сокращение») — o'chirish EMAS: bo'lim tarixda
 // qoladi, faqat yangi tayinlashlarda taklif qilinmaydi. Sabab ixtiyoriy.
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { getApiErrorMessage } from '@/api/errors';
@@ -10,20 +10,12 @@ import { Button, Sheet, Text } from '@/ui';
 import type { Department } from '../api/queries';
 import { useCloseDepartment } from '../api/mutations';
 
-export function CloseDepartmentSheet({ dept, onClose }: { dept: Department | null; onClose: () => void }) {
+/** Ota `key={dept.id}` bilan faqat ochiqda mount qiladi — holat har safar toza. */
+export function CloseDepartmentSheet({ dept, onClose }: { dept: Department; onClose: () => void }) {
   const { t } = useTranslation();
   const [reason, setReason] = useState('');
   const [error, setError] = useState<string | null>(null);
   const close = useCloseDepartment();
-
-  useEffect(() => {
-    if (dept) {
-      setReason('');
-      setError(null);
-    }
-  }, [dept]);
-
-  if (!dept) return null;
 
   const submit = async () => {
     try {

@@ -27,7 +27,8 @@ export function OrgTree({
 
   if (error) return <ErrorState onRetry={onRetry} />;
   if (loading) return <Skeleton height={220} />;
-  if (flat.length === 0) return <EmptyState title={t('structure.chartEmpty')} message={t('structure.chartEmptyHint')} />;
+  if (flat.length === 0)
+    return <EmptyState title={t('structure.chartEmpty')} message={t('structure.chartEmptyHint')} />;
 
   return (
     <View>
@@ -38,7 +39,10 @@ export function OrgTree({
           <View
             key={node.id}
             testID={`org-node-${node.id}`}
-            style={[styles.node, { marginLeft: Math.min(depth, 6) * 16, borderLeftColor: depth ? colors.border : colors.brand }]}
+            style={[
+              styles.node,
+              { marginLeft: Math.min(depth, 6) * 16, borderLeftColor: depth ? colors.border : colors.brand },
+            ]}
           >
             <Text variant="label">{node.name || node.department_name || '—'}</Text>
             {!!node.description && (

@@ -55,7 +55,9 @@ export function DepartmentDetail({
             </View>
           )}
         </Row>
-        <Row label={t('structure.colCreated')}>{dept.created_at ? dayjs(dept.created_at).format('DD.MM.YYYY') : '—'}</Row>
+        <Row label={t('structure.colCreated')}>
+          {dept.created_at ? dayjs(dept.created_at).format('DD.MM.YYYY') : '—'}
+        </Row>
         {!!dept.closed_at && (
           <Row label={t('structure.closedOn')}>
             {`${dayjs(dept.closed_at).format('DD.MM.YYYY')}${dept.closed_reason ? ` · ${dept.closed_reason}` : ''}`}
@@ -83,7 +85,9 @@ export function PositionDetail({
       <View style={styles.body}>
         <Row label={t('structure.colShortName')}>{pos.short_name || '—'}</Row>
         <Row label={t('structure.colRazryad')}>{pos.razryad != null ? String(pos.razryad) : '—'}</Row>
-        <Row label={t('structure.category')}>{pos.category ? t(`structure.cat_${pos.category}`, { defaultValue: pos.category }) : '—'}</Row>
+        <Row label={t('structure.category')}>
+          {pos.category ? t(`structure.cat_${pos.category}`, { defaultValue: pos.category }) : '—'}
+        </Row>
         {actions}
       </View>
     </Sheet>

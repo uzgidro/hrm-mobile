@@ -44,7 +44,7 @@ import {
 } from '../api/queries';
 import { DepartmentDetail, PositionDetail } from '../components/DetailSheet';
 import { OrgTree } from '../components/OrgTree';
-import { StructureFormSheet, type FormTarget } from '../components/StructureFormSheet';
+import { StructureFormSheet, formTargetKey, type FormTarget } from '../components/StructureFormSheet';
 import { CloseDepartmentSheet } from '../components/CloseDepartmentSheet';
 import { useReopenDepartment } from '../api/mutations';
 
@@ -303,8 +303,15 @@ export default function StructureScreen() {
       )}
       {canWrite && (
         <>
-          <StructureFormSheet target={form} defaultBranch={branchId} onClose={() => setForm(undefined)} />
-          <CloseDepartmentSheet dept={closing} onClose={() => setClosing(null)} />
+          {form && (
+            <StructureFormSheet
+              key={formTargetKey(form)}
+              target={form}
+              defaultBranch={branchId}
+              onClose={() => setForm(undefined)}
+            />
+          )}
+          {closing && <CloseDepartmentSheet key={closing.id} dept={closing} onClose={() => setClosing(null)} />}
         </>
       )}
     </View>

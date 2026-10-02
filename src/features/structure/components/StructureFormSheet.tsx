@@ -1,6 +1,6 @@
 // Bo'lim / lavozim yaratish-tahrirlash formasi (v2 StructureModal). `target`:
 // undefined — yopiq; `{ kind, row: null }` — yangi; `{ kind, row }` — tahrir.
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -27,46 +27,50 @@ import {
 
 export type FormTarget = { kind: 'department'; row: Department | null } | { kind: 'position'; row: JobPosition | null };
 
+/** Har ochilishda yangi kalit — forma holati qatordan qayta quriladi (effect'siz). */
+export const formTargetKey = (t: FormTarget) => `${t.kind}-${t.row?.id ?? 'new'}`;
+
 export function StructureFormSheet({
   target,
   defaultBranch,
   onClose,
 }: {
-  target: FormTarget | undefined;
+  target: FormTarget;
   defaultBranch: number | null;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
-  const isDept = target?.kind === 'department';
-  const isEdit = !!target?.row;
-  const [dept, setDept] = useState<DeptForm>(() => deptFormFrom(null, defaultBranch));
-  const [pos, setPos] = useState<PosForm>(() => posFormFrom(null, defaultBranch));
-  const [headNames, setHeadNames] = useState<Record<number, string>>({});
+  const isDept = target.kind === 'department';
+  const isEdit = !!target.row;
+  const [dept, setDept] = useState<DeptForm>(() =>
+    deptFormFrom(target.kind === 'department' ? target.row : null, defaultBranch),
+  );
+  const [pos, setPos] = useState<PosForm>(() =>
+    posFormFrom(target.kind === 'position' ? target.row : null, defaultBranch),
+  );
+  const [headNames, setHeadNames] = useState<Record<number, string>>(() =>
+    target.kind === 'department'
+      ? Object.fromEntries((target.row?.heads ?? []).map((h) => [h.id, h.legal_name ?? `#${h.id}`]))
+      : {},
+  );
   const [error, setError] = useState<string | null>(null);
   const [picker, setPicker] = useState<null | 'branch' | 'heads' | 'category'>(null);
   const [empSearch, setEmpSearch] = useState('');
   const saveDept = useSaveDepartment();
   const savePos = useSavePosition();
 
-  useEffect(() => {
-    if (!target) return;
-    setError(null);
-    if (target.kind === 'department') {
-      setDept(deptFormFrom(target.row, defaultBranch));
-      setHeadNames(Object.fromEntries((target.row?.heads ?? []).map((h) => [h.id, h.legal_name ?? `#${h.id}`])));
-    } else {
-      setPos(posFormFrom(target.row, defaultBranch));
-    }
-  }, [target, defaultBranch]);
-
-  const branches = useQuery({ ...branchesQuery(), enabled: !!target });
+  const branches = useQuery({ ...branchesQuery(), enabled: true });
   const branchId = isDept ? dept.branchId : pos.branchId;
   const employees = useQuery({
     queryKey: ['structure', 'heads-picker', branchId, empSearch],
     queryFn: () =>
       apiClient
         .get(EMPLOYEES_LIST, {
-          params: { size: 30, ...(branchId ? { organization_branch_id: branchId } : {}), ...(empSearch ? { search: empSearch } : {}) },
+          params: {
+            size: 30,
+            ...(branchId ? { organization_branch_id: branchId } : {}),
+            ...(empSearch ? { search: empSearch } : {}),
+          },
         })
         .then((r) => unwrapList<Employee>(r.data)),
     enabled: picker === 'heads',
@@ -87,7 +91,7 @@ export function StructureFormSheet({
       : validateStructure({ name: pos.name, branchId: pos.branchId, num: pos.razryad });
     if (err) return setError(t(`structure.${err}`));
     try {
-      const id = target?.row?.id ?? null;
+      const id = target.row?.id ?? null;
       if (isDept) await saveDept.mutateAsync({ id, body: buildDepartmentBody(dept, isEdit) });
       else await savePos.mutateAsync({ id, body: buildPositionBody(pos) });
       toast.success(t(isEdit ? 'structure.updated' : 'structure.created'));
@@ -105,7 +109,7 @@ export function StructureFormSheet({
   const categoryOptions = JOB_CATEGORIES.map((c, i) => ({ value: i + 1, label: t(`structure.cat_${c}`) }));
 
   return (
-    <Sheet visible={!!target} onClose={onClose} title={title}>
+    <Sheet visible onClose={onClose} title={title}>
       <View style={styles.form}>
         <FormInput
           testID="structure-name"
@@ -199,7 +203,11 @@ export function StructureFormSheet({
         visible={picker === 'heads'}
         title={t('structure.pickHeads')}
         multiple
-        options={(employees.data ?? []).map((e) => ({ value: e.id, label: e.legal_name, subLabel: e.job_position?.name }))}
+        options={(employees.data ?? []).map((e) => ({
+          value: e.id,
+          label: e.legal_name,
+          subLabel: e.job_position?.name,
+        }))}
         loading={employees.isFetching}
         selected={dept.headIds}
         onClose={() => setPicker(null)}
