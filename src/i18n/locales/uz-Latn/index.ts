@@ -34,6 +34,7 @@ import password from './password';
 import tabs from './tabs';
 import kpp from './kpp';
 import monitoring from './monitoring';
+import tempOrders from './tempOrders';
 
 export default {
   common,
@@ -70,4 +71,5 @@ export default {
   tabs,
   kpp,
   monitoring,
+  tempOrders,
 } as const;
