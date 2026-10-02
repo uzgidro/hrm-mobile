@@ -7,7 +7,7 @@ import i18n from '@/i18n';
 import { VIDEO_GUIDES } from '@/api/urls';
 import { __resetToasts, getToasts } from '@/lib/toast';
 import VideoGuideScreen from '../screens/VideoGuideScreen';
-import { formatDuration } from '../utils/format';
+import { formatDuration, isSafeVideoUrl } from '../utils/format';
 
 jest.mock('expo-router', () => ({ router: { push: jest.fn(), back: jest.fn(), canGoBack: () => true } }));
 
@@ -20,6 +20,20 @@ describe('formatDuration (v2 lib/format)', () => {
     [600, '10:00'],
     [3725, '1:02:05'],
   ])('%p → %p', (v, out) => expect(formatDuration(v as never)).toBe(out));
+});
+
+describe('isSafeVideoUrl — faqat http(s)', () => {
+  it.each([
+    ['https://cdn.example.uz/a.mp4', true],
+    ['http://cdn.example.uz/a.mp4', true],
+    ['javascript:alert(1)', false],
+    ['intent://scan#Intent;scheme=zxing;end', false],
+    ['file:///etc/passwd', false],
+    ['data:text/html,<script>', false],
+    ['//cdn/a.mp4', false],
+    ['', false],
+    [null, false],
+  ])('%p → %p', (v, ok) => expect(isSafeVideoUrl(v as never)).toBe(ok));
 });
 
 describe('VideoGuideScreen (v2 VideoGuidePage)', () => {
@@ -77,6 +91,14 @@ describe('VideoGuideScreen (v2 VideoGuidePage)', () => {
     await waitFor(() => expect(getToasts().map((x) => x.message)).toContain(i18n.t('videoGuide.noVideo')));
     expect(Linking.openURL).not.toHaveBeenCalled();
     expect(mock.history.post).toHaveLength(0);
+  });
+
+  it("xavfli sxemali URL (javascript:) — ochilmaydi", async () => {
+    mock.onGet(VIDEO_GUIDES).reply(200, { items: [{ id: 3, title: 'Zararli', view_count: 0, video_url: 'javascript:alert(1)' }] });
+    await renderWithProviders(<VideoGuideScreen />);
+    await fireEvent.press(await screen.findByText('Zararli'));
+    await waitFor(() => expect(getToasts().length).toBeGreaterThan(0));
+    expect(Linking.openURL).not.toHaveBeenCalled();
   });
 
   it("so'rov xato — ErrorState", async () => {

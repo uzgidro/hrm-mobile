@@ -12,7 +12,7 @@ import { toast } from '@/lib/toast';
 import { Icon } from '@/components/Icon';
 import { Card, EmptyState, ErrorState, PageHeader, Screen, SearchField, Skeleton, Text } from '@/ui';
 import { trackVideoView, videoGuidesQuery, type VideoGuide } from '../api/queries';
-import { formatDuration } from '../utils/format';
+import { formatDuration, isSafeVideoUrl } from '../utils/format';
 
 export default function VideoGuideScreen() {
   const { t } = useTranslation();
@@ -27,6 +27,7 @@ export default function VideoGuideScreen() {
 
   const open = async (v: VideoGuide) => {
     if (!v.video_url) return toast.error(t('videoGuide.noVideo'));
+    if (!isSafeVideoUrl(v.video_url)) return toast.error(t('videoGuide.openFailed'));
     void trackVideoView(v.id);
     try {
       await Linking.openURL(v.video_url);
