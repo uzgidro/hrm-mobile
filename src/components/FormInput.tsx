@@ -6,7 +6,7 @@ import { ff } from '../theme/typography';
 import { NO_WEB_OUTLINE } from '../theme/web';
 
 export function FormInput({
-  label, value, onChangeText, placeholder, required, multiline, keyboardType, error,
+  label, value, onChangeText, placeholder, required, multiline, keyboardType, error, testID,
 }: {
   label: string;
   value: string;
@@ -14,8 +14,9 @@ export function FormInput({
   placeholder?: string;
   required?: boolean;
   multiline?: boolean;
-  keyboardType?: 'default' | 'phone-pad' | 'email-address';
+  keyboardType?: 'default' | 'phone-pad' | 'email-address' | 'number-pad' | 'decimal-pad';
   error?: string;
+  testID?: string;
 }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -33,6 +34,7 @@ export function FormInput({
         multiline={multiline}
         keyboardType={keyboardType}
         autoCapitalize="none"
+        testID={testID}
       />
       {!!error && <Text style={styles.errorText}>{error}</Text>}
     </View>
