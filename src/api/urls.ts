@@ -381,3 +381,9 @@ export const JOB_POSITION = (id: number) => `job-positions/${id}`;
 
 // ── W5 Ish va rivojlanish ──
 export const VIDEO_GUIDES = 'video-guides';
+export const SERVICE_REQUESTS = 'service-requests';
+export const SERVICE_REQUESTS_MY = 'service-requests/my';
+export const SERVICE_REQUESTS_CATALOG = 'service-requests/catalog';
+export const SERVICE_REQUEST = (id: number) => `service-requests/${id}`;
+export const SERVICE_REQUEST_CANCEL = (id: number) => `service-requests/${id}/cancel`;
+export const SERVICE_REQUEST_STATUS = (id: number) => `service-requests/${id}/status`;

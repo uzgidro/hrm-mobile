@@ -304,6 +304,11 @@ export function canManageStructure(user?: User | null): boolean {
   return isSiteMasterAdmin(user) || isBranchAdmin(user) || isHR(user);
 }
 
+/** Interaktiv xizmat so'rovlarini ko'rib chiqish — v2 `canReviewServices` (server `can_manage`; ministr EMAS). */
+export function canReviewServices(user?: User | null): boolean {
+  return isHR(user) || isSiteMasterAdmin(user);
+}
+
 /** Shtat jadvalini yozish va «Muammolar» — v2 `canManageStaff` (ministr EMAS: backend 403). */
 export function canManageStaff(user?: User | null): boolean {
   return isSiteMasterAdmin(user) || isHR(user);
@@ -492,7 +497,7 @@ const MODULE_FOR_PAGE: Partial<Record<PageKey, ModuleDef>> = {
   terminals: { key: 'hik', defaultRoles: ADMIN_ONLY, systemAdmin: true },
 
   // ── v3: qolgan v2 modullari. `ready: false` — ekran hali yo'q (W2–W6). ──
-  services: { key: 'services', defaultRoles: [...ALL, 'guest'], ready: false },
+  services: { key: 'services', defaultRoles: [...ALL, 'guest'] },
   zoom: { key: 'zoom', defaultRoles: ALL, ready: false },
   vehicles: { key: 'vehicles', defaultRoles: ALL, gates: [needsFleet], ready: false },
   ijro: { key: 'ijro', defaultRoles: ALL },
