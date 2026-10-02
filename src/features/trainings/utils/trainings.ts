@@ -75,3 +75,14 @@ export function daysLeft(expires: string | null | undefined, today: string): num
 export function expiryTone(left: number): Tone {
   return left < 0 ? 'danger' : left <= 30 ? 'warning' : 'neutral';
 }
+
+/** Plitkaga sig'adigan ixcham son: 12 500 000 → «12.5M» (K / M / B, tilga bog'liq emas). */
+export function compactNumber(n: number): string {
+  if (!Number.isFinite(n)) return '0';
+  const abs = Math.abs(n);
+  const trim = (v: number) => String(Number(v.toFixed(1)));
+  if (abs >= 1e9) return `${trim(n / 1e9)}B`;
+  if (abs >= 1e6) return `${trim(n / 1e6)}M`;
+  if (abs >= 1e3) return `${trim(n / 1e3)}K`;
+  return String(n);
+}

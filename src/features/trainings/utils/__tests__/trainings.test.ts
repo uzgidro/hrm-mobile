@@ -1,4 +1,11 @@
-import { buildTrainingBody, daysLeft, expiryTone, validateTraining, type TrainingForm } from '../trainings';
+import {
+  buildTrainingBody,
+  compactNumber,
+  daysLeft,
+  expiryTone,
+  validateTraining,
+  type TrainingForm,
+} from '../trainings';
 
 const base: TrainingForm = {
   employeeId: 7,
@@ -61,5 +68,16 @@ describe('trainings utils (v2 TrainingsPage)', () => {
 
   it("kunlar qoldig'i TZ/soatdan mustaqil (ISO datetime ham)", () => {
     expect(daysLeft('2026-10-05T23:59:59', '2026-10-02')).toBe(3);
+  });
+
+  it("katta sonlar plitkaga sig'adigan ixcham ko'rinishda (K / M / B)", () => {
+    expect(compactNumber(950)).toBe('950');
+    expect(compactNumber(12500)).toBe('12.5K');
+    expect(compactNumber(1_000_000)).toBe('1M');
+    expect(compactNumber(12_500_000)).toBe('12.5M');
+    expect(compactNumber(2_340_000_000)).toBe('2.3B');
+    expect(compactNumber(0)).toBe('0');
+    expect(compactNumber(-1500)).toBe('-1.5K');
+    expect(compactNumber(Number.NaN)).toBe('0');
   });
 });

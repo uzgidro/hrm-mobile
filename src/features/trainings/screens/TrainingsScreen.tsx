@@ -28,7 +28,7 @@ import {
 import { trainingSummaryQuery, trainingsQuery, type Training } from '../api/queries';
 import { ExpiryBadge, STATUS_TONE, TrainingDetailSheet } from '../components/TrainingDetailSheet';
 import { TrainingFormSheet } from '../components/TrainingFormSheet';
-import { TRAINING_STATUSES, TRAINING_TYPES } from '../utils/trainings';
+import { TRAINING_STATUSES, TRAINING_TYPES, compactNumber } from '../utils/trainings';
 
 export default function TrainingsScreen() {
   const { t } = useTranslation();
@@ -66,7 +66,7 @@ export default function TrainingsScreen() {
                 {
                   id: 'cost',
                   label: t('trainings.statCost'),
-                  value: s.total_cost.toLocaleString('ru-RU'),
+                  value: compactNumber(s.total_cost),
                   icon: 'wallet',
                   tint: 'green',
                 },
