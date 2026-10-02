@@ -309,6 +309,11 @@ export function canWriteWorkPlan(user?: User | null): boolean {
   return canManageStructure(user) || isMinister(user) || isDeputy(user);
 }
 
+/** Malaka oshirish yozuvlarini yozish — v2 TrainingsPage: canManageEmployees (kadr/bosh admin) || ministr. */
+export function canWriteTrainings(user?: User | null): boolean {
+  return isHR(user) || isSiteMasterAdmin(user) || isMinister(user);
+}
+
 /** Interaktiv xizmat so'rovlarini ko'rib chiqish — v2 `canReviewServices` (server `can_manage`; ministr EMAS). */
 export function canReviewServices(user?: User | null): boolean {
   return isHR(user) || isSiteMasterAdmin(user);
@@ -516,7 +521,7 @@ const MODULE_FOR_PAGE: Partial<Record<PageKey, ModuleDef>> = {
   structure: { key: 'structure', defaultRoles: ALL },
   responsibles: { key: 'responsibles', defaultRoles: ADMIN_HR },
   hrQuality: { key: 'hrQuality', defaultRoles: ADMIN_HR },
-  trainings: { key: 'trainings', defaultRoles: ALL, ready: false },
+  trainings: { key: 'trainings', defaultRoles: ALL },
   learning: { key: 'learning', defaultRoles: ALL, ready: false },
   inspections: { key: 'inspections', defaultRoles: ADMIN_HR_LEAD, ready: false },
   reports: {

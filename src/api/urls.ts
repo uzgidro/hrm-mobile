@@ -390,3 +390,6 @@ export const SERVICE_REQUEST_STATUS = (id: number) => `service-requests/${id}/st
 export const WORK_PLANS = 'work-plans';
 export const WORK_PLANS_SUMMARY = 'work-plans/summary';
 export const WORK_PLAN = (id: number) => `work-plans/${id}`;
+export const TRAININGS = 'trainings';
+export const TRAININGS_SUMMARY = 'trainings/summary';
+export const TRAINING = (id: number) => `trainings/${id}`;

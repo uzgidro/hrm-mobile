@@ -32,6 +32,7 @@ import password from './password';
 import tabs from './tabs';
 import kpp from './kpp';
 import monitoring from './monitoring';
+import trainings from './trainings';
 import workPlan from './workPlan';
 import services from './services';
 import videoGuide from './videoGuide';
@@ -79,6 +80,7 @@ export default {
   tabs,
   kpp,
   monitoring,
+  trainings,
   workPlan,
   services,
   videoGuide,
