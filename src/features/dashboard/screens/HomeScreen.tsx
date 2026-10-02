@@ -49,7 +49,7 @@ export default function HomeScreen() {
     monitoring: '/monitoring',
     chancellery: '/documents?seg=orders',
     admin: '/modules', // v2 /filiallar — mobil ekrani W6 da
-    guest: '/profile', // v2 ariza holati — mobil ekrani W4 da
+    guest: '/registratsiya-holati', // v2 RegistrationStatusPage
   };
   const target = elsewhere[board];
   if (target) return <Redirect href={target as Href} />;

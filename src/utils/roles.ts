@@ -499,7 +499,7 @@ const MODULE_FOR_PAGE: Partial<Record<PageKey, ModuleDef>> = {
   workPlan: { key: 'workPlan', defaultRoles: ADMIN_HR_LEAD, ready: false },
   medical: { key: 'medical', defaultRoles: ALL, gates: [needsMedical], ready: false },
   health: { key: 'health', defaultRoles: ALL, gates: [needsHealth], ready: false },
-  registrationStatus: { key: 'registrationStatus', defaultRoles: ['guest'], ready: false },
+  registrationStatus: { key: 'registrationStatus', defaultRoles: ['guest'] },
   orderTypes: { key: 'orderTypes', defaultRoles: ADMIN_HR },
   tempOrders: { key: 'tempOrders', defaultRoles: ADMIN_HR },
   staffPositions: { key: 'staffPositions', defaultRoles: ADMIN_HR_LEAD, ready: false },

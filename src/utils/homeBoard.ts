@@ -22,7 +22,7 @@ import {
 
 /**
  * chancellery → v2 `/orders` (Hujjatlar); admin → v2 `/filiallar` (hali ekran yo'q —
- * Modullar); guest → v2 RegistrationStatusPage (hali yo'q — Profil).
+ * Modullar); guest → v2 RegistrationStatusPage (`/registratsiya-holati`).
  */
 export type HomeBoard = 'monitoring' | 'post' | 'leader' | 'employee' | 'chancellery' | 'admin' | 'guest';
 

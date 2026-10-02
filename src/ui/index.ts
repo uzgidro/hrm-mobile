@@ -22,3 +22,4 @@ export * from './SearchField';
 export * from './Sheet';
 export * from './SelectField';
 export * from './Fab';
+export * from './PageHeader';

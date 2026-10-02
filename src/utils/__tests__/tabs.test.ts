@@ -31,6 +31,10 @@ describe('visibleTabs — rolga qarab', () => {
     const ch = u({ id: 4, type: 'employee', employee: { id: 7, is_multi_org_user: true, multi_org_employee_role: 'chancellery' } });
     expect(visibleTabs(ch)).toEqual(['attendance', 'documents', 'modules', 'profile']);
   });
+  // v2: mehmonning bosh sahifasi — RegistrationStatusPage. Mobil'da Asosiy tabining o'zi
+  // ariza holatini ko'rsatadi (app/(tabs)/index.tsx), redirect emas — tablar qoladi.
+  it('mehmon — Asosiy (ariza holati) + Modullar + Profil', () =>
+    expect(visibleTabs(u({ id: 1, type: 'guest' }))).toEqual(['index', 'modules', 'profile']));
   it('filial admin akkaunti — Modullar va Profil', () =>
     expect(visibleTabs(u({ id: 1, type: 'admin' }))).toEqual(['modules', 'profile']));
   it("uchala hujjat moduli o'chirilsa documents tabi yo'q", () => {

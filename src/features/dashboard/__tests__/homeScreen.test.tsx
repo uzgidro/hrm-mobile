@@ -50,7 +50,7 @@ describe('HomeScreen (v3)', () => {
   it.each<[string, Record<string, unknown>, string]>([
     ['devonxona → Buyruqlar', { id: 1, type: 'employee', employee: { id: 7, legal_name: 'A B', is_multi_org_user: true, multi_org_employee_role: 'chancellery' } }, 'redirect:/documents?seg=orders'],
     ['filial admin → Modullar', { id: 1, type: 'admin' }, 'redirect:/modules'],
-    ['mehmon → Profil', { id: 1, type: 'guest' }, 'redirect:/profile'],
+    ['mehmon → Ariza holati', { id: 1, type: 'guest' }, 'redirect:/registratsiya-holati'],
   ])('%s', async (_n, user, text) => {
     setUser(user);
     await renderWithProviders(<HomeScreen />);
