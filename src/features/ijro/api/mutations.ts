@@ -4,7 +4,9 @@ import { TASKS_OVERDUE } from '@/api/urls';
 import { ijroKeys } from './queries';
 
 export const saveTask = (id: number | null, body: Record<string, unknown>) =>
-  (id == null ? apiClient.post(TASKS_OVERDUE, body) : apiClient.patch(`${TASKS_OVERDUE}/${id}`, body)).then((r) => r.data);
+  (id == null ? apiClient.post(TASKS_OVERDUE, body) : apiClient.patch(`${TASKS_OVERDUE}/${id}`, body)).then(
+    (r) => r.data,
+  );
 /** Bajarildi (bugungi sana) yoki qayta ochish (null) — v2 markDone / reopen. */
 export const setTaskCompleted = (id: number, date: string | null) =>
   apiClient.patch(`${TASKS_OVERDUE}/${id}`, { task_completed: date }).then((r) => r.data);
@@ -20,13 +22,28 @@ function useInvalidate() {
 
 export function useSaveTask() {
   const onSuccess = useInvalidate();
-  return useMutation({ mutationFn: ({ id, body }: { id: number | null; body: Record<string, unknown> }) => saveTask(id, body), onSuccess });
+  return useMutation({
+    // Forma xatoni o'zi ko'rsatadi (inline / toast) — global toast takrorlamasin.
+    meta: { skipErrorToast: true },
+    mutationFn: ({ id, body }: { id: number | null; body: Record<string, unknown> }) => saveTask(id, body),
+    onSuccess,
+  });
 }
 export function useSetTaskCompleted() {
   const onSuccess = useInvalidate();
-  return useMutation({ mutationFn: ({ id, date }: { id: number; date: string | null }) => setTaskCompleted(id, date), onSuccess });
+  return useMutation({
+    // Forma xatoni o'zi ko'rsatadi (inline / toast) — global toast takrorlamasin.
+    meta: { skipErrorToast: true },
+    mutationFn: ({ id, date }: { id: number; date: string | null }) => setTaskCompleted(id, date),
+    onSuccess,
+  });
 }
 export function useDeleteTask() {
   const onSuccess = useInvalidate();
-  return useMutation({ mutationFn: deleteTask, onSuccess });
+  return useMutation({
+    // Forma xatoni o'zi ko'rsatadi (inline / toast) — global toast takrorlamasin.
+    meta: { skipErrorToast: true },
+    mutationFn: deleteTask,
+    onSuccess,
+  });
 }

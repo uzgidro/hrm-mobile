@@ -5,7 +5,8 @@ import { apiClient } from '@/api/client';
 import { WORK_LEAVES_HR_CREATE, WORK_LEAVE_DETAIL } from '@/api/urls';
 import { tempOrderKeys } from './queries';
 
-export const createTempOrder = (body: Record<string, unknown>) => apiClient.post(WORK_LEAVES_HR_CREATE, body).then((r) => r.data);
+export const createTempOrder = (body: Record<string, unknown>) =>
+  apiClient.post(WORK_LEAVES_HR_CREATE, body).then((r) => r.data);
 export const updateTempOrder = (id: number, body: Record<string, unknown>) =>
   apiClient.patch(WORK_LEAVE_DETAIL(id), body).then((r) => r.data);
 export const deleteTempOrder = (id: number) => apiClient.delete(WORK_LEAVE_DETAIL(id)).then((r) => r.data);
@@ -22,6 +23,8 @@ function useInvalidate() {
 export function useSaveTempOrder() {
   const onSuccess = useInvalidate();
   return useMutation({
+    // Forma xatoni o'zi ko'rsatadi (inline / toast) — global toast takrorlamasin.
+    meta: { skipErrorToast: true },
     mutationFn: ({ id, body }: { id: number | null; body: Record<string, unknown> }) =>
       id == null ? createTempOrder(body) : updateTempOrder(id, body),
     onSuccess,
@@ -30,5 +33,10 @@ export function useSaveTempOrder() {
 
 export function useDeleteTempOrder() {
   const onSuccess = useInvalidate();
-  return useMutation({ mutationFn: (id: number) => deleteTempOrder(id), onSuccess });
+  return useMutation({
+    // Forma xatoni o'zi ko'rsatadi (inline / toast) — global toast takrorlamasin.
+    meta: { skipErrorToast: true },
+    mutationFn: (id: number) => deleteTempOrder(id),
+    onSuccess,
+  });
 }

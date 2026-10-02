@@ -80,14 +80,22 @@ export function TempOrderSheet({
     queryFn: () =>
       apiClient
         .get(EMPLOYEES_LIST, {
-          params: { size: 30, ...(empSearch ? { search: empSearch } : {}), ...(branchId ? { organization_branch_id: branchId } : {}) },
+          params: {
+            size: 30,
+            ...(empSearch ? { search: empSearch } : {}),
+            ...(branchId ? { organization_branch_id: branchId } : {}),
+          },
         })
         .then((r) => unwrapList<Employee>(r.data)),
     enabled: picker === 'employee',
   });
 
   const typeOptions = useMemo(
-    () => TEMP_ORDER_TYPES.map((code, i) => ({ value: i, label: t(`tempOrders.type_${code}`) })),
+    () =>
+      TEMP_ORDER_TYPES.map((code, i) => ({
+        value: i,
+        label: t(`tempOrders.type_${code}`),
+      })),
     [t],
   );
 
@@ -103,7 +111,10 @@ export function TempOrderSheet({
       return setError(t('tempOrders.timeInvalid'));
     }
     try {
-      await save.mutateAsync({ id: row?.id ?? null, body: isEdit ? buildUpdateBody(form) : buildCreateBody(form) });
+      await save.mutateAsync({
+        id: row?.id ?? null,
+        body: isEdit ? buildUpdateBody(form) : buildCreateBody(form),
+      });
       toast.success(t(isEdit ? 'tempOrders.updated' : 'tempOrders.created'));
       onClose();
     } catch (e) {
@@ -145,7 +156,11 @@ export function TempOrderSheet({
           onPress={() => setPicker('employee')}
           disabled={isEdit}
         />
-        <SelectField label={t('tempOrders.type')} value={t(`tempOrders.type_${form.type}`)} onPress={() => setPicker('type')} />
+        <SelectField
+          label={t('tempOrders.type')}
+          value={t(`tempOrders.type_${form.type}`)}
+          onPress={() => setPicker('type')}
+        />
         {archiving && (
           <Text variant="caption" tone="danger">
             {t('tempOrders.archiveWarning')}
@@ -158,21 +173,41 @@ export function TempOrderSheet({
         )}
         <View style={styles.row}>
           <View style={styles.flex}>
-            <SelectField label={t('tempOrders.dateFrom')} value={fmt(form.start)} icon="calendar" onPress={() => setPicker('start')} />
+            <SelectField
+              label={t('tempOrders.dateFrom')}
+              value={fmt(form.start)}
+              icon="calendar"
+              onPress={() => setPicker('start')}
+            />
           </View>
           {!archiving && !hourly && (
             <View style={styles.flex}>
-              <SelectField label={t('tempOrders.dateTo')} value={fmt(form.end)} icon="calendar" onPress={() => setPicker('end')} />
+              <SelectField
+                label={t('tempOrders.dateTo')}
+                value={fmt(form.end)}
+                icon="calendar"
+                onPress={() => setPicker('end')}
+              />
             </View>
           )}
         </View>
         {hourly && (
           <View style={styles.row}>
             <View style={styles.flex}>
-              <FormInput label={t('tempOrders.timeFrom')} value={form.startTime} onChangeText={(v) => set({ startTime: v })} placeholder="09:00" />
+              <FormInput
+                label={t('tempOrders.timeFrom')}
+                value={form.startTime}
+                onChangeText={(v) => set({ startTime: v })}
+                placeholder="09:00"
+              />
             </View>
             <View style={styles.flex}>
-              <FormInput label={t('tempOrders.timeTo')} value={form.endTime} onChangeText={(v) => set({ endTime: v })} placeholder="13:00" />
+              <FormInput
+                label={t('tempOrders.timeTo')}
+                value={form.endTime}
+                onChangeText={(v) => set({ endTime: v })}
+                placeholder="13:00"
+              />
             </View>
           </View>
         )}
@@ -191,14 +226,23 @@ export function TempOrderSheet({
           size="lg"
         />
         {isEdit && (
-          <Button testID="temp-order-delete" label={t('tempOrders.remove')} variant="ghost" onPress={confirmDelete} full />
+          <Button
+            testID="temp-order-delete"
+            label={t('tempOrders.remove')}
+            variant="ghost"
+            onPress={confirmDelete}
+            full
+          />
         )}
       </View>
 
       <PickerModal
         visible={picker === 'employee'}
         title={t('tempOrders.pickEmployee')}
-        options={(employees.data ?? []).map((e) => ({ value: e.id, label: e.legal_name }))}
+        options={(employees.data ?? []).map((e) => ({
+          value: e.id,
+          label: e.legal_name,
+        }))}
         loading={employees.isFetching}
         selected={form.employeeId}
         onClose={() => setPicker(null)}
@@ -221,20 +265,26 @@ export function TempOrderSheet({
           setPicker(null);
         }}
       />
-      <DatePickerModal
-        visible={picker === 'start'}
-        value={fmt(form.start)}
-        title={t('tempOrders.dateFrom')}
-        onConfirm={(d) => set({ start: d })}
-        onClose={() => setPicker(null)}
-      />
-      <DatePickerModal
-        visible={picker === 'end'}
-        value={form.end || form.start}
-        title={t('tempOrders.dateTo')}
-        onConfirm={(d) => set({ end: d })}
-        onClose={() => setPicker(null)}
-      />
+      {/* Faqat ochiqda mount — DatePickerModal boshlang'ich oyni mount paytida oladi,
+          aks holda tahrirda boshqa yozuvning (yoki bugungi) sanasidan ochilardi. */}
+      {picker === 'start' && (
+        <DatePickerModal
+          visible
+          value={form.start}
+          title={t('tempOrders.dateFrom')}
+          onConfirm={(d) => set({ start: d })}
+          onClose={() => setPicker(null)}
+        />
+      )}
+      {picker === 'end' && (
+        <DatePickerModal
+          visible
+          value={form.end || form.start}
+          title={t('tempOrders.dateTo')}
+          onConfirm={(d) => set({ end: d })}
+          onClose={() => setPicker(null)}
+        />
+      )}
     </Sheet>
   );
 }

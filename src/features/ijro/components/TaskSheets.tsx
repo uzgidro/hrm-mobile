@@ -54,7 +54,11 @@ export function TaskDetailSheet({
   const confirmDelete = () =>
     Alert.alert(t('ijro.remove'), t('ijro.deleteConfirm'), [
       { text: t('common.cancel'), style: 'cancel' },
-      { text: t('ijro.remove'), style: 'destructive', onPress: () => void run(remove.mutateAsync(task.id), 'ijro.deleted') },
+      {
+        text: t('ijro.remove'),
+        style: 'destructive',
+        onPress: () => void run(remove.mutateAsync(task.id), 'ijro.deleted'),
+      },
     ]);
 
   const row = (label: string, value: string) => (
@@ -136,7 +140,9 @@ export function TaskFormSheet({ task, onClose }: { task: IjroTask | null | undef
     queryKey: ['ijro', 'employee-picker', empSearch],
     queryFn: () =>
       apiClient
-        .get(EMPLOYEES_LIST, { params: { size: 30, ...(empSearch ? { search: empSearch } : {}) } })
+        .get(EMPLOYEES_LIST, {
+          params: { size: 30, ...(empSearch ? { search: empSearch } : {}) },
+        })
         .then((r) => unwrapList<Employee>(r.data)),
     enabled: picker === 'employee',
   });
@@ -150,7 +156,10 @@ export function TaskFormSheet({ task, onClose }: { task: IjroTask | null | undef
     const err = validateTask(form);
     if (err) return setError(t(`ijro.${err}`));
     try {
-      await save.mutateAsync({ id: task?.id ?? null, body: buildTaskBody(form) });
+      await save.mutateAsync({
+        id: task?.id ?? null,
+        body: buildTaskBody(form),
+      });
       toast.success(t('ijro.saved'));
       onClose();
     } catch (e) {
@@ -168,10 +177,20 @@ export function TaskFormSheet({ task, onClose }: { task: IjroTask | null | undef
           placeholder={t('ijro.pickEmployee')}
           onPress={() => setPicker('employee')}
         />
-        <FormInput label={t('ijro.fieldTask')} value={form.description} onChangeText={(v) => set({ description: v })} multiline />
+        <FormInput
+          label={t('ijro.fieldTask')}
+          value={form.description}
+          onChangeText={(v) => set({ description: v })}
+          multiline
+        />
         <View style={styles.row}>
           <View style={styles.flex}>
-            <SelectField label={t('ijro.fieldDeadline')} value={fmt(form.deadline)} icon="calendar" onPress={() => setPicker('deadline')} />
+            <SelectField
+              label={t('ijro.fieldDeadline')}
+              value={fmt(form.deadline)}
+              icon="calendar"
+              onPress={() => setPicker('deadline')}
+            />
           </View>
           <View style={styles.flex}>
             <SelectField
@@ -194,7 +213,10 @@ export function TaskFormSheet({ task, onClose }: { task: IjroTask | null | undef
       <PickerModal
         visible={picker === 'employee'}
         title={t('ijro.pickEmployee')}
-        options={(employees.data ?? []).map((e) => ({ value: e.id, label: e.legal_name }))}
+        options={(employees.data ?? []).map((e) => ({
+          value: e.id,
+          label: e.legal_name,
+        }))}
         loading={employees.isFetching}
         selected={form.employeeId}
         onClose={() => setPicker(null)}
@@ -205,20 +227,25 @@ export function TaskFormSheet({ task, onClose }: { task: IjroTask | null | undef
           setPicker(null);
         }}
       />
-      <DatePickerModal
-        visible={picker === 'deadline'}
-        value={form.deadline || undefined}
-        title={t('ijro.fieldDeadline')}
-        onConfirm={(d) => set({ deadline: d })}
-        onClose={() => setPicker(null)}
-      />
-      <DatePickerModal
-        visible={picker === 'done'}
-        value={form.done || undefined}
-        title={t('ijro.fieldDone')}
-        onConfirm={(d) => set({ done: d })}
-        onClose={() => setPicker(null)}
-      />
+      {/* Faqat ochiqda mount — boshlang'ich oy mount paytida olinadi. */}
+      {picker === 'deadline' && (
+        <DatePickerModal
+          visible
+          value={form.deadline || undefined}
+          title={t('ijro.fieldDeadline')}
+          onConfirm={(d) => set({ deadline: d })}
+          onClose={() => setPicker(null)}
+        />
+      )}
+      {picker === 'done' && (
+        <DatePickerModal
+          visible
+          value={form.done || undefined}
+          title={t('ijro.fieldDone')}
+          onConfirm={(d) => set({ done: d })}
+          onClose={() => setPicker(null)}
+        />
+      )}
     </Sheet>
   );
 }
