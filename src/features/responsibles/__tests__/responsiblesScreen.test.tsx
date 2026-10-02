@@ -11,7 +11,8 @@ import ResponsiblesScreen from '../screens/ResponsiblesScreen';
 jest.mock('expo-router', () => ({ router: { push: jest.fn(), back: jest.fn(), canGoBack: () => true } }));
 jest.mock('@/lib/confirm', () => ({ confirm: jest.fn(() => Promise.resolve(true)) }));
 
-const setUser = (u: Record<string, unknown>) => useAuthStore.setState({ user: u as never, isAuthenticated: true } as never);
+const setUser = (u: Record<string, unknown>) =>
+  useAuthStore.setState({ user: u as never, isAuthenticated: true } as never);
 const hr = { id: 1, type: 'employee', employee: { id: 1, is_multi_org_user: true, multi_org_employee_role: 'hr' } };
 
 describe("ResponsiblesScreen (v2 ResponsiblesPage — Ijro mas'ullari)", () => {
@@ -19,10 +20,19 @@ describe("ResponsiblesScreen (v2 ResponsiblesPage — Ijro mas'ullari)", () => {
   beforeEach(async () => {
     await i18n.changeLanguage('uz-Latn');
     (confirm as jest.Mock).mockClear();
-    mock.onGet(MODULE_RESPONSIBLES).reply(200, [
-      { id: 9, module: 'ijro', scope_type: 'department', scope_id: 4, label: 'Kadrlar bo\'limi', sub_label: 'Ijro apparati' },
-    ]);
-    mock.onGet(DEPARTMENTS_LIST).reply(200, { items: [{ id: 5, name: 'Moliya bo\'limi' }], total: 1 });
+    mock
+      .onGet(MODULE_RESPONSIBLES)
+      .reply(200, [
+        {
+          id: 9,
+          module: 'ijro',
+          scope_type: 'department',
+          scope_id: 4,
+          label: "Kadrlar bo'limi",
+          sub_label: 'Ijro apparati',
+        },
+      ]);
+    mock.onGet(DEPARTMENTS_LIST).reply(200, { items: [{ id: 5, name: "Moliya bo'limi" }], total: 1 });
     mock.onPost(MODULE_RESPONSIBLES).reply(200, { id: 10 });
     mock.onDelete(`${MODULE_RESPONSIBLES}/9`).reply(200, {});
   });

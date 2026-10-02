@@ -217,6 +217,13 @@ const styles = StyleSheet.create({
   personHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   flex: { flex: 1 },
   counts: { flexDirection: 'row', gap: 8 },
-  issue: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 8, paddingVertical: 3, borderRadius: radii.pill },
+  issue: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: radii.pill,
+  },
   dot: { width: 6, height: 6, borderRadius: 3 },
 });

@@ -85,7 +85,11 @@ export default function ResponsiblesScreen() {
           label: o.name || `#${o.id}`,
         }));
   const pickerLoading =
-    scope === 'employee' ? employees.isFetching : scope === 'department' ? departments.isFetching : positions.isFetching;
+    scope === 'employee'
+      ? employees.isFetching
+      : scope === 'department'
+        ? departments.isFetching
+        : positions.isFetching;
 
   const onPick = async (id: number) => {
     setPicking(false);
@@ -123,7 +127,8 @@ export default function ResponsiblesScreen() {
   };
 
   const rows = list.data ?? [];
-  const scopeOf = (s?: string | null) => (RESPONSIBLE_SCOPES.includes(s as ResponsibleScope) ? (s as ResponsibleScope) : 'department');
+  const scopeOf = (s?: string | null) =>
+    RESPONSIBLE_SCOPES.includes(s as ResponsibleScope) ? (s as ResponsibleScope) : 'department';
 
   return (
     <Screen refreshing={list.isRefetching} onRefresh={() => void list.refetch()}>

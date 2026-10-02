@@ -28,7 +28,8 @@ export const responsibleKeys = {
 export function responsiblesQuery(module: string, enabled = true) {
   return queryOptions({
     queryKey: responsibleKeys.list(module),
-    queryFn: () => apiClient.get(MODULE_RESPONSIBLES, { params: { module } }).then((r) => unwrapList<Responsible>(r.data)),
+    queryFn: () =>
+      apiClient.get(MODULE_RESPONSIBLES, { params: { module } }).then((r) => unwrapList<Responsible>(r.data)),
     enabled,
   });
 }

@@ -34,8 +34,14 @@ describe('RegistrationStatusScreen (v2 RegistrationStatusPage)', () => {
 
   it('rad etilgan — badge, izoh va sabab', async () => {
     mock.onGet(REGISTRATION_ME).reply(200, {
-      id: 1, status: 'rejected', full_name: 'Aliyev Vali', reject_reason: 'Pasport rasmi xira',
-      is_uge_employee: false, username: 'vali', reviewed_at: '2026-09-20T10:00:00', reviewed_by_name: 'Kadr bo\'limi',
+      id: 1,
+      status: 'rejected',
+      full_name: 'Aliyev Vali',
+      reject_reason: 'Pasport rasmi xira',
+      is_uge_employee: false,
+      username: 'vali',
+      reviewed_at: '2026-09-20T10:00:00',
+      reviewed_by_name: "Kadr bo'limi",
     });
     await renderWithProviders(<RegistrationStatusScreen />);
     expect(await screen.findByText('Aliyev Vali')).toBeTruthy();
@@ -48,8 +54,13 @@ describe('RegistrationStatusScreen (v2 RegistrationStatusPage)', () => {
 
   it("tasdiqlangan xodim — da'vo filial · bo'lim · lavozim", async () => {
     mock.onGet(REGISTRATION_ME).reply(200, {
-      id: 2, status: 'approved', full_name: 'Karimova Nodira', is_uge_employee: true,
-      claimed_branch_name: 'Ijro apparati', claimed_department_name: 'Kadrlar', claimed_job_position_name: 'Mutaxassis',
+      id: 2,
+      status: 'approved',
+      full_name: 'Karimova Nodira',
+      is_uge_employee: true,
+      claimed_branch_name: 'Ijro apparati',
+      claimed_department_name: 'Kadrlar',
+      claimed_job_position_name: 'Mutaxassis',
     });
     await renderWithProviders(<RegistrationStatusScreen />);
     expect(await screen.findByText(i18n.t('regStatus.status_approved'))).toBeTruthy();

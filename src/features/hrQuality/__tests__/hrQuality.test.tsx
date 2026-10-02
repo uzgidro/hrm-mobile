@@ -10,7 +10,8 @@ import { groupByPerson, type QualityRow } from '../utils/groupByPerson';
 
 jest.mock('expo-router', () => ({ router: { push: jest.fn(), back: jest.fn(), canGoBack: () => true } }));
 
-const setUser = (u: Record<string, unknown>) => useAuthStore.setState({ user: u as never, isAuthenticated: true } as never);
+const setUser = (u: Record<string, unknown>) =>
+  useAuthStore.setState({ user: u as never, isAuthenticated: true } as never);
 const hr = { id: 1, type: 'employee', employee: { id: 1, is_multi_org_user: true, multi_org_employee_role: 'hr' } };
 
 const row = (id: number, name: string, severity: string, rule = 'no_pinfl'): QualityRow => ({
@@ -65,7 +66,7 @@ describe('HrQualityScreen', () => {
     expect(screen.queryByText('0')).toBeNull();
   });
 
-  it("protokol: hisoblagichlar, shaxs qatori; qoida chipi → rule filtri", async () => {
+  it('protokol: hisoblagichlar, shaxs qatori; qoida chipi → rule filtri', async () => {
     setUser(hr);
     mock.onGet(EMPLOYEES_QUALITY).reply(200, {
       checked: 120,
@@ -74,7 +75,11 @@ describe('HrQualityScreen', () => {
       warnings: 1,
       clean: 117,
       by_rule: [{ rule: 'no_pinfl', rule_title: "JSHSHIR yo'q", severity: 'error', count: 2 }],
-      items: [row(7, 'Karimov Vali', 'error'), row(7, 'Karimov Vali', 'error', 'no_position'), row(8, 'Aliyeva Nodira', 'warning')],
+      items: [
+        row(7, 'Karimov Vali', 'error'),
+        row(7, 'Karimov Vali', 'error', 'no_position'),
+        row(8, 'Aliyeva Nodira', 'warning'),
+      ],
     });
     await renderWithProviders(<HrQualityScreen />);
     expect(await screen.findByText('Karimov Vali')).toBeTruthy();
@@ -88,7 +93,9 @@ describe('HrQualityScreen', () => {
 
   it("muammo yo'q — yashil bo'sh holat", async () => {
     setUser(hr);
-    mock.onGet(EMPLOYEES_QUALITY).reply(200, { checked: 5, issues: 0, errors: 0, warnings: 0, clean: 5, by_rule: [], items: [] });
+    mock
+      .onGet(EMPLOYEES_QUALITY)
+      .reply(200, { checked: 5, issues: 0, errors: 0, warnings: 0, clean: 5, by_rule: [], items: [] });
     await renderWithProviders(<HrQualityScreen />);
     expect(await screen.findByText(i18n.t('hrQuality.noIssues'))).toBeTruthy();
   });

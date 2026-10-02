@@ -38,7 +38,5 @@ export function groupByPerson(rows: QualityRow[]): QualityPerson[] {
     else p.warnings++;
     m.set(r.employee_id, p);
   }
-  return [...m.values()].sort(
-    (a, b) => b.errors - a.errors || b.warnings - a.warnings || a.name.localeCompare(b.name),
-  );
+  return [...m.values()].sort((a, b) => b.errors - a.errors || b.warnings - a.warnings || a.name.localeCompare(b.name));
 }
