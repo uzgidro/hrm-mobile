@@ -170,7 +170,11 @@ export default function ResponsiblesScreen() {
               key={r.id}
               title={r.label || `#${r.scope_id}`}
               subtitle={r.sub_label || undefined}
-              left={<Badge label={t(SCOPE_LABEL[scopeOf(r.scope_type)])} />}
+              left={
+                <View style={styles.scope}>
+                  <Badge label={t(SCOPE_LABEL[scopeOf(r.scope_type)])} />
+                </View>
+              }
               right={
                 <IconButton
                   testID={`responsible-remove-${r.id}`}
@@ -202,6 +206,8 @@ export default function ResponsiblesScreen() {
 }
 
 const styles = StyleSheet.create({
+  // Turli uzunlikdagi badge'lar sarlavhani surmasin.
+  scope: { width: 78 },
   form: { gap: 10 },
   gap: { height: 12 },
   note: { marginTop: 12 },

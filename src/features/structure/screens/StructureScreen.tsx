@@ -14,6 +14,8 @@ import { confirm } from '@/lib/confirm';
 import { resolveEmployeeBranchId } from '@/utils/branch';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { PickerModal } from '@/components/PickerModal';
+import { Icon } from '@/components/Icon';
+import { useTheme } from '@/theme/ThemeProvider';
 import {
   Avatar,
   Badge,
@@ -53,6 +55,7 @@ type Tab = 'departments' | 'positions' | 'chart';
 export default function StructureScreen() {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
+  const { colors } = useTheme();
   const [tab, setTab] = useState<Tab>('departments');
   const [search, setSearch] = useState('');
   const debounced = useDebouncedValue(search);
@@ -241,7 +244,12 @@ export default function StructureScreen() {
                   left={
                     heads[0] ? (
                       <Avatar name={heads[0].legal_name ?? '?'} uri={heads[0].photo_thumb_path} size={32} />
-                    ) : undefined
+                    ) : (
+                      // Rahbarsiz bo'lim ham bir xil chiziqda boshlansin.
+                      <View style={[styles.deptIcon, { backgroundColor: colors.surface2 }]}>
+                        <Icon name="building" size={16} color={colors.fgMuted} />
+                      </View>
+                    )
                   }
                   right={d.closed_at ? <Badge label={t('structure.closedBadge')} tone="warning" /> : undefined}
                   onPress={() => setDept(d)}
@@ -319,6 +327,7 @@ export default function StructureScreen() {
 }
 
 const styles = StyleSheet.create({
+  deptIcon: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
   root: { flex: 1 },
   actions: { gap: 8, marginTop: 4 },
   note: { marginTop: 12 },
