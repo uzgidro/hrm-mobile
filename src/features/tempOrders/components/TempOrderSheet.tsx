@@ -28,6 +28,9 @@ import {
   type TempOrderForm,
 } from '../utils/tempOrder';
 
+/** Ko'rinish: DD.MM.YYYY (ichki qiymat — YYYY-MM-DD). */
+const fmt = (d: string) => (d ? dayjs(d).format('DD.MM.YYYY') : '');
+
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 function initialForm(row: TempOrder | null): TempOrderForm {
@@ -155,11 +158,11 @@ export function TempOrderSheet({
         )}
         <View style={styles.row}>
           <View style={styles.flex}>
-            <SelectField label={t('tempOrders.dateFrom')} value={form.start} icon="calendar" onPress={() => setPicker('start')} />
+            <SelectField label={t('tempOrders.dateFrom')} value={fmt(form.start)} icon="calendar" onPress={() => setPicker('start')} />
           </View>
           {!archiving && !hourly && (
             <View style={styles.flex}>
-              <SelectField label={t('tempOrders.dateTo')} value={form.end} icon="calendar" onPress={() => setPicker('end')} />
+              <SelectField label={t('tempOrders.dateTo')} value={fmt(form.end)} icon="calendar" onPress={() => setPicker('end')} />
             </View>
           )}
         </View>
@@ -220,7 +223,7 @@ export function TempOrderSheet({
       />
       <DatePickerModal
         visible={picker === 'start'}
-        value={form.start}
+        value={fmt(form.start)}
         title={t('tempOrders.dateFrom')}
         onConfirm={(d) => set({ start: d })}
         onClose={() => setPicker(null)}

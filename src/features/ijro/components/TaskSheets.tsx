@@ -19,6 +19,9 @@ import { useDeleteTask, useSaveTask, useSetTaskCompleted } from '../api/mutation
 import { buildTaskBody, delayDays, statusOf, validateTask, type IjroTask, type TaskForm } from '../utils/ijro';
 import { STATUS_TONE } from './statusTone';
 
+/** Ko'rinish: DD.MM.YYYY (ichki qiymat — YYYY-MM-DD). */
+const fmt = (d: string) => (d ? dayjs(d).format('DD.MM.YYYY') : '');
+
 export function TaskDetailSheet({
   task,
   canWrite,
@@ -168,12 +171,12 @@ export function TaskFormSheet({ task, onClose }: { task: IjroTask | null | undef
         <FormInput label={t('ijro.fieldTask')} value={form.description} onChangeText={(v) => set({ description: v })} multiline />
         <View style={styles.row}>
           <View style={styles.flex}>
-            <SelectField label={t('ijro.fieldDeadline')} value={form.deadline} icon="calendar" onPress={() => setPicker('deadline')} />
+            <SelectField label={t('ijro.fieldDeadline')} value={fmt(form.deadline)} icon="calendar" onPress={() => setPicker('deadline')} />
           </View>
           <View style={styles.flex}>
             <SelectField
               label={t('ijro.fieldDone')}
-              value={form.done}
+              value={fmt(form.done)}
               placeholder={t('ijro.doneHint')}
               icon="calendar"
               onPress={() => setPicker('done')}
