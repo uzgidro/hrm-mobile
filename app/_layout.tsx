@@ -157,6 +157,7 @@ function ThemedNavigation() {
           <Stack.Screen name="shtat" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="video-qollanma" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="interaktiv-xizmatlar" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="ish-rejasi" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="assistant" options={{ animation: 'slide_from_bottom' }} />
           <Stack.Screen name="loyiha-form" options={{ animation: 'slide_from_bottom' }} />
           <Stack.Screen name="change-pin" options={{ animation: 'slide_from_right' }} />

@@ -387,3 +387,6 @@ export const SERVICE_REQUESTS_CATALOG = 'service-requests/catalog';
 export const SERVICE_REQUEST = (id: number) => `service-requests/${id}`;
 export const SERVICE_REQUEST_CANCEL = (id: number) => `service-requests/${id}/cancel`;
 export const SERVICE_REQUEST_STATUS = (id: number) => `service-requests/${id}/status`;
+export const WORK_PLANS = 'work-plans';
+export const WORK_PLANS_SUMMARY = 'work-plans/summary';
+export const WORK_PLAN = (id: number) => `work-plans/${id}`;

@@ -304,6 +304,11 @@ export function canManageStructure(user?: User | null): boolean {
   return isSiteMasterAdmin(user) || isBranchAdmin(user) || isHR(user);
 }
 
+/** Ish rejasini yozish — v2 WorkPlanPage: canManageStructure || ministr || deputy. */
+export function canWriteWorkPlan(user?: User | null): boolean {
+  return canManageStructure(user) || isMinister(user) || isDeputy(user);
+}
+
 /** Interaktiv xizmat so'rovlarini ko'rib chiqish — v2 `canReviewServices` (server `can_manage`; ministr EMAS). */
 export function canReviewServices(user?: User | null): boolean {
   return isHR(user) || isSiteMasterAdmin(user);
@@ -501,7 +506,7 @@ const MODULE_FOR_PAGE: Partial<Record<PageKey, ModuleDef>> = {
   zoom: { key: 'zoom', defaultRoles: ALL, ready: false },
   vehicles: { key: 'vehicles', defaultRoles: ALL, gates: [needsFleet], ready: false },
   ijro: { key: 'ijro', defaultRoles: ALL },
-  workPlan: { key: 'workPlan', defaultRoles: ADMIN_HR_LEAD, ready: false },
+  workPlan: { key: 'workPlan', defaultRoles: ADMIN_HR_LEAD },
   medical: { key: 'medical', defaultRoles: ALL, gates: [needsMedical], ready: false },
   health: { key: 'health', defaultRoles: ALL, gates: [needsHealth], ready: false },
   registrationStatus: { key: 'registrationStatus', defaultRoles: ['guest'] },
