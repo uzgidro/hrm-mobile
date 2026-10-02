@@ -355,3 +355,6 @@ export const VISITOR_TURNSTILE_ATTENDANCE = 'turnstile-attendance-events/visitor
 export const DASHBOARD_MAIN = 'dashboard/main';
 export const DASHBOARD_LATE_EMPLOYEES = 'dashboard/late-employees';
 export const DASHBOARD_LATE_EMPLOYEES_FREQUENT = 'dashboard/late-employees/frequent';
+// Vaqtinchalik buyruqlar (kadr kiritadigan ta'til/kasallik… — v2 TempOrdersPage).
+export const WORK_LEAVES_HR_LIST = 'work-leaves/hr-list';
+export const WORK_LEAVES_HR_CREATE = 'work-leaves/hr-create';
