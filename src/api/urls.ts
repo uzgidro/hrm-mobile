@@ -378,3 +378,6 @@ export const DEPARTMENT = (id: number) => `departments/${id}`;
 export const DEPARTMENT_CLOSE = (id: number) => `departments/${id}/close`;
 export const DEPARTMENT_REOPEN = (id: number) => `departments/${id}/reopen`;
 export const JOB_POSITION = (id: number) => `job-positions/${id}`;
+
+// ── W5 Ish va rivojlanish ──
+export const VIDEO_GUIDES = 'video-guides';
