@@ -1,0 +1,22 @@
+// Buyruq turlari (web v2 OrderTypesPage). creator_role kodlari tarjima qilinmaydi.
+export default {
+  title: 'Order types',
+  searchPlaceholder: 'Search by name…',
+  allFlows: 'All flows',
+  flowEmployee: 'Employee orders',
+  flowHr: 'HR orders',
+  empty: 'No order types found',
+  emptyHint: 'Add a type or change the search.',
+  create: 'New type',
+  createTitle: 'New order type',
+  editTitle: 'Edit order type',
+  fieldName: 'Name',
+  fieldFlow: 'Order flow',
+  nameRequired: 'Name is required',
+  flowRequired: 'Choose a flow',
+  created: 'Order type added',
+  updated: 'Order type updated',
+  remove: 'Delete',
+  removeConfirm: 'The «{{name}}» type will be deleted.',
+  removed: 'Order type deleted',
+} as const;

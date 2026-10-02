@@ -291,6 +291,11 @@ export function isBranchAdmin(user?: User | null): boolean {
   return String(user?.type) === 'admin';
 }
 
+/** Buyruq turlarini yozishi mumkinmi — web v2 `auth/canManage.ts` `canManageOrderTypes` 1:1. */
+export function canManageOrderTypes(user?: User | null): boolean {
+  return isSiteMasterAdmin(user) || isBranchAdmin(user) || isHR(user) || isMinister(user);
+}
+
 /** Kechikish ma'lumotini ko'rishi mumkinmi — web v2 `canSeeLateness` 1:1 (asosiy rol bo'yicha). */
 export function canSeeLateness(user?: User | null): boolean {
   if (user?.type === 'master-admin' || String(user?.type) === 'admin') return true;
@@ -482,7 +487,7 @@ const MODULE_FOR_PAGE: Partial<Record<PageKey, ModuleDef>> = {
   medical: { key: 'medical', defaultRoles: ALL, gates: [needsMedical], ready: false },
   health: { key: 'health', defaultRoles: ALL, gates: [needsHealth], ready: false },
   registrationStatus: { key: 'registrationStatus', defaultRoles: ['guest'], ready: false },
-  orderTypes: { key: 'orderTypes', defaultRoles: ADMIN_HR, ready: false },
+  orderTypes: { key: 'orderTypes', defaultRoles: ADMIN_HR },
   tempOrders: { key: 'tempOrders', defaultRoles: ADMIN_HR },
   staffPositions: { key: 'staffPositions', defaultRoles: ADMIN_HR_LEAD, ready: false },
   structure: { key: 'structure', defaultRoles: ALL, ready: false },

@@ -21,3 +21,4 @@ export * from './MasterDetail';
 export * from './SearchField';
 export * from './Sheet';
 export * from './SelectField';
+export * from './Fab';

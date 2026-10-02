@@ -1,0 +1,22 @@
+// Buyruq turlari (web v2 OrderTypesPage). creator_role kodlari tarjima qilinmaydi.
+export default {
+  title: 'Buyruq turlari',
+  searchPlaceholder: "Tur nomi bo'yicha qidirish…",
+  allFlows: 'Barcha oqimlar',
+  flowEmployee: 'Xodim buyruqlari',
+  flowHr: 'Kadr (HR) buyruqlari',
+  empty: 'Buyruq turi topilmadi',
+  emptyHint: "Yangi tur qo'shing yoki qidiruvni o'zgartiring.",
+  create: 'Yangi tur',
+  createTitle: 'Yangi buyruq turi',
+  editTitle: 'Buyruq turini tahrirlash',
+  fieldName: 'Tur nomi',
+  fieldFlow: 'Buyruq oqimi',
+  nameRequired: 'Tur nomi kiritilishi shart',
+  flowRequired: 'Buyruq oqimi tanlanishi shart',
+  created: "Buyruq turi qo'shildi",
+  updated: 'Buyruq turi yangilandi',
+  remove: "O'chirish",
+  removeConfirm: "«{{name}}» turi o'chiriladi.",
+  removed: "Buyruq turi o'chirildi",
+} as const;

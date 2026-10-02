@@ -828,3 +828,16 @@ describe('canSeeLateness (v2 auth/roles.ts)', () => {
     ['oddiy xodim', emp(), false],
   ])('%s', (_n, user, expected) => expect(canSeeLateness(user)).toBe(expected));
 });
+
+describe('canManageOrderTypes (v2 auth/canManage.ts)', () => {
+  const { canManageOrderTypes } = jest.requireActual('../roles');
+  const emp = (role?: string) => ({ type: 'employee', employee: role ? { id: 1, is_multi_org_user: true, multi_org_employee_role: role } : { id: 1 } });
+  it.each([
+    ['master-admin', { type: 'master-admin' }, true],
+    ['admin akkaunt', { type: 'admin' }, true],
+    ['hr', emp('hr'), true],
+    ['ministr', emp('ministr'), true],
+    ['deputy', emp('deputy'), false],
+    ['oddiy xodim', emp(), false],
+  ])('%s', (_n, user, expected) => expect(canManageOrderTypes(user)).toBe(expected));
+});

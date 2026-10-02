@@ -2,20 +2,17 @@
 // admin (v2 RequireRole). Oy bo'yicha guruhlangan ro'yxat, qidiruv, tur filtri,
 // sahifalash; qatorni bosish — tahrir/o'chirish, FAB — yangi buyruq.
 import React, { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import dayjs from 'dayjs';
 import { router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from '@/theme/ThemeProvider';
-import { radii, shadow, LIP } from '@/theme/tokens';
 import { useAuthStore } from '@/store/authStore';
 import { resolveEmployeeBranchId } from '@/utils/branch';
 import { isHR, isMasterAdmin } from '@/utils/roles';
 import { monthName } from '@/i18n/dates';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { PickerModal } from '@/components/PickerModal';
-import { Icon } from '@/components/Icon';
 import {
   Avatar,
   Badge,
@@ -23,6 +20,7 @@ import {
   Card,
   EmptyState,
   ErrorState,
+  Fab,
   IconButton,
   ListRow,
   Screen,
@@ -49,7 +47,6 @@ function rangeLabel(r: TempOrder): string {
 
 export default function TempOrdersScreen() {
   const { t } = useTranslation();
-  const { colors: c } = useTheme();
   const user = useAuthStore((s) => s.user);
   const allowed = isHR(user) || isMasterAdmin(user);
   const branchId = resolveEmployeeBranchId(user?.employee) ?? undefined;
@@ -142,19 +139,7 @@ export default function TempOrdersScreen() {
         </Card>
       </Screen>
 
-      <Pressable
-        testID="temp-order-add"
-        accessibilityRole="button"
-        accessibilityLabel={t('tempOrders.add')}
-        onPress={() => setEditing(null)}
-        style={({ pressed }) => [
-          styles.fab,
-          { backgroundColor: c.brand, borderBottomColor: c.brandLip, borderBottomWidth: pressed ? 0 : LIP },
-          shadow('md', c),
-        ]}
-      >
-        <Icon name="plus" size={26} color={c.fgOnBrand} strokeWidth={2.4} />
-      </Pressable>
+      <Fab testID="temp-order-add" accessibilityLabel={t('tempOrders.add')} onPress={() => setEditing(null)} />
 
       <PickerModal
         visible={typePicker}
@@ -180,14 +165,4 @@ const styles = StyleSheet.create({
   filters: { gap: 10, marginBottom: 12 },
   month: { textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 8, marginBottom: 2 },
   pager: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, marginTop: 12 },
-  fab: {
-    position: 'absolute',
-    right: 20,
-    bottom: 28,
-    width: 58,
-    height: 58,
-    borderRadius: radii.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
 });

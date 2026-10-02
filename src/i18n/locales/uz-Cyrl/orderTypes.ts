@@ -1,0 +1,22 @@
+// Buyruq turlari (web v2 OrderTypesPage). creator_role kodlari tarjima qilinmaydi.
+export default {
+  title: 'Буйруқ турлари',
+  searchPlaceholder: 'Тур номи бўйича қидириш…',
+  allFlows: 'Барча оқимлар',
+  flowEmployee: 'Ходим буйруқлари',
+  flowHr: 'Кадр (ҲР) буйруқлари',
+  empty: 'Буйруқ тури топилмади',
+  emptyHint: 'Янги тур қўшинг ёки қидирувни ўзгартиринг.',
+  create: 'Янги тур',
+  createTitle: 'Янги буйруқ тури',
+  editTitle: 'Буйруқ турини таҳрирлаш',
+  fieldName: 'Тур номи',
+  fieldFlow: 'Буйруқ оқими',
+  nameRequired: 'Тур номи киритилиши шарт',
+  flowRequired: 'Буйруқ оқими танланиши шарт',
+  created: 'Буйруқ тури қўшилди',
+  updated: 'Буйруқ тури янгиланди',
+  remove: 'Ўчириш',
+  removeConfirm: '«{{name}}» тури ўчирилади.',
+  removed: 'Буйруқ тури ўчирилди',
+} as const;

@@ -32,6 +32,7 @@ import password from './password';
 import tabs from './tabs';
 import kpp from './kpp';
 import monitoring from './monitoring';
+import orderTypes from './orderTypes';
 import tempOrders from './tempOrders';
 
 export default {
@@ -69,5 +70,6 @@ export default {
   tabs,
   kpp,
   monitoring,
+  orderTypes,
   tempOrders,
 } as const;

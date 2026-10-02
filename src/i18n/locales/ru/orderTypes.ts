@@ -1,0 +1,22 @@
+// Buyruq turlari (web v2 OrderTypesPage). creator_role kodlari tarjima qilinmaydi.
+export default {
+  title: 'Типы приказов',
+  searchPlaceholder: 'Поиск по названию…',
+  allFlows: 'Все потоки',
+  flowEmployee: 'Приказы сотрудников',
+  flowHr: 'Кадровые (HR) приказы',
+  empty: 'Типы приказов не найдены',
+  emptyHint: 'Добавьте тип или измените поиск.',
+  create: 'Новый тип',
+  createTitle: 'Новый тип приказа',
+  editTitle: 'Редактировать тип приказа',
+  fieldName: 'Название',
+  fieldFlow: 'Поток приказа',
+  nameRequired: 'Укажите название',
+  flowRequired: 'Выберите поток',
+  created: 'Тип приказа добавлен',
+  updated: 'Тип приказа обновлён',
+  remove: 'Удалить',
+  removeConfirm: 'Тип «{{name}}» будет удалён.',
+  removed: 'Тип приказа удалён',
+} as const;
