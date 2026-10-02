@@ -397,3 +397,5 @@ export const LEARNING_META = 'learning/meta';
 export const LEARNING_MY = 'learning/my';
 export const LEARNING_COURSES = 'learning/courses';
 export const LEARNING_ENROLLMENT = (id: number) => `learning/enrollments/${id}`;
+export const INSPECTIONS = 'inspections';
+export const INSPECTION = (id: number) => `inspections/${id}`;
