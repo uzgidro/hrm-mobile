@@ -393,3 +393,7 @@ export const WORK_PLAN = (id: number) => `work-plans/${id}`;
 export const TRAININGS = 'trainings';
 export const TRAININGS_SUMMARY = 'trainings/summary';
 export const TRAINING = (id: number) => `trainings/${id}`;
+export const LEARNING_META = 'learning/meta';
+export const LEARNING_MY = 'learning/my';
+export const LEARNING_COURSES = 'learning/courses';
+export const LEARNING_ENROLLMENT = (id: number) => `learning/enrollments/${id}`;

@@ -522,7 +522,7 @@ const MODULE_FOR_PAGE: Partial<Record<PageKey, ModuleDef>> = {
   responsibles: { key: 'responsibles', defaultRoles: ADMIN_HR },
   hrQuality: { key: 'hrQuality', defaultRoles: ADMIN_HR },
   trainings: { key: 'trainings', defaultRoles: ALL },
-  learning: { key: 'learning', defaultRoles: ALL, ready: false },
+  learning: { key: 'learning', defaultRoles: ALL },
   inspections: { key: 'inspections', defaultRoles: ADMIN_HR_LEAD, ready: false },
   reports: {
     key: 'reports',
