@@ -504,7 +504,7 @@ const MODULE_FOR_PAGE: Partial<Record<PageKey, ModuleDef>> = {
   tempOrders: { key: 'tempOrders', defaultRoles: ADMIN_HR },
   staffPositions: { key: 'staffPositions', defaultRoles: ADMIN_HR_LEAD, ready: false },
   structure: { key: 'structure', defaultRoles: ALL, ready: false },
-  responsibles: { key: 'responsibles', defaultRoles: ADMIN_HR, ready: false },
+  responsibles: { key: 'responsibles', defaultRoles: ADMIN_HR },
   hrQuality: { key: 'hrQuality', defaultRoles: ADMIN_HR, ready: false },
   trainings: { key: 'trainings', defaultRoles: ALL, ready: false },
   learning: { key: 'learning', defaultRoles: ALL, ready: false },

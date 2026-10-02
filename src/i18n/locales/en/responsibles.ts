@@ -1,0 +1,23 @@
+// Modul mas'ullari (web v2 ResponsiblesPage). Qamrov KODLARI tarjima qilinmaydi.
+export default {
+  title: 'Module owners',
+  subtitle: 'Who runs execution discipline',
+  scopeKind: 'Type',
+  scopeDepartment: 'Department',
+  scopePosition: 'Position',
+  scopeEmployee: 'Employee',
+  hintDepartment: 'Every employee of the department',
+  hintPosition: 'Everyone holding this position',
+  hintEmployee: 'Only the selected employee',
+  pick: 'Add',
+  addTitle: 'Add an owner',
+  addConfirm: '«{{name}}» will be able to run execution discipline.',
+  added: 'Owner added',
+  removed: 'Removed from owners',
+  empty: 'No owners assigned',
+  emptyHint: 'Pick a department, position or employee — anyone matching a row runs the module.',
+  removeTitle: 'Remove owner',
+  removeConfirm: '«{{name}}» will no longer run this module.',
+  driverNote: 'The driver pool is stored here too, but it is set up under Fleet → Drivers.',
+  noAccess: 'This page is for HR and administrators only',
+} as const;

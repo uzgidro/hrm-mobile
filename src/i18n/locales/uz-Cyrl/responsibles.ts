@@ -1,0 +1,23 @@
+// Modul mas'ullari (web v2 ResponsiblesPage). Qamrov KODLARI tarjima qilinmaydi.
+export default {
+  title: 'Модул масъуллари',
+  subtitle: 'Ижро интизомини ким юритади',
+  scopeKind: 'Тури',
+  scopeDepartment: 'Бўлим',
+  scopePosition: 'Лавозим',
+  scopeEmployee: 'Ходим',
+  hintDepartment: 'Бўлимнинг барча ходимлари',
+  hintPosition: 'Шу лавозимдаги барча ходимлар',
+  hintEmployee: 'Фақат танланган ходим',
+  pick: 'Қўшиш',
+  addTitle: 'Масъул қўшиш',
+  addConfirm: '«{{name}}» Ижро интизомини юрита олади.',
+  added: 'Масъул қўшилди',
+  removed: 'Масъулликдан олиб ташланди',
+  empty: 'Масъул белгиланмаган',
+  emptyHint: 'Бўлим, лавозим ёки ходимни танлаб қўшинг — қаторлардан бирига тушган ходим модулни юритади.',
+  removeTitle: 'Масъулликдан олиб ташлаш',
+  removeConfirm: '«{{name}}» энди бу модулни юрита олмайди.',
+  driverNote: 'Ҳайдовчи доираси ҳам шу тизимда сақланади, лекин у Автопарк → Ҳайдовчилар бўлимида созланади.',
+  noAccess: 'Бу саҳифа фақат кадрлар бўлими ва администратор учун',
+} as const;

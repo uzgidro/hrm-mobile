@@ -1,0 +1,23 @@
+// Modul mas'ullari (web v2 ResponsiblesPage). Qamrov KODLARI tarjima qilinmaydi.
+export default {
+  title: 'Ответственные за модули',
+  subtitle: 'Кто ведёт исполнительскую дисциплину',
+  scopeKind: 'Тип',
+  scopeDepartment: 'Отдел',
+  scopePosition: 'Должность',
+  scopeEmployee: 'Сотрудник',
+  hintDepartment: 'Все сотрудники отдела',
+  hintPosition: 'Все сотрудники на этой должности',
+  hintEmployee: 'Только выбранный сотрудник',
+  pick: 'Добавить',
+  addTitle: 'Добавить ответственного',
+  addConfirm: '«{{name}}» сможет вести исполнительскую дисциплину.',
+  added: 'Ответственный добавлен',
+  removed: 'Снят с ответственных',
+  empty: 'Ответственные не назначены',
+  emptyHint: 'Выберите отдел, должность или сотрудника — попавший в любую строку ведёт модуль.',
+  removeTitle: 'Снять с ответственных',
+  removeConfirm: '«{{name}}» больше не сможет вести этот модуль.',
+  driverNote: 'Круг водителей хранится здесь же, но настраивается в разделе Автопарк → Водители.',
+  noAccess: 'Страница доступна только отделу кадров и администратору',
+} as const;

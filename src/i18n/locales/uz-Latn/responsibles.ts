@@ -1,0 +1,23 @@
+// Modul mas'ullari (web v2 ResponsiblesPage). Qamrov KODLARI tarjima qilinmaydi.
+export default {
+  title: "Modul mas'ullari",
+  subtitle: 'Ijro intizomini kim yuritadi',
+  scopeKind: 'Turi',
+  scopeDepartment: "Bo'lim",
+  scopePosition: 'Lavozim',
+  scopeEmployee: 'Xodim',
+  hintDepartment: "Bo'limning barcha xodimlari",
+  hintPosition: 'Shu lavozimdagi barcha xodimlar',
+  hintEmployee: 'Faqat tanlangan xodim',
+  pick: "Qo'shish",
+  addTitle: "Mas'ul qo'shish",
+  addConfirm: '«{{name}}» Ijro intizomini yurita oladi.',
+  added: "Mas'ul qo'shildi",
+  removed: "Mas'ullikdan olib tashlandi",
+  empty: "Mas'ul belgilanmagan",
+  emptyHint: "Bo'lim, lavozim yoki xodimni tanlab qo'shing — qatorlardan biriga tushgan xodim modulni yuritadi.",
+  removeTitle: "Mas'ullikdan olib tashlash",
+  removeConfirm: '«{{name}}» endi bu modulni yurita olmaydi.',
+  driverNote: "Haydovchi doirasi ham shu tizimda saqlanadi, lekin u Avtopark → Haydovchilar bo'limida sozlanadi.",
+  noAccess: "Bu sahifa faqat kadrlar bo'limi va administrator uchun",
+} as const;
