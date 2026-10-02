@@ -15,7 +15,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useNavSettings } from '@/lib/navSettings';
 import { canAccessPage, isHR, isSiteMasterAdmin } from '@/utils/roles';
 import { resolveEmployeeBranchId } from '@/utils/branch';
-import { departmentsQuery } from '@/utils/employees';
+import { departmentOptionsQuery } from '@/utils/employees';
 import { useBreakpoint } from '@/utils/responsive';
 import { PickerModal } from '@/components/PickerModal';
 import {
@@ -50,7 +50,7 @@ export default function HrQualityScreen() {
   const [rule, setRule] = useState('');
   const [picking, setPicking] = useState(false);
   const q = useQuery(qualityQuery({ severity, departmentId: dept?.id, rule }, allowed));
-  const departments = useQuery({ ...departmentsQuery(resolveEmployeeBranchId(user?.employee)), enabled: picking });
+  const departments = useQuery({ ...departmentOptionsQuery(resolveEmployeeBranchId(user?.employee)), enabled: picking });
   const people = useMemo(() => groupByPerson(q.data?.items ?? []), [q.data]);
   const canOpenCard = canAccessPage(user, 'employees');
 

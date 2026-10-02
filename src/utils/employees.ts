@@ -161,14 +161,17 @@ export function employeesPagedQuery(params: EmployeesListParams) {
   });
 }
 
-// Filter/picker catalogs — walked page by page (see `fetchAllPages`).
+// Filter-chip catalogs for the employees list (one request, the backend's
+// default page — rendered as chips, so the whole 900-row catalog must NOT land here).
 export interface NamedRow { id: number; name: string }
 
 export function departmentsQuery(branchId?: number) {
   return queryOptions({
     queryKey: ['departments', 'catalog', branchId ?? null] as const,
-    // Barcha sahifalar (bosh ofisda 376 bo'lim) — birinchi sahifa bilan cheklanmaydi.
-    queryFn: () => fetchAllPages<NamedRow>(DEPARTMENTS_LIST, branchId ? { organization_branch_id: branchId } : {}),
+    queryFn: () =>
+      apiClient
+        .get(DEPARTMENTS_LIST, { params: branchId ? { organization_branch_id: branchId } : {} })
+        .then((r) => unwrapList<NamedRow>(r.data)),
     staleTime: 10 * 60 * 1000,
   });
 }
@@ -176,6 +179,28 @@ export function departmentsQuery(branchId?: number) {
 export function jobPositionsQuery(branchId?: number) {
   return queryOptions({
     queryKey: ['job-positions', 'catalog', branchId ?? null] as const,
+    queryFn: () =>
+      apiClient
+        .get(JOB_POSITIONS_LIST, { params: branchId ? { organization_branch_id: branchId } : {} })
+        .then((r) => unwrapList<NamedRow>(r.data)),
+    staleTime: 10 * 60 * 1000,
+  });
+}
+
+// Picker catalogs (PickerModal with search) — EVERY page (`fetchAllPages`):
+// the head office has 376 departments / 913 positions, and a picker that only
+// saw the first page could not offer the rest (web v2 useReferenceData).
+export function departmentOptionsQuery(branchId?: number) {
+  return queryOptions({
+    queryKey: ['departments', 'options', branchId ?? null] as const,
+    queryFn: () => fetchAllPages<NamedRow>(DEPARTMENTS_LIST, branchId ? { organization_branch_id: branchId } : {}),
+    staleTime: 10 * 60 * 1000,
+  });
+}
+
+export function jobPositionOptionsQuery(branchId?: number) {
+  return queryOptions({
+    queryKey: ['job-positions', 'options', branchId ?? null] as const,
     queryFn: () => fetchAllPages<NamedRow>(JOB_POSITIONS_LIST, branchId ? { organization_branch_id: branchId } : {}),
     staleTime: 10 * 60 * 1000,
   });

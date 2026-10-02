@@ -215,22 +215,40 @@ describe('fetchEmployeeOptions', () => {
   });
 });
 
-describe('departmentsQuery / jobPositionsQuery — barcha sahifalar', () => {
+describe("departmentsQuery / jobPositionsQuery — filtr chiplari (bitta so'rov)", () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { departmentsQuery, jobPositionsQuery } = require('../employees');
+  // Xodimlar ro'yxatining chip filtrlari: butun katalog (900+ lavozim) chip bo'lib chizilmasin.
+  it("bo'limlar: bitta so'rov, faqat filial paramlari", async () => {
+    mock.onGet('departments').reply(200, { items: [{ id: 1, name: 'A' }], total: 700 });
+    const out = await departmentsQuery(3).queryFn!({} as never);
+    expect(out).toHaveLength(1);
+    expect(mock.history.get).toHaveLength(1);
+    expect(mock.history.get[0].params).toEqual({ organization_branch_id: 3 });
+  });
+  it("lavozimlar: filial yo'q — param yo'q", async () => {
+    mock.onGet('job-positions').reply(200, [{ id: 1, name: 'P' }]);
+    await jobPositionsQuery().queryFn!({} as never);
+    expect(mock.history.get[0].params).toEqual({});
+  });
+});
+
+describe('departmentOptionsQuery / jobPositionOptionsQuery — tanlagich uchun barcha sahifalar', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { departmentOptionsQuery, jobPositionOptionsQuery } = require('../employees');
   const page = (p: number, n: number, total: number) => ({
     items: Array.from({ length: n }, (_, i) => ({ id: (p - 1) * 500 + i + 1, name: `D${i}` })),
     total,
   });
-  it('bo\'limlar: 700 qator — 2 sahifa yuriladi', async () => {
+  it("bo'limlar: 700 qator — 2 sahifa yuriladi", async () => {
     mock.onGet('departments').reply((cfg) => [200, page(cfg.params.page, cfg.params.page === 1 ? 500 : 200, 700)]);
-    const out = await departmentsQuery(3).queryFn!({} as never);
+    const out = await departmentOptionsQuery(3).queryFn!({} as never);
     expect(out).toHaveLength(700);
     expect(mock.history.get[0].params).toMatchObject({ organization_branch_id: 3, page: 1, size: 500 });
   });
-  it('lavozimlar: filial yo\'q — param yuborilmaydi', async () => {
+  it("lavozimlar: filial yo'q — param yuborilmaydi", async () => {
     mock.onGet('job-positions').reply(200, page(1, 2, 2));
-    const out = await jobPositionsQuery().queryFn!({} as never);
+    const out = await jobPositionOptionsQuery().queryFn!({} as never);
     expect(out).toHaveLength(2);
     expect(mock.history.get[0].params).toEqual({ page: 1, size: 500 });
   });

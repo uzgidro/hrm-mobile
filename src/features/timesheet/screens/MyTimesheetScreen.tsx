@@ -43,7 +43,8 @@ export default function MyTimesheetScreen() {
   }, []);
 
   const monthKey = currentMonth.format('YYYY-MM');
-  const { data: row, isPending, isError, isRefetching, refetch } = useQuery(myTimesheetQuery(monthKey, employeeId));
+  // isLoading (isPending EMAS): xodim kartasi yo'q akkauntda so'rov o'chiq — skeletda qotmasin.
+  const { data: row, isLoading, isError, isRefetching, refetch } = useQuery(myTimesheetQuery(monthKey, employeeId));
   const { data: locations } = useQuery(locationsCatalogQuery(resolveEmployeeBranchId(user?.employee)));
   // Kirish/chiqish va jurnal uchun xom voqealar — bloklamaydi, kalendar ularsiz chiziladi.
   const { data: events = [], refetch: refetchEvents } = useQuery(myTimesheetEventsQuery(monthKey, employeeId));
@@ -237,7 +238,7 @@ export default function MyTimesheetScreen() {
       <PageHeader title={t('timesheet.myTitle')} subtitle={t('timesheet.mySubtitle')} />
       {isError ? (
         <ErrorState title={t('timesheet.loadError')} onRetry={() => refetch()} />
-      ) : isPending ? (
+      ) : isLoading ? (
         <Skeleton height={320} />
       ) : (
         <View style={[styles.columns, wide && styles.columnsWide]}>

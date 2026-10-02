@@ -14,7 +14,7 @@ import { confirm } from '@/lib/confirm';
 import { useAuthStore } from '@/store/authStore';
 import { isHR, isSiteMasterAdmin } from '@/utils/roles';
 import { resolveEmployeeBranchId } from '@/utils/branch';
-import { departmentsQuery, jobPositionsQuery } from '@/utils/employees';
+import { departmentOptionsQuery, jobPositionOptionsQuery } from '@/utils/employees';
 import { PickerModal } from '@/components/PickerModal';
 import {
   Badge,
@@ -55,8 +55,8 @@ export default function ResponsiblesScreen() {
   const [picking, setPicking] = useState(false);
   const [empSearch, setEmpSearch] = useState('');
   const list = useQuery(responsiblesQuery(MODULE, allowed));
-  const departments = useQuery({ ...departmentsQuery(branchId), enabled: picking && scope === 'department' });
-  const positions = useQuery({ ...jobPositionsQuery(branchId), enabled: picking && scope === 'job_position' });
+  const departments = useQuery({ ...departmentOptionsQuery(branchId), enabled: picking && scope === 'department' });
+  const positions = useQuery({ ...jobPositionOptionsQuery(branchId), enabled: picking && scope === 'job_position' });
   const employees = useQuery({
     queryKey: ['responsibles', 'employee-picker', empSearch],
     queryFn: () =>

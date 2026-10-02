@@ -5,11 +5,12 @@
 export const STAFF_CATEGORIES = ['rahbar', 'mutaxassis', 'xizmatchi', 'ishchi'] as const;
 
 /**
- * Virtual qator (xodimlar bor, tasdiqlangan shtat yo'q) `id` siz keladi —
- * ro'yxat kaliti juftlikdan barqaror manfiy son (v2 `tableRows`).
+ * Ro'yxat kaliti. Virtual qator (xodimlar bor, tasdiqlangan shtat yo'q) `id` siz
+ * keladi — kalit (bo'lim, lavozim) juftligidan: u qatorni yagona belgilaydi.
+ * (v2 dagi `-(dept*10000 + pos + i)` formulasi to'qnashardi: (4,7,0) = (4,6,1).)
  */
-export function rowKey(r: { id?: number | null; department_id: number; job_position_id: number }, i: number): number {
-  return r.id ?? -(r.department_id * 10000 + r.job_position_id + i);
+export function rowKey(r: { id?: number | null; department_id: number; job_position_id: number }): string {
+  return r.id != null ? String(r.id) : `v-${r.department_id}-${r.job_position_id}`;
 }
 
 export interface StaffForm {

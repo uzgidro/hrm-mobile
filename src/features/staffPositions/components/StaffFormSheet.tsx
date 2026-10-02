@@ -7,7 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { getApiErrorMessage } from '@/api/errors';
 import { toast } from '@/lib/toast';
-import { departmentsQuery, jobPositionsQuery } from '@/utils/employees';
+import { departmentOptionsQuery, jobPositionOptionsQuery } from '@/utils/employees';
 import { fmtUnits } from '@/utils/units';
 import { FormInput } from '@/components/FormInput';
 import { PickerModal } from '@/components/PickerModal';
@@ -38,8 +38,8 @@ export function StaffFormSheet({
   const [names, setNames] = useState({ dept: row?.department_name ?? '', pos: row?.job_position_name ?? '' });
   const [error, setError] = useState<string | null>(null);
   const [picker, setPicker] = useState<null | 'dept' | 'pos'>(null);
-  const departments = useQuery({ ...departmentsQuery(branchId), enabled: picker === 'dept' });
-  const positions = useQuery({ ...jobPositionsQuery(branchId), enabled: picker === 'pos' });
+  const departments = useQuery({ ...departmentOptionsQuery(branchId), enabled: picker === 'dept' });
+  const positions = useQuery({ ...jobPositionOptionsQuery(branchId), enabled: picker === 'pos' });
   const save = useSaveStaffRow();
 
   const set = (p: Partial<StaffForm>) => {

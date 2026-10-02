@@ -70,4 +70,10 @@ describe('MyTimesheetScreen', () => {
     await renderWithProviders(<MyTimesheetScreen />);
     expect(await screen.findByText(i18n.t('timesheet.loadError'))).toBeTruthy();
   });
+
+  it("xodim kartasi yo'q akkaunt (so'rov o'chiq) — skeletda qotib qolmaydi", async () => {
+    useAuthStore.setState({ user: { id: 1, type: 'master-admin' } as never, isAuthenticated: true } as never);
+    await renderWithProviders(<MyTimesheetScreen />);
+    expect(await screen.findByText(i18n.t('timesheet.empty'))).toBeTruthy();
+  });
 });

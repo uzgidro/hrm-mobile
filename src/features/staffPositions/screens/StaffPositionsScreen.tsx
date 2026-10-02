@@ -214,12 +214,12 @@ export default function StaffPositionsScreen() {
           ) : (list.data?.items.length ?? 0) === 0 ? (
             <EmptyState title={t('staff.empty')} message={t('staff.emptyHint')} />
           ) : (
-            list.data!.items.map((r, i) => {
+            list.data!.items.map((r) => {
               const st = stateBadge(r);
               const vacant = Number(r.vacant_units ?? 0);
               return (
                 <ListRow
-                  key={rowKey(r, i)}
+                  key={rowKey(r)}
                   title={`${r.department_name ?? '—'} · ${r.job_position_name ?? '—'}`}
                   subtitle={t('staff.unitsLine', {
                     planned: fmtUnits(r.planned_units),
@@ -250,7 +250,7 @@ export default function StaffPositionsScreen() {
       )}
       {viewing && (
         <StaffDetailSheet
-          key={rowKey(viewing, 0)}
+          key={rowKey(viewing)}
           row={viewing}
           canWrite={manage}
           toggling={toggle.isPending}

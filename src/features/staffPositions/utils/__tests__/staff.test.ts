@@ -10,9 +10,13 @@ const form = (p: Partial<StaffForm> = {}): StaffForm => ({
 });
 
 describe('staff utils (v2 StaffPositionModal / StaffPositionsPage)', () => {
-  it('virtual qator (id null) — barqaror manfiy kalit, haqiqiy qator — id', () => {
-    expect(rowKey({ id: 12, department_id: 4, job_position_id: 7 }, 0)).toBe(12);
-    expect(rowKey({ id: null, department_id: 4, job_position_id: 7 }, 2)).toBe(-(4 * 10000 + 7 + 2));
+  it("kalit: haqiqiy qator — id, virtual qator — juftlikdan; to'qnashmaydi", () => {
+    expect(rowKey({ id: 12, department_id: 4, job_position_id: 7 })).toBe('12');
+    const a = rowKey({ id: null, department_id: 4, job_position_id: 7 });
+    // Avvalgi formula -(dept*10000 + pos + i) da (4,7,0) va (4,6,1) bir xil kalit berardi.
+    const b = rowKey({ id: null, department_id: 4, job_position_id: 6 });
+    const c = rowKey({ id: null, department_id: 0, job_position_id: 40007 });
+    expect(new Set([a, b, c, rowKey({ id: 40007, department_id: 1, job_position_id: 1 })]).size).toBe(4);
   });
 
   it("validatsiya: yaratishda bo'lim/lavozim majburiy, birlik ≥ 0 son", () => {
