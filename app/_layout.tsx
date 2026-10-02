@@ -153,6 +153,7 @@ function ThemedNavigation() {
           <Stack.Screen name="registratsiya-holati" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="masullar" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="kadr-nazorati" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="tuzilma" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="assistant" options={{ animation: 'slide_from_bottom' }} />
           <Stack.Screen name="loyiha-form" options={{ animation: 'slide_from_bottom' }} />
           <Stack.Screen name="change-pin" options={{ animation: 'slide_from_right' }} />

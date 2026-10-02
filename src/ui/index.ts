@@ -23,3 +23,4 @@ export * from './Sheet';
 export * from './SelectField';
 export * from './Fab';
 export * from './PageHeader';
+export * from './Pager';

@@ -503,7 +503,7 @@ const MODULE_FOR_PAGE: Partial<Record<PageKey, ModuleDef>> = {
   orderTypes: { key: 'orderTypes', defaultRoles: ADMIN_HR },
   tempOrders: { key: 'tempOrders', defaultRoles: ADMIN_HR },
   staffPositions: { key: 'staffPositions', defaultRoles: ADMIN_HR_LEAD, ready: false },
-  structure: { key: 'structure', defaultRoles: ALL, ready: false },
+  structure: { key: 'structure', defaultRoles: ALL },
   responsibles: { key: 'responsibles', defaultRoles: ADMIN_HR },
   hrQuality: { key: 'hrQuality', defaultRoles: ADMIN_HR },
   trainings: { key: 'trainings', defaultRoles: ALL, ready: false },

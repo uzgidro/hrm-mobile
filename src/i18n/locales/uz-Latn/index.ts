@@ -34,6 +34,7 @@ import password from './password';
 import tabs from './tabs';
 import kpp from './kpp';
 import monitoring from './monitoring';
+import structure from './structure';
 import hrQuality from './hrQuality';
 import responsibles from './responsibles';
 import regStatus from './regStatus';
@@ -76,6 +77,7 @@ export default {
   tabs,
   kpp,
   monitoring,
+  structure,
   hrQuality,
   responsibles,
   regStatus,
