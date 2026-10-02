@@ -14,7 +14,7 @@ import { useAuthStore } from '@/store/authStore';
 import { resolveEmployeeBranchId } from '@/utils/branch';
 import { canSeeLateness } from '@/utils/roles';
 import { useBreakpoint } from '@/utils/responsive';
-import { Avatar, Badge, Bento, Card, EmptyState, IconButton, ListRow, Screen, Skeleton, StatTile, Text } from '@/ui';
+import { Avatar, Badge, Bento, Card, EmptyState, ErrorState, IconButton, ListRow, Screen, Skeleton, StatTile, Text } from '@/ui';
 import {
   frequentLateQuery,
   lateEmployeesQuery,
@@ -60,7 +60,10 @@ export default function MonitoringScreen({ showBack = false }: { showBack?: bool
         { id: 'mon-late', label: t('monitoring.lateToday'), value: s.late_employees_count ?? 0, icon: 'clock', tint: 'amber' },
         { id: 'mon-absent', label: t('monitoring.absentToday'), value: s.absent_employees_count ?? 0, icon: 'close', tint: 'pink' },
   ];
-  const tiles = (
+  // Birinchi yuklash xatosi — 4 ta 0 «haqiqiy ma'lumot»dek ko'rinmasin (kiosk ekrani).
+  const tiles = main.isError ? (
+    <ErrorState onRetry={() => main.refetch()} />
+  ) : (
     <View style={styles.tiles}>
       {tileDefs.map((x) => (
         <View key={x.id} style={{ flexBasis: sizeClass === 'compact' ? '47%' : '23%', flexGrow: 1 }}>
@@ -72,7 +75,9 @@ export default function MonitoringScreen({ showBack = false }: { showBack?: bool
 
   const lateCard = lateness ? (
     <Card title={t('monitoring.lateLive')} icon="clock" tint="amber">
-      {late.isPending ? (
+      {late.isError ? (
+        <ErrorState onRetry={() => late.refetch()} />
+      ) : late.isPending ? (
         <Skeleton height={120} />
       ) : (late.data ?? []).length === 0 ? (
         <Text variant="caption" tone="subtle">
@@ -104,7 +109,9 @@ export default function MonitoringScreen({ showBack = false }: { showBack?: bool
 
   const frequentCard = lateness ? (
     <Card title={t('monitoring.frequentLate')} icon="chart" tint="pink">
-      {frequent.isPending ? (
+      {frequent.isError ? (
+        <ErrorState onRetry={() => frequent.refetch()} />
+      ) : frequent.isPending ? (
         <Skeleton height={100} />
       ) : (frequent.data ?? []).length === 0 ? (
         <Text variant="caption" tone="subtle">
@@ -129,7 +136,9 @@ export default function MonitoringScreen({ showBack = false }: { showBack?: bool
 
   const guestsCard = (
     <Card title={t('monitoring.guestsLive')} icon="guest" tint="drop">
-      {guests.isPending ? (
+      {guests.isError ? (
+        <ErrorState onRetry={() => guests.refetch()} />
+      ) : guests.isPending ? (
         <Skeleton height={100} />
       ) : (guests.data ?? []).length === 0 ? (
         <Text variant="caption" tone="subtle">

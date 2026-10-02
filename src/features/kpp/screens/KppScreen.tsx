@@ -20,6 +20,7 @@ import {
   Bento,
   Card,
   EmptyState,
+  ErrorState,
   IconButton,
   ListRow,
   Screen,
@@ -88,7 +89,9 @@ export default function KppScreen({ showBack = false }: { showBack?: boolean } =
           onChange={setVisit}
         />
       </View>
-      {visitorsQ.isPending ? (
+      {visitorsQ.isError ? (
+        <ErrorState onRetry={() => visitorsQ.refetch()} />
+      ) : visitorsQ.isPending ? (
         <Skeleton height={160} />
       ) : groups.length === 0 ? (
         <EmptyState title={t('kpp.noGuests')} />
@@ -147,7 +150,9 @@ export default function KppScreen({ showBack = false }: { showBack?: boolean } =
           <Badge label={selected.name} tone="brand" />
         </View>
       )}
-      {eventsQ.isPending ? (
+      {eventsQ.isError ? (
+        <ErrorState onRetry={() => eventsQ.refetch()} />
+      ) : eventsQ.isPending ? (
         <Skeleton height={120} />
       ) : events.length === 0 ? (
         <EmptyState title={t('kpp.noPasses')} message={t('kpp.noPassesHint')} />

@@ -104,3 +104,14 @@ describe('modul katalogi — v2 paritet', () => {
     await i18n.changeLanguage('uz-Latn');
   });
 });
+
+describe("marshrut to'qnashuvi yo'q", () => {
+  it("app/X.tsx va app/(tabs)/X.tsx bir vaqtda yo'q (expo-router guruh ichidagisini tanlab, stack ekrani ochilmay qoladi)", () => {
+    const fs = require('fs') as typeof import('fs');
+    const path = require('path') as typeof import('path');
+    const root = path.join(__dirname, '../../..');
+    const tabs = fs.readdirSync(path.join(root, 'app/(tabs)')).filter((f) => f.endsWith('.tsx') && !f.startsWith('_'));
+    const clashes = tabs.filter((f) => fs.existsSync(path.join(root, 'app', f)));
+    expect(clashes).toEqual([]);
+  });
+});

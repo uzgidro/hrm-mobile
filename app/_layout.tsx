@@ -146,7 +146,7 @@ function ThemedNavigation() {
           <Stack.Screen name="navbatchilik-grid" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="bayramlar" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="kpp" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="monitoring" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="monitoring-panel" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="assistant" options={{ animation: 'slide_from_bottom' }} />
           <Stack.Screen name="loyiha-form" options={{ animation: 'slide_from_bottom' }} />
           <Stack.Screen name="change-pin" options={{ animation: 'slide_from_right' }} />

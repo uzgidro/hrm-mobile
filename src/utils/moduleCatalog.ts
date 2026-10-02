@@ -73,7 +73,7 @@ export const CATALOG: CatalogEntry[] = [
   e('dictionaries', 'dictionaries', '/malumotnomalar', 'doc', 'grey', 'admin'),
   e('holidays', 'holidays', '/bayramlar', 'sun', 'amber', 'admin'),
   e('tabelSettings', 'tabelSettings', '/tabel-sozlamalari', 'settings', 'grey', 'admin'),
-  e('monitoring', 'monitoring', '/monitoring', 'eye', 'violet', 'admin'),
+  e('monitoring', 'monitoring', '/monitoring-panel', 'eye', 'violet', 'admin'),
   e('videoGuide', 'videoGuide', '/video-qollanma', 'eye', 'pink', 'admin'),
   e('users', 'users', '/foydalanuvchilar', 'users', 'grey', 'admin'),
   e('registrations', 'registrations', '/registratsiyalar', 'idcard', 'grey', 'admin'),

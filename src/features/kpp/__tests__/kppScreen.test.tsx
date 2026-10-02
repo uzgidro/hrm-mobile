@@ -54,4 +54,12 @@ describe('KppScreen', () => {
     await fireEvent.press(screen.getByTestId('kpp-guest-7'));
     expect(await screen.findByText('Boshqa Mehmon')).toBeTruthy();
   });
+
+  it("mehmonlar yuklanmasa — «topilmadi» emas, qayta urinish", async () => {
+    mock.onGet(VISITORS_LIST).reply(500);
+    await renderWithProviders(<KppScreen />);
+    expect((await screen.findAllByText(i18n.t('common.retry'))).length).toBeGreaterThan(0);
+    expect(screen.queryByText(i18n.t('kpp.noGuests'))).toBeNull();
+  });
 });
+

@@ -51,4 +51,22 @@ describe('MonitoringScreen', () => {
     expect(screen.getByText(i18n.t('monitoring.noBranch'))).toBeTruthy();
     expect(mock.history.get.filter((r) => r.url !== 'system-settings')).toEqual([]);
   });
+
+  it("statistika yuklanmasa — 0 lar emas, qayta urinish", async () => {
+    mock.onGet(DASHBOARD_MAIN).reply(500);
+    setUser({ id: 1, type: 'monitoring', organization_branch_id: 3 });
+    await renderWithProviders(<MonitoringScreen />);
+    expect(await screen.findByText(i18n.t('common.retry'))).toBeTruthy();
+    expect(screen.queryByTestId('mon-total')).toBeNull();
+  });
+
+  it("mehmonlar yuklanmasa — «mehmon yo'q» emas, kartada xato", async () => {
+    mock.onGet(VISITOR_TURNSTILE_ATTENDANCE).reply(500);
+    setUser({ id: 1, type: 'monitoring', organization_branch_id: 3 });
+    await renderWithProviders(<MonitoringScreen />);
+    await waitFor(() => expect(within(screen.getByTestId('mon-total')).getByText('147')).toBeTruthy());
+    expect(await screen.findByText(i18n.t('common.retry'))).toBeTruthy();
+    expect(screen.queryByText(i18n.t('monitoring.noGuests'))).toBeNull();
+  });
 });
+
