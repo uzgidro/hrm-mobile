@@ -1,7 +1,7 @@
 // Ijro topshirig'i: tafsilot oynasi (yurituvchi uchun bajarildi / qayta ochish /
 // tahrir / o'chirish) va yaratish-tahrirlash formasi (v2 TaskView + TaskForm).
 import React, { useEffect, useState } from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import dayjs from 'dayjs';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -10,6 +10,7 @@ import { unwrapList } from '@/api/response';
 import { EMPLOYEES_LIST } from '@/api/urls';
 import { getApiErrorMessage } from '@/api/errors';
 import { toast } from '@/lib/toast';
+import { confirm } from '@/lib/confirm';
 import { PickerModal } from '@/components/PickerModal';
 import { DatePickerModal } from '@/components/DatePicker';
 import { FormInput } from '@/components/FormInput';
@@ -51,15 +52,17 @@ export function TaskDetailSheet({
     }
   };
 
-  const confirmDelete = () =>
-    Alert.alert(t('ijro.remove'), t('ijro.deleteConfirm'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('ijro.remove'),
-        style: 'destructive',
-        onPress: () => void run(remove.mutateAsync(task.id), 'ijro.deleted'),
-      },
-    ]);
+  // Ilova ichidagi tasdiq (`confirm`) — `Alert.alert` web'da hech narsa ko'rsatmasdi.
+  const confirmDelete = async () => {
+    const ok = await confirm({
+      title: t('ijro.remove'),
+      message: t('ijro.deleteConfirm'),
+      confirmLabel: t('ijro.remove'),
+      cancelLabel: t('common.cancel'),
+      destructive: true,
+    });
+    if (ok) await run(remove.mutateAsync(task.id), 'ijro.deleted');
+  };
 
   const row = (label: string, value: string) => (
     <View style={styles.kv}>
@@ -100,7 +103,13 @@ export function TaskDetailSheet({
               />
             )}
             <Button label={t('ijro.edit')} variant="soft" full onPress={() => onEdit(task)} />
-            <Button label={t('ijro.remove')} variant="ghost" full onPress={confirmDelete} />
+            <Button
+              testID="ijro-delete"
+              label={t('ijro.remove')}
+              variant="ghost"
+              full
+              onPress={() => void confirmDelete()}
+            />
           </View>
         )}
       </View>

@@ -87,7 +87,14 @@ export default function TempOrdersScreen() {
       <Screen refreshing={q.isRefetching} onRefresh={() => void q.refetch()}>
         {header}
         <View style={styles.filters}>
-          <SearchField value={search} onChangeText={(v) => { setSearch(v); setPage(1); }} placeholder={t('tempOrders.searchPlaceholder')} />
+          <SearchField
+            value={search}
+            onChangeText={(v) => {
+              setSearch(v);
+              setPage(1);
+            }}
+            placeholder={t('tempOrders.searchPlaceholder')}
+          />
           <SelectField
             label={t('tempOrders.type')}
             value={type ? t(`tempOrders.type_${type}`) : t('tempOrders.allTypes')}
@@ -122,7 +129,12 @@ export default function TempOrdersScreen() {
                     title={name}
                     subtitle={days ? `${rangeLabel(r)} · ${t('tempOrders.daysCount', { count: days })}` : rangeLabel(r)}
                     left={<Avatar name={name} uri={r.employee?.photo_thumb_path ?? r.employee?.photo_path} size={36} />}
-                    right={<Badge label={r.type ? t(`tempOrders.type_${r.type}`, { defaultValue: r.type }) : '—'} tone="brand" />}
+                    right={
+                      <Badge
+                        label={r.type ? t(`tempOrders.type_${r.type}`, { defaultValue: r.type }) : '—'}
+                        tone="brand"
+                      />
+                    }
                     onPress={() => setEditing(r)}
                   />
                 </View>
@@ -133,10 +145,18 @@ export default function TempOrdersScreen() {
             <View style={styles.pager}>
               <Button label="‹" variant="soft" size="sm" disabled={page <= 1} onPress={() => setPage((p) => p - 1)} />
               <Text variant="label" tone="muted">{`${page} / ${pages}`}</Text>
-              <Button label="›" variant="soft" size="sm" disabled={page >= pages} onPress={() => setPage((p) => p + 1)} />
+              <Button
+                label="›"
+                variant="soft"
+                size="sm"
+                disabled={page >= pages}
+                onPress={() => setPage((p) => p + 1)}
+              />
             </View>
           )}
         </Card>
+        {/* FAB oxirgi qatorni yopmasin. */}
+        <View style={{ height: 72 }} />
       </Screen>
 
       <Fab testID="temp-order-add" accessibilityLabel={t('tempOrders.add')} onPress={() => setEditing(null)} />
@@ -153,7 +173,15 @@ export default function TempOrdersScreen() {
           setTypePicker(false);
         }}
       />
-      <TempOrderSheet visible={editing !== undefined} row={editing ?? null} branchId={branchId} onClose={() => setEditing(undefined)} />
+      {editing !== undefined && (
+        <TempOrderSheet
+          key={editing?.id ?? 'new'}
+          visible
+          row={editing}
+          branchId={branchId}
+          onClose={() => setEditing(undefined)}
+        />
+      )}
     </View>
   );
 }

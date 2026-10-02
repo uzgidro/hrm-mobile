@@ -8,8 +8,10 @@ import { ORDER_ACT_CATEGORIES } from '@/api/urls';
 import OrderTypesScreen from '../screens/OrderTypesScreen';
 
 jest.mock('expo-router', () => ({ router: { push: jest.fn(), back: jest.fn() } }));
+jest.mock('@/lib/confirm', () => ({ confirm: jest.fn(() => Promise.resolve(true)) }));
 
-const setUser = (u: Record<string, unknown>) => useAuthStore.setState({ user: u as never, isAuthenticated: true } as never);
+const setUser = (u: Record<string, unknown>) =>
+  useAuthStore.setState({ user: u as never, isAuthenticated: true } as never);
 
 describe('OrderTypesScreen', () => {
   const mock = new MockAdapter(apiClient);
@@ -30,7 +32,11 @@ describe('OrderTypesScreen', () => {
   });
 
   it("yozish huquqi yo'q (deputy) — qo'shish tugmasi yo'q", async () => {
-    setUser({ id: 2, type: 'employee', employee: { id: 1, is_multi_org_user: true, multi_org_employee_role: 'deputy' } });
+    setUser({
+      id: 2,
+      type: 'employee',
+      employee: { id: 1, is_multi_org_user: true, multi_org_employee_role: 'deputy' },
+    });
     await renderWithProviders(<OrderTypesScreen />);
     await screen.findByText("Mehnat ta'tili");
     expect(screen.queryByTestId('order-type-add')).toBeNull();
@@ -51,5 +57,15 @@ describe('OrderTypesScreen', () => {
     await screen.findByText("Mehnat ta'tili");
     await fireEvent.press(screen.getAllByText(i18n.t('orderTypes.flowEmployee'))[0]);
     await waitFor(() => expect(mock.history.get.some((r) => r.params?.creator_role === 'employee')).toBe(true));
+  });
+
+  it("o'chirish: ilova ichidagi tasdiq → DELETE", async () => {
+    setUser({ id: 1, type: 'employee', employee: { id: 1, is_multi_org_user: true, multi_org_employee_role: 'hr' } });
+    mock.onDelete(`${ORDER_ACT_CATEGORIES}/2`).reply(200, {});
+    await renderWithProviders(<OrderTypesScreen />);
+    await fireEvent.press(await screen.findByText('Xizmat safari'));
+    await fireEvent.press(await screen.findByTestId('order-type-delete'));
+    await waitFor(() => expect(mock.history.delete).toHaveLength(1));
+    expect(mock.history.delete[0].url).toBe(`${ORDER_ACT_CATEGORIES}/2`);
   });
 });

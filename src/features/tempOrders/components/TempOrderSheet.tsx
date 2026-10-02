@@ -2,7 +2,7 @@
 // Soatlik (`ruxsat`) — bitta sana + vaqt oralig'i; arxivlovchi turlar — faqat
 // boshlanish (ogohlantirish bilan). Tana shakllari sof `tempOrder.ts` da.
 import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import dayjs from 'dayjs';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -11,6 +11,7 @@ import { unwrapList } from '@/api/response';
 import { EMPLOYEES_LIST } from '@/api/urls';
 import { getApiErrorMessage } from '@/api/errors';
 import { toast } from '@/lib/toast';
+import { confirm } from '@/lib/confirm';
 import { PickerModal } from '@/components/PickerModal';
 import { DatePickerModal } from '@/components/DatePicker';
 import { FormInput } from '@/components/FormInput';
@@ -30,8 +31,6 @@ import {
 
 /** Ko'rinish: DD.MM.YYYY (ichki qiymat — YYYY-MM-DD). */
 const fmt = (d: string) => (d ? dayjs(d).format('DD.MM.YYYY') : '');
-
-const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 function initialForm(row: TempOrder | null): TempOrderForm {
   return {
@@ -107,9 +106,6 @@ export function TempOrderSheet({
   const submit = async () => {
     const err = validateTempOrder(form, isEdit);
     if (err) return setError(t(`tempOrders.${err}`));
-    if (isHourly(form.type) && !(TIME_RE.test(form.startTime) && TIME_RE.test(form.endTime))) {
-      return setError(t('tempOrders.timeInvalid'));
-    }
     try {
       await save.mutateAsync({
         id: row?.id ?? null,
@@ -122,24 +118,24 @@ export function TempOrderSheet({
     }
   };
 
-  const confirmDelete = () => {
+  // Ilova ichidagi tasdiq (`confirm`) — `Alert.alert` web'da hech narsa ko'rsatmasdi.
+  const confirmDelete = async () => {
     if (!row) return;
-    Alert.alert(t('tempOrders.remove'), t('tempOrders.removeConfirm', { name: row.employee?.legal_name ?? '' }), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('tempOrders.remove'),
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await remove.mutateAsync(row.id);
-            toast.success(t('tempOrders.removed'));
-            onClose();
-          } catch (e) {
-            setError(getApiErrorMessage(e, t('errors.generic')));
-          }
-        },
-      },
-    ]);
+    const ok = await confirm({
+      title: t('tempOrders.remove'),
+      message: t('tempOrders.removeConfirm', { name: row.employee?.legal_name ?? '' }),
+      confirmLabel: t('tempOrders.remove'),
+      cancelLabel: t('common.cancel'),
+      destructive: true,
+    });
+    if (!ok) return;
+    try {
+      await remove.mutateAsync(row.id);
+      toast.success(t('tempOrders.removed'));
+      onClose();
+    } catch (e) {
+      setError(getApiErrorMessage(e, t('errors.generic')));
+    }
   };
 
   const hourly = isHourly(form.type);
@@ -230,7 +226,7 @@ export function TempOrderSheet({
             testID="temp-order-delete"
             label={t('tempOrders.remove')}
             variant="ghost"
-            onPress={confirmDelete}
+            onPress={() => void confirmDelete()}
             full
           />
         )}

@@ -4,10 +4,12 @@ import { apiClient } from '@/api/client';
 import { renderWithProviders, screen, fireEvent, waitFor } from '@/test/renderWithProviders';
 import { useAuthStore } from '@/store/authStore';
 import i18n from '@/i18n';
-import { WORK_LEAVES_HR_LIST, EMPLOYEES_LIST } from '@/api/urls';
+import { WORK_LEAVES_HR_LIST, EMPLOYEES_LIST, WORK_LEAVE_DETAIL } from '@/api/urls';
+import { confirm } from '@/lib/confirm';
 import TempOrdersScreen from '../screens/TempOrdersScreen';
 
 jest.mock('expo-router', () => ({ router: { push: jest.fn(), back: jest.fn() } }));
+jest.mock('@/lib/confirm', () => ({ confirm: jest.fn(() => Promise.resolve(true)) }));
 
 const hr = { id: 1, type: 'employee', employee: { id: 5, is_multi_org_user: true, multi_org_employee_role: 'hr' } };
 
@@ -16,7 +18,15 @@ describe('TempOrdersScreen', () => {
   beforeEach(async () => {
     await i18n.changeLanguage('uz-Latn');
     mock.onGet(WORK_LEAVES_HR_LIST).reply(200, {
-      items: [{ id: 11, employee: { legal_name: 'Karimov Vali' }, type: 'kasal', start_date: '2026-10-01T00:00:00', end_date: '2026-10-03T23:59:59' }],
+      items: [
+        {
+          id: 11,
+          employee: { legal_name: 'Karimov Vali' },
+          type: 'kasal',
+          start_date: '2026-10-01T00:00:00',
+          end_date: '2026-10-03T23:59:59',
+        },
+      ],
       total: 1,
       pages: 1,
     });
@@ -33,7 +43,10 @@ describe('TempOrdersScreen', () => {
   });
 
   it("oddiy xodim — ruxsat yo'q, so'rov yo'q", async () => {
-    useAuthStore.setState({ user: { id: 2, type: 'employee', employee: { id: 6 } } as never, isAuthenticated: true } as never);
+    useAuthStore.setState({
+      user: { id: 2, type: 'employee', employee: { id: 6 } } as never,
+      isAuthenticated: true,
+    } as never);
     await renderWithProviders(<TempOrdersScreen />);
     expect(screen.getByText(i18n.t('tempOrders.noAccess'))).toBeTruthy();
     expect(mock.history.get.some((r) => r.url === WORK_LEAVES_HR_LIST)).toBe(false);
@@ -55,5 +68,15 @@ describe('TempOrdersScreen', () => {
     await fireEvent.press(await screen.findByText('Karimov Vali'));
     expect(screen.getByText(i18n.t('tempOrders.editTitle'))).toBeTruthy();
     await waitFor(() => expect(screen.getByTestId('temp-order-delete')).toBeTruthy());
+  });
+
+  it("o'chirish: ilova ichidagi tasdiq (web'da ham ishlaydi) → DELETE", async () => {
+    useAuthStore.setState({ user: hr as never, isAuthenticated: true } as never);
+    mock.onDelete(WORK_LEAVE_DETAIL(11)).reply(200, {});
+    await renderWithProviders(<TempOrdersScreen />);
+    await fireEvent.press(await screen.findByText('Karimov Vali'));
+    await fireEvent.press(await screen.findByTestId('temp-order-delete'));
+    await waitFor(() => expect(mock.history.delete).toHaveLength(1));
+    expect(confirm).toHaveBeenCalled();
   });
 });

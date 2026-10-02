@@ -20,6 +20,7 @@ export default {
   endRequired: 'Tugash sanasini tanlang',
   endBeforeStart: 'Tugash sanasi boshlanishdan oldin',
   timeInvalid: "Vaqtni SS:DD ko'rinishida kiriting",
+  timeOrder: "Tugash vaqti boshlanish vaqtidan keyin bo'lishi kerak",
   created: "Buyruq qo'shildi",
   updated: 'Buyruq yangilandi',
   removed: "Buyruq o'chirildi",

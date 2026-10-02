@@ -49,12 +49,21 @@ export type TempOrderForm = {
   note: string;
 };
 
-export type TempOrderError = 'employeeRequired' | 'startRequired' | 'endRequired' | 'endBeforeStart';
+export type TempOrderError =
+  'employeeRequired' | 'startRequired' | 'endRequired' | 'endBeforeStart' | 'timeInvalid' | 'timeOrder';
+
+const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 export function validateTempOrder(f: TempOrderForm, isEdit: boolean): TempOrderError | null {
   if (!isEdit && !f.employeeId) return 'employeeRequired';
   if (!f.start) return 'startRequired';
-  if (isArchiving(f.type) || isHourly(f.type)) return null;
+  if (isHourly(f.type)) {
+    // Soatlik ruxsat — bitta sana, vaqt oralig'i; «HH:mm» satrlari leksik solishtiriladi.
+    if (!TIME_RE.test(f.startTime) || !TIME_RE.test(f.endTime)) return 'timeInvalid';
+    if (f.endTime <= f.startTime) return 'timeOrder';
+    return null;
+  }
+  if (isArchiving(f.type)) return null;
   if (!f.end) return 'endRequired';
   if (f.end < f.start) return 'endBeforeStart';
   return null;

@@ -20,6 +20,7 @@ export default {
   endRequired: 'Choose an end date',
   endBeforeStart: 'End date is before the start',
   timeInvalid: 'Enter time as HH:MM',
+  timeOrder: 'End time must be after start time',
   created: 'Order added',
   updated: 'Order updated',
   removed: 'Order deleted',

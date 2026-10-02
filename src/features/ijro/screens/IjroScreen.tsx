@@ -93,7 +93,9 @@ export default function IjroScreen() {
                   testID={`ijro-task-${task.id}`}
                   title={`${task.task_index || '—'} · ${name}`}
                   subtitle={task.description || undefined}
-                  left={<Avatar name={name} uri={task.employee?.photo_thumb_path ?? task.employee?.photo_path} size={36} />}
+                  left={
+                    <Avatar name={name} uri={task.employee?.photo_thumb_path ?? task.employee?.photo_path} size={36} />
+                  }
                   right={
                     <View style={styles.right}>
                       <Badge label={t(`ijro.status_${st}`)} tone={STATUS_TONE[st]} />
@@ -108,6 +110,8 @@ export default function IjroScreen() {
             })
           )}
         </Card>
+        {/* FAB oxirgi qatorni yopmasin. */}
+        <View style={{ height: 72 }} />
       </Screen>
       {canWrite && <Fab testID="ijro-add" accessibilityLabel={t('ijro.create')} onPress={() => setEditing(null)} />}
       <TaskDetailSheet
@@ -119,7 +123,9 @@ export default function IjroScreen() {
           setEditing(task);
         }}
       />
-      {canWrite && <TaskFormSheet task={editing} onClose={() => setEditing(undefined)} />}
+      {canWrite && editing !== undefined && (
+        <TaskFormSheet key={editing?.id ?? 'new'} task={editing} onClose={() => setEditing(undefined)} />
+      )}
     </View>
   );
 }

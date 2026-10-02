@@ -2,7 +2,7 @@
 // (xodim / kadr), ro'yxat. Yozish (qo'shish/tahrir/o'chirish) faqat
 // `canManageOrderTypes` (v2 canManage) bo'lsa.
 import React, { useEffect, useState } from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -11,6 +11,7 @@ import { canManageOrderTypes } from '@/utils/roles';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { getApiErrorMessage } from '@/api/errors';
 import { toast } from '@/lib/toast';
+import { confirm } from '@/lib/confirm';
 import { FormInput } from '@/components/FormInput';
 import {
   Badge,
@@ -62,30 +63,38 @@ function OrderTypeSheet({ row, onClose }: { row: OrderType | null | undefined; o
     }
   };
 
-  const confirmDelete = () => {
+  // Ilova ichidagi tasdiq (`confirm`) — `Alert.alert` web'da hech narsa ko'rsatmasdi.
+  const confirmDelete = async () => {
     if (!row) return;
-    Alert.alert(t('orderTypes.remove'), t('orderTypes.removeConfirm', { name: row.name ?? '' }), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('orderTypes.remove'),
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await remove.mutateAsync(row.id);
-            toast.success(t('orderTypes.removed'));
-            onClose();
-          } catch (e) {
-            setError(getApiErrorMessage(e, t('errors.generic')));
-          }
-        },
-      },
-    ]);
+    const ok = await confirm({
+      title: t('orderTypes.remove'),
+      message: t('orderTypes.removeConfirm', { name: row.name ?? '' }),
+      confirmLabel: t('orderTypes.remove'),
+      cancelLabel: t('common.cancel'),
+      destructive: true,
+    });
+    if (!ok) return;
+    try {
+      await remove.mutateAsync(row.id);
+      toast.success(t('orderTypes.removed'));
+      onClose();
+    } catch (e) {
+      setError(getApiErrorMessage(e, t('errors.generic')));
+    }
   };
 
   return (
     <Sheet visible={visible} onClose={onClose} title={row ? t('orderTypes.editTitle') : t('orderTypes.createTitle')}>
       <View style={styles.form}>
-        <FormInput label={t('orderTypes.fieldName')} value={name} onChangeText={(v) => { setName(v); setError(null); }} required />
+        <FormInput
+          label={t('orderTypes.fieldName')}
+          value={name}
+          onChangeText={(v) => {
+            setName(v);
+            setError(null);
+          }}
+          required
+        />
         <Text variant="label" tone="muted">
           {t('orderTypes.fieldFlow')}
         </Text>
@@ -95,15 +104,33 @@ function OrderTypeSheet({ row, onClose }: { row: OrderType | null | undefined; o
             { value: 'hr', label: t('orderTypes.flowHr') },
           ]}
           value={flow}
-          onChange={(v) => { setFlow(v); setError(null); }}
+          onChange={(v) => {
+            setFlow(v);
+            setError(null);
+          }}
         />
         {!!error && (
           <Text variant="label" tone="danger">
             {error}
           </Text>
         )}
-        <Button testID="order-type-save" label={t('common.save')} onPress={submit} loading={save.isPending} full size="lg" />
-        {row && <Button label={t('orderTypes.remove')} variant="ghost" onPress={confirmDelete} full />}
+        <Button
+          testID="order-type-save"
+          label={t('common.save')}
+          onPress={submit}
+          loading={save.isPending}
+          full
+          size="lg"
+        />
+        {row && (
+          <Button
+            testID="order-type-delete"
+            label={t('orderTypes.remove')}
+            variant="ghost"
+            onPress={() => void confirmDelete()}
+            full
+          />
+        )}
       </View>
     </Sheet>
   );
@@ -165,9 +192,15 @@ export default function OrderTypesScreen() {
             ))
           )}
         </Card>
+        {/* FAB oxirgi qatorni yopmasin. */}
+        <View style={{ height: 72 }} />
       </Screen>
-      {canWrite && <Fab testID="order-type-add" accessibilityLabel={t('orderTypes.create')} onPress={() => setEditing(null)} />}
-      {canWrite && <OrderTypeSheet row={editing} onClose={() => setEditing(undefined)} />}
+      {canWrite && (
+        <Fab testID="order-type-add" accessibilityLabel={t('orderTypes.create')} onPress={() => setEditing(null)} />
+      )}
+      {canWrite && editing !== undefined && (
+        <OrderTypeSheet key={editing?.id ?? 'new'} row={editing} onClose={() => setEditing(undefined)} />
+      )}
     </View>
   );
 }

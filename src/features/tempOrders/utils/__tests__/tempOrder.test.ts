@@ -17,6 +17,14 @@ describe('validateTempOrder', () => {
   it("oddiy tur — tugash shart", () => expect(validateTempOrder({ ...base, end: '' }, false)).toBe('endRequired'));
   it("arxivlovchi tur — tugash shart emas", () => expect(validateTempOrder({ ...base, type: 'ishdan_ozod', end: '' }, false)).toBeNull());
   it("soatlik — tugash sanasi shart emas", () => expect(validateTempOrder({ ...base, type: 'ruxsat', end: '' }, false)).toBeNull());
+  it("soatlik — vaqt formati noto'g'ri", () =>
+    expect(validateTempOrder({ ...base, type: 'ruxsat', startTime: '9:00' }, false)).toBe('timeInvalid'));
+  it("soatlik — tugash vaqti boshlanishdan keyin bo'lishi shart", () => {
+    expect(validateTempOrder({ ...base, type: 'ruxsat', startTime: '13:00', endTime: '09:00' }, false)).toBe('timeOrder');
+    expect(validateTempOrder({ ...base, type: 'ruxsat', startTime: '09:00', endTime: '09:00' }, false)).toBe('timeOrder');
+  });
+  it("soatlik bo'lmagan tur — vaqt tekshirilmaydi", () =>
+    expect(validateTempOrder({ ...base, startTime: '13:00', endTime: '09:00' }, false)).toBeNull());
   it("tugash boshlanishdan oldin", () => expect(validateTempOrder({ ...base, end: '2026-09-30' }, false)).toBe('endBeforeStart'));
 });
 
