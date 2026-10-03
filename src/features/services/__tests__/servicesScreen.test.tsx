@@ -5,6 +5,7 @@ import { renderWithProviders, screen, fireEvent, waitFor } from '@/test/renderWi
 import { useAuthStore } from '@/store/authStore';
 import i18n from '@/i18n';
 import { SERVICE_REQUESTS, SERVICE_REQUESTS_CATALOG, SERVICE_REQUESTS_MY } from '@/api/urls';
+import { confirm } from '@/lib/confirm';
 import ServicesScreen from '../screens/ServicesScreen';
 
 jest.mock('expo-router', () => ({ router: { push: jest.fn(), back: jest.fn(), canGoBack: () => true } }));
@@ -108,5 +109,51 @@ describe('ServicesScreen (v2 ServicesPage)', () => {
     mock.onGet(SERVICE_REQUESTS_MY).reply(500);
     await renderWithProviders(<ServicesScreen />);
     expect(await screen.findByText(i18n.t('errors.generic'))).toBeTruthy();
+  });
+
+  it("tafsilot so'rovi xato (404/403) — cheksiz skelet emas, ErrorState", async () => {
+    setUser(emp);
+    mock.onGet(`${SERVICE_REQUESTS}/5`).reply(404);
+    await renderWithProviders(<ServicesScreen />);
+    await fireEvent.press(await screen.findByText('SR-2026-0005'));
+    expect(await screen.findByText(i18n.t('errors.generic'))).toBeTruthy();
+  });
+
+  it("holat o'zgartirish tasdiq so'raydi (orqaga yo'l yo'q); rad etilsa POST yo'q", async () => {
+    setUser(hr);
+    (confirm as jest.Mock).mockResolvedValueOnce(false);
+    await renderWithProviders(<ServicesScreen />);
+    await fireEvent.press(await screen.findByText(i18n.t('services.tab_inbox')));
+    await fireEvent.press(await screen.findByText('SR-2026-0006'));
+    await fireEvent.press(await screen.findByTestId('service-to-in_progress'));
+    await waitFor(() => expect(confirm).toHaveBeenCalled());
+    expect(mock.history.post).toHaveLength(0);
+    await fireEvent.press(screen.getByTestId('service-to-in_progress'));
+    await waitFor(() => expect(mock.history.post).toHaveLength(1));
+  });
+
+  it("nomzodlik arizasi: reviewer ariza beruvchi ma'lumotlarini (payload) ko'radi", async () => {
+    setUser(hr);
+    mock.onGet(`${SERVICE_REQUESTS}/6`).reply(200, {
+      ...MINE,
+      id: 6,
+      service_type: 'job_application',
+      status: 'in_review',
+      employee_id: 8,
+      submitted_at: '2026-10-01T09:00:00',
+      assignee_name: 'Kadrlar',
+      payload: { last_name: 'Nomzodov', first_name: 'Sardor', position: 'Muhandis', phone: '+998901234567', note: '' },
+      events: [],
+    });
+    await renderWithProviders(<ServicesScreen />);
+    await fireEvent.press(await screen.findByText(i18n.t('services.tab_inbox')));
+    await fireEvent.press(await screen.findByText('SR-2026-0006'));
+    expect(await screen.findByText('Nomzodov')).toBeTruthy();
+    expect(screen.getByText('Muhandis')).toBeTruthy();
+    expect(screen.getByText('+998901234567')).toBeTruthy();
+    expect(screen.getByText(i18n.t('services.field_last_name'))).toBeTruthy();
+    expect(screen.getByTestId('payload-last_name')).toBeTruthy();
+    expect(screen.queryByTestId('payload-note')).toBeNull(); // bo'sh maydon chizilmaydi
+    expect(screen.getByText(/Kadrlar/)).toBeTruthy();
   });
 });

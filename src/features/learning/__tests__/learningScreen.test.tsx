@@ -119,4 +119,11 @@ describe('LearningScreen (v2 LearningPage)', () => {
     await renderWithProviders(<LearningScreen />);
     expect(await screen.findByText(i18n.t('errors.generic'))).toBeTruthy();
   });
+
+  it("yozuv tafsiloti so'rovi xato — cheksiz skelet emas, ErrorState", async () => {
+    mock.onGet(LEARNING_ENROLLMENT(11)).reply(404);
+    await renderWithProviders(<LearningScreen />);
+    await fireEvent.press(await screen.findByText('Xavfsizlik texnikasi'));
+    expect((await screen.findAllByText(i18n.t('errors.generic'))).length).toBeGreaterThan(0);
+  });
 });

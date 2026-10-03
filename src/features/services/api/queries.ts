@@ -15,6 +15,7 @@ export interface ServiceRequestRow {
   applicant_photo_thumb_path?: string | null;
   assignee_name?: string | null;
   submitted_at?: string | null;
+  payload?: Record<string, unknown> | null;
   due_date?: string | null;
   resolution?: string | null;
   has_document: boolean;

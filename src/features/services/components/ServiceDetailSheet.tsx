@@ -10,7 +10,7 @@ import { getApiErrorMessage } from '@/api/errors';
 import { toast } from '@/lib/toast';
 import { confirm } from '@/lib/confirm';
 import { FormInput } from '@/components/FormInput';
-import { Badge, Button, ProgressBar, Sheet, Skeleton, Text, type Tone } from '@/ui';
+import { Badge, Button, ProgressBar, Sheet, Skeleton, Text, type Tone, ErrorState } from '@/ui';
 import { serviceRequestQuery } from '../api/queries';
 import { useCancelServiceRequest, useChangeServiceStatus } from '../api/mutations';
 import { STATUS_CHAIN, canCancel, nextStates, validateTransition, type ServiceStatus } from '../utils/services';
@@ -49,6 +49,15 @@ export function ServiceDetailSheet({
   const move = async (to: ServiceStatus) => {
     const err = validateTransition(to, comment);
     if (err) return setError(t(`services.${err}`));
+    // Orqaga yo'l yo'q: noto'g'ri bosish holat tarixida doimiy yozuv qoldiradi (v2 ham tasdiq so'raydi).
+    const ok = await confirm({
+      title: t(`services.to_${to}`),
+      message: r?.number,
+      confirmLabel: t(`services.to_${to}`),
+      cancelLabel: t('common.cancel'),
+      destructive: to === 'rejected',
+    });
+    if (!ok) return;
     try {
       await change.mutateAsync({ id, to, comment });
       toast.success(t('services.statusChanged'));
@@ -75,12 +84,18 @@ export function ServiceDetailSheet({
     }
   };
 
+  // Nomzodlik arizasi ma'lumotlari — reviewer qaror qilishi uchun; bo'sh maydonlar chizilmaydi.
+  const payloadEntries = Object.entries(r?.payload ?? {}).filter(
+    ([, v]) => typeof v === 'string' && v.trim() !== '',
+  ) as [string, string][];
   const step = r ? STATUS_CHAIN.indexOf(r.status) : -1;
   const next = r ? nextStates(r.status) : [];
 
   return (
     <Sheet visible onClose={onClose} title={r?.number ?? t('services.request')}>
-      {!r ? (
+      {q.isError ? (
+        <ErrorState onRetry={() => q.refetch()} />
+      ) : !r ? (
         <Skeleton height={160} />
       ) : (
         <View style={styles.body}>
@@ -90,6 +105,21 @@ export function ServiceDetailSheet({
           </View>
           {step >= 0 && <ProgressBar value={(step + 1) / STATUS_CHAIN.length} />}
           {!!r.applicant_name && <Text variant="body">{r.applicant_name}</Text>}
+          {!!r.assignee_name && (
+            <Text variant="caption" tone="muted">{`${t('services.assignee')}: ${r.assignee_name}`}</Text>
+          )}
+          {!!r.submitted_at && (
+            <Text variant="caption" tone="muted">{`${t('services.submittedAt')}: ${fmt(r.submitted_at)}`}</Text>
+          )}
+          {!!r.due_date && <Text variant="caption" tone="muted">{`${t('services.dueDate')}: ${fmt(r.due_date)}`}</Text>}
+          {payloadEntries.map(([k, v]) => (
+            <View key={k} testID={`payload-${k}`} style={styles.row}>
+              <Text variant="caption" tone="subtle">
+                {t(`services.field_${k}`, { defaultValue: k })}
+              </Text>
+              <Text variant="body">{v}</Text>
+            </View>
+          ))}
           {!!r.purpose && (
             <Text variant="body" tone="muted">
               {r.purpose}

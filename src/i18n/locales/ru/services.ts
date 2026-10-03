@@ -52,4 +52,13 @@ export default {
   history: 'История статусов',
   documentWebOnly: 'Документ готов — скачать его можно в веб-версии.',
   webOnly: 'Формирование и скачивание документа — в веб-версии.',
+  assignee: "Ответственный",
+  submittedAt: "Отправлена",
+  dueDate: "Срок",
+  field_last_name: "Фамилия",
+  field_first_name: "Имя",
+  field_middle_name: "Отчество",
+  field_position: "Должность",
+  field_phone: "Телефон",
+  field_note: "Примечание",
 } as const;

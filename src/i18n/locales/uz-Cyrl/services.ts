@@ -52,4 +52,13 @@ export default {
   history: 'Ҳолат тарихи',
   documentWebOnly: 'Ҳужжат тайёр — уни юклаб олиш веб версияда.',
   webOnly: 'Ҳужжатни шакллантириш ва юклаб олиш — веб версияда.',
+  assignee: "Масъул",
+  submittedAt: "Юборилган",
+  dueDate: "Муддат",
+  field_last_name: "Фамилия",
+  field_first_name: "Исм",
+  field_middle_name: "Отасининг исми",
+  field_position: "Лавозим",
+  field_phone: "Телефон",
+  field_note: "Изоҳ",
 } as const;

@@ -52,4 +52,13 @@ export default {
   history: 'Holat tarixi',
   documentWebOnly: 'Hujjat tayyor — uni yuklab olish web versiyada.',
   webOnly: 'Hujjatni shakllantirish va yuklab olish — web versiyada.',
+  assignee: "Mas'ul",
+  submittedAt: "Yuborilgan",
+  dueDate: "Muddat",
+  field_last_name: "Familiya",
+  field_first_name: "Ism",
+  field_middle_name: "Otasining ismi",
+  field_position: "Lavozim",
+  field_phone: "Telefon",
+  field_note: "Izoh",
 } as const;

@@ -11,7 +11,7 @@ import { getApiErrorMessage } from '@/api/errors';
 import { toast } from '@/lib/toast';
 import { confirm } from '@/lib/confirm';
 import { FormInput } from '@/components/FormInput';
-import { Badge, Button, Chip, Sheet, Skeleton, Text, type Tone } from '@/ui';
+import { Badge, Button, Chip, Sheet, Skeleton, Text, type Tone, ErrorState } from '@/ui';
 import { inspectionQuery, type Finding } from '../api/queries';
 import {
   useAddFinding,
@@ -100,7 +100,9 @@ export function InspectionDetailSheet({ id, onClose }: { id: number; onClose: ()
 
   return (
     <Sheet visible onClose={onClose} title={r?.title ?? t('inspections.title')}>
-      {!r ? (
+      {q.isError ? (
+        <ErrorState onRetry={() => q.refetch()} />
+      ) : !r ? (
         <Skeleton height={180} />
       ) : (
         <View style={styles.body}>

@@ -150,4 +150,12 @@ describe('InspectionsScreen (v2 InspectionsPage)', () => {
     await renderWithProviders(<InspectionsScreen />);
     expect(await screen.findByText(i18n.t('errors.generic'))).toBeTruthy();
   });
+
+  it("tafsilot so'rovi xato — cheksiz skelet emas, ErrorState", async () => {
+    setUser(hr);
+    mock.onGet(`${INSPECTIONS}/4`).reply(403);
+    await renderWithProviders(<InspectionsScreen />);
+    await fireEvent.press(await screen.findByText('Davomat auditi'));
+    expect(await screen.findByText(i18n.t('errors.generic'))).toBeTruthy();
+  });
 });

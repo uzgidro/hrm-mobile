@@ -7,7 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { getApiErrorMessage } from '@/api/errors';
 import { toast } from '@/lib/toast';
-import { Badge, Button, ProgressBar, Sheet, Skeleton, Text } from '@/ui';
+import { Badge, Button, ProgressBar, Sheet, Skeleton, Text, ErrorState } from '@/ui';
 import { enrollmentQuery } from '../api/queries';
 import { useCompleteLesson } from '../api/mutations';
 import { clampProgress, isSafeLink, lessonDone } from '../utils/learning';
@@ -38,7 +38,9 @@ export function EnrollmentSheet({ id, onClose }: { id: number; onClose: () => vo
 
   return (
     <Sheet visible onClose={onClose} title={e?.course_title ?? t('learning.title')}>
-      {!e ? (
+      {q.isError ? (
+        <ErrorState onRetry={() => q.refetch()} />
+      ) : !e ? (
         <Skeleton height={160} />
       ) : (
         <View style={styles.body}>

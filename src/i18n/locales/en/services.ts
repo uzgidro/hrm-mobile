@@ -52,4 +52,13 @@ export default {
   history: 'Status history',
   documentWebOnly: 'The document is ready — download it in the web version.',
   webOnly: 'Building and downloading the document is in the web version.',
+  assignee: "Assignee",
+  submittedAt: "Submitted",
+  dueDate: "Due",
+  field_last_name: "Last name",
+  field_first_name: "First name",
+  field_middle_name: "Middle name",
+  field_position: "Position",
+  field_phone: "Phone",
+  field_note: "Note",
 } as const;
