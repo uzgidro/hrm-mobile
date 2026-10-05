@@ -1,6 +1,6 @@
 // v3 Modullar tabi: web v2 katalogi (visibleCatalog → canAccessPage + nav.modules)
-// v2 bo'limlari bo'yicha, oxirida mobil-faqat plitkalar (tug'ilgan kunlar, oylik,
-// bildirishnomalar, yordamchi, QR kirish). Plitka — «Tomchi × v2»: rangli ikonka
+// v2 bo'limlari bo'yicha, oxirida mobil-faqat plitkalar (tug'ilgan kunlar,
+// bildirishnomalar, yordamchi, QR kirish). Oylik — yo'q: v2 da bunday sahifa yo'q. Plitka — «Tomchi × v2»: rangli ikonka
 // kvadrati + yozuv, 1.5px chegara + pastki lab (bosiladigan).
 import React, { useMemo, useState } from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
@@ -16,6 +16,7 @@ import { Icon, type IconName } from '@/components/Icon';
 import { canAccessPage, type PageKey } from '@/utils/roles';
 import { catalogBySection, visibleCatalog } from '@/utils/moduleCatalog';
 import { useBreakpoint } from '@/utils/responsive';
+import { fitLabelFontSize } from '../utils/fitLabel';
 import { EmptyState, Screen, SearchField, Text } from '@/ui';
 
 type Tile = { key: string; label: string; icon: IconName; tint: ModuleTintKey; route: string; badge?: number };
@@ -76,7 +77,6 @@ export default function ModulesScreen() {
     // Mobil-faqat sahifalar (v2 menyusida yo'q).
     const extras: (Tile & { page: PageKey })[] = [
       { page: 'birthdays', key: 'birthdays', label: t('modules.labels.birthdays'), icon: 'gift', tint: 'pink', route: '/birthdays' },
-      { page: 'salary', key: 'salary', label: t('modules.labels.salary'), icon: 'wallet', tint: 'green', route: '/salary' },
       { page: 'notifications', key: 'notifications', label: t('modules.labels.notifications'), icon: 'bell', tint: 'amber', route: '/notifications', badge: badgeFor('notifications', badges) },
       { page: 'assistant', key: 'assistant', label: t('modules.labels.assistant'), icon: 'target', tint: 'violet', route: '/assistant' },
       ...(Platform.OS !== 'web'
@@ -129,9 +129,15 @@ export default function ModulesScreen() {
   );
 }
 
+const TILE_LABEL_SIZE = 13;
+const TILE_PAD_X = 8;
+
 function ModuleTile({ tile, width }: { tile: Tile; width: number }) {
   const { colors: c } = useTheme();
   const tint = moduleTint(c, tile.tint);
+  // Uzun so'z («Интерактивные», «Техподдержка») qatorga butun sig'sin — so'z
+  // o'rtasidan bo'linmasin; 2 qatorgacha so'zlar bo'yicha o'raladi.
+  const fontSize = fitLabelFontSize(tile.label, width - 2 * TILE_PAD_X - 3, { base: TILE_LABEL_SIZE, min: 9 });
   return (
     <Pressable
       testID={`module-${tile.key}`}
@@ -162,7 +168,11 @@ function ModuleTile({ tile, width }: { tile: Tile; width: number }) {
               </View>
             )}
           </View>
-          <Text variant="label" numberOfLines={2} style={styles.tileLabel}>
+          <Text
+            variant="label"
+            numberOfLines={2}
+            style={[styles.tileLabel, fontSize < TILE_LABEL_SIZE && { fontSize, lineHeight: Math.ceil(fontSize * 1.35) }]}
+          >
             {tile.label}
           </Text>
         </View>
@@ -181,13 +191,13 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderRadius: radii.lg,
     paddingVertical: 14,
-    paddingHorizontal: 8,
+    paddingHorizontal: TILE_PAD_X,
     alignItems: 'center',
     gap: 8,
     minHeight: 108,
   },
   iconBox: { width: 48, height: 48, borderRadius: radii.md, alignItems: 'center', justifyContent: 'center' },
-  tileLabel: { textAlign: 'center', fontWeight: '600' },
+  tileLabel: { textAlign: 'center', fontWeight: '600', alignSelf: 'stretch' },
   badge: {
     position: 'absolute',
     top: -6,

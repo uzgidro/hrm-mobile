@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Platform } from 'react-native';
+import { Platform, View } from 'react-native';
 import { Stack, router, type Href } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { QueryClientProvider, useQueryClient } from '@tanstack/react-query';
@@ -23,6 +23,9 @@ import UpdatingOverlay from '../src/components/UpdatingOverlay';
 import LockOverlay from '../src/features/security/components/LockOverlay';
 import PasswordGateOverlay from '../src/features/security/components/PasswordGateOverlay';
 import { useOtaGateStore } from '../src/store/otaGateStore';
+import { AuthResolvedGate } from '../src/auth/AuthResolvedGate';
+import { NavRail } from '../src/components/NavRail';
+import { useBreakpoint } from '../src/utils/responsive';
 
 const queryClient = createAppQueryClient();
 
@@ -69,6 +72,13 @@ function ThemedNavigation() {
     void checkAppUpdateOnLaunch();
   }, [isLoading, lockVisible]);
 
+  // The navigator mounts only once startup auth is resolved (AuthResolvedGate
+  // below). A push tapped before that (cold start while the OTA gate / auth/me
+  // runs) is parked and replayed once the navigator exists — router.push before
+  // the root navigator mounts throws.
+  const navReady = !isLoading;
+  const pendingTapRoute = useRef<string | null>(null);
+
   // Refresh the in-app list / unread badge when a push lands in the foreground,
   // and navigate on tap. The listener helper lazy-loads the native module and
   // no-ops if it's unavailable (e.g. Expo Go), so this can't crash on mount.
@@ -77,113 +87,142 @@ function ThemedNavigation() {
       onForeground: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
       onTap: (route) => {
         queryClient.invalidateQueries({ queryKey: ['notifications'] });
-        if (route) setTimeout(() => router.push(route as Href), 400);
+        if (!route) return;
+        if (!useAuthStore.getState().isLoading) setTimeout(() => router.push(route as Href), 400);
+        else pendingTapRoute.current = route;
       },
     });
   }, [queryClient]);
+  useEffect(() => {
+    if (!navReady || !pendingTapRoute.current) return;
+    const route = pendingTapRoute.current;
+    pendingTapRoute.current = null;
+    setTimeout(() => router.push(route as Href), 400);
+  }, [navReady]);
+
+  // Tablet / wide web: the NavRail sits beside EVERY signed-in screen (v2 shows
+  // its sidebar on every page), not only inside (tabs) — pushed module screens
+  // used to lose it. Phones keep the bottom TabBar inside (tabs) only.
+  const { useRail } = useBreakpoint();
+  const showRail = useRail && isAuthenticated && navReady;
 
   return (
     <>
       <StatusBar style={isDark ? 'light' : 'dark'} />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: colors.bg },
-        }}
-      >
-        {/* Declarative auth gate: the guards redirect automatically when
-            isAuthenticated flips (login/logout), replacing the old imperative
-            router.replace calls in AuthLoader. */}
-        <Stack.Protected guard={!isAuthenticated}>
-          <Stack.Screen name="(auth)" />
-        </Stack.Protected>
+      <View style={{ flex: 1, flexDirection: 'row', backgroundColor: colors.bg }}>
+        {showRail && <NavRail />}
+        <View style={{ flex: 1 }}>
+          {/* Deep links: the Stack must not mount before the session is known.
+             With isAuthenticated still false on the first render, Stack.Protected
+             drops the URL's screen (/zoom, /documents?seg=letters…) and, when the
+             guard flips, the router lands on the (tabs) anchor — every web deep
+             link ended on "/". Rendering a plain canvas until useAuthBootstrap
+             settles keeps the initial URL state for the navigator's first mount.
+             Native: the splash still covers this (hideSplash runs after the
+             store is seeded); the PIN overlay below does not depend on it. */}
+          <AuthResolvedGate fallback={<View testID="boot-canvas" style={{ flex: 1, backgroundColor: colors.bg }} />}>
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                contentStyle: { backgroundColor: colors.bg },
+              }}
+            >
+              {/* Declarative auth gate: the guards redirect automatically when
+                  isAuthenticated flips (login/logout), replacing the old imperative
+                  router.replace calls in AuthLoader. */}
+              <Stack.Protected guard={!isAuthenticated}>
+                <Stack.Screen name="(auth)" />
+              </Stack.Protected>
 
-        <Stack.Protected guard={isAuthenticated}>
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="profile-detail" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="profile-edit" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="team" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="attendance-detail" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="employee-calendar" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="work-leaves" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="create-leave" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="team-leaves" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="employees-list" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="phone-directory" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="birthdays" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="salary" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="leave-detail" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="order-detail" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="create-order" options={{ animation: 'slide_from_bottom' }} />
-          <Stack.Screen name="create-news" options={{ animation: 'slide_from_bottom' }} />
-          {/* QR orqali web'ga kirishni tasdiqlash (kamera) — faqat kirgan foydalanuvchi. */}
-          <Stack.Screen name="qr-scan" options={{ animation: 'slide_from_bottom' }} />
-          <Stack.Screen name="order-document" options={{ animation: 'slide_from_bottom' }} />
-          <Stack.Screen name="create-letter" options={{ animation: 'slide_from_bottom' }} />
-          <Stack.Screen name="letter-detail" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="letter-document" options={{ animation: 'slide_from_bottom' }} />
-          <Stack.Screen name="submit-report" options={{ animation: 'slide_from_bottom' }} />
-          <Stack.Screen name="notifications" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="news" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="mehmon-detail" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="mehmon-form" options={{ animation: 'slide_from_bottom' }} />
-          <Stack.Screen name="texnik-yordam" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="texnik-yordam-detail" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="texnik-yordam-form" options={{ animation: 'slide_from_bottom' }} />
-          <Stack.Screen name="terminallar" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="chairman-tasks" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="chairman-task-form" options={{ animation: 'slide_from_bottom' }} />
-          <Stack.Screen name="loyihalar" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="loyiha-detail" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="loyiha-card-detail" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="hujjatlar" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="hujjat-viewer" options={{ animation: 'slide_from_bottom' }} />
-          <Stack.Screen name="kpi" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="kpi-entry" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="kpi-team" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="tabel" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="navbatchilik" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="navbatchilik-grid" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="bayramlar" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="kpp" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="monitoring-panel" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="vaqtinchalik-buyruqlar" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="buyruq-turlari" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="ijro" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="registratsiya-holati" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="masullar" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="kadr-nazorati" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="tuzilma" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="shtat" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="video-qollanma" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="interaktiv-xizmatlar" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="ish-rejasi" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="malaka-oshirish" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="oquv-markazi" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="auditlar" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="sogliq-korigi" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="zoom" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="tibbiy-korik" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="hisobotlar" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="hisobot" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="avtopark" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="avtomobil" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="tizim-holati" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="lms" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="audit-log" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="foydalanuvchilar" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="registratsiyalar" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="filiallar" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="turniketlar" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="qoshimcha-maydonlar" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="malumotnomalar" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="tabel-sozlamalari" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="assistant" options={{ animation: 'slide_from_bottom' }} />
-          <Stack.Screen name="loyiha-form" options={{ animation: 'slide_from_bottom' }} />
-          <Stack.Screen name="change-pin" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="push-diagnostics" options={{ animation: 'slide_from_right' }} />
-        </Stack.Protected>
-      </Stack>
+              <Stack.Protected guard={isAuthenticated}>
+                <Stack.Screen name="(tabs)" />
+                <Stack.Screen name="profile-detail" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="profile-edit" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="team" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="attendance-detail" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="employee-calendar" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="work-leaves" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="create-leave" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="team-leaves" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="employees-list" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="phone-directory" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="birthdays" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="salary" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="leave-detail" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="order-detail" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="create-order" options={{ animation: 'slide_from_bottom' }} />
+                <Stack.Screen name="create-news" options={{ animation: 'slide_from_bottom' }} />
+                {/* QR orqali web'ga kirishni tasdiqlash (kamera) — faqat kirgan foydalanuvchi. */}
+                <Stack.Screen name="qr-scan" options={{ animation: 'slide_from_bottom' }} />
+                <Stack.Screen name="order-document" options={{ animation: 'slide_from_bottom' }} />
+                <Stack.Screen name="create-letter" options={{ animation: 'slide_from_bottom' }} />
+                <Stack.Screen name="letter-detail" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="letter-document" options={{ animation: 'slide_from_bottom' }} />
+                <Stack.Screen name="submit-report" options={{ animation: 'slide_from_bottom' }} />
+                <Stack.Screen name="notifications" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="news" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="mehmon-detail" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="mehmon-form" options={{ animation: 'slide_from_bottom' }} />
+                <Stack.Screen name="texnik-yordam" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="texnik-yordam-detail" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="texnik-yordam-form" options={{ animation: 'slide_from_bottom' }} />
+                <Stack.Screen name="terminallar" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="chairman-tasks" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="chairman-task-form" options={{ animation: 'slide_from_bottom' }} />
+                <Stack.Screen name="loyihalar" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="loyiha-detail" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="loyiha-card-detail" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="hujjatlar" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="hujjat-viewer" options={{ animation: 'slide_from_bottom' }} />
+                <Stack.Screen name="kpi" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="kpi-entry" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="kpi-team" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="tabel" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="navbatchilik" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="navbatchilik-grid" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="bayramlar" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="kpp" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="monitoring-panel" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="vaqtinchalik-buyruqlar" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="buyruq-turlari" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="ijro" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="registratsiya-holati" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="masullar" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="kadr-nazorati" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="tuzilma" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="shtat" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="video-qollanma" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="interaktiv-xizmatlar" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="ish-rejasi" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="malaka-oshirish" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="oquv-markazi" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="auditlar" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="sogliq-korigi" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="zoom" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="tibbiy-korik" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="hisobotlar" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="hisobot" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="avtopark" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="avtomobil" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="tizim-holati" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="lms" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="audit-log" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="foydalanuvchilar" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="registratsiyalar" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="filiallar" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="turniketlar" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="qoshimcha-maydonlar" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="malumotnomalar" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="tabel-sozlamalari" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="assistant" options={{ animation: 'slide_from_bottom' }} />
+                <Stack.Screen name="loyiha-form" options={{ animation: 'slide_from_bottom' }} />
+                <Stack.Screen name="change-pin" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="push-diagnostics" options={{ animation: 'slide_from_right' }} />
+              </Stack.Protected>
+            </Stack>
+          </AuthResolvedGate>
+        </View>
+      </View>
       <ToastHost />
       {/* Global confirm dialogs (logout, delete, reject, update) rendered once
           here so imperative confirm() works from hooks and services too. */}

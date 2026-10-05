@@ -7,16 +7,23 @@ import { useAuthStore } from '@/store/authStore';
 import { useNavSettings } from '@/lib/navSettings';
 import { canAccessPage } from '@/utils/roles';
 import { EmptyState, Screen } from '@/ui';
+import { TabRoot } from '@/components/TabRoot';
 
 export default function MonitoringTab() {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   useNavSettings();
-  if (canAccessPage(user, 'monitoring')) return <MonitoringScreen />;
-  if (canAccessPage(user, 'attendance')) return <AttendanceDetailScreen />;
   return (
-    <Screen scroll={false}>
-      <EmptyState title={t('tabs.monitoringSoon')} pose="idle" />
-    </Screen>
+    <TabRoot>
+      {canAccessPage(user, 'monitoring') ? (
+        <MonitoringScreen />
+      ) : canAccessPage(user, 'attendance') ? (
+        <AttendanceDetailScreen />
+      ) : (
+        <Screen scroll={false}>
+          <EmptyState title={t('tabs.monitoringSoon')} pose="idle" />
+        </Screen>
+      )}
+    </TabRoot>
   );
 }

@@ -11,13 +11,23 @@ import { canAccessPage } from '@/utils/roles';
 import HomeScreen from '@/features/dashboard/screens/HomeScreen';
 import RegistrationStatusScreen from '@/features/registration/screens/RegistrationStatusScreen';
 import BranchesScreen from '@/features/branches/screens/BranchesScreen';
+import { TabRoot } from '@/components/TabRoot';
 
 export default function HomeTab() {
   const user = useAuthStore((s) => s.user);
   // Filiallar moduli nav.modules da o'chirilsa — qayta chizilsin.
   useNavSettings();
   const board = homeBoardFor(user);
-  if (board === 'guest') return <RegistrationStatusScreen />;
-  if (board === 'admin' && canAccessPage(user, 'branches')) return <BranchesScreen />;
-  return <HomeScreen />;
+  // Tab ildizi: mehmonning ariza holati / admin Filiallari ham orqaga strelkasiz.
+  return (
+    <TabRoot>
+      {board === 'guest' ? (
+        <RegistrationStatusScreen />
+      ) : board === 'admin' && canAccessPage(user, 'branches') ? (
+        <BranchesScreen />
+      ) : (
+        <HomeScreen />
+      )}
+    </TabRoot>
+  );
 }

@@ -16,6 +16,7 @@ import { ff } from '../theme/typography';
 import { radii } from '../theme/tokens';
 import { Text } from '../ui/Text';
 import { Icon, IconName } from './Icon';
+import { useIsTabRoot } from './TabRoot';
 
 export function ScreenHeader({
   title,
@@ -37,18 +38,22 @@ export function ScreenHeader({
   const { colors } = useTheme();
   const { t } = useTranslation();
   const styles = useThemedStyles(makeStyles);
+  // Tab ildizida (Davomat, Profil…) orqaga yo'q — navigatsiya tab bar / NavRail'da.
+  const tabRoot = useIsTabRoot();
 
   return (
     <View style={styles.header}>
-      <Pressable
-        onPress={onBack ?? (() => router.back())}
-        accessibilityRole="button"
-        accessibilityLabel={t('common.back')}
-        hitSlop={6}
-        style={({ pressed }) => [styles.backBtn, pressed && { backgroundColor: colors.surface2 }]}
-      >
-        <Icon name="chevronLeft" size={24} color={colors.fg} />
-      </Pressable>
+      {!tabRoot && (
+        <Pressable
+          onPress={onBack ?? (() => router.back())}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.back')}
+          hitSlop={6}
+          style={({ pressed }) => [styles.backBtn, pressed && { backgroundColor: colors.surface2 }]}
+        >
+          <Icon name="chevronLeft" size={24} color={colors.fg} />
+        </Pressable>
+      )}
       <View style={styles.titleCol}>
         <View style={styles.titleRow}>
           <Text variant="title" style={styles.title} numberOfLines={1} accessibilityRole="header">

@@ -5,9 +5,10 @@ import AttendanceDetailScreen from '@/features/attendance/screens/AttendanceDeta
 import { useAuthStore } from '@/store/authStore';
 import { useNavSettings } from '@/lib/navSettings';
 import { canAccessPage } from '@/utils/roles';
+import { TabRoot } from '@/components/TabRoot';
 
 export default function AttendanceTab() {
   const user = useAuthStore((s) => s.user);
   useNavSettings();
-  return canAccessPage(user, 'timesheet') ? <MyTimesheetScreen /> : <AttendanceDetailScreen />;
+  return <TabRoot>{canAccessPage(user, 'timesheet') ? <MyTimesheetScreen /> : <AttendanceDetailScreen />}</TabRoot>;
 }

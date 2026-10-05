@@ -1,7 +1,7 @@
 // v3 pastki tab bar («Tomchi × v2»): har tabning o'z rangi (Tomchi), faol tab —
 // shu rangning yumshoq ramkasida (Duolingo tab bar), yozuvlar ko'rinadi (keng
 // auditoriya), fon/chegara — v2 yuzasi. Qaysi tablar chiqishi `visibleTabs`.
-import React from 'react';
+import React, { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import type { Tabs } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,6 +11,7 @@ import { moduleTint, radii } from '@/theme/tokens';
 import { Icon } from '@/components/Icon';
 import { Text } from '@/ui';
 import { TAB_META, type TabKey } from '@/utils/tabs';
+import { fitLabelFontSize } from '../utils/fitLabel';
 
 type TabBarProps = Parameters<NonNullable<React.ComponentProps<typeof Tabs>['tabBar']>>[0];
 
@@ -24,10 +25,14 @@ export function TabBar({
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const activeName = state.routes[state.index]?.name;
+  // Har tab sloti kengligi — uzun yorliq («Посещаемость») kesilmasin, shrifti kichrayadi.
+  const [barWidth, setBarWidth] = useState(0);
+  const slotWidth = barWidth > 0 ? barWidth / Math.max(1, visible.length) - 4 : 0;
 
   return (
     <View
       accessibilityRole="tablist"
+      onLayout={(e) => setBarWidth(e.nativeEvent.layout.width)}
       style={[styles.bar, { backgroundColor: c.surface, borderTopColor: c.border, paddingBottom: insets.bottom + 6 }]}
     >
       {visible.map((key) => {
@@ -38,6 +43,7 @@ export function TabBar({
         const focused = activeName === key;
         const badge = badges?.[key];
         const label = t(meta.labelKey);
+        const fontSize = fitLabelFontSize(label, slotWidth, { base: LABEL_SIZE, min: 8.5 });
         const onPress = () => {
           const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
           if (!focused && !event.defaultPrevented) navigation.navigate(route.name, route.params);
@@ -71,7 +77,11 @@ export function TabBar({
               variant="caption"
               tone={focused ? 'fg' : 'subtle'}
               numberOfLines={1}
-              style={[styles.label, focused && styles.labelActive]}
+              style={[
+                styles.label,
+                fontSize < LABEL_SIZE && { fontSize, lineHeight: Math.ceil(fontSize * 1.3) },
+                focused && styles.labelActive,
+              ]}
             >
               {label}
             </Text>
@@ -81,6 +91,8 @@ export function TabBar({
     </View>
   );
 }
+
+const LABEL_SIZE = 11;
 
 const styles = StyleSheet.create({
   bar: { flexDirection: 'row', borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 6 },
@@ -94,7 +106,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  label: { fontSize: 11, lineHeight: 14 },
+  label: { fontSize: LABEL_SIZE, lineHeight: 14, alignSelf: 'stretch', textAlign: 'center' },
   labelActive: { fontWeight: '700' },
   badge: {
     position: 'absolute',

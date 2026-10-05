@@ -93,6 +93,62 @@ export function visibleCatalog(user: User | null | undefined, overrides?: NavMod
   );
 }
 
+/**
+ * Ichki (detal / forma) ekranlar — qaysi modulga tegishli. v2 `isPathAllowed` kabi «detal o'z
+ * ro'yxatiga ergashadi» (`/employees/7` → `/employees`), faqat mobil yo'llar tekis bo'lgani uchun
+ * prefiks o'rniga aniq jadval. NavRail shu modulni faol qilib ko'rsatadi.
+ */
+export const DETAIL_OWNER: Readonly<Record<string, PageKey>> = {
+  '/hisobot': 'reports',
+  '/avtomobil': 'vehicles',
+  '/loyiha-detail': 'projects',
+  '/loyiha-card-detail': 'projects',
+  '/loyiha-form': 'projects',
+  '/texnik-yordam-detail': 'support',
+  '/texnik-yordam-form': 'support',
+  '/mehmon-detail': 'guests',
+  '/mehmon-form': 'guests',
+  '/order-detail': 'orders',
+  '/create-order': 'orders',
+  '/order-document': 'orders',
+  '/letter-detail': 'letters',
+  '/create-letter': 'letters',
+  '/letter-document': 'letters',
+  '/submit-report': 'letters',
+  '/hujjat-viewer': 'documents',
+  '/kpi-entry': 'kpi',
+  '/kpi-team': 'kpi',
+  '/navbatchilik-grid': 'duty',
+  '/chairman-task-form': 'chairman',
+  '/leave-detail': 'requests',
+  '/create-leave': 'requests',
+  '/team-leaves': 'requests',
+  '/create-news': 'news',
+  '/employee-calendar': 'employees',
+};
+
+function barePath(route: string): string {
+  return route.split('?')[0]!.replace('/(tabs)', '').replace(/\/+$/, '') || '/';
+}
+
+/**
+ * Hozir ochiq ekran qaysi katalog moduliga tegishli (NavRail faol bandi). `pathname` —
+ * expo-router `usePathname()` (guruhlarsiz), `seg` — Hujjatlar tabining segmenti.
+ * Tab ildizlari (`/`, `/attendance`, `/modules`…) — modul emas (`null`), Hujjatlar tabi
+ * esa ochiq segment moduli (`?seg=letters` → `letters`).
+ */
+export function activeModule(pathname: string, seg?: string | string[]): PageKey | null {
+  const path = barePath(pathname);
+  const segment = Array.isArray(seg) ? seg[0] : seg;
+  if (path === '/documents') {
+    return segment === 'orders' || segment === 'letters' || segment === 'documents' ? segment : null;
+  }
+  if (path === '/') return null;
+  const own = CATALOG.find((m) => barePath(m.route) === path);
+  if (own) return own.page;
+  return DETAIL_OWNER[path] ?? null;
+}
+
 const SECTION_ORDER: CatalogSection[] = ['main', 'documents', 'stats', 'admin'];
 
 /** v2 `groupNav`: bo'limlar tartibi saqlanadi, bo'sh bo'lim tashlanadi. */

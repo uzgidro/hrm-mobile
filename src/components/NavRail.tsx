@@ -1,11 +1,14 @@
-// v3 planshet navigatsiyasi (medium/expanded) — pastki tab bar o'rnida.
+// v3 planshet navigatsiyasi (medium/expanded) — pastki tab bar o'rnida. Root layout
+// (`app/_layout.tsx`) uni HAR kirgan ekran yonida chizadi (v2 sidebar kabi — modul
+// ekrani ochilganda ham yo'qolmaydi); faol band — `activeModule` (detal ekranlar o'z
+// moduliga ergashadi).
 // Yuqorida `visibleTabs` (telefondagi tablar bilan bir xil), pastda web v2
 // katalogi bo'limlari (`visibleCatalog` → canAccessPage), shuning uchun kim nimani
 // ko'rishi telefon bilan 1:1. «Tomchi × v2»: har bandning o'z rangi, faol band
 // shu rangning yumshoq fonida.
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { router, usePathname, type Href } from 'expo-router';
+import { router, useGlobalSearchParams, usePathname, type Href } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,8 +17,8 @@ import { useTheme } from '../theme/ThemeProvider';
 import { moduleTint, radii, type ModuleTintKey } from '../theme/tokens';
 import { Icon, type IconName } from './Icon';
 import { Text } from '../ui/Text';
-import { visibleTabs, TAB_META, type TabKey } from '../utils/tabs';
-import { catalogBySection, visibleCatalog } from '../utils/moduleCatalog';
+import { visibleTabs, tabRoute, TAB_META } from '../utils/tabs';
+import { activeModule, catalogBySection, visibleCatalog } from '../utils/moduleCatalog';
 import { useBreakpoint } from '../utils/responsive';
 import { useNavSettings } from '../lib/navSettings';
 import { menuBadgesQuery } from '../lib/menuBadges';
@@ -23,15 +26,15 @@ import { menuBadgesQuery } from '../lib/menuBadges';
 const RAIL_COLLAPSED_WIDTH = 92;
 const RAIL_EXPANDED_WIDTH = 264;
 
-export function tabRoute(key: TabKey): string {
-  return key === 'index' ? '/(tabs)' : `/(tabs)/${key}`;
-}
+// Eski import yo'li saqlanadi (yo'l endi `utils/tabs` da — sof, test qilinadi).
+export { tabRoute };
 
 export function NavRail() {
   const { user } = useAuthStore();
   const { colors: c } = useTheme();
   const { t } = useTranslation();
   const pathname = usePathname();
+  const { seg } = useGlobalSearchParams<{ seg?: string }>();
   const { sizeClass } = useBreakpoint();
   // Landshaft telefonda ham rail chiqadi — notch / status bar / home indicator ostida qolmasin.
   const insets = useSafeAreaInsets();
@@ -61,6 +64,7 @@ export function NavRail() {
     const bare = route.replace('/(tabs)', '') || '/';
     return pathname === bare || pathname === route;
   };
+  const currentModule = activeModule(pathname, seg);
 
   return (
     <View
@@ -123,7 +127,7 @@ export function NavRail() {
                 tint={m.tint}
                 label={t(m.labelKey)}
                 route={m.route}
-                active={isActive(m.route)}
+                active={currentModule === m.page}
                 expanded={expanded}
               />
             ))}

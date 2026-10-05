@@ -85,7 +85,14 @@ export function useAuthBootstrap() {
         setLoading(false);
       }
       hideSplash();
-    })();
+    })().catch(() => {
+      // Never leave startup hanging: the root layout keeps the navigator
+      // unmounted while isLoading (AuthResolvedGate — deep links), so an
+      // unexpected throw here (storage / OTA module) must still release it.
+      // The auth state stays whatever was seeded (none → the login screen).
+      setLoading(false);
+      hideSplash();
+    });
     // Store actions are stable; run once on mount (matches the old AuthLoader).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

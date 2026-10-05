@@ -3,6 +3,14 @@ import { renderWithProviders } from '../../test/renderWithProviders';
 import { NavRail } from '../NavRail';
 import { useAuthStore } from '../../store/authStore';
 
+// Joriy yo'l — har testda boshqarilsin (rail endi root layout'da, har ekran yonida).
+const mockRoute: { pathname: string; seg?: string } = { pathname: '/' };
+jest.mock('expo-router', () => ({
+  ...jest.requireActual('expo-router'),
+  usePathname: () => mockRoute.pathname,
+  useGlobalSearchParams: () => ({ seg: mockRoute.seg }),
+}));
+
 // v3: NavRail = planshetdagi tab bar — `visibleTabs` (asosiy qator) + v2 katalogi
 // bo'limlari (canAccessPage orqali) bitta manbadan.
 describe('NavRail', () => {
@@ -56,5 +64,38 @@ describe('NavRail — takror yo\u2019q', () => {
     const { getByTestId, queryByTestId } = await renderWithProviders(<NavRail />);
     expect(getByTestId('rail-monitoring')).toBeTruthy();
     expect(queryByTestId('rail-mod-monitoring')).toBeNull();
+  });
+});
+
+describe('NavRail — ochiq modul ekrani faol (push qilingan ekranda ham)', () => {
+  const hr = { type: 'employee', employee: { id: 1, is_multi_org_user: true, multi_org_employee_role: 'hr' } } as any;
+  const selected = (el: { props: { accessibilityState?: { selected?: boolean } } }) => !!el.props.accessibilityState?.selected;
+  beforeEach(() => useAuthStore.setState({ user: hr, isAuthenticated: true } as any));
+  afterEach(() => {
+    mockRoute.pathname = '/';
+    mockRoute.seg = undefined;
+  });
+
+  it('modul ekrani (/zoom) — Zoom bandi faol, Asosiy emas', async () => {
+    mockRoute.pathname = '/zoom';
+    const { getByTestId } = await renderWithProviders(<NavRail />);
+    expect(selected(getByTestId('rail-mod-zoom'))).toBe(true);
+    expect(selected(getByTestId('rail-index'))).toBe(false);
+  });
+
+  it("detal ekrani (/hisobot) o'z moduliga — Hisobotlar — ergashadi", async () => {
+    mockRoute.pathname = '/hisobot';
+    const { getByTestId } = await renderWithProviders(<NavRail />);
+    expect(selected(getByTestId('rail-mod-reports'))).toBe(true);
+    expect(selected(getByTestId('rail-mod-zoom'))).toBe(false);
+  });
+
+  it('Hujjatlar tabi ?seg=letters — tab va Xatlar bandi faol', async () => {
+    mockRoute.pathname = '/documents';
+    mockRoute.seg = 'letters';
+    const { getByTestId } = await renderWithProviders(<NavRail />);
+    expect(selected(getByTestId('rail-documents'))).toBe(true);
+    expect(selected(getByTestId('rail-mod-letters'))).toBe(true);
+    expect(selected(getByTestId('rail-mod-orders'))).toBe(false);
   });
 });

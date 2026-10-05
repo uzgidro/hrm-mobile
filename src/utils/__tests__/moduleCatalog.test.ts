@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { canAccessPage, canManageDictionaries, setNavOverrides, isModuleReady } from '../roles';
-import { visibleCatalog, catalogBySection, CATALOG } from '../moduleCatalog';
+import { visibleCatalog, catalogBySection, CATALOG, activeModule, DETAIL_OWNER } from '../moduleCatalog';
 import type { User } from '@/types';
 import i18n from '@/i18n';
 
@@ -288,5 +288,35 @@ describe("marshrut to'qnashuvi yo'q", () => {
     const tabs = fs.readdirSync(path.join(root, 'app/(tabs)')).filter((f) => f.endsWith('.tsx') && !f.startsWith('_'));
     const clashes = tabs.filter((f) => fs.existsSync(path.join(root, 'app', f)));
     expect(clashes).toEqual([]);
+  });
+});
+
+describe('activeModule — NavRail faol bandi (har sahifada, v2 sidebar kabi)', () => {
+  it.each<[string, string | undefined, string | null]>([
+    ['/zoom', undefined, 'zoom'],
+    ['/hisobotlar', undefined, 'reports'],
+    ['/hisobot', undefined, 'reports'], // detal o'z ro'yxatiga ergashadi
+    ['/avtomobil', undefined, 'vehicles'],
+    ['/order-detail', undefined, 'orders'],
+    ['/letter-detail', undefined, 'letters'],
+    ['/mehmonlar', undefined, 'guests'], // katalogda '/(tabs)/mehmonlar'
+    ['/(tabs)/mehmonlar', undefined, 'guests'],
+    ['/documents', 'letters', 'letters'],
+    ['/documents', 'orders', 'orders'],
+    ['/documents', undefined, null],
+    ['/', undefined, null],
+    ['/attendance', undefined, null], // tab ildizi — modul emas
+    ['/modules', undefined, null],
+    ['/profile', undefined, null],
+    ['/filiallar/', undefined, 'branches'],
+    ['/notifications', undefined, null],
+  ])('%s ?seg=%s → %s', (path, seg, page) => expect(activeModule(path, seg)).toBe(page));
+
+  it('seg massiv bo‘lib kelsa ham', () => expect(activeModule('/documents', ['letters'])).toBe('letters'));
+
+  it("detal jadvalidagi har yo'lning route fayli bor", () => {
+    for (const route of Object.keys(DETAIL_OWNER)) {
+      expect(fs.existsSync(path.join(__dirname, '../../../app', `${route.slice(1)}.tsx`))).toBe(true);
+    }
   });
 });
