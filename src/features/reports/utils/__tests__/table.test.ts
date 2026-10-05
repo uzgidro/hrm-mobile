@@ -10,6 +10,7 @@ import {
   fmtCell,
   fmtNumber,
   fmtStamp,
+  FREEZE_MIN_COL,
   freezeLayout,
   hasDrillCells,
   sheetContentHeight,
@@ -192,9 +193,40 @@ describe('muzlatilgan ustunlar (freeze_cols)', () => {
     // 360 * 0.55 = 198 → № 52 + nom 146.
     expect(freezeLayout(2, [52, 261, 36, 36], 360)).toEqual({ count: 2, widths: [52, 146, 36, 36] });
   });
-  it('qolgan joy juda tor — keyingi ustun muzlatilmaydi', () => {
-    // 300 * 0.55 = 165 → 120 + 45 (< 80) — faqat birinchisi.
-    expect(freezeLayout(3, [120, 200, 30, 30], 300)).toEqual({ count: 1, widths: [120, 200, 30, 30] });
+  it('qolgan joy juda tor (oldingilarni toraytirib, 65% da ham) — keyingi ustun muzlatilmaydi', () => {
+    // 200 * 0.55 = 110 → birinchisi 110 ga toraytiriladi; 65% (130) da ham 84 + 46 (< 80).
+    expect(freezeLayout(3, [120, 200, 30, 30], 200)).toEqual({ count: 1, widths: [110, 200, 30, 30] });
+  });
+  describe("haqiqiy tabel (QA javobi: № 5, Tabel № 10, F.I.Sh. 34, bo'lim 24, lavozim 24; kun 8)", () => {
+    // columnWidths: [52, 88, 261, 189, 189, 74 …]; freeze_cols = 5 (hamma doimiy ustunlar).
+    const tabel = columnWidths({ ncols: 9, widths: [5, 10, 34, 24, 24, 8, 8, 8, 8] });
+    it('ustun kengliklari', () => {
+      expect(tabel.slice(0, 6)).toEqual([52, 88, 261, 189, 189, 74]);
+    });
+    it("390 telefon (≈358px): nom ustuni yo'qolmaydi — № va Tabel № toraytiriladi, blok 55% da", () => {
+      const r = freezeLayout(5, tabel, 358);
+      expect(r.count).toBe(3);
+      expect(r.widths.slice(0, 4)).toEqual([36, 62, 98, 189]);
+      expect(r.widths[0]! + r.widths[1]! + r.widths[2]!).toBeLessThanOrEqual(358 * 0.55);
+    });
+    it('360 telefon (≈328px): ham nom muzlatiladi', () => {
+      const r = freezeLayout(5, tabel, 328);
+      expect(r.count).toBe(3);
+      expect(r.widths[2]).toBeGreaterThanOrEqual(FREEZE_MIN_COL);
+    });
+    it("juda tor (300px): 55% yetmasa — blok 65% gacha kengayadi, nom baribir muzlatiladi", () => {
+      const r = freezeLayout(5, tabel, 300);
+      expect(r.count).toBe(3);
+      expect(r.widths.slice(0, 3)).toEqual([36, 62, 97]);
+    });
+    it("keng ekranda nom siqilmaydi (keyingi ustun uchun ham) — oddiy qoida", () => {
+      // 1200 · 0.55 = 660: 52 + 88 + 261 + 189 = 590, lavozimga 70 (< 80) qoladi.
+      expect(freezeLayout(5, tabel, 1200)).toEqual({ count: 4, widths: tabel });
+    });
+    it('Tabel № ustunisiz (№ + nom) — avvalgidek, toraytirish kerak emas', () => {
+      const plain = columnWidths({ ncols: 4, widths: [5, 34, 8, 8] });
+      expect(freezeLayout(2, plain, 358).widths.slice(0, 2)).toEqual([52, 144]);
+    });
   });
   it('kamida bitta ustun aylanib turadi', () => {
     expect(freezeLayout(3, [40, 40, 40], 1000).count).toBe(2);

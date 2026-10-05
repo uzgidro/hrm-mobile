@@ -83,28 +83,26 @@ export function rowLayout(row: RowJson, prefix: number[]): { cell: CellJson; col
 
 /** Muzlatilgan blok ekran kengligining ko'pi bilan shu ulushi (qolgani — aylanadigan ustunlar). */
 export const FREEZE_MAX_RATIO = 0.55;
+/** Aks holda ustun (tabelda F.I.Sh.) yo'qolib qolsa — blok shu ulushgacha kengaya oladi. */
+export const FREEZE_STRETCH_RATIO = 0.65;
 /** Toraytirilgan muzlatilgan ustun bundan tor bo'lmaydi (aks holda u muzlatilmaydi). */
 export const FREEZE_MIN_COL = 80;
+/** Oldingi tor ustunlar (№, Tabel №) siqilganda: kengligining 70% i, lekin kamida shuncha. */
+export const FREEZE_NARROW_COL = 36;
+/** «Tor» (raqam/indeks) ustun — shundan keng emas (Tabel № 10 belgi = 88px; F.I.Sh. 261px). */
+export const FREEZE_INDEX_MAX = 100;
 
-/**
- * v2 `freeze_cols` (tabelda №, F.I.Sh. …): chapdagi ustunlar gorizontal aylantirishda joyida
- * qoladi. v2 kabi blok ekranning yarmidan oshmaydi, lekin telefonda tabel nomi (34 belgi ≈ 260px)
- * hech qachon sig'masdi — shuning uchun sig'magan ustun qolgan joyga TORAYTIRILADI (kamida
- * `FREEZE_MIN_COL`), matn qisqartiriladi. Kenglik noma'lum (0) — muzlatilmaydi; kamida bitta
- * ustun aylanib turadi.
- */
-export function freezeLayout(
+function fitFrozen(
   freezeCols: number,
   widths: number[],
-  viewport: number,
+  limit: number,
+  narrowBefore: number,
 ): { count: number; widths: number[] } {
-  if (!freezeCols || viewport <= 0) return { count: 0, widths };
-  const limit = viewport * FREEZE_MAX_RATIO;
-  const out = [...widths];
+  const out = widths.map((w, i) => (i < narrowBefore ? Math.max(FREEZE_NARROW_COL, Math.round(w * 0.7)) : w));
   let acc = 0;
   let count = 0;
   for (let i = 0; i < Math.min(freezeCols, widths.length - 1); i++) {
-    const w = widths[i]!;
+    const w = out[i]!;
     if (acc + w <= limit) {
       acc += w;
       count++;
@@ -117,7 +115,37 @@ export function freezeLayout(
     }
     break;
   }
-  return count ? { count, widths: out } : { count: 0, widths };
+  return { count, widths: out };
+}
+
+/**
+ * v2 `freeze_cols` (tabelda №, Tabel №, F.I.Sh. …): chapdagi ustunlar gorizontal aylantirishda
+ * joyida qoladi. v2 kabi blok ekranning yarmidan oshmaydi, lekin telefonda tabel nomi (34 belgi
+ * ≈ 260px) hech qachon sig'masdi — shuning uchun sig'magan ustun qolgan joyga TORAYTIRILADI
+ * (kamida `FREEZE_MIN_COL`), matn qisqartiriladi. Shunda ham joy qolmasa (№ + Tabel № ≈ 140px
+ * telefon blokining deyarli hammasi) muhim ustunni yo'qotishdan oldin: avval oldingi tor
+ * ustunlar siqiladi, so'ng blok `FREEZE_STRETCH_RATIO` gacha kengayadi. Kenglik noma'lum (0) —
+ * muzlatilmaydi; kamida bitta ustun aylanib turadi.
+ */
+export function freezeLayout(
+  freezeCols: number,
+  widths: number[],
+  viewport: number,
+): { count: number; widths: number[] } {
+  if (!freezeCols || viewport <= 0) return { count: 0, widths };
+  const base = fitFrozen(freezeCols, widths, viewport * FREEZE_MAX_RATIO, 0);
+  const target = Math.min(freezeCols, widths.length - 1);
+  // Faqat tor (№, Tabel №) ustunlar muzlab, birinchi keng (matn — F.I.Sh.) ustun yo'qolgan bo'lsa:
+  // undan oldingilarni siqib, avval 55%, keyin 65% da urinamiz. Keng ekranda nom allaqachon
+  // muzlagan — u yerda nomni keyingi ustun uchun siqmaymiz.
+  const onlyIndexCols = widths.slice(0, base.count).every((w) => w <= FREEZE_INDEX_MAX);
+  if (base.count > 0 && base.count < target && onlyIndexCols) {
+    for (const ratio of [FREEZE_MAX_RATIO, FREEZE_STRETCH_RATIO]) {
+      const next = fitFrozen(freezeCols, widths, viewport * ratio, base.count);
+      if (next.count > base.count) return next;
+    }
+  }
+  return base.count ? base : { count: 0, widths };
 }
 
 export interface SpanPart {
