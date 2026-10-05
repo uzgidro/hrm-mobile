@@ -516,3 +516,13 @@ export const ISAPI_DEVICE_UNKNOWN_USERS = (id: number) => `isapi-devices/${id}/u
 export const HIK_SYNC_ACCESS_LISTS = 'hik-sync/access-lists';
 export const HIK_SYNC_DEVICES = 'hik-sync/devices';
 export const HIK_SYNC_DOORS = 'hik-sync/doors';
+// Qo'shimcha maydonlar (web v2 CustomFieldsPage, TZ 4.2.6): guruh (kartochkadagi bo'lim) va ichidagi
+// maydonlar. Ta'rif o'qish — logingan har kim; yaratish/tahrir/o'chirish — `require_structure_manager`
+// (master-admin, admin hisobi, kadr). Guruh/maydon o'chirilsa unga kiritilgan qiymatlar ham o'chadi.
+export const CUSTOM_FIELDS_META = 'custom-fields/meta';
+export const CUSTOM_FIELD_GROUPS = 'custom-fields/groups';
+export const CUSTOM_FIELD_GROUP = (id: number) => `custom-fields/groups/${id}`;
+export const CUSTOM_FIELDS = 'custom-fields/fields';
+export const CUSTOM_FIELD = (id: number) => `custom-fields/fields/${id}`;
+// Ma'lumotnomalar katalogi (web v2 DictionariesPage, TZ 4.2.5) — o'qish barcha rollarga ochiq.
+export const DICTIONARIES = 'dictionaries';

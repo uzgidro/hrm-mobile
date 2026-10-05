@@ -221,6 +221,19 @@ describe('modul katalogi — v2 paritet', () => {
     expect(CATALOG.find((e) => e.page === 'terminals')?.route).toBe('/terminallar');
   });
 
+  it("qo'shimcha maydonlar — v2 ADMIN_ONLY + SYSTEM_ADMIN_KEYS: bosh admin, admin hisobi, AKT xodimi; ministr/kadr/xodim/post yo'q; route /qoshimcha-maydonlar", () => {
+    const ministr = emp({ employee: { id: 10, is_multi_org_user: true, multi_org_employee_role: 'ministr' } });
+    expect(isModuleReady('customFields')).toBe(true);
+    expect(canAccessPage(master, 'customFields')).toBe(true);
+    expect(canAccessPage(u({ id: 5, type: 'admin' }), 'customFields')).toBe(true);
+    expect(canAccessPage(emp({ akt_branch_ids: [1] }), 'customFields')).toBe(true);
+    expect(canAccessPage(ministr, 'customFields')).toBe(false);
+    expect(canAccessPage(hr, 'customFields')).toBe(false);
+    expect(canAccessPage(emp(), 'customFields')).toBe(false);
+    expect(canAccessPage(kppAcc, 'customFields')).toBe(false);
+    expect(CATALOG.find((e) => e.page === 'customFields')?.route).toBe('/qoshimcha-maydonlar');
+  });
+
   it('har katalog yozuvining nomi 4 tilda tarjima qilingan (xom kalit chiqmaydi)', async () => {
     for (const lng of ['uz-Latn', 'uz-Cyrl', 'ru', 'en']) {
       await i18n.changeLanguage(lng);

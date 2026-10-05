@@ -32,6 +32,7 @@ import password from './password';
 import tabs from './tabs';
 import kpp from './kpp';
 import monitoring from './monitoring';
+import customFields from './customFields';
 import turnstiles from './turnstiles';
 import branches from './branches';
 import registrations from './registrations';
@@ -94,6 +95,7 @@ export default {
   tabs,
   kpp,
   monitoring,
+  customFields,
   turnstiles,
   branches,
   registrations,

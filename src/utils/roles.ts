@@ -539,7 +539,7 @@ const MODULE_FOR_PAGE: Partial<Record<PageKey, ModuleDef>> = {
   auditLog: { key: 'auditLog', defaultRoles: ADMIN_ONLY },
   branches: { key: 'branches', defaultRoles: ADMIN_ONLY, systemAdmin: true },
   turnstiles: { key: 'turnstiles', defaultRoles: ADMIN_ONLY, systemAdmin: true },
-  customFields: { key: 'customFields', defaultRoles: ADMIN_ONLY, systemAdmin: true, ready: false },
+  customFields: { key: 'customFields', defaultRoles: ADMIN_ONLY, systemAdmin: true },
   sysHealth: { key: 'sysHealth', defaultRoles: ADMIN_ONLY },
   lms: { key: 'lms', defaultRoles: ADMIN_ONLY },
 };

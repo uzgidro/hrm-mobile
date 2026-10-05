@@ -175,6 +175,7 @@ function ThemedNavigation() {
           <Stack.Screen name="registratsiyalar" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="filiallar" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="turniketlar" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="qoshimcha-maydonlar" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="assistant" options={{ animation: 'slide_from_bottom' }} />
           <Stack.Screen name="loyiha-form" options={{ animation: 'slide_from_bottom' }} />
           <Stack.Screen name="change-pin" options={{ animation: 'slide_from_right' }} />
