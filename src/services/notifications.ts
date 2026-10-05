@@ -241,7 +241,12 @@ export function routeForNotification(data: any): string | null {
   if (type.startsWith('employee_assignment')) return '/profile-detail';
   // Zoom yig'ilishlari (zoom_decision, zoom_organizer_changed) — umumiy jadval.
   if (type.startsWith('zoom')) return '/zoom';
-  // Avtopark / tibbiy ko'rik modullari mobilда hali yo'q — joyida qolamiz.
+  // Tibbiy ko'rik (v2 notificationRoutes): xodimning O'Z xabarlari (muddat / natija) v2 da
+  // profilning «Tibbiy» tabiga ochiladi — mobil'da u tab yo'q, joyida qolamiz; qolganlari
+  // (kadrga `medical_checkup_due_hr` va h.k.) — reyestr.
+  if (type === 'medical_checkup_due' || type === 'medical_result_recorded') return null;
+  if (type.startsWith('medical')) return '/tibbiy-korik';
+  // Avtopark moduli mobilда hali yo'q — joyida qolamiz.
   return null;
 }
 

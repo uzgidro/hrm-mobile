@@ -40,4 +40,6 @@ export default {
   zoom_user_quota: 'Лимит активных встреч исчерпан — отмените ненужные',
   zoom_not_live: 'Встреча сейчас не в эфире — записью можно управлять только во время встречи',
   zoom_recurrence_needs_time: 'Для повторяющейся встречи нужны дата и время начала',
+  // Tibbiy ko'rik (web v2 errors.medical_not_enabled) — router darvozasi.
+  medical_not_enabled: 'Модуль медосмотра не включён',
 } as const;

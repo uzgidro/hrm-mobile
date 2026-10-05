@@ -417,3 +417,13 @@ export const ZOOM_MEETING_REJECT = (id: number) => `zoom-meetings/${id}/reject`;
 export const ZOOM_MEETING_START = (id: number) => `zoom-meetings/${id}/start`;
 export const ZOOM_MEETING_START_URL = (id: number) => `zoom-meetings/${id}/start-url`;
 export const ZOOM_MEETING_HOST_KEY = (id: number) => `zoom-meetings/${id}/host-key`;
+// Tibbiy ko'rik — butun tashkilot bo'yicha davriy ko'riklar reyestri (router `require_medical_enabled`).
+// Filial — FILTR, cheklov emas. Eksport, ommaviy ko'rik, doktor/mutaxassislik boshqaruvi — web'da.
+export const MEDICAL_EMPLOYEES = 'medical/employees';
+export const MEDICAL_EMPLOYEE = (id: number) => `medical/employees/${id}`;
+export const MEDICAL_SPECIALTIES = 'medical/specialties';
+export const MEDICAL_CHECKUPS = 'medical/checkups';
+export const MEDICAL_CHECKUP = (id: number) => `medical/checkups/${id}`;
+export const MEDICAL_CHECKUP_FILES = (id: number) => `medical/checkups/${id}/files`;
+export const MEDICAL_FILE = (id: number) => `medical/files/${id}`;
+export const MEDICAL_ANNUAL_INDEX = 'medical/annual-index';

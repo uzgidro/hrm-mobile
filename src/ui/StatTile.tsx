@@ -1,6 +1,7 @@
 // Metrika tile'i (Kann + v2 StatTile): modul rangidagi yumshoq wash, katta raqam
 // Nunito 900 (rangi DOIM fg — kontrast), burchakda xira katta ikonka. Bosiladigan
-// bo'lsa — Tomchi labi (1.5px border + pastki LIP).
+// bo'lsa — Tomchi labi (1.5px border + pastki LIP). `selected` — filtr plitkasi tanlangan
+// (to'liq rangli 2px chegara; v2 `filterTile(on)`).
 import React from 'react';
 import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useTheme } from '@/theme/ThemeProvider';
@@ -17,6 +18,7 @@ export function StatTile({
   tint,
   progress,
   onPress,
+  selected,
   style,
   testID,
 }: {
@@ -27,6 +29,7 @@ export function StatTile({
   tint: ModuleTintKey;
   progress?: number;
   onPress?: () => void;
+  selected?: boolean;
   style?: StyleProp<ViewStyle>;
   testID?: string;
 }) {
@@ -38,9 +41,9 @@ export function StatTile({
         styles.tile,
         { backgroundColor: t.wash },
         onPress && {
-          borderWidth: 1.5,
-          borderColor: `${t.fg}40`,
-          borderBottomWidth: pressed ? 1.5 : LIP + 1.5,
+          borderColor: selected ? t.fg : `${t.fg}40`,
+          borderWidth: selected ? 2 : 1.5,
+          borderBottomWidth: (pressed ? 0 : LIP) + (selected ? 2 : 1.5),
           marginTop: pressed ? LIP : 0,
         },
       ]}
@@ -82,6 +85,7 @@ export function StatTile({
       onPress={onPress}
       testID={testID}
       accessibilityRole="button"
+      accessibilityState={selected === undefined ? undefined : { selected }}
       accessibilityLabel={`${label}: ${value}`}
       style={style}
     >

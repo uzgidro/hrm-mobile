@@ -40,4 +40,6 @@ export default {
   zoom_user_quota: 'Active meeting limit reached — cancel the ones you no longer need',
   zoom_not_live: 'The meeting is not live — recording can only be controlled during the meeting',
   zoom_recurrence_needs_time: 'A recurring meeting needs a start date and time',
+  // Tibbiy ko'rik (web v2 errors.medical_not_enabled) — router darvozasi.
+  medical_not_enabled: 'The medical checkup module is not enabled',
 } as const;

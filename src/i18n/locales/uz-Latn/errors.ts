@@ -46,4 +46,6 @@ export default {
   zoom_user_quota: "Faol yig'ilishlar limiti to'lgan — keraksizlarini bekor qiling",
   zoom_not_live: "Yig'ilish hozir jonli emas — yozuv faqat jonli yig'ilishda boshqariladi",
   zoom_recurrence_needs_time: "Takroriy yig'ilish uchun boshlanish sanasi va vaqti kerak",
+  // Tibbiy ko'rik (web v2 errors.medical_not_enabled) — router darvozasi.
+  medical_not_enabled: "Tibbiy ko'rik moduli yoqilmagan",
 } as const;

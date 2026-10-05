@@ -168,6 +168,13 @@ describe('yangi bildirishnoma turlari (2026-08-19)', () => {
     }
   });
 
+  it("tibbiy ko'rik: kadr xabari reyestrga; xodimning o'z xabari (v2 — profil tabi, mobil'da yo'q) joyida", () => {
+    expect(routeForNotification({ type: 'medical_checkup_due_hr' })).toBe('/tibbiy-korik');
+    expect(routeForNotification({ notification_type: 'medical_other', medical_checkup_id: 4 })).toBe('/tibbiy-korik');
+    expect(routeForNotification({ type: 'medical_checkup_due' })).toBeNull();
+    expect(routeForNotification({ type: 'medical_result_recorded', medical_checkup_id: 4 })).toBeNull();
+  });
+
   it('zoom bildirishnomalari Zoom jadvaliga boradi', () => {
     expect(routeForNotification({ type: 'zoom_decision' })).toBe('/zoom');
     expect(routeForNotification({ notification_type: 'zoom_organizer_changed' })).toBe('/zoom');

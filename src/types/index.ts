@@ -50,6 +50,8 @@ export interface User {
   organization_branch_id?: number | null;
   /** Filialda tibbiy ko'rik moduli yoqilgan (auth/me) — v2 needsMedical. */
   medical_enabled?: boolean;
+  /** Doktorning o'z turlari (auth/me) — bitta bo'lsa ko'rik formasida tanlash chiqmaydi (v2). */
+  medical_specialties?: { id: number; name?: string | null }[];
   /** Hamshira sifatida biriktirilgan filiallar (auth/me) — v2 needsHealth. */
   nurse_branch_ids?: number[];
   /** May view (not edit) a duty roster — web v2 `canSeeDuty`. */

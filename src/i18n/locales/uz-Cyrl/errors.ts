@@ -40,4 +40,6 @@ export default {
   zoom_user_quota: 'Фаол йиғилишлар лимити тўлган — кераксизларини бекор қилинг',
   zoom_not_live: 'Йиғилиш ҳозир жонли эмас — ёзув фақат жонли йиғилишда бошқарилади',
   zoom_recurrence_needs_time: 'Такрорий йиғилиш учун бошланиш санаси ва вақти керак',
+  // Tibbiy ko'rik (web v2 errors.medical_not_enabled) — router darvozasi.
+  medical_not_enabled: 'Тиббий кўрик модули ёқилмаган',
 } as const;

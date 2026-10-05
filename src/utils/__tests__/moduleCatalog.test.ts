@@ -97,6 +97,16 @@ describe('modul katalogi — v2 paritet', () => {
     expect(CATALOG.find((e) => e.page === 'zoom')?.route).toBe('/zoom');
   });
 
+  it("tibbiy ko'rik — faqat medical_enabled (v2 needsMedical + RequireRole); bosh admin ham bayroqsiz kirmaydi; route /tibbiy-korik", () => {
+    expect(canAccessPage(emp(), 'medical')).toBe(false);
+    expect(canAccessPage(emp({ medical_enabled: true }), 'medical')).toBe(true);
+    expect(canAccessPage(hr, 'medical')).toBe(false);
+    expect(canAccessPage({ ...hr, medical_enabled: true } as never, 'medical')).toBe(true);
+    expect(canAccessPage(master, 'medical')).toBe(false);
+    expect(canAccessPage({ ...master, medical_enabled: true } as never, 'medical')).toBe(true);
+    expect(CATALOG.find((e) => e.page === 'medical')?.route).toBe('/tibbiy-korik');
+  });
+
   it("KPI filialda o'chirilgan bo'lsa override ham qaytarolmaydi", () => {
     setNavOverrides({ kpi: { roles: ['employee'] } });
     expect(canAccessPage(emp({ kpi_enabled: false }), 'kpi')).toBe(false);
