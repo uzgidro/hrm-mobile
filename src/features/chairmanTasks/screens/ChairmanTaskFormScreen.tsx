@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
@@ -19,6 +19,7 @@ import { canManageChairmanTasks } from '@/utils/roles';
 import { chairmanTasksListQuery } from '../api/queries';
 import { useCreateChairmanTask, useUpdateChairmanTask, useDeleteChairmanTask } from '../api/mutations';
 import { toast } from '@/lib/toast';
+import { goBackOr } from '@/lib/goBack';
 
 const COLORS = ['#0DA9AA', '#6366F1', '#F59E0B', '#EF4444', '#10B981'];
 
@@ -34,7 +35,7 @@ export default function ChairmanTaskFormScreen() {
   // Route-level guard: only secretariat / master-admin may open the form (the
   // minister sees a read-only list). Backend also 403s, this is the UX contract.
   useEffect(() => {
-    if (!canManageChairmanTasks(user)) router.back();
+    if (!canManageChairmanTasks(user)) goBackOr('/chairman-tasks');
   }, [user]);
 
   // Editing has no detail endpoint — read the task from the list of ITS month
@@ -92,7 +93,7 @@ export default function ChairmanTaskFormScreen() {
       end_time: endTime.trim() || null,
       color,
     };
-    const onSuccess = () => { toast.success(t(editing ? 'chairman.updated' : 'chairman.created')); router.back(); };
+    const onSuccess = () => { toast.success(t(editing ? 'chairman.updated' : 'chairman.created')); goBackOr('/chairman-tasks'); };
     const onError = (e: unknown) => toast.error(getApiErrorMessage(e, t('chairman.actionError')));
     if (editing) updateM.mutate(payload, { onSuccess, onError });
     else createM.mutate(payload, { onSuccess, onError });
@@ -109,7 +110,7 @@ export default function ChairmanTaskFormScreen() {
     });
     if (!ok) return;
     deleteM.mutate(taskId!, {
-      onSuccess: () => { toast.success(t('chairman.deleted')); router.back(); },
+      onSuccess: () => { toast.success(t('chairman.deleted')); goBackOr('/chairman-tasks'); },
       onError: (e) => toast.error(getApiErrorMessage(e, t('chairman.actionError'))),
     });
   };

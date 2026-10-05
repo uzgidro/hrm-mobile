@@ -10,7 +10,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { ff } from '@/theme/typography';
-import type { Employee } from '@/types';
+import type { Employee, OrderAct } from '@/types';
 import { Icon } from '@/components/Icon';
 import { LoadingView, ErrorState } from '@/components/StateViews';
 import { getApiErrorMessage } from '@/api/errors';
@@ -20,7 +20,12 @@ import { statusMeta, statusColor, decreePermissions, decreeSubmitTarget } from '
 import { isHR, isSiteMasterAdmin, isBranchHr, employeeSubLabel } from '@/utils/roles';
 import { orderDetailQuery, orderEmployeesQuery } from '../api/queries';
 import { useDecreeActions } from '../hooks/useDecreeActions';
-import { useAssignFamiliarizers, useDecreeApply, useDecreeRemovalResponse } from '../api/mutations';
+import {
+  useAssignFamiliarizers,
+  useDecreeApply,
+  useDecreeRemovalResponse,
+  isOrderDeletedResponse,
+} from '../api/mutations';
 import { DetailHeader, Section, KV } from './DetailParts';
 import { DetailSections } from './DetailSections';
 import { AttachmentsSection } from './AttachmentsSection';
@@ -28,6 +33,7 @@ import { CommentsSection } from './CommentsSection';
 import { DecreeActionBar } from './DecreeActionBar';
 import { RejectModal, RegisterModal, ApplyModal } from './DetailModals';
 import { parseDdMmYyyy, formatDdMmYyyy } from '@/lib/dateText';
+import { goBackOr } from '@/lib/goBack';
 
 // The body of the decree detail — extracted so it can render either as the
 // pushed route's content (phone / push-notification deep links, `embedded`
@@ -63,14 +69,22 @@ export function OrderDetailView({ id, embedded = false }: { id: number; embedded
   const [applyPermanent, setApplyPermanent] = useState(false);
   const [applyDate, setApplyDate] = useState<null | 'start' | 'end'>(null);
 
-  const { data: order, isLoading, isError, error, refetch } = useQuery(orderDetailQuery(orderId));
+  const removalM = useDecreeRemovalResponse(orderId);
+  // Safdan chiqishga rozilik buyruqni o'chirgan bo'lsa (`{ deleted: true }`) uning
+  // so'rovlari keshdan olib tashlangan — ochiq ekran ularni qayta yaratib
+  // so'ramasin (404); oxirgi ma'lumot ekran yopilguncha qoladi.
+  const deleted = removalM.isSuccess && isOrderDeletedResponse(removalM.data);
+  const { data: order, isLoading, isError, error, refetch } = useQuery({
+    ...orderDetailQuery(orderId),
+    enabled: !!orderId && !deleted,
+    placeholderData: deleted ? (prev: OrderAct | undefined) => prev : undefined,
+  });
 
   const { busy, submit, approve, reject, resubmit, forward, confirmSubmission, acknowledge, register } =
     useDecreeActions(orderId, refetch);
 
   const assignFam = useAssignFamiliarizers(orderId);
   const applyM = useDecreeApply(orderId);
-  const removalM = useDecreeRemovalResponse(orderId);
   // Employees to pick from — scoped to the order's branch like the create form.
   // `enabled`: the picker is ONLY reachable for master-admin / KADR (see
   // `canAssignFamiliarizers` below), but this query pulls the WHOLE branch
@@ -180,8 +194,10 @@ export function OrderDetailView({ id, embedded = false }: { id: number; embedded
   const onRemoval = async (agree: boolean) => {
     try {
       const res = await removalM.mutateAsync(agree);
-      if (res && typeof res === 'object' && 'deleted' in res && res.deleted) {
-        if (router.canGoBack()) router.back();
+      if (isOrderDeletedResponse(res)) {
+        // Chuqur havolada tarix yo'q — ro'yxat ochiladi; split-view ro'yxati
+        // esa yangilanib keyingi buyruqni o'zi tanlaydi.
+        if (!embedded) goBackOr('/documents?seg=orders');
         return;
       }
       await refetch();
@@ -295,7 +311,7 @@ export function OrderDetailView({ id, embedded = false }: { id: number; embedded
         <AttachmentsSection order={order} canManage={perms.canEdit} onChanged={refetch} />
 
         {/* Izohlar + matn tahriri tarixi (webda bor, mobilда yo'q edi). */}
-        <CommentsSection orderId={orderId} />
+        {!deleted && <CommentsSection orderId={orderId} />}
 
         {perms.canEdit && (
           <TouchableOpacity

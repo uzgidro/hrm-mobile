@@ -1,6 +1,6 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
-import { invalidateAfterAction } from '@/lib/invalidateAfterAction';
+import { invalidateAfterAction, invalidateAfterDelete } from '@/lib/invalidateAfterAction';
 import {
   LETTER_CREATE, LETTER_SIGN, LETTER_REJECT, LETTER_UPLOAD_ATTACHMENT,
   LETTER_SUBMIT_REPORT, LETTER_RESET_REPORT, LETTER_UPLOAD_REPORT,
@@ -457,8 +457,22 @@ export function useDeleteLetter(id: number) {
     // bitta xato uchun ikki xil toast ko'rardi.
     meta: { skipErrorToast: true },
     mutationFn: () => deleteLetter(id),
-    onSuccess: () => invalidateAfterAction(qc, letterKeys.all),
+    onSuccess: () => afterLetterDeleted(qc, id),
   });
+}
+
+/**
+ * O'chirilgandan keyin: xatning o'z so'rovlari (tafsilot + safar harakati /
+ * davomati) keshdan AVVAL olib tashlanadi, keyin ro'yxatlar yangilanadi.
+ * `letterKeys.all` ni yangilash hali ochiq tafsilotni qayta so'rardi
+ * (`GET /letters/{id}` → 404 → qizil «Topilmadi» toasti, QA 2026-10-05).
+ */
+export function afterLetterDeleted(qc: QueryClient, id: number): Promise<void> {
+  return invalidateAfterDelete(
+    qc,
+    [letterKeys.detail(id), letterKeys.tripMovements(id), letterKeys.tripAttendance(id)],
+    letterKeys.all,
+  );
 }
 
 

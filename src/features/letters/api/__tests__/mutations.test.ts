@@ -1,4 +1,5 @@
 import MockAdapter from 'axios-mock-adapter';
+import { QueryClient, QueryObserver } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
 import {
   LETTER_CREATE, LETTER_SIGN, LETTER_REJECT, LETTER_UPLOAD_ATTACHMENT,
@@ -18,8 +19,9 @@ import {
   confirmRegistration, agreeLetter, disagreeLetter, submitAgreementLetter, sendLetterToRegistry,
   approveTripRegistration,
   returnLetter, returnReport, cancelTrip, deleteLetter, updateLetter,
-  extendTrip, decideExtension, setBasisDecree,
+  extendTrip, decideExtension, setBasisDecree, afterLetterDeleted,
 } from '../mutations';
+import { letterKeys } from '../queries';
 
 let mock: MockAdapter;
 beforeEach(() => {
@@ -356,5 +358,44 @@ describe('setBasisDecree (KADR asos buyruqni kiritadi)', () => {
       basis_decree_number: '145-A',
       basis_decree_date: '2026-08-01',
     });
+  });
+});
+
+// QA 2026-10-05: xat o'chirilgach qizil «Topilmadi» toasti chiqardi — prefiks
+// yangilash hali ochiq tafsilotni qayta so'radi (GET /letters/{id} → 404).
+describe('afterLetterDeleted', () => {
+  it("o'chirilgan xat so'rovlari qayta so'ralmaydi (404 yo'q), ro'yxat yangilanadi", async () => {
+    // gcTime Infinity: ajratilgan so'rovning 5 daqiqalik gc taymeri jest'ni ushlab turmasin.
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } });
+    const listKey = [...letterKeys.all, 'list', null];
+    mock.onGet(LETTER_DETAIL(7)).reply(404, { detail: 'Topilmadi' });
+    mock.onGet('/letters-list-test').reply(200, []);
+    qc.setQueryData(letterKeys.detail(7), { id: 7 });
+    qc.setQueryData(letterKeys.tripMovements(7), []);
+    qc.setQueryData(letterKeys.detail(8), { id: 8 });
+    qc.setQueryData(listKey, []);
+    // Faol kuzatuvchilar — ochiq tafsilot ekrani va ro'yxat aynan shunday ushlaydi.
+    const unsubs = [
+      new QueryObserver(qc, {
+        queryKey: letterKeys.detail(7),
+        queryFn: () => apiClient.get(LETTER_DETAIL(7)).then((r) => r.data),
+        staleTime: Infinity,
+      }).subscribe(() => {}),
+      new QueryObserver(qc, {
+        queryKey: listKey,
+        queryFn: () => apiClient.get('/letters-list-test').then((r) => r.data),
+        staleTime: Infinity,
+      }).subscribe(() => {}),
+    ];
+
+    await afterLetterDeleted(qc, 7);
+
+    expect(qc.getQueryCache().find({ queryKey: letterKeys.detail(7), exact: true })).toBeUndefined();
+    expect(qc.getQueryCache().find({ queryKey: letterKeys.tripMovements(7), exact: true })).toBeUndefined();
+    expect(mock.history.get.filter((r) => r.url === LETTER_DETAIL(7))).toHaveLength(0);
+    expect(mock.history.get.filter((r) => r.url === '/letters-list-test')).toHaveLength(1);
+    expect(qc.getQueryState(letterKeys.detail(8))?.isInvalidated).toBe(true);
+    unsubs.forEach((u) => u());
+    qc.clear();
   });
 });

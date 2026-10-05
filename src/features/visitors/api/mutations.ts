@@ -1,7 +1,8 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
 import { VISITORS_LIST, VISITOR_DETAIL, EMPLOYEE_VALIDATE_PHOTO } from '@/api/urls';
 import type { Visitor } from '@/types';
+import { invalidateAfterDelete } from '@/lib/invalidateAfterAction';
 import { visitorKeys } from './queries';
 
 export interface VisitorPayload {
@@ -68,6 +69,16 @@ export function useDeleteVisitor() {
     // The screen shows this error itself (toast / inline) — no second global toast.
     meta: { skipErrorToast: true },
     mutationFn: deleteVisitor,
-    onSuccess: () => qc.invalidateQueries({ queryKey: visitorKeys.all }),
+    onSuccess: (_data, id) => afterVisitorDeleted(qc, id),
   });
+}
+
+/**
+ * After a delete: drop the visitor's own detail query (cancel + remove) BEFORE
+ * refreshing the lists — invalidating `visitorKeys.all` refetched the still-open
+ * detail → `GET visitors/{id}` 404 → an error toast after the delete (same fix
+ * as leaves / letters, QA 2026-10-05).
+ */
+export function afterVisitorDeleted(qc: QueryClient, id: number): Promise<void> {
+  return invalidateAfterDelete(qc, [visitorKeys.detail(id)], visitorKeys.all);
 }

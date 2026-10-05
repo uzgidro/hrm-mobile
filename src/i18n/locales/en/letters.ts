@@ -107,6 +107,7 @@ export default {
   deleteAction: 'Delete',
   deleteConfirmTitle: 'Delete the document',
   deleteConfirmMessage: 'The document will be removed from the registry for good. This cannot be undone.',
+  deletedSuccess: 'Document deleted',
   reasonRequiredLabel: 'Reason (required)',
   reasonOptionalLabel: 'Reason (optional)',
   reasonPlaceholder: 'Describe the reason...',

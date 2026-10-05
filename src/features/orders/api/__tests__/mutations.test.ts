@@ -1,4 +1,5 @@
 import MockAdapter from 'axios-mock-adapter';
+import { QueryClient, QueryObserver } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
 import {
   ORDER_ACTS,
@@ -26,7 +27,10 @@ import {
   assignFamiliarizers,
   createOrder,
   confirmSubmissionDecree,
+  isOrderDeletedResponse,
+  afterOrderDeleted,
 } from '../mutations';
+import { orderKeys } from '../queries';
 
 let mock: MockAdapter;
 beforeEach(() => {
@@ -195,5 +199,47 @@ describe('updateOrder (tahrirlash)', () => {
     const up = mock.history.post.find((r) => r.url === ORDER_ACT_DOCUMENTS(33));
     expect(up).toBeTruthy();
     expect(up!.data instanceof FormData).toBe(true);
+  });
+});
+
+// Safdan chiqishga oxirgi rozilik buyruqni o'chiradi ({ deleted: true }) — ochiq
+// tafsilot qayta so'ralmasin (404 + xato toasti, QA 2026-10-05).
+describe('order deleted by a removal response', () => {
+  it('isOrderDeletedResponse faqat { deleted: true } ni taniydi', () => {
+    expect(isOrderDeletedResponse({ deleted: true })).toBe(true);
+    expect(isOrderDeletedResponse({ deleted: false })).toBe(false);
+    expect(isOrderDeletedResponse({ id: 1 })).toBe(false);
+    expect(isOrderDeletedResponse(null)).toBe(false);
+  });
+
+  it("afterOrderDeleted o'chirilgan buyruq tafsilotini qayta so'ramaydi, ro'yxatni yangilaydi", async () => {
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } });
+    const listKey = [...orderKeys.all, 'list', null];
+    mock.onGet(ORDER_ACT_DETAIL(9)).reply(404, { detail: 'not found' });
+    mock.onGet(ORDER_ACTS).reply(200, []);
+    qc.setQueryData(orderKeys.detail(9), { id: 9 });
+    qc.setQueryData(orderKeys.comments(9), []);
+    qc.setQueryData(listKey, []);
+    const unsubs = [
+      new QueryObserver(qc, {
+        queryKey: orderKeys.detail(9),
+        queryFn: () => apiClient.get(ORDER_ACT_DETAIL(9)).then((r) => r.data),
+        staleTime: Infinity,
+      }).subscribe(() => {}),
+      new QueryObserver(qc, {
+        queryKey: listKey,
+        queryFn: () => apiClient.get(ORDER_ACTS).then((r) => r.data),
+        staleTime: Infinity,
+      }).subscribe(() => {}),
+    ];
+
+    await afterOrderDeleted(qc, 9);
+
+    expect(qc.getQueryCache().find({ queryKey: orderKeys.detail(9), exact: true })).toBeUndefined();
+    expect(qc.getQueryCache().find({ queryKey: orderKeys.comments(9), exact: true })).toBeUndefined();
+    expect(mock.history.get.filter((r) => r.url === ORDER_ACT_DETAIL(9))).toHaveLength(0);
+    expect(mock.history.get.filter((r) => r.url === ORDER_ACTS)).toHaveLength(1);
+    unsubs.forEach((u) => u());
+    qc.clear();
   });
 });

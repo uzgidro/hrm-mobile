@@ -214,8 +214,8 @@ export default function NotificationsScreen() {
           master={listPane}
           detail={
             selected == null ? null
-            : selected.kind === 'order' ? <OrderDetailView id={selected.id} embedded />
-            : <LetterDetailView id={selected.id} embedded />
+            : selected.kind === 'order' ? <OrderDetailView key={`o${selected.id}`} id={selected.id} embedded />
+            : <LetterDetailView key={`l${selected.id}`} id={selected.id} embedded />
           }
           placeholder={<SelectItemPlaceholder icon="bell" />}
         />

@@ -107,6 +107,7 @@ export default {
   deleteAction: 'Ўчириш',
   deleteConfirmTitle: 'Ҳужжатни ўчириш',
   deleteConfirmMessage: 'Ҳужжат рўйхатдан бутунлай олиб ташланади. Бу амални орқага қайтариб бўлмайди.',
+  deletedSuccess: 'Ҳужжат ўчирилди',
   reasonRequiredLabel: 'Сабаб (мажбурий)',
   reasonOptionalLabel: 'Сабаб (ихтиёрий)',
   reasonPlaceholder: 'Сабабни ёзинг...',

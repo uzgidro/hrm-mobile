@@ -20,7 +20,7 @@ jest.mock('@/lib/toast', () => ({
   toast: { error: jest.fn(), success: jest.fn(), info: jest.fn() },
 }));
 jest.mock('expo-router', () => ({
-  router: { push: jest.fn(), back: jest.fn() },
+  router: { push: jest.fn(), back: jest.fn(), replace: jest.fn(), canGoBack: jest.fn(() => true) },
   useLocalSearchParams: () => ({ id: '1' }),
 }));
 

@@ -113,6 +113,7 @@ export default {
   deleteAction: 'O\'chirish',
   deleteConfirmTitle: 'Hujjatni o\'chirish',
   deleteConfirmMessage: 'Hujjat ro\'yxatdan butunlay olib tashlanadi. Bu amalni orqaga qaytarib bo\'lmaydi.',
+  deletedSuccess: "Hujjat o'chirildi",
   reasonRequiredLabel: 'Sabab (majburiy)',
   reasonOptionalLabel: 'Sabab (ixtiyoriy)',
   reasonPlaceholder: 'Sababni yozing...',

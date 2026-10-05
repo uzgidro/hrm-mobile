@@ -1,4 +1,5 @@
 import MockAdapter from 'axios-mock-adapter';
+import { QueryClient, QueryObserver } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
 import { VISITORS_LIST, VISITOR_DETAIL, EMPLOYEE_VALIDATE_PHOTO } from '@/api/urls';
 import {
@@ -6,7 +7,9 @@ import {
   updateVisitor,
   deleteVisitor,
   validateVisitorPhoto,
+  afterVisitorDeleted,
 } from '../mutations';
+import { visitorKeys } from '../queries';
 
 let mock: MockAdapter;
 beforeEach(() => {
@@ -46,5 +49,38 @@ describe('validateVisitorPhoto', () => {
   it('treats a missing accepted flag as accepted', async () => {
     mock.onPost(EMPLOYEE_VALIDATE_PHOTO).reply(200, {});
     expect((await validateVisitorPhoto('base64')).accepted).toBe(true);
+  });
+});
+
+// QA 2026-10-05: the still-open detail of a just-deleted record was refetched
+// by the prefix invalidation (GET → 404 → error toast).
+describe('afterVisitorDeleted', () => {
+  it('drops the deleted detail (no refetch → no 404) and still refreshes the list', async () => {
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } });
+    const listKey = visitorKeys.list(undefined, undefined, 'all');
+    mock.onGet(VISITOR_DETAIL(3)).reply(404, { detail: 'not found' });
+    mock.onGet(VISITORS_LIST).reply(200, []);
+    qc.setQueryData(visitorKeys.detail(3), { id: 3 });
+    qc.setQueryData(listKey, []);
+    const unsubs = [
+      new QueryObserver(qc, {
+        queryKey: visitorKeys.detail(3),
+        queryFn: () => apiClient.get(VISITOR_DETAIL(3)).then((r) => r.data),
+        staleTime: Infinity,
+      }).subscribe(() => {}),
+      new QueryObserver(qc, {
+        queryKey: listKey,
+        queryFn: () => apiClient.get(VISITORS_LIST).then((r) => r.data),
+        staleTime: Infinity,
+      }).subscribe(() => {}),
+    ];
+
+    await afterVisitorDeleted(qc, 3);
+
+    expect(qc.getQueryCache().find({ queryKey: visitorKeys.detail(3), exact: true })).toBeUndefined();
+    expect(mock.history.get.filter((r) => r.url === VISITOR_DETAIL(3))).toHaveLength(0);
+    expect(mock.history.get.filter((r) => r.url === VISITORS_LIST)).toHaveLength(1);
+    unsubs.forEach((u) => u());
+    qc.clear();
   });
 });

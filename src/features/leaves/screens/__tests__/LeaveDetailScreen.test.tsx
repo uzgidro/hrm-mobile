@@ -16,7 +16,7 @@ import LeaveDetailScreen from '../LeaveDetailScreen';
 
 const mockParams = { id: '19510' };
 jest.mock('expo-router', () => ({
-  router: { back: jest.fn(), push: jest.fn(), replace: jest.fn() },
+  router: { back: jest.fn(), push: jest.fn(), replace: jest.fn(), canGoBack: jest.fn(() => true) },
   useLocalSearchParams: () => mockParams,
 }));
 jest.mock('@/lib/confirm', () => ({ confirm: jest.fn(() => Promise.resolve(true)) }));
@@ -83,6 +83,18 @@ describe('LeaveDetailScreen (web v2 parity)', () => {
     await new Promise((res) => setTimeout(res, 50));
     expect(mock.history.get.filter((g) => g.url === 'work-leaves/19510')).toHaveLength(1);
     expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it("deep link (no history) → delete opens the requests list instead of GO_BACK", async () => {
+    (router.canGoBack as jest.Mock).mockReturnValueOnce(false);
+    mock.onGet('work-leaves/19510').reply(200, leave({ employee_id: ME, employee: { id: ME, legal_name: 'Men' } }));
+    mock.onDelete('work-leaves/19510').reply(204);
+    const r = await renderWithProviders(<LeaveDetailScreen />);
+
+    fireEvent.press(await r.findByText("O'chirish"));
+
+    await waitFor(() => expect(router.replace).toHaveBeenCalledWith('/work-leaves'));
+    expect(router.back).not.toHaveBeenCalled();
   });
 
   it('a decider reopens a decided request with a reason (v2 reopen)', async () => {

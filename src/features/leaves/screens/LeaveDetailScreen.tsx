@@ -4,7 +4,7 @@ import {
   TouchableOpacity, ActivityIndicator, TextInput, Modal,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
@@ -21,6 +21,7 @@ import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { getApiErrorMessage } from '@/api/errors';
 import { confirm } from '@/lib/confirm';
 import { toast } from '@/lib/toast';
+import { goBackOr } from '@/lib/goBack';
 import { isPendingCode, leaveStatusGroup, leaveStatusKind } from '@/utils/leaveStatus';
 import { statusColor } from '@/utils/orderStatus';
 import { leaveDetailQuery } from '../api/queries';
@@ -171,7 +172,8 @@ export default function LeaveDetailScreen() {
     try {
       await deleteMutation.mutateAsync();
       toast.success(t('leaves.deletedSuccess'));
-      router.back();
+      // Deep link (push / pasted URL) has no history — open the list instead of GO_BACK.
+      goBackOr('/work-leaves');
     } catch (e) {
       toast.error(getApiErrorMessage(e, t('leaves.deleteError')));
     } finally { setActing(false); }

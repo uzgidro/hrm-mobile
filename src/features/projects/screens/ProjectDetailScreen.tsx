@@ -25,6 +25,7 @@ import {
   useCreateColumn, useCreateCard, useToggleCardComplete, useDeleteWorkspace,
 } from '../api/mutations';
 import { toast } from '@/lib/toast';
+import { goBackOr } from '@/lib/goBack';
 
 export default function LoyihaDetailScreen() {
   const { t } = useTranslation();
@@ -114,7 +115,7 @@ export default function LoyihaDetailScreen() {
     });
     if (!ok) return;
     deleteWs.mutate(workspaceId, {
-      onSuccess: () => router.back(),
+      onSuccess: () => goBackOr('/loyihalar'),
       onError: (e) => toast.error(getApiErrorMessage(e, t('projects.deleteError'))),
     });
   };

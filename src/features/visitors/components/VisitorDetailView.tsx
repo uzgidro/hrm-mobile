@@ -19,6 +19,8 @@ import { confirm } from '@/lib/confirm';
 import { visitorDetailQuery } from '../api/queries';
 import { useDeleteVisitor } from '../api/mutations';
 import { toast } from '@/lib/toast';
+import { goBackOr } from '@/lib/goBack';
+import type { Visitor } from '@/types';
 
 function Row({ icon, label, value, styles, colors }: {
   icon: IconName; label: string; value?: string | null; styles: any; colors: ThemeColors;
@@ -47,9 +49,17 @@ export function VisitorDetailView({ id, embedded = false }: { id: number; embedd
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
-  const { data: v, isLoading, isError, error, refetch } = useQuery(visitorDetailQuery(visitorId));
-
   const del = useDeleteVisitor();
+  // Once deleted, the visitor's query was dropped from the cache
+  // (`afterVisitorDeleted`) — this still-mounted view must not re-create and
+  // refetch it (404). The last data stays until the screen closes / the split
+  // list selects another visitor.
+  const deleted = del.isSuccess && del.variables === visitorId;
+  const { data: v, isLoading, isError, error, refetch } = useQuery({
+    ...visitorDetailQuery(visitorId),
+    enabled: !!visitorId && !deleted,
+    placeholderData: deleted ? (prev: Visitor | undefined) => prev : undefined,
+  });
 
   const active = v?.is_active !== false;
   // Ro'yxat bergan qator ba'zan alohida GET'da 404 qaytaradi (server ma'lumoti).
@@ -69,7 +79,11 @@ export function VisitorDetailView({ id, embedded = false }: { id: number; embedd
     });
     if (!ok) return;
     del.mutate(visitorId, {
-      onSuccess: () => router.back(),
+      // Deep link (no history) → the guests list instead of a GO_BACK error;
+      // inside the split view the refreshed list selects the next visitor.
+      onSuccess: () => {
+        if (!embedded) goBackOr('/(tabs)/mehmonlar');
+      },
       onError: (e) => toast.error(getApiErrorMessage(e, t('visitors.deleteError'))),
     });
   };

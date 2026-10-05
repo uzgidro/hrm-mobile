@@ -171,7 +171,7 @@ export default function OrdersListScreen({ embedded = false }: { embedded?: bool
       <Screen edges={embedded ? [] : ['top']} maxWidth="full">
         <SplitLayout
           master={listPane}
-          detail={selectedId != null ? <OrderDetailView id={selectedId} embedded /> : null}
+          detail={selectedId != null ? <OrderDetailView key={selectedId} id={selectedId} embedded /> : null}
           placeholder={<SelectItemPlaceholder icon="doc" />}
         />
       </Screen>

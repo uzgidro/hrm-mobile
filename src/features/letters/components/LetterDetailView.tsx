@@ -42,6 +42,8 @@ import { ReasonModal } from './ReasonModal';
 import { BasisDecreeModal } from './BasisDecreeModal';
 import { DatePickerModal } from '@/components/DatePicker';
 import { toast } from '@/lib/toast';
+import { goBackOr } from '@/lib/goBack';
+import type { Letter } from '@/types';
 
 // The body of the letter detail — extracted so it can render either as the
 // pushed route's content (phone / push-notification deep links, `embedded`
@@ -58,7 +60,17 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
-  const { data: letter, isLoading, isError, error, refetch } = useQuery(letterDetailQuery(letterId));
+  const deleteLetterM = useDeleteLetter(letterId);
+  // O'chirilgach yozuv yo'q: uning so'rovi keshdan olib tashlangan
+  // (`afterLetterDeleted`) va hali ochiq ekran uni qayta yaratib so'ramasligi
+  // kerak (404 → qizil «Topilmadi» toasti, QA 2026-10-05). Oxirgi ma'lumot
+  // ekran yopilguncha (yoki split-view ro'yxati boshqasini tanlaguncha) qoladi.
+  const deleted = deleteLetterM.isSuccess;
+  const { data: letter, isLoading, isError, error, refetch } = useQuery({
+    ...letterDetailQuery(letterId),
+    enabled: !!letterId && !deleted,
+    placeholderData: deleted ? (prev: Letter | undefined) => prev : undefined,
+  });
   const { busy, sign, reject, approve } = useLetterActions(letterId, refetch);
   const resetReportM = useResetReport(letterId);
   const submitTripM = useSubmitTrip(letterId);
@@ -67,7 +79,6 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
   const returnLetterM = useReturnLetter(letterId);
   const returnReportM = useReturnReport(letterId);
   const cancelTripM = useCancelTrip(letterId);
-  const deleteLetterM = useDeleteLetter(letterId);
   const [reasonModal, setReasonModal] = useState<null | 'return' | 'returnReport' | 'cancelTrip' | 'reject'>(null);
   const [reasonError, setReasonError] = useState<string | null>(null);
   const [reasonText, setReasonText] = useState('');
@@ -218,7 +229,13 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
     if (!ok) return;
     deleteLetterM.mutate(undefined, {
       // Hujjat endi yo'q — ro'yxatga qaytamiz (tafsilot 404 bo'lib qolmasin).
-      onSuccess: () => router.back(),
+      // Chuqur havoladan ochilgan bo'lsa tarix yo'q — `router.back()` o'rniga
+      // ro'yxat ochiladi. Split-view ichida navigatsiya yo'q: ro'yxat yangilanib
+      // keyingi xatni o'zi tanlaydi.
+      onSuccess: () => {
+        toast.success(t('letters.deletedSuccess'));
+        if (!embedded) goBackOr('/documents?seg=letters');
+      },
       onError: (e) => toast.error(getApiErrorMessage(e, t('letters.actionError'))),
     });
   };
@@ -387,8 +404,9 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
         )}
 
         {isTrip && <TripVehicleSection letter={letter} user={user} onChanged={refetch} />}
-        <TripMovementsSection letter={letter} user={user} onChanged={refetch} />
-        {isTrip && <TripAttendanceSection letter={letter} />}
+        {/* O'chirilgan xatning safar so'rovlari ham qayta yaratilmasin (404). */}
+        {!deleted && <TripMovementsSection letter={letter} user={user} onChanged={refetch} />}
+        {isTrip && !deleted && <TripAttendanceSection letter={letter} />}
 
         {/* Bildirgi/ariza kelishuvi — kelishuvchilar holati va amallar. */}
         <AgreementSection letter={letter} employeeId={employeeId} onChanged={refetch} />

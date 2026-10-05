@@ -180,7 +180,7 @@ export default function LettersListScreen({ embedded = false }: { embedded?: boo
       <Screen edges={embedded ? [] : ['top']} maxWidth="full">
         <SplitLayout
           master={listPane}
-          detail={selectedId != null ? <LetterDetailView id={selectedId} embedded /> : null}
+          detail={selectedId != null ? <LetterDetailView key={selectedId} id={selectedId} embedded /> : null}
           placeholder={<SelectItemPlaceholder icon="mail" />}
         />
       </Screen>

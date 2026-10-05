@@ -108,6 +108,7 @@ export default {
   deleteAction: 'Удалить',
   deleteConfirmTitle: 'Удалить документ',
   deleteConfirmMessage: 'Документ будет полностью удалён из реестра. Это действие необратимо.',
+  deletedSuccess: 'Документ удалён',
   reasonRequiredLabel: 'Причина (обязательно)',
   reasonOptionalLabel: 'Причина (необязательно)',
   reasonPlaceholder: 'Укажите причину...',

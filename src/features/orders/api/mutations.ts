@@ -1,6 +1,6 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
-import { invalidateAfterAction } from '@/lib/invalidateAfterAction';
+import { invalidateAfterAction, invalidateAfterDelete } from '@/lib/invalidateAfterAction';
 import {
   ORDER_ACTS,
   ORDER_ACT_DETAIL,
@@ -253,13 +253,33 @@ export function decreeRemovalReject(id: number) {
   return apiClient.post(ORDER_ACT_DECREE_REMOVAL_REJECT(id)).then((r) => r.data);
 }
 
+/** Rozilik oxirgi kelishuvchidan kelsa backend buyruqni o'chiradi: `{ deleted: true }`. */
+export function isOrderDeletedResponse(res: unknown): boolean {
+  return !!res && typeof res === 'object' && !!(res as { deleted?: unknown }).deleted;
+}
+
+/**
+ * Buyruq o'chirilgach: uning o'z so'rovlari (tafsilot, izohlar, tarix) keshdan
+ * AVVAL olib tashlanadi, keyin ro'yxatlar yangilanadi — `orderKeys.all` ni
+ * yangilash hali ochiq tafsilotni qayta so'rab 404 + xato toastini berardi
+ * (xatlar/ruxsat so'rovlari bilan bir xil, QA 2026-10-05).
+ */
+export function afterOrderDeleted(qc: QueryClient, id: number): Promise<void> {
+  return invalidateAfterDelete(
+    qc,
+    [orderKeys.detail(id), orderKeys.comments(id), orderKeys.history(id)],
+    orderKeys.all,
+  );
+}
+
 export function useDecreeRemovalResponse(id: number) {
   const qc = useQueryClient();
   return useMutation({
     // `agree: true` — roziman (safdan chiqaman), `false` — rad etaman.
     mutationFn: (agree: boolean) =>
       (agree ? decreeRemovalConfirm(id) : decreeRemovalReject(id)),
-    onSuccess: () => {
+    onSuccess: (res) => {
+      if (isOrderDeletedResponse(res)) return afterOrderDeleted(qc, id);
       qc.invalidateQueries({ queryKey: orderKeys.all });
     },
   });
