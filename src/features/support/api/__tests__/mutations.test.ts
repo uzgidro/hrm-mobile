@@ -1,4 +1,5 @@
 import MockAdapter from 'axios-mock-adapter';
+import { Platform } from 'react-native';
 import { apiClient } from '@/api/client';
 import { SUPPORT_TICKETS, SUPPORT_TICKET_RATE, SUPPORT_TICKET_REOPEN } from '@/api/urls';
 import { createTicket, rateTicket, reopenTicket } from '../mutations';
@@ -28,6 +29,32 @@ describe('support ticket request functions', () => {
     const req = mock.history.post[0];
     expect(req.data instanceof FormData).toBe(true);
     expect(req.headers?.['Content-Type']).toBe('multipart/form-data');
+  });
+
+  // QA (web): `{ uri, name, type }` obyekti brauzer FormData'sida "[object Object]"
+  // matniga aylanib, server 422 qaytarardi. Vebda haqiqiy Blob ketishi kerak.
+  it('createTicket on web sends a real Blob part (not "[object Object]")', async () => {
+    const realOS = Platform.OS;
+    const realFetch = global.fetch;
+    Platform.OS = 'web';
+    global.fetch = jest.fn(async () => ({ blob: async () => new Blob(['jpeg']) })) as unknown as typeof fetch;
+    try {
+      mock.onPost(SUPPORT_TICKETS).reply(201, { id: 44 });
+      const p = createTicket({ priority: 'low', description: 'x' }, [
+        { uri: 'blob:http://localhost/a', name: 'a.jpg', mimeType: 'image/jpeg' },
+      ]);
+      // Platforma fayl qismi qo'shilayotganda (sinxron) tekshiriladi; so'rovning
+      // o'zi (token o'qish) uchun platformani tiklaymiz — vebda u localStorage'ga boradi.
+      Platform.OS = realOS;
+      await p;
+      const part = (mock.history.post[0].data as FormData).get('files') as File;
+      expect(part).toBeInstanceOf(Blob);
+      expect(part.name).toBe('a.jpg');
+      expect(part.type).toBe('image/jpeg');
+    } finally {
+      Platform.OS = realOS;
+      global.fetch = realFetch;
+    }
   });
 
   it('rateTicket POSTs { rating, note } to the rate endpoint', async () => {

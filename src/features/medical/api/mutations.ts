@@ -7,6 +7,7 @@ import {
   MEDICAL_CHECKUPS,
   MEDICAL_FILE,
 } from '@/api/urls';
+import { appendFile } from '@/api/formFile';
 import type { PickedFile } from '@/components/AttachmentField';
 import type { AnnualIndex, Checkup, buildCheckupBody, buildIndexBody } from '../utils/medical';
 import { medicalKeys } from './queries';
@@ -29,13 +30,9 @@ export const setAnnualIndex = (body: ReturnType<typeof buildIndexBody>) =>
   apiClient.post<AnnualIndex>(MEDICAL_ANNUAL_INDEX, body).then((r) => r.data);
 
 /** Ko'rikka ilova (skan, tahlil). Yo'l bitta `file` oladi — har so'rovda bitta fayl (v2). */
-export function addCheckupFile({ id, file }: { id: number; file: PickedFile }) {
+export async function addCheckupFile({ id, file }: { id: number; file: PickedFile }) {
   const fd = new FormData();
-  fd.append('file', {
-    uri: file.uri,
-    name: file.name,
-    type: file.mimeType || 'application/octet-stream',
-  } as unknown as Blob);
+  await appendFile(fd, 'file', file);
   return apiClient
     .post(MEDICAL_CHECKUP_FILES(id), fd, { headers: { 'Content-Type': 'multipart/form-data' } })
     .then((r) => r.data);

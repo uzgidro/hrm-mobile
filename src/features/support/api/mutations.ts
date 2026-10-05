@@ -10,6 +10,7 @@ import {
   SUPPORT_TICKET_MESSAGES,
   SUPPORT_TICKET_READ,
 } from '@/api/urls';
+import { appendFiles } from '@/api/formFile';
 import type { PickedFile } from '@/components/AttachmentField';
 import type { SupportTicket, SupportTicketMessage } from '@/types';
 import { supportKeys } from './queries';
@@ -29,19 +30,13 @@ interface RateTicketForm {
 // Create is multipart/form-data (the backend reads Form fields, not a JSON body)
 // with optional image/video attachments under the `files` field — one append per
 // file, matching the web SupportTicketDrawer.
-export function createTicket(form: CreateTicketForm, files: PickedFile[] = []): Promise<SupportTicket> {
+export async function createTicket(form: CreateTicketForm, files: PickedFile[] = []): Promise<SupportTicket> {
   const fd = new FormData();
   fd.append('priority', form.priority);
   fd.append('description', form.description.trim());
   if (form.uge_number?.trim()) fd.append('uge_number', form.uge_number.trim());
   if (form.room_number?.trim()) fd.append('room_number', form.room_number.trim());
-  files.forEach((f) => {
-    fd.append('files', {
-      uri: f.uri,
-      name: f.name,
-      type: f.mimeType || 'application/octet-stream',
-    } as unknown as Blob);
-  });
+  await appendFiles(fd, 'files', files);
   return apiClient
     .post<SupportTicket>(SUPPORT_TICKETS, fd, { headers: { 'Content-Type': 'multipart/form-data' } })
     .then((r) => r.data);

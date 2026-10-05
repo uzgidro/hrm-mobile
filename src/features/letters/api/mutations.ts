@@ -14,6 +14,7 @@ import {
   LETTER_BASIS_DECREE,
   LETTER_TRIP_VEHICLE,
 } from '@/api/urls';
+import { appendFile } from '@/api/formFile';
 import type { PickedFile } from '@/components/AttachmentField';
 import { letterKeys } from './queries';
 
@@ -57,14 +58,9 @@ export async function updateLetter(
 ): Promise<number> {
   await apiClient.patch(LETTER_DETAIL(id), payload);
   if (files.length) {
-    const f = files[0];
     const fd = new FormData();
-    fd.append('file', {
-      uri: f.uri,
-      name: f.name,
-      type: f.mimeType || 'application/octet-stream',
-    } as unknown as Blob);
     try {
+      await appendFile(fd, 'file', files[0]);
       await apiClient.post(LETTER_UPLOAD_ATTACHMENT(id), fd, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
@@ -101,14 +97,9 @@ export async function createLetter(
   const res = await apiClient.post(LETTER_CREATE, payload);
   const letterId = res.data.id;
   if (files.length) {
-    const f = files[0];
     const fd = new FormData();
-    fd.append('file', {
-      uri: f.uri,
-      name: f.name,
-      type: f.mimeType || 'application/octet-stream',
-    } as unknown as Blob);
     try {
+      await appendFile(fd, 'file', files[0]);
       await apiClient.post(LETTER_UPLOAD_ATTACHMENT(letterId), fd, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
@@ -153,13 +144,9 @@ export function resetReport(id: number): Promise<unknown> {
 
 // Optional: attach a single file report instead of / in addition to the text
 // (same multipart shape as the letter attachment upload).
-export function uploadReport(id: number, file: PickedFile): Promise<unknown> {
+export async function uploadReport(id: number, file: PickedFile): Promise<unknown> {
   const fd = new FormData();
-  fd.append('file', {
-    uri: file.uri,
-    name: file.name,
-    type: file.mimeType || 'application/octet-stream',
-  } as unknown as Blob);
+  await appendFile(fd, 'file', file);
   return apiClient
     .post(LETTER_UPLOAD_REPORT(id), fd, { headers: { 'Content-Type': 'multipart/form-data' } })
     .then((r) => r.data);

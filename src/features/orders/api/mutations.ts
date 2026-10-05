@@ -20,6 +20,7 @@ import {
   ORDER_ACT_DECREE_REMOVAL_REJECT,
   ORDER_ACT_DOCUMENT_DELETE,
 } from '@/api/urls';
+import { appendFiles } from '@/api/formFile';
 import type { PickedFile } from '@/components/AttachmentField';
 import { orderKeys } from './queries';
 
@@ -116,14 +117,8 @@ export async function createOrder(
   const orderId = res.data.id;
   if (files.length) {
     const fd = new FormData();
-    files.forEach((f) =>
-      fd.append('files', {
-        uri: f.uri,
-        name: f.name,
-        type: f.mimeType || 'application/octet-stream',
-      } as unknown as Blob)
-    );
     try {
+      await appendFiles(fd, 'files', files);
       await apiClient.post(ORDER_ACT_DOCUMENTS(orderId), fd, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
@@ -164,14 +159,8 @@ export async function updateOrder(
   await apiClient.patch(ORDER_ACT_DETAIL(id), payload);
   if (files.length) {
     const fd = new FormData();
-    files.forEach((f) =>
-      fd.append('files', {
-        uri: f.uri,
-        name: f.name,
-        type: f.mimeType || 'application/octet-stream',
-      } as unknown as Blob)
-    );
     try {
+      await appendFiles(fd, 'files', files);
       await apiClient.post(ORDER_ACT_DOCUMENTS(id), fd, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
