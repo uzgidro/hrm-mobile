@@ -3,8 +3,22 @@
 // active request; the sheet's buttons answer the store, which resolves the
 // pending confirm() promise and promotes any queued request.
 import { useSyncExternalStore } from 'react';
+import { Platform } from 'react-native';
 import { ConfirmSheet } from '@/components/ConfirmSheet';
 import { subscribeConfirm, getConfirm, answerConfirm } from '@/lib/confirm';
+
+/**
+ * react-native-web's Modal creates its portal `<div>` when the component MOUNTS
+ * (even while `visible` is false) and appends it to `document.body`. The host is
+ * mounted at app start, so its portal sat FIRST in the body and every Sheet opened
+ * later covered it: a confirm() fired from inside a sheet was invisible and the
+ * action looked dead. On web the sheet is remounted per request so its portal is
+ * appended last (on top). Native modals stack in presentation order — keep the
+ * stable mount there for the entrance animation.
+ */
+export function confirmSheetKey(os: string, activeId: number | null | undefined): string {
+  return os === 'web' ? `confirm-${activeId ?? 'idle'}` : 'confirm';
+}
 
 export function ConfirmHost() {
   const active = useSyncExternalStore(subscribeConfirm, getConfirm, getConfirm);
@@ -15,6 +29,7 @@ export function ConfirmHost() {
     // remounted the sheet on every open/close and skipped the entrance animation
     // — the stable mount lets `visible` toggling animate as designed.
     <ConfirmSheet
+      key={confirmSheetKey(Platform.OS, active?.id)}
       visible={active !== null}
       title={active?.title ?? ''}
       message={active?.message}
