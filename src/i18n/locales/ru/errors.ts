@@ -89,4 +89,11 @@ export default {
   job_position_not_found: 'Должность не найдена',
   location_not_found: 'Адрес не найден',
   location_without_branch: 'К адресу не привязан филиал',
+  isapi_disabled: 'Прямая работа с устройством отключена',
+  isapi_unreachable: 'Не удалось подключиться к турникету',
+  turnstile_not_found: 'Турникет не найден',
+  turnstile_index_code_exists: 'Турникет с таким кодом уже существует',
+  turnstile_door_not_found: 'Не найдено',
+  hik_sync_failed: 'Ошибка синхронизации устройств с HikCentral',
+  hik_sync_doors_failed: 'Ошибка синхронизации дверей с HikCentral',
 } as const;

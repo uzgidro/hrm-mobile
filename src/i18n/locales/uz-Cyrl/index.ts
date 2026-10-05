@@ -32,6 +32,7 @@ import password from './password';
 import tabs from './tabs';
 import kpp from './kpp';
 import monitoring from './monitoring';
+import turnstiles from './turnstiles';
 import branches from './branches';
 import registrations from './registrations';
 import users from './users';
@@ -93,6 +94,7 @@ export default {
   tabs,
   kpp,
   monitoring,
+  turnstiles,
   branches,
   registrations,
   users,

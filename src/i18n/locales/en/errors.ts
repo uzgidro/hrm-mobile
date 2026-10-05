@@ -89,4 +89,11 @@ export default {
   job_position_not_found: 'Position not found',
   location_not_found: 'Location not found',
   location_without_branch: 'The location is not attached to a branch',
+  isapi_disabled: 'Direct device access is disabled',
+  isapi_unreachable: 'Could not connect to the turnstile device',
+  turnstile_not_found: 'Turnstile not found',
+  turnstile_index_code_exists: 'A turnstile with this code already exists',
+  turnstile_door_not_found: 'Not found',
+  hik_sync_failed: 'Failed to sync devices with HikCentral',
+  hik_sync_doors_failed: 'Failed to sync doors with HikCentral',
 } as const;

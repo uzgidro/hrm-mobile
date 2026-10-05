@@ -98,4 +98,12 @@ export default {
   // Filiallar / manzillar (web v2 errors.*).
   location_not_found: 'Manzil topilmadi',
   location_without_branch: 'Manzilga filial biriktirilmagan',
+  // Turniketlar / ISAPI terminallari / HikCentral sinxroni (web v2 errors.*).
+  isapi_disabled: "Qurilma bilan bevosita ishlash o'chirilgan",
+  isapi_unreachable: "Turniket qurilmasiga ulanib bo'lmadi",
+  turnstile_not_found: 'Turniket topilmadi',
+  turnstile_index_code_exists: 'Ushbu kodli turniket allaqachon mavjud',
+  turnstile_door_not_found: 'Topilmadi',
+  hik_sync_failed: 'HikCentral bilan qurilmalarni sinxronlashda xatolik',
+  hik_sync_doors_failed: 'HikCentral bilan eshiklarni sinxronlashda xatolik',
 } as const;

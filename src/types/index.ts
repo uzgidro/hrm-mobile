@@ -19,6 +19,11 @@ export interface User {
   // backend `require_system_admin` shu roldagi XODIMni ham kiritadi
   // (turniket/HikCentral monitoringi).
   akt_branch_ids?: number[];
+  /**
+   * `admin` hisobining o'z yozuvi (`/auth/me` — `AdminRead`). Filialga BOG'LANGAN admin filial
+   * doirasida: HikCentral to'liq sinxronini faqat filialsiz (global) admin ishga tushiradi (v2 `canRunHikSync`).
+   */
+  admin?: { organization_branch_id?: number | null } | null;
   /** departments this user heads (department head), from /me — scopes work-leave "all" view like the web */
   headed_department_ids?: number[];
   /** may create/edit news posts (auth/me flag = can_manage_news on the backend) */

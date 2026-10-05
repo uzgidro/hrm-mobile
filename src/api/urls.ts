@@ -499,3 +499,20 @@ export const REGISTRATION_REJECT = (id: number) => `registrations/${id}/reject`;
 export const ORGANIZATION_BRANCH = (id: number) => `organization-branches/${id}`;
 export const ORGANIZATION_BRANCH_SYNC_HIK = (id: number) => `organization-branches/${id}/sync-employees-to-hik`;
 export const LOCATION = (id: number) => `locations/${id}`;
+// Turniketlar (web v2 TurnstilesPage). Ro'yxat har qanday xodimga ochiq va `event_token` /
+// `rtsp_stream_url` ni QAYTARMAYDI; yozish, eshiklar, ISAPI terminallari — `require_system_admin`
+// (AKT xodimi o'z filiali doirasida). HikCentral to'liq sinxroni (`hik-sync` POST) — faqat global admin.
+// ISAPI terminal paroli hech qaysi javobda yo'q.
+export const TURNSTILES = 'turnstiles';
+export const TURNSTILE = (id: number) => `turnstiles/${id}`;
+export const TURNSTILE_DOORS = 'turnstile-doors';
+export const TURNSTILE_DOOR = (id: number) => `turnstile-doors/${id}`;
+export const ISAPI_DEVICES = 'isapi-devices';
+export const ISAPI_DEVICE_CREDENTIALS = (id: number) => `isapi-devices/${id}/credentials`;
+export const ISAPI_DEVICE_TEST = (id: number) => `isapi-devices/${id}/test`;
+export const ISAPI_DEVICE_POLL = (id: number) => `isapi-devices/${id}/poll`;
+export const ISAPI_DEVICE_SYNC_EMPLOYEES = (id: number) => `isapi-devices/${id}/sync-employees`;
+export const ISAPI_DEVICE_UNKNOWN_USERS = (id: number) => `isapi-devices/${id}/unknown-users`;
+export const HIK_SYNC_ACCESS_LISTS = 'hik-sync/access-lists';
+export const HIK_SYNC_DEVICES = 'hik-sync/devices';
+export const HIK_SYNC_DOORS = 'hik-sync/doors';

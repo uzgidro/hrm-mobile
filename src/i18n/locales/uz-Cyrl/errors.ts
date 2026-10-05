@@ -89,4 +89,11 @@ export default {
   job_position_not_found: 'Лавозим топилмади',
   location_not_found: 'Манзил топилмади',
   location_without_branch: 'Манзилга филиал бириктирилмаган',
+  isapi_disabled: 'Қурилма билан бевосита ишлаш ўчирилган',
+  isapi_unreachable: 'Турникет қурилмасига уланиб бўлмади',
+  turnstile_not_found: 'Турникет топилмади',
+  turnstile_index_code_exists: 'Ушбу кодли турникет аллақачон мавжуд',
+  turnstile_door_not_found: 'Топилмади',
+  hik_sync_failed: 'HikCentral билан қурилмаларни синхронлашда хатолик',
+  hik_sync_doors_failed: 'HikCentral билан эшикларни синхронлашда хатолик',
 } as const;
