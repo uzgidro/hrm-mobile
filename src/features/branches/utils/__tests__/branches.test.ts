@@ -6,6 +6,7 @@ import {
   buildLocationBody,
   canManageBranches,
   filterBranches,
+  isOutOfScopeError,
   isSyncQueued,
   knownRegions,
   locationSubtitle,
@@ -158,5 +159,14 @@ describe('branches utils (v2 BranchesPage)', () => {
     expect(isSyncQueued(q, 5, 1_000 + SYNC_COOLDOWN_MS - 1)).toBe(true);
     expect(isSyncQueued(q, 5, 1_000 + SYNC_COOLDOWN_MS)).toBe(false);
     expect(isSyncQueued(q, 6, 1_000)).toBe(false);
+  });
+  it("isOutOfScopeError: umumiy 404 not_found / 403 — doiradan tashqari; aniq kodli 404 va boshqalar emas", () => {
+    expect(isOutOfScopeError({ response: { status: 404, data: { code: 'not_found' } } })).toBe(true);
+    expect(isOutOfScopeError({ response: { status: 404, data: { detail: 'Not Found' } } })).toBe(true);
+    expect(isOutOfScopeError({ response: { status: 403 } })).toBe(true);
+    expect(isOutOfScopeError({ response: { status: 404, data: { code: 'branch_not_found' } } })).toBe(false);
+    expect(isOutOfScopeError({ response: { status: 400 } })).toBe(false);
+    expect(isOutOfScopeError(new Error('Network Error'))).toBe(false);
+    expect(isOutOfScopeError(null)).toBe(false);
   });
 });

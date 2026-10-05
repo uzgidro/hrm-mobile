@@ -1,5 +1,6 @@
 // v3 Turniketlar — web v2 `TurnstilesPage` porti: davomat aynan shu qurilmalardan yig'iladi. Server
-// qidiruvi (nomi, IP, kod), «N / M onlayn» (ro'yxatdagilar bo'yicha), qator: holat nuqtasi, nom, IP ·
+// qidiruvi (nomi, IP, kod) va sahifalash (50 tadan), «N / M onlayn» (bitta sahifa bo'lsa — hammasi
+// bo'yicha, aks holda joriy sahifa bo'yicha va shunday deb yoziladi), qator: holat nuqtasi, nom, IP ·
 // manzillar, holat nishoni (ulanish turi — faqat keng ekranda, v2 kabi); varaq: ma'lumot / eshiklar /
 // ISAPI terminali; qo'shish va tahrir, o'chirish — tasdiq bilan; ISAPI terminalini ro'yxatga olish;
 // HikCentral sinxronizatsiyasi (faqat global admin). Huquq — v2 `RequireRole(canAccessSystemAdmin)`.
@@ -21,6 +22,7 @@ import {
   ErrorState,
   ListRow,
   PageHeader,
+  Pager,
   Screen,
   SearchField,
   Skeleton,
@@ -49,7 +51,18 @@ export default function TurnstilesScreen() {
   const [search, setSearch] = useState('');
   const debounced = useDebouncedValue(search, 300);
   const [open, setOpen] = useState<Open>(null);
-  const list = useQuery({ ...turnstilesQuery(debounced), enabled: allowed });
+  // Pull-to-refresh spinneri faqat foydalanuvchi tortganda: `isRefetching` qidiruv/invalidatsiyada ham
+  // yonib, ekran tepasida keraksiz aylanardi.
+  const [refreshing, setRefreshing] = useState(false);
+  // Sahifa qidiruvga bog'liq: qidiruv o'zgarsa — yana 1-sahifa.
+  const [pg, setPg] = useState({ key: debounced, n: 1 });
+  const page = pg.key === debounced ? pg.n : 1;
+  const setPage = (n: number) => setPg({ key: debounced, n });
+  const list = useQuery({ ...turnstilesQuery(debounced, page), enabled: allowed });
+  // Sahifa serverdagi sahifalar sonidan oshmasin: oxirgi sahifaning yagona turniketi o'chirilsa ro'yxat
+  // bo'sh qolib, Pager yashirinardi — oxirgi mavjud sahifaga qaytamiz (render paytidagi tuzatish).
+  const serverPages = list.isSuccess && !list.isPlaceholderData ? Math.max(1, list.data.pages) : null;
+  if (serverPages != null && pg.key === debounced && pg.n > serverPages) setPg({ key: debounced, n: serverPages });
 
   const header = <PageHeader title={t('turnstiles.title')} subtitle={t('turnstiles.subtitle')} />;
   if (!allowed) {
@@ -63,7 +76,16 @@ export default function TurnstilesScreen() {
     );
   }
 
-  const rows = list.data ?? [];
+  const rows = list.data?.items ?? [];
+  const pages = list.data?.pages ?? 1;
+  const refresh = async () => {
+    setRefreshing(true);
+    try {
+      await list.refetch();
+    } finally {
+      setRefreshing(false);
+    }
+  };
   const renderRows = () => {
     if (list.isError && !list.data) return <ErrorState onRetry={() => list.refetch()} />;
     if (list.isPending) return <Skeleton height={260} />;
@@ -107,13 +129,21 @@ export default function TurnstilesScreen() {
 
   return (
     <View style={styles.root}>
-      <Screen refreshing={list.isRefetching} onRefresh={() => void list.refetch()} testID="turnstiles-screen">
+      <Screen refreshing={refreshing} onRefresh={() => void refresh()} testID="turnstiles-screen">
         {header}
         <View style={styles.controls}>
           <SearchField value={search} onChangeText={setSearch} placeholder={t('turnstiles.searchPlaceholder')} />
           <View style={styles.bar}>
             <Text variant="caption" tone="subtle" style={styles.flex} testID="turnstiles-online">
-              {list.data ? t('turnstiles.onlineOf', { online: onlineCount(rows), total: rows.length }) : ''}
+              {!list.data
+                ? ''
+                : pages > 1
+                  ? t('turnstiles.onlineOfPage', {
+                      online: onlineCount(rows),
+                      shown: rows.length,
+                      total: list.data.total,
+                    })
+                  : t('turnstiles.onlineOf', { online: onlineCount(rows), total: rows.length })}
             </Text>
             <Button
               testID="turnstile-sync"
@@ -139,7 +169,10 @@ export default function TurnstilesScreen() {
             />
           </View>
         </View>
-        <Card>{renderRows()}</Card>
+        <Card>
+          {renderRows()}
+          <Pager page={page} pages={pages} onPage={setPage} />
+        </Card>
       </Screen>
       {open?.kind === 'view' && (
         <TurnstileSheet

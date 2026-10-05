@@ -48,6 +48,9 @@ export default {
   saved: 'Сақланди',
   deleted: 'Ўчирилди',
   actionFailed: 'Амални бажариб бўлмади',
+  outOfScope: 'Филиал топилмади ёки сизнинг доирангизда эмас — бу филиални бошқара олмайсиз',
+  showMore: 'Яна кўрсатиш',
+  terminalGroupPlaceholder: 'bosh-bino',
   noAccess: 'Рухсат йўқ',
   noAccessHint: 'Бу бўлим фақат тизим администратори учун.',
 } as const;

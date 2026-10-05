@@ -84,6 +84,7 @@ export default {
   offline: 'Оффлайн',
   online: 'Онлайн',
   onlineOf: '{{online}} / {{total}} онлайн',
+  onlineOfPage: 'На этой странице {{online}} / {{shown}} онлайн · всего {{total}}',
   pickBranch: 'Выберите филиал',
   pickLocations: 'Выберите адреса',
   removeConfirm: '«{{name}}» будет удалён. Ранее полученные записи сохранятся.',

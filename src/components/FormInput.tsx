@@ -1,5 +1,5 @@
 // Themed labeled text input used by the create/edit forms.
-import { View, Text, TextInput, StyleSheet } from 'react-native';
+import { View, Text, TextInput, StyleSheet, type KeyboardTypeOptions } from 'react-native';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 import type { ThemeColors } from '../theme/palettes';
 import { ff } from '../theme/typography';
@@ -14,7 +14,7 @@ export function FormInput({
   placeholder?: string;
   required?: boolean;
   multiline?: boolean;
-  keyboardType?: 'default' | 'phone-pad' | 'email-address' | 'number-pad' | 'decimal-pad';
+  keyboardType?: KeyboardTypeOptions;
   error?: string;
   testID?: string;
   /** Maxfiy qiymat (API kalit) — kiritilgani nuqtalar bilan ko'rinadi. */

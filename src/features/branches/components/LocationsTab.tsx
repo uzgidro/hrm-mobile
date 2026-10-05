@@ -1,5 +1,5 @@
 // Manzillar tabi (v2 `LocationsTab`): filial ichidagi joylar — turniket aynan manzilga biriktiriladi.
-// Ro'yxat (filial · manzil), qator → varaq (tafsilot, tahrir, o'chirish — tasdiq bilan), yangi manzil.
+// Ro'yxat (filial · manzil; bir so'rovda keladi, lekin 50 tadan chiziladi — «Yana ko'rsatish»), qator → varaq (tafsilot, tahrir, o'chirish — tasdiq bilan), yangi manzil.
 // Server `require_system_admin`: AKT xodimi faqat o'z filiali manzillarini ko'radi va o'zgartiradi.
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
@@ -17,28 +17,47 @@ import { LocationFormSheet } from './LocationFormSheet';
 
 type Open = { kind: 'view'; row: LocationRow; n: number } | { kind: 'form'; row: LocationRow | null; n: number } | null;
 
+/** Bir martada chiziladigan manzillar soni — yuzlab qator ScrollView ichida birdan chizilmasin. */
+export const LOCATIONS_STEP = 50;
+
 export function LocationsTab() {
   const { t } = useTranslation();
   const list = useQuery(locationsQuery());
   const { nameOf } = useBranchNames();
   const [open, setOpen] = useState<Open>(null);
+  const [limit, setLimit] = useState(LOCATIONS_STEP);
 
   const rows = list.data ?? [];
+  // Ro'yxat qisqarsa (o'chirish) — `slice` o'zi chegaralaydi; tugma faqat yashiringan qator bo'lsa.
+  const visible = rows.slice(0, limit);
   const renderRows = () => {
     if (list.isError && !list.data) return <ErrorState onRetry={() => list.refetch()} />;
     if (list.isPending) return <Skeleton height={220} />;
     if (!rows.length)
       return <EmptyState title={t('branches.locationsEmpty')} message={t('branches.locationsEmptyHint')} />;
-    return rows.map((l) => (
-      <ListRow
-        key={l.id}
-        testID={`location-row-${l.id}`}
-        title={l.name || `#${l.id}`}
-        subtitle={locationSubtitle(l, nameOf)}
-        chevron
-        onPress={() => setOpen({ kind: 'view', row: l, n: Date.now() })}
-      />
-    ));
+    return (
+      <>
+        {visible.map((l) => (
+          <ListRow
+            key={l.id}
+            testID={`location-row-${l.id}`}
+            title={l.name || `#${l.id}`}
+            subtitle={locationSubtitle(l, nameOf)}
+            chevron
+            onPress={() => setOpen({ kind: 'view', row: l, n: Date.now() })}
+          />
+        ))}
+        {rows.length > visible.length && (
+          <Button
+            testID="locations-more"
+            label={`${t('branches.showMore')} (${rows.length - visible.length})`}
+            variant="ghost"
+            size="sm"
+            onPress={() => setLimit((n) => n + LOCATIONS_STEP)}
+          />
+        )}
+      </>
+    );
   };
 
   return (

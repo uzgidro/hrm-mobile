@@ -51,6 +51,24 @@ const TURNSTILE_ROWS = [
   },
 ];
 
+/** Screen ScrollView'ining `refreshControl` elementi (RNTL 14 da UNSAFE_getByType yo'q). */
+function refreshControl(): { props: { refreshing: boolean; onRefresh: () => void } } {
+  type Node = { props?: Record<string, unknown>; children?: unknown[] };
+  const walk = (n: Node): Node | null => {
+    if (n.props?.refreshControl) return n.props.refreshControl as Node;
+    for (const c of n.children ?? []) {
+      if (c && typeof c === 'object') {
+        const hit = walk(c as Node);
+        if (hit) return hit;
+      }
+    }
+    return null;
+  };
+  const hit = walk(screen.getByTestId('turnstiles-screen') as unknown as Node);
+  if (!hit) throw new Error('refreshControl topilmadi');
+  return hit as never;
+}
+
 describe('TurnstilesScreen (v2 TurnstilesPage)', () => {
   const mock = new MockAdapter(apiClient);
   beforeEach(async () => {
@@ -81,7 +99,7 @@ describe('TurnstilesScreen (v2 TurnstilesPage)', () => {
       expect(screen.getByTestId('turnstile-status-1')).toHaveTextContent('Onlayn');
       expect(screen.getByTestId('turnstile-status-2')).toHaveTextContent('Oflayn');
       expect(screen.getByTestId('turnstiles-online')).toHaveTextContent('1 / 2 onlayn');
-      expect(mock.history.get.find((r) => r.url === TURNSTILES)!.params).toEqual({});
+      expect(mock.history.get.find((r) => r.url === TURNSTILES)!.params).toEqual({ page: 1, size: 50 });
 
       await fireEvent.changeText(screen.getByPlaceholderText("Nomi, IP yoki kod bo'yicha qidirish"), ' 10.2 ');
       await act(async () => {
@@ -89,9 +107,13 @@ describe('TurnstilesScreen (v2 TurnstilesPage)', () => {
       });
       await waitFor(() =>
         expect(mock.history.get.filter((r) => r.url === TURNSTILES).map((r) => r.params)).toContainEqual({
+          page: 1,
+          size: 50,
           search: '10.2',
         }),
       );
+      // Qidiruv/debounce qayta so'rovi pull-to-refresh spinnerini yoqmaydi — u faqat tortilganda.
+      expect(refreshControl().props.refreshing).toBe(false);
     } finally {
       jest.useRealTimers();
     }
@@ -264,6 +286,102 @@ describe('TurnstilesScreen (v2 TurnstilesPage)', () => {
       expect(mock.history.post.map((r) => r.url)).toEqual([HIK_SYNC_DEVICES, HIK_SYNC_DOORS, HIK_SYNC_ACCESS_LISTS]),
     );
     expect(confirm).toHaveBeenCalledTimes(1);
+  });
+
+  it("server sahifalash 50 tadan: onlayn soni joriy sahifa bo'yicha deb yoziladi; oxirgi sahifa bo'shasa — oldingisiga", async () => {
+    let deleted = false;
+    const page1 = Array.from({ length: 50 }, (_, i) => ({
+      id: 100 + i,
+      acs_dev_index_code: `P${i}`,
+      acs_dev_name: `Qurilma ${i}`,
+      status: i < 10 ? '1' : '0',
+      locations: [],
+    }));
+    mock.onGet(TURNSTILES).reply((cfg) => {
+      const pages = deleted ? 1 : 2;
+      if ((cfg.params?.page ?? 1) === 1) return [200, { items: page1, total: deleted ? 50 : 51, page: 1, size: 50, pages }];
+      return [200, { items: deleted ? [] : [TURNSTILE_ROWS[0]], total: deleted ? 50 : 51, page: 2, size: 50, pages }];
+    });
+    mock.onDelete(TURNSTILE(1)).reply(() => {
+      deleted = true;
+      return [200, {}];
+    });
+    await renderWithProviders(<TurnstilesScreen />);
+    expect(await screen.findByText('Qurilma 0')).toBeTruthy();
+    expect(screen.getByTestId('turnstiles-online')).toHaveTextContent('Bu sahifada 10 / 50 onlayn · jami 51 ta');
+    await fireEvent.press(screen.getByTestId('pager-next'));
+    expect(await screen.findByText('Kirish-1')).toBeTruthy();
+    expect(mock.history.get.filter((r) => r.url === TURNSTILES).at(-1)!.params).toEqual({ page: 2, size: 50 });
+
+    await fireEvent.press(screen.getByTestId('turnstile-row-1'));
+    await fireEvent.press(await screen.findByTestId('turnstile-delete'));
+    await waitFor(() => expect(mock.history.delete).toHaveLength(1));
+    // 2-sahifa yo'qoldi — bo'sh ro'yxat va yashiringan Pager o'rniga 1-sahifa.
+    expect(await screen.findByText('Qurilma 0')).toBeTruthy();
+    expect(screen.queryByTestId('pager-next')).toBeNull();
+    expect(screen.getByTestId('turnstiles-online')).toHaveTextContent('10 / 50 onlayn');
+  });
+
+  it('pull-to-refresh: spinner faqat tortilganda yonadi', async () => {
+    await renderWithProviders(<TurnstilesScreen />);
+    expect(await screen.findByText('Kirish-1')).toBeTruthy();
+    expect(refreshControl().props.refreshing).toBe(false);
+    const before = mock.history.get.filter((r) => r.url === TURNSTILES).length;
+    await act(async () => {
+      refreshControl().props.onRefresh();
+    });
+    await waitFor(() => expect(mock.history.get.filter((r) => r.url === TURNSTILES).length).toBe(before + 1));
+    await waitFor(() => expect(refreshControl().props.refreshing).toBe(false));
+  });
+
+  it("IP maydonlari decimal-pad emas (ru/uz da «,» chiqadi) — nuqta yoziladigan klaviatura", async () => {
+    await renderWithProviders(<TurnstilesScreen />);
+    await fireEvent.press(await screen.findByTestId('turnstile-new'));
+    expect(screen.getByTestId('turnstile-form-ip').props.keyboardType).toBe('numbers-and-punctuation');
+    await fireEvent.press(screen.getAllByLabelText(i18n.t('common.close')).at(-1)!);
+    await fireEvent.press(await screen.findByTestId('isapi-new'));
+    expect(screen.getByTestId('isapi-form-ip').props.keyboardType).toBe('numbers-and-punctuation');
+  });
+
+  it("turniket o'chirilsa Filiallar keshi ham yangilanadi (turniketlar soni)", async () => {
+    mock.onDelete(TURNSTILE(1)).reply(200, {});
+    const { queryClient } = await renderWithProviders(<TurnstilesScreen />);
+    const spy = jest.spyOn(queryClient, 'invalidateQueries');
+    await fireEvent.press(await screen.findByTestId('turnstile-row-1'));
+    await fireEvent.press(await screen.findByTestId('turnstile-delete'));
+    await waitFor(() => expect(mock.history.delete).toHaveLength(1));
+    await waitFor(() => expect(spy).toHaveBeenCalledWith({ queryKey: ['branches-admin'] }));
+    expect(spy).toHaveBeenCalledWith({ queryKey: ['turnstiles-admin'] });
+  });
+
+  it("HikCentral sinxroni: varaq yopilib qayta ochilsa ham ishlayotgan sinxron qayta boshlanmaydi", async () => {
+    mock.onGet(HIK_SYNC_ACCESS_LISTS).reply(200, []);
+    let release: () => void = () => {};
+    mock.onPost(HIK_SYNC_DEVICES).reply(
+      () =>
+        new Promise((resolve) => {
+          release = () => resolve([200, {}]);
+        }),
+    );
+    mock.onPost(HIK_SYNC_DOORS).reply(200, {});
+    mock.onPost(HIK_SYNC_ACCESS_LISTS).reply(200, {});
+    await renderWithProviders(<TurnstilesScreen />);
+    await fireEvent.press(await screen.findByTestId('turnstile-sync'));
+    await fireEvent.press(await screen.findByTestId('hik-sync-run'));
+    await waitFor(() => expect(mock.history.post.map((r) => r.url)).toEqual([HIK_SYNC_DEVICES]));
+    await fireEvent.press(screen.getAllByLabelText(i18n.t('common.close')).at(-1)!);
+    await fireEvent.press(screen.getByTestId('turnstile-sync'));
+    const btn = await screen.findByTestId('hik-sync-run');
+    expect(btn).toBeDisabled();
+    await fireEvent.press(btn);
+    expect(confirm).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      release();
+    });
+    await waitFor(() =>
+      expect(mock.history.post.map((r) => r.url)).toEqual([HIK_SYNC_DEVICES, HIK_SYNC_DOORS, HIK_SYNC_ACCESS_LISTS]),
+    );
+    await waitFor(() => expect(screen.getByTestId('hik-sync-run')).toBeEnabled());
   });
 
   it("AKT xodimi: sinxron tugmasi o'rniga izoh; oddiy xodim — «Ruxsat yo'q», so'rov yo'q", async () => {

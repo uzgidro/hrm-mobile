@@ -83,6 +83,7 @@ export default {
   offline: 'Офлайн',
   online: 'Онлайн',
   onlineOf: '{{online}} / {{total}} онлайн',
+  onlineOfPage: 'Бу саҳифада {{online}} / {{shown}} онлайн · жами {{total}} та',
   pickBranch: 'Филиални танланг',
   pickLocations: 'Манзилларни танланг',
   removeConfirm: '«{{name}}» ўчирилади. Ундан келган эски ёзувлар сақланиб қолади.',

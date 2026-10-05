@@ -50,6 +50,9 @@ export default {
   saved: 'Сохранено',
   deleted: 'Удалено',
   actionFailed: 'Не удалось выполнить действие',
+  outOfScope: 'Филиал не найден или вне вашей зоны ответственности — управлять им нельзя',
+  showMore: 'Показать ещё',
+  terminalGroupPlaceholder: 'glavnoe-zdanie',
   noAccess: 'Нет доступа',
   noAccessHint: 'Этот раздел доступен только администратору системы.',
 } as const;

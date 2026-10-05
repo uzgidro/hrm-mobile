@@ -168,6 +168,48 @@ describe('DictionariesScreen (v2 DictionariesPage)', () => {
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Bu yozuv ishlatilmoqda, o'chirib bo'lmaydi"));
   });
 
+  it("oxirgi sahifadagi yagona yozuv o'chirilsa — oxirgi mavjud sahifaga qaytadi; filtr o'zgarsa 1-sahifa", async () => {
+    let deleted = false;
+    const page1 = Array.from({ length: 25 }, (_, i) => ({ id: 100 + i, code: `c${i}`, name: `Yozuv ${i}` }));
+    mock.onGet(DICTIONARY_ENTRIES('nationalities')).reply((cfg) => {
+      const p = cfg.params?.page ?? 1;
+      const pages = deleted ? 1 : 2;
+      if (p === 1) return [200, { items: page1, total: deleted ? 25 : 26, pages }];
+      return [200, { items: deleted ? [] : [{ id: 99, code: 'oxirgi', name: 'Oxirgi' }], total: 25, pages }];
+    });
+    mock.onGet(DICTIONARY_ENTRY_USAGE(99)).reply(200, { entry_id: 99, used: false, refs: [] });
+    mock.onDelete(DICTIONARY_ENTRY(99)).reply(() => {
+      deleted = true;
+      return [200, {}];
+    });
+    await renderWithProviders(<DictionariesScreen />);
+    await fireEvent.press(await screen.findByTestId('dict-type-nationalities'));
+    expect(await screen.findByText('Yozuv 0')).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('pager-next'));
+    await fireEvent.press(await screen.findByTestId('dict-entry-99'));
+    await fireEvent.press(await screen.findByTestId('dict-entry-delete'));
+    await waitFor(() => expect(mock.history.delete).toHaveLength(1));
+    // 2-sahifa bo'sh qolmaydi: 1-sahifa yozuvlari ko'rinadi
+    expect(await screen.findByText('Yozuv 0')).toBeTruthy();
+    expect(screen.queryByText('Oxirgi')).toBeNull();
+    expect(mock.history.get.filter((r) => r.url === DICTIONARY_ENTRIES('nationalities')).at(-1)?.params).toEqual({
+      page: 1,
+      size: 25,
+    });
+
+    // filtr o'zgarsa — 1-sahifa
+    deleted = false;
+    await fireEvent.press(screen.getByTestId('dict-status-all'));
+    await fireEvent.press(screen.getByTestId('dict-status-active'));
+    await waitFor(() =>
+      expect(mock.history.get.filter((r) => r.url === DICTIONARY_ENTRIES('nationalities')).at(-1)?.params).toEqual({
+        page: 1,
+        size: 25,
+        is_active: true,
+      }),
+    );
+  });
+
   it("ierarxik: tegishli filtri ota ma'lumotnomadan; formada tegishli tanlanadi", async () => {
     mock.onGet(DICTIONARY_OPTIONS('regions')).reply(200, [
       { id: 21, code: 'toshkent', name: 'Toshkent' },

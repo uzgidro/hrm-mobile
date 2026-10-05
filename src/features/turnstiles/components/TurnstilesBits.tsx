@@ -1,12 +1,18 @@
 // Turniketlar ekranining kichik umumiy bo'laklari: kalit–qiymat qatori va manzillar tanlagichi.
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View, type KeyboardTypeOptions } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeProvider';
 import { PickerModal } from '@/components/PickerModal';
 import { Text } from '@/ui';
 import { turnstileLocationsQuery } from '../api/queries';
+
+/**
+ * IP manzil klaviaturasi. `decimal-pad` ru/uz lokalida o'nlik ajratuvchini «,» qilib beradi — IP ni
+ * (10.2.90.6) yozib bo'lmaydi. iOS da raqam + tinish belgilari, Android da oddiy klaviatura.
+ */
+export const IP_KEYBOARD: KeyboardTypeOptions = Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'default';
 
 export function KeyValue({ label, value, testID }: { label: string; value?: string | null; testID?: string }) {
   const { colors: c } = useTheme();

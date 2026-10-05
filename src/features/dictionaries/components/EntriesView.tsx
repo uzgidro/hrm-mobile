@@ -65,11 +65,20 @@ export function EntriesView({ type, manage, onBack }: { type: DictionaryType; ma
   const debounced = useDebouncedValue(search);
   const [status, setStatus] = useState<StatusFilter>('');
   const [parentId, setParentId] = useState<number | null>(null);
-  const [page, setPage] = useState(1);
+  // Sahifa filtrga bog'liq: qidiruv, holat yoki tegishli yozuv o'zgarsa — yana 1-sahifa (ma'lumotnoma
+  // almashsa komponent `key` bilan qayta yaratiladi).
+  const filterKey = [debounced, status, parentId ?? ''].join('|');
+  const [pg, setPg] = useState({ key: filterKey, n: 1 });
+  const page = pg.key === filterKey ? pg.n : 1;
+  const setPage = (n: number) => setPg({ key: filterKey, n });
   const [pickingParent, setPickingParent] = useState(false);
   const [open, setOpen] = useState<Open>(null);
 
   const list = useQuery(dictionaryEntriesQuery(type.code, { page, search: debounced, parentId, status }));
+  // Sahifa serverdagi sahifalar sonidan oshmasin: oxirgi sahifaning yagona yozuvi o'chirilgach ro'yxat
+  // bo'sh qolib, Pager yashirinib qolardi — oxirgi mavjud sahifaga qaytamiz (render paytidagi tuzatish).
+  const serverPages = list.isSuccess && !list.isPlaceholderData ? Math.max(1, list.data.pages) : null;
+  if (serverPages != null && pg.key === filterKey && pg.n > serverPages) setPg({ key: filterKey, n: serverPages });
   const parents = useQuery({
     ...dictionaryOptionsQuery(type.parent_type_code ?? ''),
     enabled: hierarchical && !!type.parent_type_code,
@@ -92,7 +101,6 @@ export function EntriesView({ type, manage, onBack }: { type: DictionaryType; ma
               setSearch('');
               setStatus('');
               setParentId(null);
-              setPage(1);
             },
           }}
         />
@@ -161,10 +169,7 @@ export function EntriesView({ type, manage, onBack }: { type: DictionaryType; ma
 
       <SearchField
         value={search}
-        onChangeText={(v) => {
-          setSearch(v);
-          setPage(1);
-        }}
+        onChangeText={setSearch}
         placeholder={t('dictionaries.searchEntry')}
       />
       {!type.external_source && (
@@ -175,10 +180,7 @@ export function EntriesView({ type, manage, onBack }: { type: DictionaryType; ma
               testID={`dict-status-${s || 'all'}`}
               label={s ? t(`dictionaries.${s}`) : t('dictionaries.allStatuses')}
               selected={status === s}
-              onPress={() => {
-                setStatus(s);
-                setPage(1);
-              }}
+              onPress={() => setStatus(s)}
             />
           ))}
         </View>
@@ -228,7 +230,6 @@ export function EntriesView({ type, manage, onBack }: { type: DictionaryType; ma
           onSelect={(v) => {
             setPickingParent(false);
             setParentId(v === NONE ? null : v);
-            setPage(1);
           }}
         />
       )}

@@ -65,22 +65,30 @@ export async function runHikSync(): Promise<void> {
 
 const meta = { skipErrorToast: true };
 
-function useInvalidate() {
+/**
+ * Filiallar ekranining kesh ildizi — LITERAL (funksiyalararo import yo'q): filial varag'idagi
+ * «Turniketlar» soni (`turnstile_count`) turniket qo'shilsa/o'chirilsa/manzili almashsa o'zgaradi.
+ */
+const BRANCHES_ADMIN_KEY = ['branches-admin'] as const;
+
+/** `withBranches` — turniketlar to'plami (soni yoki manzillari) o'zgaradigan amallar uchun. */
+function useInvalidate(withBranches = false) {
   const qc = useQueryClient();
   // HikCentral monitoringi (Terminallar ekrani) ham shu qurilmalarni ko'rsatadi.
   return () =>
     Promise.all([
       qc.invalidateQueries({ queryKey: turnstilesKeys.all }),
       qc.invalidateQueries({ queryKey: ['hik-monitoring'] }),
+      ...(withBranches ? [qc.invalidateQueries({ queryKey: BRANCHES_ADMIN_KEY })] : []),
     ]);
 }
 
 export function useSaveTurnstile() {
-  const onSuccess = useInvalidate();
+  const onSuccess = useInvalidate(true);
   return useMutation({ meta, mutationFn: saveTurnstile, onSuccess });
 }
 export function useDeleteTurnstile() {
-  const onSuccess = useInvalidate();
+  const onSuccess = useInvalidate(true);
   return useMutation({ meta, mutationFn: deleteTurnstile, onSuccess });
 }
 
@@ -98,7 +106,8 @@ export function useDeleteDoor() {
 }
 
 export function useRegisterIsapi() {
-  const onSuccess = useInvalidate();
+  // Server terminal bilan birga turniket ham yaratadi — filial soni o'zgaradi.
+  const onSuccess = useInvalidate(true);
   // Terminal paroli so'rov tanasida — mutatsiya keshida turib qolmasin.
   return useMutation({ meta, mutationFn: registerIsapi, onSuccess, gcTime: 0 });
 }
@@ -119,7 +128,14 @@ export function useSetIsapiCredentials() {
 export function useIsapiUnknownUsers() {
   return useMutation({ meta, mutationFn: fetchIsapiUnknownUsers });
 }
+/**
+ * To'liq sinxron uchun kalit: varaq yopilib qayta ochilsa ham ishlayotgan sinxron ko'rinadi
+ * (`useIsMutating`) — ikkinchi marta boshlab bo'lmaydi.
+ */
+export const HIK_SYNC_MUTATION_KEY = [...turnstilesKeys.all, 'hik-sync'] as const;
+
 export function useHikSync() {
-  const onSuccess = useInvalidate();
-  return useMutation({ meta, mutationFn: runHikSync, onSuccess });
+  // Qurilmalar sinxroni turniketlarni qo'shishi mumkin — filial soni ham.
+  const onSuccess = useInvalidate(true);
+  return useMutation({ meta, mutationKey: HIK_SYNC_MUTATION_KEY, mutationFn: runHikSync, onSuccess });
 }

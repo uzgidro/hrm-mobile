@@ -19,7 +19,7 @@ import {
   type TurnstileForm,
   type TurnstileRow,
 } from '../utils/turnstiles';
-import { LocationsPicker, useLocationNames } from './TurnstilesBits';
+import { IP_KEYBOARD, LocationsPicker, useLocationNames } from './TurnstilesBits';
 
 export function TurnstileFormSheet({ row, onClose }: { row: TurnstileRow | null; onClose: () => void }) {
   const { t } = useTranslation();
@@ -77,7 +77,7 @@ export function TurnstileFormSheet({ row, onClose }: { row: TurnstileRow | null;
               value={form.ip}
               onChangeText={(v) => set({ ip: v })}
               placeholder="192.168.0.10"
-              keyboardType="decimal-pad"
+              keyboardType={IP_KEYBOARD}
             />
           </View>
           <View style={styles.flex}>

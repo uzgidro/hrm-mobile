@@ -48,6 +48,9 @@ export default {
   saved: 'Saved',
   deleted: 'Deleted',
   actionFailed: 'The action could not be completed',
+  outOfScope: 'Branch not found or outside your scope — you cannot manage this branch',
+  showMore: 'Show more',
+  terminalGroupPlaceholder: 'head-office',
   noAccess: 'No access',
   noAccessHint: 'This section is for system administrators only.',
 } as const;

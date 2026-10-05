@@ -83,6 +83,7 @@ export default {
   offline: 'Offline',
   online: 'Online',
   onlineOf: '{{online}} / {{total}} online',
+  onlineOfPage: 'On this page {{online}} / {{shown}} online · {{total}} in total',
   pickBranch: 'Pick a branch',
   pickLocations: 'Pick locations',
   removeConfirm: '«{{name}}» will be deleted. Earlier records from it are kept.',

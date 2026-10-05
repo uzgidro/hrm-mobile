@@ -15,7 +15,7 @@ import { Button, Segmented, SelectField, Sheet, Text } from '@/ui';
 import { turnstileBranchesQuery } from '../api/queries';
 import { useRegisterIsapi } from '../api/mutations';
 import { EMPTY_ISAPI, buildIsapiBody, onlyDigits, toggleId, type IsapiForm } from '../utils/turnstiles';
-import { LocationsPicker, useLocationNames } from './TurnstilesBits';
+import { IP_KEYBOARD, LocationsPicker, useLocationNames } from './TurnstilesBits';
 
 export function IsapiRegisterSheet({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation();
@@ -67,7 +67,7 @@ export function IsapiRegisterSheet({ onClose }: { onClose: () => void }) {
               value={form.ip}
               onChangeText={(v) => set({ ip: v })}
               placeholder="10.2.90.6"
-              keyboardType="decimal-pad"
+              keyboardType={IP_KEYBOARD}
               required
             />
           </View>

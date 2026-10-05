@@ -5,7 +5,6 @@ import React, { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { getApiErrorMessage } from '@/api/errors';
 import { confirm } from '@/lib/confirm';
 import { toast } from '@/lib/toast';
 import { useAuthStore } from '@/store/authStore';
@@ -22,19 +21,24 @@ import {
   type BranchRow,
 } from '../utils/branches';
 import { BranchFormSheet } from './BranchFormSheet';
-import { KeyValue } from './BranchesBits';
+import { KeyValue, branchActionError } from './BranchesBits';
 
 type Open = { kind: 'view'; row: BranchRow; n: number } | { kind: 'form'; row: BranchRow | null; n: number } | null;
 
-export function BranchesTab() {
+export function BranchesTab({
+  queuedAt,
+  onQueued,
+}: {
+  /** Navbatga qo'yilgan vaqt (id → ms) — ekranda saqlanadi: «Manzillar» tabiga o'tib qaytilsa ham yo'qolmaydi. */
+  queuedAt: Record<number, number>;
+  onQueued: (id: number) => void;
+}) {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const canManage = canManageBranches(user);
   const list = useQuery(branchesQuery());
   const [search, setSearch] = useState('');
   const [open, setOpen] = useState<Open>(null);
-  // Navbatga qo'yilgan vaqt (id → ms): sinxron ko'rinmas, tugma bir daqiqa bosilmaydi (v2).
-  const [queuedAt, setQueuedAt] = useState<Record<number, number>>({});
 
   const rows = filterBranches(list.data ?? [], search);
   const renderRows = () => {
@@ -88,7 +92,7 @@ export function BranchesTab() {
           canManage={canManage}
           // `n` — varaq ochilgan payt (render ichida Date.now() chaqirilmaydi).
           queued={isSyncQueued(queuedAt, open.row.id, open.n)}
-          onQueued={() => setQueuedAt((q) => ({ ...q, [open.row.id]: Date.now() }))}
+          onQueued={() => onQueued(open.row.id)}
           onEdit={() => setOpen({ kind: 'form', row: open.row, n: Date.now() })}
           onClose={() => setOpen(null)}
         />
@@ -135,7 +139,7 @@ function BranchSheet({
       onQueued();
       toast.success(t('branches.syncQueued'));
     } catch (e) {
-      toast.error(getApiErrorMessage(e, t('branches.actionFailed')));
+      toast.error(branchActionError(e, t));
     }
   };
 
@@ -153,7 +157,7 @@ function BranchSheet({
       toast.success(t('branches.deleted'));
       onClose();
     } catch (e) {
-      toast.error(getApiErrorMessage(e, t('branches.actionFailed')));
+      toast.error(branchActionError(e, t));
     }
   };
 

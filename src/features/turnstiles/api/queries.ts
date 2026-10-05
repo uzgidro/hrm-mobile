@@ -13,7 +13,7 @@ import type { AccessList, IsapiDevice, TurnstileDoor, TurnstileRow } from '../ut
 
 export const turnstilesKeys = {
   all: ['turnstiles-admin'] as const,
-  list: (search: string) => [...turnstilesKeys.all, 'list', search] as const,
+  list: (search: string, page: number) => [...turnstilesKeys.all, 'list', search, page] as const,
   locations: (branchId: number | null) => [...turnstilesKeys.all, 'locations', branchId] as const,
   branches: () => [...turnstilesKeys.all, 'branches'] as const,
   doors: (turnstileId: number) => [...turnstilesKeys.all, 'doors', turnstileId] as const,
@@ -21,16 +21,33 @@ export const turnstilesKeys = {
   accessLists: () => [...turnstilesKeys.all, 'access-lists'] as const,
 };
 
+/** Turniketlar sahifasi hajmi (server `OptionalPage` standarti) — 100+ qurilma bir varaqda chizilmaydi. */
+export const TURNSTILES_PAGE_SIZE = 50;
+
+export interface PagedTurnstiles {
+  items: TurnstileRow[];
+  total: number;
+  pages: number;
+}
+
 /**
  * Turniketlar — qidiruv SERVERDA (nomi, ko'rinadigan nomi, IP, indeks kodi; kirill/lotin farqsiz):
- * v2 `useTurnstiles`. Sahifasiz ro'yxat; filial doirasini server o'zi qo'yadi (AKT — o'z filiali).
+ * v2 `useTurnstiles`. Server sahifalaydi (`page`/`size` berilsa konvert qaytaradi); filial doirasini
+ * server o'zi qo'yadi (AKT — o'z filiali). Eski server yalang massiv qaytarsa — bitta sahifa.
  */
-export function turnstilesQuery(search: string) {
+export function turnstilesQuery(search: string, page = 1) {
   const term = search.trim();
   return queryOptions({
-    queryKey: turnstilesKeys.list(term),
+    queryKey: turnstilesKeys.list(term, page),
     queryFn: () =>
-      apiClient.get(TURNSTILES, { params: term ? { search: term } : {} }).then((r) => unwrapList<TurnstileRow>(r.data)),
+      apiClient
+        .get(TURNSTILES, { params: { page, size: TURNSTILES_PAGE_SIZE, ...(term ? { search: term } : {}) } })
+        .then((r): PagedTurnstiles => {
+          const items = unwrapList<TurnstileRow>(r.data);
+          const meta = (r.data && !Array.isArray(r.data) ? r.data : {}) as { total?: number; pages?: number };
+          const total = meta.total ?? items.length;
+          return { items, total, pages: meta.pages ?? Math.max(1, Math.ceil(total / TURNSTILES_PAGE_SIZE)) };
+        }),
     placeholderData: keepPreviousData,
   });
 }

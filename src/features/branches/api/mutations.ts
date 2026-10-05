@@ -25,13 +25,21 @@ export const deleteLocation = (id: number) => apiClient.delete(LOCATION(id)).the
 
 const meta = { skipErrorToast: true };
 
+/**
+ * Turniketlar ekranining kesh ildizi — LITERAL (funksiyalararo import yo'q): u yerdagi manzil va filial
+ * tanlagichlari (`turnstile` formasi, ISAPI terminali) shu filial/manzillarni ko'rsatadi.
+ */
+const TURNSTILES_ADMIN_KEY = ['turnstiles-admin'] as const;
+
 function useInvalidate() {
   const qc = useQueryClient();
-  // Filial nomi/viloyati umumiy filial katalogida ham bor (ma'lumotnoma, xat formasi — `org-branches`).
+  // Filial nomi/viloyati umumiy filial katalogida ham bor (ma'lumotnoma, xat formasi — `org-branches`);
+  // manzil va filial Turniketlar ekranining tanlagichlarida ham.
   return () =>
     Promise.all([
       qc.invalidateQueries({ queryKey: branchesKeys.all }),
       qc.invalidateQueries({ queryKey: ['org-branches'] }),
+      qc.invalidateQueries({ queryKey: TURNSTILES_ADMIN_KEY }),
     ]);
 }
 

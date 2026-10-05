@@ -185,3 +185,18 @@ export const SYNC_COOLDOWN_MS = 60_000;
 
 export const isSyncQueued = (queuedAt: Record<number, number>, id: number, now: number) =>
   queuedAt[id] != null && now - queuedAt[id]! < SYNC_COOLDOWN_MS;
+
+/**
+ * Filial doirasidan tashqarida (AKT `akt_branch_ids`, filialga bog'langan admin hisobi) tahrir / Hik'ga
+ * yuborish / o'chirish: server mavjudlikni oshkor qilmaslik uchun umumiy 404 `not_found` qaytaradi
+ * (`assert_branch_access`; ba'zi yo'llar 403). v2 bu tugmalarni hammaga ko'rsatadi (paritet) — biz faqat
+ * «Topilmadi» o'rniga tushunarli matn chiqaramiz. Aniq kodli 404 (`branch_not_found` …) — haqiqatan yo'q,
+ * uning o'z matni qoladi.
+ */
+export function isOutOfScopeError(e: unknown): boolean {
+  const res = (e as { response?: { status?: number; data?: unknown } } | null)?.response;
+  if (res?.status === 403) return true;
+  if (res?.status !== 404) return false;
+  const code = (res.data as { code?: unknown } | null | undefined)?.code;
+  return code == null || code === 'not_found';
+}

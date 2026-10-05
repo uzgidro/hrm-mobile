@@ -4,7 +4,7 @@
 // tugma chizilmaydi, o'rniga izoh.
 import React from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
-import { useQuery } from '@tanstack/react-query';
+import { useIsMutating, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { getApiErrorMessage } from '@/api/errors';
 import { confirm } from '@/lib/confirm';
@@ -12,7 +12,7 @@ import { toast } from '@/lib/toast';
 import { useAuthStore } from '@/store/authStore';
 import { Badge, Button, EmptyState, ErrorState, ListRow, Sheet, Skeleton, Text } from '@/ui';
 import { accessListsQuery } from '../api/queries';
-import { useHikSync } from '../api/mutations';
+import { HIK_SYNC_MUTATION_KEY, useHikSync } from '../api/mutations';
 import { canRunHikSync } from '../utils/turnstiles';
 
 export function HikSyncSheet({ onClose }: { onClose: () => void }) {
@@ -21,8 +21,12 @@ export function HikSyncSheet({ onClose }: { onClose: () => void }) {
   const canSync = canRunHikSync(user);
   const lists = useQuery(accessListsQuery());
   const sync = useHikSync();
+  // Varaq sinxron paytida yopilib qayta ochilsa, `sync` yangi (bo'sh) mutatsiya — ishlayotganini
+  // umumiy mutatsiya keshidan bilamiz.
+  const running = useIsMutating({ mutationKey: HIK_SYNC_MUTATION_KEY }) > 0;
 
   const run = async () => {
+    if (running) return;
     const ok = await confirm({
       title: t('turnstiles.syncTitle'),
       message: t('turnstiles.syncHint'),
@@ -66,7 +70,7 @@ export function HikSyncSheet({ onClose }: { onClose: () => void }) {
             label={t('turnstiles.syncRun')}
             icon="refresh"
             onPress={() => void run()}
-            loading={sync.isPending}
+            loading={running}
             full
           />
         ) : (

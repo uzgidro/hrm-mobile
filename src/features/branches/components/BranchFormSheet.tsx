@@ -4,12 +4,12 @@
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Switch, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { getApiErrorMessage } from '@/api/errors';
 import { toast } from '@/lib/toast';
 import { useTheme } from '@/theme/ThemeProvider';
 import { FormInput } from '@/components/FormInput';
 import { Button, Card, Chip, Sheet, Text } from '@/ui';
 import { useSaveBranch } from '../api/mutations';
+import { branchActionError } from './BranchesBits';
 import {
   buildBranchBody,
   knownRegions,
@@ -49,7 +49,8 @@ export function BranchFormSheet({
       toast.success(t('branches.saved'));
       onClose();
     } catch (e) {
-      setError(getApiErrorMessage(e, t('branches.actionFailed')));
+      // Server maydon xatosi (`validation_error`) — o'z matni; doiradan tashqari filial — tushunarli matn.
+      setError(branchActionError(e, t));
     }
   };
 
@@ -155,7 +156,7 @@ export function BranchFormSheet({
               label={t('branches.terminalGroup')}
               value={form.terminalGroup}
               onChangeText={(v) => set({ terminalGroup: v })}
-              placeholder="bosh-bino"
+              placeholder={t('branches.terminalGroupPlaceholder')}
             />
             <Text variant="caption" tone="subtle" style={styles.hint}>
               {t('branches.terminalGroupHint')}

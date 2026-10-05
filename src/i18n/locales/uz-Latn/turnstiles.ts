@@ -84,6 +84,7 @@ export default {
   offline: 'Oflayn',
   online: 'Onlayn',
   onlineOf: '{{online}} / {{total}} onlayn',
+  onlineOfPage: 'Bu sahifada {{online}} / {{shown}} onlayn · jami {{total}} ta',
   pickBranch: 'Filialni tanlang',
   pickLocations: 'Manzillarni tanlang',
   removeConfirm: "«{{name}}» o'chiriladi. Undan kelgan eski yozuvlar saqlanib qoladi.",

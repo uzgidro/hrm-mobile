@@ -48,6 +48,9 @@ export default {
   saved: 'Saqlandi',
   deleted: "O'chirildi",
   actionFailed: "Amalni bajarib bo'lmadi",
+  outOfScope: "Filial topilmadi yoki sizning doirangizda emas — bu filialni boshqara olmaysiz",
+  showMore: "Yana ko'rsatish",
+  terminalGroupPlaceholder: 'bosh-bino',
   noAccess: "Ruxsat yo'q",
   noAccessHint: "Bu bo'lim faqat tizim administratori uchun.",
 } as const;
