@@ -1,5 +1,7 @@
 import type { User, Employee } from '../../types';
 import {
+  canAdministerBranch,
+  canSwitchBranchScope,
   hasSupervisor,
   getMultiOrgRoles,
   getMultiOrgRole,
@@ -855,5 +857,71 @@ describe('canManageStructure / canManageStaff (v2 auth/canManage + staff)', () =
   ])('%s', (_n, user, structure, staff) => {
     expect(canManageStructure(user)).toBe(structure);
     expect(canManageStaff(user)).toBe(staff);
+  });
+});
+
+// Tabel sozlamalari — v2 `canAdministerBranch` / `canSwitchBranchScope` (server `assert_branch_admin`).
+
+describe('canAdministerBranch / canSwitchBranchScope (v2 TabelSettingsPage)', () => {
+  const asUser = (x: Record<string, unknown>) => x as unknown as User;
+  const hrEmp = (extra: Record<string, unknown> = {}, branchId = 5) =>
+    asUser({
+      id: 1,
+      type: 'employee',
+      employee: { id: 1, is_multi_org_user: true, multi_org_employee_role: ['hr'], department: { organization_branch_id: branchId } },
+      ...extra,
+    });
+  const plainEmp = (extra: Record<string, unknown> = {}) => asUser({ id: 2, type: 'employee', employee: { id: 2 }, ...extra });
+
+  it('master-admin, admin hisobi va ijro apparati kadri — har filialni', () => {
+    expect(canAdministerBranch(asUser({ id: 9, type: 'master-admin' }), 7)).toBe(true);
+    expect(canAdministerBranch(asUser({ id: 9, type: 'admin' }), 7)).toBe(true);
+    expect(canAdministerBranch(hrEmp({ is_executive_hr: true }), 7)).toBe(true);
+    // /me bayrog'i bo'lmasa — bosh filial a'zoligidan (v2 isExecutiveHR).
+    expect(canAdministerBranch(hrEmp({}, 1), 7, { execBranchId: 1 })).toBe(true);
+    expect(canAdministerBranch(hrEmp({}, 5), 7, { execBranchId: 1 })).toBe(false);
+    // Server hukmi `false` — filiallardan qayta hisoblanmaydi.
+    expect(canAdministerBranch(hrEmp({ is_executive_hr: false }, 1), 7, { execBranchId: 1 })).toBe(false);
+  });
+
+  it("ministr — yo'q (server 403); filial kadri — faqat o'z filiali", () => {
+    const ministr = asUser({ id: 3, type: 'employee', employee: { id: 3, is_multi_org_user: true, multi_org_employee_role: 'ministr' } });
+    expect(canAdministerBranch(ministr, 5)).toBe(false);
+    expect(canAdministerBranch(hrEmp(), 5)).toBe(true);
+    expect(canAdministerBranch(hrEmp(), 6)).toBe(false);
+    expect(canAdministerBranch(null, 5)).toBe(false);
+    expect(canAdministerBranch(asUser({ id: 9, type: 'master-admin' }), null)).toBe(false);
+  });
+
+  it('filial rahbari — o‘z filiali; rahbarlar ro‘yxati faqat direktor / AKT', () => {
+    for (const k of [
+      'director_branch_ids',
+      'akt_branch_ids',
+      'hr_branch_ids',
+      'deputy_branch_ids',
+      'accounting_branch_ids',
+      'legal_branch_ids',
+      'chancellery_branch_ids',
+      'nurse_branch_ids',
+      'transport_branch_ids',
+      'transport_approver_branch_ids',
+    ]) {
+      expect({ k, ok: canAdministerBranch(plainEmp({ [k]: [5] }), 5) }).toEqual({ k, ok: true });
+      expect({ k, ok: canAdministerBranch(plainEmp({ [k]: [5] }), 6) }).toEqual({ k, ok: false });
+      const leaders = k === 'director_branch_ids' || k === 'akt_branch_ids';
+      expect({ k, ok: canAdministerBranch(plainEmp({ [k]: [5] }), 5, { leadersOnly: true }) }).toEqual({ k, ok: leaders });
+    }
+    expect(canAdministerBranch(plainEmp(), 5)).toBe(false);
+  });
+
+  it('«Barcha filiallar» doirasi: bosh admin (ministr ham), o‘rinbosar, ijro apparati kadri', () => {
+    const ministr = asUser({ id: 3, type: 'employee', employee: { id: 3, is_multi_org_user: true, multi_org_employee_role: 'ministr' } });
+    const deputy = asUser({ id: 4, type: 'employee', employee: { id: 4, is_multi_org_user: true, multi_org_employee_role: 'deputy' } });
+    expect(canSwitchBranchScope(asUser({ id: 9, type: 'master-admin' }), null)).toBe(true);
+    expect(canSwitchBranchScope(ministr, null)).toBe(true);
+    expect(canSwitchBranchScope(deputy, null)).toBe(true);
+    expect(canSwitchBranchScope(hrEmp({}, 1), 1)).toBe(true);
+    expect(canSwitchBranchScope(hrEmp({}, 5), 1)).toBe(false);
+    expect(canSwitchBranchScope(plainEmp(), 1)).toBe(false);
   });
 });

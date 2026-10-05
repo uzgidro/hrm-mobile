@@ -66,6 +66,13 @@ export interface User {
   transport_approver_branch_ids?: number[];
   /** Branches where this user is the designated accountant (Tabel). */
   accounting_branch_ids?: number[];
+  /** Tabel sozlamalarida «Yuridik bo'lim» qilib biriktirilgan filiallar (auth/me). */
+  legal_branch_ids?: number[];
+  /**
+   * Ijro apparati (bosh filial) kadri — barcha filiallarni boshqaradi. Server hukmi (`/me`,
+   * `scoping.is_executive_hr`); bo'lmasa v2 kabi filiallar ro'yxatidan hisoblanadi.
+   */
+  is_executive_hr?: boolean;
 }
 
 export interface Employee {

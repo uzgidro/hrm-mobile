@@ -34,6 +34,7 @@ import password from './password';
 import tabs from './tabs';
 import kpp from './kpp';
 import monitoring from './monitoring';
+import tabelSettings from './tabelSettings';
 import dictionaries from './dictionaries';
 import customFields from './customFields';
 import turnstiles from './turnstiles';
@@ -98,6 +99,7 @@ export default {
   tabs,
   kpp,
   monitoring,
+  tabelSettings,
   dictionaries,
   customFields,
   turnstiles,

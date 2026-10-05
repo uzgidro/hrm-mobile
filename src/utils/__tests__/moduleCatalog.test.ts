@@ -35,8 +35,11 @@ describe('modul katalogi — v2 paritet', () => {
 
   it("ready:false modul hech kimga, hatto master adminga ham ko'rinmaydi", () => {
     const notReady = CATALOG.filter((e) => !isModuleReady(e.page));
-    expect(notReady.length).toBeGreaterThan(0);
     for (const e of notReady) expect(canAccessPage(master, e.page)).toBe(false);
+  });
+
+  it("W6 dan keyin v2 katalogidagi barcha modullar mobil'da tayyor (designSystem katalogda yo'q — spec §13)", () => {
+    expect(CATALOG.filter((e) => !isModuleReady(e.page)).map((e) => e.page)).toEqual([]);
   });
 
   it("nav.modules override modulni o'chiradi (katalogdan ham)", () => {
@@ -250,6 +253,24 @@ describe('modul katalogi — v2 paritet', () => {
     expect(CATALOG.find((e) => e.page === 'dictionaries')?.route).toBe('/malumotnomalar');
   });
 
+  it("tabel sozlamalari — v2 ADMIN_HR: bosh admin va kadr; ministr, o'rinbosar, oddiy xodim, filial direktori, admin hisobi va post yo'q; route /tabel-sozlamalari", () => {
+    const ministr = emp({ employee: { id: 10, is_multi_org_user: true, multi_org_employee_role: 'ministr' } });
+    const deputy = emp({ employee: { id: 10, is_multi_org_user: true, multi_org_employee_role: 'deputy' } });
+    expect(isModuleReady('tabelSettings')).toBe(true);
+    expect(canAccessPage(master, 'tabelSettings')).toBe(true);
+    expect(canAccessPage(hr, 'tabelSettings')).toBe(true);
+    for (const x of [ministr, deputy, emp(), emp({ director_branch_ids: [1] }), emp({ akt_branch_ids: [1] })]) {
+      expect(canAccessPage(x, 'tabelSettings')).toBe(false);
+    }
+    expect(canAccessPage(u({ id: 5, type: 'admin' }), 'tabelSettings')).toBe(false);
+    expect(canAccessPage(kppAcc, 'tabelSettings')).toBe(false);
+    expect(canAccessPage(monAcc, 'tabelSettings')).toBe(false);
+    // Bosh admin `nav.modules` da rollarni kengaytirsa — v2 kabi o'sha rollar ko'radi.
+    setNavOverrides({ tabelSettings: { roles: ['masterAdmin', 'hr', 'employee'] } });
+    expect(canAccessPage(emp({ director_branch_ids: [1] }), 'tabelSettings')).toBe(true);
+    expect(CATALOG.find((e) => e.page === 'tabelSettings')?.route).toBe('/tabel-sozlamalari');
+  });
+
   it('har katalog yozuvining nomi 4 tilda tarjima qilingan (xom kalit chiqmaydi)', async () => {
     for (const lng of ['uz-Latn', 'uz-Cyrl', 'ru', 'en']) {
       await i18n.changeLanguage(lng);
@@ -262,8 +283,7 @@ describe('modul katalogi — v2 paritet', () => {
 
 describe("marshrut to'qnashuvi yo'q", () => {
   it("app/X.tsx va app/(tabs)/X.tsx bir vaqtda yo'q (expo-router guruh ichidagisini tanlab, stack ekrani ochilmay qoladi)", () => {
-    const fs = require('fs') as typeof import('fs');
-    const path = require('path') as typeof import('path');
+    // `fs` / `path` — fayl boshidagi importlar.
     const root = path.join(__dirname, '../../..');
     const tabs = fs.readdirSync(path.join(root, 'app/(tabs)')).filter((f) => f.endsWith('.tsx') && !f.startsWith('_'));
     const clashes = tabs.filter((f) => fs.existsSync(path.join(root, 'app', f)));

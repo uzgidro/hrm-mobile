@@ -498,6 +498,17 @@ export const REGISTRATION_REJECT = (id: number) => `registrations/${id}/reject`;
 // Manzillar — `require_system_admin`, AKT xodimi o'z filiali doirasida (server majburlaydi).
 export const ORGANIZATION_BRANCH = (id: number) => `organization-branches/${id}`;
 export const ORGANIZATION_BRANCH_SYNC_HIK = (id: number) => `organization-branches/${id}/sync-employees-to-hik`;
+// Tabel sozlamalari (web v2 TabelSettingsPage). Yozuvlar — filial egaligi (`assert_branch_admin`);
+// rahbar qo'shish/o'chirish — global rollar yoki filialning direktor / AKT rahbari (`admin_roles_only`).
+// Rahbarni o'chirishda `?role=` — faqat o'sha rol olinadi (xodimda bir necha rol bo'lishi mumkin).
+export const ORGANIZATION_BRANCH_LEADER = (id: number, employeeId: number) =>
+  `organization-branches/${id}/leaders/${employeeId}`;
+export const ORGANIZATION_BRANCH_TABEL_TEMPLATE = (id: number) => `organization-branches/${id}/tabel-template`;
+export const ORGANIZATION_BRANCH_LOGO = (id: number) => `organization-branches/${id}/logo`;
+export const ORGANIZATION_BRANCH_DOC_TEMPLATE = (id: number, docType: string) =>
+  `organization-branches/${id}/document-template/${docType}`;
+// Filial devonxonasi keyingi hujjatga beradigan ro'yxat raqami — faqat ko'rish, hech narsa band qilinmaydi.
+export const LETTER_NEXT_REG_NUMBER = 'letters/next-registration-number';
 export const LOCATION = (id: number) => `locations/${id}`;
 // Turniketlar (web v2 TurnstilesPage). Ro'yxat har qanday xodimga ochiq va `event_token` /
 // `rtsp_stream_url` ni QAYTARMAYDI; yozish, eshiklar, ISAPI terminallari — `require_system_admin`

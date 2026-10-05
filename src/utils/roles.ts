@@ -125,7 +125,7 @@ export function getAllowedBranchIds(user?: User | null): number[] {
  * M2M list hid the trip buttons from those KADR accounts while the API would have
  * accepted the write. The web had the same bug and fixed it the same way.
  */
-function employeeBranchIds(user?: User | null): number[] {
+export function employeeBranchIds(user?: User | null): number[] {
   const home = user?.employee?.department?.organization_branch_id;
   const ids = getAllowedBranchIds(user).map(Number);
   return home != null ? Array.from(new Set([Number(home), ...ids])) : ids;
@@ -289,6 +289,55 @@ export function isMonitoringOperator(user?: User | null): boolean {
 /** An `admin` account — a branch's system administrator, with no employee card. */
 export function isBranchAdmin(user?: User | null): boolean {
   return String(user?.type) === 'admin';
+}
+
+/**
+ * Ijro apparati (bosh filial) kadri — web v2 `isExecutiveHR` 1:1. Server hukmi (`/me.is_executive_hr`,
+ * yozish darvozalari ishlatadigan predikat) ustun; bayroqsiz eski `/me` uchun — kadr bosh filialga
+ * tegishlimi (`employeeBranchIds`, M2M emas).
+ */
+function isExecutiveHR(user: User | null | undefined, execBranchId: number | null): boolean {
+  if (typeof user?.is_executive_hr === 'boolean') return user.is_executive_hr;
+  if (!isHR(user) || execBranchId == null) return false;
+  return employeeBranchIds(user).map(Number).includes(Number(execBranchId));
+}
+
+/** «Barcha filiallar» doirasiga o'ta oladimi — web v2 `canSwitchBranchScope` 1:1. */
+export function canSwitchBranchScope(user: User | null | undefined, execBranchId: number | null): boolean {
+  return isMasterAdmin(user) || isDeputy(user) || isExecutiveHR(user, execBranchId);
+}
+
+/**
+ * BITTA filialning sozlamalari, blanki, shtampi va rahbarlar ro'yxatini kim o'zgartiradi — web v2
+ * `canAdministerBranch` 1:1 (server `assert_branch_admin`): master-admin / admin / ijro apparati kadri —
+ * har filial; filial kadri — o'z filial(lar)i; filialning ro'yxatdagi rahbari — o'sha filial.
+ * `leadersOnly` (rahbarlar ro'yxatining o'zi) — global rollardan tashqari faqat direktor / AKT rahbari
+ * (server `admin_roles_only`). Ministr — yo'q: server bu yerda uni rad etadi (`isSiteMasterAdmin`).
+ */
+export function canAdministerBranch(
+  user: User | null | undefined,
+  branchId: number | null | undefined,
+  opts: { leadersOnly?: boolean; execBranchId?: number | null } = {},
+): boolean {
+  if (branchId == null) return false;
+  const bid = Number(branchId);
+  if (isSiteMasterAdmin(user) || isBranchAdmin(user) || isExecutiveHR(user, opts.execBranchId ?? null)) return true;
+  if (isHR(user) && employeeBranchIds(user).map(Number).includes(bid)) return true;
+  const buckets = opts.leadersOnly
+    ? [user?.director_branch_ids, user?.akt_branch_ids]
+    : [
+        user?.director_branch_ids,
+        user?.akt_branch_ids,
+        user?.hr_branch_ids,
+        user?.deputy_branch_ids,
+        user?.accounting_branch_ids,
+        user?.legal_branch_ids,
+        user?.chancellery_branch_ids,
+        user?.nurse_branch_ids,
+        user?.transport_branch_ids,
+        user?.transport_approver_branch_ids,
+      ];
+  return buckets.some((ids) => (ids ?? []).map(Number).includes(bid));
 }
 
 /** Buyruq turlarini yozishi mumkinmi — web v2 `auth/canManage.ts` `canManageOrderTypes` 1:1. */
@@ -516,7 +565,7 @@ const MODULE_FOR_PAGE: Partial<Record<PageKey, ModuleDef>> = {
   holidays: { key: 'holidays', defaultRoles: ADMIN_HR },
   terminals: { key: 'hik', defaultRoles: ADMIN_ONLY, systemAdmin: true },
 
-  // ── v3: qolgan v2 modullari. `ready: false` — ekran hali yo'q (W2–W6). ──
+  // ── v3: qolgan v2 modullari (W2–W6). `ready: false` — ekran hali yo'q; W6 dan keyin bunday modul yo'q. ──
   services: { key: 'services', defaultRoles: [...ALL, 'guest'] },
   zoom: { key: 'zoom', defaultRoles: ALL },
   vehicles: { key: 'vehicles', defaultRoles: ALL, gates: [needsFleet] },
@@ -540,7 +589,7 @@ const MODULE_FOR_PAGE: Partial<Record<PageKey, ModuleDef>> = {
     gates: [reportsGate],
   },
   dictionaries: { key: 'dictionaries', defaultRoles: ALL },
-  tabelSettings: { key: 'tabelSettings', defaultRoles: ADMIN_HR, ready: false },
+  tabelSettings: { key: 'tabelSettings', defaultRoles: ADMIN_HR },
   monitoring: { key: 'monitoring', defaultRoles: ['masterAdmin', 'monitoring'] },
   kpp: { key: 'kpp', defaultRoles: ['kpp', 'masterAdmin'] },
   videoGuide: { key: 'videoGuide', defaultRoles: ALL },
