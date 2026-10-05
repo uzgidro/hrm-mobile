@@ -40,6 +40,7 @@ import {
   opsActions,
   overallStatus,
   recoveryHasProblems,
+  systemReasonKey,
   type OpsAction,
 } from '../utils/sysHealth';
 
@@ -248,6 +249,8 @@ export default function SystemHealthScreen() {
   };
 
   const changedAt = state.data?.changed_at;
+  // Server yozgan tizim sababi (resume/recovery) — tarjimada; erkin matn — o'zicha.
+  const reasonKey = systemReasonKey(state.data?.reason);
 
   return (
     <View style={styles.root}>
@@ -280,7 +283,7 @@ export default function SystemHealthScreen() {
             </Text>
             {!!state.data?.reason && (
               <Text variant="label" tone="muted" testID="sys-ops-reason">
-                {state.data.reason}
+                {reasonKey ? t(reasonKey) : state.data.reason}
               </Text>
             )}
             {!!changedAt && (

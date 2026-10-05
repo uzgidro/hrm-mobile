@@ -187,6 +187,14 @@ describe('SystemHealthScreen (v2 SystemHealthPage + SystemOpsPanel)', () => {
     expect(await screen.findByTestId('sys-report')).toHaveTextContent(/"incident_id": 9/);
   });
 
+  it("server yozgan sabab («Ish rejimiga qaytarildi») ruschada tarjima qilinadi", async () => {
+    await i18n.changeLanguage('ru');
+    setUser(master);
+    mock.onGet(SYSTEM_OPS_STATE).reply(200, { mode: 'running', reason: 'Ish rejimiga qaytarildi' });
+    await renderWithProviders(<SystemHealthScreen />);
+    expect(await screen.findByTestId('sys-ops-reason')).toHaveTextContent('Возврат в рабочий режим');
+  });
+
   it("to'xtatilgan rejim: tiklash (rollback tanlovi) va ish rejimiga qaytarish (tasdiq bilan)", async () => {
     setUser(master);
     mock.onGet(SYSTEM_OPS_STATE).reply(200, { mode: 'maintenance', reason: 'Rejali ish', changed_by_name: 'Admin' });

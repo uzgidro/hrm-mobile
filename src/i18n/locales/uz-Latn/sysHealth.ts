@@ -28,6 +28,8 @@ export default {
   ops: 'Tizim boshqaruvi',
   opsHint: "Faqat bosh administrator uchun. Bu amallar butun tizimga ta'sir qiladi.",
   changedBy: "O'zgartirdi",
+  reasonResume: 'Ish rejimiga qaytarildi',
+  reasonRecovery: 'Tiklash rejimi',
   shutdown: "Avariyaviy to'xtatish",
   shutdownWarn:
     "Tizim avariyaviy rejimga o'tadi: barcha foydalanuvchilar chiqarib yuboriladi va yangi kirish to'xtaydi. Qaytarish faqat shu sahifadan «Ish rejimiga qaytarish» orqali bo'ladi.",

@@ -9,6 +9,7 @@ import {
   recoveryBody,
   recoveryHasProblems,
   shutdownBody,
+  systemReasonKey,
 } from '../sysHealth';
 
 describe('sysHealth utils (v2 SystemHealthPage + SystemOpsPanel)', () => {
@@ -53,5 +54,17 @@ describe('sysHealth utils (v2 SystemHealthPage + SystemOpsPanel)', () => {
   });
   it("hodisa turlari — server models/system_ops.py dagi to'rttasi (restore — zaxira nusxadan tiklash)", () => {
     expect([...INCIDENT_KINDS].sort()).toEqual(['detected', 'recovery', 'restore', 'shutdown']);
+  });
+});
+
+describe('systemReasonKey — server yozgan tizim sabablari tarjimada', () => {
+  it("ma'lum sabablar (server system_ops.py) — kalit; bo'shliq/registr farqi yo'q", () => {
+    expect(systemReasonKey('Ish rejimiga qaytarildi')).toBe('sysHealth.reasonResume');
+    expect(systemReasonKey('  ish rejimiga qaytarildi ')).toBe('sysHealth.reasonResume');
+    expect(systemReasonKey('Tiklash rejimi')).toBe('sysHealth.reasonRecovery');
+  });
+  it("administrator yozgan erkin matn — null (server matni ko'rsatiladi)", () => {
+    expect(systemReasonKey('Rejali ish')).toBeNull();
+    expect(systemReasonKey(null)).toBeNull();
   });
 });

@@ -10,6 +10,20 @@ export interface OpsState {
   changed_by_name?: string | null;
 }
 
+/**
+ * `state.reason` — odatda administrator yozgan erkin matn, lekin ba'zi rejim o'zgarishlarida uni
+ * SERVER o'zbekcha yozadi (`system_ops.py`: `resume` → «Ish rejimiga qaytarildi», `recovery` →
+ * «Tiklash rejimi»). Shularni tarjima kalitiga o'giramiz; qolgani — server matni.
+ */
+const SYSTEM_REASONS: Record<string, string> = {
+  'ish rejimiga qaytarildi': 'sysHealth.reasonResume',
+  'tiklash rejimi': 'sysHealth.reasonRecovery',
+};
+
+export function systemReasonKey(reason?: string | null): string | null {
+  return SYSTEM_REASONS[(reason ?? '').trim().toLowerCase()] ?? null;
+}
+
 export interface SysCheck {
   component: string;
   status: string;

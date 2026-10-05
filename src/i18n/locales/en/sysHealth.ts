@@ -28,6 +28,8 @@ export default {
   ops: 'System control',
   opsHint: 'Master administrator only. These actions affect the whole system.',
   changedBy: 'Changed by',
+  reasonResume: 'Returned to normal operation',
+  reasonRecovery: 'Recovery mode',
   shutdown: 'Emergency shutdown',
   shutdownWarn:
     'The system switches to emergency mode: all users are signed out and new sign-ins stop. It can only be brought back from this page with «Return to operating mode».',
