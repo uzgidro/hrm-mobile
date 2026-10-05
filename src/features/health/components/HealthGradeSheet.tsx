@@ -86,6 +86,7 @@ export function HealthGradeSheet({ row, day, onClose }: { row: HealthRosterRow; 
               testID={`health-grade-${s}`}
               label={t(`health.status_${s}`)}
               tone={STATUS_TONE[s]}
+              tintSelected
               selected={form.status === s}
               onPress={() => set({ status: s })}
             />
@@ -134,7 +135,7 @@ export function HealthGradeSheet({ row, day, onClose }: { row: HealthRosterRow; 
             testID="health-remove"
             label={t('common.delete')}
             icon="trash"
-            variant="ghost"
+            variant="dangerGhost"
             onPress={doRemove}
             loading={remove.isPending}
             full

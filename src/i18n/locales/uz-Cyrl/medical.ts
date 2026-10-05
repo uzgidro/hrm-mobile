@@ -27,6 +27,7 @@ export default {
   history: 'Кўриклар тарихи',
   noCheckups: 'Кўрик ёзуви йўқ',
   annualIndexes: 'Йиллик индекслар',
+  setBy: 'Белгилаган',
   addCheckup: 'Кўрик қўшиш',
   editCheckup: 'Кўрикни таҳрирлаш',
   setIndex: 'Йиллик индекс',

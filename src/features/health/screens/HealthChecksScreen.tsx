@@ -50,6 +50,8 @@ import {
   type HealthRosterRow,
 } from '../utils/health';
 
+const LIST_MAX_WIDTH = 960;
+
 export default function HealthChecksScreen() {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
@@ -108,7 +110,8 @@ export default function HealthChecksScreen() {
     }
   };
 
-  const basis = sizeClass === 'compact' ? '47%' : '23%';
+  const compact = sizeClass === 'compact';
+  const basis = compact ? '47%' : '23%';
   const tiles = [
     {
       id: 'checked',
@@ -150,6 +153,17 @@ export default function HealthChecksScreen() {
     return rows.map((r) => {
       const st = r.status ?? '';
       const subtitle = [r.position, r.note ? `${t('health.note')}: ${r.note}` : null].filter(Boolean).join(' · ');
+      const badge = (
+        <Badge
+          testID={`health-badge-${r.employee_id}`}
+          label={
+            st
+              ? `${t(`health.status_${st}`, { defaultValue: r.label ?? st })}${untilSuffix(r, day)}`
+              : t('health.notChecked')
+          }
+          tone={st ? (STATUS_TONE[st] ?? 'neutral') : 'neutral'}
+        />
+      );
       return (
         <ListRow
           key={r.employee_id}
@@ -157,17 +171,10 @@ export default function HealthChecksScreen() {
           left={<Avatar name={r.legal_name || '?'} uri={r.photo_path} size={40} />}
           title={r.legal_name || '—'}
           subtitle={subtitle || undefined}
-          right={
-            <Badge
-              testID={`health-badge-${r.employee_id}`}
-              label={
-                st
-                  ? `${t(`health.status_${st}`, { defaultValue: r.label ?? st })}${untilSuffix(r, day)}`
-                  : t('health.notChecked')
-              }
-              tone={st ? (STATUS_TONE[st] ?? 'neutral') : 'neutral'}
-            />
-          }
+          // Telefonda nishon ism ostida — o'ng ustunda ismni «Amirsaidov B…» gacha qisardi.
+          below={compact ? <View style={styles.below}>{badge}</View> : undefined}
+          // O'ram: Badge o'zi `alignSelf: flex-start` — qatorda tepaga yopishmasin, markazda tursin.
+          right={compact ? undefined : <View>{badge}</View>}
           onPress={canCheck ? () => setEditing({ row: r, n: Date.now() }) : undefined}
         />
       );
@@ -176,7 +183,8 @@ export default function HealthChecksScreen() {
 
   return (
     <View style={styles.root}>
-      <Screen refreshing={full.isRefetching} onRefresh={refresh}>
+      {/* Kunlik ro'yxat — keng ekranda 1250px'ga cho'zilmasin (formalar 600–640, ro'yxat 960). */}
+      <Screen refreshing={full.isRefetching} onRefresh={refresh} maxWidth={LIST_MAX_WIDTH}>
         <PageHeader title={t('health.title')} subtitle={t('health.subtitle')} />
         <View style={styles.selectors}>
           {showPicker && (
@@ -265,4 +273,5 @@ const styles = StyleSheet.create({
   flex: { flexGrow: 1, flexBasis: 160 },
   tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 12 },
   filters: { gap: 10, marginBottom: 12 },
+  below: { marginTop: 4 },
 });

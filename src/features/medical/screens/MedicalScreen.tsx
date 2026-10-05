@@ -118,7 +118,8 @@ export default function MedicalScreen() {
   const pages = pageCount(list.data?.total ?? 0, MEDICAL_PAGE_SIZE);
   const folded = foldedCount(filters);
   const active = activeFilterCount(filters);
-  const basis = sizeClass === 'compact' ? '47%' : '23%';
+  const compact = sizeClass === 'compact';
+  const basis = compact ? '47%' : '23%';
   const now = dayjs().year();
 
   const pickerOptions = (
@@ -275,37 +276,47 @@ export default function MedicalScreen() {
               <EmptyState title={t('medical.empty')} />
             )
           ) : (
-            rows.map((r) => (
-              <ListRow
-                key={r.id}
-                testID={`medical-row-${r.id}`}
-                title={r.legal_name || '—'}
-                subtitle={rowSubtitle(r) || undefined}
-                left={<Avatar name={r.legal_name || '?'} uri={r.photo_thumb_path || r.photo_path} size={36} />}
-                right={
-                  <View style={styles.right}>
-                    {!!r.status && (
+            rows.map((r) => {
+              const marks = (
+                <>
+                  {/* Badge o'zi `alignSelf: flex-start` — o'ram qatorda sana bilan markazda turishi uchun. */}
+                  {!!r.status && (
+                    <View>
                       <Badge
                         label={t(`medical.status_${r.status}`, { defaultValue: r.status })}
                         tone={statusTone(r.status)}
                       />
-                    )}
-                    {!!r.annual_index && (
+                    </View>
+                  )}
+                  {!!r.annual_index && (
+                    <View>
                       <Badge
                         label={`${t(`medical.index_${r.annual_index}`, { defaultValue: r.annual_index })}${
                           r.annual_index_year ? ` · ${r.annual_index_year}` : ''
                         }`}
                         tone={indexTone(r.annual_index)}
                       />
-                    )}
-                    <Text variant="caption" tone="subtle">
-                      {fmtDate(r.last_checkup_date)}
-                    </Text>
-                  </View>
-                }
-                onPress={() => setViewing({ row: r, n: Date.now() })}
-              />
-            ))
+                    </View>
+                  )}
+                  <Text variant="caption" tone="subtle">
+                    {fmtDate(r.last_checkup_date)}
+                  </Text>
+                </>
+              );
+              return (
+                <ListRow
+                  key={r.id}
+                  testID={`medical-row-${r.id}`}
+                  title={r.legal_name || '—'}
+                  subtitle={rowSubtitle(r) || undefined}
+                  left={<Avatar name={r.legal_name || '?'} uri={r.photo_thumb_path || r.photo_path} size={36} />}
+                  // Telefonda nishonlar va sana ism ostida — o'ng ustun ismni «Aliyeva Umida …» gacha qisardi.
+                  below={compact ? <View style={styles.below}>{marks}</View> : undefined}
+                  right={compact ? undefined : <View style={styles.right}>{marks}</View>}
+                  onPress={() => setViewing({ row: r, n: Date.now() })}
+                />
+              );
+            })
           )}
           <Pager page={page} pages={pages} onPage={setPage} />
         </Card>
@@ -337,5 +348,6 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   panel: { gap: 10 },
   right: { alignItems: 'flex-end', gap: 4, maxWidth: '45%' },
+  below: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginTop: 4 },
   note: { marginTop: 12 },
 });

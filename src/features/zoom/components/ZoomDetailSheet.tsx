@@ -145,6 +145,25 @@ export function ZoomDetailSheet({ meeting: m, onClose }: { meeting: ZoomMeeting;
   const cancelKey = cancelLabelKey(m);
   const topic = m.topic || '—';
 
+  // Bitta asosiy (brand) amal: hali boshlanmagan yig'ilishni boshqaruvchi — «Boshlash»
+  // (yozuv va host faqat shu bilan yoqiladi), qolgan hollarda — «Qo'shilish».
+  const startFirst = can.start && !m.is_live;
+  const startBlock = (
+    <View style={styles.actions}>
+      <Button
+        testID="zoom-start"
+        label={m.is_live ? t('zoom.joinAsHost') : t('zoom.start')}
+        variant={startFirst || !canJoin ? 'primary' : 'soft'}
+        onPress={() => void doStart()}
+        loading={start.isPending}
+        full
+      />
+      <Text variant="caption" tone="subtle">
+        {m.recording_mode === 'cloud' ? t('zoom.startHintRecord') : t('zoom.startHint')}
+      </Text>
+    </View>
+  );
+
   return (
     <Sheet visible onClose={onClose} title={topic}>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
@@ -211,9 +230,18 @@ export function ZoomDetailSheet({ meeting: m, onClose }: { meeting: ZoomMeeting;
           )}
         </View>
 
+        {startFirst && startBlock}
+
         {canJoin && (
           <View style={styles.actions}>
-            <Button testID="zoom-join" label={t('zoom.join')} icon="globe" onPress={join} full />
+            <Button
+              testID="zoom-join"
+              label={t('zoom.join')}
+              icon="globe"
+              variant={startFirst ? 'soft' : 'primary'}
+              onPress={join}
+              full
+            />
             <Button
               testID="zoom-share"
               label={t('zoom.shareInvitation')}
@@ -227,20 +255,7 @@ export function ZoomDetailSheet({ meeting: m, onClose }: { meeting: ZoomMeeting;
           </View>
         )}
 
-        {can.start && (
-          <View style={styles.actions}>
-            <Button
-              testID="zoom-start"
-              label={m.is_live ? t('zoom.joinAsHost') : t('zoom.start')}
-              onPress={() => void doStart()}
-              loading={start.isPending}
-              full
-            />
-            <Text variant="caption" tone="subtle">
-              {m.recording_mode === 'cloud' ? t('zoom.startHintRecord') : t('zoom.startHint')}
-            </Text>
-          </View>
-        )}
+        {can.start && !startFirst && startBlock}
 
         {can.hostKey && (
           <View style={styles.actions}>
@@ -333,7 +348,7 @@ export function ZoomDetailSheet({ meeting: m, onClose }: { meeting: ZoomMeeting;
             <Button
               testID="zoom-cancel"
               label={t(cancelKey)}
-              variant="ghost"
+              variant="dangerGhost"
               disabled={busy}
               loading={cancel.isPending}
               onPress={() =>
@@ -356,7 +371,7 @@ export function ZoomDetailSheet({ meeting: m, onClose }: { meeting: ZoomMeeting;
           <Button
             testID="zoom-cancel-series"
             label={t('zoom.cancelSeries')}
-            variant="ghost"
+            variant="dangerGhost"
             disabled={busy}
             loading={cancelSeries.isPending}
             onPress={() =>

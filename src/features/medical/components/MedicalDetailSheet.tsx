@@ -130,7 +130,12 @@ export function MedicalDetailSheet({ row, onClose }: { row: MedicalRow; onClose:
                   <Text variant="heading" style={styles.date}>
                     {fmtDate(c.checkup_date)}
                   </Text>
-                  {!!c.specialty_name && <Badge label={c.specialty_name} />}
+                  {/* Badge o'zi `alignSelf: flex-start` — sana bilan bir chiziqda markazlansin. */}
+                  {!!c.specialty_name && (
+                    <View>
+                      <Badge label={c.specialty_name} />
+                    </View>
+                  )}
                   <View style={styles.spacer} />
                   {c.can_edit && (
                     <IconButton
@@ -174,10 +179,12 @@ export function MedicalDetailSheet({ row, onClose }: { row: MedicalRow; onClose:
                 <View style={styles.row}>
                   <Text variant="heading">{a.year != null ? String(a.year) : '—'}</Text>
                   {!!a.health_index && (
-                    <Badge
-                      label={t(`medical.index_${a.health_index}`, { defaultValue: a.health_index })}
-                      tone={indexTone(a.health_index)}
-                    />
+                    <View>
+                      <Badge
+                        label={t(`medical.index_${a.health_index}`, { defaultValue: a.health_index })}
+                        tone={indexTone(a.health_index)}
+                      />
+                    </View>
                   )}
                   {!!a.set_at && (
                     <Text variant="caption" tone="subtle" style={styles.setAt}>
@@ -188,6 +195,12 @@ export function MedicalDetailSheet({ row, onClose }: { row: MedicalRow; onClose:
                 {!!a.index_note && (
                   <Text variant="caption" tone="muted">
                     {a.index_note}
+                  </Text>
+                )}
+                {/* Kim belgilagani (v2 profil «Tibbiy» tabi `set_by_name`). */}
+                {!!a.set_by_name && (
+                  <Text variant="caption" tone="subtle" testID={`medical-index-set-by-${a.id ?? i}`}>
+                    {`${t('medical.setBy')}: ${a.set_by_name}`}
                   </Text>
                 )}
               </View>

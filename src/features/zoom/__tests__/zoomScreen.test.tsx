@@ -22,6 +22,12 @@ import { tashkentToday } from '../utils/zoom';
 
 jest.mock('expo-router', () => ({ router: { push: jest.fn(), back: jest.fn(), canGoBack: () => true } }));
 jest.mock('@/lib/confirm', () => ({ confirm: jest.fn(() => Promise.resolve(true)) }));
+// Forma vaqti kun soatiga bog'liq (o'tgan 10:00 → keyingi yarim soat) — testlar barqaror
+// bo'lishi uchun bugungi 10:00 qotiriladi; qoidaning o'zi `defaultZoomStart` testida.
+jest.mock('../utils/zoom', () => {
+  const actual = jest.requireActual('../utils/zoom');
+  return { ...actual, defaultZoomStart: () => ({ date: actual.tashkentToday(), time: '10:00' }) };
+});
 
 // Sana — Toshkent bo'yicha bugun (ekran ham shunday hisoblaydi), qurilma TZ dan mustaqil.
 const TODAY = tashkentToday();

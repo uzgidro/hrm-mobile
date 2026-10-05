@@ -27,6 +27,7 @@ export default {
   history: 'История осмотров',
   noCheckups: 'Записей об осмотрах нет',
   annualIndexes: 'Годовые индексы',
+  setBy: 'Установил',
   addCheckup: 'Добавить осмотр',
   editCheckup: 'Редактирование осмотра',
   setIndex: 'Годовой индекс',

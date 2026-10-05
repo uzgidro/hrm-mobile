@@ -27,6 +27,7 @@ export default {
   history: "Ko'riklar tarixi",
   noCheckups: "Ko'rik yozuvi yo'q",
   annualIndexes: 'Yillik indekslar',
+  setBy: 'Belgilagan',
   addCheckup: "Ko'rik qo'shish",
   editCheckup: "Ko'rikni tahrirlash",
   setIndex: 'Yillik indeks',

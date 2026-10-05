@@ -27,6 +27,7 @@ import {
   buildRecurrence,
   composeDuration,
   currentVerdict,
+  defaultZoomStart,
   expandRecurrence,
   inTashkent,
   initialZoomForm,
@@ -35,7 +36,6 @@ import {
   splitDuration,
   startAtOf,
   submitBlocked,
-  tashkentToday,
   validateZoomForm,
   type Repeat,
   type ZoomForm,
@@ -65,8 +65,12 @@ export function ZoomCreateSheet({
 }) {
   const { t } = useTranslation();
   const { colors: c } = useTheme();
-  const [form, setForm] = useState<ZoomForm>(() => initialZoomForm(tashkentToday()));
-  const [picker, setPicker] = useState<null | 'date' | 'time' | 'hours'>(null);
+  // Bugun 10:00 (v2) — o'tib ketgan bo'lsa keyingi yarim soat (Toshkent vaqti).
+  const [form, setForm] = useState<ZoomForm>(() => {
+    const s = defaultZoomStart();
+    return initialZoomForm(s.date, s.time);
+  });
+  const [picker, setPicker] = useState<null | 'date' | 'time' | 'hours' | 'minutes'>(null);
   const [error, setError] = useState<string | null>(null);
   const create = useCreateZoomMeeting();
 
@@ -148,13 +152,14 @@ export function ZoomCreateSheet({
           </View>
         </View>
 
-        {/* Davomiylik «soat + daqiqa» (v2 DurationPicker) — serverga baribir duration_minutes. */}
+        {/* Davomiylik «soat + daqiqa» — v2 DurationPicker kabi ikki tanlagich yonma-yon (sana/vaqt
+            qatori bilan bir xil to'r); serverga baribir duration_minutes. */}
         <View style={styles.group}>
           <Text variant="label" tone="muted">
             {t('zoom.fieldDuration')}
           </Text>
           <View style={styles.row}>
-            <View style={styles.hours}>
+            <View style={styles.flex}>
               <SelectField
                 testID="zoom-hours"
                 label={t('zoom.durationHours')}
@@ -162,16 +167,13 @@ export function ZoomCreateSheet({
                 onPress={() => setPicker('hours')}
               />
             </View>
-            <View style={[styles.flex, styles.chips]}>
-              {DUR_MINUTES.map((mm) => (
-                <Chip
-                  key={mm}
-                  testID={`zoom-min-${mm}`}
-                  label={`${mm} ${t('zoom.durationMinutes')}`}
-                  selected={minutes === mm}
-                  onPress={() => set({ duration: composeDuration(hours, mm) })}
-                />
-              ))}
+            <View style={styles.flex}>
+              <SelectField
+                testID="zoom-minutes"
+                label={t('zoom.durationMinutes')}
+                value={String(minutes)}
+                onPress={() => setPicker('minutes')}
+              />
             </View>
           </View>
           <Text variant="caption" tone="subtle">
@@ -380,6 +382,19 @@ export function ZoomCreateSheet({
           }}
         />
       )}
+      {picker === 'minutes' && (
+        <PickerModal
+          visible
+          title={t('zoom.durationMinutes')}
+          options={DUR_MINUTES.map((mm) => ({ value: mm, label: String(mm) }))}
+          selected={minutes}
+          onClose={() => setPicker(null)}
+          onSelect={(mm) => {
+            set({ duration: composeDuration(hours, mm) });
+            setPicker(null);
+          }}
+        />
+      )}
     </Sheet>
   );
 }
@@ -390,7 +405,6 @@ const styles = StyleSheet.create({
   group: { gap: 8 },
   row: { flexDirection: 'row', gap: 8, alignItems: 'flex-end' },
   flex: { flex: 1 },
-  hours: { width: 96 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   switchRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   verdict: { gap: 6, padding: 12, borderRadius: radii.md },

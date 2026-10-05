@@ -27,6 +27,7 @@ export default {
   history: 'Checkup history',
   noCheckups: 'No checkup records',
   annualIndexes: 'Annual indexes',
+  setBy: 'Set by',
   addCheckup: 'Add checkup',
   editCheckup: 'Edit checkup',
   setIndex: 'Annual index',

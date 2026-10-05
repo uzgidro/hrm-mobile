@@ -86,7 +86,9 @@ const DETAIL = {
       can_delete: true,
     },
   ],
-  annual_indexes: [{ id: 1, year: 2025, health_index: 'excellent', index_note: 'Yaxshi natija' }],
+  annual_indexes: [
+    { id: 1, year: 2025, health_index: 'excellent', index_note: 'Yaxshi natija', set_by_name: 'Toshmatov Bosh' },
+  ],
 };
 
 const listCalls = (m: MockAdapter) =>
@@ -205,6 +207,8 @@ describe('MedicalScreen (v2 MedicalPage)', () => {
     expect(screen.queryByTestId('medical-checkup-edit-101')).toBeNull();
     expect(screen.queryByTestId('medical-checkup-remove-101')).toBeNull();
     expect(screen.getByText('Yaxshi natija')).toBeTruthy();
+    // Kim belgilagani (v2 `set_by_name`).
+    expect(screen.getByText('Belgilagan: Toshmatov Bosh')).toBeTruthy();
   });
 
   it("ko'rik qo'shish: bitta turli doktor — tanlash yo'q, POST (employee_id, bugungi sana, bo'sh matn null)", async () => {

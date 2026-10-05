@@ -2,19 +2,22 @@
 // http(s) bo'lsa tizim brauzerida. Biriktirish / olib tashlash — muallif doktor: server
 // `can_edit` / `can_delete` VA tafsilotning `can_add_checkup` (doktorlik) bayrog'i birga.
 import React from 'react';
-import { Linking, StyleSheet, View } from 'react-native';
+import { Linking, Pressable, StyleSheet, View } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { useTranslation } from 'react-i18next';
 import { getApiErrorMessage } from '@/api/errors';
 import { toast } from '@/lib/toast';
 import { confirm } from '@/lib/confirm';
 import { isHttpUrl } from '@/utils/safeUrl';
-import { Button, IconButton } from '@/ui';
+import { useTheme } from '@/theme/ThemeProvider';
+import { Icon } from '@/components/Icon';
+import { Button, IconButton, Text } from '@/ui';
 import { useAddCheckupFile, useRemoveCheckupFile } from '../api/mutations';
 import { fileRights, shortFileName, type Checkup, type CheckupFile } from '../utils/medical';
 
 export function CheckupFiles({ checkup, isDoctor }: { checkup: Checkup; isDoctor: boolean }) {
   const { t } = useTranslation();
+  const { colors: c } = useTheme();
   const add = useAddCheckupFile();
   const remove = useRemoveCheckupFile();
   const files = checkup.files ?? [];
@@ -60,15 +63,19 @@ export function CheckupFiles({ checkup, isDoctor }: { checkup: Checkup; isDoctor
     <View style={styles.wrap}>
       {files.map((f) => (
         <View key={f.id} style={styles.file}>
-          <Button
+          {/* Fayl — havola (drop-ko'k), tugma emas: nom qatorni egallaydi, o'chirish o'ng chetda. */}
+          <Pressable
             testID={`medical-file-${f.id}`}
-            label={shortFileName(f.original_filename || `#${f.id}`)}
-            icon="doc"
-            variant="ghost"
-            size="sm"
+            accessibilityRole="link"
+            accessibilityLabel={f.original_filename || `#${f.id}`}
             onPress={() => open(f)}
-            style={styles.name}
-          />
+            style={({ pressed }) => [styles.name, pressed && styles.pressed]}
+          >
+            <Icon name="doc" size={16} color={c.drop} />
+            <Text variant="label" tone="link" numberOfLines={1} style={styles.flex}>
+              {shortFileName(f.original_filename || `#${f.id}`)}
+            </Text>
+          </Pressable>
           {canDetach && (
             <IconButton
               testID={`medical-file-remove-${f.id}`}
@@ -96,6 +103,8 @@ export function CheckupFiles({ checkup, isDoctor }: { checkup: Checkup; isDoctor
 
 const styles = StyleSheet.create({
   wrap: { gap: 4, alignItems: 'flex-start' },
-  file: { flexDirection: 'row', alignItems: 'center', gap: 4, maxWidth: '100%' },
-  name: { flexShrink: 1 },
+  file: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'stretch' },
+  name: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 40 },
+  flex: { flexShrink: 1 },
+  pressed: { opacity: 0.6 },
 });

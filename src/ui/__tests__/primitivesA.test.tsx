@@ -1,6 +1,7 @@
 import React from 'react';
 import { renderWithProviders, screen, fireEvent } from '@/test/renderWithProviders';
 import { Button, Card, Chip, Badge, SectionHeader, IconButton } from '@/ui';
+import { lightColors } from '@/theme/palettes';
 
 describe('primitivlar A', () => {
   it('Button bosiladi', async () => {
@@ -32,6 +33,11 @@ describe('primitivlar A', () => {
     await renderWithProviders(<Chip label="Kelgan" count={98} selected onPress={() => {}} />);
     expect(screen.getByRole('button').props.accessibilityState).toMatchObject({ selected: true });
     expect(screen.getByText('98')).toBeTruthy();
+  });
+
+  it('Chip tintSelected: tanlangan holat brand emas, o‘z toni bilan', async () => {
+    await renderWithProviders(<Chip label="Kasal" tone="danger" tintSelected selected onPress={() => {}} />);
+    expect(screen.getByText('Kasal')).toHaveStyle({ color: lightColors.danger });
   });
 
   it('IconButton badge 9+ ga qisqaradi', async () => {

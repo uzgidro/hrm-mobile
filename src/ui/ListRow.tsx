@@ -16,6 +16,7 @@ export function ListRow({
   pressable = false,
   badge,
   chevron,
+  below,
   testID,
 }: {
   title: string;
@@ -26,6 +27,8 @@ export function ListRow({
   pressable?: boolean;
   badge?: number;
   chevron?: boolean;
+  /** Sarlavha ostidagi qo'shimcha qator (masalan, telefonda status nishonlari — `right` ism joyini yemasin). */
+  below?: React.ReactNode;
   testID?: string;
 }) {
   const { colors: c } = useTheme();
@@ -55,6 +58,7 @@ export function ListRow({
             {subtitle}
           </Text>
         ) : null}
+        {below}
       </View>
       {right}
       {!!badge && badge > 0 && (

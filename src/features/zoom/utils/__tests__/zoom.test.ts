@@ -10,6 +10,7 @@ import {
   dayLabelKey,
   expandRecurrence,
   formatMeetingId,
+  defaultZoomStart,
   initialZoomForm,
   inTashkent,
   isClosed,
@@ -63,6 +64,25 @@ describe('Toshkent vaqti (qurilma TZ dan mustaqil)', () => {
     expect(dayLabelKey('2026-10-04', '2026-10-05')).toBe('yesterday');
     expect(dayLabelKey('2026-10-09', '2026-10-05')).toBeNull();
     expect(dayLabelKey('', '2026-10-05')).toBeNull();
+  });
+
+  it('formaning boshlang‘ich vaqti: 10:00 oldinda bo‘lsa — 10:00 (v2), o‘tgan bo‘lsa — keyingi yarim soat', () => {
+    const at = (utc: string) => defaultZoomStart(Date.parse(utc));
+    // 08:00 Toshkent — 10:00 hali oldinda.
+    expect(at('2026-10-05T03:00:00Z')).toEqual({ date: '2026-10-05', time: '10:00' });
+    // 09:20 → +30 = 09:50 → 10:00.
+    expect(at('2026-10-05T04:20:00Z')).toEqual({ date: '2026-10-05', time: '10:00' });
+    // 09:31 → 10:01 → 10:30.
+    expect(at('2026-10-05T04:31:00Z')).toEqual({ date: '2026-10-05', time: '10:30' });
+    // Aniq 14:00 → 14:30 (chegarada qoladi); 14:10 → 14:40 → 15:00.
+    expect(at('2026-10-05T09:00:00Z')).toEqual({ date: '2026-10-05', time: '14:30' });
+    expect(at('2026-10-05T09:10:00Z')).toEqual({ date: '2026-10-05', time: '15:00' });
+    // 23:50 → 00:20 → ertangi 00:30.
+    expect(at('2026-10-05T18:50:00Z')).toEqual({ date: '2026-10-06', time: '00:30' });
+    // Toshkentda yangi kun boshlangan (00:30) — o'sha kunning 10:00.
+    expect(at('2026-10-05T19:30:00Z')).toEqual({ date: '2026-10-06', time: '10:00' });
+    expect(initialZoomForm('2026-10-05', '15:00').time).toBe('15:00');
+    expect(initialZoomForm('2026-10-05').time).toBe('10:00');
   });
 
   it('qator vaqti: boshlanish – tugash · davomiylik', () => {

@@ -339,11 +339,30 @@ export interface ZoomForm {
   count: string;
 }
 
-export function initialZoomForm(today: string): ZoomForm {
+/** v2 formaning boshlang'ich vaqti. */
+export const DEFAULT_START_TIME = '10:00';
+const SLOT_MS = 30 * 60_000;
+
+/**
+ * Formaning boshlang'ich sana/vaqti (Toshkent devor soati). v2 bugun 10:00 ni beradi — u
+ * hali oldinda bo'lsa shunday qoladi; o'tib ketgan bo'lsa «hozir + 30 daqiqa», keyingi
+ * :00 / :30 ga yaxlitlangan (yarim tundan oshsa — ertangi kun). `now` — UTC epoch ms.
+ */
+export function defaultZoomStart(now: number = Date.now()): { date: string; time: string } {
+  const today = tashkentToday(now);
+  const tenAm = Date.parse(`${today}T${DEFAULT_START_TIME}:00Z`) - TASHKENT_OFFSET_MS;
+  const slot = Math.ceil((now + SLOT_MS) / SLOT_MS) * SLOT_MS;
+  // Toshkent UTC+5:00 — butun soat, shuning uchun UTC'dagi :00/:30 chegarasi Toshkentda ham :00/:30.
+  const at = Math.max(tenAm, slot);
+  const wall = new Date(at + TASHKENT_OFFSET_MS).toISOString();
+  return { date: wall.slice(0, 10), time: wall.slice(11, 16) };
+}
+
+export function initialZoomForm(today: string, time: string = DEFAULT_START_TIME): ZoomForm {
   return {
     topic: '',
     date: today,
-    time: '10:00',
+    time,
     duration: 60,
     agenda: '',
     record: false,

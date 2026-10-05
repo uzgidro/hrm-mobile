@@ -32,6 +32,7 @@ export function Chip({
   onPress,
   tone = 'neutral',
   count,
+  tintSelected = false,
   testID,
 }: {
   label: string;
@@ -39,16 +40,26 @@ export function Chip({
   onPress?: () => void;
   tone?: Tone;
   count?: number;
+  /** Tanlangan holat brand emas, o'z toni bilan (status tanlovi: sog'lom — yashil, kasal — qizil). */
+  tintSelected?: boolean;
   testID?: string;
 }) {
   const { colors: c } = useTheme();
   const t = toneColors(c, tone);
-  const bg = selected ? c.brand : c.surface2;
-  const fg = selected ? c.fgOnBrand : c.fg;
+  const tinted = tintSelected && tone !== 'neutral';
+  const bg = selected ? (tinted ? t.soft : c.brand) : c.surface2;
+  const fg = selected ? (tinted ? t.fg : c.fgOnBrand) : c.fg;
   const body = (
-    <View style={[styles.chip, { backgroundColor: bg }]}>
-      {tone !== 'neutral' && !selected && <View style={[styles.dot, { backgroundColor: t.mark }]} />}
-      <Text variant="label" style={{ color: fg }}>
+    <View
+      style={[
+        styles.chip,
+        { backgroundColor: bg },
+        // Tonli tanlov: chegara faqat shu rejimda (o'lcham sakramasin — tanlanmaganda shaffof).
+        tinted && { borderWidth: 1.5, borderColor: selected ? t.mark : 'transparent' },
+      ]}
+    >
+      {tone !== 'neutral' && (!selected || tinted) && <View style={[styles.dot, { backgroundColor: t.mark }]} />}
+      <Text variant="label" style={[{ color: fg }, tinted && selected && styles.strong]}>
         {label}
       </Text>
       {count !== undefined && (
@@ -83,4 +94,5 @@ const styles = StyleSheet.create({
   },
   dot: { width: 8, height: 8, borderRadius: 4 },
   count: { fontWeight: '700', fontVariant: ['tabular-nums'] },
+  strong: { fontWeight: '700' },
 });
