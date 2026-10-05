@@ -8,6 +8,7 @@ import { radii, shadow } from '@/theme/tokens';
 import { useBreakpoint } from '@/utils/responsive';
 import { Text } from './Text';
 import { IconButton } from './IconButton';
+import { ModalToasts } from '@/components/ToastHost';
 import { WEB_BREAK } from './webText';
 
 export function Sheet({
@@ -52,6 +53,8 @@ export function Sheet({
           )}
           {children}
         </View>
+        {/* Toast'lar varaq USTIDA: ildizdagi ToastHost'ni Modal yopib qo'yadi. */}
+        <ModalToasts visible={visible} />
       </KeyboardAvoidingView>
     </Modal>
   );

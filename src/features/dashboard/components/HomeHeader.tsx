@@ -35,7 +35,7 @@ export function HomeHeader() {
 
   const now = dayjs();
   const name = givenName(user?.employee?.legal_name) || t('dashboard.userFallback');
-  const dateLine = `${weekdayName(now.day())}, ${now.date()} ${monthName(now.month())}`;
+  const dateLine = `${weekdayName(now.day())}, ${now.date()} ${monthName(now.month(), { genitive: true })}`;
   const dept = user?.employee?.department?.name;
 
   const results = useMemo(() => {

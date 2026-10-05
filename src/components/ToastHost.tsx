@@ -16,6 +16,7 @@ import {
   type Toast,
   type ToastKind,
 } from '../lib/toast';
+import { newModalLayerId, openModalLayer, subscribeModalLayers, topModalLayer } from '../lib/modalLayer';
 
 const ICON: Record<ToastKind, IconName> = {
   error: 'close',
@@ -70,12 +71,18 @@ function ToastCard({ toast }: { toast: Toast }) {
   );
 }
 
-export function ToastHost() {
+/**
+ * `layer` yo'q — ildizdagi host: faqat ochiq modal bo'lmaganda chizadi.
+ * `layer` berilgan — modal ichidagi host: faqat o'sha qatlam eng yuqorida bo'lsa.
+ * Shunda toast doim ko'rinadigan qatlamda va faqat bir marta chiziladi.
+ */
+export function ToastHost({ layer = null }: { layer?: number | null } = {}) {
   const insets = useSafeAreaInsets();
   const styles = useThemedStyles(makeStyles);
   const toasts = useSyncExternalStore(subscribeToasts, getToasts, getToasts);
+  const top = useSyncExternalStore(subscribeModalLayers, topModalLayer, topModalLayer);
 
-  if (toasts.length === 0) return null;
+  if (toasts.length === 0 || top !== layer) return null;
   return (
     <View pointerEvents="box-none" style={[styles.host, { top: insets.top + 8 }]}>
       {toasts.map((t) => (
@@ -83,6 +90,18 @@ export function ToastHost() {
       ))}
     </View>
   );
+}
+
+/**
+ * Modal (Sheet, ModalCard) ICHIGA qo'yiladi: ochiq turgan paytda o'z qatlamini
+ * ro'yxatdan o'tkazadi va toast'larni modal ustida ko'rsatadi. RN Modal ildizdagi
+ * <ToastHost/> ni yopib qo'yadi — usiz varaq ichidagi xato xabari ko'rinmasdi.
+ */
+export function ModalToasts({ visible = true }: { visible?: boolean }) {
+  const [layer] = useState(newModalLayerId);
+  useEffect(() => (visible ? openModalLayer(layer) : undefined), [visible, layer]);
+  if (!visible) return null;
+  return <ToastHost layer={layer} />;
 }
 
 const makeStyles = (c: ThemeColors) =>

@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Modal, ActivityIndicator } fr
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 import { KeyboardAvoider } from './KeyboardAvoider';
+import { ModalToasts } from './ToastHost';
 import type { ThemeColors } from '../theme/palettes';
 import { ff } from '@/theme/typography';
 
@@ -97,6 +98,7 @@ export function ModalCard({
             </TouchableOpacity>
           </View>
         </View>
+        <ModalToasts visible={visible} />
       </KeyboardAvoider>
     </Modal>
   );
