@@ -70,7 +70,7 @@ describe('ReportsScreen (v2 ReportsPage)', () => {
     await i18n.changeLanguage('uz-Latn');
     (router.push as jest.Mock).mockClear();
     mock.onGet(REPORTS_CATALOG).reply(200, CATALOG);
-    mock.onGet(DASHBOARD_MAIN).reply(200, { total_employees_count: 412 });
+    mock.onGet(DASHBOARD_MAIN).reply(200, { total_employees_count: 412, absent_employees_count: 7, late_employees_count: 3 });
     mock.onGet(DASHBOARD_KPI_MONTHLY_AVERAGE).reply(200, [
       { month: '2026-08', kpi_percentage: 70 },
       { month: '2026-09', kpi_percentage: 81.6 },
@@ -178,8 +178,9 @@ describe('ReportsScreen (v2 ReportsPage)', () => {
     // O'rtacha KPI — oxirgi oy, butun songa.
     expect(within(screen.getByTestId('staff-tile-kpi')).getByText('82%')).toBeTruthy();
     expect(within(screen.getByTestId('staff-tile-done')).getByText('37')).toBeTruthy();
-    expect(within(screen.getByTestId('staff-tile-absent')).getByText('9')).toBeTruthy();
-    expect(within(screen.getByTestId('staff-tile-late')).getByText('14')).toBeTruthy();
+    // Bugungi sonlar — `dashboard/main` dan (jami bilan bir asos), task-exec'ning eski hisobidan emas.
+    expect(within(screen.getByTestId('staff-tile-absent')).getByText('7')).toBeTruthy();
+    expect(within(screen.getByTestId('staff-tile-late')).getByText('3')).toBeTruthy();
     expect(within(screen.getByTestId('staff-tile-low')).getByText('3')).toBeTruthy();
     // Taqsimot: kattasi birinchi.
     const dept = screen.getByTestId('staff-by-dept');

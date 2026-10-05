@@ -15,6 +15,7 @@ import type { CatalogResponse, ReportOption } from '../utils/types';
 import type {
   CardsSummary,
   DeptCount,
+  MainStats,
   PosStat,
   RequestFilters,
   RequestStats,
@@ -96,7 +97,7 @@ const get = <T>(url: string, params?: object) => apiClient.get<T>(url, { params 
 export const dashboardMainQuery = () =>
   queryOptions({
     queryKey: reportsKeys.staff('main'),
-    queryFn: () => get<{ total_employees_count?: number }>(DASHBOARD_MAIN),
+    queryFn: () => get<MainStats>(DASHBOARD_MAIN),
   });
 
 export const deptCountQuery = () =>

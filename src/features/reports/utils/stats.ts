@@ -166,6 +166,15 @@ export interface PosStat {
   job_position_name: string;
   count: number;
 }
+/**
+ * `dashboard/main` — bugungi ko'rsatkichlar toifalar bilan BITTA manbadan (server
+ * `partition_counts`, bosh sahifa ham shu): «Jami xodimlar» bilan bir xil asosda.
+ */
+export interface MainStats {
+  total_employees_count?: number;
+  absent_employees_count?: number;
+  late_employees_count?: number;
+}
 export interface CardsSummary {
   completed_tasks_count?: number;
 }

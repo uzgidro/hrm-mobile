@@ -64,17 +64,20 @@ export function StaffStats() {
       icon: 'checklist',
       tint: 'cyan',
     },
+    // «Bugun» — `dashboard/main` dan (jami bilan bir asos). `task-execution-attendance` dagi
+    // `absent_employee_count` boshqa to'plamni sanaydi (lavozimsizlar, dam kunidagilar ham) va
+    // jamidan oshib ketardi (156 > 153); oraliq u yerda ahamiyatsiz — server baribir bugunni oladi.
     {
       key: 'absent',
       label: t('reports.absentToday'),
-      value: v(!tasks.isSuccess, tasks.data?.absent_employee_count),
+      value: v(!main.isSuccess, main.data?.absent_employees_count),
       icon: 'user',
       tint: 'pink',
     },
     {
       key: 'late',
       label: t('reports.lateToday'),
-      value: v(!tasks.isSuccess, tasks.data?.late_employee_count),
+      value: v(!main.isSuccess, main.data?.late_employees_count),
       icon: 'clock',
       tint: 'amber',
     },
