@@ -45,6 +45,26 @@ describe('getApiErrorMessage', () => {
     expect(getApiErrorMessage(e)).toBe('Kelishuvchi emassiz');
   });
 
+  // v2 `errorMessage` GENERIC_CODES: o'ram kodlar uchun serverning aniq jumlasi — tarjima emas.
+  it('shows the server sentence for a generic wrapper code (validation_error/bad_request/conflict)', () => {
+    const v = axiosErrorWith({ code: 'validation_error', message: 'Bu doktor turi sizga biriktirilmagan' }, 422);
+    expect(getApiErrorMessage(v)).toBe('Bu doktor turi sizga biriktirilmagan');
+    const c = axiosErrorWith({ code: 'conflict', detail: 'Muddatlar kesishmoqda' }, 409);
+    expect(getApiErrorMessage(c)).toBe('Muddatlar kesishmoqda');
+    const b = axiosErrorWith({ detail: { code: 'bad_request', message: 'Noma\'lum davr turi' } }, 400);
+    expect(getApiErrorMessage(b)).toBe("Noma'lum davr turi");
+  });
+
+  it('translates a generic code when the server sent only the bare i18n key', () => {
+    const e = axiosErrorWith({ code: 'validation_error', message: 'errors.validation_error' }, 422);
+    expect(getApiErrorMessage(e)).toBe("Kiritilgan ma'lumot noto'g'ri");
+  });
+
+  it('still translates a specific code over the server prose', () => {
+    const e = axiosErrorWith({ code: 'forbidden', message: 'Access denied' }, 403);
+    expect(getApiErrorMessage(e)).toBe("Ruxsat yo'q");
+  });
+
   it('shows the status when the gateway returns an HTML page (502/504)', () => {
     const e = axiosErrorWith('<html><body>502 Bad Gateway</body></html>', 502);
     expect(getApiErrorMessage(e)).toBe('Xatolik yuz berdi (502)');

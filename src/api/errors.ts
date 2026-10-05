@@ -43,6 +43,29 @@ function translateCode(data: unknown): string | null {
   return text && text !== key ? text : null;
 }
 
+/**
+ * `validation_error` / `bad_request` / `conflict` are WRAPPERS, not reasons (web v2
+ * `errorMessage` GENERIC_CODES): the backend raises them with its own specific
+ * sentence («Muddatlar kesishmoqda…»), and translating the code threw that away.
+ * For these the server's sentence wins; a bare i18n key («errors.conflict») is not one.
+ */
+const GENERIC_CODES = new Set(['validation_error', 'bad_request', 'conflict']);
+const isI18nKey = (s: string) => /^[a-z0-9_]+(\.[a-z0-9_]+)+$/i.test(s.trim());
+
+function wrapperSentence(data: object): string | null {
+  const d = data as { code?: unknown; detail?: unknown; message?: unknown };
+  const obj = d.detail && typeof d.detail === 'object' && !Array.isArray(d.detail)
+    ? (d.detail as { code?: unknown; message?: unknown })
+    : null;
+  const code = typeof d.code === 'string' ? d.code : obj?.code;
+  if (typeof code !== 'string' || !GENERIC_CODES.has(code)) return null;
+  const candidates = [d.detail, d.message, obj?.message];
+  for (const c of candidates) {
+    if (typeof c === 'string' && c.trim() && !isI18nKey(c)) return c;
+  }
+  return null;
+}
+
 function extractMessage(data: unknown): string | null {
   if (!data) return null;
   // Ba'zi javoblar JSON EMAS: shlyuz (nginx) 502/504 da HTML sahifa qaytaradi.
@@ -54,6 +77,8 @@ function extractMessage(data: unknown): string | null {
     return text.slice(0, 300);
   }
   if (typeof data !== 'object') return null;
+  const specific = wrapperSentence(data);
+  if (specific) return specific;
   const translated = translateCode(data);
   if (translated) return translated;
   const detail = (data as { detail?: unknown }).detail;
