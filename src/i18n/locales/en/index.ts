@@ -32,6 +32,7 @@ import password from './password';
 import tabs from './tabs';
 import kpp from './kpp';
 import monitoring from './monitoring';
+import sysHealth from './sysHealth';
 import vehicles from './vehicles';
 import reports from './reports';
 import medical from './medical';
@@ -87,6 +88,7 @@ export default {
   tabs,
   kpp,
   monitoring,
+  sysHealth,
   vehicles,
   reports,
   medical,

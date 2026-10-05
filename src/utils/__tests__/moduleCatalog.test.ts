@@ -134,6 +134,20 @@ describe('modul katalogi — v2 paritet', () => {
     expect(CATALOG.find((e) => e.page === 'reports')?.route).toBe('/hisobotlar');
   });
 
+  it("tizim holati — v2 ADMIN_ONLY, SYSTEM_ADMIN_KEYS da yo'q: faqat bosh admin; AKT/admin hisobi, ministr, kadr yo'q; route /tizim-holati", () => {
+    expect(isModuleReady('sysHealth')).toBe(true);
+    expect(canAccessPage(master, 'sysHealth')).toBe(true);
+    expect(canAccessPage(emp(), 'sysHealth')).toBe(false);
+    expect(canAccessPage(hr, 'sysHealth')).toBe(false);
+    expect(canAccessPage(emp({ akt_branch_ids: [1] }), 'sysHealth')).toBe(false);
+    expect(canAccessPage(u({ id: 5, type: 'admin' }), 'sysHealth')).toBe(false);
+    expect(
+      canAccessPage(emp({ employee: { id: 10, is_multi_org_user: true, multi_org_employee_role: 'ministr' } }), 'sysHealth'),
+    ).toBe(false);
+    expect(canAccessPage(kppAcc, 'sysHealth')).toBe(false);
+    expect(CATALOG.find((e) => e.page === 'sysHealth')?.route).toBe('/tizim-holati');
+  });
+
   it('har katalog yozuvining nomi 4 tilda tarjima qilingan (xom kalit chiqmaydi)', async () => {
     for (const lng of ['uz-Latn', 'uz-Cyrl', 'ru', 'en']) {
       await i18n.changeLanguage(lng);

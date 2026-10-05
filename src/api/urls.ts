@@ -456,3 +456,12 @@ export const VEHICLE_FUEL_LOGS = 'vehicles/fuel-logs';
 export const VEHICLE_VISITS = 'vehicles/visits';
 export const VEHICLE_DRIVER_SCOPES = 'vehicles/driver-scopes';
 export const VEHICLE_DRIVER_SCOPE = (id: number) => `vehicles/driver-scopes/${id}`;
+// Tizim holati (web v2 SystemHealthPage + SystemOpsPanel) — faqat sayt master-admini
+// (`_require_master_admin`). Avariya/tiklash rejimida ham `system/ops/*` ochiq qoladi.
+export const SYSTEM_OPS_STATE = 'system/ops/state';
+export const SYSTEM_OPS_DIAGNOSTICS = 'system/ops/diagnostics';
+export const SYSTEM_OPS_INCIDENTS = 'system/ops/incidents';
+export const SYSTEM_OPS_SHUTDOWN = 'system/ops/shutdown';
+export const SYSTEM_OPS_RECOVERY_ENTER = 'system/ops/recovery/enter';
+export const SYSTEM_OPS_RECOVERY_RUN = 'system/ops/recovery/run';
+export const SYSTEM_OPS_RESUME = 'system/ops/resume';
