@@ -535,7 +535,7 @@ const MODULE_FOR_PAGE: Partial<Record<PageKey, ModuleDef>> = {
   kpp: { key: 'kpp', defaultRoles: ['kpp', 'masterAdmin'] },
   videoGuide: { key: 'videoGuide', defaultRoles: ALL },
   users: { key: 'users', defaultRoles: ADMIN_ONLY },
-  registrations: { key: 'registrations', defaultRoles: ADMIN_ONLY, systemAdmin: true, ready: false },
+  registrations: { key: 'registrations', defaultRoles: ADMIN_ONLY, systemAdmin: true },
   auditLog: { key: 'auditLog', defaultRoles: ADMIN_ONLY },
   branches: { key: 'branches', defaultRoles: ADMIN_ONLY, systemAdmin: true, ready: false },
   turnstiles: { key: 'turnstiles', defaultRoles: ADMIN_ONLY, systemAdmin: true, ready: false },

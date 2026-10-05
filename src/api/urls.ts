@@ -488,3 +488,8 @@ export const EMPLOYEE_DEACTIVATE = (id: number) => `employees/${id}/deactivate`;
 export const MULTI_MODAL_USERS = 'multi-modal-users';
 export const MULTI_MODAL_USER = (id: number) => `multi-modal-users/${id}`;
 export const MULTI_MODAL_USER_SEND_PASSWORD = (id: number) => `multi-modal-users/${id}/send-password-email`;
+// Ro'yxatdan o'tish arizalari (web v2 RegistrationsPage) — `require_system_admin` (admin hisobi,
+// master-admin, AKT xodimi; filial doirasi serverda). Holat filtri faqat pending|approved|rejected.
+export const REGISTRATIONS = 'registrations';
+export const REGISTRATION_APPROVE = (id: number) => `registrations/${id}/approve`;
+export const REGISTRATION_REJECT = (id: number) => `registrations/${id}/reject`;

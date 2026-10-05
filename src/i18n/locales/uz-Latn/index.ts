@@ -34,6 +34,7 @@ import password from './password';
 import tabs from './tabs';
 import kpp from './kpp';
 import monitoring from './monitoring';
+import registrations from './registrations';
 import users from './users';
 import auditLog from './auditLog';
 import lms from './lms';
@@ -93,6 +94,7 @@ export default {
   tabs,
   kpp,
   monitoring,
+  registrations,
   users,
   auditLog,
   lms,

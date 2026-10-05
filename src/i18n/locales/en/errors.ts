@@ -84,4 +84,7 @@ export default {
   email_already_taken: 'This email is already taken',
   weak_password: 'The password does not meet the requirements: at least 8 characters, upper- and lower-case letters and a digit; not the login or a common word',
   password_reused: 'This password was used recently — choose one different from your previous passwords',
+  branch_not_found: 'Branch not found',
+  department_not_found: 'Department not found',
+  job_position_not_found: 'Position not found',
 } as const;

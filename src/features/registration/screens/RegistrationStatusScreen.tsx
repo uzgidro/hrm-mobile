@@ -20,11 +20,10 @@ import {
   Skeleton,
   Text,
   toneColors,
-  type Tone,
 } from '@/ui';
+import { registrationStatusTone } from '@/utils/registrationStatus';
 import { myRegistrationQuery, type Registration } from '../api/queries';
 
-const TONE: Record<string, Tone> = { pending: 'warning', approved: 'success', rejected: 'danger' };
 const ICON: Record<string, IconName> = { pending: 'clock', approved: 'check', rejected: 'close' };
 const fmt = (d?: string | null) => (d ? dayjs(d).format('DD.MM.YYYY') : null);
 
@@ -53,7 +52,7 @@ export default function RegistrationStatusScreen() {
 function Status({ row }: { row: Registration }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const tone = TONE[row.status] ?? 'neutral';
+  const tone = registrationStatusTone(row.status);
   const tc = toneColors(colors, tone);
   const reviewed = fmt(row.reviewed_at);
   const claim = row.is_uge_employee

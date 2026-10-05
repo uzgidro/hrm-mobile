@@ -91,4 +91,8 @@ export default {
   email_already_taken: 'Bu e-pochta allaqachon band',
   weak_password: "Parol talabga javob bermaydi: kamida 8 belgi, katta va kichik harf hamda raqam bo'lsin; login yoki oddiy so'z bo'lmasin",
   password_reused: 'Bu parol yaqinda ishlatilgan — oldingi parollardan farq qiladigan yangi parol tanlang',
+  // Ro'yxatdan o'tish arizalari (web v2 errors.*) — tasdiqlashdagi joy kodlari.
+  branch_not_found: 'Filial topilmadi',
+  department_not_found: "Bo'lim topilmadi",
+  job_position_not_found: 'Lavozim topilmadi',
 } as const;

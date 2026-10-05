@@ -181,6 +181,19 @@ describe('modul katalogi — v2 paritet', () => {
     expect(CATALOG.find((e) => e.page === 'users')?.route).toBe('/foydalanuvchilar');
   });
 
+  it("registratsiyalar — v2 ADMIN_ONLY + SYSTEM_ADMIN_KEYS: bosh admin, admin hisobi, AKT xodimi; kadr/xodim/post yo'q; mehmon holati ekrani alohida; route /registratsiyalar", () => {
+    expect(isModuleReady('registrations')).toBe(true);
+    expect(canAccessPage(master, 'registrations')).toBe(true);
+    expect(canAccessPage(u({ id: 5, type: 'admin' }), 'registrations')).toBe(true);
+    expect(canAccessPage(emp({ akt_branch_ids: [1] }), 'registrations')).toBe(true);
+    expect(canAccessPage(emp(), 'registrations')).toBe(false);
+    expect(canAccessPage(hr, 'registrations')).toBe(false);
+    expect(canAccessPage(kppAcc, 'registrations')).toBe(false);
+    expect(canAccessPage(u({ id: 7, type: 'guest' }), 'registrations')).toBe(false);
+    expect(canAccessPage(u({ id: 7, type: 'guest' }), 'registrationStatus')).toBe(true);
+    expect(CATALOG.find((e) => e.page === 'registrations')?.route).toBe('/registratsiyalar');
+  });
+
   it('har katalog yozuvining nomi 4 tilda tarjima qilingan (xom kalit chiqmaydi)', async () => {
     for (const lng of ['uz-Latn', 'uz-Cyrl', 'ru', 'en']) {
       await i18n.changeLanguage(lng);
