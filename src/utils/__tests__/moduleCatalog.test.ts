@@ -112,11 +112,14 @@ describe('modul katalogi — v2 paritet', () => {
     expect(canAccessPage(emp({ kpi_enabled: false }), 'kpi')).toBe(false);
   });
 
-  it('reports — oddiy xodim faqat rahbar bo\'lsa', () => {
-    // reports hali ready emas; darvoza mantig'i ready bo'lganda ishlashi uchun gate funksiyasi tekshiriladi
-    const { reportsGate } = jest.requireActual('../roles');
-    expect(reportsGate(emp())).toBe(false);
-    expect(reportsGate(emp({ is_line_manager: true }))).toBe(true);
+  it("hisobotlar — v2 canSeeReports darvozasi: oddiy xodim faqat rahbar bo'lsa; kadr, bosh admin; post akkaunti yo'q; route /hisobotlar", () => {
+    expect(isModuleReady('reports')).toBe(true);
+    expect(canAccessPage(emp(), 'reports')).toBe(false);
+    expect(canAccessPage(emp({ is_line_manager: true }), 'reports')).toBe(true);
+    expect(canAccessPage(hr, 'reports')).toBe(true);
+    expect(canAccessPage(master, 'reports')).toBe(true);
+    expect(canAccessPage(kppAcc, 'reports')).toBe(false);
+    expect(CATALOG.find((e) => e.page === 'reports')?.route).toBe('/hisobotlar');
   });
 
   it('har katalog yozuvining nomi 4 tilda tarjima qilingan (xom kalit chiqmaydi)', async () => {

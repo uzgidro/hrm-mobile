@@ -48,4 +48,10 @@ export default {
   zoom_recurrence_needs_time: "Takroriy yig'ilish uchun boshlanish sanasi va vaqti kerak",
   // Tibbiy ko'rik (web v2 errors.medical_not_enabled) — router darvozasi.
   medical_not_enabled: "Tibbiy ko'rik moduli yoqilmagan",
+  // Hisobotlar (server reports/* kodlari; v2 errors.report_not_found + server jumlalari).
+  report_not_found: 'Topilmadi',
+  report_forbidden: "Bu hisobotga ruxsat yo'q",
+  report_drill_forbidden: "Bu tafsilotga ruxsat yo'q",
+  report_too_large: 'Hisobot juda katta — davr yoki filialni toraytiring',
+  report_invalid_param: "Hisobot parametrlari noto'g'ri",
 } as const;

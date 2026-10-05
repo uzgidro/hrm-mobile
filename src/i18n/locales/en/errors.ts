@@ -42,4 +42,10 @@ export default {
   zoom_recurrence_needs_time: 'A recurring meeting needs a start date and time',
   // Tibbiy ko'rik (web v2 errors.medical_not_enabled) — router darvozasi.
   medical_not_enabled: 'The medical checkup module is not enabled',
+  // Hisobotlar (server reports/* kodlari; v2 errors.report_not_found + server jumlalari).
+  report_not_found: 'Not found',
+  report_forbidden: 'You have no access to this report',
+  report_drill_forbidden: 'You have no access to this detail',
+  report_too_large: 'The report is too large — narrow the period or branch',
+  report_invalid_param: 'Invalid report parameters',
 } as const;

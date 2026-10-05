@@ -528,7 +528,6 @@ const MODULE_FOR_PAGE: Partial<Record<PageKey, ModuleDef>> = {
     key: 'reports',
     defaultRoles: ['masterAdmin', 'ministr', 'deputy', 'hr', 'accounting', 'employee'],
     gates: [reportsGate],
-    ready: false,
   },
   dictionaries: { key: 'dictionaries', defaultRoles: ALL, ready: false },
   tabelSettings: { key: 'tabelSettings', defaultRoles: ADMIN_HR, ready: false },

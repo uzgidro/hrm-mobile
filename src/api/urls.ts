@@ -427,3 +427,13 @@ export const MEDICAL_CHECKUP = (id: number) => `medical/checkups/${id}`;
 export const MEDICAL_CHECKUP_FILES = (id: number) => `medical/checkups/${id}/files`;
 export const MEDICAL_FILE = (id: number) => `medical/files/${id}`;
 export const MEDICAL_ANNUAL_INDEX = 'medical/annual-index';
+// Hisobotlar — web v2 hisobot dvigateli (katalog serverda rol bo'yicha hal qilinadi; `run`
+// JSON jadval qaytaradi, drill ham shu yo'l bilan) va ReportsPage'ning tayyor statistikasi.
+export const REPORTS_CATALOG = 'reports/catalog';
+export const REPORT_RUN = (code: string) => `reports/${code}/run`;
+export const REPORT_OPTIONS = (code: string, param: string) => `reports/${code}/options/${param}`;
+export const SERVICE_REQUEST_STATISTICS = 'service-requests/statistics';
+export const DASHBOARD_DEPARTMENTS_EMPLOYEE_COUNT = 'dashboard/departments-employee-count';
+export const DASHBOARD_KPI_MONTHLY_AVERAGE = 'dashboard/kpi-monthly-average';
+export const DASHBOARD_CARDS_SUMMARY = 'dashboard/cards-summary';
+export const DASHBOARD_TASK_EXECUTION_ATTENDANCE = 'dashboard/task-execution-attendance';

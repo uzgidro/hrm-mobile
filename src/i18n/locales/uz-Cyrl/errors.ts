@@ -42,4 +42,10 @@ export default {
   zoom_recurrence_needs_time: 'Такрорий йиғилиш учун бошланиш санаси ва вақти керак',
   // Tibbiy ko'rik (web v2 errors.medical_not_enabled) — router darvozasi.
   medical_not_enabled: 'Тиббий кўрик модули ёқилмаган',
+  // Hisobotlar (server reports/* kodlari; v2 errors.report_not_found + server jumlalari).
+  report_not_found: 'Топилмади',
+  report_forbidden: 'Бу ҳисоботга рухсат йўқ',
+  report_drill_forbidden: 'Бу тафсилотга рухсат йўқ',
+  report_too_large: 'Ҳисобот жуда катта — давр ёки филиални торайтиринг',
+  report_invalid_param: 'Ҳисобот параметрлари нотўғри',
 } as const;

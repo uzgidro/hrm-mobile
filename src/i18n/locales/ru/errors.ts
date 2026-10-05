@@ -42,4 +42,10 @@ export default {
   zoom_recurrence_needs_time: 'Для повторяющейся встречи нужны дата и время начала',
   // Tibbiy ko'rik (web v2 errors.medical_not_enabled) — router darvozasi.
   medical_not_enabled: 'Модуль медосмотра не включён',
+  // Hisobotlar (server reports/* kodlari; v2 errors.report_not_found + server jumlalari).
+  report_not_found: 'Не найдено',
+  report_forbidden: 'Нет доступа к этому отчёту',
+  report_drill_forbidden: 'Нет доступа к этой детализации',
+  report_too_large: 'Отчёт слишком большой — сузьте период или филиал',
+  report_invalid_param: 'Неверные параметры отчёта',
 } as const;
