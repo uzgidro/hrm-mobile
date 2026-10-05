@@ -2,6 +2,9 @@
 export default {
   title: 'Мониторинг',
   noBranch: 'Филиал для мониторинга не определён',
+  noBranchHint: 'Выберите филиал, чтобы открыть табло',
+  branch: 'Филиал',
+  pickBranch: 'Выберите филиал',
   totalEmployees: 'Всего сотрудников',
   presentToday: 'Пришли сегодня',
   lateToday: 'Опоздали сегодня',

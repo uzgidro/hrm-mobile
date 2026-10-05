@@ -6,8 +6,9 @@ export interface User {
    * department, no position — could not be recognised and fell through every
    * check into the ordinary-employee menu.
    */
-  type: 'employee' | 'master-admin' | 'admin' | 'guest' | 'monitoring-operator' | 'kpp';
-  employee?: Employee;
+  type: 'employee' | 'master-admin' | 'admin' | 'guest' | 'monitoring' | 'monitoring-operator' | 'kpp';
+  /** Xodim kartasi — `admin` / `master-admin` / kiosk / mehmon hisoblarida `null` keladi. */
+  employee?: Employee | null;
   is_secretariat?: boolean;
   /** member of a navbatchilik group (auth/me flag; gates the duty tile like the web nav) */
   is_navbatchi?: boolean;
@@ -23,7 +24,29 @@ export interface User {
    * `admin` hisobining o'z yozuvi (`/auth/me` — `AdminRead`). Filialga BOG'LANGAN admin filial
    * doirasida: HikCentral to'liq sinxronini faqat filialsiz (global) admin ishga tushiradi (v2 `canRunHikSync`).
    */
-  admin?: { organization_branch_id?: number | null } | null;
+  admin?: {
+    id?: number;
+    email?: string | null;
+    legal_name?: string | null;
+    organization_branch_id?: number | null;
+    photo_path?: string | null;
+  } | null;
+  /** `master-admin` hisobining o'z yozuvi (`/auth/me` — `MasterAdminRead`): xodim kartasi YO'Q. */
+  master_admin?: { id?: number; email?: string | null } | null;
+  /**
+   * Post/kiosk (kpp / monitoring) hisobining o'z yozuvi (`/auth/me` — `MultiModalUserRead`).
+   * ⚠️ Kioskning filiali FAQAT shu yerda — `organization_branch_ids` (bir nechta bo'lishi mumkin);
+   * `/auth/me` da yuqori darajadagi `organization_branch_id` YO'Q, `employee` esa `null`.
+   * Filialni `src/utils/userBranch.ts` orqali o'qing.
+   */
+  multi_modal_user?: {
+    id?: number;
+    role?: string | null;
+    username?: string | null;
+    legal_name?: string | null;
+    organization_branch_ids?: number[] | null;
+    photo_path?: string | null;
+  } | null;
   /** departments this user heads (department head), from /me — scopes work-leave "all" view like the web */
   headed_department_ids?: number[];
   /** may create/edit news posts (auth/me flag = can_manage_news on the backend) */
@@ -51,8 +74,6 @@ export interface User {
   is_line_manager?: boolean;
   /** Ijro topshiriqlarini yuritadi (auth/me) — v2 IjroPage yozish huquqi. */
   is_ijro_manager?: boolean;
-  /** Kiosk (kpp / monitoring) akkauntining filiali — xodim kartasi yo'q akkauntlar uchun. */
-  organization_branch_id?: number | null;
   /** Filialda tibbiy ko'rik moduli yoqilgan (auth/me) — v2 needsMedical. */
   medical_enabled?: boolean;
   /** Doktorning o'z turlari (auth/me) — bitta bo'lsa ko'rik formasida tanlash chiqmaydi (v2). */

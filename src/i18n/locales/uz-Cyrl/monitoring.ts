@@ -2,6 +2,9 @@
 export default {
   title: 'Мониторинг',
   noBranch: 'Мониторинг учун филиал аниқланмади',
+  noBranchHint: 'Тахтани кўриш учун филиални танланг',
+  branch: 'Филиал',
+  pickBranch: 'Филиални танланг',
   totalEmployees: 'Жами ходимлар',
   presentToday: 'Бугун келганлар',
   lateToday: 'Бугун кеч қолганлар',

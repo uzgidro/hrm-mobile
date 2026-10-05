@@ -11,7 +11,6 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeProvider';
 import { moduleTint, radii } from '@/theme/tokens';
 import { useAuthStore } from '@/store/authStore';
-import { resolveEmployeeBranchId } from '@/utils/branch';
 import { useBreakpoint } from '@/utils/responsive';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import {
@@ -30,7 +29,7 @@ import {
   Text,
 } from '@/ui';
 import { kppVisitorsQuery, visitorEventsQuery, type VisitFilter } from '../api/queries';
-import { countPasses, groupVisitorsByDay, NO_VISIT } from '../utils/kpp';
+import { countPasses, groupVisitorsByDay, kppBranchId, NO_VISIT } from '../utils/kpp';
 
 /** Bugungi sana — daqiqada bir yangilanadi (yarim tundan keyin «bugun» almashadi). */
 function useToday(): string {
@@ -50,7 +49,7 @@ export default function KppScreen({ showBack = false }: { showBack?: boolean } =
   const { colors: c } = useTheme();
   const { sizeClass } = useBreakpoint();
   const user = useAuthStore((s) => s.user);
-  const branchId = resolveEmployeeBranchId(user?.employee) ?? user?.organization_branch_id ?? undefined;
+  const branchId = kppBranchId(user);
   const today = useToday();
 
   const [search, setSearch] = useState('');

@@ -1,7 +1,8 @@
 // KPP posti (web v2 KppPage porti): mehmonlarni oxirgi tashrif kuni bo'yicha
 // guruhlash va o'tishlarni sanash — sof funksiyalar.
 import dayjs from 'dayjs';
-import type { Visitor } from '@/types';
+import type { User, Visitor } from '@/types';
+import { primaryBranchId, userBranchIds } from '@/utils/userBranch';
 
 export const NO_VISIT = 'none';
 
@@ -28,4 +29,16 @@ export function countPasses(events: { direction_type?: string | null }[]): { ent
     else if (e.direction_type === 'exit') exited++;
   }
   return { entered, exited };
+}
+
+/**
+ * Mehmonlar ro'yxati qaysi filial bo'yicha so'raladi. Xodim — asosiy filiali; kiosk / admin — yagona
+ * filiali (`utils/userBranch`; real `/auth/me` da kioskning filiali `multi_modal_user` da). Bir nechta
+ * filialli post yoki o'z filiali yo'q global hisob — filialsiz: server so'rovni hisobning o'z
+ * filiallariga o'zi toraytiradi (v2 da bunday postning sarlavha filiali ham tanlanmagan bo'ladi).
+ */
+export function kppBranchId(user?: User | null): number | undefined {
+  if (user?.employee) return primaryBranchId(user);
+  const ids = userBranchIds(user);
+  return ids.length === 1 ? ids[0] : undefined;
 }

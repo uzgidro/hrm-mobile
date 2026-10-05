@@ -16,7 +16,18 @@ describe('KppScreen', () => {
   const mock = new MockAdapter(apiClient);
   beforeEach(async () => {
     await i18n.changeLanguage('uz-Latn');
-    useAuthStore.setState({ user: { id: 1, type: 'kpp' } as never, isAuthenticated: true } as never);
+    // REAL `/auth/me` (qa.kpp, 2026-10-05): `employee: null`, filial `multi_modal_user` da.
+    useAuthStore.setState({
+      user: {
+        id: 931116,
+        username: 'qa.kpp',
+        type: 'kpp',
+        employee: null,
+        admin: null,
+        multi_modal_user: { id: 551, role: 'kpp', username: 'qa.kpp', organization_branch_ids: [1], legal_name: 'QA KPP Post' },
+      } as never,
+      isAuthenticated: true,
+    } as never);
     mock.onGet(VISITORS_LIST).reply(200, {
       items: [
         { id: 7, legal_name: 'Karimov Aziz', organization_name: 'Suv MChJ', host_employee_name: 'Ali Valiyev', last_visit_time: `${today}T09:10:00`, visit_count: 3 },
@@ -44,6 +55,8 @@ describe('KppScreen', () => {
     expect(screen.getByText(i18n.t('kpp.noVisit'))).toBeTruthy();
     await waitFor(() => expect(within(screen.getByTestId('kpp-entered')).getByText('1')).toBeTruthy());
     expect(within(screen.getByTestId('kpp-exited')).getByText('1')).toBeTruthy();
+    // Kioskning filiali `multi_modal_user.organization_branch_ids` dan olinadi.
+    expect(mock.history.get.find((r) => r.url === VISITORS_LIST)?.params?.organization_branch_id).toBe(1);
   });
 
   it("mehmonni tanlash o'tishlarni filtrlaydi, qayta bosish bekor qiladi", async () => {

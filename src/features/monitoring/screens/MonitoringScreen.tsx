@@ -1,8 +1,10 @@
 // v3 Monitoring — web v2 `pages/MonitoringPage.tsx` ning mobil shakli: bugungi 4
 // ko'rsatkich, kechikkanlar (bugun), ko'p kechikadiganlar (oy), bugungi mehmonlar.
 // Kechikish kartalari faqat `canSeeLateness` (v2) bo'lsa — aks holda so'rov ham yo'q.
-// Filial aniqlanmasa (v2: «filial tanlang») hech narsa so'ralmaydi.
-import React from 'react';
+// Filial — `utils/userBranch` (kiosk: `multi_modal_user`, admin: `admin`, xodim: bo'lim/asosiy).
+// Global (master-admin / ministr) yoki ko'p filialli hisobga ekranning o'zida tanlagich —
+// v2 buni sarlavhadagi `BranchSelector` bilan qiladi. Filial aniqlanmasa hech narsa so'ralmaydi.
+import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import dayjs from 'dayjs';
 import { router } from 'expo-router';
@@ -11,13 +13,35 @@ import { useTranslation } from 'react-i18next';
 import type { IconName } from '@/components/Icon';
 import type { ModuleTintKey } from '@/theme/tokens';
 import { useAuthStore } from '@/store/authStore';
-import { resolveEmployeeBranchId } from '@/utils/branch';
 import { canSeeLateness } from '@/utils/roles';
+import {
+  defaultGlobalBranchId,
+  hasGlobalBranchScope,
+  needsBranchPicker,
+  primaryBranchId,
+  userBranchIds,
+} from '@/utils/userBranch';
+import { PickerModal } from '@/components/PickerModal';
 import { useBreakpoint } from '@/utils/responsive';
-import { Avatar, Badge, Bento, Card, EmptyState, ErrorState, IconButton, ListRow, Screen, Skeleton, StatTile, Text } from '@/ui';
+import {
+  Avatar,
+  Badge,
+  Bento,
+  Card,
+  EmptyState,
+  ErrorState,
+  IconButton,
+  ListRow,
+  Screen,
+  SelectField,
+  Skeleton,
+  StatTile,
+  Text,
+} from '@/ui';
 import {
   frequentLateQuery,
   lateEmployeesQuery,
+  monitoringBranchesQuery,
   monitoringMainQuery,
   visitorPassesQuery,
 } from '../api/queries';
@@ -26,7 +50,17 @@ export default function MonitoringScreen({ showBack = false }: { showBack?: bool
   const { t } = useTranslation();
   const { sizeClass } = useBreakpoint();
   const user = useAuthStore((s) => s.user);
-  const branchId = resolveEmployeeBranchId(user?.employee) ?? user?.organization_branch_id ?? undefined;
+  const [picked, setPicked] = useState<number | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const own = userBranchIds(user);
+  const global = hasGlobalBranchScope(user);
+  const showPicker = needsBranchPicker(user);
+  const branchesQ = useQuery(monitoringBranchesQuery(showPicker));
+  // O'z filiali yo'q global hisob — v2 `useBranchInit` kabi bosh filial (ro'yxat kelgach).
+  const seeded = global && branchesQ.isFetched ? defaultGlobalBranchId(branchesQ.data) : undefined;
+  const branchId = picked ?? primaryBranchId(user) ?? seeded;
+  const branchName = (id: number) => branchesQ.data?.find((b) => b.id === id)?.name || `#${id}`;
+  const pickerIds = global ? (branchesQ.data ?? []).map((b) => b.id) : own;
   const lateness = canSeeLateness(user);
   const today = dayjs().format('YYYY-MM-DD');
 
@@ -44,11 +78,48 @@ export default function MonitoringScreen({ showBack = false }: { showBack?: bool
     </View>
   );
 
+  const branchSelect = showPicker ? (
+    <View style={styles.branch}>
+      <SelectField
+        testID="mon-branch"
+        label={t('monitoring.branch')}
+        value={branchId != null ? branchName(branchId) : ''}
+        placeholder={t('monitoring.pickBranch')}
+        icon="building"
+        onPress={() => setPickerOpen(true)}
+      />
+    </View>
+  ) : null;
+
+  const branchPicker = pickerOpen ? (
+    <PickerModal
+      visible
+      title={t('monitoring.branch')}
+      options={pickerIds.map((id) => ({ value: id, label: branchName(id) }))}
+      loading={branchesQ.isFetching}
+      selected={branchId ?? null}
+      onClose={() => setPickerOpen(false)}
+      onSelect={(id) => {
+        setPicked(id);
+        setPickerOpen(false);
+      }}
+    />
+  ) : null;
+
   if (branchId == null) {
     return (
       <Screen scroll={false}>
         {header}
-        <EmptyState title={t('monitoring.noBranch')} />
+        {branchSelect}
+        {branchesQ.isPending && showPicker ? (
+          <Skeleton height={120} />
+        ) : (
+          <EmptyState
+            title={t('monitoring.noBranch')}
+            message={showPicker ? t('monitoring.noBranchHint') : undefined}
+          />
+        )}
+        {branchPicker}
       </Screen>
     );
   }
@@ -175,6 +246,7 @@ export default function MonitoringScreen({ showBack = false }: { showBack?: bool
       onRefresh={() => void Promise.all([main.refetch(), late.refetch(), frequent.refetch(), guests.refetch()])}
     >
       {header}
+      {branchSelect}
       {tiles}
       <View style={styles.gap} />
       <Bento>
@@ -182,12 +254,14 @@ export default function MonitoringScreen({ showBack = false }: { showBack?: bool
         <Bento.Item>{guestsCard}</Bento.Item>
         {frequentCard ? <Bento.Item>{frequentCard}</Bento.Item> : null}
       </Bento>
+      {branchPicker}
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingTop: 8, paddingBottom: 12 },
+  branch: { marginBottom: 12 },
   tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   gap: { height: 12 },
   right: { alignItems: 'flex-end', gap: 4 },

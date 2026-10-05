@@ -2,6 +2,9 @@
 export default {
   title: 'Monitoring',
   noBranch: 'Monitoring uchun filial aniqlanmadi',
+  noBranchHint: "Taxtani ko'rish uchun filialni tanlang",
+  branch: 'Filial',
+  pickBranch: 'Filialni tanlang',
   totalEmployees: 'Jami xodimlar',
   presentToday: 'Bugun kelganlar',
   lateToday: 'Bugun kech qolganlar',

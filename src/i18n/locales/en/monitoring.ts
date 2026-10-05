@@ -2,6 +2,9 @@
 export default {
   title: 'Monitoring',
   noBranch: 'No branch found for monitoring',
+  noBranchHint: 'Pick a branch to open the board',
+  branch: 'Branch',
+  pickBranch: 'Pick a branch',
   totalEmployees: 'Total employees',
   presentToday: 'Arrived today',
   lateToday: 'Late today',

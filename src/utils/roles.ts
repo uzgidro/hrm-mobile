@@ -10,7 +10,7 @@ import { resolveEmployeeBranchId } from './branch';
 // ─────────────────────────────────────────────────────────────────────────────
 
 // multi_org_employee_role may arrive as a string or an array depending on endpoint.
-function primaryMultiOrgRoles(employee?: Employee): string[] {
+function primaryMultiOrgRoles(employee?: Employee | null): string[] {
   if (!employee?.is_multi_org_user) return [];
   const raw: any = employee?.multi_org_employee_role;
   if (Array.isArray(raw)) return raw.filter(Boolean);
@@ -23,7 +23,7 @@ function primaryMultiOrgRoles(employee?: Employee): string[] {
  * stacks on top of whatever the primary role is (a plain employee can still be
  * a KPI admin), so it is appended after the primary roles.
  */
-export function getMultiOrgRoles(employee?: Employee): string[] {
+export function getMultiOrgRoles(employee?: Employee | null): string[] {
   const extra = employee?.is_kpi_admin ? ['kpi_admin'] : [];
   return [...primaryMultiOrgRoles(employee), ...extra];
 }

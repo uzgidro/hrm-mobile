@@ -9,6 +9,7 @@ import {
   DASHBOARD_MAIN,
   DASHBOARD_LATE_EMPLOYEES,
   DASHBOARD_LATE_EMPLOYEES_FREQUENT,
+  ORGANIZATION_BRANCHES,
   VISITOR_TURNSTILE_ATTENDANCE,
 } from '@/api/urls';
 
@@ -52,7 +53,24 @@ export const monitoringKeys = {
   late: (b: number | undefined) => ['monitoring', 'late', b ?? null] as const,
   frequent: (b: number | undefined, day: string) => ['monitoring', 'frequent-late', b ?? null, day.slice(0, 7)] as const,
   visitors: (b: number | undefined, day: string) => ['monitoring', 'visitors', b ?? null, day] as const,
+  branches: () => ['monitoring', 'branches'] as const,
 };
+
+export type BranchOption = { id: number; name?: string | null; is_head_office?: boolean | null };
+
+/**
+ * Filial tanlagichi ro'yxati (v2 sarlavhadagi `BranchSelector` — `organization-branches?slim`).
+ * Faqat tanlagich kerak bo'lganda (global yoki ko'p filialli hisob) so'raladi.
+ */
+export function monitoringBranchesQuery(enabled: boolean) {
+  return queryOptions({
+    queryKey: monitoringKeys.branches(),
+    queryFn: () =>
+      apiClient.get(ORGANIZATION_BRANCHES, { params: { slim: true } }).then((r) => unwrapList<BranchOption>(r.data)),
+    enabled,
+    staleTime: 10 * 60_000,
+  });
+}
 
 export function monitoringMainQuery(branchId: number | undefined, day: string) {
   return queryOptions({
