@@ -108,7 +108,7 @@ export function VisitorDetailView({ id, embedded = false }: { id: number; embedd
         {embedded ? (
           <View style={styles.backBtn} />
         ) : (
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={10}>
+          <TouchableOpacity onPress={() => goBackOr('/(tabs)/mehmonlar')} style={styles.backBtn} hitSlop={10}>
             <Icon name="chevronLeft" size={24} color={colors.text} />
           </TouchableOpacity>
         )}

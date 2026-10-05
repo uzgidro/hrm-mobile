@@ -1,12 +1,12 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { ff } from '@/theme/typography';
 import { Icon } from '@/components/Icon';
 import type { TimelineItem } from '@/utils/letterStatus';
+import { goBackOr } from '@/lib/goBack';
 
 // Small presentational pieces of the letter detail screen, split out so the
 // screen file stays composition-only. Styles are colocated here.
@@ -20,7 +20,7 @@ export function DetailHeader({ embedded = false }: { embedded?: boolean } = {}) 
       {embedded ? (
         <View style={styles.backBtn} />
       ) : (
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={10}>
+        <TouchableOpacity onPress={() => goBackOr('/documents?seg=letters')} style={styles.backBtn} hitSlop={10}>
           <Icon name="chevronLeft" size={24} color={colors.text} />
         </TouchableOpacity>
       )}
