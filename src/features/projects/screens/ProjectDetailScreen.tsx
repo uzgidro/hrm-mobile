@@ -19,7 +19,7 @@ import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { isMasterAdmin } from '@/utils/roles';
 import { getApiErrorMessage } from '@/api/errors';
 import { confirm } from '@/lib/confirm';
-import type { WorkspaceCard } from '@/types';
+import type { Workspace, WorkspaceCard } from '@/types';
 import { workspaceDetailQuery, columnCardsQuery } from '../api/queries';
 import {
   useCreateColumn, useCreateCard, useToggleCardComplete, useDeleteWorkspace,
@@ -46,12 +46,20 @@ export default function LoyihaDetailScreen() {
   // Save error stays INSIDE the open modal (a toast renders beneath an RN Modal).
   const [modalError, setModalError] = useState<string | null>(null);
 
-  const { data: ws, isLoading } = useQuery(workspaceDetailQuery(workspaceId));
-
   const createColumn = useCreateColumn(workspaceId);
   const createCard = useCreateCard();
   const toggleCard = useToggleCardComplete();
   const deleteWs = useDeleteWorkspace();
+
+  // A deleted board's query was dropped from the cache (`afterWorkspaceDeleted`);
+  // this still-mounted screen must not re-create and refetch it (404 → a stray
+  // error toast, QA 2026-10-05). The last data stays while the stack pops.
+  const deleted = deleteWs.isSuccess;
+  const { data: ws, isLoading } = useQuery({
+    ...workspaceDetailQuery(workspaceId),
+    enabled: !!workspaceId && !deleted,
+    placeholderData: deleted ? (prev: Workspace | undefined) => prev : undefined,
+  });
 
   const columns = useMemo(() => (ws?.columns ?? []).filter((c) => !c.is_archived), [ws]);
 
@@ -167,7 +175,7 @@ export default function LoyihaDetailScreen() {
         right={
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <HeaderAction icon="edit" onPress={() => router.push({ pathname: '/loyiha-form', params: { id: String(workspaceId) } })} />
-            {canDelete && <HeaderAction icon="trash" onPress={onDelete} color={colors.error} disabled={deleteWs.isPending} />}
+            {canDelete && <HeaderAction icon="trash" onPress={onDelete} color={colors.error} disabled={deleteWs.isPending} accessibilityLabel={t('projects.deleteTitle')} />}
           </View>
         }
       />

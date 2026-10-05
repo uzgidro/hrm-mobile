@@ -22,7 +22,10 @@ import {
   uncompleteCard,
   toggleCardComplete,
   createCardComment,
+  afterWorkspaceDeleted,
 } from '../mutations';
+import { projectKeys } from '../queries';
+import { QueryClient, QueryObserver } from '@tanstack/react-query';
 
 let mock: MockAdapter;
 beforeEach(() => {
@@ -125,5 +128,28 @@ describe('toggleCardComplete', () => {
     mock.onPost(CARD_COMPLETE(3)).reply(200);
     await toggleCardComplete({ id: 3, is_completed: false });
     expect(mock.history.post[0].url).toBe(CARD_COMPLETE(3));
+  });
+});
+
+describe('afterWorkspaceDeleted (QA 2026-10-05: GET workspaces/{id} 404 after delete)', () => {
+  it('drops the deleted board, refreshes only my-workspaces', async () => {
+    // gcTime Infinity: no gc timer on the detached query keeps jest alive.
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } });
+    mock.onGet(WORKSPACE_DETAIL(8)).reply(404, {});
+    mock.onGet(WORKSPACES_LIST).reply(200, []);
+    qc.setQueryData(projectKeys.detail(8), { id: 8 });
+    qc.setQueryData(projectKeys.myWorkspaces(), [{ id: 8 }]);
+    const unsubs = [
+      new QueryObserver(qc, { queryKey: projectKeys.detail(8), queryFn: () => apiClient.get(WORKSPACE_DETAIL(8)).then((r) => r.data), staleTime: Infinity }).subscribe(() => {}),
+      new QueryObserver(qc, { queryKey: projectKeys.myWorkspaces(), queryFn: () => apiClient.get(WORKSPACES_LIST).then((r) => r.data), staleTime: Infinity }).subscribe(() => {}),
+    ];
+
+    await afterWorkspaceDeleted(qc, 8);
+
+    expect(qc.getQueryCache().find({ queryKey: projectKeys.detail(8), exact: true })).toBeUndefined();
+    expect(mock.history.get.filter((r) => r.url === WORKSPACE_DETAIL(8))).toHaveLength(0);
+    expect(mock.history.get.filter((r) => r.url === WORKSPACES_LIST)).toHaveLength(1);
+    unsubs.forEach((u) => u());
+    qc.clear();
   });
 });

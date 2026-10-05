@@ -1,5 +1,6 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
+import { invalidateAfterDelete } from '@/lib/invalidateAfterAction';
 import {
   WORKSPACES_LIST,
   WORKSPACE_DETAIL,
@@ -81,6 +82,16 @@ export function createCardComment(cardId: number, text: string): Promise<CardCom
     .then((r) => r.data);
 }
 
+/**
+ * After deleting a workspace: drop the board's own detail query (cancel +
+ * remove) and refresh only the my-workspaces list. Invalidating
+ * `projectKeys.all` refetched the still-open board — `GET workspaces/{id}` →
+ * 404 → a second, English error toast after the success (QA 2026-10-05).
+ */
+export function afterWorkspaceDeleted(qc: QueryClient, id: number): Promise<void> {
+  return invalidateAfterDelete(qc, [projectKeys.detail(id)], projectKeys.myWorkspaces());
+}
+
 // ── Mutation hooks ──────────────────────────────────────────────────────────
 // Each invalidates the whole projects subtree on success (one call refreshes
 // the list, any open board detail and its per-column cards via the
@@ -111,7 +122,7 @@ export function useDeleteWorkspace() {
     // The screen shows this error itself (toast / inline) — no second global toast.
     meta: { skipErrorToast: true },
     mutationFn: deleteWorkspace,
-    onSuccess: () => qc.invalidateQueries({ queryKey: projectKeys.all }),
+    onSuccess: (_data, id) => afterWorkspaceDeleted(qc, id),
   });
 }
 

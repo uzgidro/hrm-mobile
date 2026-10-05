@@ -10,10 +10,15 @@
 import React from 'react';
 import MockAdapter from 'axios-mock-adapter';
 import { apiClient } from '@/api/client';
-import { renderWithProviders, fireEvent } from '@/test/renderWithProviders';
+import { renderWithProviders, fireEvent, waitFor } from '@/test/renderWithProviders';
 import { WORKSPACE_DETAIL, CARDS_LIST } from '@/api/urls';
 import ProjectDetailScreen from '../ProjectDetailScreen';
 
+jest.mock('@/lib/confirm', () => ({ confirm: jest.fn(() => Promise.resolve(true)) }));
+jest.mock('@/lib/toast', () => ({
+  ...jest.requireActual('@/lib/toast'),
+  toast: { error: jest.fn(), success: jest.fn(), info: jest.fn() },
+}));
 jest.mock('expo-router', () => ({
   router: { push: jest.fn(), back: jest.fn() },
   useLocalSearchParams: () => ({ id: '1' }),
@@ -115,5 +120,37 @@ describe('ProjectDetailScreen — tablet landscape board layout', () => {
       pathname: '/loyiha-card-detail',
       params: { id: '100' },
     });
+  });
+});
+
+// QA 2026-10-05: deleting a board showed a stray error toast — the
+// `projectKeys.all` invalidation refetched the still-open board (GET
+// workspaces/{id} → 404).
+describe('ProjectDetailScreen — delete', () => {
+  // One adapter per test: a second describe-level MockAdapter would replace the
+  // first one's adapter on the shared axios instance at module load.
+  let mock: MockAdapter;
+  beforeEach(() => {
+    mock = new MockAdapter(apiClient);
+  });
+  afterEach(() => mock.restore());
+
+  it('deletes, goes back, and never refetches the deleted board', async () => {
+    const { useAuthStore } = jest.requireActual('@/store/authStore');
+    useAuthStore.setState({ user: { id: 1, type: 'employee', employee: { id: 5, legal_name: 'Men' } } as never, isAuthenticated: true } as never);
+    mock.onGet(WORKSPACE_DETAIL(1)).replyOnce(200, { ...WORKSPACE, created_by_id: 5 });
+    mock.onGet(WORKSPACE_DETAIL(1)).reply(404, { code: 'workspace_not_found' });
+    mock.onGet(CARDS_LIST).reply(200, []);
+    mock.onDelete(WORKSPACE_DETAIL(1)).reply(204);
+    const { toast } = jest.requireMock('@/lib/toast');
+
+    const r = await renderWithProviders(<ProjectDetailScreen />);
+    fireEvent.press(await r.findByLabelText("O'chirish"));
+
+    const { router } = jest.requireMock('expo-router');
+    await waitFor(() => expect(router.back).toHaveBeenCalled());
+    await new Promise((res) => setTimeout(res, 50));
+    expect(mock.history.get.filter((g) => g.url === WORKSPACE_DETAIL(1))).toHaveLength(1);
+    expect(toast.error).not.toHaveBeenCalled();
   });
 });
