@@ -9,6 +9,7 @@ export default {
   send: 'Отправить',
   search: 'Поиск...',
   done: 'Готово',
+  yes: 'Да',
   no: 'Нет',
   confirm: 'Подтвердить',
   notFound: 'Не найдено',

@@ -9,6 +9,7 @@ export default {
   send: 'Юбориш',
   search: 'Қидириш...',
   done: 'Тайёр',
+  yes: 'Ҳа',
   no: 'Йўқ',
   confirm: 'Тасдиқлаш',
   notFound: 'Топилмади',

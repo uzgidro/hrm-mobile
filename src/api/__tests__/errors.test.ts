@@ -65,6 +65,18 @@ describe('getApiErrorMessage', () => {
     expect(getApiErrorMessage(e)).toBe("Ruxsat yo'q");
   });
 
+  it('translates the *_not_found codes instead of the English server sentence (QA)', () => {
+    const body = (code: string, message: string) => ({ code, i18n_key: `errors.${code}`, params: {}, message });
+    expect(getApiErrorMessage(axiosErrorWith(body('letter_not_found', 'Letter not found'), 404))).toBe('Hujjat topilmadi');
+    expect(getApiErrorMessage(axiosErrorWith(body('work_leave_not_found', 'Work leave not found'), 404))).toBe(
+      'Ruxsatnoma topilmadi'
+    );
+    expect(getApiErrorMessage(axiosErrorWith(body('visitor_not_found', 'Visitor not found'), 404))).toBe('Mehmon topilmadi');
+    expect(getApiErrorMessage(axiosErrorWith(body('workspace_not_found', 'Workspace not found'), 404))).toBe(
+      'Loyiha topilmadi'
+    );
+  });
+
   it('shows the status when the gateway returns an HTML page (502/504)', () => {
     const e = axiosErrorWith('<html><body>502 Bad Gateway</body></html>', 502);
     expect(getApiErrorMessage(e)).toBe('Xatolik yuz berdi (502)');

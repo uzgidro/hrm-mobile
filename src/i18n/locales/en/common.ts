@@ -9,6 +9,7 @@ export default {
   send: 'Send',
   search: 'Search...',
   done: 'Done',
+  yes: 'Yes',
   no: 'No',
   confirm: 'Confirm',
   notFound: 'Not found',

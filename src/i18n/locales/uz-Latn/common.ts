@@ -11,6 +11,7 @@ export default {
   send: 'Yuborish',
   search: 'Qidirish...',
   done: 'Tayyor',
+  yes: 'Ha',
   no: "Yo'q",
   confirm: 'Tasdiqlash',
   notFound: 'Topilmadi',
