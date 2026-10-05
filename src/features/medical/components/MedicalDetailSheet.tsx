@@ -55,11 +55,12 @@ export function MedicalDetailSheet({ row, onClose }: { row: MedicalRow; onClose:
     }
   };
 
+  const caption = [emp.branch_name, rowSubtitle(emp)].filter(Boolean).join(' · ');
   const header = (
     <View style={styles.block}>
-      {!!rowSubtitle(emp) && (
+      {!!caption && (
         <Text variant="caption" tone="subtle">
-          {[emp.branch_name, rowSubtitle(emp)].filter(Boolean).join(' · ')}
+          {caption}
         </Text>
       )}
       <View style={styles.row}>
@@ -201,7 +202,7 @@ export function MedicalDetailSheet({ row, onClose }: { row: MedicalRow; onClose:
     <Sheet visible onClose={onClose} title={row.legal_name || t('medical.card')}>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
         {header}
-        {q.isError ? <ErrorState onRetry={() => q.refetch()} /> : !d ? <Skeleton height={180} /> : body()}
+        {q.isError && !d ? <ErrorState onRetry={() => q.refetch()} /> : !d ? <Skeleton height={180} /> : body()}
       </ScrollView>
     </Sheet>
   );

@@ -22,15 +22,16 @@ export function CheckupFiles({ checkup, isDoctor }: { checkup: Checkup; isDoctor
   if (files.length === 0 && !canAttach) return null;
 
   const open = (f: CheckupFile) => {
-    if (isHttpUrl(f.file_url)) void Linking.openURL(f.file_url.trim());
+    if (isHttpUrl(f.file_url)) Linking.openURL(f.file_url.trim()).catch(() => toast.error(t('medical.fileUnsafe')));
     else toast.error(t('medical.fileUnsafe'));
   };
 
   const attach = async () => {
-    const res = await DocumentPicker.getDocumentAsync({ multiple: false, copyToCacheDirectory: true });
-    if (res.canceled || !res.assets?.[0]) return;
-    const a = res.assets[0];
     try {
+      // Android: picker allaqachon ochiq bo'lsa getDocumentAsync rad etadi — xato yutilmasin.
+      const res = await DocumentPicker.getDocumentAsync({ multiple: false, copyToCacheDirectory: true });
+      if (res.canceled || !res.assets?.[0]) return;
+      const a = res.assets[0];
       await add.mutateAsync({ id: checkup.id, file: { uri: a.uri, name: a.name, mimeType: a.mimeType } });
       toast.success(t('medical.fileAdded'));
     } catch (e) {

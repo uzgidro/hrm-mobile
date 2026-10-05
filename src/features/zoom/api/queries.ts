@@ -40,9 +40,12 @@ export function zoomConfigQuery() {
  * Ro'yxatda `host_key` ham keladi (faqat `can_manage` ga) — u keshda saqlanmaydi:
  * kod faqat «Hostlik kodi» mutatsiyasi bilan, so'ralgan paytda ko'rsatiladi.
  */
-function stripSecrets(m: ZoomMeeting & { host_key?: unknown; host_key_at?: unknown }): ZoomMeeting {
+export function stripSecrets<
+  T extends (ZoomMeeting & { host_key?: unknown; host_key_at?: unknown }) | null | undefined,
+>(m: T): T {
+  if (!m || typeof m !== 'object') return m;
   const { host_key: _k, host_key_at: _a, ...rest } = m;
-  return rest;
+  return rest as T;
 }
 
 /** v2 `useZoomMeetings`: kompaniya bo'yicha umumiy jadval; faol tab o'zini 15 s da yangilaydi (jonli nuqta). */

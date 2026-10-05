@@ -74,7 +74,7 @@ export function ZoomDetailSheet({ meeting: m, onClose }: { meeting: ZoomMeeting;
   };
 
   const join = () => {
-    if (canJoin) void Linking.openURL(m.join_url!.trim());
+    if (canJoin) Linking.openURL(m.join_url!.trim()).catch(() => toast.error(t('zoom.linkUnsafe')));
   };
 
   const share = async () => {
@@ -94,8 +94,14 @@ export function ZoomDetailSheet({ meeting: m, onClose }: { meeting: ZoomMeeting;
     setError(null);
     try {
       const r = await start.mutateAsync(m.id);
-      if (isHttpUrl(r?.start_url)) await Linking.openURL(r.start_url.trim());
-      else toast.error(t('zoom.linkUnsafe'));
+      // Yig'ilish serverda allaqachon boshlangan — havola ochilmasa ham bu xato EMAS.
+      const opened =
+        isHttpUrl(r?.start_url) &&
+        (await Linking.openURL(r.start_url.trim()).then(
+          () => true,
+          () => false,
+        ));
+      if (!opened) toast.error(t('zoom.linkUnsafe'));
       const o = startOutcome(r ?? { recording: 'off' });
       toast[o.kind](t(o.key, o.params));
       onClose();

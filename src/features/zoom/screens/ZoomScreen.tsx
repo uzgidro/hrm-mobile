@@ -88,7 +88,7 @@ export default function ZoomScreen() {
       </Screen>
     );
   }
-  if (config.isError) {
+  if (config.isError && !config.data) {
     return (
       <Screen>
         {header}
@@ -189,7 +189,7 @@ export default function ZoomScreen() {
           </View>
         </View>
         <Card>
-          {list.isError ? (
+          {list.isError && !list.data ? (
             <ErrorState onRetry={() => list.refetch()} />
           ) : list.isPending ? (
             <Skeleton height={220} />

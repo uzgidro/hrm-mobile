@@ -130,13 +130,15 @@ export default function HealthChecksScreen() {
 
   const renderBody = () => {
     if (branchId == null) {
+      // Identitet so'rovi yiqilsa — bu «filial yo'q» emas, xato.
+      if (identity.isError && !identity.data) return <ErrorState onRetry={() => identity.refetch()} />;
       return identity.isLoading ? (
         <Skeleton height={220} />
       ) : (
         <EmptyState title={t('health.noBranch')} message={t('health.noBranchHint')} />
       );
     }
-    if (list.isError) return <ErrorState onRetry={() => list.refetch()} />;
+    if (list.isError && !list.data) return <ErrorState onRetry={() => list.refetch()} />;
     if (list.isPending) return <Skeleton height={220} />;
     if (!rows.length) {
       return debounced.trim() ? (

@@ -264,7 +264,7 @@ export default function MedicalScreen() {
         </View>
 
         <Card>
-          {list.isError ? (
+          {list.isError && !list.data ? (
             <ErrorState onRetry={() => list.refetch()} />
           ) : list.isPending ? (
             <Skeleton height={220} />
