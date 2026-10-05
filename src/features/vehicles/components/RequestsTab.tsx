@@ -197,6 +197,7 @@ export function RequestsTab({
         <PickerModal
           visible
           title={t('vehicles.visitVehicle')}
+          avatars={false}
           options={(cars.data ?? []).map((c) => ({
             value: c.id,
             label: `${c.plate_number ?? ''} — ${c.model_name ?? ''}`,

@@ -316,6 +316,7 @@ function AttachForm({ r, onDone, onCancel }: FormProps) {
         <PickerModal
           visible
           title={picker === 'vehicle' ? t('vehicles.pickVehicle') : t('vehicles.pickDriver')}
+          avatars={picker !== 'vehicle'}
           options={opts}
           disabledValues={opts.filter((o) => o.disabled).map((o) => o.value)}
           loading={picker === 'vehicle' ? cars.isFetching : drivers.isFetching}

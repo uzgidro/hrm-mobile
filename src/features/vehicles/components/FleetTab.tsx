@@ -1,6 +1,6 @@
 // «Mashinalar» tabi (v2 FleetTab): bugungi oraliq bilan ro'yxat — server har mashina uchun
 // safarda/so'ralganini hisoblaydi. Qidiruv serverda, qolgan toraytirish mijozda (o'nlab mashina).
-// Qator — mashina profiliga yo'l; tahrir/o'chirish faqat `can_manage`. Ommaviy amallar — web'da.
+// Qator — mashina profiliga yo'l; tahrir/o'chirish faqat mashina filiali mas'uliga (`canEditVehicle`). Ommaviy amallar — web'da.
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { router, type Href } from 'expo-router';
@@ -18,6 +18,7 @@ import {
   EMPTY_FLEET_FILTERS,
   filterVehicles,
   fleetFilterCount,
+  fmtConsumption,
   fmtMoney,
   type FleetFilters,
   type Vehicle,
@@ -26,7 +27,8 @@ import { AvailabilityBadge, GpsMark, PlateChip } from './FleetBits';
 
 export function FleetTab({
   today,
-  canManage,
+  canAdd,
+  canEdit,
   filters,
   setFilters,
   search,
@@ -35,7 +37,10 @@ export function FleetTab({
   onEdit,
 }: {
   today: string;
-  canManage: boolean;
+  /** Server `create_vehicle` ruxsati (avtopark filiali mas'uli / bosh admin). */
+  canAdd: boolean;
+  /** Qator bo'yicha — server mashina FILIALI bo'yicha tekshiradi (`canEditVehicle`). */
+  canEdit: (v: Vehicle) => boolean;
   filters: FleetFilters;
   setFilters: (f: FleetFilters) => void;
   search: string;
@@ -168,11 +173,11 @@ export function FleetTab({
           count > 0 || !!debounced.trim() ? (
             <EmptyState title={t('common.noMatch')} message={t('common.noMatchHint')} />
           ) : (
-            <EmptyState title={t('vehicles.empty')} message={canManage ? t('vehicles.emptyHint') : undefined} />
+            <EmptyState title={t('vehicles.empty')} message={canAdd ? t('vehicles.emptyHint') : undefined} />
           )
         ) : (
           rows.map((v) => (
-            <VehicleRow key={v.id} v={v} canManage={canManage} onEdit={() => onEdit(v)} onDelete={() => void del(v)} />
+            <VehicleRow key={v.id} v={v} canManage={canEdit(v)} onEdit={() => onEdit(v)} onDelete={() => void del(v)} />
           ))
         )}
       </Card>
@@ -181,6 +186,7 @@ export function FleetTab({
         <PickerModal
           visible
           title={t('vehicles.colFuel')}
+          avatars={false}
           options={(fuels.data ?? []).map((f) => ({ value: f.id, label: f.name || `#${f.id}` }))}
           loading={fuels.isFetching}
           selected={filters.fuel}
@@ -246,7 +252,7 @@ function VehicleRow({
   const spec = [v.color, v.seats ? `${v.seats} ${t('vehicles.seats')}` : null, v.year].filter(Boolean).join(' · ');
   const fuel = [
     v.fuel_type_name,
-    v.fuel_consumption ? `${v.fuel_consumption} ${v.fuel_unit ?? ''}`.trim() : null,
+    fmtConsumption(v.fuel_consumption, t('vehicles.unitKmL')),
     v.fuel_price != null ? `${fmtMoney(v.fuel_price)} ${t('vehicles.sum')}` : null,
   ]
     .filter(Boolean)

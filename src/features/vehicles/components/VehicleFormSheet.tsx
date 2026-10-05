@@ -211,6 +211,7 @@ export function VehicleFormSheet({ vehicle, onClose }: { vehicle: Vehicle | null
         <PickerModal
           visible
           {...pickerProps}
+          avatars={picker === 'driver'}
           onClose={() => setPicker(null)}
           onSelect={(id) => {
             setPicker(null);

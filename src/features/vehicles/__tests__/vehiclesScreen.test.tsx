@@ -182,6 +182,18 @@ describe('VehiclesScreen (v2 VehiclesPage)', () => {
     expect(screen.queryByTestId('vehicles-tile-queue')).toBeNull();
   });
 
+  it("boshqa filial transport mas'uli (can_manage, lekin mashinalar 29-filialda) — yozish tugmalari yo'q (server 403)", async () => {
+    mock.onGet(VEHICLE_ACCESS).reply(200, { ...ACCESS, managed_branch_ids: [1] });
+    mock.onGet(VEHICLES).reply(200, CARS.map((c) => ({ ...c, organization_branch_id: 29 })));
+    await renderWithProviders(<VehiclesScreen />);
+    await screen.findByText('Cobalt');
+    expect(screen.queryByTestId('vehicle-edit-1')).toBeNull();
+    expect(screen.queryByTestId('vehicle-delete-1')).toBeNull();
+    expect(screen.queryByTestId('vehicles-add')).toBeNull();
+    // GPS/yoqilg'i ko'rish huquqi `can_manage` bo'yicha qoladi.
+    expect(screen.getByText(i18n.t('vehicles.tabFuel'))).toBeTruthy();
+  });
+
   it("o'chirish tasdiq bilan; bekor qilinsa so'rov yo'q", async () => {
     mock.onDelete(VEHICLE(1)).reply(200, {});
     await renderWithProviders(<VehiclesScreen />);

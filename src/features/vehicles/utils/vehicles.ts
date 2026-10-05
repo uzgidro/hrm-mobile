@@ -29,6 +29,7 @@ export interface PersonShort {
 
 export interface Vehicle {
   id: number;
+  organization_branch_id?: number | null;
   model_name?: string | null;
   plate_number?: string | null;
   color?: string | null;
@@ -220,6 +221,14 @@ export function fmtMoney(v?: number | null): string {
 }
 
 /** ISO sana/vaqt satridan kesib DD.MM.YYYY — qurilma TZ'iga bog'liq emas. */
+/**
+ * Sarf — server modeli bo'yicha AYNAN km/l (`models/vehicle.py`: «1 litr yoqilg'iga necha km»).
+ * Yoqilg'i turining `fuel_unit` i (litr, m³) bu yerga tegishli emas. Ro'yxat va profil bir xil.
+ */
+export function fmtConsumption(v: number | null | undefined, unitKmL: string): string | null {
+  return v ? `${fmtMoney(v)} ${unitKmL}` : null;
+}
+
 export function fmtDate(s?: string | null): string {
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s ?? '');
   return m ? `${m[3]}.${m[2]}.${m[1]}` : '—';
@@ -336,6 +345,35 @@ export type FleetTab = 'fleet' | 'requests' | 'fuel' | 'visits' | 'drivers';
 
 /** GPS ma'lumoti (tashriflar, jonli holat) — operator va tasdiqlovchi (server `can_view_fleet`). */
 export const canSeeGps = (a?: FleetAccess | null) => !!(a?.can_manage || a?.can_approve);
+
+/**
+ * Mashinani YOZISH huquqi — server `VehicleService._assert_manager` ning aynan o'zi: sayt bosh admini
+ * har doim, boshqalar faqat o'sha filialning transport mas'uli (`managed_branch_ids`). `can_manage`
+ * yetarli EMAS: u «biror filialda mas'ul» degani, server esa mashina FILIALI bo'yicha tekshiradi
+ * (1-filial mas'uli 29-filial mashinasini qo'shsa → 403). v2 `can_manage` ga qaraydi — bu v2/server
+ * nomuvofiqligi; mobil server rad etadigan tugmani ko'rsatmaydi.
+ */
+export function canManageFleetBranch(
+  a: FleetAccess | null | undefined,
+  branchId: number | null | undefined,
+  user: User | null | undefined,
+): boolean {
+  if (!a?.can_manage) return false;
+  if (isSiteMasterAdmin(user)) return true;
+  if (branchId == null) return false;
+  return a.managed_branch_ids.some((id) => Number(id) === Number(branchId));
+}
+
+/** Yangi mashina — forma filial yubormaydi, server avtopark (BFD) filialiga yozadi (`create_vehicle`). */
+export const canAddVehicle = (a: FleetAccess | null | undefined, user: User | null | undefined) =>
+  canManageFleetBranch(a, a?.provider_branch_id, user);
+
+/** Tahrir/o'chirish — mashinaning o'z filiali (`update_vehicle` / `delete_vehicle`). */
+export const canEditVehicle = (
+  a: FleetAccess | null | undefined,
+  v: Pick<Vehicle, 'organization_branch_id'>,
+  user: User | null | undefined,
+) => canManageFleetBranch(a, v.organization_branch_id ?? a?.provider_branch_id, user);
 
 export function tabsFor(access: FleetAccess | null | undefined, user: User | null | undefined): FleetTab[] {
   const tabs: FleetTab[] = ['fleet', 'requests'];

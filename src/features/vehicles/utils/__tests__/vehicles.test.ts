@@ -3,6 +3,8 @@ import {
   availability,
   buildFuelBody,
   buildVehicleBody,
+  canAddVehicle,
+  canEditVehicle,
   categoryLabelKey,
   defaultRequestStatus,
   driverPickerOptions,
@@ -12,6 +14,7 @@ import {
   finalizeBody,
   fleetFilterCount,
   fleetOverview,
+  fmtConsumption,
   fmtDate,
   fmtDateTime,
   fmtMoney,
@@ -140,6 +143,37 @@ describe('tablar (v2 VehiclesPage)', () => {
     expect(resolveTab('fuel', ['fleet', 'requests', 'fuel'])).toBe('fuel');
     expect(resolveTab('fuel', ['fleet', 'requests'])).toBe('fleet');
     expect(resolveTab(undefined, ['fleet'])).toBe('fleet');
+  });
+});
+
+describe("mashinani yozish huquqi (server _assert_manager)", () => {
+  it("can_manage bo'lsa ham boshqa filial mashinasi — yo'q (qa.fleet: 1-filial mas'uli, mashinalar 29-da)", () => {
+    const a = access({ can_manage: true, managed_branch_ids: [1], provider_branch_id: 29 });
+    expect(canAddVehicle(a, emp)).toBe(false);
+    expect(canEditVehicle(a, { organization_branch_id: 29 }, emp)).toBe(false);
+    expect(canEditVehicle(a, { organization_branch_id: 1 }, emp)).toBe(true);
+  });
+  it("avtopark filiali mas'uli — qo'shadi; filialsiz mashina avtopark filialiga tegishli", () => {
+    const a = access({ can_manage: true, managed_branch_ids: [29] });
+    expect(canAddVehicle(a, emp)).toBe(true);
+    expect(canEditVehicle(a, { organization_branch_id: null }, emp)).toBe(true);
+    expect(canEditVehicle(a, { organization_branch_id: 5 }, emp)).toBe(false);
+  });
+  it("sayt bosh admini — har qanday filial; can_manage yo'q — hech narsa", () => {
+    const a = access({ can_manage: true, managed_branch_ids: [] });
+    expect(canAddVehicle(a, master)).toBe(true);
+    expect(canEditVehicle(a, { organization_branch_id: 5 }, master)).toBe(true);
+    expect(canAddVehicle(access({ managed_branch_ids: [29] }), emp)).toBe(false);
+    expect(canAddVehicle(undefined, master)).toBe(false);
+  });
+});
+
+describe("sarf (km/l)", () => {
+  it("fmtConsumption — fuel_unit emas, km/l; kasr vergul bilan; bo'sh → null", () => {
+    expect(fmtConsumption(12.5, 'km/l')).toBe('12,5 km/l');
+    expect(fmtConsumption(10, 'km/l')).toBe('10 km/l');
+    expect(fmtConsumption(null, 'km/l')).toBeNull();
+    expect(fmtConsumption(0, 'km/l')).toBeNull();
   });
 });
 

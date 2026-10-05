@@ -139,6 +139,7 @@ export function DriverScopesTab({ fleetBranchId }: { fleetBranchId: number | nul
         <PickerModal
           visible
           title={t(scopeKindKey(kind))}
+          avatars={kind === 'employee'}
           options={options}
           loading={loading}
           selected={null}

@@ -22,6 +22,8 @@ import { RequestsTab, type RequestTabState } from '../components/RequestsTab';
 import { VehicleFormSheet } from '../components/VehicleFormSheet';
 import { VisitsTab } from '../components/VisitsTab';
 import {
+  canAddVehicle,
+  canEditVehicle,
   canSeeGps,
   defaultRequestStatus,
   EMPTY_FLEET_FILTERS,
@@ -88,6 +90,8 @@ export default function VehiclesScreen() {
   };
 
   const header = <PageHeader title={t('vehicles.title')} subtitle={t('vehicles.subtitle')} />;
+  // Yozish huquqi — server `_assert_manager` (filial bo'yicha), `can_manage` emas.
+  const canAdd = canAddVehicle(a, user);
 
   if (access.isPending) {
     return (
@@ -180,7 +184,8 @@ export default function VehiclesScreen() {
         {tab === 'fleet' && (
           <FleetTab
             today={day}
-            canManage={a.can_manage}
+            canAdd={canAdd}
+            canEdit={(v) => canEditVehicle(a, v, user)}
             filters={fleetFilters}
             setFilters={setFleetFilters}
             search={fleetSearch}
@@ -203,16 +208,18 @@ export default function VehiclesScreen() {
         <Text variant="caption" tone="subtle" style={styles.note}>
           {t('vehicles.webOnly')}
         </Text>
-        {a.can_manage && tab === 'fleet' && <View style={styles.fabSpace} />}
+        {canAdd && tab === 'fleet' && <View style={styles.fabSpace} />}
       </Screen>
-      {a.can_manage && tab === 'fleet' && (
+      {canAdd && tab === 'fleet' && (
         <Fab
           testID="vehicles-add"
           accessibilityLabel={t('vehicles.add')}
           onPress={() => setForm({ vehicle: null, n: Date.now() })}
         />
       )}
-      {form && a.can_manage && <VehicleFormSheet key={form.n} vehicle={form.vehicle} onClose={() => setForm(null)} />}
+      {form && (form.vehicle ? canEditVehicle(a, form.vehicle, user) : canAdd) && (
+        <VehicleFormSheet key={form.n} vehicle={form.vehicle} onClose={() => setForm(null)} />
+      )}
     </View>
   );
 }

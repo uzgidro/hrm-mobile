@@ -24,7 +24,7 @@ import {
 } from '@/ui';
 import { fleetAccessQuery, vehicleDetailQuery, vehicleLiveQuery, vehicleTripsQuery } from '../api/queries';
 import { PlateChip } from '../components/FleetBits';
-import { canSeeGps, dateRangeText, fmtDate, fmtMoney, liveStatus, type VehicleTrip } from '../utils/vehicles';
+import { canSeeGps, dateRangeText, fmtConsumption, fmtDate, fmtMoney, liveStatus, type VehicleTrip } from '../utils/vehicles';
 
 /** Safarlar tarixi (≤200) — Screen ichida birdaniga chizilmaydi: 30 tadan. */
 const TRIPS_STEP = 30;
@@ -79,7 +79,7 @@ export default function VehicleProfileScreen() {
     [t('vehicles.seatsLabel'), v.seats],
     [t('vehicles.fuelType'), v.fuel_type_name],
     // v2 `VehicleProfilePage`: «km/l».
-    [t('vehicles.consumption'), v.fuel_consumption ? `${fmtMoney(v.fuel_consumption)} ${t('vehicles.unitKmL')}` : null],
+    [t('vehicles.consumption'), fmtConsumption(v.fuel_consumption, t('vehicles.unitKmL'))],
     [
       t('vehicles.fuelPriceLabel'),
       v.fuel_price != null
