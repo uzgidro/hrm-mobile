@@ -508,7 +508,7 @@ const MODULE_FOR_PAGE: Partial<Record<PageKey, ModuleDef>> = {
 
   // ── v3: qolgan v2 modullari. `ready: false` — ekran hali yo'q (W2–W6). ──
   services: { key: 'services', defaultRoles: [...ALL, 'guest'] },
-  zoom: { key: 'zoom', defaultRoles: ALL, ready: false },
+  zoom: { key: 'zoom', defaultRoles: ALL },
   vehicles: { key: 'vehicles', defaultRoles: ALL, gates: [needsFleet], ready: false },
   ijro: { key: 'ijro', defaultRoles: ALL },
   workPlan: { key: 'workPlan', defaultRoles: ADMIN_HR_LEAD },

@@ -32,6 +32,7 @@ import password from './password';
 import tabs from './tabs';
 import kpp from './kpp';
 import monitoring from './monitoring';
+import zoom from './zoom';
 import health from './health';
 import inspections from './inspections';
 import learning from './learning';
@@ -83,6 +84,7 @@ export default {
   tabs,
   kpp,
   monitoring,
+  zoom,
   health,
   inspections,
   learning,

@@ -168,6 +168,11 @@ describe('yangi bildirishnoma turlari (2026-08-19)', () => {
     }
   });
 
+  it('zoom bildirishnomalari Zoom jadvaliga boradi', () => {
+    expect(routeForNotification({ type: 'zoom_decision' })).toBe('/zoom');
+    expect(routeForNotification({ notification_type: 'zoom_organizer_changed' })).toBe('/zoom');
+  });
+
   it('safar so\'rovi letter_id bilan xat tafsilotiga, idsiz ro\'yxatga boradi', () => {
     expect(routeForNotification({ type: 'trip_return_confirm_prompt', letter_id: 12 })).toBe(
       '/letter-detail?id=12'

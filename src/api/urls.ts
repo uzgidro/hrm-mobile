@@ -405,3 +405,15 @@ export const HEALTH_CHECKS_ACCESS = 'health-checks/access';
 export const HEALTH_CHECKS_ROSTER = 'health-checks/roster';
 export const HEALTH_CHECKS_BULK = 'health-checks/bulk-grade';
 export const HEALTH_CHECK = (id: number) => `health-checks/${id}`;
+// Zoom — kompaniyaning umumiy litsenziyasi jadvali. `start` / `start-url` / `host-key`
+// faqat mutatsiya bilan so'raladi va hech qachon keshlanmaydi (parolsiz host havolasi).
+export const ZOOM_MEETINGS = 'zoom-meetings';
+export const ZOOM_CONFIG = 'zoom-meetings/config';
+export const ZOOM_LIVE = 'zoom-meetings/live';
+export const ZOOM_AVAILABILITY = 'zoom-meetings/availability';
+export const ZOOM_MEETING = (id: number) => `zoom-meetings/${id}`;
+export const ZOOM_MEETING_APPROVE = (id: number) => `zoom-meetings/${id}/approve`;
+export const ZOOM_MEETING_REJECT = (id: number) => `zoom-meetings/${id}/reject`;
+export const ZOOM_MEETING_START = (id: number) => `zoom-meetings/${id}/start`;
+export const ZOOM_MEETING_START_URL = (id: number) => `zoom-meetings/${id}/start-url`;
+export const ZOOM_MEETING_HOST_KEY = (id: number) => `zoom-meetings/${id}/host-key`;

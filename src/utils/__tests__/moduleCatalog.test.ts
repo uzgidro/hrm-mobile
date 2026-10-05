@@ -89,6 +89,14 @@ describe('modul katalogi — v2 paritet', () => {
     expect(canAccessPage(master, 'health')).toBe(true);
   });
 
+  it("zoom — hamma rol (v2 defaultRoles ALL, darvozasiz); post akkaunti yo'q; route /zoom", () => {
+    expect(canAccessPage(emp(), 'zoom')).toBe(true);
+    expect(canAccessPage(hr, 'zoom')).toBe(true);
+    expect(canAccessPage(master, 'zoom')).toBe(true);
+    expect(canAccessPage(kppAcc, 'zoom')).toBe(false);
+    expect(CATALOG.find((e) => e.page === 'zoom')?.route).toBe('/zoom');
+  });
+
   it("KPI filialda o'chirilgan bo'lsa override ham qaytarolmaydi", () => {
     setNavOverrides({ kpi: { roles: ['employee'] } });
     expect(canAccessPage(emp({ kpi_enabled: false }), 'kpi')).toBe(false);

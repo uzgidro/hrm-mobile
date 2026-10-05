@@ -162,6 +162,7 @@ function ThemedNavigation() {
           <Stack.Screen name="oquv-markazi" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="auditlar" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="sogliq-korigi" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="zoom" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="assistant" options={{ animation: 'slide_from_bottom' }} />
           <Stack.Screen name="loyiha-form" options={{ animation: 'slide_from_bottom' }} />
           <Stack.Screen name="change-pin" options={{ animation: 'slide_from_right' }} />

@@ -239,7 +239,9 @@ export function routeForNotification(data: any): string | null {
   // Both screens exist on mobile; these used to return null (tap did nothing).
   if (type.startsWith('navbatchilik')) return '/navbatchilik';
   if (type.startsWith('employee_assignment')) return '/profile-detail';
-  // Avtopark / tibbiy ko'rik / zoom modullari mobilда hali yo'q — joyida qolamiz.
+  // Zoom yig'ilishlari (zoom_decision, zoom_organizer_changed) — umumiy jadval.
+  if (type.startsWith('zoom')) return '/zoom';
+  // Avtopark / tibbiy ko'rik modullari mobilда hali yo'q — joyida qolamiz.
   return null;
 }
 
