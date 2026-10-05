@@ -150,16 +150,35 @@ export function activeModule(pathname: string, seg?: string | string[]): PageKey
 }
 
 /**
- * Root Stack sahifa darvozasi (`app/_layout.tsx` `screenLayout`): `name` — `app/`
- * dagi fayl nomi. Faqat modulning O'Z route'i (va katalogdan tashqari, lekin xodim
- * ma'lumotini ko'rsatadigan `birthdays`) — kirish huquqisiz foydalanuvchi to'g'ridan
- * to'g'ri havola bilan admin sahifasi ramkasini ko'rmasin. Tafsilot ekranlari
- * (`DETAIL_OWNER`) ATAYLAB darvozasiz: bildirishnoma yoki boshqa moduldan ochiladi.
+ * Root Stack sahifa darvozasi (`app/_layout.tsx` `screenLayout`) qo'llanadigan sahifalar —
+ * ATAYLAB aniq ro'yxat: admin bo'limining maxfiy sahifalari va xodimlar ro'yxatini
+ * ko'rsatadigan `birthdays`. Butun katalogga qo'llanmaydi: `/attendance-detail`,
+ * `/work-leaves`, `/tabel` kabi sahifalar boshqa modullardan ham ochiladi (masalan
+ * rahbar Jamoa → «Tafsilotlar» orqali, Davomat moduli yo'q bo'lsa ham) — umumiy
+ * darvoza ularni «Ruxsat yo'q» ga aylantirib qo'ygan edi (QA D, 2026-10-05).
+ */
+const GATED_PAGES: ReadonlySet<PageKey> = new Set<PageKey>([
+  'users',
+  'registrations',
+  'auditLog',
+  'branches',
+  'turnstiles',
+  'terminals',
+  'customFields',
+  'sysHealth',
+  'lms',
+  'tabelSettings',
+]);
+
+/**
+ * `name` — `app/` dagi fayl nomi. Darvozali sahifaning O'Z route'i bo'lsa — uning
+ * kaliti, aks holda `null` (ekran darvozasiz ochiladi). Huquqsiz foydalanuvchi
+ * to'g'ridan-to'g'ri havola bilan admin sahifasi ramkasini ko'rmasin.
  */
 export function gatedPageForRoute(name: string): PageKey | null {
   if (name === 'birthdays') return 'birthdays';
   const path = `/${name}`;
-  const own = CATALOG.find((m) => m.page !== 'home' && barePath(m.route) === path);
+  const own = CATALOG.find((m) => GATED_PAGES.has(m.page) && barePath(m.route) === path);
   return own ? own.page : null;
 }
 

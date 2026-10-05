@@ -326,7 +326,15 @@ describe('gatedPageForRoute (root Stack sahifa darvozasi)', () => {
     expect(gatedPageForRoute('foydalanuvchilar')).toBe('users');
     expect(gatedPageForRoute('registratsiyalar')).toBe('registrations');
     expect(gatedPageForRoute('audit-log')).toBe('auditLog');
-    expect(gatedPageForRoute('zoom')).toBe('zoom');
+    expect(gatedPageForRoute('tizim-holati')).toBe('sysHealth');
+  });
+
+  it('boshqa modullardan ham ochiladigan oddiy sahifalar — darvozasiz (rahbar → /attendance-detail)', () => {
+    expect(gatedPageForRoute('attendance-detail')).toBeNull();
+    expect(gatedPageForRoute('work-leaves')).toBeNull();
+    expect(gatedPageForRoute('tabel')).toBeNull();
+    expect(gatedPageForRoute('zoom')).toBeNull();
+    expect(gatedPageForRoute('malumotnomalar')).toBeNull();
   });
 
   it('katalogdan tashqari, lekin ma\'lumot ko\'rsatadigan sahifa — birthdays', () => {
