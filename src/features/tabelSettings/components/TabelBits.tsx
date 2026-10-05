@@ -2,12 +2,12 @@
 // qatori, o'nlik son maydoni va soat tanlagichi (v2 `ClockSelect`: soat ro'yxati + 5 daqiqalik qadam —
 // Zoom formasidagi SelectField + PickerModal naqshi).
 import React, { useState } from 'react';
-import { StyleSheet, Switch, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeProvider';
 import { FormInput } from '@/components/FormInput';
 import { PickerModal } from '@/components/PickerModal';
-import { SelectField, Text } from '@/ui';
+import { SelectField, Text, Toggle } from '@/ui';
 import { parseDecimal } from '../utils/blank';
 import { CLOCK_HOURS, CLOCK_MINUTES, setClockHour, setClockMinute, splitClock } from '../utils/tabelConfig';
 
@@ -27,7 +27,7 @@ export function KeyValue({ label, value, testID }: { label: string; value?: stri
 
 export function SectionTitle({ children }: { children: string }) {
   return (
-    <Text variant="label" tone="brand" weight="700" style={styles.section}>
+    <Text variant="label" weight="700" style={styles.section}>
       {children}
     </Text>
   );
@@ -46,19 +46,16 @@ export function SwitchRow({
   onChange: (v: boolean) => void;
   testID?: string;
 }) {
-  const { colors: c } = useTheme();
   return (
     <View style={styles.switchWrap}>
       <View style={styles.switchRow}>
         <Text variant="body" style={styles.flex}>
           {label}
         </Text>
-        <Switch
+        <Toggle
           testID={testID}
           value={value}
           onValueChange={onChange}
-          trackColor={{ false: c.border, true: c.brand }}
-          thumbColor={c.surface}
         />
       </View>
       {!!hint && (
@@ -131,7 +128,8 @@ export function ClockField({
           <SelectField
             testID={`${testID}-hour`}
             label={t('tabelSettings.clockHour')}
-            value={h ? `${h}:00` : ''}
+            // Faqat soat («08») — daqiqa yonidagi maydonda (avval «08:00» + «Daqiqa 00» chalg'itardi).
+            value={h || ''}
             placeholder={empty}
             icon="clock"
             onPress={() => setPicker('h')}
@@ -152,7 +150,7 @@ export function ClockField({
         <PickerModal
           visible
           title={`${label} · ${t('tabelSettings.clockHour')}`}
-          options={[{ value: NONE, label: empty }, ...CLOCK_HOURS.map((x, i) => ({ value: i, label: `${x}:00` }))]}
+          options={[{ value: NONE, label: empty }, ...CLOCK_HOURS.map((x, i) => ({ value: i, label: x }))]}
           selected={h ? Number(h) : NONE}
           onClose={() => setPicker(null)}
           onSelect={(v) => {

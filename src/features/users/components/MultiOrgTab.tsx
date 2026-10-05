@@ -23,7 +23,7 @@ function RoleBadges({ row }: { row: MultiOrgRow }) {
         <Badge
           testID={`multiorg-role-${row.id}`}
           label={t(`users.role_${role}`, { defaultValue: role })}
-          tone="brand"
+          tone="info"
         />
       ) : null}
       {!!row.is_kpi_admin && <Badge label={t('users.kpiAdmin')} tone="neutral" />}

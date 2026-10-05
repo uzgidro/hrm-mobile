@@ -18,6 +18,8 @@ export default {
   fieldLon: 'Longitude',
   coordinates: 'Coordinates',
   coordInvalid: 'A coordinate must be a number (e.g. 41.29950)',
+  latRange: 'Latitude must be between −90 and 90',
+  lonRange: 'Longitude must be between −180 and 180',
   topologyTitle: "The branch's role in the system",
   isHeadOffice: 'Head office (Executive office)',
   isHeadOfficeHint:

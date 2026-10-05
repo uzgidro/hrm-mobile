@@ -51,7 +51,7 @@ export function LocationsTab() {
           <Button
             testID="locations-more"
             label={`${t('branches.showMore')} (${rows.length - visible.length})`}
-            variant="ghost"
+            variant="link"
             size="sm"
             onPress={() => setLimit((n) => n + LOCATIONS_STEP)}
           />

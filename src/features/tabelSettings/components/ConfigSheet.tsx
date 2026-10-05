@@ -145,12 +145,12 @@ export function ConfigSheet({ branch, onClose }: { branch: TabelBranch; onClose:
             keyboardType="number-pad"
           />,
         )}
-        <View style={[styles.next, { backgroundColor: c.brandSoft, borderColor: c.border }]}>
+        <View style={[styles.next, { backgroundColor: c.dropSoft, borderColor: c.border }]}>
           <View style={styles.flex}>
             <Text variant="caption" tone="subtle">
               {t('tabelSettings.nextNumLabel')}
             </Text>
-            <Text variant="heading" tone="brand" testID="cfg-next-number">
+            <Text variant="heading" testID="cfg-next-number">
               {next.data?.next_number || '—'}
             </Text>
           </View>
@@ -244,7 +244,7 @@ export function ConfigSheet({ branch, onClose }: { branch: TabelBranch; onClose:
             label={t('tabelSettings.addSigner')}
             icon="plus"
             size="sm"
-            variant="ghost"
+            variant="link"
             onPress={() => set({ signers: [...form.signers, { position: '', name: '' }] })}
           />
         </View>

@@ -116,7 +116,7 @@ export function LeadersSheet({ branch, onClose }: { branch: TabelBranch; onClose
           left={<Avatar name={name} uri={l.employee?.photo_thumb_path || l.employee?.photo_path} size={36} />}
           below={
             <View style={styles.badges}>
-              <Badge label={roleName(l.leadership_role)} tone="brand" />
+              <Badge label={roleName(l.leadership_role)} tone="info" />
               {l._new && <Badge label={t('tabelSettings.leaderNew')} tone="success" />}
             </View>
           }
@@ -144,7 +144,7 @@ export function LeadersSheet({ branch, onClose }: { branch: TabelBranch; onClose
           {branch.name || `#${branch.id}`}
         </Text>
         <View style={[styles.addBox, { borderColor: c.border, backgroundColor: c.surface2 }]}>
-          <Text variant="label" tone="brand" weight="700">
+          <Text variant="label" weight="700">
             {t('tabelSettings.leaderAdd')}
           </Text>
           <SelectField
@@ -172,7 +172,7 @@ export function LeadersSheet({ branch, onClose }: { branch: TabelBranch; onClose
           />
         </View>
 
-        <Text variant="label" tone="brand" weight="700">
+        <Text variant="label" weight="700">
           {t('tabelSettings.leaderList')}
         </Text>
         {renderList()}

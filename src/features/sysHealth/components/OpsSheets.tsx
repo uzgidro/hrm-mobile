@@ -3,13 +3,13 @@
 // va server hisobotini so'zma-so'z ko'rsatish. Varaqning o'zi tasdiq: oqibat matn bilan yozilgan.
 // Ota `key` bilan faqat ochiqda mount qiladi.
 import React, { useState } from 'react';
-import { Platform, ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { getApiErrorMessage } from '@/api/errors';
 import { useTheme } from '@/theme/ThemeProvider';
 import { radii } from '@/theme/tokens';
 import { FormInput } from '@/components/FormInput';
-import { Button, Chip, Sheet, Text } from '@/ui';
+import { Button, Chip, Sheet, Text, Toggle } from '@/ui';
 import { useRunRecovery, useShutdownSystem } from '../api/mutations';
 import { REASON_MAX, REASON_MIN, isReasonValid, prettyReport, type TxAction } from '../utils/sysHealth';
 
@@ -17,7 +17,6 @@ type Report = Record<string, unknown>;
 
 export function ShutdownSheet({ onClose, onDone }: { onClose: () => void; onDone: (data: Report) => void }) {
   const { t } = useTranslation();
-  const { colors: c } = useTheme();
   const [reason, setReason] = useState('');
   const [force, setForce] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,12 +55,11 @@ export function ShutdownSheet({ onClose, onDone }: { onClose: () => void; onDone
           <Text variant="body" style={styles.flex}>
             {t('sysHealth.force')}
           </Text>
-          <Switch
+          <Toggle
             testID="sys-shutdown-force"
             value={force}
             onValueChange={setForce}
-            trackColor={{ false: c.border, true: c.danger }}
-            thumbColor={c.surface}
+            tone="danger"
           />
         </View>
         <Text variant="caption" tone={force ? 'danger' : 'subtle'}>

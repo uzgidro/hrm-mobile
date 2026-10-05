@@ -18,6 +18,9 @@ import { BranchPicker, useBranchName } from '../components/UsersBits';
 
 type Tab = 'accounts' | 'admins' | 'multiorg' | 'kiosk';
 
+/** Keng ekranda ro'yxat butun enga cho'zilmaydi (boshqa W6 ro'yxat ekranlari kabi, Tizim holati — 960). */
+const LIST_MAX_WIDTH = 960;
+
 export default function UsersScreen() {
   const { t } = useTranslation();
   const qc = useQueryClient();
@@ -38,7 +41,7 @@ export default function UsersScreen() {
 
   return (
     <View style={styles.root}>
-      <Screen refreshing={refreshing} onRefresh={() => void refresh()}>
+      <Screen refreshing={refreshing} onRefresh={() => void refresh()} maxWidth={LIST_MAX_WIDTH}>
         <PageHeader title={t('users.title')} subtitle={t('users.subtitle')} />
         <View style={styles.controls}>
           <Segmented

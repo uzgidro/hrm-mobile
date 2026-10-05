@@ -59,7 +59,14 @@ export function GroupCard({
           <ListRow
             key={f.id}
             testID={`cf-field-row-${f.id}`}
-            title={`${f.label || f.key || `#${f.id}`}${f.is_required ? ' *' : ''}`}
+            title={f.label || f.key || `#${f.id}`}
+            titleAddon={
+              f.is_required ? (
+                <Text variant="heading" tone="danger" accessibilityLabel={t('customFields.requiredLabel')}>
+                  *
+                </Text>
+              ) : undefined
+            }
             subtitle={f.key || undefined}
             below={compact ? fieldBadges(f) : undefined}
             right={compact ? undefined : fieldBadges(f)}

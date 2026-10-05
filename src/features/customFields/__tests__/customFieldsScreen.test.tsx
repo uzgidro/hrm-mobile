@@ -83,7 +83,9 @@ describe('CustomFieldsScreen (v2 CustomFieldsPage)', () => {
     await renderWithProviders(<CustomFieldsScreen />);
     expect(await screen.findByText('Harbiy hisob')).toBeTruthy();
     expect(screen.getByTestId('cf-count')).toHaveTextContent("2 ta bo'lim");
-    expect(screen.getByText('Harbiy unvon *')).toBeTruthy();
+    // Majburiy «*» — nomdan tashqarida (nom qisqarganda ham ko'rinadi).
+    expect(screen.getByText('Harbiy unvon')).toBeTruthy();
+    expect(screen.getByLabelText('Majburiy maydon')).toHaveTextContent('*');
     expect(screen.getByText('harbiy_unvon')).toBeTruthy();
     expect(screen.getByText("Ro'yxatdan bittasi")).toBeTruthy();
     expect(screen.getByText("Ro'yxatda")).toBeTruthy();

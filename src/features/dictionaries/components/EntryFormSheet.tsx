@@ -2,15 +2,14 @@
 // server nomdan yasaydi), tegishli yozuv (faqat ierarxik ma'lumotnomada — ota ma'lumotnomaning faol
 // yozuvlaridan), izoh, tartib, faollik. Ota `key` bilan faqat ochiqda mount qiladi.
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { getApiErrorMessage } from '@/api/errors';
 import { toast } from '@/lib/toast';
-import { useTheme } from '@/theme/ThemeProvider';
 import type { DictionaryType } from '@/utils/dictionaries';
 import { FormInput } from '@/components/FormInput';
 import { PickerModal } from '@/components/PickerModal';
-import { Button, SelectField, Sheet, Text } from '@/ui';
+import { Button, SelectField, Sheet, Text, Toggle } from '@/ui';
 import { useSaveEntry } from '../api/mutations';
 import { buildEntryBody, seedEntryForm, type DictionaryEntry, type EntryForm } from '../utils/dictionaries';
 
@@ -28,7 +27,6 @@ export function EntryFormSheet({
   onClose: () => void;
 }) {
   const { t } = useTranslation();
-  const { colors: c } = useTheme();
   const [form, setForm] = useState<EntryForm>(() => seedEntryForm(entry));
   const [error, setError] = useState<string | null>(null);
   const [picking, setPicking] = useState(false);
@@ -113,12 +111,10 @@ export function EntryFormSheet({
           <Text variant="body" style={styles.flex}>
             {t('dictionaries.active')}
           </Text>
-          <Switch
+          <Toggle
             testID="dict-form-active"
             value={form.active}
             onValueChange={(v) => set({ active: v })}
-            trackColor={{ false: c.border, true: c.brand }}
-            thumbColor={c.surface}
           />
         </View>
         {!!error && (

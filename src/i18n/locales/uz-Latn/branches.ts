@@ -18,6 +18,8 @@ export default {
   fieldLon: 'Uzunlik (longitude)',
   coordinates: 'Koordinatalar',
   coordInvalid: "Koordinata son bo'lishi kerak (masalan, 41.29950)",
+  latRange: "Kenglik −90 dan 90 gacha bo'lishi kerak",
+  lonRange: "Uzunlik −180 dan 180 gacha bo'lishi kerak",
   topologyTitle: 'Filialning tizimdagi roli',
   isHeadOffice: 'Bosh filial (Ijro apparati)',
   isHeadOfficeHint:

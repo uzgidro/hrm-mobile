@@ -22,7 +22,13 @@ import {
   useSyncIsapiEmployees,
   useTestIsapi,
 } from '../api/mutations';
-import { buildCredentialsBody, isapiPollOutcome, isapiTestOutcome, type IsapiUnknownUsers } from '../utils/turnstiles';
+import {
+  buildCredentialsBody,
+  isapiAddress,
+  isapiPollOutcome,
+  isapiTestOutcome,
+  type IsapiUnknownUsers,
+} from '../utils/turnstiles';
 
 export function IsapiPanel({
   turnstileId,
@@ -42,6 +48,8 @@ export function IsapiPanel({
   const creds = useSetIsapiCredentials();
   const unknownQ = useIsapiUnknownUsers();
   const device = devices.data?.find((d) => d.id === turnstileId);
+  // Qurilma porti (`GET /isapi-devices`), turniket qatoridagisi emas; bo'sh — server ulanadigan 80.
+  const address = isapiAddress(device?.ip ?? ip, port, device?.port);
   // Login serverdan BIRINCHI kelganda olinadi, keyin operator qo'lida — fon yangilanishi yozilayotganni o'chirmaydi.
   const [username, setUsername] = useState<string | null>(null);
   const [password, setPassword] = useState('');
@@ -73,7 +81,7 @@ export function IsapiPanel({
   const runSync = async () => {
     const ok = await confirm({
       title: t('turnstiles.isapiSyncEmployees'),
-      message: [ip, port].filter(Boolean).join(':') || undefined,
+      message: address ?? undefined,
       confirmLabel: t('turnstiles.isapiSyncEmployees'),
       cancelLabel: t('common.cancel'),
     });
@@ -112,7 +120,7 @@ export function IsapiPanel({
     <View style={styles.root}>
       <View style={[styles.box, { borderColor: c.border, backgroundColor: c.surface2 }]}>
         <Text variant="heading" testID="isapi-address">
-          {[ip, port].filter(Boolean).join(':') || '—'}
+          {address ?? '—'}
         </Text>
         <Text variant="caption" tone="muted">
           {t('turnstiles.isapiIntro')}

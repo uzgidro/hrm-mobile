@@ -45,6 +45,22 @@ export interface IsapiDevice {
   branch_ids?: number[] | null;
 }
 
+/** ISAPI terminali porti ko'rsatilmagan bo'lsa server shu portga ulanadi (`isapi_manager`: `acs_dev_port or 80`). */
+export const ISAPI_DEFAULT_PORT = 80;
+
+/**
+ * ISAPI paneli manzili: port `GET /isapi-devices` qatoridan (qurilma), u hali kelmagan bo'lsa — turniket
+ * qatoridan; ikkalasi ham bo'sh — server ulanadigan standart 80. IP yo'q — null.
+ */
+export function isapiAddress(
+  ip: string | null | undefined,
+  rowPort: number | null | undefined,
+  devicePort: number | null | undefined,
+): string | null {
+  if (!ip) return null;
+  return `${ip}:${devicePort || rowPort || ISAPI_DEFAULT_PORT}`;
+}
+
 export interface IsapiTestResult {
   online?: boolean;
   error?: string;

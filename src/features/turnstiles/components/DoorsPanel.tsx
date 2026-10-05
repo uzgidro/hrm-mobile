@@ -175,7 +175,7 @@ export function DoorsPanel({ turnstileId, deviceIndexCode }: { turnstileId: numb
           <View style={styles.actions}>
             <Button
               label={t('common.cancel')}
-              variant="ghost"
+              variant="neutral"
               onPress={() => {
                 setAdding(false);
                 setError(null);

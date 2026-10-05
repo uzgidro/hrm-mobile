@@ -5,6 +5,7 @@ import {
   buildBranchBody,
   buildLocationBody,
   canManageBranches,
+  coordRangeError,
   filterBranches,
   isOutOfScopeError,
   isSyncQueued,
@@ -74,6 +75,24 @@ describe('branches utils (v2 BranchesPage)', () => {
     expect(parseCoord(' 41,2995 ')).toBe(41.2995);
     expect(parseCoord('69.2401')).toBe(69.2401);
     expect(parseCoord('abc')).toBeUndefined();
+  });
+
+  it("coordRangeError: kenglik [-90, 90], uzunlik [-180, 180]; bo'sh — tekshirilmaydi (v2 da yo'q, server ma'nosizini saqlardi)", () => {
+    expect(coordRangeError(41.3, 69.2)).toBeNull();
+    expect(coordRangeError(90, -180)).toBeNull();
+    expect(coordRangeError(null, null)).toBeNull();
+    expect(coordRangeError(91.5, 69)).toBe('branches.latRange');
+    expect(coordRangeError(-90.01, null)).toBe('branches.latRange');
+    expect(coordRangeError(41, 180.5)).toBe('branches.lonRange');
+    expect(coordRangeError(null, -181)).toBe('branches.lonRange');
+  });
+
+  it("filial va manzil formasi oraliqdan tashqari koordinatani yubormaydi", () => {
+    const b = { ...seedBranchForm(null), name: 'X' };
+    expect(buildBranchBody({ ...b, lat: '91.5' })).toEqual({ ok: false, error: 'branches.latRange' });
+    expect(buildBranchBody({ ...b, lon: '-200' })).toEqual({ ok: false, error: 'branches.lonRange' });
+    const l = { ...seedLocationForm(null), name: 'Darvoza' };
+    expect(buildLocationBody({ ...l, lat: '-95' })).toEqual({ ok: false, error: 'branches.latRange' });
   });
 
   it('filial formasi: nom majburiy, koordinata noto‘g‘ri — xato; tana v2 bilan aynan', () => {

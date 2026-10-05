@@ -20,6 +20,8 @@ export default {
   fieldLon: 'Долгота (longitude)',
   coordinates: 'Координаты',
   coordInvalid: 'Координата должна быть числом (например, 41.29950)',
+  latRange: 'Широта должна быть от −90 до 90',
+  lonRange: 'Долгота должна быть от −180 до 180',
   topologyTitle: 'Роль филиала в системе',
   isHeadOffice: 'Головной филиал (Исполнительный аппарат)',
   isHeadOfficeHint:

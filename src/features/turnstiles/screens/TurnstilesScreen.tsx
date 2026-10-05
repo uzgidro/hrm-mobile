@@ -104,7 +104,7 @@ export default function TurnstilesScreen() {
       const online = isOnline(x.status);
       const badges = (
         <View style={styles.badges}>
-          {!compact && !!x.treaty_type && <Badge label={x.treaty_type} />}
+          {!!x.treaty_type && <Badge testID={`turnstile-type-${x.id}`} label={x.treaty_type} />}
           <Badge
             testID={`turnstile-status-${x.id}`}
             label={online ? t('turnstiles.online') : t('turnstiles.offline')}
@@ -116,7 +116,8 @@ export default function TurnstilesScreen() {
         <ListRow
           key={x.id}
           testID={`turnstile-row-${x.id}`}
-          left={<View style={[styles.dot, { backgroundColor: online ? c.successMark : c.border }]} />}
+          // Telefonda onlayn holati bitta — nishon (matnli); nuqta faqat keng ekranda (u yerda nishon o'ngda).
+          left={compact ? undefined : <View style={[styles.dot, { backgroundColor: online ? c.successMark : c.border }]} />}
           title={turnstileName(x)}
           subtitle={turnstileSubtitle(x)}
           below={compact ? <View style={styles.below}>{badges}</View> : undefined}
@@ -150,14 +151,14 @@ export default function TurnstilesScreen() {
               label={t('turnstiles.syncTitle')}
               icon="refresh"
               size="sm"
-              variant="ghost"
+              variant="link"
               onPress={() => setOpen({ kind: 'sync', n: Date.now() })}
             />
             <Button
               testID="isapi-new"
               label={t('turnstiles.isapiAdd')}
               size="sm"
-              variant="soft"
+              variant="link"
               onPress={() => setOpen({ kind: 'isapi', n: Date.now() })}
             />
             <Button

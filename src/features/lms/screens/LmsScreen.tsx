@@ -5,13 +5,14 @@
 // ⚠️ API kalit ekranda hech qachon ko'rinmaydi: server uni qaytarmaydi, forma maydoni bo'sh
 // boshlanadi va «bo'sh = o'zgarmaydi»; kiritilgan kalit faqat komponent holatida, keshda emas.
 import React, { useState } from 'react';
-import { StyleSheet, Switch, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { isSiteMasterAdmin } from '@/utils/roles';
 import { formatTashkentDateTime } from '@/utils/tashkentTime';
+import { useBreakpoint } from '@/utils/responsive';
 import { getApiErrorMessage } from '@/api/errors';
 import { toast } from '@/lib/toast';
 import { confirm } from '@/lib/confirm';
@@ -19,7 +20,7 @@ import { useTheme } from '@/theme/ThemeProvider';
 import { radii } from '@/theme/tokens';
 import { FormInput } from '@/components/FormInput';
 import { Icon } from '@/components/Icon';
-import { Badge, Button, Card, Chip, EmptyState, ErrorState, ListRow, PageHeader, Screen, Skeleton, Text } from '@/ui';
+import { Badge, Button, Card, Chip, EmptyState, ErrorState, ListRow, PageHeader, Screen, Skeleton, Text, Toggle } from '@/ui';
 import { lmsLogsQuery, lmsSettingsQuery } from '../api/queries';
 import { useSaveLmsSettings, useSyncLmsNow, useTestLmsConnection } from '../api/mutations';
 import {
@@ -108,6 +109,7 @@ export default function LmsScreen() {
             icon="globe"
             variant="soft"
             size="sm"
+            style={styles.actionBtn}
             loading={test.isPending}
             onPress={runTest}
           />
@@ -117,6 +119,7 @@ export default function LmsScreen() {
             icon="refresh"
             variant="soft"
             size="sm"
+            style={styles.actionBtn}
             loading={sync.isPending}
             onPress={runSync}
           />
@@ -187,7 +190,6 @@ function TestBanner({ ok, message }: { ok: boolean; message: string }) {
 
 function LmsSettingsForm({ settings }: { settings: LmsSettings }) {
   const { t } = useTranslation();
-  const { colors: c } = useTheme();
   const [form, setForm] = useState<LmsForm>(() => seedLmsForm(settings));
   const save = useSaveLmsSettings();
   const set = (p: Partial<LmsForm>) => setForm((f) => ({ ...f, ...p }));
@@ -208,12 +210,10 @@ function LmsSettingsForm({ settings }: { settings: LmsSettings }) {
       <Text variant="body" style={styles.flex}>
         {label}
       </Text>
-      <Switch
+      <Toggle
         testID={id}
         value={value}
         onValueChange={onChange}
-        trackColor={{ false: c.border, true: c.brand }}
-        thumbColor={c.surface}
       />
     </View>
   );
@@ -268,6 +268,8 @@ function LmsSettingsForm({ settings }: { settings: LmsSettings }) {
 function LastSyncCard({ settings }: { settings: LmsSettings }) {
   const { t } = useTranslation();
   const { colors: c } = useTheme();
+  // Telefonda 4 ustunga «O'tkazib yuborildi» sig'masdi — 2×2.
+  const compact = useBreakpoint().sizeClass === 'compact';
   const stats = settings.last_sync_stats;
   const ok = settings.last_sync_status === 'ok';
   const cells = [
@@ -294,7 +296,11 @@ function LastSyncCard({ settings }: { settings: LmsSettings }) {
           {!!stats && (
             <View style={styles.stats}>
               {cells.map(([k, v]) => (
-                <View key={k} style={[styles.stat, { backgroundColor: c.surface2 }]} testID={`lms-stat-${k}`}>
+                <View
+                  key={k}
+                  style={[styles.stat, compact && styles.statHalf, { backgroundColor: c.surface2 }]}
+                  testID={`lms-stat-${k}`}
+                >
                   <Text variant="heading">{String(v ?? 0)}</Text>
                   <Text variant="caption" tone="subtle" numberOfLines={1}>
                     {t(`lms.${k}`)}
@@ -315,6 +321,8 @@ function LastSyncCard({ settings }: { settings: LmsSettings }) {
 
 const styles = StyleSheet.create({
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
+  // Sig'sa — yonma-yon teng; sig'masa — har biri to'liq enda (chapga yopishgan yarim tugma emas).
+  actionBtn: { flexGrow: 1 },
   card: { marginBottom: 12 },
   banner: {
     flexDirection: 'row',
@@ -332,7 +340,8 @@ const styles = StyleSheet.create({
   switchRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 10 },
   last: { gap: 8 },
   row: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
-  stats: { flexDirection: 'row', gap: 8, marginTop: 4 },
+  stats: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
   stat: { flex: 1, alignItems: 'center', borderRadius: radii.sm, paddingVertical: 8, paddingHorizontal: 4 },
+  statHalf: { flexBasis: '45%', flexGrow: 1 },
   center: { textAlign: 'center', paddingVertical: 16 },
 });

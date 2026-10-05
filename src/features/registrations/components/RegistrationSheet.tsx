@@ -284,7 +284,7 @@ export function RegistrationSheet({ row, onClose }: { row: RegistrationRow; onCl
               loading={approve.isPending}
               full
             />
-            <Button label={t('common.cancel')} variant="ghost" onPress={() => switchMode('view')} full />
+            <Button label={t('common.cancel')} variant="neutral" onPress={() => switchMode('view')} full />
           </>
         )}
 
@@ -317,7 +317,7 @@ export function RegistrationSheet({ row, onClose }: { row: RegistrationRow; onCl
               loading={reject.isPending}
               full
             />
-            <Button label={t('common.cancel')} variant="ghost" onPress={() => switchMode('view')} full />
+            <Button label={t('common.cancel')} variant="neutral" onPress={() => switchMode('view')} full />
           </>
         )}
       </ScrollView>

@@ -1,7 +1,7 @@
 import React from 'react';
 import MockAdapter from 'axios-mock-adapter';
 import { apiClient } from '@/api/client';
-import { act, renderWithProviders, screen, fireEvent, waitFor } from '@/test/renderWithProviders';
+import { act, renderWithProviders, screen, fireEvent, waitFor, within } from '@/test/renderWithProviders';
 import { useAuthStore } from '@/store/authStore';
 import { confirm } from '@/lib/confirm';
 import i18n from '@/i18n';
@@ -88,6 +88,9 @@ describe('SystemHealthScreen (v2 SystemHealthPage + SystemOpsPanel)', () => {
     await renderWithProviders(<SystemHealthScreen />);
     expect(await screen.findByText("Ma'lumotlar bazasi")).toBeTruthy();
     expect(screen.getByText('Disk')).toBeTruthy();
+    // Komponent tafsiloti — 3 qatorgacha (bir qatorli subtitle emas).
+    expect(screen.getByTestId('sys-check-detail-disk')).toHaveTextContent("bo'sh 1.2 GB / 50 GB");
+    expect(screen.getByTestId('sys-check-detail-disk').props.numberOfLines).toBe(3);
     // Noma'lum komponent — slug bilan, xom kalit emas.
     expect(screen.getByText('something_new')).toBeTruthy();
     expect(screen.getByText('Nosozlik bor')).toBeTruthy();
@@ -151,6 +154,10 @@ describe('SystemHealthScreen (v2 SystemHealthPage + SystemOpsPanel)', () => {
     await renderWithProviders(<SystemHealthScreen />);
     expect(await screen.findByText("Ma'lumotni yuklab bo'lmadi")).toBeTruthy();
     expect(screen.queryByText('Soz')).toBeNull();
+    // Plitkada katta raqam o'rnida «—», sabab — izoh qatorida (telefonda kesilmaydi).
+    const tile = screen.getByTestId('sys-tile-overall');
+    expect(within(tile).getAllByText('—').length).toBeGreaterThan(0);
+    expect(within(tile).getByText("Ma'lumotni yuklab bo'lmadi")).toBeTruthy();
   });
 
   it("master-admin bo'lmagan (ministr ham) — so'rovsiz «ruxsat yo'q»", async () => {

@@ -9,6 +9,7 @@ import {
   canRunHikSync,
   doorDirection,
   isOnline,
+  isapiAddress,
   isapiPollOutcome,
   isapiTestOutcome,
   onlineCount,
@@ -149,5 +150,12 @@ describe('turnstiles utils (v2 TurnstilesPage)', () => {
     expect(isapiTestOutcome({ online: true })).toEqual({ ok: true, text: '—' });
     expect(isapiPollOutcome({ skipped: 'band', detail: 'busy' })).toEqual({ kind: 'busy', detail: 'busy' });
     expect(isapiPollOutcome({ pulled: 5, created: 2 })).toEqual({ kind: 'done', pulled: 5, created: 2 });
+  });
+
+  it("isapiAddress: qurilma porti turniket qatoridan ustun; bo'sh — server standarti 80; IP yo'q — null", () => {
+    expect(isapiAddress('10.2.90.6', 8000, 80)).toBe('10.2.90.6:80');
+    expect(isapiAddress('10.2.90.6', 8000, null)).toBe('10.2.90.6:8000');
+    expect(isapiAddress('10.2.90.6', null, undefined)).toBe('10.2.90.6:80');
+    expect(isapiAddress(null, 80, 80)).toBeNull();
   });
 });

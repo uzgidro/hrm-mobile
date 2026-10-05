@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeProvider';
 import { PickerModal } from '@/components/PickerModal';
-import { Card, EmptyState, Text } from '@/ui';
+import { Card, EmptyState, Text, WEB_BREAK } from '@/ui';
 import { usersBranchesQuery } from '../api/queries';
 
 export function KeyValue({ label, value, testID }: { label: string; value?: string | null; testID?: string }) {
@@ -16,7 +16,7 @@ export function KeyValue({ label, value, testID }: { label: string; value?: stri
       <Text variant="caption" tone="muted" style={styles.kvLabel}>
         {label}
       </Text>
-      <Text variant="body" style={styles.kvValue} testID={testID}>
+      <Text variant="body" style={[styles.kvValue, WEB_BREAK]} testID={testID}>
         {value || '—'}
       </Text>
     </View>
@@ -77,6 +77,7 @@ export function BranchPicker({
 
 const styles = StyleSheet.create({
   kv: { flexDirection: 'row', gap: 12, paddingVertical: 9, borderBottomWidth: StyleSheet.hairlineWidth },
-  kvLabel: { width: '40%' },
-  kvValue: { flex: 1 },
+  // Yorliq eni qat'iy (uzun bo'linmas qiymat uni siqib 3 qatorga tushirmasin), qiymat o'raladi.
+  kvLabel: { width: '40%', flexShrink: 0 },
+  kvValue: { flex: 1, minWidth: 0 },
 });

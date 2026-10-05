@@ -2,12 +2,11 @@
 // olingan katalog — tanlanganlar tartibida, birinchisi asosiy), manzil, koordinatalar, tizimdagi roli
 // (bosh filial, tibbiy markaz, umumiy turniket guruhi). Ota `key` bilan faqat ochiqda mount qiladi.
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { toast } from '@/lib/toast';
-import { useTheme } from '@/theme/ThemeProvider';
 import { FormInput } from '@/components/FormInput';
-import { Button, Card, Chip, Sheet, Text } from '@/ui';
+import { Button, Card, Chip, Sheet, Text, Toggle } from '@/ui';
 import { useSaveBranch } from '../api/mutations';
 import { branchActionError } from './BranchesBits';
 import {
@@ -29,7 +28,6 @@ export function BranchFormSheet({
   onClose: () => void;
 }) {
   const { t } = useTranslation();
-  const { colors: c } = useTheme();
   const [form, setForm] = useState<BranchForm>(() => seedBranchForm(row));
   const [error, setError] = useState<string | null>(null);
   const save = useSaveBranch();
@@ -60,12 +58,10 @@ export function BranchFormSheet({
         <Text variant="body" style={styles.flex}>
           {label}
         </Text>
-        <Switch
+        <Toggle
           testID={id}
           value={value}
           onValueChange={onChange}
-          trackColor={{ false: c.border, true: c.brand }}
-          thumbColor={c.surface}
         />
       </View>
       <Text variant="caption" tone="subtle">

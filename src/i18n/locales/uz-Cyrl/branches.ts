@@ -18,6 +18,8 @@ export default {
   fieldLon: 'Узунлик (longitude)',
   coordinates: 'Координаталар',
   coordInvalid: 'Координата сон бўлиши керак (масалан, 41.29950)',
+  latRange: 'Кенглик −90 дан 90 гача бўлиши керак',
+  lonRange: 'Узунлик −180 дан 180 гача бўлиши керак',
   topologyTitle: 'Филиалнинг тизимдаги роли',
   isHeadOffice: 'Бош филиал (Ижро аппарати)',
   isHeadOfficeHint:

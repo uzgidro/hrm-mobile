@@ -1,11 +1,11 @@
 // Qo'shimcha maydonlar ekranining kichik umumiy bo'laklari: kalit–qiymat qatori, kalitli almashtirgich,
 // tur nomlari (KODLAR tarjima qilinmaydi — faqat ko'rinadigan nomi; noma'lum kod — server nomi, so'ng kodning o'zi).
 import React from 'react';
-import { StyleSheet, Switch, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeProvider';
-import { Text } from '@/ui';
+import { Text, Toggle, WEB_BREAK } from '@/ui';
 import { customFieldMetaQuery } from '../api/queries';
 
 export function KeyValue({ label, value, testID }: { label: string; value?: string | null; testID?: string }) {
@@ -15,7 +15,7 @@ export function KeyValue({ label, value, testID }: { label: string; value?: stri
       <Text variant="caption" tone="muted" style={styles.kvLabel}>
         {label}
       </Text>
-      <Text variant="body" style={styles.kvValue} testID={testID}>
+      <Text variant="body" style={[styles.kvValue, WEB_BREAK]} testID={testID}>
         {value || '—'}
       </Text>
     </View>
@@ -33,18 +33,15 @@ export function ToggleRow({
   onChange: (v: boolean) => void;
   testID: string;
 }) {
-  const { colors: c } = useTheme();
   return (
     <View style={styles.toggle}>
       <Text variant="body" style={styles.flex}>
         {label}
       </Text>
-      <Switch
+      <Toggle
         testID={testID}
         value={value}
         onValueChange={onChange}
-        trackColor={{ false: c.border, true: c.brand }}
-        thumbColor={c.surface}
       />
     </View>
   );
@@ -67,8 +64,9 @@ export function useTypeLabels() {
 
 const styles = StyleSheet.create({
   kv: { flexDirection: 'row', gap: 12, paddingVertical: 9, borderBottomWidth: StyleSheet.hairlineWidth },
-  kvLabel: { width: '40%' },
-  kvValue: { flex: 1 },
+  // Yorliq eni qat'iy (uzun bo'linmas qiymat uni siqib 3 qatorga tushirmasin), qiymat o'raladi.
+  kvLabel: { width: '40%', flexShrink: 0 },
+  kvValue: { flex: 1, minWidth: 0 },
   toggle: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 40 },
   flex: { flex: 1 },
 });

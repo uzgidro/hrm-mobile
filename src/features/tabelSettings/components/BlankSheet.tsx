@@ -212,7 +212,7 @@ function BlankForm({ branch, doc, onSaved }: { branch: TabelBranch; doc: BlankDo
           testID="blank-line-add"
           label={t('tabelSettings.addLine')}
           icon="plus"
-          variant="ghost"
+          variant="link"
           size="sm"
           onPress={() => set({ header_lines: [...lines, ''] })}
         />

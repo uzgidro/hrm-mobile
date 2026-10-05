@@ -166,7 +166,7 @@ function BranchSheet({
       <ScrollView style={styles.scroll} contentContainerStyle={styles.body}>
         {(row.is_head_office || row.is_medical_center) && (
           <View style={styles.badges}>
-            {!!row.is_head_office && <Badge label={t('branches.isHeadOffice')} tone="brand" />}
+            {!!row.is_head_office && <Badge label={t('branches.isHeadOffice')} tone="info" />}
             {!!row.is_medical_center && <Badge label={t('branches.isMedicalCenter')} tone="info" />}
           </View>
         )}

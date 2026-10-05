@@ -91,6 +91,19 @@ export function parseCoord(v: string): number | null | undefined {
 
 const coordText = (n?: number | null) => (n != null ? String(n) : '');
 
+/**
+ * Koordinata oralig'i: kenglik [-90, 90], uzunlik [-180, 180]. v2 tekshirmaydi, server esa
+ * ma'nosiz qiymatni (91.5) saqlab qo'yardi — geofencing buziladi. Bo'sh (`null`) — tekshirilmaydi.
+ */
+export function coordRangeError(
+  latitude: number | null,
+  longitude: number | null,
+): 'branches.latRange' | 'branches.lonRange' | null {
+  if (latitude != null && (latitude < -90 || latitude > 90)) return 'branches.latRange';
+  if (longitude != null && (longitude < -180 || longitude > 180)) return 'branches.lonRange';
+  return null;
+}
+
 // ── Filial formasi ───────────────────────────────────────────────────────────
 
 export interface BranchForm {
@@ -131,6 +144,8 @@ export function buildBranchBody(f: BranchForm): BuildResult {
   const latitude = parseCoord(f.lat);
   const longitude = parseCoord(f.lon);
   if (latitude === undefined || longitude === undefined) return { ok: false, error: 'branches.coordInvalid' };
+  const range = coordRangeError(latitude, longitude);
+  if (range) return { ok: false, error: range };
   return {
     ok: true,
     body: {
@@ -172,6 +187,8 @@ export function buildLocationBody(f: LocationForm): BuildResult {
   const latitude = parseCoord(f.lat);
   const longitude = parseCoord(f.lon);
   if (latitude === undefined || longitude === undefined) return { ok: false, error: 'branches.coordInvalid' };
+  const range = coordRangeError(latitude, longitude);
+  if (range) return { ok: false, error: range };
   return {
     ok: true,
     body: { name, organization_branch_id: f.branchId, address: f.address.trim() || null, latitude, longitude },

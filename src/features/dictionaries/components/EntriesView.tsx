@@ -135,7 +135,7 @@ export function EntriesView({ type, manage, onBack }: { type: DictionaryType; ma
           testID="dict-back"
           label={t('dictionaries.allTypes')}
           icon="chevronLeft"
-          variant="ghost"
+          variant="link"
           size="sm"
           onPress={onBack}
         />
@@ -148,7 +148,7 @@ export function EntriesView({ type, manage, onBack }: { type: DictionaryType; ma
           </Text>
         )}
         <View style={styles.marks}>
-          <Badge label={type.code} tone="brand" />
+          <Badge label={type.code} />
           <TypeMarks type={type} withSystem />
         </View>
         {!!type.description && (

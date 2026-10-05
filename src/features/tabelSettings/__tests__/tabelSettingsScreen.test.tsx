@@ -101,7 +101,11 @@ describe('TabelSettingsScreen (v2 TabelSettingsPage)', () => {
     // Tushlik: soat tanlansa daqiqa — :00 (v2 ClockSelect).
     await fireEvent.press(screen.getByTestId('cfg-lunch-start-hour'));
     await fireEvent.changeText(await screen.findByPlaceholderText('Qidirish...'), '13');
-    await fireEvent.press(await screen.findByText('13:00'));
+    // Soat tanlagichi faqat soatni ko'rsatadi («13», «13:00» emas) — daqiqa alohida maydonda.
+    expect(screen.queryByText('13:00')).toBeNull();
+    await fireEvent.press(await screen.findByText('13'));
+    expect(screen.getByTestId('cfg-lunch-start-hour')).toHaveTextContent('13');
+    expect(screen.getByTestId('cfg-lunch-start-hour')).not.toHaveTextContent('13:00');
     expect(screen.getByTestId('cfg-lunch-start-minute')).toHaveTextContent('00');
     await fireEvent.press(screen.getByTestId('cfg-signer-add'));
     await fireEvent.changeText(screen.getByTestId('cfg-signer-position-1'), 'Kadr');

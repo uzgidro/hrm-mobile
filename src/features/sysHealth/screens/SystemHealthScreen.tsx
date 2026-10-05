@@ -147,15 +147,18 @@ export default function SystemHealthScreen() {
     {
       id: 'overall',
       label: t('sysHealth.overall'),
-      value: t(`sysHealth.overall_${overall}`),
+      // «Yuklab bo'lmadi» katta raqam shriftida telefonda kesilardi — plitkada «—», izoh ostida.
+      value: overall === 'failed' ? '—' : t(`sysHealth.overall_${overall}`),
+      sub: overall === 'failed' ? t('sysHealth.overall_failed') : undefined,
       icon: overall === 'healthy' ? 'check' : 'close',
       tint: overall === 'healthy' ? 'green' : 'pink',
     },
-    { id: 'mode', label: t('sysHealth.mode'), value: modeLabel, icon: 'system', tint: 'violet' },
+    { id: 'mode', label: t('sysHealth.mode'), value: modeLabel, sub: undefined, icon: 'system', tint: 'violet' },
     {
       id: 'failed',
       label: t('sysHealth.failedChecks'),
       value: diag.data ? `${diag.data.failed ?? 0} / ${checks.length}` : diag.isError ? '—' : '…',
+      sub: undefined,
       icon: 'bell',
       tint: diag.data?.failed ? 'amber' : 'grey',
     },
@@ -178,8 +181,19 @@ export default function SystemHealthScreen() {
           key={c.component}
           testID={`sys-check-${c.component}`}
           title={t(`sysHealth.comp_${c.component}`, { defaultValue: c.component })}
-          subtitle={c.detail || undefined}
-          below={compact ? <View style={styles.below}>{badge}</View> : undefined}
+          // Tafsilot (xato matni) — bir qatorli subtitle emas, 3 qatorgacha (telefonda kesilib qolardi).
+          below={
+            c.detail || compact ? (
+              <View style={styles.belowCol}>
+                {!!c.detail && (
+                  <Text variant="caption" tone="subtle" numberOfLines={3} testID={`sys-check-detail-${c.component}`}>
+                    {c.detail}
+                  </Text>
+                )}
+                {compact && badge}
+              </View>
+            ) : undefined
+          }
           right={compact ? undefined : <View>{badge}</View>}
         />
       );
@@ -247,7 +261,14 @@ export default function SystemHealthScreen() {
         <View style={styles.tiles}>
           {tiles.map((x) => (
             <View key={x.id} style={{ flexBasis: basis, flexGrow: 1 }}>
-              <StatTile testID={`sys-tile-${x.id}`} label={x.label} value={x.value} icon={x.icon} tint={x.tint} />
+              <StatTile
+                testID={`sys-tile-${x.id}`}
+                label={x.label}
+                value={x.value}
+                sub={x.sub}
+                icon={x.icon}
+                tint={x.tint}
+              />
             </View>
           ))}
         </View>
@@ -330,6 +351,5 @@ const styles = StyleSheet.create({
   ops: { gap: 8 },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
   meta: { marginBottom: 4 },
-  below: { marginTop: 4 },
   belowCol: { marginTop: 4, gap: 4 },
 });
