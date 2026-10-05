@@ -23,6 +23,8 @@ export default {
   draftFoundMessage: 'Oxirgi safar yozgan matningiz saqlab qolingan',
   draftRestore: 'Tiklash',
   noMatch: 'Filtrga mos yozuv topilmadi',
+  pageNoAccess: "Ruxsat yo'q",
+  pageNoAccessHint: "Bu bo'lim sizning rolingiz uchun ochiq emas.",
   noMatchHint: "Qidiruv yoki tanlangan filtrlarni o'zgartirib ko'ring",
   clearFilters: 'Filtrlarni tozalash',
   clear: 'Tozalash',

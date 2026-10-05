@@ -21,6 +21,8 @@ export default {
   draftFoundMessage: 'Охирги сафар ёзган матнингиз сақлаб қолинган',
   draftRestore: 'Тиклаш',
   noMatch: 'Филтрга мос ёзув топилмади',
+  pageNoAccess: 'Рухсат йўқ',
+  pageNoAccessHint: 'Бу бўлим сизнинг ролингиз учун очиқ эмас.',
   noMatchHint: 'Қидирув ёки танланган филтрларни ўзгартириб кўринг',
   clearFilters: 'Филтрларни тозалаш',
   clear: 'Тозалаш',

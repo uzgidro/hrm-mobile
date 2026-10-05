@@ -149,6 +149,20 @@ export function activeModule(pathname: string, seg?: string | string[]): PageKey
   return DETAIL_OWNER[path] ?? null;
 }
 
+/**
+ * Root Stack sahifa darvozasi (`app/_layout.tsx` `screenLayout`): `name` — `app/`
+ * dagi fayl nomi. Faqat modulning O'Z route'i (va katalogdan tashqari, lekin xodim
+ * ma'lumotini ko'rsatadigan `birthdays`) — kirish huquqisiz foydalanuvchi to'g'ridan
+ * to'g'ri havola bilan admin sahifasi ramkasini ko'rmasin. Tafsilot ekranlari
+ * (`DETAIL_OWNER`) ATAYLAB darvozasiz: bildirishnoma yoki boshqa moduldan ochiladi.
+ */
+export function gatedPageForRoute(name: string): PageKey | null {
+  if (name === 'birthdays') return 'birthdays';
+  const path = `/${name}`;
+  const own = CATALOG.find((m) => m.page !== 'home' && barePath(m.route) === path);
+  return own ? own.page : null;
+}
+
 const SECTION_ORDER: CatalogSection[] = ['main', 'documents', 'stats', 'admin'];
 
 /** v2 `groupNav`: bo'limlar tartibi saqlanadi, bo'sh bo'lim tashlanadi. */

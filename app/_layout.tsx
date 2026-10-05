@@ -25,6 +25,7 @@ import PasswordGateOverlay from '../src/features/security/components/PasswordGat
 import { useOtaGateStore } from '../src/store/otaGateStore';
 import { AuthResolvedGate } from '../src/auth/AuthResolvedGate';
 import { NavRail } from '../src/components/NavRail';
+import { ModuleGate } from '../src/components/ModuleGate';
 import { useBreakpoint } from '../src/utils/responsive';
 
 const queryClient = createAppQueryClient();
@@ -126,6 +127,9 @@ function ThemedNavigation() {
                 headerShown: false,
                 contentStyle: { backgroundColor: colors.bg },
               }}
+              // Modulning o'z sahifasi kirish huquqisiz to'g'ridan-to'g'ri havola bilan
+              // ochilsa — admin ramkasi o'rniga «Ruxsat yo'q» (src/components/ModuleGate).
+              screenLayout={({ route, children }) => <ModuleGate routeName={route.name}>{children}</ModuleGate>}
             >
               {/* Declarative auth gate: the guards redirect automatically when
                   isAuthenticated flips (login/logout), replacing the old imperative

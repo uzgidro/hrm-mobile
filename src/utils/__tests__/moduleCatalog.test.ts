@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { canAccessPage, canManageDictionaries, setNavOverrides, isModuleReady } from '../roles';
-import { visibleCatalog, catalogBySection, CATALOG, activeModule, DETAIL_OWNER } from '../moduleCatalog';
+import { visibleCatalog, catalogBySection, CATALOG, activeModule, DETAIL_OWNER, gatedPageForRoute } from '../moduleCatalog';
 import type { User } from '@/types';
 import i18n from '@/i18n';
 
@@ -318,5 +318,26 @@ describe('activeModule — NavRail faol bandi (har sahifada, v2 sidebar kabi)', 
     for (const route of Object.keys(DETAIL_OWNER)) {
       expect(fs.existsSync(path.join(__dirname, '../../../app', `${route.slice(1)}.tsx`))).toBe(true);
     }
+  });
+});
+
+describe('gatedPageForRoute (root Stack sahifa darvozasi)', () => {
+  it('modulning O\'Z route\'i — sahifa kaliti', () => {
+    expect(gatedPageForRoute('foydalanuvchilar')).toBe('users');
+    expect(gatedPageForRoute('registratsiyalar')).toBe('registrations');
+    expect(gatedPageForRoute('audit-log')).toBe('auditLog');
+    expect(gatedPageForRoute('zoom')).toBe('zoom');
+  });
+
+  it('katalogdan tashqari, lekin ma\'lumot ko\'rsatadigan sahifa — birthdays', () => {
+    expect(gatedPageForRoute('birthdays')).toBe('birthdays');
+  });
+
+  it('tafsilot ekranlari, tab guruhi va auth — darvozasiz (bildirishnomadan ochiladi)', () => {
+    expect(gatedPageForRoute('order-detail')).toBeNull();
+    expect(gatedPageForRoute('hisobot')).toBeNull();
+    expect(gatedPageForRoute('(tabs)')).toBeNull();
+    expect(gatedPageForRoute('(auth)')).toBeNull();
+    expect(gatedPageForRoute('profile-edit')).toBeNull();
   });
 });

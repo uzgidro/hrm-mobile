@@ -21,6 +21,8 @@ export default {
   draftFoundMessage: 'Текст, введённый в прошлый раз, сохранён',
   draftRestore: 'Восстановить',
   noMatch: 'По фильтру ничего не найдено',
+  pageNoAccess: 'Нет доступа',
+  pageNoAccessHint: 'Этот раздел недоступен для вашей роли.',
   noMatchHint: 'Измените поиск или выбранные фильтры',
   clearFilters: 'Сбросить фильтры',
   clear: 'Очистить',

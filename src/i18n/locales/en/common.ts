@@ -21,6 +21,8 @@ export default {
   draftFoundMessage: 'The text you typed last time was kept',
   draftRestore: 'Restore',
   noMatch: 'Nothing matches the filters',
+  pageNoAccess: 'No access',
+  pageNoAccessHint: "This section isn't available for your role.",
   noMatchHint: 'Try changing the search or the selected filters',
   clearFilters: 'Clear filters',
   clear: 'Clear',
