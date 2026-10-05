@@ -28,4 +28,6 @@ export default {
   clear: 'Tozalash',
   close: 'Yopish',
   back: 'Orqaga',
+  // Split (master-detail) detail pane before a row is picked.
+  selectToView: "Ko'rish uchun ro'yxatdan birini tanlang",
 } as const;

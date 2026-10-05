@@ -13,7 +13,8 @@ import { ff } from '@/theme/typography';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { SplitLayout } from '@/components/SplitLayout';
-import { EmptyState } from '@/components/StateViews';
+import { SelectItemPlaceholder } from '@/components/SelectItemPlaceholder';
+import { Segmented } from '@/ui';
 import { FilterChip } from '@/components/FilterChip';
 import { SearchBox } from '@/components/SearchBox';
 import { PagedList, usePagedRows } from '@/components/PagedList';
@@ -89,33 +90,46 @@ export default function LettersListScreen({ embedded = false }: { embedded?: boo
     setSelectedId((current) => selectSplitId(letters, current, split));
   }, [split, letters]);
 
+  // The ONE primary (violet) control of the pane — embedded in the Hujjatlar
+  // tab it ends the scope row instead of sitting on a row of its own (QA).
+  const createBtn = (
+    <TouchableOpacity
+      testID="letters-create"
+      style={styles.fab}
+      onPress={() => router.push('/create-letter')}
+      activeOpacity={0.8}
+      accessibilityRole="button"
+      accessibilityLabel={t('letters.createTitle')}
+    >
+      <Icon name="plus" size={22} color={colors.onPrimary} strokeWidth={2.4} />
+    </TouchableOpacity>
+  );
+
   const listPane = (
     <>
-      <View style={styles.header}>
-        {/* v3: Hujjatlar tabi segmenti ichida sarlavhani tab o'zi chizadi. */}
-        {embedded ? <View style={styles.flex1} /> : <Text style={styles.title}>{t('letters.listTitle')}</Text>}
-        <TouchableOpacity testID="letters-create" style={styles.fab} onPress={() => router.push('/create-letter')} activeOpacity={0.8}>
-          <Icon name="plus" size={22} color={colors.onPrimary} strokeWidth={2.4} />
-        </TouchableOpacity>
-      </View>
+      {/* v3: Hujjatlar tabi segmenti ichida sarlavhani tab o'zi chizadi. */}
+      {!embedded && (
+        <View style={styles.header}>
+          <Text style={styles.title}>{t('letters.listTitle')}</Text>
+          {createBtn}
+        </View>
+      )}
 
-      <View style={styles.tabsRow}>
-        {TABS.map((tItem) => {
-          const active = tab === tItem.key;
-          return (
-            <TouchableOpacity
-              key={tItem.key}
-              style={[styles.tab, active && styles.tabActive]}
-              onPress={() => setTab(tItem.key)}
-              activeOpacity={0.8}
-            >
-              <Text style={[styles.tabText, active && styles.tabTextActive]}>{t(tItem.labelKey)}</Text>
-              {tItem.key === 'action' && actionCount > 0 && (
-                <View style={styles.tabBadge}><Text style={styles.tabBadgeText}>{actionCount > 9 ? '9+' : actionCount}</Text></View>
-              )}
-            </TouchableOpacity>
-          );
-        })}
+      {/* Scope = shared Segmented (not violet-filled pills): only the "+" is primary. */}
+      <View style={[styles.tabsRow, embedded && styles.tabsRowEmbedded]}>
+        <View style={styles.flex1}>
+          <Segmented
+            options={TABS.map((tItem) => ({
+              value: tItem.key,
+              label: t(tItem.labelKey),
+              count: tItem.key === 'action' ? actionCount : undefined,
+            }))}
+            value={tab}
+            onChange={setTab}
+            testID="letters-scope"
+          />
+        </View>
+        {embedded && createBtn}
       </View>
 
       <View style={styles.searchWrap}>
@@ -167,7 +181,7 @@ export default function LettersListScreen({ embedded = false }: { embedded?: boo
         <SplitLayout
           master={listPane}
           detail={selectedId != null ? <LetterDetailView id={selectedId} embedded /> : null}
-          placeholder={<EmptyState icon="mail" title={t('letters.emptyAction')} />}
+          placeholder={<SelectItemPlaceholder icon="mail" />}
         />
       </Screen>
     );
@@ -182,19 +196,15 @@ const makeStyles = (c: ThemeColors) =>
     title: { flex: 1, fontSize: 26, ...ff('900'), color: c.text },
     flex1: { flex: 1 },
     fab: { width: 42, height: 42, borderRadius: 14, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' },
-    tabsRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingBottom: 12 },
-    tab: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 9, borderRadius: 22, backgroundColor: c.card, borderWidth: 2, borderColor: c.cardBorder },
-    tabActive: { backgroundColor: c.primary, borderColor: c.primary },
-    tabText: { fontSize: 13, ...ff('800'), color: c.textSecondary },
-    tabTextActive: { color: c.onPrimary },
-    tabBadge: { backgroundColor: c.warning, borderRadius: 9, minWidth: 18, height: 18, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
-    tabBadgeText: { fontSize: 10, ...ff('900'), color: '#fff' },
+    tabsRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingBottom: 12 },
+    tabsRowEmbedded: { paddingTop: 12 },
     searchWrap: { paddingHorizontal: 16, paddingBottom: 10 },
     chipRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingBottom: 10, alignItems: 'center' },
     chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 18, backgroundColor: c.card, borderWidth: 2, borderColor: c.cardBorder },
-    chipActive: { backgroundColor: c.primary, borderColor: c.primary },
+    // Selected filter chip = soft tint, not a violet fill (the "+" is the only primary).
+    chipActive: { backgroundColor: c.primarySoft, borderColor: c.primary },
     chipText: { fontSize: 13, ...ff('800'), color: c.textSecondary },
-    chipTextActive: { color: c.onPrimary },
+    chipTextActive: { color: c.primary },
     chipSubtle: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 14, backgroundColor: c.card, borderWidth: 2, borderColor: c.cardBorder },
     chipSubtleActive: { backgroundColor: c.primarySoft, borderColor: c.primary },
     chipSubtleText: { fontSize: 12, ...ff('700'), color: c.textSecondary },

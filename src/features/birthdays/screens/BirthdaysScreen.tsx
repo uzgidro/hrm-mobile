@@ -96,7 +96,7 @@ export default function BirthdaysScreen() {
                     <View style={styles.birthDateRow}>
                       <Icon name="cake" size={14} color={isToday ? colors.warning : colors.textSecondary} />
                       <Text style={[styles.birthDate, isToday && styles.birthDateToday]}>
-                        {birthDay.date()} {monthName(birthDay.month())}
+                        {birthDay.date()} {monthName(birthDay.month(), { genitive: true })}
                         <Text style={styles.yearLabel}>{' · '}{t('birthdays.age', { count: today.year() - birthDay.year() })}</Text>
                       </Text>
                     </View>

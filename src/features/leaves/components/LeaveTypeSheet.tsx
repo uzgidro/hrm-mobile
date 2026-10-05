@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, Modal, ScrollView } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import type { TFunction } from 'i18next';
+import { leaveTypeLabel } from '@/utils/leaveStatus';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
@@ -19,9 +19,9 @@ import { NO_WEB_OUTLINE } from '@/theme/web';
 export const LEAVE_TYPES = ["Xizmat topshirig'i", 'Kasallik', "Ta'til", 'Shaxsiy sabab', 'Boshqa'];
 
 // Localized display label for a leave type; custom free-text falls back to itself.
-export function leaveTypeLabel(t: TFunction, value: string): string {
-  return t(`leaves.presetType.${value}`, { defaultValue: value });
-}
+// Lives in `@/utils/leaveStatus` (shared with the attendance Team screen);
+// re-exported so the leaves screens keep their import.
+export { leaveTypeLabel };
 
 export function LeaveTypeSheet({ visible, selected, onSelect, onClose, options = LEAVE_TYPES }: {
   visible: boolean; selected: string; onSelect: (t: string) => void; onClose: () => void;

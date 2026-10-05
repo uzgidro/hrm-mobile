@@ -121,7 +121,9 @@ export type DictionaryOption = { id: number; name: string };
 export function leaveApproversQuery() {
   return queryOptions({
     queryKey: [...leaveKeys.all, 'my-approvers'] as const,
-    queryFn: () => apiClient.get<LeaveApprover[]>(WORK_LEAVES_MY_APPROVERS).then((r) => r.data ?? []),
+    // unwrapList: a `{ items }` envelope (or any non-array) used to reach
+    // `approverNotice` as-is and crash the form via RootErrorBoundary.
+    queryFn: () => apiClient.get(WORK_LEAVES_MY_APPROVERS).then((r) => unwrapList<LeaveApprover>(r.data)),
     staleTime: 5 * 60_000,
   });
 }
@@ -139,7 +141,7 @@ export function leaveReasonsQuery() {
   return queryOptions({
     queryKey: ['dictionaries', 'options', 'leave_request_reasons'] as const,
     queryFn: () =>
-      apiClient.get<DictionaryOption[]>(DICTIONARY_OPTIONS('leave_request_reasons')).then((r) => r.data ?? []),
+      apiClient.get(DICTIONARY_OPTIONS('leave_request_reasons')).then((r) => unwrapList<DictionaryOption>(r.data)),
     staleTime: 10 * 60_000,
   });
 }

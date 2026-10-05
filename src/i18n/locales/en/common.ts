@@ -26,4 +26,6 @@ export default {
   clear: 'Clear',
   close: 'Close',
   back: 'Back',
+  // Split (master-detail) detail pane before a row is picked.
+  selectToView: 'Select an item from the list to view it',
 } as const;

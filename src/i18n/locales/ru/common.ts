@@ -26,4 +26,6 @@ export default {
   clear: 'Очистить',
   close: 'Закрыть',
   back: 'Назад',
+  // Split (master-detail) detail pane before a row is picked.
+  selectToView: 'Выберите запись в списке, чтобы открыть её',
 } as const;

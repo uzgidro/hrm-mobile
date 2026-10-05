@@ -26,4 +26,6 @@ export default {
   clear: 'Тозалаш',
   close: 'Ёпиш',
   back: 'Орқага',
+  // Split (master-detail) detail pane before a row is picked.
+  selectToView: 'Кўриш учун рўйхатдан бирини танланг',
 } as const;

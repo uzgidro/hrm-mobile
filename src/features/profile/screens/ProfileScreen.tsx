@@ -1,8 +1,9 @@
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, Switch, Platform,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, Platform,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { Toggle } from '@/ui';
 import Constants from 'expo-constants';
 import { useAuthStore } from '@/store/authStore';
 import { usePrefsStore } from '@/store/prefsStore';
@@ -73,12 +74,7 @@ export default function ProfileScreen() {
 
   return (
     <Screen edges={['top']}>
-      {/* Profile is a bar-less tab (href:null) opened from Modules/the avatar,
-          so it needs its own back affordance; back() walks the tab history. */}
-      <ScreenHeader
-        title={t('profile.title')}
-        onBack={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
-      />
+      <ScreenHeader title={t('profile.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* User card */}
         <View style={styles.card}>
@@ -189,11 +185,10 @@ export default function ProfileScreen() {
                 <Text style={styles.menuHint}>{t('profile.onlySubordinatesHint')}</Text>
               </View>
             </View>
-            <Switch
+            <Toggle
               value={onlySubordinates}
               onValueChange={setOnlySubordinates}
-              trackColor={{ false: colors.cardBorder, true: colors.primary }}
-              thumbColor={'#fff'}
+              accessibilityLabel={t('profile.onlySubordinates')}
             />
           </View>
 
@@ -261,11 +256,10 @@ export default function ProfileScreen() {
                   <Text style={styles.menuHint}>{t('profile.biometricsHint')}</Text>
                 </View>
               </View>
-              <Switch
+              <Toggle
                 value={biometricsEnabled}
                 onValueChange={handleBiometricsToggle}
-                trackColor={{ false: colors.cardBorder, true: colors.primary }}
-                thumbColor={'#fff'}
+                accessibilityLabel={t('profile.biometrics')}
               />
             </View>
           )}

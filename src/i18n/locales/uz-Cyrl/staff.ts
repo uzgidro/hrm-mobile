@@ -9,7 +9,7 @@ export default {
   occupied: 'Банд',
   vacant: 'Вакант',
   rows: 'Қаторлар',
-  overstaffed: 'ортиқча банд',
+  overstaffed: 'Ортиқча банд',
   unitsLine: 'Режа {{planned}} · банд {{occupied}} · вакант {{vacant}}',
   category: 'Категория',
   cat_rahbar: 'Раҳбар',

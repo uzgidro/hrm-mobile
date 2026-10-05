@@ -1,9 +1,11 @@
+import i18n from '@/i18n';
 import {
   leaveStatusGroup,
   leaveStatusKind,
   isPendingCode,
   isApprovedCode,
   isRejectedCode,
+  leaveTypeLabel,
 } from '../leaveStatus';
 
 describe('leaveStatusGroup', () => {
@@ -74,5 +76,19 @@ describe('leaveStatusKind', () => {
   it('maps rejected (and its alias) to the "error" StatusKind', () => {
     expect(leaveStatusKind('rejected')).toBe('error');
     expect(leaveStatusKind('rad_etilgan')).toBe('error');
+  });
+});
+
+describe('leaveTypeLabel', () => {
+  afterAll(() => i18n.changeLanguage('uz-Latn'));
+
+  // QA: the Team screen printed the raw untranslated `type` value.
+  it('localizes the preset value; dictionary/free text passes through', async () => {
+    await i18n.changeLanguage('ru');
+    expect(leaveTypeLabel(i18n.t, "Ta'til")).toBe('Отпуск');
+    expect(leaveTypeLabel(i18n.t, 'Kasallik')).toBe('Больничный');
+    expect(leaveTypeLabel(i18n.t, 'Oilaviy sabab (HR)')).toBe('Oilaviy sabab (HR)');
+    await i18n.changeLanguage('uz-Latn');
+    expect(leaveTypeLabel(i18n.t, "Ta'til")).toBe("Ta'til");
   });
 });

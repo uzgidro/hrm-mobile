@@ -9,7 +9,7 @@ export default {
   occupied: 'Занято',
   vacant: 'Вакантно',
   rows: 'Строки',
-  overstaffed: 'сверх штата',
+  overstaffed: 'Сверх штата',
   unitsLine: 'План {{planned}} · занято {{occupied}} · вакантно {{vacant}}',
   category: 'Категория',
   cat_rahbar: 'Руководитель',

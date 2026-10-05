@@ -20,7 +20,7 @@ import { resolveEmployeeBranchId } from '@/utils/branch';
 import { useBreakpoint } from '@/utils/responsive';
 import { canAccessPage, hasSupervisor } from '@/utils/roles';
 import { useDayRoster } from '@/lib/useDayRoster';
-import { leaveStatusGroup } from '@/utils/leaveStatus';
+import { leaveStatusGroup, leaveTypeLabel } from '@/utils/leaveStatus';
 import { Icon } from '@/components/Icon';
 import type { EmployeeBirthday, WorkLeave } from '@/types';
 import { Avatar, Badge, Button, Card, Donut, ListRow, PageHeader, Screen, Skeleton, Text, type Tone } from '@/ui';
@@ -145,7 +145,8 @@ export default function TeamScreen() {
           return (
             <ListRow
               key={leave.id}
-              title={leave.type ?? t('attendance.requestFallback')}
+              // The raw `type` is an untranslated preset value — show its label.
+              title={leave.type ? leaveTypeLabel(t, leave.type) : t('attendance.requestFallback')}
               subtitle={`${dayjs(leave.start_date).format('D MMM YYYY, HH:mm')} – ${dayjs(leave.end_date).format('HH:mm')} · ${leave.employee?.legal_name ?? '—'}`}
               left={<Avatar name={leave.employee?.legal_name ?? '?'} uri={leave.employee?.photo_path} size={40} />}
               right={<Badge label={t(`attendance.status.${group}`)} tone={STATUS_TONE[group]} />}

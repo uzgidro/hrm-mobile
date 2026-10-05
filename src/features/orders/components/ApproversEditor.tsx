@@ -1,4 +1,5 @@
-import { View, Text, TouchableOpacity, Switch, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Toggle } from '@/ui';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
@@ -59,11 +60,10 @@ export function ApproversEditor({
             </View>
             <View style={styles.editRow}>
               <Text style={styles.editLabel}>{t('orders.canEditDocLabel')}</Text>
-              <Switch
+              <Toggle
                 value={a.can_edit_document}
                 onValueChange={(v) => onToggleEdit(idx, v)}
-                trackColor={{ false: colors.cardBorder, true: colors.primary }}
-                thumbColor="#fff"
+                accessibilityLabel={t('orders.canEditDocLabel')}
               />
             </View>
           </View>

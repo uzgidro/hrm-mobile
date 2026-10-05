@@ -16,6 +16,8 @@ import { ff } from '@/theme/typography';
 import { useBreakpoint } from '@/utils/responsive';
 import type { Notification } from '@/types';
 import { Icon } from '@/components/Icon';
+import { Segmented } from '@/ui';
+import { SelectItemPlaceholder } from '@/components/SelectItemPlaceholder';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { SplitLayout } from '@/components/SplitLayout';
@@ -137,26 +139,18 @@ export default function NotificationsScreen() {
         }
       />
 
+      {/* Shared v3 Segmented (QA: the old-palette tabs made the SELECTED «Barchasi»
+          look flat and the unselected one look raised in light mode). */}
       <View style={styles.filterRow}>
-        {([false, true] as const).map((only) => {
-          const on = unreadOnly === only;
-          const label = only
-            ? `${t('notifications.filterUnread')}${unread > 0 ? ` · ${unread}` : ''}`
-            : t('notifications.filterAll');
-          return (
-            <TouchableOpacity
-              key={String(only)}
-              style={[styles.filterTab, on && styles.filterTabOn]}
-              onPress={() => { setUnreadOnly(only); setLimit(NOTIFICATIONS_PAGE); }}
-              activeOpacity={0.8}
-              accessibilityRole="button"
-              accessibilityState={{ selected: on }}
-              testID={only ? 'notif-filter-unread' : 'notif-filter-all'}
-            >
-              <Text style={[styles.filterText, on && styles.filterTextOn]}>{label}</Text>
-            </TouchableOpacity>
-          );
-        })}
+        <Segmented
+          options={[
+            { value: 'all', label: t('notifications.filterAll') },
+            { value: 'unread', label: t('notifications.filterUnread'), count: unread },
+          ]}
+          value={unreadOnly ? 'unread' : 'all'}
+          onChange={(v) => { setUnreadOnly(v === 'unread'); setLimit(NOTIFICATIONS_PAGE); }}
+          testID="notif-filter"
+        />
       </View>
 
       {isLoading ? (
@@ -223,7 +217,7 @@ export default function NotificationsScreen() {
             : selected.kind === 'order' ? <OrderDetailView id={selected.id} embedded />
             : <LetterDetailView id={selected.id} embedded />
           }
-          placeholder={<EmptyState icon="bell" title={t('notifications.empty')} />}
+          placeholder={<SelectItemPlaceholder icon="bell" />}
         />
       </Screen>
     );
@@ -240,13 +234,6 @@ function targetEquals(a: Target, b: Target): boolean {
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     filterRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingBottom: 10 },
-    filterTab: {
-      paddingHorizontal: 16, paddingVertical: 8, borderRadius: 14, backgroundColor: c.card,
-      borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder,
-    },
-    filterTabOn: { backgroundColor: c.primarySoft, borderColor: c.tabBarActiveBorder },
-    filterText: { fontSize: 13.5, color: c.textSecondary, ...ff('900') },
-    filterTextOn: { color: c.primaryLight },
     content: { padding: 16, gap: 10 },
     moreBtn: { alignSelf: 'center', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 18, backgroundColor: c.card, borderWidth: 2, borderColor: c.cardBorder, marginTop: 4 },
     moreText: { fontSize: 13, ...ff('800'), color: c.primary },

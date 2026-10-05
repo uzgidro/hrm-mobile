@@ -143,4 +143,12 @@ describe('create-form queries (web v2 parity)', () => {
     expect(d.queryKey).toEqual(['dictionaries', 'options', 'leave_request_reasons']);
     expect(await (d.queryFn as () => Promise<unknown>)()).toEqual([{ id: 1, name: 'Kasal' }]);
   });
+
+  it('`{ items }` envelope / object payloads are unwrapped to arrays (no crash downstream)', async () => {
+    mock.onGet('work-leaves/my-approvers').reply(200, { items: [{ id: 3, legal_name: 'Karimov A', via: 'supervisor' }] });
+    mock.onGet('dictionaries/leave_request_reasons/options').reply(200, { detail: 'not a list' });
+    expect(await (leaveApproversQuery().queryFn as () => Promise<unknown>)())
+      .toEqual([{ id: 3, legal_name: 'Karimov A', via: 'supervisor' }]);
+    expect(await (leaveReasonsQuery().queryFn as () => Promise<unknown>)()).toEqual([]);
+  });
 });

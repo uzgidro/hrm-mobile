@@ -28,6 +28,12 @@ describe('leaveReasonOptions', () => {
     expect(leaveReasonOptions([], FALLBACK)).toEqual(FALLBACK);
     expect(leaveReasonOptions(undefined, FALLBACK)).toEqual(FALLBACK);
   });
+
+  it('massiv emas javob (`{ items }` / obyekt) — yiqilmaydi', () => {
+    expect(leaveReasonOptions({ items: [{ name: 'Kasal' }] }, FALLBACK)).toEqual(['Kasal']);
+    expect(leaveReasonOptions({ detail: 'x' }, FALLBACK)).toEqual(FALLBACK);
+    expect(leaveReasonOptions([null, { name: 5 }], FALLBACK)).toEqual(FALLBACK);
+  });
 });
 
 describe('approverNotice', () => {
@@ -37,5 +43,12 @@ describe('approverNotice', () => {
       .toEqual({ kind: 'department_head', names: 'Aliyeva Z, Rustamov B' });
     expect(approverNotice([])).toEqual({ kind: 'nobody', names: '' });
     expect(approverNotice(undefined)).toEqual({ kind: 'nobody', names: '' });
+  });
+
+  it('massiv emas javob — `.map is not a function` emas', () => {
+    expect(approverNotice({ items: [{ legal_name: 'Karimov A', via: 'supervisor' }] }))
+      .toEqual({ kind: 'supervisor', names: 'Karimov A' });
+    expect(approverNotice({})).toEqual({ kind: 'nobody', names: '' });
+    expect(approverNotice([null])).toEqual({ kind: 'nobody', names: '' });
   });
 });

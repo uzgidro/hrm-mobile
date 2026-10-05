@@ -17,7 +17,7 @@ import { useBreakpoint } from '@/utils/responsive';
 import { hasSupervisor } from '@/utils/roles';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
-import { ScreenHeader, HeaderAction } from '@/components/ScreenHeader';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { PagedList } from '@/components/PagedList';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { menuBadgesQuery } from '@/lib/menuBadges';
@@ -138,6 +138,8 @@ export default function WorkLeavesScreen() {
   const filters = isSupervisor ? INCOMING_FILTERS : MY_FILTERS;
   const activeFilter = isSupervisor ? incomingFilter : myFilter;
 
+  // ONE create affordance — the FAB, like the other v3 list screens (QA: the
+  // header "+" duplicated it).
   const fab = !isSupervisor ? (
     <TouchableOpacity testID="leaves-create" style={styles.fab} onPress={() => router.push('/create-leave')} activeOpacity={0.85}>
       <Icon name="plus" size={24} color={colors.onPrimary} strokeWidth={2.4} />
@@ -150,7 +152,6 @@ export default function WorkLeavesScreen() {
         title={isSupervisor ? t('leaves.incomingTitle') : t('leaves.myTitle')}
         count={isSupervisor ? pendingCount : undefined}
         countTone="attention"
-        right={!isSupervisor ? <HeaderAction icon="plus" onPress={() => router.push('/create-leave')} /> : undefined}
       />
 
       <View style={styles.filterWrapper}>

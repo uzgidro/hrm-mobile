@@ -9,7 +9,7 @@ export default {
   occupied: 'Band',
   vacant: 'Vakant',
   rows: 'Qatorlar',
-  overstaffed: 'ortiqcha band',
+  overstaffed: 'Ortiqcha band',
   unitsLine: 'Reja {{planned}} · band {{occupied}} · vakant {{vacant}}',
   category: 'Kategoriya',
   cat_rahbar: 'Rahbar',

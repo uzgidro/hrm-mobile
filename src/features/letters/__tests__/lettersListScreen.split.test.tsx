@@ -56,11 +56,15 @@ describe('LettersListScreen (tablet-landscape split)', () => {
     (useWindowDimensions as jest.Mock).mockReturnValue(TABLET_LANDSCAPE);
     mock.onGet(new RegExp('letters/?(\\?|$)')).reply(200, []);
 
-    const { findByText, queryByText } = await renderWithProviders(<LettersListScreen />);
+    const { findByText, queryByText, findByTestId } = await renderWithProviders(<LettersListScreen />);
 
     await findByText("Xatlar");
     // No letters → selectedId stays null → SplitLayout falls back to `placeholder`.
     expect(queryByText("Ma'lumot")).toBeNull();
+    // QA (1366): the detail pane is a neutral "pick from the list" hint — it no
+    // longer repeats the list's own empty text next to it.
+    expect(await findByTestId('split-select-placeholder')).toBeTruthy();
+    expect(await findByText("Ko'rish uchun ro'yxatdan birini tanlang")).toBeTruthy();
   }, 15000);
 
   it('phone/portrait renders the plain list (no split, unaffected by injectable onPress)', async () => {

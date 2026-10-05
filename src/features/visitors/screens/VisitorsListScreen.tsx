@@ -19,7 +19,7 @@ import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader, HeaderAction } from '@/components/ScreenHeader';
 import { SplitLayout } from '@/components/SplitLayout';
-import { EmptyState } from '@/components/StateViews';
+import { SelectItemPlaceholder } from '@/components/SelectItemPlaceholder';
 import { PagedList, usePagedRows } from '@/components/PagedList';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
@@ -188,7 +188,7 @@ export default function MehmonlarScreen() {
         <SplitLayout
           master={listPane}
           detail={selectedId != null ? <VisitorDetailView id={selectedId} embedded /> : null}
-          placeholder={<EmptyState icon="guest" title={t('visitors.emptyList')} />}
+          placeholder={<SelectItemPlaceholder icon="guest" />}
         />
       </Screen>
     );

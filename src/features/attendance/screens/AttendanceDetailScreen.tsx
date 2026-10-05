@@ -42,7 +42,8 @@ export default function AttendanceDetailScreen() {
   const [sectionFilter, setSectionFilter] = useState<StatusGroup | null>(() => filterFromParam(filter));
   const selDay = dayjs(selectedDate);
   const isToday = selectedDate === dayjs().format('YYYY-MM-DD');
-  const dateLabel = `${selDay.date()} ${monthName(selDay.month())} ${selDay.year()} (${weekdayName(selDay.day())})`;
+  // Genitive month after the day number (ru «5 октября», not «5 октябрь»).
+  const dateLabel = `${selDay.date()} ${monthName(selDay.month(), { genitive: true })} ${selDay.year()} (${weekdayName(selDay.day())})`;
 
   const prevDay = () => setSelectedDate(selDay.subtract(1, 'day').format('YYYY-MM-DD'));
   const nextDay = () => setSelectedDate(selDay.add(1, 'day').format('YYYY-MM-DD'));

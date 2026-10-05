@@ -19,6 +19,7 @@
 // silently changing any screen's displayed text, this module does NOT own the
 // label string — only the group and the StatusKind used for color. Each
 // screen keeps resolving its own label via its own existing t() key.
+import type { TFunction } from 'i18next';
 import type { StatusKind } from './orderStatus';
 
 type LeaveStatusGroup = 'pending' | 'approved' | 'rejected';
@@ -73,4 +74,15 @@ export function leaveStatusKind(status?: string): StatusKind {
   if (group === 'approved') return 'success';
   if (group === 'rejected') return 'error';
   return 'pending';
+}
+
+// ── Leave TYPE display label ────────────────────────────────────────────────
+// Web-parity: the `type` stored on a work-leave is the untranslated preset
+// value (LEAVE_TYPES in the leaves feature) or HR's dictionary/free text — it
+// is never translated in data. Only the DISPLAYED label is localized via
+// `leaves.presetType.<value>`; anything without an entry (a dictionary reason,
+// free text) is shown as-is. Shared here so screens outside the leaves feature
+// (attendance Team screen) show the same label without a cross-feature import.
+export function leaveTypeLabel(t: TFunction, value: string): string {
+  return t(`leaves.presetType.${value}`, { defaultValue: value });
 }

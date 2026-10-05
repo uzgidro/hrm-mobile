@@ -7,6 +7,7 @@ import dayjs, { type Dayjs } from 'dayjs';
 import type { WorkLeave, Employee } from '@/types';
 import { getMultiOrgRoles } from '@/utils/roles';
 import { isPendingCode, isApprovedCode, isRejectedCode } from '@/utils/leaveStatus';
+import { unwrapList } from '@/api/response';
 
 // Permission gating uses the exact-membership checks from leaveStatus.ts, NOT
 // leaveStatusGroup() — leaveStatusGroup() deliberately defaults an
@@ -136,10 +137,11 @@ export function earliestLeaveStart(
  * the built-in fallback when the dictionary is empty or unreachable — the field
  * must never be left without a choice.
  */
-export function leaveReasonOptions(rows: { name?: string | null }[] | undefined, fallback: readonly string[]): string[] {
+export function leaveReasonOptions(rows: unknown, fallback: readonly string[]): string[] {
   const seen = new Set<string>();
-  for (const r of rows ?? []) {
-    const n = (r.name ?? '').trim();
+  // unwrapList — a non-array payload (`{ items }`, `{}`) must not crash the form.
+  for (const r of unwrapList<{ name?: string | null } | null>(rows)) {
+    const n = typeof r?.name === 'string' ? r.name.trim() : '';
     if (n) seen.add(n);
   }
   return seen.size ? [...seen] : [...fallback];
@@ -147,9 +149,10 @@ export function leaveReasonOptions(rows: { name?: string | null }[] | undefined,
 
 /** What the routing notice says: who gets the request, or that HR will. */
 export function approverNotice(
-  approvers: { legal_name?: string | null; via?: string }[] | undefined,
+  approvers: unknown,
 ): { kind: 'supervisor' | 'department_head' | 'nobody'; names: string } {
-  const names = (approvers ?? []).map((a) => (a.legal_name ?? '').trim()).filter(Boolean).join(', ');
+  const list = unwrapList<{ legal_name?: string | null; via?: string } | null>(approvers).filter(Boolean);
+  const names = list.map((a) => (typeof a?.legal_name === 'string' ? a.legal_name.trim() : '')).filter(Boolean).join(', ');
   if (!names) return { kind: 'nobody', names: '' };
-  return { kind: approvers?.[0]?.via === 'department_head' ? 'department_head' : 'supervisor', names };
+  return { kind: list[0]?.via === 'department_head' ? 'department_head' : 'supervisor', names };
 }

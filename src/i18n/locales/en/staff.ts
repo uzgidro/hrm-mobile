@@ -9,7 +9,7 @@ export default {
   occupied: 'Filled',
   vacant: 'Vacant',
   rows: 'Rows',
-  overstaffed: 'over establishment',
+  overstaffed: 'Over establishment',
   unitsLine: 'Planned {{planned}} · filled {{occupied}} · vacant {{vacant}}',
   category: 'Category',
   cat_rahbar: 'Manager',
