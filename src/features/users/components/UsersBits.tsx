@@ -8,15 +8,18 @@ import { useTheme } from '@/theme/ThemeProvider';
 import { PickerModal } from '@/components/PickerModal';
 import { Card, EmptyState, Text, WEB_BREAK } from '@/ui';
 import { usersBranchesQuery } from '../api/queries';
+import { isLongToken } from '../utils/users';
 
 export function KeyValue({ label, value, testID }: { label: string; value?: string | null; testID?: string }) {
   const { colors: c } = useTheme();
+  // Bo'linmas uzun qiymat (pochta) — yorliq ostida to'liq kenglikda, aks holda so'z o'rtasidan bo'linadi.
+  const stacked = isLongToken(value);
   return (
-    <View style={[styles.kv, { borderBottomColor: c.border }]}>
-      <Text variant="caption" tone="muted" style={styles.kvLabel}>
+    <View style={[styles.kv, stacked && styles.kvStacked, { borderBottomColor: c.border }]}>
+      <Text variant="caption" tone="muted" style={stacked ? undefined : styles.kvLabel}>
         {label}
       </Text>
-      <Text variant="body" style={[styles.kvValue, WEB_BREAK]} testID={testID}>
+      <Text variant="body" selectable style={[stacked ? undefined : styles.kvValue, WEB_BREAK]} testID={testID}>
         {value || '—'}
       </Text>
     </View>
@@ -60,6 +63,7 @@ export function BranchPicker({
     <PickerModal
       visible={visible}
       title={t('users.colBranch')}
+      avatars={false}
       options={[
         { value: ALL, label: allLabel },
         ...(branches.data ?? []).map((b) => ({ value: b.id, label: b.name || `#${b.id}` })),
@@ -80,4 +84,5 @@ const styles = StyleSheet.create({
   // Yorliq eni qat'iy (uzun bo'linmas qiymat uni siqib 3 qatorga tushirmasin), qiymat o'raladi.
   kvLabel: { width: '40%', flexShrink: 0 },
   kvValue: { flex: 1, minWidth: 0 },
+  kvStacked: { flexDirection: 'column', gap: 2 },
 });

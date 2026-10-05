@@ -137,6 +137,7 @@ export function KioskFormSheet({ row, onClose }: { row: (KioskUser & { id: numbe
           visible
           multiple
           title={t('users.kioskBranches')}
+          avatars={false}
           options={(branches.data ?? []).map((b) => ({ value: b.id, label: b.name || `#${b.id}` }))}
           loading={branches.isFetching}
           selected={form.branchIds}

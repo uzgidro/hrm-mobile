@@ -6,6 +6,7 @@ import {
   buildAdminBody,
   buildKioskBody,
   isForbidden,
+  isLongToken,
   kioskRoleKey,
   maskPinfl,
   multiOrgBranchNames,
@@ -160,5 +161,17 @@ describe('users utils (v2 UsersPage)', () => {
     expect(isForbidden(new AxiosError('Network Error', 'ERR_NETWORK'))).toBe(false);
     expect(isForbidden(new Error('boom'))).toBe(false);
     expect(isForbidden(null)).toBe(false);
+  });
+});
+
+describe("isLongToken — bo'linmas uzun qiymat (pochta) to'liq kenglikda", () => {
+  it("bo'shliqsiz 21+ belgi — ha (QA: «AbdugafurovKudratillo@mail / .ru» bo'lib ketardi)", () => {
+    expect(isLongToken('AbdugafurovKudratillo@mail.ru')).toBe(true);
+    expect(isLongToken('  AbdugafurovKudratillo@mail.ru ')).toBe(true);
+  });
+  it("qisqa yoki so'zlardan iborat — yo'q (oddiy ikki ustunli qator)", () => {
+    expect(isLongToken('ali@mail.ru')).toBe(false);
+    expect(isLongToken("Tezkor dispetcherlik xizmati bo'limi")).toBe(false);
+    expect(isLongToken(null)).toBe(false);
   });
 });

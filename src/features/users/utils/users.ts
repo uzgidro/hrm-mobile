@@ -8,6 +8,16 @@ import { isAxiosError } from 'axios';
 import { unwrapList } from '@/api/response';
 
 /**
+ * Bo'shliqsiz uzun qiymat (pochta, login): ikki ustunli qatorning ~40% yorliqdan qolgan joyiga
+ * sig'maydi va so'z o'rtasidan bo'linardi («…@mail / .ru»). Bunday qiymat yorliq OSTIDA to'liq
+ * kenglikda chiziladi — qiymat o'zgartirilmaydi (nusxa olishda yashirin belgi yo'q).
+ */
+export function isLongToken(value?: string | null): boolean {
+  const v = (value ?? '').trim();
+  return v.length > 20 && !/\s/.test(v);
+}
+
+/**
  * Tab ro'yxati «Ruxsat yo'q» faqat HTTP 403 da; tarmoq/500 xatolari — qayta urinish bilan `ErrorState`
  * (aks holda vaqtinchalik nosozlik ruxsat yo'qdek ko'rinib, qayta urinib bo'lmasdi).
  */
