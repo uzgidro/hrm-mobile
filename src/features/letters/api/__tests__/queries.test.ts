@@ -1,9 +1,10 @@
 import MockAdapter from 'axios-mock-adapter';
 import { apiClient } from '@/api/client';
-import { LETTERS_LIST, LETTER_DETAIL, EMPLOYEES_LIST, ORGANIZATION_BRANCH_LEADERS } from '@/api/urls';
+import { LETTERS_LIST, LETTER_DETAIL, EMPLOYEES_LIST, ORGANIZATION_BRANCH_LEADERS, LETTER_TRIP_MOVEMENTS } from '@/api/urls';
 import {
   letterKeys, lettersListQuery, lettersListServerParams, letterDetailQuery,
   letterSignersQuery, letterAgreementSignersQuery, letterSubmittersQuery, letterRahbariyatQuery,
+  tripMovementsQuery,
 } from '../queries';
 
 let mock: MockAdapter;
@@ -190,5 +191,14 @@ describe('letterRahbariyatQuery — SAFAR rahbariyati', () => {
     const empReq = mock.history.get.find((r) => r.url === EMPLOYEES_LIST)!;
     expect(empReq.params.organization_branch_id).toBeUndefined();
     expect(empReq.params.multi_org_employee_role).toEqual(['deputy', 'ministr']);
+  });
+});
+
+describe('tripMovementsQuery', () => {
+  it('{items} yoki massiv — har doim massiv (movements.map yiqilmasin)', async () => {
+    mock.onGet(LETTER_TRIP_MOVEMENTS(9)).replyOnce(200, { items: [{ id: 1 }] }).onGet(LETTER_TRIP_MOVEMENTS(9)).replyOnce(200, [{ id: 2 }]);
+    const fn = tripMovementsQuery(9).queryFn as () => Promise<unknown[]>;
+    expect(await fn()).toEqual([{ id: 1 }]);
+    expect(await fn()).toEqual([{ id: 2 }]);
   });
 });

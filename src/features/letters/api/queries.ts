@@ -128,7 +128,8 @@ export function tripMovementsQuery(id: number) {
   return queryOptions({
     queryKey: letterKeys.tripMovements(id),
     queryFn: () =>
-      apiClient.get<BusinessTripMovement[]>(LETTER_TRIP_MOVEMENTS(id)).then((r) => r.data ?? []),
+      // Ro'yxat yoki {items} — ikkalasi ham massivga (aks holda movements.map yiqilardi).
+      apiClient.get(LETTER_TRIP_MOVEMENTS(id)).then((r) => unwrapList<BusinessTripMovement>(r.data)),
     enabled: !!id,
     refetchOnMount: 'always',
   });

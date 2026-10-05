@@ -19,6 +19,7 @@
 // silently changing any screen's displayed text, this module does NOT own the
 // label string — only the group and the StatusKind used for color. Each
 // screen keeps resolving its own label via its own existing t() key.
+import dayjs from 'dayjs';
 import type { TFunction } from 'i18next';
 import type { StatusKind } from './orderStatus';
 
@@ -85,4 +86,23 @@ export function leaveStatusKind(status?: string): StatusKind {
 // (attendance Team screen) show the same label without a cross-feature import.
 export function leaveTypeLabel(t: TFunction, value: string): string {
   return t(`leaves.presetType.${value}`, { defaultValue: value });
+}
+
+/**
+ * So'rov oralig'i matni. Bir kun ichida — sana bir marta («4.10.2026, 09:00 – 13:00»);
+ * bir necha kunlik — tugash sanasi ham («… – 6.10.2026, 18:00»). Ilgari tugash faqat
+ * HH:mm edi va 4→6 oktyabr ta'tili bir kunlik bo'lib ko'rinardi.
+ */
+export function leaveRangeText(
+  start: string | null | undefined,
+  end: string | null | undefined,
+  dateFormat = 'D MMM YYYY',
+): string {
+  if (!start) return '—';
+  const s = dayjs(start);
+  const head = `${s.format(dateFormat)}, ${s.format('HH:mm')}`;
+  if (!end) return head;
+  const e = dayjs(end);
+  const tail = s.isSame(e, 'day') ? e.format('HH:mm') : `${e.format(dateFormat)}, ${e.format('HH:mm')}`;
+  return `${head} – ${tail}`;
 }

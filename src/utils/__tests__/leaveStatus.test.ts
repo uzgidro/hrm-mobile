@@ -6,6 +6,7 @@ import {
   isApprovedCode,
   isRejectedCode,
   leaveTypeLabel,
+  leaveRangeText,
 } from '../leaveStatus';
 
 describe('leaveStatusGroup', () => {
@@ -90,5 +91,22 @@ describe('leaveTypeLabel', () => {
     expect(leaveTypeLabel(i18n.t, 'Oilaviy sabab (HR)')).toBe('Oilaviy sabab (HR)');
     await i18n.changeLanguage('uz-Latn');
     expect(leaveTypeLabel(i18n.t, "Ta'til")).toBe("Ta'til");
+  });
+});
+
+describe('leaveRangeText', () => {
+  // Server sanalari — Toshkent devor soati (offsetsiz), shuning uchun TZ'dan mustaqil.
+  it('bir kun ichida — sana bir marta, ikki vaqt', () => {
+    expect(leaveRangeText('2026-10-04T09:00:00', '2026-10-04T13:00:00', 'D.MM.YYYY')).toBe('4.10.2026, 09:00 – 13:00');
+  });
+
+  it('bir necha kun — tugash sanasi ham ko\'rsatiladi', () => {
+    expect(leaveRangeText('2026-10-04T09:00:00', '2026-10-06T18:00:00', 'D.MM.YYYY')).toBe(
+      '4.10.2026, 09:00 – 6.10.2026, 18:00',
+    );
+  });
+
+  it('tugash yo\'q — faqat boshlanish', () => {
+    expect(leaveRangeText('2026-10-04T09:00:00', null, 'D.MM.YYYY')).toBe('4.10.2026, 09:00');
   });
 });

@@ -40,11 +40,14 @@ interface Props {
    *  the API with it. Used for organisation-wide employee pickers, which used
    *  to download every page (15 × 100 rows) just to filter in JS. */
   onSearchChange?: (query: string) => void;
+  /** Bosh harfli avatar (odamlar ro'yxati). Soat / daqiqa / holat kabi ro'yxatlarda
+   *  `false` — aks holda har qatorda ma'nosiz «0», «1» doirasi chiziladi. */
+  avatars?: boolean;
 }
 
 export function PickerModal({
   visible, title, options, loading, multiple, selected, onClose, onSelect, onToggle,
-  disabledValues, onSearchChange,
+  disabledValues, onSearchChange, avatars = true,
 }: Props) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -124,7 +127,7 @@ export function PickerModal({
                       else onSelect(item.value);
                     }}
                   >
-                    {item.photo ? (
+                    {!avatars ? null : item.photo ? (
                       <Image source={{ uri: item.photo }} style={styles.photo} />
                     ) : (
                       <View style={styles.photoPlaceholder}>

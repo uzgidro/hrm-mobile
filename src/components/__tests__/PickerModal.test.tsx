@@ -61,4 +61,21 @@ describe('PickerModal', () => {
     );
     expect(queryByText('Pick one')).toBeNull();
   });
+
+  it("avatars={false} — bosh harf doirasi chizilmaydi (soat/daqiqa ro'yxati)", async () => {
+    const opts: PickerOption[] = [
+      { value: 0, label: '08' },
+      { value: 1, label: '19' },
+    ];
+    const withAv = await renderWithProviders(
+      <PickerModal visible title="Soat" options={opts} selected={null} onClose={() => {}} onSelect={() => {}} />,
+    );
+    expect(withAv.getAllByText('0').length).toBeGreaterThan(0);
+    withAv.unmount();
+    const noAv = await renderWithProviders(
+      <PickerModal visible avatars={false} title="Soat" options={opts} selected={null} onClose={() => {}} onSelect={() => {}} />,
+    );
+    expect(noAv.queryByText('0')).toBeNull();
+    expect(noAv.getByText('08')).toBeTruthy();
+  });
 });

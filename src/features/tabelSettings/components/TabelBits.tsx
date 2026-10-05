@@ -149,6 +149,7 @@ export function ClockField({
       {picker === 'h' && (
         <PickerModal
           visible
+          avatars={false}
           title={`${label} · ${t('tabelSettings.clockHour')}`}
           options={[{ value: NONE, label: empty }, ...CLOCK_HOURS.map((x, i) => ({ value: i, label: x }))]}
           selected={h ? Number(h) : NONE}
@@ -162,6 +163,7 @@ export function ClockField({
       {picker === 'm' && (
         <PickerModal
           visible
+          avatars={false}
           title={`${label} · ${t('tabelSettings.clockMinute')}`}
           options={CLOCK_MINUTES.map((x) => ({ value: Number(x), label: x }))}
           selected={m ? Number(m) : null}
