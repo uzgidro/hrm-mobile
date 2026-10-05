@@ -6,74 +6,59 @@ import { unwrapList } from '@/api/response';
 import {
   WORK_LEAVES, WORK_LEAVE_DETAIL, WORK_LEAVES_MY_APPROVERS, WORK_LEAVES_RULES, DICTIONARY_OPTIONS,
 } from '@/api/urls';
-import { workLeaveAllScopeParams } from '@/utils/workLeaveScope';
-import type { User, WorkLeave } from '@/types';
+import { leaveScopeParams, type LeaveScope } from '@/utils/workLeaveScope';
+import type { WorkLeave } from '@/types';
 
 // Hierarchical query keys — `all` is a strict prefix of every list and detail
-// key, so invalidating `leaveKeys.all` refreshes all three lists (mine /
-// assigned / team) AND any open detail in one call (prefix match). This is the
-// per-feature queryOptions pattern (TkDodo): key + queryFn colocated so
-// screens, prefetch and invalidation all reference one source of truth.
+// key, so invalidating `leaveKeys.all` refreshes every list AND any open
+// detail in one call (prefix match). This is the per-feature queryOptions
+// pattern (TkDodo): key + queryFn colocated so screens, prefetch and
+// invalidation all reference one source of truth.
 export const leaveKeys = {
   all: ['work-leaves'] as const,
-  list: (scope: 'mine' | 'assigned' | 'team', employeeId?: number) =>
-    [...leaveKeys.all, 'list', scope, employeeId ?? null] as const,
+  list: (scope: LeaveScope, employeeId?: number) => [...leaveKeys.all, 'list', scope, employeeId ?? null] as const,
   detail: (id: number) => [...leaveKeys.all, 'detail', id] as const,
 };
 
 // ── Server-paged lists (30 rows, infinite scroll) ─────────────────────────────
-// WHY (audit 2026-09-13): the three lists asked for ONE page of 100/200 rows,
+// WHY (audit 2026-09-13): the lists asked for ONE page of 100/200 rows,
 // threw the envelope's `total` away and then filtered/searched in JS — so an
 // older request could never be found and HR's team list silently ended at
 // 200. Every chip is now a server param (`workLeavesServerParams`).
 export type LeaveStatusFilter = 'all' | 'pending' | 'approved' | 'rejected';
-export type IncomingFilter = 'all' | 'action' | 'approved' | 'rejected';
 
 export interface LeavesListParams {
-  scope: 'mine' | 'assigned' | 'team';
-  employeeId?: number;
-  status?: LeaveStatusFilter | IncomingFilter;
+  /** Whose requests — web v2 scope (`@/utils/workLeaveScope`). */
+  scope: LeaveScope;
+  status?: LeaveStatusFilter;
   search?: string;
-  /** Team list: `YYYY-MM` — overlap window, i.e. leaves touching that month. */
+  /** `YYYY-MM` — overlap window, i.e. leaves touching that month. */
   month?: string;
-  /** Team list role scope (`workLeaveAllScopeParams`). */
-  user?: User | null;
+  /** The caller's branch (v2 injects the selected branch into every request). */
   branchId?: number | null;
 }
 
 /**
+ * Web v2 `leaveListParams`:
+ * • scope → `leaveScopeParams` (mine: no scope param — the server default is
+ *   "what I filed AND what is mine to decide"; team: `supervised=true`;
+ *   branch: the branch filter only, HR/admin). ⚠️ Never `assigned_signer=true`
+ *   any more: a request filed without signers (the default path) reaches the
+ *   supervisor with `assigned_signers: []`, so that filter hid it (QA 2026-10-05);
  * • status chips → backend `status` GROUPS (`pending` = pending+yuborildi,
  *   `approved` = approved+signed+tasdiqlangan, `rejected` = rejected+rad_etilgan
- *   — `services/work_leave.py::_STATUS_GROUPS`, the same grouping
- *   `leaveStatusGroup` does in JS).
- * • incoming "action" = pending AND I have not signed yet →
- *   `status=pending&signer=false`; "approved" = ones I already signed →
- *   `signer=true` (the old JS rule was `approved || alreadySigned`).
- * • month → `date_from/date_to` (backend overlap: end ≥ from AND start ≤ to).
- * • search → name / type / description (backend 2026-09-13).
+ *   — `services/work_leave.py::_STATUS_GROUPS`);
+ * • month → `date_from/date_to` (backend overlap: end ≥ from AND start ≤ to);
+ * • search → name / type / description.
  */
 export function workLeavesServerParams(p: LeavesListParams): ListParams {
-  const out: ListParams = { search: p.search?.trim() || undefined };
-  if (p.scope === 'mine') {
-    out.employee_id = p.employeeId;
-    out.status = p.status === 'all' ? undefined : p.status;
-  } else if (p.scope === 'assigned') {
-    out.assigned_signer = true;
-    if (p.status === 'action') { out.status = 'pending'; out.signer = false; }
-    else if (p.status === 'approved') out.signer = true;
-    else if (p.status === 'rejected') out.status = 'rejected';
-  } else {
-    const scope = workLeaveAllScopeParams(p.user, p.branchId);
-    for (const [k, v] of Object.entries(scope)) {
-      // `department_ids` is an array — serialised as repeated keys by the client.
-      out[k] = v as ListParams[string];
-    }
-    out.status = p.status === 'all' ? undefined : p.status;
-    if (p.month) {
-      const start = dayjs(`${p.month}-01`);
-      out.date_from = start.format('YYYY-MM-DD');
-      out.date_to = start.endOf('month').format('YYYY-MM-DD');
-    }
+  const out: ListParams = { ...(leaveScopeParams(p.scope, p.branchId) as ListParams) };
+  out.status = !p.status || p.status === 'all' ? undefined : p.status;
+  out.search = p.search?.trim() || undefined;
+  if (p.month) {
+    const start = dayjs(`${p.month}-01`);
+    out.date_from = start.format('YYYY-MM-DD');
+    out.date_to = start.endOf('month').format('YYYY-MM-DD');
   }
   return out;
 }
@@ -84,7 +69,8 @@ export function leavesListQuery(params: LeavesListParams) {
     url: WORK_LEAVES,
     params: workLeavesServerParams(params),
     staleTime: 30 * 1000,
-    refetchInterval: params.scope === 'assigned' ? 60 * 1000 : undefined,
+    // The list also carries requests waiting for MY decision — keep it fresh.
+    refetchInterval: 60 * 1000,
   });
 }
 

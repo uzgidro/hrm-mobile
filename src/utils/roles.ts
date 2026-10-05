@@ -631,8 +631,10 @@ function postAccountPages(user: User | null | undefined): PageKey[] {
 
 /**
  * v2 menyusida YO'Q sahifalar — v2 ularni qayerda ko'rsatsa, shunga ko'ra:
- *  - `profile`, `notifications` — v2 sarlavhasidagi profil menyusi va qo'ng'iroqcha HAR KIMDA
- *    (mehmon ham: `Header.tsx` faqat filial tanlagich / qidiruvni yashiradi).
+ *  - `profile` — v2 sarlavhasidagi profil menyusi HAR KIMDA.
+ *  - `notifications` — v2 qo'ng'iroqchasi ham har kimda (mehmonda ham), LEKIN server mehmonga
+ *    `/notifications` ni yopadi (403 `guest_forbidden`, `core/security._GUEST_ALLOWED_EXACT`):
+ *    v2 da mehmon qo'ng'iroqchasi har daqiqa 403 oladi. Mobil buni takrorlamaydi — mehmondan tashqari hammaga.
  *  - `birthdays` — v2 da alohida sahifa yo'q, faqat xodim / kadr bosh panellaridagi
  *    «Tug'ilgan kunlar» bloki. Mehmon (bosh sahifasi — ariza holati), `admin` hisobi
  *    (→ /filiallar) va post/kiosk hisoblari (→ /kpp, /monitoring) bu panellarni ko'rmaydi —
@@ -642,8 +644,9 @@ function postAccountPages(user: User | null | undefined): PageKey[] {
 function offCatalogueAccess(user: User | null | undefined, key: PageKey): boolean {
   switch (key) {
     case 'profile':
-    case 'notifications':
       return true;
+    case 'notifications':
+      return !!user && user.type !== 'guest';
     case 'birthdays':
       return !!user && user.type !== 'guest' && !isBranchAdmin(user) && !isSeparateAccount(user);
     default:

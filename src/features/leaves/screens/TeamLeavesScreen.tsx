@@ -26,6 +26,7 @@ import { statusColor } from '@/utils/orderStatus';
 import { leavesListQuery } from '../api/queries';
 import { leaveTypeLabel } from '../components/LeaveTypeSheet';
 import { resolveEmployeeBranchId } from '@/utils/branch';
+import { canManageLeave } from '@/utils/workLeaveScope';
 
 function statusMeta(status: string, c: ThemeColors, t: TFunction) {
   const group = leaveStatusGroup(status);
@@ -59,9 +60,14 @@ export default function TeamLeavesScreen() {
   const debouncedSearch = useDebouncedValue(search);
   // Server-paged; month → date_from/date_to (leaves TOUCHING the month, the
   // backend overlap window), status group + search → server params.
+  // Scope = web v2: «Mening jamoam» (`supervised=true`, a line manager's direct
+  // reports) — or the whole branch for HR / admins. The old role scope sent
+  // `assigned_signer=true`, which never matches a request routed to the
+  // supervisor without a named signer (QA 2026-10-05: empty list).
   const month = dayjs().year(selectedYear).month(selectedMonth).format('YYYY-MM');
+  const scope = canManageLeave(user) ? 'branch' : 'team';
   const query = useInfiniteQuery({
-    ...leavesListQuery({ scope: 'team', user, branchId: orgBranchId, status: statusF, search: debouncedSearch, month }),
+    ...leavesListQuery({ scope, branchId: orgBranchId, status: statusF, search: debouncedSearch, month }),
     staleTime: 2 * 60 * 1000,
   });
 

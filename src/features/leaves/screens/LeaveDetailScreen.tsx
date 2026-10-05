@@ -9,6 +9,7 @@ import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { useAuthStore } from '@/store/authStore';
+import type { WorkLeave } from '@/types';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { ff } from '@/theme/typography';
@@ -20,12 +21,11 @@ import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { getApiErrorMessage } from '@/api/errors';
 import { confirm } from '@/lib/confirm';
 import { toast } from '@/lib/toast';
-import { isHR } from '@/utils/roles';
-import { leaveStatusGroup, leaveStatusKind } from '@/utils/leaveStatus';
+import { isPendingCode, leaveStatusGroup, leaveStatusKind } from '@/utils/leaveStatus';
 import { statusColor } from '@/utils/orderStatus';
 import { leaveDetailQuery } from '../api/queries';
-import { useSignLeave, useRejectLeave, useDeleteLeave } from '../api/mutations';
-import { canActOnLeave, canDeleteLeave } from '../utils';
+import { useSignLeave, useRejectLeave, useDeleteLeave, useReopenLeave } from '../api/mutations';
+import { canActOnLeave, canDeleteLeave, canReopenLeave, REOPEN_REASON_MIN } from '../utils';
 import { leaveTypeLabel } from '../components/LeaveTypeSheet';
 
 function isApproved(status: string) { return leaveStatusGroup(status) === 'approved'; }
@@ -38,20 +38,25 @@ function getStatusMeta(status: string, c: ThemeColors, t: TFunction) {
   return { label: t('leaves.statusPending'), fg, bg };
 }
 
-function RejectModal({ visible, onConfirm, onClose, styles, colors }: {
-  visible: boolean; onConfirm: (reason: string) => void; onClose: () => void; styles: any; colors: ThemeColors;
+/** A reason prompt — rejecting or reopening (v2 `RejectLeaveModal`). */
+function ReasonModal({ visible, title, hint, placeholder, confirmLabel, minLength = 1, danger = true, testID, onConfirm, onClose, styles, colors }: {
+  visible: boolean; title: string; hint?: string; placeholder: string; confirmLabel: string; minLength?: number;
+  danger?: boolean; testID?: string; onConfirm: (reason: string) => void; onClose: () => void; styles: any; colors: ThemeColors;
 }) {
   const { t } = useTranslation();
   const [reason, setReason] = useState('');
+  const ready = reason.trim().length >= minLength;
   return (
     <Modal visible={visible} transparent animationType="slide">
       <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={onClose} />
       <View style={styles.sheet}>
         <View style={styles.handle} />
-        <Text style={styles.sheetTitle}>{t('leaves.rejectReasonTitle')}</Text>
+        <Text style={styles.sheetTitle}>{title}</Text>
+        {hint ? <Text style={styles.sheetHint}>{hint}</Text> : null}
         <TextInput
+          testID={testID ? `${testID}-input` : undefined}
           style={styles.sheetInput}
-          placeholder={t('leaves.rejectReasonPlaceholder')}
+          placeholder={placeholder}
           placeholderTextColor={colors.textMuted}
           value={reason}
           onChangeText={setReason}
@@ -63,8 +68,13 @@ function RejectModal({ visible, onConfirm, onClose, styles, colors }: {
           <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
             <Text style={styles.cancelBtnText}>{t('common.cancel')}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.confirmBtn, !reason.trim() && { opacity: 0.4 }]} disabled={!reason.trim()} onPress={() => { onConfirm(reason.trim()); setReason(''); }}>
-            <Text style={styles.confirmBtnText}>{t('leaves.reject')}</Text>
+          <TouchableOpacity
+            testID={testID ? `${testID}-submit` : undefined}
+            style={[styles.confirmBtn, !danger && { backgroundColor: colors.primary }, !ready && { opacity: 0.4 }]}
+            disabled={!ready}
+            onPress={() => { onConfirm(reason.trim()); setReason(''); }}
+          >
+            <Text style={styles.confirmBtnText}>{confirmLabel}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -83,18 +93,32 @@ export default function LeaveDetailScreen() {
 
   const [acting, setActing] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
-
-  const { data: leave, isLoading } = useQuery(leaveDetailQuery(leaveId));
+  const [showReopenModal, setShowReopenModal] = useState(false);
 
   const signMutation = useSignLeave(leaveId);
   const rejectMutation = useRejectLeave(leaveId);
   const deleteMutation = useDeleteLeave(leaveId);
+  const reopenMutation = useReopenLeave(leaveId);
 
-  // Web parity: HR is view-only (never signs/rejects). canActOnLeave mirrors the
-  // web's canActOnWorkLeave — the sign/reject buttons appear only for a
-  // non-HR assigned signer on a pending request they haven't signed yet.
-  const { canSign, canReject } = canActOnLeave(leave, employeeId, { isHR: isHR(user) });
+  // Once deleted, the record is gone: its query was dropped from the cache
+  // (`afterLeaveDeleted`) and must not be re-created and refetched by this
+  // still-mounted screen (404 → a second «not found» toast, QA 2026-10-05).
+  // The last data stays on screen while the stack pops.
+  const deleted = deleteMutation.isSuccess;
+  const { data: leave, isLoading } = useQuery({
+    ...leaveDetailQuery(leaveId),
+    enabled: !!leaveId && !deleted,
+    placeholderData: deleted ? (prev: WorkLeave | undefined) => prev : undefined,
+  });
+
+  // Web v2 parity (RequestPermissionPage `canActOn`): an assigned signer — or,
+  // when NO signer is named (the default routing), the requester's supervisor,
+  // else a head of their department, or HR / an admin.
+  const { canSign, canReject } = canActOnLeave(leave, user);
   const canApprove = canSign || canReject;
+  // v2 `canReopen`: a decided (signed / rejected) non-KADR request, by one of its deciders.
+  const canReopen = canReopenLeave(leave, user);
+  const reopenReason = (leave as { reopen_reason?: string | null } | undefined)?.reopen_reason;
 
   // Web parity: the author may withdraw (delete) their own request while it is
   // still pending and unsigned (mirrors the web's canDeleteWorkLeave, shown on
@@ -121,6 +145,17 @@ export default function LeaveDetailScreen() {
       toast.error(getApiErrorMessage(e, t('leaves.rejectError')));
     } finally { setActing(false); }
   }, [rejectMutation, t]);
+
+  const handleReopen = useCallback(async (reason: string) => {
+    setShowReopenModal(false);
+    setActing(true);
+    try {
+      await reopenMutation.mutateAsync(reason);
+      toast.success(t('leaves.reopenedSuccess'));
+    } catch (e) {
+      toast.error(getApiErrorMessage(e, t('leaves.reopenError')));
+    } finally { setActing(false); }
+  }, [reopenMutation, t]);
 
   // In-app confirm + toast — the OS `Alert` is a no-op on react-native-web.
   const handleDelete = useCallback(async () => {
@@ -213,6 +248,12 @@ export default function LeaveDetailScreen() {
           </View>
         ) : null}
 
+        {isPendingCode(leave.status) && reopenReason ? (
+          <View style={s.reopenCard} testID="leave-reopen-note">
+            <Text style={s.reopenText}>{t('leaves.reopenedNote', { reason: reopenReason })}</Text>
+          </View>
+        ) : null}
+
         {(leave.assigned_signers?.length ?? 0) > 0 && (
           <View style={s.signersCard}>
             <Text style={s.signersTitle}>{t('leaves.signersTitle')}</Text>
@@ -247,9 +288,16 @@ export default function LeaveDetailScreen() {
               {acting ? <ActivityIndicator color={colors.error} size="small" /> : <Text style={s.rejectBtnText}>{t('leaves.reject')}</Text>}
             </TouchableOpacity>
             <TouchableOpacity style={[s.approveBtn, acting && { opacity: 0.5 }]} disabled={acting} onPress={handleApprove}>
-              {acting ? <ActivityIndicator color="#fff" size="small" /> : <Text style={s.approveBtnText}>{t('leaves.approve')}</Text>}
+              {acting ? <ActivityIndicator color={colors.onPrimary} size="small" /> : <Text style={s.approveBtnText}>{t('leaves.approve')}</Text>}
             </TouchableOpacity>
           </View>
+        )}
+
+        {canReopen && (
+          <TouchableOpacity testID="leave-reopen" style={[s.reopenBtn, acting && { opacity: 0.5 }]} disabled={acting} onPress={() => setShowReopenModal(true)}>
+            <Icon name="refresh" size={16} color={colors.primary} />
+            <Text style={s.reopenBtnText}>{t('leaves.reopen')}</Text>
+          </TouchableOpacity>
         )}
 
         {canDelete && (
@@ -262,7 +310,30 @@ export default function LeaveDetailScreen() {
         <View style={{ height: 32 }} />
       </ScrollView>
 
-      <RejectModal visible={showRejectModal} onConfirm={handleReject} onClose={() => setShowRejectModal(false)} styles={s} colors={colors} />
+      <ReasonModal
+        visible={showRejectModal}
+        title={t('leaves.rejectReasonTitle')}
+        placeholder={t('leaves.rejectReasonPlaceholder')}
+        confirmLabel={t('leaves.reject')}
+        onConfirm={handleReject}
+        onClose={() => setShowRejectModal(false)}
+        styles={s}
+        colors={colors}
+      />
+      <ReasonModal
+        visible={showReopenModal}
+        testID="leave-reopen-sheet"
+        title={t('leaves.reopen')}
+        hint={t('leaves.reopenHint')}
+        placeholder={t('leaves.reopenReason')}
+        confirmLabel={t('leaves.reopen')}
+        minLength={REOPEN_REASON_MIN}
+        danger={false}
+        onConfirm={handleReopen}
+        onClose={() => setShowReopenModal(false)}
+        styles={s}
+        colors={colors}
+      />
     </Screen>
   );
 }
@@ -301,19 +372,24 @@ const makeStyles = (c: ThemeColors) =>
     rejectBtn: { flex: 1, borderRadius: 14, paddingVertical: 15, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: c.error },
     rejectBtnText: { color: c.error, fontSize: 15, ...ff('800') },
     approveBtn: { flex: 1, borderRadius: 14, paddingVertical: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: c.success },
-    approveBtnText: { color: '#fff', fontSize: 15, ...ff('800') },
+    approveBtnText: { color: c.onPrimary, fontSize: 15, ...ff('800') },
 
+    reopenCard: { backgroundColor: c.warningSoft, borderRadius: 14, borderWidth: 1, borderColor: c.warning, padding: 12, marginBottom: 10 },
+    reopenText: { fontSize: 13, color: c.text, lineHeight: 18, ...ff('700') },
+    reopenBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 14, paddingVertical: 15, marginTop: 10, borderWidth: 1.5, borderColor: c.primary },
+    reopenBtnText: { color: c.primary, fontSize: 15, ...ff('800') },
     deleteBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 14, paddingVertical: 15, marginTop: 10, borderWidth: 1.5, borderColor: c.error },
     deleteBtnText: { color: c.error, fontSize: 15, ...ff('800') },
 
     overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: c.overlay },
     sheet: { position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: c.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 16, paddingBottom: 32 },
     handle: { width: 40, height: 4, backgroundColor: c.cardBorder, borderRadius: 2, alignSelf: 'center', marginTop: 12, marginBottom: 16 },
+    sheetHint: { fontSize: 13, color: c.textMuted, lineHeight: 18, marginBottom: 12, ...ff('600') },
     sheetTitle: { fontSize: 17, ...ff('800'), color: c.text, marginBottom: 12 },
     sheetInput: { backgroundColor: c.bg, borderRadius: 12, borderWidth: 2, borderColor: c.cardBorder, paddingHorizontal: 14, paddingVertical: 12, color: c.text, fontSize: 14, minHeight: 100, marginBottom: 16, ...ff('700') },
     btnRow: { flexDirection: 'row', gap: 10 },
     cancelBtn: { flex: 1, borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 2, borderColor: c.cardBorder },
     cancelBtnText: { color: c.textMuted, fontSize: 15, ...ff('700') },
     confirmBtn: { flex: 1, borderRadius: 12, paddingVertical: 14, alignItems: 'center', backgroundColor: c.error },
-    confirmBtnText: { color: '#fff', fontSize: 15, ...ff('800') },
+    confirmBtnText: { color: c.onPrimary, fontSize: 15, ...ff('800') },
   });

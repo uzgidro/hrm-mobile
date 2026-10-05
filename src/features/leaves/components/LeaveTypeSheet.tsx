@@ -70,5 +70,5 @@ const makeTs = (c: ThemeColors) =>
     customRow: { flexDirection: 'row', gap: 10, marginTop: 14, alignItems: 'center' },
     customInput: { flex: 1, backgroundColor: c.inputBg, borderRadius: 14, borderWidth: 2, borderColor: c.cardBorder, paddingHorizontal: 12, paddingVertical: 10, color: c.text, fontSize: 15, ...NO_WEB_OUTLINE, ...ff('700') },
     customBtn: { backgroundColor: c.primary, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 11, borderBottomWidth: 4, borderBottomColor: c.primaryShadow },
-    customBtnText: { color: '#fff', fontSize: 14, ...ff('900') },
+    customBtnText: { color: c.onPrimary, fontSize: 14, ...ff('900') },
   });

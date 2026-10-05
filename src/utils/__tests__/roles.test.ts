@@ -661,9 +661,11 @@ describe('canAccessPage (web v2 defaults)', () => {
   // v2: mehmonning bosh sahifasi — ariza holati; menyusi `home`, `services`,
   // `registrationStatus`; sarlavhada profil + bildirishnomalar. Xodimlar ro'yxatiga
   // (tug'ilgan kunlar) va mavjud bo'lmagan oylik sahifasiga yo'l yo'q.
-  it('a guest gets home, profile and notifications only (no birthdays / salary)', () => {
+  // ⚠️ Bildirishnomalar — YO'Q: server mehmonga faqat `auth/me`, `registrations/me` va o'z xizmat
+  // so'rovlarini ochadi (`core/security._GUEST_ALLOWED_EXACT`); `/notifications` → 403 `guest_forbidden`.
+  it('a guest gets home and profile only (no notifications / birthdays / salary)', () => {
     const guest: User = { id: 22, type: 'guest' };
-    expect(ALL_PAGES.filter((p) => canAccessPage(guest, p))).toEqual(['home', 'notifications', 'profile']);
+    expect(ALL_PAGES.filter((p) => canAccessPage(guest, p))).toEqual(['home', 'profile']);
     expect(canAccessPage(guest, 'services')).toBe(true);
     expect(canAccessPage(guest, 'registrationStatus')).toBe(true);
   });
@@ -683,11 +685,11 @@ describe('canAccessPage (web v2 defaults)', () => {
     }
   });
 
-  it('profile and notifications stay open to every account (v2 header)', () => {
+  it('profile stays open to every account; notifications to every account but the guest (server 403)', () => {
     for (const type of ['guest', 'admin', 'kpp', 'monitoring', 'employee', 'master-admin']) {
       const user = { id: 30, type } as unknown as User;
       expect(canAccessPage(user, 'profile')).toBe(true);
-      expect(canAccessPage(user, 'notifications')).toBe(true);
+      expect(canAccessPage(user, 'notifications')).toBe(type !== 'guest');
     }
   });
 

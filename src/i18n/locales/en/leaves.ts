@@ -87,4 +87,17 @@ export default {
   signerRejected: 'Rejected',
   fieldOrigin: 'Origin',
   originHrOrder: 'From an HR order',
+
+  // ── Scope (web v2 RequestPermissionPage) ───────────────────────────────────
+  scopeMine: 'Mine & for me',
+  scopeTeam: 'My team',
+  scopeBranch: 'Whole branch',
+
+  // ── Reopen (Verifix «reset», v2) ───────────────────────────────────────────
+  reopen: 'Reopen',
+  reopenHint: 'Signatures or the rejection are cleared and the request goes back to «Pending». The employee is notified.',
+  reopenReason: 'Reason for reopening',
+  reopenedNote: 'Reopened: {{reason}}',
+  reopenedSuccess: 'The request was sent back for review',
+  reopenError: 'Could not reopen the request',
 } as const;

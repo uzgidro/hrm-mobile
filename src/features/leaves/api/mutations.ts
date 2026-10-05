@@ -1,7 +1,7 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
-import { invalidateAfterAction } from '@/lib/invalidateAfterAction';
-import { WORK_LEAVES, WORK_LEAVE_SIGN, WORK_LEAVE_REJECT, WORK_LEAVE_DETAIL } from '@/api/urls';
+import { invalidateAfterAction, invalidateAfterDelete } from '@/lib/invalidateAfterAction';
+import { WORK_LEAVES, WORK_LEAVE_SIGN, WORK_LEAVE_REJECT, WORK_LEAVE_DETAIL, WORK_LEAVE_REOPEN } from '@/api/urls';
 import { leaveKeys } from './queries';
 
 export interface CreateLeavePayload {
@@ -31,8 +31,22 @@ export function deleteLeave(id: number): Promise<unknown> {
   return apiClient.delete(WORK_LEAVE_DETAIL(id)).then((r) => r.data);
 }
 
+/** Put a decided (signed / rejected) request back to pending — v2 `reopen`. */
+export function reopenLeave(id: number, reason: string): Promise<unknown> {
+  return apiClient.post(WORK_LEAVE_REOPEN(id), { reason }).then((r) => r.data);
+}
+
+/**
+ * After a delete: the record's own detail query is cancelled and dropped
+ * BEFORE the lists refresh — otherwise the prefix invalidation refetched the
+ * still-open detail, got 404 and toasted «Work leave not found» (QA 2026-10-05).
+ */
+export function afterLeaveDeleted(qc: QueryClient, id: number): Promise<void> {
+  return invalidateAfterDelete(qc, [leaveKeys.detail(id)], leaveKeys.all);
+}
+
 // ── Mutation hooks ──────────────────────────────────────────────────────────
-// Because every list (mine / assigned / team) and the detail live under
+// Because every list (mine / team / branch) and the detail live under
 // `leaveKeys.all`, this ONE invalidate refreshes all of them via the
 // hierarchical key — replacing the four manual invalidations the old detail
 // screen did by hand.
@@ -72,6 +86,15 @@ export function useDeleteLeave(id: number) {
   return useMutation({
     meta: { skipErrorToast: true },
     mutationFn: () => deleteLeave(id),
+    onSuccess: () => afterLeaveDeleted(qc, id),
+  });
+}
+
+export function useReopenLeave(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    meta: { skipErrorToast: true },
+    mutationFn: (reason: string) => reopenLeave(id, reason),
     onSuccess: () => invalidateAfterAction(qc, leaveKeys.all),
   });
 }

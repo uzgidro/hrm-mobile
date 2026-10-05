@@ -543,3 +543,8 @@ export const DICTIONARIES_SYNC = 'dictionaries/sync-catalog';
 export const DICTIONARY_ENTRIES = (code: string) => `dictionaries/${code}/entries`;
 export const DICTIONARY_ENTRY = (id: number) => `dictionaries/entries/${id}`;
 export const DICTIONARY_ENTRY_USAGE = (id: number) => `dictionaries/entries/${id}/usage`;
+
+// Ruxsat so'rovini qayta ochish (Verifix «reset») — v2 useLeaveMutations.reopen.
+export const WORK_LEAVE_REOPEN = (id: number) => `work-leaves/${id}/reopen`;
+// «Mening jamoam» — rahbarning odamlari va kun holati (v2 MyTeamPage, server my_team).
+export const EMPLOYEES_MY_TEAM = 'employees/my-team';

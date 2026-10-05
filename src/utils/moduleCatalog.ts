@@ -157,7 +157,15 @@ export function activeModule(pathname: string, seg?: string | string[]): PageKey
  * rahbar Jamoa → «Tafsilotlar» orqali, Davomat moduli yo'q bo'lsa ham) — umumiy
  * darvoza ularni «Ruxsat yo'q» ga aylantirib qo'ygan edi (QA D, 2026-10-05).
  */
+//
+// `reports` — `/hisobotlar` faqat Modullar plitkasidan ochiladi, ishga tushirish ekrani (`/hisobot`)
+// esa faqat shu ro'yxatdan (bildirishnoma yoki boshqa modul ularga olib bormaydi); darvozasiz AKT
+// to'g'ridan-to'g'ri havola bilan butun tashkilot shtat statistikasini ko'rardi (real QA, 2026-10-05).
+// `health` — v2 `HealthChecksPage` `RequireRole` (hamshira yoki sayt master-admini) bilan bir xil:
+// ro'yxat so'rovi boshqalarga 403, filiali yo'q `admin` esa «Yuqoridan filial tanlang» da qolardi.
 const GATED_PAGES: ReadonlySet<PageKey> = new Set<PageKey>([
+  'reports',
+  'health',
   'users',
   'registrations',
   'auditLog',
@@ -171,15 +179,19 @@ const GATED_PAGES: ReadonlySet<PageKey> = new Set<PageKey>([
 ]);
 
 /**
- * `name` — `app/` dagi fayl nomi. Darvozali sahifaning O'Z route'i bo'lsa — uning
- * kaliti, aks holda `null` (ekran darvozasiz ochiladi). Huquqsiz foydalanuvchi
- * to'g'ridan-to'g'ri havola bilan admin sahifasi ramkasini ko'rmasin.
+ * `name` — `app/` dagi fayl nomi. Darvozali sahifaning O'Z route'i yoki uning tafsilot ekrani
+ * (`DETAIL_OWNER` — v2 `isPathAllowed`: «detal o'z ro'yxatiga ergashadi», `/reports/:code` →
+ * `/reports`) bo'lsa — uning kaliti, aks holda `null` (ekran darvozasiz ochiladi). Huquqsiz
+ * foydalanuvchi to'g'ridan-to'g'ri havola bilan admin sahifasi ramkasini ko'rmasin.
  */
 export function gatedPageForRoute(name: string): PageKey | null {
-  if (name === 'birthdays') return 'birthdays';
+  // Katalogdan tashqari, lekin hamma uchun ochiq bo'lmagan sahifalar (`offCatalogueAccess`).
+  if (name === 'birthdays' || name === 'notifications') return name;
   const path = `/${name}`;
   const own = CATALOG.find((m) => GATED_PAGES.has(m.page) && barePath(m.route) === path);
-  return own ? own.page : null;
+  if (own) return own.page;
+  const owner = DETAIL_OWNER[path];
+  return owner && GATED_PAGES.has(owner) ? owner : null;
 }
 
 const SECTION_ORDER: CatalogSection[] = ['main', 'documents', 'stats', 'admin'];

@@ -110,4 +110,17 @@ export default {
   signerRejected: 'Rad etdi',
   fieldOrigin: 'Manba',
   originHrOrder: "KADR buyrug'idan",
+
+  // ── Scope (web v2 RequestPermissionPage) ───────────────────────────────────
+  scopeMine: 'Menga tegishli',
+  scopeTeam: 'Mening jamoam',
+  scopeBranch: 'Butun filial',
+
+  // ── Reopen (Verifix «reset», v2) ───────────────────────────────────────────
+  reopen: 'Qayta ochish',
+  reopenHint: "Imzo yoki rad etish bekor qilinadi, so'rov yana «Kutilmoqda» holatiga o'tadi. Xodimga xabar boradi.",
+  reopenReason: 'Qayta ochish sababi',
+  reopenedNote: 'Qayta ochilgan: {{reason}}',
+  reopenedSuccess: "So'rov qayta ko'rib chiqishga qaytarildi",
+  reopenError: 'Qayta ochishda xatolik yuz berdi',
 } as const;

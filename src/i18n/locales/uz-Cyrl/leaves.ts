@@ -87,4 +87,17 @@ export default {
   signerRejected: 'Рад этди',
   fieldOrigin: 'Манба',
   originHrOrder: 'КАДР буйруғидан',
+
+  // ── Scope (web v2 RequestPermissionPage) ───────────────────────────────────
+  scopeMine: 'Менга тегишли',
+  scopeTeam: 'Менинг жамоам',
+  scopeBranch: 'Бутун филиал',
+
+  // ── Reopen (Verifix «reset», v2) ───────────────────────────────────────────
+  reopen: 'Қайта очиш',
+  reopenHint: 'Имзо ёки рад этиш бекор қилинади, сўров яна «Кутилмоқда» ҳолатига ўтади. Ходимга хабар боради.',
+  reopenReason: 'Қайта очиш сабаби',
+  reopenedNote: 'Қайта очилган: {{reason}}',
+  reopenedSuccess: 'Сўров қайта кўриб чиқишга қайтарилди',
+  reopenError: 'Қайта очишда хатолик юз берди',
 } as const;

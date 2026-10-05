@@ -17,3 +17,29 @@ export function invalidateAfterAction(qc: QueryClient, ...featureKeys: QueryKey[
     qc.invalidateQueries({ queryKey: ['notifications', 'list'] }),
   ]).then(() => undefined);
 }
+
+/**
+ * After a successful DELETE: drop the deleted record's own queries from the
+ * cache FIRST, then refresh the lists (+ badges / notifications).
+ *
+ * WHY (QA 2026-10-05): `invalidateAfterAction(qc, leaveKeys.all)` prefix-matched
+ * the still-mounted detail query of the record that had just been deleted; its
+ * refetch answered 404 and — the query already holding data — the global
+ * QueryCache handler showed a second, English «Work leave not found» toast
+ * right after «So'rov o'chirildi» (same for a deleted project: `GET
+ * workspaces/{id}` 404). Cancelling + removing the deleted keys (exact) means
+ * the prefix invalidation below can no longer reach them.
+ *
+ * ⚠️ The detail SCREEN must also stop its observer from rebuilding the query
+ * (a removed query is re-created on the next render and fetched again): pass
+ * `enabled: !deleteMutation.isSuccess` to its `useQuery`.
+ */
+export async function invalidateAfterDelete(
+  qc: QueryClient,
+  deletedKeys: QueryKey[],
+  ...listKeys: QueryKey[]
+): Promise<void> {
+  await Promise.all(deletedKeys.map((key) => qc.cancelQueries({ queryKey: key, exact: true })));
+  for (const key of deletedKeys) qc.removeQueries({ queryKey: key, exact: true });
+  await invalidateAfterAction(qc, ...listKeys);
+}

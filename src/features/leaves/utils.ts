@@ -1,81 +1,99 @@
-// Pure work-leave approval logic — mirrors the web's canActOnWorkLeave
-// (RequestPermissionPage.jsx:63-101) so the mobile app gates sign/reject exactly
-// like the web dashboard (web parity is a hard constraint). Kept as a pure
-// function (no React) so it is unit-testable — screens call it, never re-derive
-// the rules inline.
+// Pure work-leave approval logic — a port of web v2 RequestPermissionPage
+// (`canActOn` / `isDecider` / `canReopen`) so the mobile app gates
+// approve / reject / reopen exactly like the web dashboard (web parity is a
+// hard constraint). Kept as pure functions (no React) so they are
+// unit-testable — screens call them, never re-derive the rules inline.
 import dayjs, { type Dayjs } from 'dayjs';
-import type { WorkLeave, Employee } from '@/types';
-import { getMultiOrgRoles } from '@/utils/roles';
+import type { Employee, User, WorkLeave } from '@/types';
 import { isPendingCode, isApprovedCode, isRejectedCode } from '@/utils/leaveStatus';
+import { canManageLeave } from '@/utils/workLeaveScope';
 import { unwrapList } from '@/api/response';
 
 // Permission gating uses the exact-membership checks from leaveStatus.ts, NOT
 // leaveStatusGroup() — leaveStatusGroup() deliberately defaults an
 // undefined/unrecognized status to 'pending' for display purposes, which
 // would widen permissions here (an unknown status must stay non-actionable,
-// non-deletable). isPending/isRejected below are thin local aliases kept so
-// the call sites in this file read the same as before.
-function isPending(status?: string): boolean {
-  return isPendingCode(status);
-}
-
-function isRejected(status?: string): boolean {
-  return isRejectedCode(status);
-}
-
-/** Whether a signer (assigned_signers / signers entry) carries a given role. */
-function signerHasRole(signer: Employee, role: string): boolean {
-  return getMultiOrgRoles(signer).includes(role);
-}
+// non-deletable).
 
 interface LeaveActionAbility {
   canSign: boolean;
   canReject: boolean;
 }
 
-/**
- * Can the current employee sign/reject this leave request? Mirrors the web:
- *   - HR is VIEW-ONLY — never signs or rejects (web returns all-false for HR).
- *   - Rejected requests → no actions.
- *   - If the current user already signed → no actions.
- *   - Otherwise: an assigned signer may act while the request is pending.
- *     canSign is additionally blocked for HR before the Deputy (Zam) has signed,
- *     but since HR is already view-only that guard never fires here — it is kept
- *     for parity/clarity, matching the web's isSignDisabled.
- *
- * @param isHR  whether the CURRENT user is HR (resolve via roles.isHR at the call site)
- */
-export function canActOnLeave(
-  leave: WorkLeave | undefined,
-  employeeId: number | undefined,
-  opts: { isHR: boolean },
-): LeaveActionAbility {
-  const none: LeaveActionAbility = { canSign: false, canReject: false };
-  if (!leave || employeeId == null) return none;
-
-  // HR only views status — never signs or rejects (web parity).
-  if (opts.isHR) return none;
-
-  if (isRejected(leave.status)) return none;
-
-  const signers = leave.signers ?? [];
-  const assignedSigners = leave.assigned_signers ?? [];
-
-  // Already signed → cannot act again.
-  if (signers.some((s) => s.id === employeeId)) return none;
-
-  // Must be an assigned signer AND the request still pending.
-  const isAssignedSigner = assignedSigners.some((s) => s.id === employeeId);
-  const canAct = isAssignedSigner && isPending(leave.status);
-  if (!canAct) return none;
-
-  // HR-can't-sign-before-Zam guard (dead for non-HR, kept for web parity).
-  const hasZamSigned = signers.some((s) => signerHasRole(s, 'deputy'));
-  const isZamAssigned = assignedSigners.some((s) => signerHasRole(s, 'deputy'));
-  const isSignDisabled = opts.isHR && isZamAssigned && !hasZamSigned;
-
-  return { canSign: !isSignDisabled, canReject: true };
+function leaveOwnerId(leave: WorkLeave): number | undefined {
+  return leave.employee_id ?? leave.employee?.id;
 }
+
+/**
+ * The default approver of a request that names NO signer — the server's
+ * `WorkLeaveService.default_approvers`: the requester's direct supervisor,
+ * else the heads of the requester's department. A privileged manager (HR /
+ * admin) may settle it too. v2 `canActOn` / `isDecider`, assigned-list-empty arm.
+ */
+function isDefaultApprover(leave: WorkLeave, user: User | null | undefined, me: number): boolean {
+  if (canManageLeave(user)) return true;
+  const supId = leave.employee?.supervisor_id;
+  if (supId) return supId === me;
+  // EmployeeSafeRead carries the flat `department_id` (not on the shared Employee type).
+  const requester = leave.employee as (Employee & { department_id?: number | null }) | undefined;
+  const deptId = requester?.department_id ?? requester?.department?.id;
+  return !!deptId && (user?.headed_department_ids ?? []).includes(deptId);
+}
+
+/**
+ * Is this person one of the request's deciders (status aside)? v2 `isDecider`
+ * — the same gate the server's `_assert_assigned_signer` applies to
+ * sign / reject / reopen. Never the requester themselves.
+ */
+export function isLeaveDecider(leave: WorkLeave | undefined, user: User | null | undefined): boolean {
+  const me = user?.employee?.id;
+  if (!leave || me == null || leaveOwnerId(leave) === me) return false;
+  const assigned = leave.assigned_signers ?? [];
+  if (assigned.length === 0) return isDefaultApprover(leave, user, me);
+  return canManageLeave(user) || assigned.some((s) => s.id === me);
+}
+
+/**
+ * Can the current user approve / reject this request? v2 `canActOn`:
+ *   - only a PENDING request, never one's own;
+ *   - no signer named (the default path — the server routes it to the
+ *     requester's supervisor and returns `assigned_signers: []`): the default
+ *     approver (supervisor, else a head of the requester's department) or a
+ *     privileged manager (HR / admin);
+ *   - signers named: an assigned signer who has not signed yet.
+ */
+export function canActOnLeave(leave: WorkLeave | undefined, user: User | null | undefined): LeaveActionAbility {
+  const none: LeaveActionAbility = { canSign: false, canReject: false };
+  const me = user?.employee?.id;
+  if (!leave || me == null) return none;
+  if (!isPendingCode(leave.status)) return none;
+  if (leaveOwnerId(leave) === me) return none;
+
+  const assigned = leave.assigned_signers ?? [];
+  let can: boolean;
+  if (assigned.length === 0) {
+    can = isDefaultApprover(leave, user, me);
+  } else {
+    const alreadySigned = (leave.signers ?? []).some((s) => s.id === me);
+    can = assigned.some((s) => s.id === me) && !alreadySigned;
+  }
+  return can ? { canSign: true, canReject: true } : none;
+}
+
+/**
+ * Reopen (Verifix «reset», `POST work-leaves/{id}/reopen`): a DECIDED
+ * (signed / rejected) request that is not a KADR order, by one of its
+ * deciders. v2 `canReopen`; the server checks the same gate.
+ */
+export function canReopenLeave(leave: WorkLeave | undefined, user: User | null | undefined): boolean {
+  if (!leave || leave.is_hr_order) return false;
+  if (!isApprovedCode(leave.status) && !isRejectedCode(leave.status)) return false;
+  return isLeaveDecider(leave, user);
+}
+
+/** Minimum length of a reopen reason (server `WorkLeaveReopen.reason`, v2 minLength). */
+export const REOPEN_REASON_MIN = 3;
+
 
 /** True when `leave` belongs to the given employee (author of the request). */
 function isOwnLeave(leave: WorkLeave, employeeId: number): boolean {
@@ -155,4 +173,19 @@ export function approverNotice(
   const names = list.map((a) => (typeof a?.legal_name === 'string' ? a.legal_name.trim() : '')).filter(Boolean).join(', ');
   if (!names) return { kind: 'nobody', names: '' };
   return { kind: list[0]?.via === 'department_head' ? 'department_head' : 'supervisor', names };
+}
+
+/**
+ * A leave timestamp on the whole minute — seconds AND milliseconds zeroed.
+ * QA 2026-10-05: the defaults set `.minute(0).second(0)` but kept `now`'s
+ * milliseconds, so requests reached the server as `20:00:00.073`.
+ */
+export function leaveMinute(d: Dayjs): Dayjs {
+  return d.second(0).millisecond(0);
+}
+
+/** Create-form defaults: from the top of the current hour, for one hour. */
+export function defaultLeaveRange(now: Dayjs = dayjs()): { start: Dayjs; end: Dayjs } {
+  const start = leaveMinute(now.minute(0));
+  return { start, end: start.add(1, 'hour') };
 }

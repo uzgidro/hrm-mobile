@@ -92,4 +92,17 @@ export default {
   signerRejected: 'Отклонил(а)',
   fieldOrigin: 'Источник',
   originHrOrder: 'Из приказа кадров',
+
+  // ── Scope (web v2 RequestPermissionPage) ───────────────────────────────────
+  scopeMine: 'Мои и ко мне',
+  scopeTeam: 'Моя команда',
+  scopeBranch: 'Весь филиал',
+
+  // ── Reopen (Verifix «reset», v2) ───────────────────────────────────────────
+  reopen: 'Открыть заново',
+  reopenHint: 'Подписи или отказ будут отменены, заявка снова станет «В ожидании». Сотрудник получит уведомление.',
+  reopenReason: 'Причина повторного открытия',
+  reopenedNote: 'Открыта заново: {{reason}}',
+  reopenedSuccess: 'Заявка возвращена на рассмотрение',
+  reopenError: 'Не удалось открыть заявку заново',
 } as const;

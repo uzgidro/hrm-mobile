@@ -6,9 +6,16 @@
 import { queryOptions, useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
 import { SYSTEM_SETTINGS } from '@/api/urls';
+import { useAuthStore } from '@/store/authStore';
 import { setNavOverrides, type NavModuleOverrides } from '@/utils/roles';
 
 type SystemSettings = { values?: Record<string, unknown> };
+
+// MEHMON — so'rov yo'q: server unga `system-settings` ni yopadi (403 `guest_forbidden`); uning
+// menyusi (bosh sahifa + xizmatlar) baribir standartlardan. So'rov o'chirilmaydi (`enabled: false`
+// bo'lsa `ModuleGate` «kutilmoqda» holatida qolib ketardi) — darrov bo'sh javob, u darhol eskiradi:
+// keyin kirgan hisob o'z sozlamasini birinchi ekrandayoq oladi.
+const GUEST_SETTINGS: SystemSettings = {};
 
 export function readNavOverrides(data: SystemSettings | undefined): NavModuleOverrides | undefined {
   const v = data?.values?.['nav.modules'];
@@ -19,12 +26,16 @@ export function navSettingsQuery() {
   return queryOptions({
     queryKey: ['system-settings'] as const,
     queryFn: async () => {
+      if (useAuthStore.getState().user?.type === 'guest') {
+        setNavOverrides(undefined);
+        return GUEST_SETTINGS;
+      }
       const { data } = await apiClient.get<SystemSettings>(SYSTEM_SETTINGS);
       // Stored before the query settles, so every subscriber re-renders with it.
       setNavOverrides(readNavOverrides(data));
       return data;
     },
-    staleTime: 10 * 60_000,
+    staleTime: (q) => (q.state.data === GUEST_SETTINGS ? 0 : 10 * 60_000),
     retry: 1,
     // A settings failure must stay silent — the defaults already apply.
     meta: { skipErrorToast: true },

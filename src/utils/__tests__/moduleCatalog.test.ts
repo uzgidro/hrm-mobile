@@ -341,9 +341,39 @@ describe('gatedPageForRoute (root Stack sahifa darvozasi)', () => {
     expect(gatedPageForRoute('birthdays')).toBe('birthdays');
   });
 
+  it("bildirishnomalar — darvozali: mehmon chuqur havola bilan 403 o'rniga «Ruxsat yo'q» ko'radi", () => {
+    expect(gatedPageForRoute('notifications')).toBe('notifications');
+    expect(canAccessPage(u({ id: 22, type: 'guest' }), 'notifications')).toBe(false);
+    expect(canAccessPage(emp(), 'notifications')).toBe(true);
+  });
+
+  it("Hisobotlar: ro'yxat VA ishga tushirish ekrani darvozali (v2 isPathAllowed: /reports/:code → /reports)", () => {
+    // `/hisobotlar` faqat Modullar plitkasidan, `/hisobot` faqat shu ro'yxatdan ochiladi.
+    expect(gatedPageForRoute('hisobotlar')).toBe('reports');
+    expect(gatedPageForRoute('hisobot')).toBe('reports');
+    const akt = emp({ akt_branch_ids: [1] });
+    expect(canAccessPage(akt, 'reports')).toBe(false);
+    expect(canAccessPage(emp({ is_line_manager: true }), 'reports')).toBe(true);
+    expect(canAccessPage(master, 'reports')).toBe(true);
+  });
+
+  it("Sog'liq ko'rigi darvozali — v2 RequireRole: hamshira yoki sayt master-admini; admin hisobi — yo'q", () => {
+    expect(gatedPageForRoute('sogliq-korigi')).toBe('health');
+    expect(canAccessPage(emp({ nurse_branch_ids: [1] }), 'health')).toBe(true);
+    expect(canAccessPage(master, 'health')).toBe(true);
+    expect(canAccessPage(u({ id: 9, type: 'admin', employee: null, admin: { organization_branch_id: 4 } }), 'health')).toBe(false);
+    expect(canAccessPage(emp(), 'health')).toBe(false);
+  });
+
+  it("boshqa modullardan ochiladigan sahifalar (admin ham chuqur havola bilan) — darvozasiz, server qo'riqlaydi", () => {
+    for (const name of ['team', 'attendance-detail', 'tibbiy-korik', 'shtat', 'kpp']) {
+      expect(gatedPageForRoute(name)).toBeNull();
+    }
+  });
+
   it('tafsilot ekranlari, tab guruhi va auth — darvozasiz (bildirishnomadan ochiladi)', () => {
     expect(gatedPageForRoute('order-detail')).toBeNull();
-    expect(gatedPageForRoute('hisobot')).toBeNull();
+    expect(gatedPageForRoute('loyiha-detail')).toBeNull();
     expect(gatedPageForRoute('(tabs)')).toBeNull();
     expect(gatedPageForRoute('(auth)')).toBeNull();
     expect(gatedPageForRoute('profile-edit')).toBeNull();

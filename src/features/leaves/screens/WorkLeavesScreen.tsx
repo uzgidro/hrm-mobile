@@ -14,7 +14,10 @@ import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { ff } from '@/theme/typography';
 import { useBreakpoint } from '@/utils/responsive';
-import { hasSupervisor } from '@/utils/roles';
+import { subordinateIdsQuery } from '@/utils/employees';
+import { resolveEmployeeBranchId } from '@/utils/branch';
+import { availableLeaveScopes, type LeaveScope } from '@/utils/workLeaveScope';
+import { Segmented } from '@/ui';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
@@ -26,12 +29,11 @@ import { SearchBox } from '@/components/SearchBox';
 import { WorkLeave } from '@/types';
 import { leaveStatusGroup, leaveStatusKind } from '@/utils/leaveStatus';
 import { statusColor } from '@/utils/orderStatus';
-import { leavesListQuery, type IncomingFilter } from '../api/queries';
+import { leavesListQuery } from '../api/queries';
+import { canActOnLeave } from '../utils';
 import { leaveTypeLabel } from '../components/LeaveTypeSheet';
 
 type StatusFilter = 'all' | 'pending' | 'approved' | 'rejected';
-
-function isPendingStatus(s: string) { return leaveStatusGroup(s) === 'pending'; }
 
 function statusMeta(status: string, c: ThemeColors, t: TFunction) {
   const group = leaveStatusGroup(status);
@@ -50,12 +52,12 @@ const MY_FILTERS: { key: StatusFilter; labelKey: string }[] = [
   { key: 'rejected', labelKey: 'leaves.statusRejected' },
 ];
 
-const INCOMING_FILTERS: { key: IncomingFilter; labelKey: string }[] = [
-  { key: 'all', labelKey: 'common.all' },
-  { key: 'action', labelKey: 'leaves.statusPending' },
-  { key: 'approved', labelKey: 'leaves.statusApproved' },
-  { key: 'rejected', labelKey: 'leaves.statusRejected' },
-];
+// Web v2 RequestPermissionPage scope labels (Menga tegishli / Mening jamoam / Butun filial).
+const SCOPE_LABEL: Record<LeaveScope, string> = {
+  mine: 'leaves.scopeMine',
+  team: 'leaves.scopeTeam',
+  branch: 'leaves.scopeBranch',
+};
 
 function LeaveCard({ leave, showEmployee, actionNeeded, styles, colors }: {
   leave: WorkLeave; showEmployee?: boolean; actionNeeded?: boolean; styles: any; colors: ThemeColors;
@@ -104,43 +106,50 @@ function LeaveCard({ leave, showEmployee, actionNeeded, styles, colors }: {
   );
 }
 
+// Web v2 RequestPermissionPage parity (2026-10-05). ONE list for everybody, with
+// v2's scope switch — «Menga tegishli» (default: what I filed AND what is mine
+// to decide), «Mening jamoam» (direct reports, `supervised=true`) for someone
+// with subordinates, «Butun filial» for HR / admins — and the status chips.
+//
+// ⚠️ It used to pick ONE of two views by `!hasSupervisor(user)`: a person
+// without a supervisor got an incoming queue filtered by `assigned_signer=true`
+// (which never matches a request routed to its supervisor with no signer
+// named — QA: empty list, badge 3) and NO create button (v2 always offers it;
+// the server routes such a request to the department head / HR).
 export default function WorkLeavesScreen() {
   const { user } = useAuthStore();
   const employee = user?.employee;
   const employeeId = employee?.id;
+  const branchId = resolveEmployeeBranchId(employee);
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { t } = useTranslation();
-  const isSupervisor = !hasSupervisor(user);
   const bp = useBreakpoint();
   const cols = bp.isTablet ? (bp.isLandscape ? 3 : 2) : 1;
 
-  const [myFilter, setMyFilter] = useState<StatusFilter>('all');
-  const [incomingFilter, setIncomingFilter] = useState<IncomingFilter>('action');
+  const [scope, setScope] = useState<LeaveScope>('mine');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebouncedValue(search);
 
-  // One server-paged list per role; chips/search are server params
-  // (`workLeavesServerParams`).
+  // «Mening jamoam» only for someone who supervises anyone (v2 useHasSubordinates).
+  const { data: subordinateIds } = useQuery(subordinateIdsQuery(employeeId));
+  const scopes = availableLeaveScopes(user, (subordinateIds?.size ?? 0) > 0);
+  const activeScope: LeaveScope = scopes.includes(scope) ? scope : 'mine';
+
+  // Server-paged; scope / status / search are server params (`workLeavesServerParams`).
   const query = useInfiniteQuery({
-    ...leavesListQuery(
-      isSupervisor
-        ? { scope: 'assigned', status: incomingFilter, search: debouncedSearch }
-        : { scope: 'mine', employeeId, status: myFilter, search: debouncedSearch },
-    ),
-    enabled: !!employeeId,
+    ...leavesListQuery({ scope: activeScope, status: statusFilter, search: debouncedSearch, branchId }),
+    enabled: !!user,
   });
 
-  // "Kutilmoqda" count = the server's menu-badge number (same as the tab bar).
+  // How many wait for MY decision = the server's menu-badge number (same as the tab bar).
   const { data: badges } = useQuery(menuBadgesQuery());
   const pendingCount = badges?.leaves ?? 0;
 
-  const filters = isSupervisor ? INCOMING_FILTERS : MY_FILTERS;
-  const activeFilter = isSupervisor ? incomingFilter : myFilter;
-
-  // ONE create affordance — the FAB, like the other v3 list screens (QA: the
-  // header "+" duplicated it).
-  const fab = !isSupervisor ? (
+  // ONE create affordance — the FAB, like the other v3 list screens. A request
+  // belongs to a PERSON (v2: `myEmployeeId &&`), so only an employee card gets it.
+  const fab = employeeId ? (
     <TouchableOpacity testID="leaves-create" style={styles.fab} onPress={() => router.push('/create-leave')} activeOpacity={0.85}>
       <Icon name="plus" size={24} color={colors.onPrimary} strokeWidth={2.4} />
     </TouchableOpacity>
@@ -149,25 +158,35 @@ export default function WorkLeavesScreen() {
   return (
     <Screen edges={['top', 'bottom']} overlay={fab}>
       <ScreenHeader
-        title={isSupervisor ? t('leaves.incomingTitle') : t('leaves.myTitle')}
-        count={isSupervisor ? pendingCount : undefined}
+        title={t('leaves.myTitle')}
+        count={pendingCount > 0 ? pendingCount : undefined}
         countTone="attention"
       />
 
+      {scopes.length > 1 && (
+        <View style={styles.scopeWrap}>
+          <Segmented<LeaveScope>
+            testID="leaves-scope"
+            value={activeScope}
+            onChange={setScope}
+            options={scopes.map((sc) => ({ value: sc, label: t(SCOPE_LABEL[sc]) }))}
+          />
+        </View>
+      )}
+
       <View style={styles.filterWrapper}>
         <ChipScroll contentContainerStyle={styles.filterRow}>
-          {filters.map((f) => {
-            const active = activeFilter === f.key;
+          {MY_FILTERS.map((f) => {
+            const active = statusFilter === f.key;
             return (
               <TouchableOpacity
                 key={f.key}
+                testID={`leaves-filter-${f.key}`}
                 style={[styles.filterTab, active && styles.filterTabActive]}
-                onPress={() => isSupervisor ? setIncomingFilter(f.key as IncomingFilter) : setMyFilter(f.key as StatusFilter)}
+                onPress={() => setStatusFilter(f.key)}
                 activeOpacity={0.7}
               >
-                <Text style={[styles.filterTabText, active && styles.filterTabTextActive]}>
-                  {t(f.labelKey)}{isSupervisor && f.key === 'action' && pendingCount > 0 ? ` (${pendingCount})` : ''}
-                </Text>
+                <Text style={[styles.filterTabText, active && styles.filterTabTextActive]}>{t(f.labelKey)}</Text>
               </TouchableOpacity>
             );
           })}
@@ -182,19 +201,19 @@ export default function WorkLeavesScreen() {
         <PagedList
           query={query}
           keyExtractor={(l) => String(l.id)}
-          filtersActive={!!search.trim() || (isSupervisor ? incomingFilter !== 'action' : myFilter !== 'all')}
-          onClearFilters={() => { setSearch(''); setIncomingFilter('action'); setMyFilter('all'); }}
+          filtersActive={!!search.trim() || statusFilter !== 'all'}
+          onClearFilters={() => { setSearch(''); setStatusFilter('all'); }}
           numColumns={cols}
           columnWrapperStyle={cols > 1 ? styles.wrapRow : undefined}
           contentContainerStyle={styles.content}
           emptyIcon="checklist"
-          emptyTitle={isSupervisor && incomingFilter === 'action' ? t('leaves.emptyPending') : t('leaves.emptyLeaves')}
+          emptyTitle={statusFilter === 'pending' ? t('leaves.emptyPending') : t('leaves.emptyLeaves')}
           renderItem={(leave) => {
-            const alreadySigned = leave.signers?.some((s) => s.id === employeeId);
-            const actionNeeded = isSupervisor && isPendingStatus(leave.status) && !alreadySigned;
+            const own = (leave.employee_id ?? leave.employee?.id) === employeeId;
+            const actionNeeded = canActOnLeave(leave, user).canSign;
             return (
               <View style={cols > 1 ? { flex: 1 / cols } : undefined}>
-                <LeaveCard leave={leave} showEmployee={isSupervisor} actionNeeded={actionNeeded} styles={styles} colors={colors} />
+                <LeaveCard leave={leave} showEmployee={!own} actionNeeded={actionNeeded} styles={styles} colors={colors} />
               </View>
             );
           }}
@@ -206,6 +225,7 @@ export default function WorkLeavesScreen() {
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
+    scopeWrap: { paddingHorizontal: 16, paddingTop: 10, flexShrink: 0 },
     filterWrapper: { flexShrink: 0, borderBottomWidth: 2, borderBottomColor: c.cardBorder },
     searchWrap: { paddingHorizontal: 16, paddingVertical: 10, flexShrink: 0 },
     filterRow: { paddingHorizontal: 16, paddingVertical: 10, gap: 8, flexDirection: 'row', alignItems: 'center' },

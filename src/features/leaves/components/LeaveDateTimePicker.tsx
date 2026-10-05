@@ -25,7 +25,7 @@ export function LeaveDateTimePicker({ value, visible, title, minDate, onConfirm,
   const cells = buildMonthCells(month);
 
   const handleDayPress = (day: number) => {
-    const nd = month.date(day).hour(selected.hour()).minute(selected.minute()).second(0);
+    const nd = month.date(day).hour(selected.hour()).minute(selected.minute()).second(0).millisecond(0);
     if (minDate && nd.isBefore(minDate, 'day')) return;
     setSelected(nd);
     setTab('time');
@@ -40,7 +40,7 @@ export function LeaveDateTimePicker({ value, visible, title, minDate, onConfirm,
           <View style={dp.header}>
             <TouchableOpacity onPress={onClose}><Text style={dp.cancelText}>{t('common.cancel')}</Text></TouchableOpacity>
             <Text style={dp.title}>{title}</Text>
-            <TouchableOpacity onPress={() => { onConfirm(selected); onClose(); }}><Text style={dp.confirmText}>{t('common.done')}</Text></TouchableOpacity>
+            <TouchableOpacity onPress={() => { onConfirm(selected.second(0).millisecond(0)); onClose(); }}><Text style={dp.confirmText}>{t('common.done')}</Text></TouchableOpacity>
           </View>
 
           <View style={dp.tabs}>
@@ -120,7 +120,7 @@ const makeDp = (c: ThemeColors) =>
     tabRow: { flexDirection: 'row', justifyContent: 'center', gap: 6 },
     tabActive: { backgroundColor: c.primary, borderColor: c.primary },
     tabText: { fontSize: 13, color: c.textMuted, ...ff('700') },
-    tabTextActive: { color: '#fff' },
+    tabTextActive: { color: c.onPrimary },
     calWrap: { paddingHorizontal: 16, paddingBottom: 8 },
     monthNav: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
     navBtn: { width: 36, height: 36, backgroundColor: c.bg, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
@@ -134,7 +134,7 @@ const makeDp = (c: ThemeColors) =>
     cellDis: { opacity: 0.25 },
     cellText: { fontSize: 13, ...ff('700'), color: c.text },
     cellTextToday: { color: c.primaryLight },
-    cellTextSel: { color: '#fff' },
+    cellTextSel: { color: c.onPrimary },
     timePicker: { paddingHorizontal: 16, paddingVertical: 16, alignItems: 'center' },
     timeRow: { flexDirection: 'row', alignItems: 'center', gap: 16 },
     timeCol: { alignItems: 'center', gap: 8 },
@@ -145,5 +145,5 @@ const makeDp = (c: ThemeColors) =>
     quickBtn: { paddingHorizontal: 16, paddingVertical: 8, backgroundColor: c.bg, borderRadius: 10, borderWidth: 2, borderColor: c.cardBorder },
     quickBtnActive: { backgroundColor: c.primary, borderColor: c.primary },
     quickBtnText: { fontSize: 14, color: c.textMuted, ...ff('700') },
-    quickBtnTextActive: { color: '#fff' },
+    quickBtnTextActive: { color: c.onPrimary },
   });

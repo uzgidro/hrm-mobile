@@ -6,6 +6,7 @@
 import { queryOptions, keepPreviousData } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
 import { MENU_BADGES } from '@/api/urls';
+import { useAuthStore } from '@/store/authStore';
 
 export interface MenuBadges {
   letters: number;
@@ -33,16 +34,26 @@ export const EMPTY_BADGES: MenuBadges = {
 // of the old `.catch(() => zeros)`, which silently showed "nothing pending"
 // whenever the request failed. No toast either — a background poll failing
 // must not nag every minute.
+//
+// MEHMON — so'rov ham, polling ham yo'q: server unga `notifications/menu-badges` ni yopadi (403
+// `guest_forbidden`, `core/security._GUEST_ALLOWED_EXACT`) — real QA'da 60 s polling 148 ta konsol
+// xatosini bergan. Mehmonning bo'sh javobi darrov eskiradi: tasdiqlangan hisob bilan qayta kirilsa,
+// birinchi ekranning o'zi haqiqiy raqamlarni so'raydi (60 s kutmaydi).
+const GUEST_BADGES: MenuBadges = { ...EMPTY_BADGES };
+const isGuest = () => useAuthStore.getState().user?.type === 'guest';
+
 export function menuBadgesQuery() {
   return queryOptions({
     queryKey: MENU_BADGES_KEY,
     queryFn: () =>
-      apiClient
-        .get<Partial<MenuBadges>>(MENU_BADGES)
-        .then((r) => ({ ...EMPTY_BADGES, ...(r.data ?? {}) }) as MenuBadges),
+      isGuest()
+        ? Promise.resolve(GUEST_BADGES)
+        : apiClient
+            .get<Partial<MenuBadges>>(MENU_BADGES)
+            .then((r) => ({ ...EMPTY_BADGES, ...(r.data ?? {}) }) as MenuBadges),
     placeholderData: keepPreviousData,
-    staleTime: 60 * 1000,
-    refetchInterval: 60 * 1000,
+    staleTime: (q) => (q.state.data === GUEST_BADGES ? 0 : 60 * 1000),
+    refetchInterval: () => (isGuest() ? false : 60 * 1000),
     meta: { skipErrorToast: true },
   });
 }

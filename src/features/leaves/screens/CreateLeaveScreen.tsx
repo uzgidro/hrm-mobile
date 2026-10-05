@@ -5,7 +5,6 @@ import {
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { getApiErrorMessage } from '@/api/errors';
 import { toast } from '@/lib/toast';
@@ -20,7 +19,7 @@ import { Button } from '@/ui/Button';
 import { useBreakpoint } from '@/utils/responsive';
 import { useCreateLeave, type CreateLeavePayload } from '../api/mutations';
 import { leaveApproversQuery, leaveReasonsQuery, leaveRulesQuery } from '../api/queries';
-import { approverNotice, earliestLeaveStart, leaveReasonOptions } from '../utils';
+import { approverNotice, defaultLeaveRange, earliestLeaveStart, leaveMinute, leaveReasonOptions } from '../utils';
 import { LeaveDateTimePicker } from '../components/LeaveDateTimePicker';
 import { LeaveTypeSheet, LEAVE_TYPES, leaveTypeLabel } from '../components/LeaveTypeSheet';
 import { KeyboardAvoider } from '@/components/KeyboardAvoider';
@@ -40,10 +39,10 @@ export default function CreateLeaveScreen() {
   const bp = useBreakpoint();
   const twoCol = bp.isTablet;
 
-  const now = dayjs();
+  const [initialRange] = useState(() => defaultLeaveRange());
   const [leaveType, setLeaveType] = useState(LEAVE_TYPES[0]);
-  const [startDate, setStartDate] = useState(now.minute(0).second(0));
-  const [endDate, setEndDate] = useState(now.add(1, 'hour').minute(0).second(0));
+  const [startDate, setStartDate] = useState(initialRange.start);
+  const [endDate, setEndDate] = useState(initialRange.end);
   const [description, setDescription] = useState('');
   // Inline «Izoh» error — the OS `Alert` showed nothing on web (QA), so the
   // empty-comment submit gave no feedback at all.
@@ -80,8 +79,8 @@ export default function CreateLeaveScreen() {
     try {
       const payload: CreateLeavePayload = {
         type: leaveType,
-        start_date: startDate.toISOString(),
-        end_date: endDate.toISOString(),
+        start_date: leaveMinute(startDate).toISOString(),
+        end_date: leaveMinute(endDate).toISOString(),
         description: description.trim(),
       };
       await createLeaveMut.mutateAsync(payload);
