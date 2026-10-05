@@ -1,22 +1,21 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useMemo } from 'react';
 import {
   View, Text, StyleSheet, ActivityIndicator,
 } from 'react-native';
-import { WebView } from 'react-native-webview';
 import { useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { apiClient } from '@/api/client';
 import {
   LETTER_EDITOR_CONFIG, LETTER_REPORT_EDITOR_CONFIG, LETTER_GUVOHNOMA_EDITOR_CONFIG,
-  LETTER_ATTACHMENT_EDITOR_CONFIG, ONLYOFFICE_SERVER_URL,
+  LETTER_ATTACHMENT_EDITOR_CONFIG,
 } from '@/api/urls';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { ff } from '@/theme/typography';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { ErrorState } from '@/components/StateViews';
+import { OnlyOfficeFrame } from '@/components/OnlyOfficeFrame';
 
 // Xatning QAYSI hujjati ochilyapti. `main` — bildirgi/ariza/safar hujjati;
 // `guvohnoma` — safar varaqasi; `report` — hisobot docx'i; `attachment` —
@@ -61,27 +60,6 @@ export default function LetterDocumentScreen() {
     gcTime: 0,
   });
 
-  const html = useMemo(() => {
-    if (!config) return '';
-    const editorConfig = { ...config, type: 'mobile', width: '100%', height: '100%' };
-    return `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <script type="text/javascript" src="${ONLYOFFICE_SERVER_URL}/web-apps/apps/api/documents/api.js"></script>
-  <style>html,body{margin:0;padding:0;height:100%;width:100%;overflow:hidden;background:#fff}#editor{height:100%;width:100%}</style>
-</head>
-<body>
-  <div id="editor"></div>
-  <script type="text/javascript">
-    try { new DocsAPI.DocEditor("editor", ${JSON.stringify(editorConfig)}); }
-    catch (e) { document.body.innerHTML = '<div style="padding:24px;font-family:sans-serif;color:#333">${t('letters.documentOpenError')}: ' + e.message + '</div>'; }
-  </script>
-</body>
-</html>`;
-  }, [config, t]);
-
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <ScreenHeader title={t(TITLE_KEY[kind])} />
@@ -94,15 +72,7 @@ export default function LetterDocumentScreen() {
       ) : isError || !config ? (
         <ErrorState title={t('letters.documentLoadError')} onRetry={() => refetch()} />
       ) : (
-        <WebView
-          originWhitelist={['*']}
-          source={{ html, baseUrl: ONLYOFFICE_SERVER_URL }}
-          javaScriptEnabled domStorageEnabled startInLoadingState allowsInlineMediaPlayback
-          renderLoading={() => (
-            <View style={styles.center}><ActivityIndicator color={colors.primaryLight} size="large" /></View>
-          )}
-          style={styles.webview}
-        />
+        <OnlyOfficeFrame config={config} errorLabel={t('letters.documentOpenError')} title={t(TITLE_KEY[kind])} />
       )}
     </SafeAreaView>
   );
@@ -113,5 +83,4 @@ const makeStyles = (c: ThemeColors) =>
     safe: { flex: 1, backgroundColor: c.bg },
     center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, backgroundColor: c.bg },
     hint: { fontSize: 14, color: c.textMuted, ...ff('700') },
-    webview: { flex: 1, backgroundColor: '#fff' },
   });
