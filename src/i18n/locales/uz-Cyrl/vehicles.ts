@@ -198,7 +198,6 @@ export default {
   fuelNameRequired: 'Ном киритилиши шарт',
   perUnit: 'сўм / {{unit}}',
   noPrice: 'нарх йўқ',
-  pendingPrice: 'тасдиқ кутилмоқда: {{price}}',
   notApproved: 'Тасдиқланмаган',
   approvePrice: 'Нархни тасдиқлаш',
   rejectPrice: 'Рад этиш',

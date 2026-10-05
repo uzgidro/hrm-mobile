@@ -2,8 +2,8 @@
 // vaqti (mintaqasiz satr serverga shu holicha). Bandlik forma to'ldirilayotganda so'raladi
 // (debounce bilan); limit to'lgani ANIQ bo'lsa yuborish tugmasi o'chiq. Takrorlash Zoom'ning
 // «Recurring meeting» tanlovlari bilan bir xil. Ota `key` bilan faqat ochiqda mount qiladi.
-import React, { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import dayjs from 'dayjs';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -16,7 +16,7 @@ import { DatePickerModal } from '@/components/DatePicker';
 import { DateTimePickerModal } from '@/components/DateTimePicker';
 import { FormInput } from '@/components/FormInput';
 import { PickerModal } from '@/components/PickerModal';
-import { Button, Chip, SelectField, Sheet, Text } from '@/ui';
+import { Button, Chip, SelectField, Sheet, Text, Toggle } from '@/ui';
 import { zoomAvailabilityQuery } from '../api/queries';
 import { useCreateZoomMeeting } from '../api/mutations';
 import {
@@ -72,11 +72,16 @@ export function ZoomCreateSheet({
   });
   const [picker, setPicker] = useState<null | 'date' | 'time' | 'hours' | 'minutes'>(null);
   const [error, setError] = useState<string | null>(null);
+  // Mavzu xatosi maydonning o'zida (pastdagi umumiy xato emas) — ko'rinmay qolmasin.
+  const [topicError, setTopicError] = useState<string | null>(null);
+  const scrollRef = useRef<ScrollView>(null);
+  const topicRef = useRef<TextInput>(null);
   const create = useCreateZoomMeeting();
 
   const set = (p: Partial<ZoomForm>) => {
     setForm((f) => ({ ...f, ...p }));
     setError(null);
+    if (p.topic !== undefined) setTopicError(null);
   };
 
   // Bandlik so'rovi ham, yaratish ham AYNAN shu satr bilan — tekshirilgan oraliq bilan
@@ -107,6 +112,12 @@ export function ZoomCreateSheet({
 
   const submit = async () => {
     const err = validateZoomForm(form);
+    if (err === 'topicRequired') {
+      setTopicError(t('zoom.topicRequired'));
+      scrollRef.current?.scrollTo({ y: 0, animated: true });
+      topicRef.current?.focus();
+      return;
+    }
     if (err) return setError(t(`zoom.${err}`));
     try {
       const m = await create.mutateAsync(buildCreateBody(form));
@@ -123,12 +134,19 @@ export function ZoomCreateSheet({
 
   return (
     <Sheet visible onClose={onClose} title={title}>
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.form} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        ref={scrollRef}
+        style={styles.scroll}
+        contentContainerStyle={styles.form}
+        keyboardShouldPersistTaps="handled"
+      >
         <FormInput
           testID="zoom-topic"
+          inputRef={topicRef}
           label={t('zoom.fieldTopic')}
           value={form.topic}
           onChangeText={(v) => set({ topic: v })}
+          error={topicError ?? undefined}
           required
         />
         <View style={styles.row}>
@@ -262,24 +280,20 @@ export function ZoomCreateSheet({
               {t('zoom.recordingAfterStart')}
             </Text>
           </View>
-          <Switch
+          <Toggle
             testID="zoom-record"
             value={form.record}
             onValueChange={(v) => set({ record: v })}
-            trackColor={{ false: c.border, true: c.brand }}
-            thumbColor={c.surface}
           />
         </View>
         <View style={styles.switchRow}>
           <Text variant="body" style={styles.flex}>
             {t('zoom.waitingRoom')}
           </Text>
-          <Switch
+          <Toggle
             testID="zoom-waiting"
             value={form.waitingRoom}
             onValueChange={(v) => set({ waitingRoom: v })}
-            trackColor={{ false: c.border, true: c.brand }}
-            thumbColor={c.surface}
           />
         </View>
 

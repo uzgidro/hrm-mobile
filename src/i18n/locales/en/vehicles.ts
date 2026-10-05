@@ -198,7 +198,6 @@ export default {
   fuelNameRequired: 'A name is required',
   perUnit: 'UZS / {{unit}}',
   noPrice: 'no price',
-  pendingPrice: 'awaiting approval: {{price}}',
   notApproved: 'Not approved',
   approvePrice: 'Approve price',
   rejectPrice: 'Reject',

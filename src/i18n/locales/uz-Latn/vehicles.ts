@@ -198,7 +198,6 @@ export default {
   fuelNameRequired: 'Nom kiritilishi shart',
   perUnit: "so'm / {{unit}}",
   noPrice: "narx yo'q",
-  pendingPrice: 'tasdiq kutilmoqda: {{price}}',
   notApproved: 'Tasdiqlanmagan',
   approvePrice: 'Narxni tasdiqlash',
   rejectPrice: 'Rad etish',

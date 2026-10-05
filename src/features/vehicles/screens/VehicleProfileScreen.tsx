@@ -245,7 +245,7 @@ export default function VehicleProfileScreen() {
               <Button
                 testID="vehicle-trips-more"
                 label={`${t('vehicles.showMore')} (${(trips.data ?? []).length - tripLimit})`}
-                variant="ghost"
+                variant="link"
                 size="sm"
                 onPress={() => setTripLimit((n) => n + TRIPS_STEP)}
               />

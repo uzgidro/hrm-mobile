@@ -198,7 +198,7 @@ function DecideForm({ r, onDone, onCancel }: FormProps) {
           />
         </View>
       </View>
-      <Button label={t('common.cancel')} variant="ghost" onPress={onCancel} full />
+      <Button label={t('common.cancel')} variant="neutral" onPress={onCancel} full />
     </View>
   );
 }
@@ -311,7 +311,7 @@ function AttachForm({ r, onDone, onCancel }: FormProps) {
           />
         </View>
       </View>
-      <Button label={t('common.cancel')} variant="ghost" onPress={onCancel} full />
+      <Button label={t('common.cancel')} variant="neutral" onPress={onCancel} full />
       {picker && (
         <PickerModal
           visible
@@ -377,7 +377,7 @@ function FinalizeForm({ r, onDone, onCancel }: FormProps) {
         onPress={() => void save()}
         full
       />
-      <Button label={t('common.cancel')} variant="ghost" onPress={onCancel} full />
+      <Button label={t('common.cancel')} variant="neutral" onPress={onCancel} full />
     </View>
   );
 }

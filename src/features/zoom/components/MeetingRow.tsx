@@ -84,7 +84,7 @@ export function MeetingRow({ m, onPress }: { m: ZoomMeeting; onPress: () => void
           {!!m.series_id && (
             <Badge
               label={t('zoom.seriesBadge', { index: m.series_index ?? '?', total: m.series_total ?? '?' })}
-              tone="brand"
+              tone="info"
             />
           )}
         </View>

@@ -15,6 +15,7 @@ import {
   sheetContentHeight,
   layoutHeader,
   leafLabels,
+  measuredChrome,
   popTo,
   prefixSums,
   pushLevel,
@@ -22,6 +23,7 @@ import {
   splitSpan,
   startStack,
   styleTone,
+  tableKey,
 } from '../table';
 import type { CellJson, DrillLevel, ReportTableJson } from '../types';
 
@@ -233,5 +235,22 @@ describe('drill izohi va jadval balandligi', () => {
         ),
       ),
     ).toBe(HEADER_ROW_H + 3 * ROW_H + 2);
+  });
+});
+
+describe("jadval kaliti va web qobig'i", () => {
+  it("tableKey: bir jadval — bir kalit, boshqa jadval (drill) — boshqa kalit", () => {
+    const a = { sheets: [] };
+    const b = { sheets: [] };
+    expect(tableKey(a)).toBe(tableKey(a));
+    expect(tableKey(b)).not.toBe(tableKey(a));
+  });
+
+  it("measuredChrome: offsetHeight − clientHeight (Windows chizig'i 17 + chegaralar 2); DOM bo'lmasa null", () => {
+    expect(measuredChrome({ offsetHeight: 300, clientHeight: 281 })).toBe(19);
+    expect(measuredChrome({ offsetHeight: 300, clientHeight: 298 })).toBe(2);
+    expect(measuredChrome({ offsetHeight: 0, clientHeight: 0 })).toBeNull();
+    expect(measuredChrome(null)).toBeNull();
+    expect(measuredChrome({ scrollTo: () => {} })).toBeNull();
   });
 });

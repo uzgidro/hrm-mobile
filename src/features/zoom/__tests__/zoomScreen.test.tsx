@@ -323,9 +323,12 @@ describe('ZoomScreen (v2 ZoomPage)', () => {
     await screen.findByText('Kengash');
     await fireEvent.press(screen.getByTestId('zoom-add'));
     await fireEvent.press(await screen.findByTestId('zoom-submit'));
+    // Xato maydonning o'zida (pastdagi umumiy xato qatorida emas).
     expect(await screen.findByText(i18n.t('zoom.topicRequired'))).toBeTruthy();
+    expect(screen.queryByTestId('zoom-form-error')).toBeNull();
     expect(mock.history.post).toHaveLength(0);
     await fireEvent.changeText(screen.getByTestId('zoom-topic'), 'Seriya');
+    expect(screen.queryByText(i18n.t('zoom.topicRequired'))).toBeNull();
     await fireEvent.press(screen.getByTestId('zoom-repeat-weekly'));
     await fireEvent.changeText(screen.getByTestId('zoom-count'), '4');
     const other = [1, 2, 3, 4, 5, 6, 7].find((d) => d !== ((new Date(`${TODAY}T12:00:00`).getDay() + 6) % 7) + 1)!;

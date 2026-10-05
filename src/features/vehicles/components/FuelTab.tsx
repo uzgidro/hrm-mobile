@@ -10,6 +10,7 @@ import { confirm } from '@/lib/confirm';
 import { toast } from '@/lib/toast';
 import { FormInput } from '@/components/FormInput';
 import { useTheme } from '@/theme/ThemeProvider';
+import { useBreakpoint } from '@/utils/responsive';
 import {
   Badge,
   Button,
@@ -49,6 +50,7 @@ type Open =
 export function FuelTab({ canManage, canApprove }: { canManage: boolean; canApprove: boolean }) {
   const { t } = useTranslation();
   const { colors: c } = useTheme();
+  const compact = useBreakpoint().sizeClass === 'compact';
   const list = useQuery(fuelTypesQuery());
   const remove = useRemoveFuelType();
   const [search, setSearch] = useState('');
@@ -117,47 +119,56 @@ export function FuelTab({ canManage, canApprove }: { canManage: boolean; canAppr
         ) : (
           rows.map((f) => {
             const badge = fuelBadge(f);
+            const approve = canApprove && !isFuelApproved(f) && (
+              <Button
+                testID={`vehicle-fuel-approve-${f.id}`}
+                label={t('vehicles.approvePrice')}
+                size="sm"
+                variant="soft"
+                onPress={() => setOpen({ kind: 'decide', fuel: f, n: Date.now() })}
+              />
+            );
+            const manage = canManage && (
+              <View style={styles.actions}>
+                <IconButton
+                  testID={`vehicle-fuel-edit-${f.id}`}
+                  icon="edit"
+                  accessibilityLabel={t('common.edit')}
+                  onPress={() => setOpen({ kind: 'form', fuel: f, n: Date.now() })}
+                />
+                <IconButton
+                  testID={`vehicle-fuel-delete-${f.id}`}
+                  icon="trash"
+                  accessibilityLabel={t('common.delete')}
+                  onPress={() => void del(f)}
+                />
+              </View>
+            );
+            // Telefonda tasdiqlash tugmasi bor qatorda amallar matn ostiga tushadi — aks holda
+            // nom va narx bir so'zli ustunga siqilardi.
+            const stacked = compact && !!approve;
             return (
               <View key={f.id} testID={`vehicle-fuel-${f.id}`} style={[styles.row, { borderBottomColor: c.border }]}>
                 <View style={styles.flex}>
                   <Text variant="body" weight="600">
                     {f.name || '—'}
                   </Text>
+                  {/* Narx bir marta: kutilayotgani nishonda («Tasdiqlanmagan»), takroriy «tasdiq kutilmoqda: …» yo'q. */}
                   <Text variant="caption" tone="subtle">
                     {f.price != null
                       ? `${fmtMoney(f.price)} ${t('vehicles.perUnit', { unit: f.unit ?? '' })}`
                       : t('vehicles.noPrice')}
-                    {f.approval_status === 'pending' && f.price != null
-                      ? ` · ${t('vehicles.pendingPrice', { price: fmtMoney(f.price) })}`
-                      : ''}
                   </Text>
                   {!!badge && <Badge label={t(badge.key)} tone={badge.tone} />}
+                  {stacked && (
+                    <View style={styles.stackedActions}>
+                      {approve}
+                      {manage}
+                    </View>
+                  )}
                 </View>
-                {canApprove && !isFuelApproved(f) && (
-                  <Button
-                    testID={`vehicle-fuel-approve-${f.id}`}
-                    label={t('vehicles.approvePrice')}
-                    size="sm"
-                    variant="soft"
-                    onPress={() => setOpen({ kind: 'decide', fuel: f, n: Date.now() })}
-                  />
-                )}
-                {canManage && (
-                  <View style={styles.actions}>
-                    <IconButton
-                      testID={`vehicle-fuel-edit-${f.id}`}
-                      icon="edit"
-                      accessibilityLabel={t('common.edit')}
-                      onPress={() => setOpen({ kind: 'form', fuel: f, n: Date.now() })}
-                    />
-                    <IconButton
-                      testID={`vehicle-fuel-delete-${f.id}`}
-                      icon="trash"
-                      accessibilityLabel={t('common.delete')}
-                      onPress={() => void del(f)}
-                    />
-                  </View>
-                )}
+                {!stacked && approve}
+                {!stacked && manage}
               </View>
             );
           })
@@ -343,7 +354,7 @@ function FuelHistorySheet({ onClose }: { onClose: () => void }) {
           <Button
             testID="fuel-logs-more"
             label={`${t('vehicles.showMore')} (${rows.length - limit})`}
-            variant="ghost"
+            variant="link"
             size="sm"
             onPress={() => setLimit((n) => n + 30)}
           />
@@ -364,6 +375,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   actions: { flexDirection: 'row' },
+  stackedActions: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 4, marginTop: 6 },
   flex: { flex: 1, minWidth: 0, gap: 2 },
   scroll: { flexShrink: 1 },
   body: { gap: 12, paddingBottom: 8 },

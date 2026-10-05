@@ -76,7 +76,7 @@ export function GpsMark({ v }: { v: Vehicle }) {
   const { colors: c } = useTheme();
   if (!v.gps_device_id) return null;
   return (
-    <Text variant="caption" style={[styles.gps, { color: c.success }]}>
+    <Text variant="caption" numberOfLines={1} style={[styles.gps, { color: c.success }]}>
       {`● ${t('vehicles.unitGps')}`}
     </Text>
   );
@@ -97,5 +97,6 @@ const styles = StyleSheet.create({
   mono: { fontSize: 13, fontWeight: '800', letterSpacing: 1, fontVariant: ['tabular-nums'] },
   monoSmall: { fontSize: 11.5 },
   avail: { gap: 2, alignItems: 'flex-start', flexShrink: 1, minWidth: 0 },
-  gps: { fontWeight: '700' },
+  // Qisqa belgi siqilmaydi (aks holda «●» va «GPS» ikki qatorga bo'linardi) — joyni nishon beradi.
+  gps: { fontWeight: '700', flexShrink: 0 },
 });

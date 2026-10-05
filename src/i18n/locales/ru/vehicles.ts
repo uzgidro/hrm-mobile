@@ -197,7 +197,6 @@ export default {
   fuelNameRequired: 'Название обязательно',
   perUnit: 'сум / {{unit}}',
   noPrice: 'цена не указана',
-  pendingPrice: 'ожидает подтверждения: {{price}}',
   notApproved: 'Не подтверждено',
   approvePrice: 'Подтвердить цену',
   rejectPrice: 'Отклонить',

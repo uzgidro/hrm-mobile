@@ -183,7 +183,7 @@ export function VehicleFormSheet({ vehicle, onClose }: { vehicle: Vehicle | null
           </>
         )}
         {!!form.gps_device_id && (
-          <Button label={t('vehicles.clearGps')} variant="ghost" size="sm" onPress={() => set({ gps_device_id: '' })} />
+          <Button label={t('vehicles.clearGps')} variant="link" size="sm" onPress={() => set({ gps_device_id: '' })} />
         )}
         <SelectField
           testID="vehicle-form-driver"
@@ -195,7 +195,7 @@ export function VehicleFormSheet({ vehicle, onClose }: { vehicle: Vehicle | null
         {form.driver_employee_id != null && (
           <Button
             label={t('vehicles.clearDriver')}
-            variant="ghost"
+            variant="link"
             size="sm"
             onPress={() => set({ driver_employee_id: null })}
           />

@@ -247,7 +247,7 @@ export function RequestsStats() {
                   <Button
                     testID="requests-more"
                     label={`${t('reports.showMore')} (${sorted.length - visible.length})`}
-                    variant="ghost"
+                    variant="link"
                     size="sm"
                     onPress={() => setMore({ src: sorted, n: limit + ROWS_STEP })}
                   />

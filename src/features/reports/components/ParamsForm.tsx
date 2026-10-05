@@ -2,16 +2,15 @@
 // tanlov ro'yxatlari serverdan (`reports/{code}/options/{param}`, `depends_on` → `branch_ids`).
 // Mobil chiza olmaydigan tur ko'rsatilmaydi (majburiy bo'lsa butun hisobot «Web versiyada»).
 import React, { useMemo, useState } from 'react';
-import { StyleSheet, Switch, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import dayjs from 'dayjs';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from '@/theme/ThemeProvider';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { DatePickerModal } from '@/components/DatePicker';
 import { FormInput } from '@/components/FormInput';
 import { MonthNavigator } from '@/components/MonthNavigator';
-import { Chip, SelectField, Text } from '@/ui';
+import { Chip, SelectField, Text, Toggle } from '@/ui';
 import { reportOptionsQuery } from '../api/queries';
 import { reportLabel } from '../utils/labels';
 import { branchDeps, selectionSummary, toggleOne, visibleParams, type ParamError, type Range } from '../utils/params';
@@ -71,7 +70,6 @@ function ParamControl({
   onChange: (v: unknown) => void;
 }) {
   const { t } = useTranslation();
-  const { colors: c } = useTheme();
   const [dateOpen, setDateOpen] = useState<null | 'from' | 'to' | 'date'>(null);
   const tid = `report-param-${def.name}`;
 
@@ -209,12 +207,10 @@ function ParamControl({
           <Text variant="body" style={styles.switchLabel}>
             {reportLabel(def.label_key, def.name)}
           </Text>
-          <Switch
+          <Toggle
             testID={tid}
             value={!!value}
             onValueChange={onChange}
-            trackColor={{ true: c.brand, false: c.borderStrong }}
-            thumbColor={c.surface}
           />
         </View>
       );

@@ -147,7 +147,7 @@ export function OptionsSheet({
             hasMore && onLoadMore ? (
               <Button
                 label={t('reports.loadMore')}
-                variant="ghost"
+                variant="link"
                 size="sm"
                 onPress={onLoadMore}
                 testID="report-options-more"
@@ -162,7 +162,7 @@ export function OptionsSheet({
           {clearable && selected.length > 0 && (
             <Button
               label={t('common.clear')}
-              variant="ghost"
+              variant="link"
               size="sm"
               onPress={() => onChange([])}
               testID="report-options-clear"

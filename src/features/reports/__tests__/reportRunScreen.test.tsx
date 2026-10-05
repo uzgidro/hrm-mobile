@@ -314,6 +314,15 @@ describe('ReportRunScreen (v2 ReportRunPage)', () => {
     await fireEvent.press(screen.getByTestId('report-drill-timesheet_employee_detail'));
     expect(await screen.findByText('01.09.2026')).toBeTruthy();
     expect(screen.queryByText(i18n.t('reports.drillHint'))).toBeNull();
+    // Orqaga — varaq qayta yaratiladi (eski jadvalning gorizontal siljishi/o'lchami ko'chmaydi):
+    // muzlatish yangi o'lchovdan keyingina.
+    await fireEvent.press(screen.getByTestId('report-crumb-0'));
+    await screen.findByTestId('report-drill-timesheet_employee_detail');
+    expect(screen.queryByTestId('report-frozen-head-0')).toBeNull();
+    await fireEvent(screen.getByTestId('report-sheet'), 'layout', {
+      nativeEvent: { layout: { x: 0, y: 0, width: 360, height: 500 } },
+    });
+    expect(screen.getByTestId('report-frozen-head-0')).toBeTruthy();
   });
 
   it('til: ru — ru, en va kirill — uz (server faqat uz/ru biladi)', async () => {

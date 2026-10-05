@@ -291,6 +291,32 @@ export function sheetContentHeight(sheet: Pick<SheetJson, 'header' | 'rows' | 'f
   return sheet.header.length * HEADER_ROW_H + body + sheet.footer.length * ROW_H + 2;
 }
 
+/**
+ * Jadval obyekti uchun barqaror raqam (SheetView kaliti): drill/orqaga — boshqa jadval, boshqa kalit,
+ * demak yangi gorizontal siljish holati. Saqlangan jadvalga qaytilsa — o'sha raqam.
+ */
+const tableIds = new WeakMap<object, number>();
+let tableSeq = 0;
+export function tableKey(table: object): number {
+  let id = tableIds.get(table);
+  if (id === undefined) {
+    id = ++tableSeq;
+    tableIds.set(table, id);
+  }
+  return id;
+}
+
+/**
+ * Web: aylantiriladigan DOM tugunining «qobig'i» (chegaralar + gorizontal aylantirish chizig'i) =
+ * offsetHeight − clientHeight. Tugun DOM emas (native / hali yo'q) — null.
+ */
+export function measuredChrome(node: unknown): number | null {
+  const el = node as { offsetHeight?: unknown; clientHeight?: unknown } | null | undefined;
+  if (!el || typeof el.offsetHeight !== 'number' || typeof el.clientHeight !== 'number') return null;
+  if (el.offsetHeight <= 0) return null; // hali chizilmagan
+  return Math.max(0, el.offsetHeight - el.clientHeight);
+}
+
 export const bodyCount = (sheet: Pick<SheetJson, 'rows'>): number => sheet.rows.filter((r) => r.kind === 'body').length;
 
 /** Drill stack (v2 `useReportRun`): yangi hisobot — 0-daraja, drill — yangi daraja. */

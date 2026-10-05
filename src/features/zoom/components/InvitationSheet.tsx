@@ -40,7 +40,7 @@ export function InvitationSheet({ meeting, onClose }: { meeting: ZoomMeeting; on
           {t('zoom.shareInvitationHint')}
         </Text>
         <Button testID="zoom-invitation-share" label={t('zoom.shareInvitation')} onPress={() => void share()} full />
-        <Button label={t('common.close')} variant="ghost" onPress={onClose} full />
+        <Button label={t('common.close')} variant="neutral" onPress={onClose} full />
       </ScrollView>
     </Sheet>
   );

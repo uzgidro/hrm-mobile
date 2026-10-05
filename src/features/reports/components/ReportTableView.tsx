@@ -5,13 +5,14 @@
 // Muzlatilgan ustunlar (`freeze_cols`): gorizontal siljish (RN Animated qiymati) shu kataklarga
 // teskari `translateX` bo'lib beriladi — ular ekranning chap chetida turadi, qolgani tagidan
 // o'tadi. Bitta FlatList — qator balandligi va vertikal siljish o'z-o'zidan bir xil.
-import React, { memo, useMemo, useState } from 'react';
+import React, { memo, useMemo, useRef, useState } from 'react';
 import {
   Animated,
   FlatList,
   Image,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   View,
   type StyleProp,
@@ -35,12 +36,14 @@ import {
   fmtStamp,
   freezeLayout,
   layoutHeader,
+  measuredChrome,
   leafLabels,
   prefixSums,
   sheetContentHeight,
   rowLayout,
   splitSpan,
   styleTone,
+  tableKey,
 } from '../utils/table';
 import type { DrillRef, ReportTableJson, RowJson, SheetJson } from '../utils/types';
 
@@ -49,8 +52,12 @@ type Pin = Animated.WithAnimatedValue<StyleProp<ViewStyle>>;
 
 // Web'da native driver yo'q (RN Web JS orqali yangilaydi).
 const NATIVE_DRIVER = Platform.OS !== 'web';
-// Web'da gorizontal aylantirish chizig'i balandlikdan joy oladi.
-const WEB_SCROLLBAR = 12;
+// Gorizontal ScrollView'ning «qobig'i» — chegaralar va (web'da) aylantirish chizig'i —
+// kontent balandligidan joy oladi. Web'da haqiqiy chiziq o'lchanadi (Windows'da 17px);
+// o'lchangunicha — 17px taxmin.
+const BORDERS = 2 * StyleSheet.hairlineWidth;
+const WEB_SCROLLBAR_FALLBACK = 17;
+const INITIAL_CHROME = BORDERS + (Platform.OS === 'web' ? WEB_SCROLLBAR_FALLBACK : 0);
 
 export function ReportTableView({ table, onDrill }: { table: ReportTableJson; onDrill?: OnDrill }) {
   const { t } = useTranslation();
@@ -89,7 +96,9 @@ export function ReportTableView({ table, onDrill }: { table: ReportTableJson; on
           ))}
         </ChipScroll>
       )}
-      {sheet ? <SheetView key={`${index}`} sheet={sheet} onDrill={onDrill} /> : null}
+      {/* Kalit jadvalga ham bog'liq: drill/orqaga — yangi SheetView (yangi scrollX = 0). Faqat varaq
+          indeksi bo'lsa, eski gorizontal siljish muzlatilgan ustunlarni yangi jadvalda surib qo'yardi. */}
+      {sheet ? <SheetView key={`${tableKey(table)}:${index}`} sheet={sheet} onDrill={onDrill} /> : null}
       {!!sheet?.legend.length && (
         <View style={styles.legend}>
           {sheet.legend.map((l) => {
@@ -149,6 +158,15 @@ function SheetView({ sheet, onDrill }: { sheet: SheetJson; onDrill?: OnDrill }) 
   const { t, i18n } = useTranslation();
   const { colors: c } = useTheme();
   const [box, setBox] = useState({ w: 0, h: 0 });
+  const [chrome, setChrome] = useState(INITIAL_CHROME);
+  const scrollRef = useRef<ScrollView>(null);
+  // Web: chegaralar + aylantirish chizig'ining haqiqiy balandligi (DOM: offsetHeight − clientHeight).
+  const measureChrome = () => {
+    if (Platform.OS !== 'web') return;
+    const ref = scrollRef.current as unknown as { getScrollableNode?: () => unknown } | null;
+    const ch = measuredChrome(ref?.getScrollableNode?.() ?? ref);
+    if (ch !== null) setChrome((prev) => (prev === ch ? prev : ch));
+  };
   const base = useMemo(() => columnWidths(sheet), [sheet]);
   // Muzlatish ekran kengligiga bog'liq (o'lchangach): blok ko'pi bilan ~yarim ekran.
   const frz = useMemo(() => freezeLayout(sheet.freeze_cols ?? 0, base, box.w), [sheet.freeze_cols, base, box.w]);
@@ -175,7 +193,8 @@ function SheetView({ sheet, onDrill }: { sheet: SheetJson; onDrill?: OnDrill }) 
 
   // Qisqa jadval o'z balandligida (jami oxirgi qatordan keyin, bo'sh joy ostida emas); uzuni
   // mavjud joyga qisqaradi va tana FlatList'da virtual qoladi.
-  const contentH = sheetContentHeight(sheet) + (Platform.OS === 'web' ? WEB_SCROLLBAR : 0);
+  // sheetContentHeight chegaralarni o'z ichiga oladi — ustiga faqat aylantirish chizig'i qo'shiladi.
+  const contentH = sheetContentHeight(sheet) + Math.max(0, chrome - BORDERS);
   return (
     <View
       style={[styles.sheet, { height: contentH, minHeight: Math.min(contentH, 160) }]}
@@ -186,13 +205,17 @@ function SheetView({ sheet, onDrill }: { sheet: SheetJson; onDrill?: OnDrill }) 
       }}
     >
       <Animated.ScrollView
+        ref={scrollRef}
         horizontal
+        onLayout={measureChrome}
+        onContentSizeChange={measureChrome}
         style={[styles.hscroll, { borderColor: c.border }]}
         testID="report-sheet-scroll"
         onScroll={onScroll}
         scrollEventThrottle={16}
       >
-        <View style={{ width: total, height: box.h || undefined }}>
+        {/* Ichki balandlik — ko'rinadigan maydon (qobiqsiz): aks holda «Jami» qatori chiziq ostida qoladi. */}
+        <View style={{ width: total, height: box.h ? Math.max(0, box.h - chrome) : undefined }}>
           <View style={{ height: header.height, width: total, backgroundColor: c.bg }}>
             {header.cells.flatMap((pc, i) =>
               splitSpan(pc.col, pc.cell.cs ?? 1, freeze, prefix).map((part, k) => {

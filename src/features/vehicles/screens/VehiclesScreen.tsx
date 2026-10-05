@@ -159,6 +159,7 @@ export default function VehiclesScreen() {
               testID={`vehicles-tile-${x.key}`}
               style={{ width: tileWidth }}
               label={t(`vehicles.stat_${x.key}`)}
+              labelLines={2}
               value={value(x.key)}
               icon={x.icon}
               tint={x.tint}

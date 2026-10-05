@@ -177,7 +177,7 @@ export function ZoomDetailSheet({ meeting: m, onClose }: { meeting: ZoomMeeting;
           {!!m.series_id && (
             <Badge
               label={t('zoom.seriesBadge', { index: m.series_index ?? '?', total: m.series_total ?? '?' })}
-              tone="brand"
+              tone="info"
             />
           )}
         </View>
@@ -339,7 +339,7 @@ export function ZoomDetailSheet({ meeting: m, onClose }: { meeting: ZoomMeeting;
               onPress={() => void doReject()}
               full
             />
-            <Button label={t('common.cancel')} variant="ghost" onPress={() => setRejecting(false)} full />
+            <Button label={t('common.cancel')} variant="neutral" onPress={() => setRejecting(false)} full />
           </View>
         )}
 
