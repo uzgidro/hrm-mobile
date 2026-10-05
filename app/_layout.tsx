@@ -169,6 +169,7 @@ function ThemedNavigation() {
           <Stack.Screen name="avtopark" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="avtomobil" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="tizim-holati" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="lms" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="assistant" options={{ animation: 'slide_from_bottom' }} />
           <Stack.Screen name="loyiha-form" options={{ animation: 'slide_from_bottom' }} />
           <Stack.Screen name="change-pin" options={{ animation: 'slide_from_right' }} />

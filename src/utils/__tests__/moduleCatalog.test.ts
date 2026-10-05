@@ -148,6 +148,17 @@ describe('modul katalogi — v2 paritet', () => {
     expect(CATALOG.find((e) => e.page === 'sysHealth')?.route).toBe('/tizim-holati');
   });
 
+  it("LMS — v2 ADMIN_ONLY, SYSTEM_ADMIN_KEYS da yo'q: faqat bosh admin; AKT/admin hisobi va kadr yo'q; route /lms", () => {
+    expect(isModuleReady('lms')).toBe(true);
+    expect(canAccessPage(master, 'lms')).toBe(true);
+    expect(canAccessPage(emp(), 'lms')).toBe(false);
+    expect(canAccessPage(hr, 'lms')).toBe(false);
+    expect(canAccessPage(emp({ akt_branch_ids: [1] }), 'lms')).toBe(false);
+    expect(canAccessPage(u({ id: 5, type: 'admin' }), 'lms')).toBe(false);
+    expect(canAccessPage(kppAcc, 'lms')).toBe(false);
+    expect(CATALOG.find((e) => e.page === 'lms')?.route).toBe('/lms');
+  });
+
   it('har katalog yozuvining nomi 4 tilda tarjima qilingan (xom kalit chiqmaydi)', async () => {
     for (const lng of ['uz-Latn', 'uz-Cyrl', 'ru', 'en']) {
       await i18n.changeLanguage(lng);

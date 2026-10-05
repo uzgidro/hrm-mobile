@@ -465,3 +465,9 @@ export const SYSTEM_OPS_SHUTDOWN = 'system/ops/shutdown';
 export const SYSTEM_OPS_RECOVERY_ENTER = 'system/ops/recovery/enter';
 export const SYSTEM_OPS_RECOVERY_RUN = 'system/ops/recovery/run';
 export const SYSTEM_OPS_RESUME = 'system/ops/resume';
+// LMS integratsiyasi (web v2 LmsPage) — faqat sayt master-admini. API kalit HECH QACHON qaytmaydi
+// (`has_api_key`); saqlashda bo'sh kalit = eskisi qoladi.
+export const LMS_SETTINGS = 'lms/settings';
+export const LMS_TEST = 'lms/test';
+export const LMS_SYNC = 'lms/sync';
+export const LMS_LOGS = 'lms/logs';
