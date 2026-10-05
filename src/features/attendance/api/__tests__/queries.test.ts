@@ -2,7 +2,7 @@ import MockAdapter from 'axios-mock-adapter';
 import { apiClient } from '@/api/client';
 import { TURNSTILE_ATTENDANCE_EVENTS, WORK_LEAVES } from '@/api/urls';
 import { attendanceQueryKey } from '@/utils/attendance';
-import { attendanceKeys, dayAttendanceQuery, teamLeavesQuery } from '../queries';
+import { attendanceKeys, dayAttendanceQuery, myTeamQuery, teamLeavesQuery } from '../queries';
 
 let mock: MockAdapter;
 beforeEach(() => {
@@ -88,5 +88,16 @@ describe('teamLeavesQuery', () => {
     const data = await (teamLeavesQuery('2026-07-06', 100).queryFn as () => Promise<unknown[]>)();
     expect(data).toHaveLength(2);
     expect(mock.history.get[0].params).toEqual({ size: 100 });
+  });
+});
+
+describe('myTeamQuery (v2 useMyTeam)', () => {
+  it('GET employees/my-team?day= under a per-day key', async () => {
+    const opts = myTeamQuery('2026-10-05');
+    expect(opts.queryKey).toEqual(['my-team', '2026-10-05']);
+    mock.onGet('employees/my-team').reply(200, { date: '2026-10-05', items: [{ id: 1 }], summary: {} });
+    const data = await (opts.queryFn as unknown as () => Promise<{ items: unknown[] }>)();
+    expect(mock.history.get[0].params).toEqual({ day: '2026-10-05' });
+    expect(data.items).toHaveLength(1);
   });
 });

@@ -5,26 +5,22 @@ import { apiClient } from '@/api/client';
 import { renderWithProviders, screen, fireEvent } from '@/test/renderWithProviders';
 import { useAuthStore } from '@/store/authStore';
 import i18n from '@/i18n';
-import { EMPLOYEES_BIRTHDAYS, WORK_LEAVES } from '@/api/urls';
+import { EMPLOYEES_BIRTHDAYS, EMPLOYEES_MY_TEAM, WORK_LEAVES } from '@/api/urls';
 import TeamScreen from '../screens/TeamScreen';
 
 jest.mock('expo-router', () => ({ router: { push: jest.fn(), back: jest.fn(), canGoBack: () => true } }));
-jest.mock('@/lib/useDayRoster', () => ({
-  useDayRoster: () => ({
-    roster: {
-      rows: [
-        { employee: { id: 11, legal_name: 'Karimov Vali', job_position: { id: 1, name: 'Muhandis' } } },
-        { employee: { id: 12, legal_name: 'Aliyeva Nodira' } },
-      ],
-      counts: { total: 10, present: 6, late: 2, onLeave: 1, absent: 1 },
-    },
-    total: 10,
-    isLoading: false,
-    isError: false,
-    isFetching: false,
-    refetch: jest.fn(),
-  }),
-}));
+// «Mening jamoam» = web v2 MyTeamPage: GET employees/my-team?day= (QA 2026-10-05:
+// the screen showed the whole branch, 153 people, from the branch categories).
+const TEAM = {
+  date: '2026-10-05',
+  summary: {},
+  items: [
+    { id: 11, legal_name: 'Karimov Vali', job_position_name: 'Muhandis', via: 'direct', status: 'present', first_in: '08:50' },
+    { id: 12, legal_name: 'Aliyeva Nodira', via: 'indirect', status: 'late', first_in: '09:30' },
+    { id: 13, legal_name: 'Tursunov Bek', via: 'department', status: 'absent' },
+    { id: 14, legal_name: 'Dam Oluvchi', via: 'direct', status: 'day_off' },
+  ],
+};
 
 // Xarakteristika testi (W4 qayta chizish): ekran xatti-harakati o'zgarmaydi.
 describe('TeamScreen', () => {
@@ -40,6 +36,7 @@ describe('TeamScreen', () => {
       } as never,
       isAuthenticated: true,
     } as never);
+    mock.onGet(EMPLOYEES_MY_TEAM).reply(200, TEAM);
     mock.onGet(WORK_LEAVES).reply(200, {
       items: [
         {
@@ -62,8 +59,10 @@ describe('TeamScreen', () => {
   it("davomat donut jami va legenda; so'rovlar, jamoa, tug'ilgan kunlar", async () => {
     await renderWithProviders(<TeamScreen />);
     expect(await screen.findByText('Shaxsiy ish')).toBeTruthy();
-    expect(screen.getByText('10')).toBeTruthy(); // donut markazi — jami
-    expect(screen.getByText('6')).toBeTruthy(); // kelganlar
+    // donut markazi — faqat jamoa, dam olishdagi hisobga kirmaydi (3, branch 153 emas)
+    expect(await screen.findByText('3')).toBeTruthy();
+    expect(screen.getByTestId('team-day-off')).toBeTruthy();
+    expect(screen.getByText('Dam Oluvchi')).toBeTruthy();
     expect(screen.getByText(i18n.t('attendance.status.pending'))).toBeTruthy();
     expect(screen.getAllByText('Karimov Vali').length).toBeGreaterThan(0);
     expect(await screen.findByText(i18n.t('attendance.birthdayToday'))).toBeTruthy();
@@ -75,6 +74,15 @@ describe('TeamScreen', () => {
     expect(router.push).toHaveBeenCalledWith({ pathname: '/leave-detail', params: { id: 3 } });
     await fireEvent.press(screen.getByText(i18n.t('attendance.details')));
     expect(router.push).toHaveBeenCalledWith('/attendance-detail');
+  });
+
+  it('jamoa kun tanlanadi: oldingi kun → my-team?day= shu kun bilan', async () => {
+    await renderWithProviders(<TeamScreen />);
+    await screen.findByText('Karimov Vali');
+    await fireEvent.press(screen.getByTestId('team-prev-day'));
+    const days = mock.history.get.filter((g) => g.url === EMPLOYEES_MY_TEAM).map((g) => g.params?.day);
+    expect(new Set(days).size).toBeGreaterThan(1);
+    expect(screen.getByTestId('team-next-day')).toBeTruthy();
   });
 
   it("rahbari bor xodim — «So'rov yaratish» ko'rinadi", async () => {

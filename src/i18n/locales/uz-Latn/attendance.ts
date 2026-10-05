@@ -15,7 +15,7 @@ export default {
   section: {
     present: 'Keldi',
     late: 'Kechikkan',
-    onLeave: "So'rov yuborilgan",
+    onLeave: 'Boshqa sabab',
     absent: 'Kelmagan',
   },
   sectionEmpty: {
@@ -27,8 +27,8 @@ export default {
     present: 'keldi',
     late: 'kechikkan',
     absent: 'kelmagan',
-    onLeave: "so'rov",
-    onLeaveTeam: "so'rovda",
+    onLeave: 'boshqa sabab',
+    onLeaveTeam: 'boshqa sabab',
   },
   clearFilter: 'tozalash uchun bosing',
   showAll: "Barchasini ko'rsatish",
@@ -53,4 +53,12 @@ export default {
     approved: 'Tasdiqlangan',
     rejected: 'Rad etildi',
   },
+
+  // Kun tanlash va dam olishdagilar (v2 MyTeamPage / DashboardPage — hisobga kirmaydi)
+  today: 'Bugun',
+  prevDay: 'Oldingi kun',
+  nextDay: 'Keyingi kun',
+  dayOffTitle: 'Dam olishda',
+  dayOffCount_one: '{{count}} kishi dam olishda',
+  dayOffCount_other: '{{count}} kishi dam olishda',
 } as const;

@@ -1,6 +1,7 @@
 import { queryOptions } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
-import { WORK_LEAVES } from '@/api/urls';
+import { EMPLOYEES_MY_TEAM, WORK_LEAVES } from '@/api/urls';
+import type { MyTeamResponse } from '@/utils/attendanceRoster';
 import { fetchAllAttendanceEvents, attendanceQueryKey } from '@/utils/attendance';
 import type { WorkLeave } from '@/types';
 
@@ -69,5 +70,17 @@ export function teamLeavesQuery(dateKey: string, size: number, branchId?: number
         return (Array.isArray(d) ? d : (d?.items ?? [])) as WorkLeave[];
       }),
     staleTime: 2 * 60 * 1000,
+  });
+}
+
+// «Mening jamoam» for one day — web v2 `useMyTeam` (`GET /employees/my-team?day=`):
+// the line manager's own people (direct + indirect reports, headed departments)
+// with the day's tabel status. Empty for someone who manages nobody.
+export function myTeamQuery(day: string) {
+  return queryOptions({
+    queryKey: ['my-team', day] as const,
+    queryFn: () => apiClient.get<MyTeamResponse>(EMPLOYEES_MY_TEAM, { params: { day } }).then((r) => r.data),
+    staleTime: 2 * 60 * 1000,
+    placeholderData: (prev) => prev,
   });
 }

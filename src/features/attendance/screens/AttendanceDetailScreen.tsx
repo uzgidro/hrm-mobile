@@ -50,7 +50,7 @@ export default function AttendanceDetailScreen() {
 
   // Today → branch categories (web employee-dashboard source); past days →
   // /normalized. See `useDayRoster`.
-  const { roster: { rows, counts }, isLoading, isError, error, refetch } = useDayRoster({
+  const { roster: { rows, counts, dayOff = [] }, isLoading, isError, error, refetch } = useDayRoster({
     date: selectedDate, orgBranchId, onlySubordinates, myId,
   });
 
@@ -113,6 +113,19 @@ export default function AttendanceDetailScreen() {
               ))
             )}
           </View>
+
+          {/* Not expected today (day off / holiday): listed apart and OUT of the
+              donut — the same total as Home «Bugungi tabelda» (web v2 DashboardPage). */}
+          {!sectionFilter && dayOff.length > 0 && (
+            <View style={styles.rosterCard} testID="attendance-day-off">
+              <View style={styles.rosterHeader}>
+                <Text style={styles.rosterTitle}>{t('attendance.dayOffTitle')} ({dayOff.length})</Text>
+              </View>
+              {dayOff.map((row, idx) => (
+                <RosterRow key={row.employee.id} row={row} colors={colors} showBorder={idx < dayOff.length - 1} />
+              ))}
+            </View>
+          )}
 
           <View style={{ height: 32 }} />
         </ScrollView>

@@ -7,7 +7,7 @@ export default {
   section: {
     present: 'Келди',
     late: 'Кечиккан',
-    onLeave: 'Сўров юборилган',
+    onLeave: 'Бошқа сабаб',
     absent: 'Келмаган',
   },
   sectionEmpty: {
@@ -18,8 +18,8 @@ export default {
     present: 'келди',
     late: 'кечиккан',
     absent: 'келмаган',
-    onLeave: 'сўров',
-    onLeaveTeam: 'сўровда',
+    onLeave: 'бошқа сабаб',
+    onLeaveTeam: 'бошқа сабаб',
   },
   clearFilter: 'тозалаш учун босинг',
   showAll: 'Барчасини кўрсатиш',
@@ -41,4 +41,12 @@ export default {
     approved: 'Тасдиқланган',
     rejected: 'Рад этилди',
   },
+
+  // Kun tanlash va dam olishdagilar (v2 MyTeamPage / DashboardPage — hisobga kirmaydi)
+  today: 'Бугун',
+  prevDay: 'Олдинги кун',
+  nextDay: 'Кейинги кун',
+  dayOffTitle: 'Дам олишда',
+  dayOffCount_one: '{{count}} киши дам олишда',
+  dayOffCount_other: '{{count}} киши дам олишда',
 } as const;

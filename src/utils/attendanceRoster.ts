@@ -41,9 +41,29 @@ export interface RosterRow {
 }
 
 export interface AttendanceRoster {
-  rows: RosterRow[]; // ALL employees, sorted by legal_name (A→Z, locale-aware)
+  /** Everyone who COUNTS today (expected at work, or away for a known reason), A→Z. */
+  rows: RosterRow[];
   counts: { total: number; present: number; late: number; onLeave: number; absent: number };
+  /**
+   * People not expected today at all — day off, holiday, shift rest, otgul.
+   * Kept OUT of `rows` / `counts`, exactly like web v2's DashboardPage («Bugungi
+   * tabelda» = arrived + absent + other) and the server's `counted_employees_count`
+   * («dam kunidagilar bo'lakka kirmaydi»). QA 2026-10-05: they were counted as
+   * «so'rovda» — Davomat said 153 «7 so'rovda» while Home said 146 and 0 leave.
+   * Rows carry `status: 'onLeave'` (the neutral stripe) and `code` / `leaveName` «Dam olish».
+   */
+  dayOff?: RosterRow[];
 }
+
+/** Codes that mean "not expected today" (web v2 `mapCalStatus` → `day_off`). */
+const DAY_OFF_CODES = new Set(['day_off', 'dam_olish', 'holiday', 'off', 'otgul']);
+
+export function isDayOffCode(code: string | undefined | null): boolean {
+  return !!code && DAY_OFF_CODES.has(String(code).toLowerCase());
+}
+
+const byName = (a: RosterRow, b: RosterRow) =>
+  (a.employee.legal_name ?? '').localeCompare(b.employee.legal_name ?? '', undefined, { sensitivity: 'base' });
 
 /** Backend calendar code → donut zone. Anything that is neither presence nor
  *  absence (leave, trip, day off, holiday, dismissed …) is "onLeave": the
@@ -51,7 +71,8 @@ export interface AttendanceRoster {
 export function statusForCode(code: string | undefined | null): AttendanceStatus {
   if (code === 'present' || code === 'early_leave') return 'present';
   if (code === 'late') return 'late';
-  if (code === 'absent' || code === 'progul' || !code) return 'absent';
+  // Unexcused absence with a reason attached is still an absence (v2 mapCalStatus).
+  if (code === 'absent' || code === 'progul' || code === 'noaniq_sabab' || !code) return 'absent';
   return 'onLeave';
 }
 
@@ -64,9 +85,15 @@ export function buildRosterFromNormalized(
 ): AttendanceRoster {
   const { firstEntry, lastExit } = indexEvents(events);
 
-  const counts = { total: rows.length, present: 0, late: 0, onLeave: 0, absent: 0 };
-  const out: RosterRow[] = rows.map((emp) => {
+  const counts = { total: 0, present: 0, late: 0, onLeave: 0, absent: 0 };
+  const out: RosterRow[] = [];
+  const dayOff: RosterRow[] = [];
+  for (const emp of rows) {
     const code = emp.attendance?.calendar?.[date];
+    if (isDayOffCode(code)) {
+      dayOff.push({ employee: emp, status: 'onLeave', code: code ?? undefined, leaveName: i18n.t(tabelCodeMeta('day_off').labelKey) });
+      continue;
+    }
     const status = statusForCode(code);
     counts[status] += 1;
     const row: RosterRow = { employee: emp, status, code: code ?? undefined };
@@ -76,13 +103,12 @@ export function buildRosterFromNormalized(
     } else if (status === 'onLeave') {
       row.leaveName = i18n.t(tabelCodeMeta(code).labelKey);
     }
-    return row;
-  });
-
-  out.sort((a, b) =>
-    (a.employee.legal_name ?? '').localeCompare(b.employee.legal_name ?? '', undefined, { sensitivity: 'base' }),
-  );
-  return { rows: out, counts };
+    out.push(row);
+  }
+  counts.total = out.length;
+  out.sort(byName);
+  dayOff.sort(byName);
+  return { rows: out, counts, dayOff };
 }
 
 // ── TODAY: `/dashboard/employees-by-category` → roster ──────────────────────
@@ -142,15 +168,23 @@ export function buildRosterFromCategories(
   take(cats.on_sick_leave_employees, 'onLeave', 'sick_leave');
   take(cats.on_dekret_employees, 'onLeave', 'dekret');
   take(cats.on_leave_employees, 'onLeave', 'work_leave', (e) => e.category_name ?? undefined);
-  take(cats.day_off_employees, 'onLeave', 'day_off');
   take(cats.present_employees, 'present', 'present');
   take(cats.absent_employees, 'absent', 'absent');
 
+  // Not expected today — listed apart, never counted (v2 DashboardPage, server
+  // `counted_employees_count`). Precedence unchanged: a person already placed
+  // above (e.g. came in on a rest day) stays there.
+  const dayOff: RosterRow[] = [];
+  for (const e of cats.day_off_employees ?? []) {
+    if (e.id == null || seen.has(e.id)) continue;
+    seen.add(e.id);
+    dayOff.push({ employee: e, status: 'onLeave', code: 'day_off', leaveName: i18n.t(tabelCodeMeta('day_off').labelKey) });
+  }
+
   counts.total = rows.length;
-  rows.sort((a, b) =>
-    (a.employee.legal_name ?? '').localeCompare(b.employee.legal_name ?? '', undefined, { sensitivity: 'base' }),
-  );
-  return { rows, counts };
+  rows.sort(byName);
+  dayOff.sort(byName);
+  return { rows, counts, dayOff };
 }
 
 /** Keep only `ids` (the "faqat bo'ysunuvchilar" toggle) and recount. */
@@ -158,5 +192,75 @@ export function filterRoster(roster: AttendanceRoster, ids: Set<number>): Attend
   const rows = roster.rows.filter((r) => ids.has(r.employee.id));
   const counts = { total: rows.length, present: 0, late: 0, onLeave: 0, absent: 0 };
   for (const r of rows) counts[r.status] += 1;
-  return { rows, counts };
+  return { rows, counts, dayOff: (roster.dayOff ?? []).filter((r) => ids.has(r.employee.id)) };
+}
+
+// ── «Mening jamoam»: `GET /employees/my-team?day=` → roster ──────────────────
+// Web v2 MyTeamPage source: the line manager's OWN people (direct + indirect
+// reports + headed departments — server `line_manager_scope`), each with the
+// day's tabel status. QA 2026-10-05: the Team screen used the branch-wide
+// category endpoint and showed 153 people instead of the leader's team.
+export type TeamVia = 'direct' | 'indirect' | 'department';
+
+export interface MyTeamMember {
+  id: number;
+  legal_name: string;
+  photo_path?: string | null;
+  photo_thumb_path?: string | null;
+  job_position_name?: string | null;
+  department_name?: string | null;
+  via: TeamVia;
+  /** Tabel status for the day (present, late, absent, day_off, leave kinds…); null — none. */
+  status?: string | null;
+  first_in?: string | null; // "HH:mm"
+  last_out?: string | null; // "HH:mm"
+}
+
+export interface MyTeamResponse {
+  date: string;
+  items: MyTeamMember[];
+  summary: Record<string, number>;
+}
+
+/**
+ * The team as a roster. A member without a status counts as a day off — v2
+ * `mapCalStatus(null)` is `day_off` (the tabel engine had nothing to expect).
+ * `onlyDirect` = the «faqat bo'ysunuvchilar» preference: direct reports only.
+ */
+export function buildRosterFromMyTeam(data: MyTeamResponse | undefined, onlyDirect = false): AttendanceRoster {
+  const counts = { total: 0, present: 0, late: 0, onLeave: 0, absent: 0 };
+  const rows: RosterRow[] = [];
+  const dayOff: RosterRow[] = [];
+  const day = data?.date;
+  const at = (hhmm?: string | null) => (day && hhmm ? `${day}T${hhmm}:00` : undefined);
+  for (const m of data?.items ?? []) {
+    if (onlyDirect && m.via !== 'direct') continue;
+    const employee: RosterEmployee = {
+      id: m.id,
+      legal_name: m.legal_name,
+      photo_path: m.photo_path,
+      photo_thumb_path: m.photo_thumb_path,
+      job_position: m.job_position_name ? { name: m.job_position_name } : null,
+      department: m.department_name ? { name: m.department_name } : null,
+    };
+    const code = m.status ?? undefined;
+    if (!code || isDayOffCode(code)) {
+      dayOff.push({ employee, status: 'onLeave', code: 'day_off', leaveName: i18n.t(tabelCodeMeta('day_off').labelKey) });
+      continue;
+    }
+    const status = statusForCode(code);
+    counts[status] += 1;
+    const row: RosterRow = { employee, status, code };
+    if (status === 'present' || status === 'late') {
+      row.entryTime = at(m.first_in);
+      row.exitTime = at(m.last_out);
+    } else if (status === 'onLeave') {
+      row.leaveName = i18n.t(tabelCodeMeta(code).labelKey);
+    }
+    rows.push(row);
+  }
+  counts.total = rows.length;
+  rows.sort(byName);
+  dayOff.sort(byName);
+  return { rows, counts, dayOff };
 }

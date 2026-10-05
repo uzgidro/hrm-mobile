@@ -7,7 +7,7 @@ export default {
   section: {
     present: 'Пришли',
     late: 'Опоздали',
-    onLeave: 'Отправлен запрос',
+    onLeave: 'Другая причина',
     absent: 'Отсутствуют',
   },
   sectionEmpty: {
@@ -18,8 +18,8 @@ export default {
     present: 'пришли',
     late: 'опоздали',
     absent: 'отсутствуют',
-    onLeave: 'запрос',
-    onLeaveTeam: 'в запросе',
+    onLeave: 'другая причина',
+    onLeaveTeam: 'другая причина',
   },
   clearFilter: 'нажмите, чтобы сбросить',
   showAll: 'Показать все',
@@ -41,4 +41,13 @@ export default {
     approved: 'Подтверждён',
     rejected: 'Отклонён',
   },
+
+  // Kun tanlash va dam olishdagilar (v2 MyTeamPage / DashboardPage — hisobga kirmaydi)
+  today: 'Сегодня',
+  prevDay: 'Предыдущий день',
+  nextDay: 'Следующий день',
+  dayOffTitle: 'Выходной',
+  dayOffCount_one: '{{count}} человек в выходном',
+  dayOffCount_few: '{{count}} человека в выходном',
+  dayOffCount_many: '{{count}} человек в выходном',
 } as const;

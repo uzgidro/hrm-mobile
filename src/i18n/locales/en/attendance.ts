@@ -7,7 +7,7 @@ export default {
   section: {
     present: 'Present',
     late: 'Late',
-    onLeave: 'Request sent',
+    onLeave: 'Other reason',
     absent: 'Absent',
   },
   sectionEmpty: {
@@ -18,8 +18,8 @@ export default {
     present: 'present',
     late: 'late',
     absent: 'absent',
-    onLeave: 'request',
-    onLeaveTeam: 'on request',
+    onLeave: 'other reason',
+    onLeaveTeam: 'other reason',
   },
   clearFilter: 'tap to clear',
   showAll: 'Show all',
@@ -41,4 +41,12 @@ export default {
     approved: 'Approved',
     rejected: 'Rejected',
   },
+
+  // Kun tanlash va dam olishdagilar (v2 MyTeamPage / DashboardPage — hisobga kirmaydi)
+  today: 'Today',
+  prevDay: 'Previous day',
+  nextDay: 'Next day',
+  dayOffTitle: 'Day off',
+  dayOffCount_one: '{{count}} person off today',
+  dayOffCount_other: '{{count}} people off today',
 } as const;

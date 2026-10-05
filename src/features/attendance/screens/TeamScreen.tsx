@@ -1,11 +1,17 @@
-// «Jamoam» — rahbar paneli: bugungi davomat (donut), so'nggi so'rovlar, jamoa va
-// tug'ilgan kunlar. To'rt domen: davomat + so'rovlar shu feature fabrikalaridan;
-// xodimlar `useDayRoster` (umumiy); tug'ilgan kunlar `['birthdays', 'list', branch]`
-// kalitida — BirthdaysScreen bilan bitta kesh, feature'lararo importsiz.
+// «Mening jamoam» — rahbar paneli: kun bo'yicha jamoa holati (donut), so'nggi
+// so'rovlar, jamoa ro'yxati va tug'ilgan kunlar.
+//
+// Jamoa — web v2 MyTeamPage manbai: `GET /employees/my-team?day=` (rahbarning
+// O'Z odamlari: bevosita va bilvosita bo'ysunuvchilar + boshqaradigan
+// bo'limlari, har biri kunning tabel holati bilan). QA 2026-10-05: ekran
+// filial bo'yicha kategoriyalarni (`useDayRoster`) o'qirdi va jamoa o'rniga
+// butun filialni (153 kishi) ko'rsatardi. v2 kabi kun tanlanadi (bugundan
+// oldinga emas); dam olishdagilar alohida, hisobga kirmaydi.
+// Tug'ilgan kunlar `['birthdays', 'list', branch]` kalitida — BirthdaysScreen bilan bitta kesh.
 // v3: `src/ui` primitivlarida; planshetda ikki ustun.
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useQueries } from '@tanstack/react-query';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';
 import dayjs from 'dayjs';
@@ -18,19 +24,38 @@ import { useTheme } from '@/theme/ThemeProvider';
 import { radii } from '@/theme/tokens';
 import { resolveEmployeeBranchId } from '@/utils/branch';
 import { useBreakpoint } from '@/utils/responsive';
-import { canAccessPage, hasSupervisor } from '@/utils/roles';
-import { useDayRoster } from '@/lib/useDayRoster';
+import { buildRosterFromMyTeam, type RosterRow } from '@/utils/attendanceRoster';
 import { leaveStatusGroup, leaveRangeText, leaveTypeLabel } from '@/utils/leaveStatus';
+import { monthName, weekdayName } from '@/i18n/dates';
 import { Icon } from '@/components/Icon';
 import type { EmployeeBirthday, WorkLeave } from '@/types';
-import { Avatar, Badge, Button, Card, Donut, ListRow, PageHeader, Screen, Skeleton, Text, type Tone } from '@/ui';
-import { teamLeavesQuery } from '../api/queries';
+import {
+  Avatar,
+  Badge,
+  Button,
+  Card,
+  Donut,
+  IconButton,
+  ListRow,
+  PageHeader,
+  Screen,
+  Skeleton,
+  Text,
+  type Tone,
+} from '@/ui';
+import { myTeamQuery, teamLeavesQuery } from '../api/queries';
 
 const birthdaysListKey = (orgBranchId?: number) => ['birthdays', 'list', orgBranchId ?? null] as const;
 const STATUS_TONE: Record<'pending' | 'approved' | 'rejected', Tone> = {
   pending: 'warning',
   approved: 'success',
   rejected: 'danger',
+};
+const ROW_TONE: Record<RosterRow['status'], Tone> = {
+  present: 'success',
+  late: 'warning',
+  absent: 'danger',
+  onLeave: 'info',
 };
 
 export default function TeamScreen() {
@@ -43,9 +68,18 @@ export default function TeamScreen() {
   const myId = user?.employee?.id;
   const orgBranchId = resolveEmployeeBranchId(user?.employee);
   const today = dayjs().format('YYYY-MM-DD');
+  const [day, setDay] = useState(today);
+  const sel = dayjs(day);
+  const isToday = day === today;
+  const dateLabel = `${sel.date()} ${monthName(sel.month(), { genitive: true })}, ${weekdayName(sel.day())}`;
 
-  // Bugungi ro'yxat: filial kategoriyalari (web employee-dashboard manbai) + kirish vaqtlari uchun xom voqealar.
-  const rosterQ = useDayRoster({ date: today, orgBranchId, onlySubordinates, myId });
+  // Jamoa va kun holati — v2 MyTeamPage (`employees/my-team?day=`).
+  // «Faqat bo'ysunuvchilar» sozlamasi — faqat bevosita bo'ysunuvchilar (`via: direct`).
+  const teamQ = useQuery(myTeamQuery(day));
+  const roster = useMemo(() => buildRosterFromMyTeam(teamQ.data, onlySubordinates), [teamQ.data, onlySubordinates]);
+  const members = useMemo(() => [...roster.rows, ...(roster.dayOff ?? [])], [roster]);
+  const memberIds = useMemo(() => new Set(members.map((r) => r.employee.id)), [members]);
+
   const [leavesQ, bDayQ] = useQueries({
     queries: [
       teamLeavesQuery(today, 20, orgBranchId),
@@ -59,40 +93,60 @@ export default function TeamScreen() {
       },
     ],
   });
-  const refreshing = rosterQ.isFetching || leavesQ.isRefetching || bDayQ.isRefetching;
+  const refreshing = teamQ.isRefetching || leavesQ.isRefetching || bDayQ.isRefetching;
   const refetchAll = () => {
-    rosterQ.refetch();
+    void teamQ.refetch();
     void leavesQ.refetch();
     void bDayQ.refetch();
   };
 
-  const roster = rosterQ.roster;
-  const employees = useMemo(() => roster.rows.map((r) => r.employee), [roster]);
-  const empIdSet = useMemo(() => new Set(employees.map((e) => e.id)), [employees]);
   const recentLeaves = useMemo(
     () =>
       [...((leavesQ.data as WorkLeave[] | undefined) ?? [])]
-        .filter((l) => !l.employee?.id || empIdSet.has(l.employee.id))
+        .filter((l) => !l.employee?.id || memberIds.has(l.employee.id))
         .sort((a, b) => (b.created_at ?? String(b.id)).localeCompare(a.created_at ?? String(a.id)))
         .slice(0, 3),
-    [leavesQ.data, empIdSet],
+    [leavesQ.data, memberIds],
   );
-  const topEmployees = employees.slice(0, 3);
   const birthdays = (bDayQ.data ?? []).slice(0, 3);
 
-  const total = rosterQ.total;
-  const { present, late, onLeave } = roster.counts;
-  const absent = Math.max(0, total - present - late - onLeave);
+  const { total, present, late, onLeave, absent } = roster.counts;
   const legend = [
     { key: 'present', value: present, color: colors.success, label: t('attendance.legend.present') },
     { key: 'late', value: late, color: colors.warning, label: t('attendance.legend.late') },
     { key: 'onLeave', value: onLeave, color: colors.brand, label: t('attendance.legend.onLeaveTeam') },
     { key: 'absent', value: absent, color: colors.danger, label: t('attendance.legend.absent') },
   ];
+  const dayOffCount = roster.dayOff?.length ?? 0;
+
+  const dayNav = (
+    <View style={styles.dayNav}>
+      <IconButton
+        icon="chevronLeft"
+        accessibilityLabel={t('attendance.prevDay')}
+        onPress={() => setDay(sel.subtract(1, 'day').format('YYYY-MM-DD'))}
+        testID="team-prev-day"
+      />
+      <Text variant="label" style={styles.dayLabel} testID="team-day">
+        {isToday ? `${t('attendance.today')} · ${dateLabel}` : dateLabel}
+      </Text>
+      {!isToday ? (
+        <IconButton
+          icon="chevronRight"
+          accessibilityLabel={t('attendance.nextDay')}
+          onPress={() => setDay(sel.add(1, 'day').format('YYYY-MM-DD'))}
+          testID="team-next-day"
+        />
+      ) : (
+        <View style={styles.navSpacer} />
+      )}
+    </View>
+  );
 
   const attendanceCard = (
     <Card title={t('attendance.title')} icon="chart" tint="green">
-      {rosterQ.isLoading ? (
+      {dayNav}
+      {teamQ.isLoading ? (
         <Skeleton height={160} />
       ) : (
         <>
@@ -118,6 +172,11 @@ export default function TeamScreen() {
                     </View>
                   </View>
                 ))}
+              {dayOffCount > 0 && (
+                <Text variant="caption" tone="subtle" testID="team-day-off">
+                  {t('attendance.dayOffCount', { count: dayOffCount })}
+                </Text>
+              )}
             </View>
           </View>
           <Button label={t('attendance.details')} onPress={() => router.push('/attendance-detail')} full />
@@ -155,9 +214,9 @@ export default function TeamScreen() {
           );
         })
       )}
-      {/* Web pariteti (RequestPermissionPage.canCreatePermission): faqat rahbari BOR
-          xodim so'rov yubora oladi — yuqori rahbarning yuboradigan odami yo'q. */}
-      {hasSupervisor(user) && (
+      {/* Web v2 (RequestPermissionPage): so'rovni xodim kartasi bor HAR KIM yaratadi —
+          rahbari bo'lmasa server uni bo'lim boshlig'iga / kadrga yo'naltiradi. */}
+      {!!myId && (
         <Button
           label={t('attendance.createRequest')}
           variant="soft"
@@ -169,31 +228,36 @@ export default function TeamScreen() {
     </Card>
   );
 
+  const rowStatusLabel = (r: RosterRow) =>
+    r.status === 'onLeave' ? (r.leaveName ?? t('attendance.section.onLeave')) : t(`attendance.section.${r.status}`);
+
   const teamCard = (
-    <Card
-      title={t('attendance.teamTitle')}
-      icon="users"
-      tint="violet"
-      action={
-        canAccessPage(user, 'employees')
-          ? { label: t('common.all'), onPress: () => router.push('/employees-list') }
-          : undefined
-      }
-    >
-      {rosterQ.isLoading ? (
+    <Card title={`${t('attendance.teamTitle')} · ${members.length}`} icon="users" tint="violet">
+      {teamQ.isLoading ? (
         <Skeleton height={120} />
-      ) : topEmployees.length === 0 ? (
+      ) : members.length === 0 ? (
         <Text variant="body" tone="muted" style={styles.empty}>
           {t('attendance.noEmployees')}
         </Text>
       ) : (
-        topEmployees.map((emp) => (
+        members.map((r) => (
           <ListRow
-            key={emp.id}
-            title={emp.legal_name ?? '—'}
-            subtitle={emp.job_position?.name ?? emp.department?.name ?? '—'}
-            left={<Avatar name={emp.legal_name ?? '?'} uri={emp.photo_thumb_path ?? emp.photo_path} size={40} />}
-            onPress={() => router.push({ pathname: '/profile-detail', params: { id: emp.id } })}
+            key={r.employee.id}
+            title={r.employee.legal_name ?? '—'}
+            subtitle={
+              r.entryTime
+                ? `${r.employee.job_position?.name ?? r.employee.department?.name ?? '—'} · ${dayjs(r.entryTime).format('HH:mm')}`
+                : (r.employee.job_position?.name ?? r.employee.department?.name ?? '—')
+            }
+            left={
+              <Avatar
+                name={r.employee.legal_name ?? '?'}
+                uri={r.employee.photo_thumb_path ?? r.employee.photo_path ?? undefined}
+                size={40}
+              />
+            }
+            right={<Badge label={rowStatusLabel(r)} tone={r.code === 'day_off' ? 'neutral' : ROW_TONE[r.status]} />}
+            onPress={() => router.push({ pathname: '/profile-detail', params: { id: r.employee.id } })}
           />
         ))
       )}
@@ -276,6 +340,9 @@ const styles = StyleSheet.create({
   columnsWide: { flexDirection: 'row', alignItems: 'flex-start' },
   col: { gap: 12 },
   colWide: { flex: 1 },
+  dayNav: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+  dayLabel: { flex: 1, textAlign: 'center' },
+  navSpacer: { width: 44 },
   chartRow: { flexDirection: 'row', alignItems: 'center', gap: 20, marginBottom: 12 },
   legend: { flex: 1, gap: 10 },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 10 },
