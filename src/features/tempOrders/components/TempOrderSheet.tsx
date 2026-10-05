@@ -1,7 +1,7 @@
 // Vaqtinchalik buyruq qo'shish / tahrirlash formasi (v2 TempOrdersPage modal porti).
 // Soatlik (`ruxsat`) — bitta sana + vaqt oralig'i; arxivlovchi turlar — faqat
 // boshlanish (ogohlantirish bilan). Tana shakllari sof `tempOrder.ts` da.
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import dayjs from 'dayjs';
 import { useQuery } from '@tanstack/react-query';
@@ -66,13 +66,8 @@ export function TempOrderSheet({
   const save = useSaveTempOrder();
   const remove = useDeleteTempOrder();
 
-  useEffect(() => {
-    if (visible) {
-      setForm(initialForm(row));
-      setEmployeeName(row?.employee?.legal_name ?? '');
-      setError(null);
-    }
-  }, [visible, row]);
+  // Holat boshlang'ich qiymatdan: varaq har ochilishda `key` bilan yangidan mount qilinadi
+  // (TempOrdersScreen), shuning uchun effektda qayta to'ldirish shart emas.
 
   const employees = useQuery({
     queryKey: ['temp-orders', 'employee-picker', empSearch, branchId ?? null],
@@ -253,6 +248,7 @@ export function TempOrderSheet({
       <PickerModal
         visible={picker === 'type'}
         title={t('tempOrders.type')}
+        avatars={false}
         options={typeOptions}
         selected={TEMP_ORDER_TYPES.indexOf(form.type as (typeof TEMP_ORDER_TYPES)[number])}
         onClose={() => setPicker(null)}

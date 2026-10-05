@@ -2,6 +2,8 @@
 // `TempOrdersPage` saqlash mantig'i porti. Tur KODLARI tarjima qilinmaydi (tabel
 // ularni o'qiydi); faqat ko'rsatiladigan nomlar i18n'da.
 
+import dayjs from 'dayjs';
+
 export const TEMP_ORDER_TYPES = [
   'kasal',
   'mehnat_tatili',
@@ -38,6 +40,42 @@ export const HOURLY_TYPE = 'ruxsat';
 
 export const isArchiving = (type: string) => ARCHIVING_TYPES.includes(type);
 export const isHourly = (type: string) => type === HOURLY_TYPE;
+
+/**
+ * Ochiq muddat: server oxirgi sanasiz yozuvni 2099-12-31 bilan saqlaydi (`work_leave.py` —
+ * arxivlash turlari; `order_act.py` — muddatsiz holatlar). Bu haqiqiy sana emas: ro'yxatda
+ * «16.08 – 31.12.2099 · 26801 kun» chiqardi.
+ */
+export const OPEN_END_YEAR = 2099;
+
+type RangeRow = { type?: string | null; start_date?: string | null; end_date?: string | null };
+
+export function isOpenEnded(r: RangeRow): boolean {
+  if (isArchiving(r.type ?? '')) return true;
+  return !!r.end_date && Number(r.end_date.slice(0, 4)) >= OPEN_END_YEAR;
+}
+
+/**
+ * Qator muddati (v2 `TempOrdersPage` ko'rinishi): `text` — sanalar, `days` — bir kundan uzun
+ * oraliqda kunlar soni, `open` — «muddatsiz» belgisi kerak (arxivlash turida emas: u — voqea
+ * sanasi, ishdan bo'shatish/o'tkazish).
+ */
+export function tempOrderRange(r: RangeRow): { text: string; days: number | null; open: boolean } {
+  if (!r.start_date) return { text: '—', days: null, open: false };
+  const s = dayjs(r.start_date);
+  if (isOpenEnded(r)) return { text: s.format('DD.MM.YYYY'), days: null, open: !isArchiving(r.type ?? '') };
+  if (!r.end_date) return { text: s.format('DD.MM.YYYY'), days: null, open: false };
+  const e = dayjs(r.end_date);
+  if (e.isSame(s, 'day')) {
+    const hm = s.format('HH:mm') !== '00:00' ? ` ${s.format('HH:mm')}–${e.format('HH:mm')}` : '';
+    return { text: `${s.format('DD.MM.YYYY')}${hm}`, days: null, open: false };
+  }
+  return {
+    text: `${s.format('DD.MM')} – ${e.format('DD.MM.YYYY')}`,
+    days: e.startOf('day').diff(s.startOf('day'), 'day') + 1,
+    open: false,
+  };
+}
 
 export type TempOrderForm = {
   employeeId: number | null;

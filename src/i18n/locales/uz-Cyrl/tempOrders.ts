@@ -30,6 +30,7 @@ export default {
   emptyHint: 'Танланган фильтр бўйича киритилган буйруқ топилмади.',
   daysCount_one: '{{count}} кун',
   daysCount_other: '{{count}} кун',
+  openEnded: 'муддатсиз',
   noAccess: 'Бу саҳифа фақат кадрлар бўлими учун',
   type_kasal: 'Касал',
   type_mehnat_tatili: 'Меҳнат таътили',

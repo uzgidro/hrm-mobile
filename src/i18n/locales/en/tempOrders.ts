@@ -30,6 +30,7 @@ export default {
   emptyHint: 'No orders match the selected filter.',
   daysCount_one: '{{count}} day',
   daysCount_other: '{{count}} days',
+  openEnded: 'open-ended',
   noAccess: 'This page is for the HR department only',
   type_kasal: 'Sick leave',
   type_mehnat_tatili: 'Annual leave',

@@ -30,20 +30,8 @@ import {
   Text,
 } from '@/ui';
 import { tempOrdersQuery, type TempOrder } from '../api/queries';
-import { TEMP_ORDER_TYPES } from '../utils/tempOrder';
+import { TEMP_ORDER_TYPES, tempOrderRange } from '../utils/tempOrder';
 import { TempOrderSheet } from '../components/TempOrderSheet';
-
-function rangeLabel(r: TempOrder): string {
-  if (!r.start_date) return '—';
-  const s = dayjs(r.start_date);
-  if (!r.end_date) return s.format('DD.MM.YYYY');
-  const e = dayjs(r.end_date);
-  if (e.isSame(s, 'day')) {
-    const hm = s.format('HH:mm') !== '00:00' ? ` ${s.format('HH:mm')}–${e.format('HH:mm')}` : '';
-    return `${s.format('DD.MM.YYYY')}${hm}`;
-  }
-  return `${s.format('DD.MM')} – ${e.format('DD.MM.YYYY')}`;
-}
 
 export default function TempOrdersScreen() {
   const { t } = useTranslation();
@@ -112,10 +100,8 @@ export default function TempOrdersScreen() {
             rows.map((r, i) => {
               const month = r.start_date ? dayjs(r.start_date).format('YYYY-MM') : '';
               const prevMonth = i > 0 && rows[i - 1].start_date ? dayjs(rows[i - 1].start_date!).format('YYYY-MM') : '';
-              const days =
-                r.start_date && r.end_date && !dayjs(r.end_date).isSame(r.start_date, 'day')
-                  ? dayjs(r.end_date).startOf('day').diff(dayjs(r.start_date).startOf('day'), 'day') + 1
-                  : null;
+              // Ochiq muddat (server 2099-12-31) — faqat boshlanish, kunlar soni yo'q.
+              const range = tempOrderRange(r);
               const name = r.employee?.legal_name ?? '—';
               return (
                 <View key={r.id}>
@@ -127,7 +113,13 @@ export default function TempOrdersScreen() {
                   <ListRow
                     testID={`temp-order-${r.id}`}
                     title={name}
-                    subtitle={days ? `${rangeLabel(r)} · ${t('tempOrders.daysCount', { count: days })}` : rangeLabel(r)}
+                    subtitle={
+                      range.days
+                        ? `${range.text} · ${t('tempOrders.daysCount', { count: range.days })}`
+                        : range.open
+                          ? `${range.text} – ${t('tempOrders.openEnded')}`
+                          : range.text
+                    }
                     left={<Avatar name={name} uri={r.employee?.photo_thumb_path ?? r.employee?.photo_path} size={36} />}
                     right={
                       <Badge
@@ -164,6 +156,7 @@ export default function TempOrdersScreen() {
       <PickerModal
         visible={typePicker}
         title={t('tempOrders.type')}
+        avatars={false}
         options={[{ value: -1, label: t('tempOrders.allTypes') }, ...typeOptions]}
         selected={type ? TEMP_ORDER_TYPES.indexOf(type as (typeof TEMP_ORDER_TYPES)[number]) : -1}
         onClose={() => setTypePicker(false)}

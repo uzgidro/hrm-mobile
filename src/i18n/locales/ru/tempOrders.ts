@@ -32,6 +32,7 @@ export default {
   daysCount_few: '{{count}} дня',
   daysCount_many: '{{count}} дней',
   daysCount_other: '{{count}} дня',
+  openEnded: 'бессрочно',
   noAccess: 'Страница доступна только отделу кадров',
   type_kasal: 'Больничный',
   type_mehnat_tatili: 'Трудовой отпуск',

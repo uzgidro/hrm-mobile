@@ -1,4 +1,12 @@
-import { TEMP_ORDER_TYPES, buildCreateBody, buildUpdateBody, validateTempOrder, type TempOrderForm } from '../tempOrder';
+import {
+  TEMP_ORDER_TYPES,
+  buildCreateBody,
+  buildUpdateBody,
+  isOpenEnded,
+  tempOrderRange,
+  validateTempOrder,
+  type TempOrderForm,
+} from '../tempOrder';
 
 const base: TempOrderForm = { employeeId: 7, type: 'kasal', start: '2026-10-01', end: '2026-10-05', startTime: '09:00', endTime: '13:00', note: '  isitma ' };
 
@@ -42,4 +50,31 @@ describe('buildUpdateBody — v2 PATCH', () => {
   it('soatlik', () =>
     expect(buildUpdateBody({ ...base, type: 'ruxsat' })).toMatchObject({ start_date: '2026-10-01T09:00:00', end_date: '2026-10-01T13:00:00' }));
   it('arxivlovchi', () => expect(buildUpdateBody({ ...base, type: 'boshqa_ishga_otkazish' })).toMatchObject({ end_date: null }));
+});
+
+describe("muddat (ro'yxat qatori)", () => {
+  it("arxivlash turi — server 2099-12-31 yozadi: faqat boshlanish sanasi, kunlar soni yo'q (26801 kun emas)", () => {
+    const r = { type: 'ishdan_ozod', start_date: '2026-08-16T00:00:00', end_date: '2099-12-31T23:59:59' };
+    expect(isOpenEnded(r)).toBe(true);
+    expect(tempOrderRange(r)).toEqual({ text: '16.08.2026', days: null, open: false });
+  });
+  it("boshqa tur, lekin 2099+ to'ldiruvchi sana — boshlanish + «muddatsiz» belgisi", () => {
+    const r = { type: 'dekret', start_date: '2026-08-16T00:00:00', end_date: '2099-12-31T23:59:59' };
+    expect(isOpenEnded(r)).toBe(true);
+    expect(tempOrderRange(r)).toEqual({ text: '16.08.2026', days: null, open: true });
+  });
+  it('oddiy oraliq — kunlar soni bilan; bir kun — vaqt bilan; sanasiz — «—»', () => {
+    expect(tempOrderRange({ type: 'kasal', start_date: '2026-10-01T00:00:00', end_date: '2026-10-03T23:59:59' })).toEqual({
+      text: '01.10 – 03.10.2026',
+      days: 3,
+      open: false,
+    });
+    expect(tempOrderRange({ type: 'ruxsat', start_date: '2026-10-01T09:00:00', end_date: '2026-10-01T13:00:00' })).toEqual({
+      text: '01.10.2026 09:00–13:00',
+      days: null,
+      open: false,
+    });
+    expect(tempOrderRange({ type: 'kasal', start_date: null, end_date: null })).toEqual({ text: '—', days: null, open: false });
+    expect(isOpenEnded({ type: 'kasal', end_date: '2098-12-31' })).toBe(false);
+  });
 });

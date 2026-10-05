@@ -42,6 +42,28 @@ describe('TempOrdersScreen', () => {
     expect(screen.getByText(/3 kun/)).toBeTruthy();
   });
 
+  it("arxivlash turi (server 2099-12-31) — faqat boshlanish sanasi, «26801 kun» yo'q", async () => {
+    mock.onGet(WORK_LEAVES_HR_LIST).reply(200, {
+      items: [
+        {
+          id: 12,
+          employee: { legal_name: 'Toshev Bek' },
+          type: 'ishdan_ozod',
+          start_date: '2026-08-16T00:00:00',
+          end_date: '2099-12-31T23:59:59',
+        },
+      ],
+      total: 1,
+      pages: 1,
+    });
+    useAuthStore.setState({ user: hr as never, isAuthenticated: true } as never);
+    await renderWithProviders(<TempOrdersScreen />);
+    expect(await screen.findByText('Toshev Bek')).toBeTruthy();
+    expect(screen.queryByText(/2099/)).toBeNull();
+    expect(screen.queryByText(/kun/)).toBeNull();
+    expect(screen.getByText(/16\.08\.2026/)).toBeTruthy();
+  });
+
   it("oddiy xodim — ruxsat yo'q, so'rov yo'q", async () => {
     useAuthStore.setState({
       user: { id: 2, type: 'employee', employee: { id: 6 } } as never,

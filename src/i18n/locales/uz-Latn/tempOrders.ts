@@ -30,6 +30,7 @@ export default {
   emptyHint: "Tanlangan filtr bo'yicha kiritilgan buyruq topilmadi.",
   daysCount_one: '{{count}} kun',
   daysCount_other: '{{count}} kun',
+  openEnded: 'muddatsiz',
   noAccess: "Bu sahifa faqat kadrlar bo'limi uchun",
   type_kasal: 'Kasal',
   type_mehnat_tatili: "Mehnat ta'tili",
