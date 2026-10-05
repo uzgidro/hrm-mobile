@@ -163,6 +163,54 @@ describe('RegistrationsScreen (v2 RegistrationsPage)', () => {
     expect(mock.history.post).toHaveLength(0);
   });
 
+  it("2-sahifadagi yagona ariza ko'rib chiqilsa — sahifa serverdagi sahifalar soniga qisqaradi", async () => {
+    let reviewed = false;
+    mock.onGet(REGISTRATIONS).reply((cfg) => {
+      const p = cfg.params?.page ?? 1;
+      if (p === 1) return [200, { items: [{ ...ROWS[0], id: 51, full_name: 'Birinchi' }], total: reviewed ? 1 : 26, pages: reviewed ? 1 : 2 }];
+      return [200, reviewed ? { items: [], total: 1, pages: 1 } : { items: [ROWS[0]], total: 26, pages: 2 }];
+    });
+    mock.onPost(REGISTRATION_REJECT(41)).reply(() => {
+      reviewed = true;
+      return [200, { ...ROWS[0], status: 'rejected' }];
+    });
+    await renderWithProviders(<RegistrationsScreen />);
+    await screen.findByText('Birinchi');
+    await fireEvent.press(screen.getByTestId('pager-next'));
+    await fireEvent.press(await screen.findByTestId('registration-row-41'));
+    await fireEvent.press(await screen.findByTestId('registration-reject'));
+    await fireEvent.changeText(await screen.findByTestId('registration-reason'), 'Hujjat xira');
+    await fireEvent.press(screen.getByTestId('registration-reject-submit'));
+    // Bo'sh 2-sahifa + yashirin Pager emas — 1-sahifa so'raladi va ko'rinadi.
+    expect(await screen.findByText('Birinchi')).toBeTruthy();
+    expect(lastList(mock)).toMatchObject({ page: 1 });
+    expect(screen.queryByText("Ariza yo'q")).toBeNull();
+  });
+
+  it("409 (boshqasi allaqachon ko'rib chiqqan) — xato formada va ro'yxat baribir yangilanadi", async () => {
+    mock.onPost(REGISTRATION_APPROVE(41)).reply(409, { code: 'already_reviewed', detail: 'Ariza allaqachon ko‘rib chiqilgan' });
+    await renderWithProviders(<RegistrationsScreen />);
+    await fireEvent.press(await screen.findByTestId('registration-row-41'));
+    await fireEvent.press(await screen.findByTestId('registration-approve'));
+    await screen.findByText('Chorvoq GES');
+    const before = listCalls(mock).length;
+    await fireEvent.press(screen.getByTestId('registration-approve-submit'));
+    expect(await screen.findByTestId('registration-error')).toBeTruthy();
+    await waitFor(() => expect(listCalls(mock).length).toBeGreaterThan(before));
+  });
+
+  it("409 rad etishda ham ro'yxat yangilanadi", async () => {
+    mock.onPost(REGISTRATION_REJECT(41)).reply(409, { code: 'already_reviewed' });
+    await renderWithProviders(<RegistrationsScreen />);
+    await fireEvent.press(await screen.findByTestId('registration-row-41'));
+    await fireEvent.press(await screen.findByTestId('registration-reject'));
+    await fireEvent.changeText(await screen.findByTestId('registration-reason'), 'Hujjat xira');
+    const before = listCalls(mock).length;
+    await fireEvent.press(screen.getByTestId('registration-reject-submit'));
+    expect(await screen.findByTestId('registration-error')).toBeTruthy();
+    await waitFor(() => expect(listCalls(mock).length).toBeGreaterThan(before));
+  });
+
   it("403 — «Ruxsat yo'q»", async () => {
     mock.onGet(REGISTRATIONS).reply(403, { code: 'forbidden' });
     await renderWithProviders(<RegistrationsScreen />);

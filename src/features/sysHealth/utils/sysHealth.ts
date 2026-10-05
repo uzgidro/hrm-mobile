@@ -41,7 +41,8 @@ export interface Incident {
 
 /** Serverning ma'lum rejimlari (`models/system_ops.py` MODES). */
 export const OPS_MODES = ['running', 'maintenance', 'recovery'] as const;
-export const INCIDENT_KINDS = ['shutdown', 'recovery', 'detected'] as const;
+/** `models/system_ops.py` `kind`: detected · shutdown · recovery (E3) · restore (zaxira nusxadan, E1). */
+export const INCIDENT_KINDS = ['shutdown', 'recovery', 'detected', 'restore'] as const;
 
 /** Server tarjimasi bo'lgan komponent nomlari (v2 `sysHealth.comp_*`). */
 export const KNOWN_COMPONENTS = [

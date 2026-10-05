@@ -195,6 +195,7 @@ function LmsSettingsForm({ settings }: { settings: LmsSettings }) {
   const submit = async () => {
     try {
       await save.mutateAsync(form);
+      save.reset(); // kalit mutatsiya holatida (variables) qolmasin
       set({ apiKey: '' });
       toast.success(t('lms.saved'));
     } catch (e) {

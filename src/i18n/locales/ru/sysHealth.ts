@@ -69,6 +69,7 @@ export default {
   kind_shutdown: 'Аварийное завершение',
   kind_recovery: 'Восстановление',
   kind_detected: 'Обнаружен сбой',
+  kind_restore: 'Восстановление из резервной копии',
   minutes_one: '{{count}} мин',
   minutes_few: '{{count}} мин',
   minutes_many: '{{count}} мин',

@@ -1,6 +1,7 @@
 // Bitta jurnal yozuvi to'liq (v2 `AuditDetailModal`): metod + endpoint, kim/qayerdan/qachon,
 // qurilma; keyin «nima yuborildi» — o'zgarishlar «kalit: eski → yangi» matni, qolgan maydonlar
-// va to'liq tana (parol/token server tomonida `***`). Faqat o'qish. Ota `key` bilan mount qiladi.
+// va to'liq tana (parol/token server tomonida `***`; server o'tkazib yuborgan `api_key` kabilarni
+// `describeDetails` → `maskSecrets` maskalaydi). Faqat o'qish. Ota `key` bilan mount qiladi.
 import React from 'react';
 import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';

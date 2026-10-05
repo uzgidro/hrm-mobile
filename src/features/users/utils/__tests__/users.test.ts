@@ -1,9 +1,11 @@
+import { AxiosError, type AxiosResponse } from 'axios';
 import {
   KIOSK_ROLES,
   USERS_PAGE_SIZE,
   accountState,
   buildAdminBody,
   buildKioskBody,
+  isForbidden,
   kioskRoleKey,
   maskPinfl,
   multiOrgBranchNames,
@@ -148,5 +150,15 @@ describe('users utils (v2 UsersPage)', () => {
 
   it('JShShIR niqobi: faqat raqam, 14 tagacha', () => {
     expect(maskPinfl('12a34 5678901234567')).toBe('12345678901234');
+  });
+  it("isForbidden: faqat HTTP 403 — 500, tarmoq xatosi va oddiy Error emas", () => {
+    const http = (status: number) =>
+      new AxiosError('x', 'ERR', undefined, undefined, { status, data: {} } as AxiosResponse);
+    expect(isForbidden(http(403))).toBe(true);
+    expect(isForbidden(http(401))).toBe(false);
+    expect(isForbidden(http(500))).toBe(false);
+    expect(isForbidden(new AxiosError('Network Error', 'ERR_NETWORK'))).toBe(false);
+    expect(isForbidden(new Error('boom'))).toBe(false);
+    expect(isForbidden(null)).toBe(false);
   });
 });

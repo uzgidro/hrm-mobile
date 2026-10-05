@@ -28,11 +28,13 @@ function useInvalidate() {
     ]);
 }
 
+// `onSettled` — xatoda ham: 409 (ariza allaqachon boshqa administrator tomonidan ko'rib chiqilgan)
+// bo'lsa ro'yxatda eskirgan «Kutilmoqda» qatori qolib ketmasin.
 export function useApproveRegistration() {
-  const onSuccess = useInvalidate();
-  return useMutation({ meta, mutationFn: approveRegistration, onSuccess });
+  const onSettled = useInvalidate();
+  return useMutation({ meta, mutationFn: approveRegistration, onSettled });
 }
 export function useRejectRegistration() {
-  const onSuccess = useInvalidate();
-  return useMutation({ meta, mutationFn: rejectRegistration, onSuccess });
+  const onSettled = useInvalidate();
+  return useMutation({ meta, mutationFn: rejectRegistration, onSettled });
 }

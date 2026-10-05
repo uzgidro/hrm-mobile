@@ -4,7 +4,14 @@
 // ⚠️ Parollar: administrator/kiosk formasida kiritilgan parol faqat so'rov tanasiga tushadi va hech
 // qayerda saqlanmaydi; «Parol yuborish» serverda bir martalik parol yasab POCHTAGA jo'natadi —
 // javobda parol yo'q, shuning uchun mobil uni ko'rsatmaydi ham, keshlamaydi ham (v2).
+import { isAxiosError } from 'axios';
 import { unwrapList } from '@/api/response';
+
+/**
+ * Tab ro'yxati «Ruxsat yo'q» faqat HTTP 403 da; tarmoq/500 xatolari — qayta urinish bilan `ErrorState`
+ * (aks holda vaqtinchalik nosozlik ruxsat yo'qdek ko'rinib, qayta urinib bo'lmasdi).
+ */
+export const isForbidden = (e: unknown): boolean => isAxiosError(e) && e.response?.status === 403;
 
 /** v2 `useListParams` DEFAULT_PAGE_SIZE. */
 export const USERS_PAGE_SIZE = 25;

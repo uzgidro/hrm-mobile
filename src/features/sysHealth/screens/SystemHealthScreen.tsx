@@ -61,6 +61,16 @@ export default function SystemHealthScreen() {
   const resume = useResumeSystem();
   const [sheet, setSheet] = useState<null | { kind: 'shutdown' | 'run'; n: number }>(null);
   const [report, setReport] = useState<Report | null>(null);
+  // Spinner faqat tortib yangilashda: `diag.isRefetching` har 120 s lik avtomatik so'rovda ham yonardi.
+  const [refreshing, setRefreshing] = useState(false);
+  const refresh = async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([state.refetch(), diag.refetch(), incidents.refetch()]);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const header = <PageHeader title={t('sysHealth.title')} subtitle={t('sysHealth.subtitle')} />;
 
@@ -228,8 +238,9 @@ export default function SystemHealthScreen() {
   return (
     <View style={styles.root}>
       <Screen
-        refreshing={diag.isRefetching}
-        onRefresh={() => void Promise.all([state.refetch(), diag.refetch(), incidents.refetch()])}
+        testID="sys-health-screen"
+        refreshing={refreshing}
+        onRefresh={() => void refresh()}
         maxWidth={LIST_MAX_WIDTH}
       >
         {header}

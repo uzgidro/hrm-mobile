@@ -1,7 +1,7 @@
 import React from 'react';
 import MockAdapter from 'axios-mock-adapter';
 import { apiClient } from '@/api/client';
-import { renderWithProviders, screen, fireEvent, waitFor } from '@/test/renderWithProviders';
+import { act, renderWithProviders, screen, fireEvent, waitFor } from '@/test/renderWithProviders';
 import { useAuthStore } from '@/store/authStore';
 import { confirm } from '@/lib/confirm';
 import i18n from '@/i18n';
@@ -14,6 +14,7 @@ import {
   SYSTEM_OPS_STATE,
 } from '@/api/urls';
 import SystemHealthScreen from '../screens/SystemHealthScreen';
+import { sysHealthKeys } from '../api/queries';
 
 jest.mock('expo-router', () => ({ router: { push: jest.fn(), back: jest.fn(), canGoBack: () => true } }));
 jest.mock('@/lib/confirm', () => ({ confirm: jest.fn(() => Promise.resolve(true)) }));
@@ -51,6 +52,24 @@ const INCIDENTS = [
   { id: 5, kind: 'detected', message: null, detected_at: '2026-10-05T03:00:00+00:00', resolved_at: null },
 ];
 
+/** Screen ScrollView'ining `refreshControl` elementi (RNTL 14 da UNSAFE_getByType yo'q). */
+function refreshControl(): { props: { refreshing: boolean; onRefresh: () => void } } {
+  type Node = { props?: Record<string, unknown>; children?: unknown[] };
+  const walk = (n: Node): Node | null => {
+    if (n.props?.refreshControl) return n.props.refreshControl as Node;
+    for (const c of n.children ?? []) {
+      if (c && typeof c === 'object') {
+        const hit = walk(c as Node);
+        if (hit) return hit;
+      }
+    }
+    return null;
+  };
+  const hit = walk(screen.getByTestId('sys-health-screen') as unknown as Node);
+  if (!hit) throw new Error('refreshControl topilmadi');
+  return hit as never;
+}
+
 const posts = (m: MockAdapter, url: string) => m.history.post.filter((r) => r.url === url);
 
 describe('SystemHealthScreen (v2 SystemHealthPage + SystemOpsPanel)', () => {
@@ -83,6 +102,47 @@ describe('SystemHealthScreen (v2 SystemHealthPage + SystemOpsPanel)', () => {
     expect(screen.getByText('Bartaraf etilgan')).toBeTruthy();
     expect(screen.getByText('Ochiq')).toBeTruthy();
     expect(mock.history.get.find((r) => r.url === SYSTEM_OPS_INCIDENTS)!.params).toEqual({ limit: 30 });
+  });
+
+  it("«restore» hodisasi — zaxira nusxadan tiklash (recovery'dan alohida)", async () => {
+    setUser(master);
+    mock.onGet(SYSTEM_OPS_INCIDENTS).reply(200, [
+      { id: 9, kind: 'restore', message: null, detected_at: '2026-10-05T03:00:00+00:00', resolved_at: null },
+    ]);
+    await renderWithProviders(<SystemHealthScreen />);
+    expect(await screen.findByText('Zaxira nusxadan tiklash')).toBeTruthy();
+  });
+
+  it("fon yangilanishi (120 s so'rov) spinner ko'rsatmaydi — faqat tortib yangilash", async () => {
+    setUser(master);
+    const { queryClient } = await renderWithProviders(<SystemHealthScreen />);
+    await screen.findByText("Ma'lumotlar bazasi");
+    let release: () => void = () => {};
+    mock.onGet(SYSTEM_OPS_DIAGNOSTICS).reply(
+      () => new Promise((res) => (release = () => res([200, DIAG]))),
+    );
+    // Avtomatik so'rov kabi: kesh fonda yangilanadi.
+    let bg!: Promise<void>;
+    await act(async () => {
+      bg = queryClient.refetchQueries({ queryKey: sysHealthKeys.diagnostics() });
+    });
+    await waitFor(() => expect(queryClient.isFetching({ queryKey: sysHealthKeys.diagnostics() })).toBe(1));
+    expect(refreshControl().props.refreshing).toBe(false);
+    await act(async () => {
+      release();
+      await bg;
+    });
+
+    // Tortib yangilash — spinner so'rovlar tugaguncha.
+    mock.onGet(SYSTEM_OPS_DIAGNOSTICS).reply(
+      () => new Promise((res) => (release = () => res([200, DIAG]))),
+    );
+    await act(async () => {
+      refreshControl().props.onRefresh();
+    });
+    await waitFor(() => expect(refreshControl().props.refreshing).toBe(true));
+    await act(async () => release());
+    await waitFor(() => expect(refreshControl().props.refreshing).toBe(false));
   });
 
   it('diagnostika yiqilsa «soz» deyilmaydi (v2 izohi)', async () => {

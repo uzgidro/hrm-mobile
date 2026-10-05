@@ -137,6 +137,34 @@ describe('UsersScreen (v2 UsersPage)', () => {
     expect(await screen.findByText("Bu bo'lim faqat administrator va bosh administrator uchun.")).toBeTruthy();
   });
 
+  describe("har tab: faqat 403 — «Ruxsat yo'q», boshqa xato — qayta urinish", () => {
+    const DENIED = "Ruxsat yo'q";
+    const multiOrg = (status: number) =>
+      mock.onGet(EMPLOYEES_LIST).reply((cfg) =>
+        cfg.params?.is_multi_org_user ? [status, {}] : [200, { items: ACCOUNTS, total: 1, pages: 1 }],
+      );
+    const cases: [string, string, (status: number) => void][] = [
+      ['Xodim hisoblari', 'accounts', (st) => mock.onGet(EMPLOYEES_LIST).reply(st, {})],
+      ['Administratorlar', 'admins', (st) => mock.onGet(ADMINS).reply(st, {})],
+      ['Rol vakillari', 'multiorg', multiOrg],
+      ['Kiosk hisoblari', 'kiosk', (st) => mock.onGet(MULTI_MODAL_USERS).reply(st, {})],
+    ];
+    it.each(cases)('%s: 403 → ruxsat yo‘q', async (tab, _id, fail) => {
+      fail(403);
+      await renderWithProviders(<UsersScreen />);
+      if (tab !== 'Xodim hisoblari') await fireEvent.press(await screen.findByText(tab));
+      expect(await screen.findByText(DENIED)).toBeTruthy();
+      expect(screen.queryByText('Qayta urinish')).toBeNull();
+    });
+    it.each(cases)('%s: 500 → xato + qayta urinish (ruxsat yo‘q emas)', async (tab, _id, fail) => {
+      fail(500);
+      await renderWithProviders(<UsersScreen />);
+      if (tab !== 'Xodim hisoblari') await fireEvent.press(await screen.findByText(tab));
+      expect(await screen.findByText('Qayta urinish')).toBeTruthy();
+      expect(screen.queryByText(DENIED)).toBeNull();
+    });
+  });
+
   it('administratorlar: yangi — pochta majburiy, parol ≥ 8; bo‘sh parol null (pochtaga), filial bo‘sh — null', async () => {
     mock.onPost(ADMINS).reply(200, { id: 6 });
     await renderWithProviders(<UsersScreen />);

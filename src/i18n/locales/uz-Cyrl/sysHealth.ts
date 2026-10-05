@@ -69,6 +69,7 @@ export default {
   kind_shutdown: 'Авариявий тўхтатиш',
   kind_recovery: 'Тиклаш',
   kind_detected: 'Носозлик аниқланди',
+  kind_restore: 'Захира нусхадан тиклаш',
   minutes_one: '{{count}} дақ',
   minutes_other: '{{count}} дақ',
   noAccess: 'Рухсат йўқ',

@@ -7,6 +7,8 @@ import {
   describeDetails,
   foldedCount,
   isRangeInvalid,
+  isSensitiveKey,
+  maskSecrets,
   onlinePeaks,
   shortAgent,
   valueText,
@@ -115,5 +117,93 @@ describe('auditLog utils (v2 AuditLogPage)', () => {
     ]);
     expect(valueText('x'.repeat(250))).toHaveLength(201);
     expect(valueText(null)).toBe('—');
+  });
+  describe('maxfiy qiymatlarni maskalash (server api_key ni maskalamaydi)', () => {
+    const M = '••••••';
+
+    it("kalit nomi: snake/camel/katta harf; parol/token/sir/api kalit/JShShIR — oxiridagi bo'lak bo'yicha", () => {
+      for (const k of [
+        'password',
+        'new_password',
+        'newPassword',
+        'PASSWORD',
+        'pass',
+        'access_token',
+        'refreshToken',
+        'token',
+        'client_secret',
+        'secret_key',
+        'api_key',
+        'apiKey',
+        'API_KEY',
+        'apikey',
+        'api-key',
+        'hik_api_key',
+        'private_key',
+        'privateKey',
+        'pinfl',
+        'PINFL',
+      ]) {
+        expect([k, isSensitiveKey(k)]).toEqual([k, true]);
+      }
+      for (const k of ['token_count', 'passport_number', 'pasport_series', 'bypass', 'keyboard', 'status', 'tokens_used']) {
+        expect([k, isSensitiveKey(k)]).toEqual([k, false]);
+      }
+    });
+
+    it("istalgan chuqurlikda, massivlarda; faqat satr/son — null, bo'sh satr, mantiqiy qiymat va server *** o'zicha", () => {
+      expect(
+        maskSecrets({
+          provider: 'moodle',
+          api_key: 'sk-live-123',
+          has_api_key: true,
+          token_count: 42,
+          config: { nested: { apiKey: 'abc', url: 'https://x.uz' } },
+          accounts: [{ login: 'kpp1', password: 'Qwerty123' }, { login: 'kpp2', password: null }],
+          pinfl: 12345678901234,
+          secret: '',
+          token: '***',
+          include_pinfl: false,
+        }),
+      ).toEqual({
+        provider: 'moodle',
+        api_key: M,
+        has_api_key: true,
+        token_count: 42,
+        config: { nested: { apiKey: M, url: 'https://x.uz' } },
+        accounts: [{ login: 'kpp1', password: M }, { login: 'kpp2', password: null }],
+        pinfl: M,
+        secret: '',
+        token: '***',
+        include_pinfl: false,
+      });
+      // Maxfiy kalit ostidagi obyekt — ichidagi barcha satr/sonlar.
+      expect(maskSecrets({ token: { value: 'x', ttl: 60, ok: true } })).toEqual({ token: { value: M, ttl: M, ok: true } });
+      // Xom (form-urlencoded) matndagi juftliklar.
+      expect(maskSecrets({ _raw: 'username=ali&api_key=sk-1&password=p w' })).toEqual({
+        _raw: `username=ali&api_key=${M}&password=${M} w`,
+      });
+      expect(maskSecrets('a=1&apiKey=zzz')).toBe(`a=1&apiKey=${M}`);
+    });
+
+    it("tafsilot: maydonlar, o'zgarish qatori va to'liq tana maskalanadi; kalit almashgani ko'rinadi", () => {
+      const d = describeDetails({
+        provider: 'generic',
+        api_key: 'sk-NEW-secret',
+        meta: { password: 'p@ss' },
+        target: { id: '1', label: 'LMS', provider: 'moodle', api_key: 'sk-OLD-secret' },
+      });
+      expect(d.changes).toEqual([
+        { key: 'provider', from: 'moodle', to: 'generic' },
+        { key: 'api_key', from: M, to: M },
+      ]);
+      expect(d.fields).toEqual([{ key: 'meta', value: `{"password":"${M}"}` }]);
+      expect(d.raw).not.toMatch(/sk-NEW|sk-OLD|p@ss/);
+      expect(d.raw).toContain(M);
+      // _body konverti ham.
+      const b = describeDetails({ _body: { api_key: 'sk-1' } });
+      expect(b.fields).toEqual([{ key: 'api_key', value: M }]);
+      expect(b.raw).not.toContain('sk-1');
+    });
   });
 });

@@ -23,9 +23,11 @@ function useInvalidate() {
   return () => qc.invalidateQueries({ queryKey: lmsKeys.all });
 }
 
+// Forma ochiq API kalitni olib ketadi — u mutatsiya `variables`ida qolmasin: `gcTime: 0` (ekran
+// yopilgach darhol tozalanadi) + ekran muvaffaqiyatli saqlashdan keyin `reset()` chaqiradi.
 export function useSaveLmsSettings() {
   const onSuccess = useInvalidate();
-  return useMutation({ meta, mutationFn: saveLmsSettings, onSuccess });
+  return useMutation({ meta, mutationFn: saveLmsSettings, onSuccess, gcTime: 0 });
 }
 export function useTestLmsConnection() {
   return useMutation({ meta, mutationFn: testLmsConnection });

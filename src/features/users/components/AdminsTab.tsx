@@ -4,7 +4,6 @@
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
-import { isAxiosError } from 'axios';
 import { useTranslation } from 'react-i18next';
 import { getApiErrorMessage } from '@/api/errors';
 import { confirm } from '@/lib/confirm';
@@ -12,7 +11,7 @@ import { toast } from '@/lib/toast';
 import { Avatar, Button, Card, EmptyState, ErrorState, ListRow, Sheet, Skeleton, Text } from '@/ui';
 import { adminsQuery } from '../api/queries';
 import { useDeleteAdmin, useSendAdminPassword } from '../api/mutations';
-import type { AdminRow } from '../utils/users';
+import { isForbidden, type AdminRow } from '../utils/users';
 import { AdminFormSheet } from './AdminFormSheet';
 import { Denied, KeyValue, useBranchName } from './UsersBits';
 
@@ -24,7 +23,7 @@ export function AdminsTab() {
   const { nameOf } = useBranchName();
   const [open, setOpen] = useState<Open>(null);
 
-  if (list.isError && !list.data && isAxiosError(list.error) && list.error.response?.status === 403) {
+  if (list.isError && !list.data && isForbidden(list.error)) {
     return <Denied hint={t('users.noAccessHint')} />;
   }
 

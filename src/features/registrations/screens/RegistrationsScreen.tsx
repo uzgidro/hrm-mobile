@@ -41,6 +41,11 @@ export default function RegistrationsScreen() {
   const [page, setPage] = useState(1);
   const [viewing, setViewing] = useState<{ row: RegistrationRow; n: number } | null>(null);
   const list = useQuery(registrationsQuery(status, debounced, page));
+  // Sahifa serverdagi sahifalar sonidan oshmasin: oxirgi sahifadagi yagona ariza ko'rib chiqilsa
+  // ro'yxat bo'sh qolib, Pager yashirinib qolardi — oxirgi mavjud sahifaga qaytamiz (render paytidagi
+  // tuzatish, vehicles RequestsTab kabi). Holat/qidiruv o'zgarsa sahifa 1 ga qaytariladi (pastda).
+  const serverPages = list.isSuccess && !list.isPlaceholderData ? Math.max(1, list.data.pages) : null;
+  if (serverPages != null && page > serverPages) setPage(serverPages);
   const denied = list.isError && !list.data && isAxiosError(list.error) && list.error.response?.status === 403;
 
   const header = <PageHeader title={t('registrations.title')} subtitle={t('registrations.subtitle')} />;

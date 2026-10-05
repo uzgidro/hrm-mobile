@@ -11,8 +11,8 @@ import { useBreakpoint } from '@/utils/responsive';
 import { formatTashkentDate } from '@/utils/tashkentTime';
 import { Avatar, Badge, Card, EmptyState, ErrorState, ListRow, Pager, SearchField, Sheet, Skeleton, Text } from '@/ui';
 import { multiOrgQuery } from '../api/queries';
-import { multiOrgBranchNames, primaryMultiOrgRole, type MultiOrgRow } from '../utils/users';
-import { KeyValue, useBranchName } from './UsersBits';
+import { isForbidden, multiOrgBranchNames, primaryMultiOrgRole, type MultiOrgRow } from '../utils/users';
+import { Denied, KeyValue, useBranchName } from './UsersBits';
 
 function RoleBadges({ row }: { row: MultiOrgRow }) {
   const { t } = useTranslation();
@@ -43,6 +43,8 @@ export function MultiOrgTab({ branchId }: { branchId: number | null }) {
   const [viewing, setViewing] = useState<{ row: MultiOrgRow; n: number } | null>(null);
   const list = useQuery(multiOrgQuery({ search: debounced, page, branchId }));
   const { nameOf } = useBranchName();
+
+  if (list.isError && !list.data && isForbidden(list.error)) return <Denied hint={t('users.noAccessHint')} />;
 
   const rows = list.data?.items ?? [];
   const summary = (r: MultiOrgRow) => {

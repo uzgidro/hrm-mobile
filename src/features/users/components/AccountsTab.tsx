@@ -4,7 +4,6 @@
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
-import { isAxiosError } from 'axios';
 import { useTranslation } from 'react-i18next';
 import { getApiErrorMessage } from '@/api/errors';
 import { confirm } from '@/lib/confirm';
@@ -28,7 +27,7 @@ import {
 } from '@/ui';
 import { accountsQuery } from '../api/queries';
 import { useSetEmployeeActive } from '../api/mutations';
-import { accountState, type AccountState, type EmployeeAccountRow } from '../utils/users';
+import { accountState, isForbidden, type AccountState, type EmployeeAccountRow } from '../utils/users';
 import { Denied, KeyValue } from './UsersBits';
 
 const STATE_TONE: Record<AccountState, Tone> = { none: 'neutral', active: 'success', inactive: 'danger' };
@@ -52,7 +51,7 @@ export function AccountsTab({ branchId }: { branchId: number | null }) {
   const [viewing, setViewing] = useState<{ row: EmployeeAccountRow; n: number } | null>(null);
   const list = useQuery(accountsQuery({ search: debounced, page, branchId }));
 
-  if (list.isError && !list.data && isAxiosError(list.error) && list.error.response?.status === 403) {
+  if (list.isError && !list.data && isForbidden(list.error)) {
     return <Denied hint={t('users.noAccessHint')} />;
   }
 

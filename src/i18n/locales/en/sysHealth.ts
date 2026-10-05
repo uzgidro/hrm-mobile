@@ -69,6 +69,7 @@ export default {
   kind_shutdown: 'Emergency shutdown',
   kind_recovery: 'Recovery',
   kind_detected: 'Failure detected',
+  kind_restore: 'Restore from backup',
   minutes_one: '{{count}} min',
   minutes_other: '{{count}} min',
   noAccess: 'No access',

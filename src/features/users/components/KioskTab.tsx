@@ -9,10 +9,10 @@ import { getApiErrorMessage } from '@/api/errors';
 import { confirm } from '@/lib/confirm';
 import { toast } from '@/lib/toast';
 import { useBreakpoint } from '@/utils/responsive';
-import { Avatar, Badge, Button, Card, EmptyState, ListRow, Sheet, Skeleton, Text } from '@/ui';
+import { Avatar, Badge, Button, Card, EmptyState, ErrorState, ListRow, Sheet, Skeleton, Text } from '@/ui';
 import { kioskUsersQuery } from '../api/queries';
 import { useDeleteKiosk, useSendKioskPassword } from '../api/mutations';
-import { kioskRoleKey, type KioskUser } from '../utils/users';
+import { isForbidden, kioskRoleKey, type KioskUser } from '../utils/users';
 import { KioskFormSheet } from './KioskFormSheet';
 import { Denied, KeyValue, useBranchName } from './UsersBits';
 
@@ -26,8 +26,8 @@ export function KioskTab({ branchId }: { branchId: number | null }) {
   const { nameOf } = useBranchName();
   const [open, setOpen] = useState<Open>(null);
 
-  // v2: kiosk ro'yxati xato bersa — «ruxsat yo'q» (admin/master-admin darvozasi).
-  if (list.isError && !list.data) return <Denied hint={t('users.kioskDeniedHint')} />;
+  // «Ruxsat yo'q» faqat 403 da (admin/master-admin darvozasi); boshqa xato — qayta urinish bilan.
+  if (list.isError && !list.data && isForbidden(list.error)) return <Denied hint={t('users.kioskDeniedHint')} />;
 
   const branchesLabel = (r: KioskUser) =>
     r.organization_branch_ids?.length ? r.organization_branch_ids.map(nameOf).join(', ') : t('users.kioskAllBranches');
@@ -37,6 +37,7 @@ export function KioskTab({ branchId }: { branchId: number | null }) {
   const rows = (list.data ?? []) as Kiosk[];
 
   const renderRows = () => {
+    if (list.isError && !list.data) return <ErrorState onRetry={() => list.refetch()} />;
     if (list.isPending) return <Skeleton height={200} />;
     if (!rows.length) return <EmptyState title={t('users.kioskEmpty')} message={t('users.kioskEmptyHint')} />;
     return rows.map((r) => (

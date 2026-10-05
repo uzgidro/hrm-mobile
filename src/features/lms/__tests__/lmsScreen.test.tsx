@@ -1,7 +1,7 @@
 import React from 'react';
 import MockAdapter from 'axios-mock-adapter';
 import { apiClient } from '@/api/client';
-import { renderWithProviders, screen, fireEvent, waitFor } from '@/test/renderWithProviders';
+import { createTestQueryClient, renderWithProviders, screen, fireEvent, waitFor } from '@/test/renderWithProviders';
 import { useAuthStore } from '@/store/authStore';
 import { confirm } from '@/lib/confirm';
 import i18n from '@/i18n';
@@ -88,6 +88,27 @@ describe('LmsScreen (v2 LmsPage)', () => {
     await waitFor(() => expect(puts(mock)).toHaveLength(2));
     expect(JSON.parse(puts(mock)[1]!.data).api_key).toBe('secret-key');
     await waitFor(() => expect(screen.getByTestId('lms-api-key').props.value).toBe(''));
+  });
+
+  it("saqlangach ochiq kalit mutatsiya keshida qolmaydi (variables yo'q)", async () => {
+    setUser(master);
+    // Ilovadagidek: mutatsiyalar standart 5 daqiqa keshda turadi — hook o'zi gcTime: 0 berishi kerak.
+    const queryClient = createTestQueryClient();
+    queryClient.setDefaultOptions({ ...queryClient.getDefaultOptions(), mutations: { retry: false, gcTime: 5 * 60_000 } });
+    const { unmount } = await renderWithProviders(<LmsScreen />, { queryClient });
+    await screen.findByDisplayValue('https://ailm.uz');
+    await fireEvent.changeText(screen.getByTestId('lms-api-key'), 'secret-key');
+    await fireEvent.press(screen.getByTestId('lms-save'));
+    await waitFor(() => expect(puts(mock)).toHaveLength(1));
+    const holdsKey = () =>
+      queryClient
+        .getMutationCache()
+        .getAll()
+        .some((m) => JSON.stringify(m.state.variables ?? null).includes('secret-key'));
+    // Ekran ochiq turganda ham (save.reset()) — va yopilgach ham.
+    await waitFor(() => expect(holdsKey()).toBe(false));
+    unmount();
+    await waitFor(() => expect(holdsKey()).toBe(false));
   });
 
   it("ulanishni tekshirish natijasi ko'rsatiladi; sinxron tasdiq bilan", async () => {

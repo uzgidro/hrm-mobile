@@ -1,4 +1,5 @@
 import {
+  INCIDENT_KINDS,
   checkTone,
   incidentMinutes,
   isReasonValid,
@@ -49,5 +50,8 @@ describe('sysHealth utils (v2 SystemHealthPage + SystemOpsPanel)', () => {
   it('hodisa davomiyligi daqiqada', () => {
     expect(incidentMinutes(150)).toBe(3);
     expect(incidentMinutes(null)).toBeNull();
+  });
+  it("hodisa turlari — server models/system_ops.py dagi to'rttasi (restore — zaxira nusxadan tiklash)", () => {
+    expect([...INCIDENT_KINDS].sort()).toEqual(['detected', 'recovery', 'restore', 'shutdown']);
   });
 });

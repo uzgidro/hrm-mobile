@@ -69,6 +69,7 @@ export default {
   kind_shutdown: "Avariyaviy to'xtatish",
   kind_recovery: 'Tiklash',
   kind_detected: 'Nosozlik aniqlandi',
+  kind_restore: 'Zaxira nusxadan tiklash',
   minutes_one: '{{count}} daq',
   minutes_other: '{{count}} daq',
   noAccess: "Ruxsat yo'q",

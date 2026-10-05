@@ -273,17 +273,56 @@ export function valueText(v: unknown): string {
 }
 
 const isPlain = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
+
+// ── Maxfiy qiymatlarni maskalash (himoyaning ikkinchi qatlami) ────────────────
+// Server middleware `_SENSITIVE_KEYS` ro'yxatidagi kalitlarni `***` qiladi, lekin u ro'yxat to'liq
+// emas — masalan LMS sozlamalaridagi `api_key` jurnalga OCHIQ tushadi. Shu bois mobil ham tafsilotni
+// ko'rsatishdan oldin parol/token/sir/API kalit/JShShIR kalitlarini maskalaydi. Kalit nomining OXIRGI
+// bo'lagi bo'yicha (snake/camel/kebab), shunda `token_count`, `passport_number` kabi maxfiy bo'lmagan
+// kalitlar ko'rinib qoladi. Faqat satr va son maskalanadi: null, bo'sh satr va mantiqiy qiymat
+// (`has_api_key: true`) sir emas. JShShIR: server PII sifatida `personal_identification_number` ni
+// maskalaydi, lekin `pinfl` kalitini (kiosk/registratsiya tanalari) — yo'q; shu bois u ham shu yerda.
+
+export const SECRET_MASK = '••••••';
+const SENSITIVE_KEY = /(?:^|_)(?:pass(?:word)?|secret(?:_?key)?|token|api_?key|private_?key|pinfl)$/i;
+const SERVER_MASK = '***';
+
+/** `newPassword` / `api-key` / `API_KEY` → oxirgi bo'lagi bo'yicha tekshiriladi. */
+export const isSensitiveKey = (key: string): boolean =>
+  SENSITIVE_KEY.test(key.replace(/([a-z0-9])([A-Z])/g, '$1_$2').replace(/[-\s.]+/g, '_'));
+
+/** Xom (form-urlencoded) matndagi `api_key=...` kabi juftliklar. */
+const maskPairs = (s: string) =>
+  s.replace(/(^|[?&\s])([\w.-]+)=([^&\s]*)/g, (all, pre: string, k: string, v: string) =>
+    v && isSensitiveKey(k) ? `${pre}${k}=${SECRET_MASK}` : all,
+  );
+
+const maskLeaf = (v: unknown): unknown =>
+  (typeof v === 'string' && v !== '' && v !== SERVER_MASK) || typeof v === 'number' ? SECRET_MASK : v;
+
+/** Chuqur nusxa: maxfiy kalitlar (istalgan chuqurlikda, massivlar ichida ham) qiymati `SECRET_MASK`. */
+export function maskSecrets(v: unknown, underSecret = false): unknown {
+  if (Array.isArray(v)) return v.map((x) => maskSecrets(x, underSecret));
+  if (isPlain(v)) {
+    return Object.fromEntries(
+      Object.entries(v).map(([k, x]) => [k, maskSecrets(x, underSecret || isSensitiveKey(k))]),
+    );
+  }
+  if (underSecret) return maskLeaf(v);
+  return typeof v === 'string' ? maskPairs(v) : v;
+}
+
 const SNAPSHOT_META = new Set(['id', 'label']);
 const ENVELOPE = new Set(['target', 'deleted', '_body']);
 
 export interface AuditDetails {
   /** Old → new: middleware oldindan olgan `target` nusxasi va yuborilgan qiymat farq qilsa. */
   changes: { key: string; from: string; to: string }[];
-  /** Qolgan yuborilgan maydonlar (`key: value`); maxfiylar server tomonidan `***`. */
+  /** Qolgan yuborilgan maydonlar (`key: value`); maxfiylar server tomonidan `***`, qolganini `maskSecrets`. */
   fields: { key: string; value: string }[];
   /** Tahrir/o'chirishdan oldingi yozuv nomi (`target`/`deleted` `label`). */
   snapshot: { kind: 'target' | 'deleted'; label: string } | null;
-  /** To'liq tana (v2 `<pre>`); tana bo'lmasa `null`. */
+  /** To'liq tana (v2 `<pre>`, maxfiylari maskalangan); tana bo'lmasa `null`. */
   raw: string | null;
 }
 
@@ -295,30 +334,36 @@ export interface AuditDetails {
 export function describeDetails(details: unknown): AuditDetails {
   const empty = details == null || (isPlain(details) && Object.keys(details).length === 0);
   if (empty) return { changes: [], fields: [], snapshot: null, raw: null };
+  // Ko'rsatiladigan hamma narsa (tana, maydonlar, o'zgarishlar) maskalangan nusxadan; solishtirish
+  // esa asl qiymatlar bilan — maxfiy kalit almashgani «•••••• → ••••••» bo'lib ko'rinsin.
+  const masked = maskSecrets(details);
   let raw: string;
   try {
-    raw = JSON.stringify(details, null, 2) ?? String(details);
+    raw = JSON.stringify(masked, null, 2) ?? String(masked);
   } catch {
-    raw = String(details);
+    raw = String(masked);
   }
-  if (!isPlain(details)) return { changes: [], fields: [], snapshot: null, raw };
+  if (!isPlain(details) || !isPlain(masked)) return { changes: [], fields: [], snapshot: null, raw };
 
   const kind = isPlain(details.deleted) ? 'deleted' : isPlain(details.target) ? 'target' : null;
   const snap = kind ? (details[kind] as Record<string, unknown>) : null;
-  const body = isPlain(details._body)
-    ? details._body
-    : Object.fromEntries(Object.entries(details).filter(([k]) => !ENVELOPE.has(k)));
+  const shownSnap = kind ? (masked[kind] as Record<string, unknown>) : null;
+  const pickBody = (d: Record<string, unknown>) =>
+    isPlain(d._body) ? d._body : Object.fromEntries(Object.entries(d).filter(([k]) => !ENVELOPE.has(k)));
+  const body = pickBody(details);
+  const shownBody = pickBody(masked);
 
   const changes: AuditDetails['changes'] = [];
   const fields: AuditDetails['fields'] = [];
   for (const [key, value] of Object.entries(body)) {
-    if (snap && !SNAPSHOT_META.has(key) && key in snap && valueText(snap[key]) !== valueText(value)) {
-      changes.push({ key, from: valueText(snap[key]), to: valueText(value) });
+    const shown = shownBody[key];
+    if (snap && shownSnap && !SNAPSHOT_META.has(key) && key in snap && valueText(snap[key]) !== valueText(value)) {
+      changes.push({ key, from: valueText(shownSnap[key]), to: valueText(shown) });
     } else {
-      fields.push({ key, value: valueText(value) });
+      fields.push({ key, value: valueText(shown) });
     }
   }
-  const label = snap?.label;
+  const label = shownSnap?.label;
   return {
     changes,
     fields,
