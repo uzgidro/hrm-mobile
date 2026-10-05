@@ -399,3 +399,9 @@ export const LEARNING_COURSES = 'learning/courses';
 export const LEARNING_ENROLLMENT = (id: number) => `learning/enrollments/${id}`;
 export const INSPECTIONS = 'inspections';
 export const INSPECTION = (id: number) => `inspections/${id}`;
+// Sog'liq ko'rigi (hamshira, smena oldidan). `access` — can_check + nurse_branch_ids.
+export const HEALTH_CHECKS = 'health-checks';
+export const HEALTH_CHECKS_ACCESS = 'health-checks/access';
+export const HEALTH_CHECKS_ROSTER = 'health-checks/roster';
+export const HEALTH_CHECKS_BULK = 'health-checks/bulk-grade';
+export const HEALTH_CHECK = (id: number) => `health-checks/${id}`;

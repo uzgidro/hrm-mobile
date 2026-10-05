@@ -513,7 +513,7 @@ const MODULE_FOR_PAGE: Partial<Record<PageKey, ModuleDef>> = {
   ijro: { key: 'ijro', defaultRoles: ALL },
   workPlan: { key: 'workPlan', defaultRoles: ADMIN_HR_LEAD },
   medical: { key: 'medical', defaultRoles: ALL, gates: [needsMedical], ready: false },
-  health: { key: 'health', defaultRoles: ALL, gates: [needsHealth], ready: false },
+  health: { key: 'health', defaultRoles: ALL, gates: [needsHealth] },
   registrationStatus: { key: 'registrationStatus', defaultRoles: ['guest'] },
   orderTypes: { key: 'orderTypes', defaultRoles: ADMIN_HR },
   tempOrders: { key: 'tempOrders', defaultRoles: ADMIN_HR },

@@ -83,6 +83,12 @@ describe('modul katalogi — v2 paritet', () => {
     }
   });
 
+  it("sog'liq ko'rigi — faqat hamshira (nurse_branch_ids) yoki bosh admin (v2 needsHealth)", () => {
+    expect(canAccessPage(emp(), 'health')).toBe(false);
+    expect(canAccessPage(emp({ nurse_branch_ids: [7] }), 'health')).toBe(true);
+    expect(canAccessPage(master, 'health')).toBe(true);
+  });
+
   it("KPI filialda o'chirilgan bo'lsa override ham qaytarolmaydi", () => {
     setNavOverrides({ kpi: { roles: ['employee'] } });
     expect(canAccessPage(emp({ kpi_enabled: false }), 'kpi')).toBe(false);

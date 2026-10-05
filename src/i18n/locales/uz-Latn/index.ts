@@ -34,6 +34,7 @@ import password from './password';
 import tabs from './tabs';
 import kpp from './kpp';
 import monitoring from './monitoring';
+import health from './health';
 import inspections from './inspections';
 import learning from './learning';
 import trainings from './trainings';
@@ -84,6 +85,7 @@ export default {
   tabs,
   kpp,
   monitoring,
+  health,
   inspections,
   learning,
   trainings,
