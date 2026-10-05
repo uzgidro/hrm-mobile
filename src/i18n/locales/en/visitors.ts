@@ -14,6 +14,7 @@ export default {
   emptyList: 'No visitors',
 
   detailTitle: 'Visitor',
+  notFoundHint: 'This visitor record was not found — it was deleted or is not visible to you. Refresh the list.',
   permitActive: 'Permit active',
   cardNo: 'Card: {{value}}',
   qrDownload: 'Download',

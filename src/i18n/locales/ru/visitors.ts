@@ -14,6 +14,7 @@ export default {
   emptyList: 'Посетителей нет',
 
   detailTitle: 'Посетитель',
+  notFoundHint: 'Запись о посетителе не найдена — она удалена или вам недоступна. Обновите список.',
   permitActive: 'Пропуск активен',
   cardNo: 'Карта: {{value}}',
   qrDownload: 'Скачать',

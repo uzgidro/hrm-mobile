@@ -120,6 +120,7 @@ export default {
   documentLoading: 'Документ загружается...',
   documentLoadError: 'Не удалось загрузить документ',
   documentOpenError: 'Ошибка при открытии документа',
+  notFoundHint: 'Документ удалён, ещё не дошёл до вас или вам недоступен.',
 
   // ── Create form: field labels ───────────────────────────────────────────────
   fieldType: 'Тип документа',

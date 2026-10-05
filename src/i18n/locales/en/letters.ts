@@ -119,6 +119,7 @@ export default {
   documentLoading: 'Loading document...',
   documentLoadError: 'Failed to load document',
   documentOpenError: 'Error opening document',
+  notFoundHint: 'The document was deleted, has not reached you yet, or is not visible to you.',
 
   // ── Create form: field labels ───────────────────────────────────────────────
   fieldType: 'Document type',

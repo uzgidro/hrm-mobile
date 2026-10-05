@@ -135,3 +135,11 @@ export function toApiError(error: unknown, fallback?: string): ApiError {
     original: error,
   };
 }
+
+/** React Query `retry`: 404/403 qayta so'ralsa ham o'zgarmaydi — darhol «topilmadi»
+ *  holatini ko'rsatish uchun qayta urinmaymiz; boshqa xatolarda standart 2 marta. */
+export function retryUnlessMissing(failureCount: number, error: unknown): boolean {
+  const status = (error as AxiosError | undefined)?.response?.status;
+  if (status === 404 || status === 403) return false;
+  return failureCount < 2;
+}

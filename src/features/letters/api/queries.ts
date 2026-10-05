@@ -2,6 +2,7 @@ import { queryOptions } from '@tanstack/react-query';
 import { pagedListOptions, cleanParams, type ListParams } from '@/lib/pagedList';
 import { apiClient } from '@/api/client';
 import { unwrapList } from '@/api/response';
+import { retryUnlessMissing } from '@/api/errors';
 import {
   LETTERS_LIST,
   LETTER_DETAIL,
@@ -92,6 +93,8 @@ export function letterDetailQuery(id: number) {
     // Sign state must reflect the server on every open — another signer may have
     // acted. Override the global staleTime so it always revalidates.
     refetchOnMount: 'always',
+    // 404 (o'chirilgan / hali yetib kelmagan) qayta so'ralsa ham o'zgarmaydi.
+    retry: retryUnlessMissing,
   });
 }
 

@@ -11,9 +11,10 @@ import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { ff } from '@/theme/typography';
 import { Icon, IconName } from '@/components/Icon';
-import { LoadingView, ErrorState } from '@/components/StateViews';
+import { LoadingView, ErrorState, EmptyState } from '@/components/StateViews';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
-import { getApiErrorMessage } from '@/api/errors';
+import { getApiErrorMessage, toApiError } from '@/api/errors';
+import { isHttpUrl } from '@/utils/safeUrl';
 import { confirm } from '@/lib/confirm';
 import { visitorDetailQuery } from '../api/queries';
 import { useDeleteVisitor } from '../api/mutations';
@@ -51,6 +52,11 @@ export function VisitorDetailView({ id, embedded = false }: { id: number; embedd
   const del = useDeleteVisitor();
 
   const active = v?.is_active !== false;
+  // Ro'yxat bergan qator ba'zan alohida GET'da 404 qaytaradi (server ma'lumoti).
+  // Yozuv yuklanmagan bo'lsa tahrir/o'chirish tugmalari ko'rsatilmaydi — ular
+  // mavjud bo'lmagan mehmonga amal taklif qilardi.
+  const loaded = !!v && !isError;
+  const notFound = toApiError(error).status === 404;
 
   const onDelete = async () => {
     const ok = await confirm({
@@ -96,29 +102,35 @@ export function VisitorDetailView({ id, embedded = false }: { id: number; embedd
           <Text style={styles.headerTitle} numberOfLines={1}>{t('visitors.detailTitle')}</Text>
         </View>
         <View style={styles.rightSlot}>
-          <View style={{ flexDirection: 'row', gap: 8 }}>
-            <TouchableOpacity
-              onPress={() => router.push({ pathname: '/mehmon-form', params: { id: String(visitorId) } })}
-              activeOpacity={0.7}
-              hitSlop={8}
-              style={[styles.headerAction, { backgroundColor: colors.primarySoft }]}
-            >
-              <Icon name="edit" size={20} color={colors.primary} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={onDelete}
-              disabled={del.isPending}
-              activeOpacity={0.7}
-              hitSlop={8}
-              style={[styles.headerAction, { backgroundColor: colors.primarySoft }, del.isPending && { opacity: 0.5 }]}
-            >
-              <Icon name="trash" size={20} color={colors.error} />
-            </TouchableOpacity>
-          </View>
+          {loaded && (
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <TouchableOpacity
+                onPress={() => router.push({ pathname: '/mehmon-form', params: { id: String(visitorId) } })}
+                testID="visitor-edit"
+                activeOpacity={0.7}
+                hitSlop={8}
+                style={[styles.headerAction, { backgroundColor: colors.primarySoft }]}
+              >
+                <Icon name="edit" size={20} color={colors.primary} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={onDelete}
+                testID="visitor-delete"
+                disabled={del.isPending}
+                activeOpacity={0.7}
+                hitSlop={8}
+                style={[styles.headerAction, { backgroundColor: colors.primarySoft }, del.isPending && { opacity: 0.5 }]}
+              >
+                <Icon name="trash" size={20} color={colors.error} />
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
       </View>
 
-      {isError || (!isLoading && !v) ? (
+      {notFound ? (
+        <EmptyState icon="guest" title={t('errors.visitor_not_found')} message={t('visitors.notFoundHint')} />
+      ) : isError || (!isLoading && !v) ? (
         <ErrorState message={getApiErrorMessage(error, t('errors.refreshFailed'))} onRetry={() => refetch()} />
       ) : isLoading || !v ? (
         <LoadingView />
@@ -142,7 +154,7 @@ export function VisitorDetailView({ id, embedded = false }: { id: number; embedd
               <Image source={{ uri: v.qr_path }} style={styles.qr} resizeMode="contain" />
               {!!v.card_no && <Text style={styles.cardNo}>{t('visitors.cardNo', { value: v.card_no })}</Text>}
               <View style={styles.qrActions}>
-                <TouchableOpacity style={styles.qrBtn} activeOpacity={0.85} onPress={() => Linking.openURL(v.qr_path!)}>
+                <TouchableOpacity style={styles.qrBtn} activeOpacity={0.85} onPress={() => { if (isHttpUrl(v.qr_path)) void Linking.openURL(v.qr_path); }}>
                   <Icon name="arrowDown" size={17} color={colors.primary} />
                   <Text style={styles.qrBtnText}>{t('visitors.qrDownload')}</Text>
                 </TouchableOpacity>
@@ -208,7 +220,7 @@ const makeStyles = (c: ThemeColors) =>
     badgeText: { fontSize: 12, ...ff('800') },
 
     qrCard: { backgroundColor: c.card, borderRadius: 16, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder, padding: 16, alignItems: 'center', marginBottom: 12, gap: 10 },
-    qr: { width: 180, height: 180, backgroundColor: '#fff', borderRadius: 8 },
+    qr: { width: 180, height: 180, backgroundColor: 'white', borderRadius: 8 },
     cardNo: { fontSize: 13, color: c.textSecondary, ...ff('700') },
     qrActions: { flexDirection: 'row', gap: 10, alignSelf: 'stretch', marginTop: 4 },
     qrBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 11, borderRadius: 12, backgroundColor: c.primarySoft, borderWidth: 1, borderColor: c.primary },

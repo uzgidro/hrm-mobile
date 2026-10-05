@@ -19,6 +19,7 @@ export default {
 
   // ── Detail screen ───────────────────────────────────────────────────────────
   detailTitle: 'Mehmon',
+  notFoundHint: "Bu mehmon yozuvi topilmadi — u o'chirilgan yoki sizga ko'rinmaydi. Ro'yxatni yangilang.",
   permitActive: 'Aktiv ruxsat',
   cardNo: 'Karta: {{value}}',
   qrDownload: 'Yuklab olish',

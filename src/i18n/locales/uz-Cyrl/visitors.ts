@@ -12,6 +12,7 @@ export default {
   emptyList: 'Меҳмонлар йўқ',
 
   detailTitle: 'Меҳмон',
+  notFoundHint: 'Бу меҳмон ёзуви топилмади — у ўчирилган ёки сизга кўринмайди. Рўйхатни янгиланг.',
   permitActive: 'Актив рухсат',
   cardNo: 'Карта: {{value}}',
   qrDownload: 'Юклаб олиш',

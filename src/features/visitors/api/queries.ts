@@ -1,6 +1,7 @@
 import { queryOptions } from '@tanstack/react-query';
 import { pagedListOptions } from '@/lib/pagedList';
 import { apiClient } from '@/api/client';
+import { retryUnlessMissing } from '@/api/errors';
 import { VISITORS_LIST, VISITOR_DETAIL, VISITORS_SUMMARY } from '@/api/urls';
 import type { Visitor } from '@/types';
 
@@ -66,5 +67,7 @@ export function visitorDetailQuery(id: number) {
     // Visitor status (active/checked-out) can change externally — always
     // revalidate on open so stale action buttons aren't shown.
     refetchOnMount: 'always',
+    // Ro'yxatdagi qator ba'zan 404 beradi — qayta urinish befoyda, «topilmadi» darhol.
+    retry: retryUnlessMissing,
   });
 }

@@ -21,7 +21,33 @@ describe('VisitorDetailView (embedded)', () => {
       is_active: true,
     });
 
-    const { findByText } = await renderWithProviders(<VisitorDetailView id={1} embedded />);
+    const { findByText, getByTestId } = await renderWithProviders(<VisitorDetailView id={1} embedded />);
     expect(await findByText('Test Visitor')).toBeTruthy();
+    expect(getByTestId('visitor-edit')).toBeTruthy();
+    expect(getByTestId('visitor-delete')).toBeTruthy();
+  }, 15000);
+
+  it('404: «Mehmon topilmadi» holati, tahrir/o\'chirish tugmalari yo\'q (QA: ro\'yxat qatori GET da 404)', async () => {
+    mock.onGet(new RegExp('visitors/7')).reply(404, {
+      code: 'visitor_not_found',
+      i18n_key: 'errors.visitor_not_found',
+      params: {},
+      message: 'Visitor not found',
+    });
+    const { findByText, queryByTestId, queryByText } = await renderWithProviders(<VisitorDetailView id={7} embedded />);
+    expect(await findByText('Mehmon topilmadi')).toBeTruthy();
+    expect(queryByText('Visitor not found')).toBeNull();
+    expect(queryByTestId('visitor-edit')).toBeNull();
+    expect(queryByTestId('visitor-delete')).toBeNull();
+    // 404 qayta so'ralmaydi.
+    expect(mock.history.get.filter((r) => /visitors\/7/.test(r.url ?? ''))).toHaveLength(1);
+  }, 15000);
+
+  it('boshqa xatoda ErrorState (qayta urinish bilan), amallar yo\'q', async () => {
+    mock.onGet(new RegExp('visitors/8')).reply(500, { detail: 'boom' });
+    const { findByText, queryByTestId } = await renderWithProviders(<VisitorDetailView id={8} embedded />);
+    // 500 standart 2 marta qayta so'raladi (retryUnlessMissing) — backoff kutiladi.
+    expect(await findByText('boom', {}, { timeout: 8000 })).toBeTruthy();
+    expect(queryByTestId('visitor-edit')).toBeNull();
   }, 15000);
 });

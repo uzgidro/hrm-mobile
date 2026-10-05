@@ -125,6 +125,7 @@ export default {
   documentLoading: 'Hujjat yuklanmoqda...',
   documentLoadError: "Hujjatni yuklab bo'lmadi",
   documentOpenError: 'Hujjatni ochishda xatolik',
+  notFoundHint: "Hujjat o'chirilgan, hali sizga yetib kelmagan yoki sizga ko'rinmasligi mumkin.",
 
   // ── Create form: field labels ───────────────────────────────────────────────
   fieldType: 'Hujjat turi',

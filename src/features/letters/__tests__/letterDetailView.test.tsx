@@ -51,4 +51,19 @@ describe('LetterDetailView (embedded)', () => {
     await findByText("Ma'lumot");
     expect(queryByTestId('letter-out-of-sync-warning')).toBeNull();
   }, 15000);
+
+  // QA: adresat xatni devonxona ro'yxatidan OLDIN ochsa server 404
+  // `letter_not_found` beradi — xom «Xatolik yuz berdi | Letter not found»
+  // o'rniga web v2 LetterDetail kabi tushunarli bo'sh holat (qayta urinishsiz).
+  it('404 letter_not_found: friendly empty state, no raw English server text', async () => {
+    mock.onGet(new RegExp('letters/9')).reply(404, {
+      code: 'letter_not_found', i18n_key: 'errors.letter_not_found', params: {}, message: 'Letter not found',
+    });
+    const { findByText, queryByText } = await renderWithProviders(<LetterDetailView id={9} embedded />);
+    expect(await findByText('Hujjat topilmadi')).toBeTruthy();
+    expect(queryByText(/yetib kelmagan/)).toBeTruthy();
+    expect(queryByText('Letter not found')).toBeNull();
+    expect(queryByText('Qayta urinish')).toBeNull();
+    expect(mock.history.get.filter((r) => /letters\/9$/.test(r.url ?? ''))).toHaveLength(1);
+  }, 15000);
 });

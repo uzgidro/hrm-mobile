@@ -119,6 +119,7 @@ export default {
   documentLoading: 'Ҳужжат юкланмоқда...',
   documentLoadError: 'Ҳужжатни юклаб бўлмади',
   documentOpenError: 'Ҳужжатни очишда хатолик',
+  notFoundHint: 'Ҳужжат ўчирилган, ҳали сизга етиб келмаган ёки сизга кўринмаслиги мумкин.',
 
   // ── Create form: field labels ───────────────────────────────────────────────
   fieldType: 'Ҳужжат тури',

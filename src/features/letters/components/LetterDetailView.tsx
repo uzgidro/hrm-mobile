@@ -10,9 +10,9 @@ import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { ff } from '@/theme/typography';
 import { Icon } from '@/components/Icon';
-import { LoadingView, ErrorState } from '@/components/StateViews';
+import { LoadingView, ErrorState, EmptyState } from '@/components/StateViews';
 import { confirm } from '@/lib/confirm';
-import { getApiErrorMessage } from '@/api/errors';
+import { getApiErrorMessage, toApiError } from '@/api/errors';
 import {
   letterStatusMeta, letterTypeLabel, canSignLetter, getSigningTimeline, statusColor,
   getManagementSigners, normalizeLetterType,
@@ -92,6 +92,19 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
       </SafeAreaView>
     );
 
+  // 404/403 — xat o'chirilgan, hali bu o'quvchiga yetib kelmagan (masalan,
+  // adresat devonxona ro'yxatidan oldin ochsa) yoki unga ko'rinmaydi. Web v2
+  // LetterDetail kabi xom «Xatolik yuz berdi | Letter not found» o'rniga
+  // tushunarli bo'sh holat; qayta urinish befoyda, shuning uchun tugmasiz.
+  const errStatus = toApiError(error).status;
+  if (isError && (errStatus === 404 || errStatus === 403)) {
+    return renderRoot(
+      <>
+        <DetailHeader embedded={embedded} />
+        <EmptyState icon="doc" title={t('errors.letter_not_found')} message={t('letters.notFoundHint')} />
+      </>,
+    );
+  }
   // A failed load used to spin forever (`isLoading || !letter`); the error
   // now shows with a retry.
   if (isError || (!isLoading && !letter)) {
