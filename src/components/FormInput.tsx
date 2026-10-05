@@ -1,4 +1,5 @@
 // Themed labeled text input used by the create/edit forms.
+import type React from 'react';
 import { View, Text, TextInput, StyleSheet, type KeyboardTypeOptions } from 'react-native';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 import type { ThemeColors } from '../theme/palettes';
@@ -6,7 +7,7 @@ import { ff } from '../theme/typography';
 import { NO_WEB_OUTLINE } from '../theme/web';
 
 export function FormInput({
-  label, value, onChangeText, placeholder, required, multiline, keyboardType, error, testID, secureTextEntry,
+  label, value, onChangeText, placeholder, required, multiline, keyboardType, error, testID, secureTextEntry, inputRef,
 }: {
   label: string;
   value: string;
@@ -19,6 +20,8 @@ export function FormInput({
   testID?: string;
   /** Maxfiy qiymat (API kalit) — kiritilgani nuqtalar bilan ko'rinadi. */
   secureTextEntry?: boolean;
+  /** Ichki TextInput'ga ref — xato bo'lsa maydonga fokus berish uchun. */
+  inputRef?: React.Ref<TextInput>;
 }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -28,6 +31,7 @@ export function FormInput({
         {label}{required && <Text style={styles.req}> *</Text>}
       </Text>
       <TextInput
+        ref={inputRef}
         style={[styles.input, multiline && styles.multiline, !!error && styles.inputError]}
         value={value}
         onChangeText={onChangeText}

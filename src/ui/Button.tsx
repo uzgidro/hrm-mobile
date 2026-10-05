@@ -1,7 +1,9 @@
 // v3 tugmasi: v2 pill shakli + Tomchi pastki «labi». Lab faqat to'liq rangli
 // variantlarda (primary / danger / white) — bosilganda tugma LIP px pastga tushadi.
 // soft / ghost — ikkinchi darajali, labsiz. dangerGhost — ikkinchi darajali buzuvchi amal
-// (o'chirish / tugatish; v2 `danger-ghost`): fonsiz, qizil matn.
+// (o'chirish / tugatish; v2 `danger-ghost`): fonsiz, qizil matn. link — fonsiz drop-ko'k havola
+// (ikkinchi darajali navigatsiya / «… qo'shish» havolasi); neutral — fonsiz siyoh rangli
+// («Bekor qilish» kabi rad etuvchi amal — violet faqat yagona asosiy amalga).
 import React from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useTheme } from '@/theme/ThemeProvider';
@@ -9,7 +11,7 @@ import { LIP, radii } from '@/theme/tokens';
 import { Icon, type IconName } from '@/components/Icon';
 import { Text } from './Text';
 
-export type ButtonVariant = 'primary' | 'soft' | 'ghost' | 'danger' | 'dangerGhost' | 'white';
+export type ButtonVariant = 'primary' | 'soft' | 'ghost' | 'danger' | 'dangerGhost' | 'white' | 'link' | 'neutral';
 const HEIGHT = { sm: 36, md: 44, lg: 52 } as const;
 
 export function Button({
@@ -44,6 +46,8 @@ export function Button({
     soft: { bg: c.brandSoft, fg: c.brandStrong },
     ghost: { bg: 'transparent', fg: c.brandStrong },
     dangerGhost: { bg: 'transparent', fg: c.danger },
+    link: { bg: 'transparent', fg: c.drop },
+    neutral: { bg: 'transparent', fg: c.fgMuted },
   }[variant];
 
   return (

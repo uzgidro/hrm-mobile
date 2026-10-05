@@ -1,4 +1,5 @@
-// Filtr / sabab chipi. Tanlangan — brand fon; aks holda surface2. Ixtiyoriy son.
+// Filtr / sabab chipi. Tanlangan — brand fon; bosiladigan tanlanmagan — surface + chegara;
+// faqat ko'rsatuvchi — surface2. Ixtiyoriy son.
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useTheme } from '@/theme/ThemeProvider';
@@ -47,15 +48,21 @@ export function Chip({
   const { colors: c } = useTheme();
   const t = toneColors(c, tone);
   const tinted = tintSelected && tone !== 'neutral';
-  const bg = selected ? (tinted ? t.soft : c.brand) : c.surface2;
+  const pressable = !!onPress;
+  // Bosiladigan tanlanmagan chip — surface + chegara (yorug' mavzuda surface2 fon kanvasga
+  // singib ketardi, chip bosiladigan narsa bo'lib o'qilmasdi). Faqat ko'rsatuvchi chip — avvalgidek surface2.
+  const bg = selected ? (tinted ? t.soft : c.brand) : pressable ? c.surface : c.surface2;
   const fg = selected ? (tinted ? t.fg : c.fgOnBrand) : c.fg;
   const body = (
     <View
       style={[
         styles.chip,
         { backgroundColor: bg },
-        // Tonli tanlov: chegara faqat shu rejimda (o'lcham sakramasin — tanlanmaganda shaffof).
-        tinted && { borderWidth: 1.5, borderColor: selected ? t.mark : 'transparent' },
+        // Tonli tanlov: qalinroq chegara; tanlanganda — ton belgisi rangida. Chegara qalinligi
+        // holatga bog'liq emas — tanlanganda o'lcham sakramaydi.
+        tinted
+          ? { borderWidth: 1.5, borderColor: selected ? t.mark : pressable ? c.borderStrong : 'transparent' }
+          : pressable && { borderWidth: 1, borderColor: selected ? c.brand : c.borderStrong },
       ]}
     >
       {tone !== 'neutral' && (!selected || tinted) && <View style={[styles.dot, { backgroundColor: t.mark }]} />}

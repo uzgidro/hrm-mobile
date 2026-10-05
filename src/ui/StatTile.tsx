@@ -19,6 +19,7 @@ export function StatTile({
   progress,
   onPress,
   selected,
+  labelLines = 1,
   style,
   testID,
 }: {
@@ -30,6 +31,8 @@ export function StatTile({
   progress?: number;
   onPress?: () => void;
   selected?: boolean;
+  /** Yorliq qatorlari (standart 1). Tor plitkada uzun tarjima («Свободны сегодня») — 2. */
+  labelLines?: number;
   style?: StyleProp<ViewStyle>;
   testID?: string;
 }) {
@@ -54,7 +57,7 @@ export function StatTile({
       <View style={[styles.iconBox, { backgroundColor: t.fg }]}>
         <Icon name={icon} size={16} color={c.fgOnBrand} />
       </View>
-      <Text variant="label" tone="muted" numberOfLines={1} style={styles.label}>
+      <Text variant="label" tone="muted" numberOfLines={labelLines} style={styles.label}>
         {label}
       </Text>
       <Text variant="number" tone="fg" numberOfLines={1}>
@@ -95,7 +98,8 @@ export function StatTile({
 }
 
 const styles = StyleSheet.create({
-  tile: { borderRadius: radii.xl, padding: 14, minHeight: 128, overflow: 'hidden' },
+  // flexGrow — bir qatorda bo'yi cho'zilgan o'rami to'ldiriladi (2 qatorli yorliqli qo'shni bilan teng bo'y).
+  tile: { flexGrow: 1, borderRadius: radii.xl, padding: 14, minHeight: 128, overflow: 'hidden' },
   corner: { position: 'absolute', right: -6, top: -6, opacity: 0.18 },
   iconBox: { width: 30, height: 30, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginBottom: 10 },
   label: { marginBottom: 2 },

@@ -17,6 +17,7 @@ export function ListRow({
   badge,
   chevron,
   below,
+  titleAddon,
   testID,
 }: {
   title: string;
@@ -29,6 +30,8 @@ export function ListRow({
   chevron?: boolean;
   /** Sarlavha ostidagi qo'shimcha qator (masalan, telefonda status nishonlari — `right` ism joyini yemasin). */
   below?: React.ReactNode;
+  /** Sarlavha yonidagi kichik belgi (masalan, majburiy «*») — sarlavha qisqarganda ham ko'rinib turadi. */
+  titleAddon?: React.ReactNode;
   testID?: string;
 }) {
   const { colors: c } = useTheme();
@@ -50,9 +53,18 @@ export function ListRow({
     >
       {left}
       <View style={styles.text}>
-        <Text variant="heading" numberOfLines={1} style={styles.title}>
-          {title}
-        </Text>
+        {titleAddon ? (
+          <View style={styles.titleLine}>
+            <Text variant="heading" numberOfLines={1} style={[styles.title, styles.titleShrink]}>
+              {title}
+            </Text>
+            {titleAddon}
+          </View>
+        ) : (
+          <Text variant="heading" numberOfLines={1} style={styles.title}>
+            {title}
+          </Text>
+        )}
         {subtitle ? (
           <Text variant="caption" tone="subtle" numberOfLines={1}>
             {subtitle}
@@ -84,6 +96,8 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 56, paddingVertical: 8 },
   text: { flex: 1, minWidth: 0 },
   title: { fontSize: 15 },
+  titleLine: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  titleShrink: { flexShrink: 1, minWidth: 0 },
   badge: { minWidth: 22, height: 22, borderRadius: 11, paddingHorizontal: 6, alignItems: 'center', justifyContent: 'center' },
   badgeText: { fontWeight: '800', fontSize: 11, lineHeight: 14 },
 });

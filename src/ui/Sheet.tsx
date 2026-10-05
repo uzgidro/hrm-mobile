@@ -8,6 +8,7 @@ import { radii, shadow } from '@/theme/tokens';
 import { useBreakpoint } from '@/utils/responsive';
 import { Text } from './Text';
 import { IconButton } from './IconButton';
+import { WEB_BREAK } from './webText';
 
 export function Sheet({
   visible,
@@ -43,7 +44,7 @@ export function Sheet({
           {!centered && <View style={[styles.grabber, { backgroundColor: c.borderStrong }]} />}
           {title && (
             <View style={styles.header}>
-              <Text variant="title" style={styles.title}>
+              <Text variant="title" numberOfLines={2} style={[styles.title, WEB_BREAK]}>
                 {title}
               </Text>
               <IconButton icon="close" onPress={onClose} accessibilityLabel={t('common.close')} />
@@ -64,6 +65,7 @@ const styles = StyleSheet.create({
   panelCentered: { width: '100%', maxWidth: 560, borderRadius: radii.xl, maxHeight: '85%' },
   panelBottom: { borderTopLeftRadius: radii.xl, borderTopRightRadius: radii.xl, maxHeight: '90%' },
   grabber: { alignSelf: 'center', width: 40, height: 4, borderRadius: 2, marginBottom: 8 },
-  header: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-  title: { flex: 1, fontSize: 18 },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+  // Uzun bo'linmas sarlavha (masalan, e-pochta) ✕ ni chetga surmasin: qisqaradi, 2 qatorgacha o'raladi.
+  title: { flex: 1, flexShrink: 1, minWidth: 0, fontSize: 18 },
 });
