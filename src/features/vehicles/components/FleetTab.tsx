@@ -120,7 +120,7 @@ export function FleetTab({
               testID="vehicles-filter-avail"
             />
             <FilterRow
-              label="GPS"
+              label={t('vehicles.unitGps')}
               value={filters.gps}
               options={[
                 ['1', t('vehicles.filterGpsYes')],
@@ -251,79 +251,82 @@ function VehicleRow({
   ]
     .filter(Boolean)
     .join(' · ');
+  // Amal tugmalari bosiladigan qatorning ICHIDA emas, YONIDA (web: <button> ichida <button> bo'lmaydi).
   return (
-    <Pressable
-      testID={`vehicle-row-${v.id}`}
-      accessibilityRole="button"
-      accessibilityLabel={`${v.plate_number ?? ''} ${v.model_name ?? ''}`}
-      onPress={() => router.push(`/avtomobil?id=${v.id}` as Href)}
-      style={({ pressed }) => [styles.row, { borderBottomColor: c.border }, pressed && { opacity: 0.7 }]}
-    >
-      <View style={styles.rowTop}>
-        <PlateChip plate={v.plate_number} />
-        <GpsMark v={v} />
-        <View style={styles.flex} />
-        <AvailabilityBadge v={v} />
-      </View>
-      <Text variant="body" weight="600" numberOfLines={1}>
-        {v.model_name || '—'}
-      </Text>
-      {!!spec && (
-        <Text variant="caption" tone="subtle" numberOfLines={1}>
-          {spec}
+    <View style={[styles.row, { borderBottomColor: c.border }]}>
+      <Pressable
+        testID={`vehicle-row-${v.id}`}
+        accessibilityRole="button"
+        accessibilityLabel={`${v.plate_number ?? ''} ${v.model_name ?? ''}`}
+        onPress={() => router.push(`/avtomobil?id=${v.id}` as Href)}
+        style={({ pressed }) => [styles.rowBody, pressed && { opacity: 0.7 }]}
+      >
+        <View style={styles.rowTop}>
+          <PlateChip plate={v.plate_number} />
+          <GpsMark v={v} />
+          <View style={styles.flex} />
+          <AvailabilityBadge v={v} />
+        </View>
+        <Text variant="body" weight="600" numberOfLines={1}>
+          {v.model_name || '—'}
         </Text>
-      )}
-      <View style={styles.driver}>
-        {v.driver ? (
-          <>
-            <Avatar
-              name={v.driver.legal_name ?? '?'}
-              uri={v.driver.photo_thumb_path || v.driver.photo_path}
-              size={24}
-            />
-            <View style={styles.flex}>
-              <Text variant="caption" numberOfLines={1}>
-                {v.driver.legal_name}
-              </Text>
-              {v.driver_available === false && !!v.driver_block_reason ? (
-                <Text variant="caption" tone="danger" numberOfLines={1}>
-                  {v.driver_block_reason}
-                </Text>
-              ) : v.driver_position ? (
-                <Text variant="caption" tone="subtle" numberOfLines={1}>
-                  {v.driver_position}
-                </Text>
-              ) : null}
-            </View>
-          </>
-        ) : (
-          <Text variant="caption" tone="subtle" style={styles.flex}>
-            {t('vehicles.noDriver')}
+        {!!spec && (
+          <Text variant="caption" tone="subtle" numberOfLines={1}>
+            {spec}
           </Text>
         )}
-        {canManage && (
-          <View style={styles.actions}>
-            <IconButton
-              testID={`vehicle-edit-${v.id}`}
-              icon="edit"
-              accessibilityLabel={t('common.edit')}
-              onPress={onEdit}
-            />
-            <IconButton
-              testID={`vehicle-delete-${v.id}`}
-              icon="trash"
-              accessibilityLabel={t('common.delete')}
-              onPress={onDelete}
-            />
-          </View>
+        <View style={styles.driver}>
+          {v.driver ? (
+            <>
+              <Avatar
+                name={v.driver.legal_name ?? '?'}
+                uri={v.driver.photo_thumb_path || v.driver.photo_path}
+                size={24}
+              />
+              <View style={styles.flex}>
+                <Text variant="caption" numberOfLines={1}>
+                  {v.driver.legal_name}
+                </Text>
+                {v.driver_available === false && !!v.driver_block_reason ? (
+                  <Text variant="caption" tone="danger" numberOfLines={1}>
+                    {v.driver_block_reason}
+                  </Text>
+                ) : v.driver_position ? (
+                  <Text variant="caption" tone="subtle" numberOfLines={1}>
+                    {v.driver_position}
+                  </Text>
+                ) : null}
+              </View>
+            </>
+          ) : (
+            <Text variant="caption" tone="subtle" style={styles.flex}>
+              {t('vehicles.noDriver')}
+            </Text>
+          )}
+        </View>
+        {!!fuel && (
+          <Text variant="caption" tone="muted" numberOfLines={1}>
+            {fuel}
+          </Text>
         )}
-      </View>
-      {!!fuel && (
-        <Text variant="caption" tone="muted" numberOfLines={1}>
-          {fuel}
-        </Text>
+      </Pressable>
+      {canManage && (
+        <View style={styles.actions}>
+          <IconButton
+            testID={`vehicle-edit-${v.id}`}
+            icon="edit"
+            accessibilityLabel={t('common.edit')}
+            onPress={onEdit}
+          />
+          <IconButton
+            testID={`vehicle-delete-${v.id}`}
+            icon="trash"
+            accessibilityLabel={t('common.delete')}
+            onPress={onDelete}
+          />
+        </View>
       )}
-    </Pressable>
+    </View>
   );
 }
 
@@ -333,9 +336,16 @@ const styles = StyleSheet.create({
   count: { marginLeft: 'auto' },
   panel: { gap: 10 },
   filterRow: { gap: 6 },
-  row: { paddingVertical: 10, gap: 4, borderBottomWidth: StyleSheet.hairlineWidth },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  rowBody: { flex: 1, minWidth: 0, gap: 4 },
   rowTop: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   driver: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  actions: { flexDirection: 'row' },
+  actions: { flexDirection: 'column' },
   flex: { flex: 1, minWidth: 0 },
 });

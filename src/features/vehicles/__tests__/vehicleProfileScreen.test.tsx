@@ -1,7 +1,7 @@
 import React from 'react';
 import MockAdapter from 'axios-mock-adapter';
 import { apiClient } from '@/api/client';
-import { renderWithProviders, screen, waitFor } from '@/test/renderWithProviders';
+import { fireEvent, renderWithProviders, screen, waitFor, within } from '@/test/renderWithProviders';
 import i18n from '@/i18n';
 import { VEHICLE, VEHICLE_ACCESS, VEHICLE_LIVE, VEHICLE_TRIPS } from '@/api/urls';
 import VehicleProfileScreen from '../screens/VehicleProfileScreen';
@@ -44,8 +44,8 @@ const CAR = {
   stats: {
     trip_count: 7,
     finalized_count: 5,
-    total_distance_km: 2400,
-    total_fuel_liters: 200,
+    total_distance_km: 8450.5,
+    total_fuel_liters: 1200.4,
     total_fuel_cost: 1800000,
     last_trip_date: '2026-09-30',
   },
@@ -94,6 +94,38 @@ describe('VehicleProfileScreen (v2 VehicleProfilePage)', () => {
     expect(screen.getByText('640 km · aniq')).toBeTruthy();
     expect(screen.getByText('Buxoro filiali, Buxoro')).toBeTruthy();
     expect(screen.getByText(i18n.t('vehicles.lastTrip', { date: '30.09.2026' }))).toBeTruthy();
+    // Masofa/litr — minglar ajratilgan, birlik lug'atdan (plitkaga sig'adigan ko'rinish).
+    expect(screen.getByText('8 451')).toBeTruthy();
+    expect(screen.getByText('1 200')).toBeTruthy();
+    expect(screen.getByText('12 km/l')).toBeTruthy();
+    // Davlat raqami — faqat plastinkada (takroriy qator yo'q).
+    expect(screen.queryByText(i18n.t('vehicles.plate'))).toBeNull();
+  });
+
+  it("ruscha birliklar; safarlar tarixi 30 tadan — «yana ko'rsatish»", async () => {
+    await i18n.changeLanguage('ru');
+    mock.onGet(VEHICLE_TRIPS(1)).reply(
+      200,
+      Array.from({ length: 45 }, (_, i) => ({ ...TRIPS[0], request_id: 100 + i, letter_number: `B-${100 + i}` })),
+    );
+    await renderWithProviders(<VehicleProfileScreen />);
+    expect(await screen.findByTestId('vehicle-trip-129')).toBeTruthy();
+    expect(screen.queryByTestId('vehicle-trip-130')).toBeNull();
+    expect(
+      within(screen.getByTestId('vehicle-trip-100')).getByText('640 км · ' + i18n.t('vehicles.actual')),
+    ).toBeTruthy();
+    expect(await screen.findByTestId('vehicle-live')).toHaveTextContent(/54 км\/ч/);
+    await fireEvent.press(screen.getByTestId('vehicle-trips-more'));
+    expect(screen.getByTestId('vehicle-trip-144')).toBeTruthy();
+    expect(screen.queryByTestId('vehicle-trips-more')).toBeNull();
+  });
+
+  it('signal hozirgina kelgan — «0 daqiqa oldin» emas', async () => {
+    mock.onGet(VEHICLE_LIVE(1)).reply(200, { lat: 41.3, lon: 69.2, speed: 0, age_seconds: 20 });
+    await renderWithProviders(<VehicleProfileScreen />);
+    expect(await screen.findByTestId('vehicle-live')).toHaveTextContent(
+      new RegExp(`${i18n.t('vehicles.gpsJustNow')}$`),
+    );
   });
 
   it('operator + GPS — jonli holat matni (harakatda, tezlik, necha daqiqa oldin)', async () => {

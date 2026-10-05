@@ -308,6 +308,8 @@ function FuelHistorySheet({ onClose }: { onClose: () => void }) {
   const { colors: c } = useTheme();
   const logs = useQuery(fuelLogsQuery(true));
   const rows = logs.data ?? [];
+  // Tarix (≤200) — 30 tadan, «yana ko'rsatish» bilan.
+  const [limit, setLimit] = useState(30);
   return (
     <Sheet visible onClose={onClose} title={t('vehicles.fuelHistory')}>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.body}>
@@ -321,7 +323,7 @@ function FuelHistorySheet({ onClose }: { onClose: () => void }) {
         ) : rows.length === 0 ? (
           <EmptyState title={t('vehicles.fuelHistoryEmpty')} />
         ) : (
-          rows.map((r) => (
+          rows.slice(0, limit).map((r) => (
             <View key={r.id} style={[styles.log, { borderBottomColor: c.border }]} testID={`fuel-log-${r.id}`}>
               <Text variant="body" weight="600">
                 {[r.fuel_name || '—', r.action_label || r.action].filter(Boolean).join(' · ')}
@@ -336,6 +338,15 @@ function FuelHistorySheet({ onClose }: { onClose: () => void }) {
               </Text>
             </View>
           ))
+        )}
+        {rows.length > limit && (
+          <Button
+            testID="fuel-logs-more"
+            label={`${t('vehicles.showMore')} (${rows.length - limit})`}
+            variant="ghost"
+            size="sm"
+            onPress={() => setLimit((n) => n + 30)}
+          />
         )}
       </ScrollView>
     </Sheet>

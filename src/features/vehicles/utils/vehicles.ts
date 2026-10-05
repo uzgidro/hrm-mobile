@@ -569,7 +569,9 @@ export function buildVehicleBody(f: VehicleForm) {
   const year = parseNumber(f.year);
   const seats = parseNumber(f.seats);
   const cons = parseNumber(f.fuel_consumption);
-  if (year === undefined || seats === undefined || cons === undefined) {
+  // Yil va o'rinlar soni — butun son (server `int`); sarf — kasr bo'lishi mumkin.
+  const notInt = (n: number | null | undefined) => n != null && !Number.isInteger(n);
+  if (year === undefined || seats === undefined || cons === undefined || notInt(year) || notInt(seats)) {
     return { ok: false as const, error: 'vehicles.invalidNumber' as const };
   }
   return {

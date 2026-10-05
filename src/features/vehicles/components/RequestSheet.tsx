@@ -11,6 +11,7 @@ import { getApiErrorMessage } from '@/api/errors';
 import { toast } from '@/lib/toast';
 import { FormInput } from '@/components/FormInput';
 import { PickerModal } from '@/components/PickerModal';
+import { useBreakpoint } from '@/utils/responsive';
 import { Avatar, Badge, Button, Chip, SelectField, Sheet, Text } from '@/ui';
 import { driversQuery, vehiclesQuery } from '../api/queries';
 import { useApproveRequest, useFinalizeRequest, useRespondRequest } from '../api/mutations';
@@ -74,7 +75,7 @@ export function RequestSheet({ req: r, onClose }: { req: VehicleRequest; onClose
           )}
           {km != null && (
             <Text variant="caption" tone="muted">
-              {`${km} km${cost != null ? ` · ${fmtMoney(cost)} ${t('vehicles.sum')}` : ''}`}
+              {`${fmtMoney(km)} ${t('vehicles.unitKm')}${cost != null ? ` · ${fmtMoney(cost)} ${t('vehicles.sum')}` : ''}`}
             </Text>
           )}
           {!!r.purpose && (
@@ -149,6 +150,9 @@ type FormProps = { r: VehicleRequest; onDone: () => void; onCancel: () => void }
 function DecideForm({ r, onDone, onCancel }: FormProps) {
   const { t } = useTranslation();
   const approve = useApproveRequest();
+  // Telefonda «Avtoparkka o'tkazish» ikki qatorga bo'linardi — tugmalar ustma-ust, asosiysi yuqorida.
+  const { sizeClass } = useBreakpoint();
+  const compact = sizeClass === 'compact';
   const [note, setNote] = useState('');
   const [error, setError] = useState<string | null>(null);
   const run = async (approved: boolean) => {
@@ -173,8 +177,8 @@ function DecideForm({ r, onDone, onCancel }: FormProps) {
         }}
       />
       <FormError error={error} />
-      <View style={styles.row}>
-        <View style={styles.flex}>
+      <View style={compact ? styles.stack : styles.row}>
+        <View style={compact ? undefined : styles.flex}>
           <Button
             testID="vehicle-decide-refuse"
             label={t('vehicles.refuse')}
@@ -184,7 +188,7 @@ function DecideForm({ r, onDone, onCancel }: FormProps) {
             full
           />
         </View>
-        <View style={styles.flex}>
+        <View style={compact ? undefined : styles.flex}>
           <Button
             testID="vehicle-decide-pass"
             label={t('vehicles.pass')}
@@ -418,5 +422,6 @@ const styles = StyleSheet.create({
   form: { gap: 10 },
   peers: { gap: 6 },
   row: { flexDirection: 'row', gap: 8 },
+  stack: { flexDirection: 'column-reverse', gap: 8 },
   flex: { flex: 1, minWidth: 0 },
 });

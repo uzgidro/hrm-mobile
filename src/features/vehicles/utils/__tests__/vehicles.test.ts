@@ -295,6 +295,19 @@ describe('mashina formasi', () => {
       ok: false,
       error: 'vehicles.invalidNumber',
     });
+    // Yil va o'rinlar — butun son (kasr rad etiladi), sarf — kasr bo'lishi mumkin.
+    expect(buildVehicleBody({ ...f, plate_number: '01a', model_name: 'X', year: '2020.5' })).toEqual({
+      ok: false,
+      error: 'vehicles.invalidNumber',
+    });
+    expect(buildVehicleBody({ ...f, plate_number: '01a', model_name: 'X', seats: '4,5' })).toEqual({
+      ok: false,
+      error: 'vehicles.invalidNumber',
+    });
+    expect(buildVehicleBody({ ...f, plate_number: '01a', model_name: 'X', seats: '5' })).toMatchObject({
+      ok: true,
+      body: { seats: 5 },
+    });
     expect(
       buildVehicleBody({
         ...f,

@@ -72,11 +72,12 @@ export function AvailabilityBadge({ v }: { v: Vehicle }) {
 }
 
 export function GpsMark({ v }: { v: Vehicle }) {
+  const { t } = useTranslation();
   const { colors: c } = useTheme();
   if (!v.gps_device_id) return null;
   return (
     <Text variant="caption" style={[styles.gps, { color: c.success }]}>
-      ● GPS
+      {`● ${t('vehicles.unitGps')}`}
     </Text>
   );
 }
@@ -95,6 +96,6 @@ const styles = StyleSheet.create({
   seg: { paddingHorizontal: 7, justifyContent: 'center' },
   mono: { fontSize: 13, fontWeight: '800', letterSpacing: 1, fontVariant: ['tabular-nums'] },
   monoSmall: { fontSize: 11.5 },
-  avail: { gap: 2, alignItems: 'flex-start' },
+  avail: { gap: 2, alignItems: 'flex-start', flexShrink: 1, minWidth: 0 },
   gps: { fontWeight: '700' },
 });

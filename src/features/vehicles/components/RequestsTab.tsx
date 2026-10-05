@@ -59,7 +59,12 @@ export function RequestsTab({
   debounced: string;
 }) {
   const { t } = useTranslation();
-  const [page, setPage] = useState(1);
+  // Sahifa filtrga bog'liq: holat (masalan «Navbatda» plitkasidan), qidiruv, sana yoki mashina
+  // o'zgarsa — yana 1-sahifa.
+  const filterKey = [state.status, debounced, state.from, state.to, state.vehicleId ?? ''].join('|');
+  const [pg, setPg] = useState({ key: filterKey, n: 1 });
+  const page = pg.key === filterKey ? pg.n : 1;
+  const setPage = (n: number) => setPg({ key: filterKey, n });
   const [open, setOpen] = useState(false);
   const [picker, setPicker] = useState<Picker>(null);
   const [viewing, setViewing] = useState<{ req: VehicleRequest; n: number } | null>(null);
@@ -72,6 +77,11 @@ export function RequestsTab({
       page,
     ),
   );
+  // Sahifa serverdagi sahifalar sonidan oshmasin: oxirgi sahifaning so'nggi so'rovi hal qilingach
+  // ro'yxat bo'sh qolib, Pager yashirinib qolardi — oxirgi mavjud sahifaga qaytamiz.
+  const serverPages = list.isSuccess && !list.isPlaceholderData ? Math.max(1, list.data.pages) : null;
+  // (render paytidagi tuzatish — effektsiz, bitta qo'shimcha render)
+  if (serverPages != null && pg.key === filterKey && pg.n > serverPages) setPg({ key: filterKey, n: serverPages });
   const cars = useQuery(vehiclesQuery('', false, undefined, picker === 'vehicle' || state.vehicleId != null));
   const rows = list.data?.items ?? [];
   const filterCount = [state.from, state.to, state.vehicleId != null ? 'x' : ''].filter(Boolean).length;
@@ -235,7 +245,9 @@ function RequestRow({ r, onPress }: { r: VehicleRequest; onPress: () => void }) 
         {[
           dateRangeText(r.start_date, r.end_date),
           r.regions?.length ? r.regions.join(', ') : null,
-          km != null ? `${km} km${cost != null ? ` · ${fmtMoney(cost)} ${t('vehicles.sum')}` : ''}` : null,
+          km != null
+            ? `${fmtMoney(km)} ${t('vehicles.unitKm')}${cost != null ? ` · ${fmtMoney(cost)} ${t('vehicles.sum')}` : ''}`
+            : null,
           r.letter_number ? `#${r.letter_number}` : null,
         ]
           .filter(Boolean)

@@ -2,17 +2,32 @@
 // umumiy ko'rsatkichlar va safarlar tarixi. Jonli holat — faqat matn (harakatda / to'xtab
 // turibdi / signal eski), operator va tasdiqlovchiga hamda trekker ulangan mashinaga, 20 s da
 // yangilanadi. Xarita, marshrut va kunlik GPS tarixi — web'da (native xarita yo'q).
-import React from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeProvider';
 import { useBreakpoint } from '@/utils/responsive';
-import { Avatar, Badge, Card, EmptyState, ErrorState, PageHeader, Screen, Skeleton, StatTile, Text } from '@/ui';
+import {
+  Avatar,
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  ErrorState,
+  PageHeader,
+  Screen,
+  Skeleton,
+  StatTile,
+  Text,
+} from '@/ui';
 import { fleetAccessQuery, vehicleDetailQuery, vehicleLiveQuery, vehicleTripsQuery } from '../api/queries';
 import { PlateChip } from '../components/FleetBits';
 import { canSeeGps, dateRangeText, fmtDate, fmtMoney, liveStatus, type VehicleTrip } from '../utils/vehicles';
+
+/** Safarlar tarixi (≤200) — Screen ichida birdaniga chizilmaydi: 30 tadan. */
+const TRIPS_STEP = 30;
 
 export default function VehicleProfileScreen() {
   const { t } = useTranslation();
@@ -27,6 +42,7 @@ export default function VehicleProfileScreen() {
   const gpsAllowed = canSeeGps(access.data);
   const canSeeLive = gpsAllowed && !!v?.gps_device_id;
   const live = useQuery(vehicleLiveQuery(id, canSeeLive));
+  const [tripLimit, setTripLimit] = useState(TRIPS_STEP);
 
   if (detail.isPending && id > 0) {
     return (
@@ -57,13 +73,13 @@ export default function VehicleProfileScreen() {
 
   const stats = v.stats;
   const spec: [string, string | number | null | undefined][] = [
-    [t('vehicles.plate'), v.plate_number],
     [t('vehicles.model'), v.model_name],
     [t('vehicles.color'), v.color],
     [t('vehicles.year'), v.year],
     [t('vehicles.seatsLabel'), v.seats],
     [t('vehicles.fuelType'), v.fuel_type_name],
-    [t('vehicles.consumption'), v.fuel_consumption ? `${v.fuel_consumption} km/l` : null],
+    // v2 `VehicleProfilePage`: «km/l».
+    [t('vehicles.consumption'), v.fuel_consumption ? `${fmtMoney(v.fuel_consumption)} ${t('vehicles.unitKmL')}` : null],
     [
       t('vehicles.fuelPriceLabel'),
       v.fuel_price != null
@@ -110,7 +126,9 @@ export default function VehicleProfileScreen() {
         <View style={{ flexBasis: basis, flexGrow: 1 }}>
           <StatTile
             label={t('vehicles.statDistance')}
-            value={stats?.total_distance_km ? `${stats.total_distance_km} km` : '—'}
+            // Butun songa, minglar ajratilgan; birlik pastda — plitkaga sig'adi.
+            value={stats?.total_distance_km ? fmtMoney(Math.round(stats.total_distance_km)) : '—'}
+            sub={stats?.total_distance_km ? t('vehicles.unitKm') : undefined}
             icon="mapPin"
             tint="drop"
           />
@@ -118,7 +136,8 @@ export default function VehicleProfileScreen() {
         <View style={{ flexBasis: basis, flexGrow: 1 }}>
           <StatTile
             label={t('vehicles.statFuel')}
-            value={stats?.total_fuel_liters ? `${stats.total_fuel_liters} l` : '—'}
+            value={stats?.total_fuel_liters ? fmtMoney(Math.round(stats.total_fuel_liters)) : '—'}
+            sub={stats?.total_fuel_liters ? t('vehicles.unitL') : undefined}
             icon="target"
             tint="amber"
           />
@@ -148,7 +167,7 @@ export default function VehicleProfileScreen() {
               <Text variant="body" weight="600" numberOfLines={1}>
                 {v.driver.legal_name}
               </Text>
-              <Text variant="caption" tone="subtle" selectable>
+              <Text variant="caption" tone="subtle" selectable numberOfLines={1}>
                 {[v.driver_position, v.driver_phone].filter(Boolean).join(' · ') || t('vehicles.driver')}
               </Text>
             </View>
@@ -186,8 +205,12 @@ export default function VehicleProfileScreen() {
             <Text variant="caption" tone="muted" testID="vehicle-live">
               {[
                 t(ls.key),
-                'speed' in ls ? `${ls.speed} km/h` : null,
-                'agoMin' in ls && ls.agoMin != null ? t('vehicles.gpsAgo', { min: ls.agoMin }) : null,
+                'speed' in ls ? `${ls.speed} ${t('vehicles.unitKmh')}` : null,
+                'agoMin' in ls && ls.agoMin != null
+                  ? ls.agoMin < 1
+                    ? t('vehicles.gpsJustNow')
+                    : t('vehicles.gpsAgo', { min: ls.agoMin })
+                  : null,
               ]
                 .filter(Boolean)
                 .join(' · ')}
@@ -214,7 +237,20 @@ export default function VehicleProfileScreen() {
         ) : (trips.data ?? []).length === 0 ? (
           <EmptyState title={t('vehicles.noTrips')} message={t('vehicles.noTripsHint')} />
         ) : (
-          (trips.data ?? []).map((trip) => <TripRow key={trip.request_id} trip={trip} />)
+          <>
+            {(trips.data ?? []).slice(0, tripLimit).map((trip) => (
+              <TripRow key={trip.request_id} trip={trip} />
+            ))}
+            {(trips.data ?? []).length > tripLimit && (
+              <Button
+                testID="vehicle-trips-more"
+                label={`${t('vehicles.showMore')} (${(trips.data ?? []).length - tripLimit})`}
+                variant="ghost"
+                size="sm"
+                onPress={() => setTripLimit((n) => n + TRIPS_STEP)}
+              />
+            )}
+          </>
         )}
       </Card>
       <Text variant="caption" tone="subtle" style={styles.note}>
@@ -242,7 +278,7 @@ function TripRow({ trip }: { trip: VehicleTrip }) {
         </Text>
         {distance != null && (
           <Badge
-            label={`${distance} km${isActual ? ` · ${t('vehicles.actual')}` : ''}`}
+            label={`${fmtMoney(distance)} ${t('vehicles.unitKm')}${isActual ? ` · ${t('vehicles.actual')}` : ''}`}
             tone={isActual ? 'success' : 'neutral'}
           />
         )}

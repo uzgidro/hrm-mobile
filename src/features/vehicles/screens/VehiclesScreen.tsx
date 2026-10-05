@@ -128,7 +128,11 @@ export default function VehiclesScreen() {
   const o = fleetOverview(today.data ?? []);
   const queue = (qPending.data ?? 0) + (qAwaiting.data ?? 0);
   const value = (k: TileKey) => {
-    if (k === 'queue') return qPending.isPending || qAwaiting.isPending ? '…' : queue;
+    if (k === 'queue') {
+      // Sanoq olinmasa «—» (0 — yolg'on bo'lardi).
+      if (qPending.isError || qAwaiting.isError) return '—';
+      return qPending.isPending || qAwaiting.isPending ? '…' : queue;
+    }
     if (today.isError) return '—';
     return today.isPending ? '…' : o[k];
   };

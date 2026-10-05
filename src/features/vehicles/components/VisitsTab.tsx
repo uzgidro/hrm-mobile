@@ -194,7 +194,7 @@ function VisitRow({ r }: { r: VehicleVisit }) {
       <Text variant="caption" tone="muted">
         {[
           kind,
-          r.place_distance_m != null ? `${r.place_distance_m} m` : null,
+          r.place_distance_m != null ? `${r.place_distance_m} ${t('vehicles.unitM')}` : null,
           r.is_habitual ? t('vehicles.stopHabitualShort') : null,
         ]
           .filter(Boolean)

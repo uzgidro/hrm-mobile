@@ -131,8 +131,10 @@ describe('VehiclesScreen (v2 VehiclesPage)', () => {
   afterEach(() => {
     __resetToasts();
     mock.reset();
-    setUser(null);
   });
+  // Foydalanuvchi har testda RENDERDAN OLDIN (beforeEach / test boshida) qo'yiladi; bu yerda
+  // tozalash — ekran unmount bo'lgach (afterEach'da store o'zgarishi act ogohlantirishi berardi).
+  afterAll(() => setUser(null));
 
   it("can_view yo'q — ruxsat yo'q holati, ro'yxat so'ralmaydi", async () => {
     mock.onGet(VEHICLE_ACCESS).reply(200, { ...ACCESS, can_manage: false, can_view: false });
@@ -278,24 +280,22 @@ describe('VehiclesScreen (v2 VehiclesPage)', () => {
 
   it("tasdiqlovchi: standart «Tasdiqlash kerak», qaror — avtoparkka o'tkazish (izoh bilan)", async () => {
     mock.onGet(VEHICLE_ACCESS).reply(200, { ...ACCESS, can_manage: false, can_approve: true });
-    mock
-      .onGet(VEHICLE_REQUESTS)
-      .reply((cfg) =>
-        cfg.params?.size === 1
-          ? [200, { items: [], total: 0, page: 1, size: 1, pages: 1 }]
-          : [
-              200,
-              page([
-                {
-                  ...REQ,
-                  status: 'awaiting_approval',
-                  approval_status: 'pending',
-                  can_respond: false,
-                  can_approve: true,
-                },
-              ]),
-            ],
-      );
+    mock.onGet(VEHICLE_REQUESTS).reply((cfg) =>
+      cfg.params?.size === 1
+        ? [200, { items: [], total: 0, page: 1, size: 1, pages: 1 }]
+        : [
+            200,
+            page([
+              {
+                ...REQ,
+                status: 'awaiting_approval',
+                approval_status: 'pending',
+                can_respond: false,
+                can_approve: true,
+              },
+            ]),
+          ],
+    );
     mock.onPost(VEHICLE_REQUEST_APPROVE(50)).reply(200, {});
     mockParams = { tab: 'requests' };
     await renderWithProviders(<VehiclesScreen />);
@@ -382,6 +382,80 @@ describe('VehiclesScreen (v2 VehiclesPage)', () => {
     await renderWithProviders(<VehiclesScreen />);
     expect(await screen.findByText('Cobalt')).toBeTruthy();
     expect(mock.history.get.filter((r) => r.url === VEHICLE_FUEL_TYPES)).toHaveLength(0);
+  });
+
+  it("so'rovlar: oxirgi sahifa bo'shab qolsa — mavjud oxirgi sahifaga qaytadi", async () => {
+    let pages = 2;
+    mock.onGet(VEHICLE_REQUESTS).reply((cfg) => {
+      if (cfg.params?.size === 1) return [200, { items: [], total: 0, page: 1, size: 1, pages: 1 }];
+      const p = cfg.params?.page ?? 1;
+      const items =
+        p === 1
+          ? [REQ]
+          : pages >= 2
+            ? [
+                {
+                  ...REQ,
+                  id: 52,
+                  status: 'approved',
+                  can_finalize: true,
+                  vehicle: { id: 1, plate_number: '01A123BC' },
+                },
+              ]
+            : [];
+      return [200, { items, total: items.length, page: p, size: 30, pages }];
+    });
+    mock.onPost(VEHICLE_REQUEST_FINALIZE(52)).reply(() => {
+      pages = 1; // yakunlangan so'rov navbatdan chiqdi — 2-sahifa endi yo'q
+      return [200, {}];
+    });
+    mockParams = { tab: 'requests' };
+    await renderWithProviders(<VehiclesScreen />);
+    await screen.findByTestId('vehicle-req-50');
+    await fireEvent.press(screen.getByTestId('pager-next'));
+    await fireEvent.press(await screen.findByTestId('vehicle-req-52'));
+    await fireEvent.press(screen.getByTestId('vehicle-req-finalize'));
+    await fireEvent.press(screen.getByTestId('vehicle-finalize-save'));
+    await waitFor(() => expect(mock.history.post).toHaveLength(1));
+    // 2-sahifa bo'sh keldi → 1-sahifa so'raladi va ko'rinadi (bo'sh ro'yxat + yashirin Pager emas).
+    expect(await screen.findByTestId('vehicle-req-50')).toBeTruthy();
+    const last = mock.history.get.filter((r) => r.url === VEHICLE_REQUESTS && r.params?.size === 30).pop();
+    expect(last?.params.page).toBe(1);
+  });
+
+  it("so'rovlar: «Navbatda» plitkasi holatni almashtirsa — 1-sahifadan", async () => {
+    mock.onGet(VEHICLE_ACCESS).reply(200, { ...ACCESS, can_manage: false, can_approve: true });
+    mock.onGet(VEHICLE_REQUESTS).reply((cfg) =>
+      cfg.params?.size === 1
+        ? [200, { items: [], total: 1, page: 1, size: 1, pages: 1 }]
+        : [
+            200,
+            {
+              items: [{ ...REQ, id: 60 + (cfg.params?.page ?? 1) }],
+              total: 40,
+              page: cfg.params?.page,
+              size: 30,
+              pages: 2,
+            },
+          ],
+    );
+    mockParams = { tab: 'requests' };
+    await renderWithProviders(<VehiclesScreen />);
+    await screen.findByTestId('vehicle-req-61');
+    await fireEvent.press(screen.getByTestId('pager-next'));
+    expect(await screen.findByTestId('vehicle-req-62')).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('vehicles-tile-queue'));
+    await waitFor(() => {
+      const last = mock.history.get.filter((r) => r.url === VEHICLE_REQUESTS && r.params?.size === 30).pop();
+      expect(last?.params).toMatchObject({ status: 'pending', page: 1 });
+    });
+  });
+
+  it("navbat sanog'i olinmasa plitkada «—» (0 emas)", async () => {
+    mock.onGet(VEHICLE_REQUESTS).reply((cfg) => (cfg.params?.size === 1 ? [500, {}] : [200, page([REQ])]));
+    await renderWithProviders(<VehiclesScreen />);
+    await screen.findByText('Cobalt');
+    await waitFor(() => expect(screen.getByTestId('vehicles-tile-queue')).toHaveTextContent(/—/));
   });
 
   it('tashriflar: standart 7 kun, 10 daqiqa; qator mashina profiliga', async () => {
