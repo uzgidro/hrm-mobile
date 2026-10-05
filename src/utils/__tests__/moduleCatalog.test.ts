@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { canAccessPage, setNavOverrides, isModuleReady } from '../roles';
+import { canAccessPage, canManageDictionaries, setNavOverrides, isModuleReady } from '../roles';
 import { visibleCatalog, catalogBySection, CATALOG } from '../moduleCatalog';
 import type { User } from '@/types';
 import i18n from '@/i18n';
@@ -232,6 +232,22 @@ describe('modul katalogi — v2 paritet', () => {
     expect(canAccessPage(emp(), 'customFields')).toBe(false);
     expect(canAccessPage(kppAcc, 'customFields')).toBe(false);
     expect(CATALOG.find((e) => e.page === 'customFields')?.route).toBe('/qoshimcha-maydonlar');
+  });
+
+  it("ma'lumotnomalar — v2 ALL (o'qish hammaga): xodim, kadr, ministr, bosh admin; admin hisobi (tizim modullari) va post/mehmon yo'q; yozish — faqat bosh admin va kadr; route /malumotnomalar", () => {
+    const ministr = emp({ employee: { id: 10, is_multi_org_user: true, multi_org_employee_role: 'ministr' } });
+    const adminAcc = u({ id: 5, type: 'admin' });
+    expect(isModuleReady('dictionaries')).toBe(true);
+    for (const x of [master, hr, ministr, emp()]) expect(canAccessPage(x, 'dictionaries')).toBe(true);
+    expect(canAccessPage(adminAcc, 'dictionaries')).toBe(false);
+    expect(canAccessPage(kppAcc, 'dictionaries')).toBe(false);
+    expect(canAccessPage(u({ id: 7, type: 'guest' }), 'dictionaries')).toBe(false);
+    expect(canManageDictionaries(master)).toBe(true);
+    expect(canManageDictionaries(hr)).toBe(true);
+    expect(canManageDictionaries(ministr)).toBe(false);
+    expect(canManageDictionaries(adminAcc)).toBe(false);
+    expect(canManageDictionaries(emp({ akt_branch_ids: [1] }))).toBe(false);
+    expect(CATALOG.find((e) => e.page === 'dictionaries')?.route).toBe('/malumotnomalar');
   });
 
   it('har katalog yozuvining nomi 4 tilda tarjima qilingan (xom kalit chiqmaydi)', async () => {

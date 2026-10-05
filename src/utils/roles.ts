@@ -304,6 +304,16 @@ export function canManageStructure(user?: User | null): boolean {
   return isSiteMasterAdmin(user) || isBranchAdmin(user) || isHR(user);
 }
 
+/**
+ * Ma'lumotnoma yozuvlarini yozish — web v2 `features/dictionaries/useDictionaries.ts`
+ * `canManageDictionaries` 1:1: sayt master-admini va kadr. Ministr — yo'q (server
+ * `require_structure_manager` uni rad etadi). `admin` hisobi bu sahifaga umuman kirmaydi
+ * (v2 menyusida faqat tizim modullari).
+ */
+export function canManageDictionaries(user?: User | null): boolean {
+  return isSiteMasterAdmin(user) || isHR(user);
+}
+
 /** Ish rejasini yozish — v2 WorkPlanPage: canManageStructure || ministr || deputy. */
 export function canWriteWorkPlan(user?: User | null): boolean {
   return canManageStructure(user) || isMinister(user) || isDeputy(user);
@@ -529,7 +539,7 @@ const MODULE_FOR_PAGE: Partial<Record<PageKey, ModuleDef>> = {
     defaultRoles: ['masterAdmin', 'ministr', 'deputy', 'hr', 'accounting', 'employee'],
     gates: [reportsGate],
   },
-  dictionaries: { key: 'dictionaries', defaultRoles: ALL, ready: false },
+  dictionaries: { key: 'dictionaries', defaultRoles: ALL },
   tabelSettings: { key: 'tabelSettings', defaultRoles: ADMIN_HR, ready: false },
   monitoring: { key: 'monitoring', defaultRoles: ['masterAdmin', 'monitoring'] },
   kpp: { key: 'kpp', defaultRoles: ['kpp', 'masterAdmin'] },

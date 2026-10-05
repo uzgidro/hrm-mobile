@@ -524,5 +524,11 @@ export const CUSTOM_FIELD_GROUPS = 'custom-fields/groups';
 export const CUSTOM_FIELD_GROUP = (id: number) => `custom-fields/groups/${id}`;
 export const CUSTOM_FIELDS = 'custom-fields/fields';
 export const CUSTOM_FIELD = (id: number) => `custom-fields/fields/${id}`;
-// Ma'lumotnomalar katalogi (web v2 DictionariesPage, TZ 4.2.5) — o'qish barcha rollarga ochiq.
+// Ma'lumotnomalar (web v2 DictionariesPage, TZ 4.2.5): o'qish — barcha rollar; yozish —
+// `require_structure_manager`. Tashqi manbali (filiallar, bo'limlar, lavozimlar) va tizim (o'zgarmas)
+// ma'lumotnomalari faqat o'qiladi. Yozuv o'chirilishidan oldin `usage` — qayerda ishlatilyapti.
 export const DICTIONARIES = 'dictionaries';
+export const DICTIONARIES_SYNC = 'dictionaries/sync-catalog';
+export const DICTIONARY_ENTRIES = (code: string) => `dictionaries/${code}/entries`;
+export const DICTIONARY_ENTRY = (id: number) => `dictionaries/entries/${id}`;
+export const DICTIONARY_ENTRY_USAGE = (id: number) => `dictionaries/entries/${id}/usage`;
