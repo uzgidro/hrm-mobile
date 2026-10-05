@@ -8,6 +8,8 @@ export default {
   title: 'KPI',
   entryTitle: "KPI ko'rsatkichi",
   loadError: "KPI ma'lumotlarini yuklashda xatolik",
+  noEmployeeTitle: "«Mening KPI» — faqat xodimlar uchun",
+  noEmployeeHint: "Bu hisobda xodim kartasi yo'q, shaxsiy KPI kartasi ham yo'q. KPI boshqaruvi — web versiyada.",
 
   // ── Profile info rows ─────────────────────────────────────────────────────
   department: "Bo'lim",

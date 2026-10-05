@@ -31,6 +31,15 @@ describe('kpiKeys', () => {
 });
 
 describe('myScorecardQuery', () => {
+  it("o'chirilishi mumkin (xodim kartasi yo'q hisob) va `not_an_employee` ni qayta so'ramaydi", () => {
+    expect(myScorecardQuery('', undefined, false).enabled).toBe(false);
+    expect(myScorecardQuery().enabled).toBe(true);
+    const retry = myScorecardQuery().retry as (n: number, e: unknown) => boolean;
+    expect(retry(0, { isAxiosError: true, response: { status: 400, data: { code: 'not_an_employee' } } })).toBe(false);
+    expect(retry(0, { isAxiosError: true, response: { status: 500, data: {} } })).toBe(true);
+    expect(retry(2, { isAxiosError: true, response: { status: 500, data: {} } })).toBe(false);
+  });
+
   it('keys by period and omits both params for the current month (self)', async () => {
     mock.onGet(KPI_MY_SCORECARD).reply(200, { entries: [] });
     const opts = myScorecardQuery();

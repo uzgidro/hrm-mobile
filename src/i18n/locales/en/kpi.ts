@@ -4,6 +4,8 @@ export default {
   title: 'KPI',
   entryTitle: 'KPI indicator',
   loadError: 'Failed to load KPI data',
+  noEmployeeTitle: '“My KPI” is for employees only',
+  noEmployeeHint: 'This account has no employee card, so it has no personal KPI scorecard. KPI management is in the web version.',
 
   department: 'Department',
   period: 'Period',

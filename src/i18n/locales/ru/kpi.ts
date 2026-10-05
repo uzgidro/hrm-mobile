@@ -4,6 +4,8 @@ export default {
   title: 'KPI',
   entryTitle: 'Показатель KPI',
   loadError: 'Ошибка при загрузке данных KPI',
+  noEmployeeTitle: '«Мой KPI» — только для сотрудников',
+  noEmployeeHint: 'У этой учётной записи нет карточки сотрудника, а значит и личной карты KPI. Управление KPI — в веб-версии.',
 
   department: 'Отдел',
   period: 'Период',

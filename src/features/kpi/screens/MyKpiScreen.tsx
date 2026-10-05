@@ -5,6 +5,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { router, useLocalSearchParams } from 'expo-router';
+import { useAuthStore } from '@/store/authStore';
 import dayjs from 'dayjs';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
@@ -20,6 +21,7 @@ import { myScorecardQuery, myTeamQuery } from '../api/queries';
 import { KpiGauge } from '../components/KpiGauge';
 import {
   entryStatusKey, isPenaltyEntry, scorecardTotals, entryResultDisplay, resultColorKey,
+  hasOwnScorecard, isNotAnEmployeeError,
 } from '../utils';
 
 // «Мой KPI» — the employee's personal Verifix scorecard (web EmployeeKpiScreen):
@@ -47,10 +49,15 @@ export default function MyKpiScreen() {
   const subordinateId = employeeId ? Number(employeeId) : undefined;
   // Selected period ('YYYY-MM'); '' = the current month.
   const [period, setPeriod] = useState('');
+  const user = useAuthStore((s) => s.user);
+  // v2 KpiPage: «Mening KPI» faqat xodim kartasi bor hisobga (master-admin / admin — 400
+  // `not_an_employee`). Bo'ysunuvchining kartasi (`employeeId`) esa har kimga so'raladi.
+  const ownCard = !!subordinateId || hasOwnScorecard(user);
 
-  const { data, isLoading, isError, refetch, isFetching } = useQuery(
-    myScorecardQuery(period, subordinateId)
+  const { data, isLoading, isError, error, refetch, isFetching } = useQuery(
+    myScorecardQuery(period, subordinateId, ownCard)
   );
+  const notEmployee = !ownCard || (isError && isNotAnEmployeeError(error));
 
   // Own view only: probe for direct reports to decide whether to offer the team
   // screen. Empty employees[] for a non-supervisor, so this is safe for everyone.
@@ -99,7 +106,9 @@ export default function MyKpiScreen() {
         }
       />
 
-      {isLoading ? (
+      {notEmployee ? (
+        <EmptyState icon="target" title={t('kpi.noEmployeeTitle')} message={t('kpi.noEmployeeHint')} />
+      ) : isLoading ? (
         <LoadingView />
       ) : isError ? (
         <ErrorState title={t('kpi.loadError')} onRetry={() => refetch()} />

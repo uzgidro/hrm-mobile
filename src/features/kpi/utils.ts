@@ -1,4 +1,4 @@
-import type { KpiEntry, KpiTask, KpiEntryAccess, KpiTeamMember } from '@/types';
+import type { KpiEntry, KpiTask, KpiEntryAccess, KpiTeamMember, User } from '@/types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Pure presentation/permission logic for the KPI feature. Mirrors the web
@@ -171,4 +171,17 @@ export function filterTeamMembers(
       (m.department_name?.toLowerCase().includes(q) ?? false)
     );
   });
+}
+
+// ── «Mening KPI» kimga (v2 KpiPage `hasEmployee`) ────────────────────────────
+// Shaxsiy karta — XODIMNING kartasi: `/kpi/my-scorecard` xodim kartasi yo'q hisobga (master-admin,
+// admin) 400 `not_an_employee` beradi. v2 bunday hisobga «Mening KPI» tabini umuman bermaydi.
+export function hasOwnScorecard(user?: User | null): boolean {
+  return !!user?.employee?.id;
+}
+
+/** Server javobi `not_an_employee` (400) — «xato» emas, «bu hisobda shaxsiy karta yo'q». */
+export function isNotAnEmployeeError(error: unknown): boolean {
+  const res = (error as { response?: { status?: number; data?: { code?: unknown } } } | null | undefined)?.response;
+  return res?.status === 400 && res.data?.code === 'not_an_employee';
 }

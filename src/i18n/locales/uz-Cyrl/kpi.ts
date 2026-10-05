@@ -4,6 +4,8 @@ export default {
   title: 'KPI',
   entryTitle: 'KPI кўрсаткичи',
   loadError: 'KPI маълумотларини юклашда хатолик',
+  noEmployeeTitle: '«Менинг KPI» — фақат ходимлар учун',
+  noEmployeeHint: 'Бу ҳисобда ходим картаси йўқ, шахсий KPI картаси ҳам йўқ. KPI бошқаруви — веб версияда.',
 
   department: 'Бўлим',
   period: 'Давр',

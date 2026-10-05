@@ -1,5 +1,7 @@
 import type { KpiEntry, KpiTask, KpiEntryAccess, KpiTeamMember } from '@/types';
 import {
+  isNotAnEmployeeError,
+  hasOwnScorecard,
   bandFor,
   KPI_BANDS,
   entryStatusKey,
@@ -310,5 +312,29 @@ describe('filterTeamMembers', () => {
     const ghost = member({ employee_id: 3, legal_name: null, pending_tasks: 5, all_done: false });
     expect(filterTeamMembers([ghost], 'anything', 'all')).toEqual([]);
     expect(filterTeamMembers([ghost], '', 'pending')).toEqual([ghost]);
+  });
+});
+
+// v2 KpiPage: «Mening KPI» — SHAXSNING kartasi; `/kpi/my-scorecard` xodim kartasi yo'q hisobga
+// 400 `not_an_employee` beradi (real QA: master va admin) — tab faqat xodimga.
+describe('hasOwnScorecard / isNotAnEmployeeError', () => {
+  it('xodim kartasi borlarga (v2 hasEmployee)', () => {
+    expect(hasOwnScorecard({ id: 1, type: 'employee', employee: { id: 5, legal_name: 'X' } })).toBe(true);
+    expect(hasOwnScorecard({ id: 2, type: 'master-admin', employee: null })).toBe(false);
+    expect(hasOwnScorecard({ id: 3, type: 'admin' })).toBe(false);
+    expect(hasOwnScorecard(null)).toBe(false);
+  });
+
+  it('serverning `not_an_employee` javobini taniydi, boshqa xatolarni emas', () => {
+    const err = (status: number, data: unknown) => ({ isAxiosError: true, response: { status, data } });
+    expect(
+      isNotAnEmployeeError(
+        err(400, { code: 'not_an_employee', i18n_key: 'errors.not_an_employee', message: 'Only employees can perform this action' }),
+      ),
+    ).toBe(true);
+    expect(isNotAnEmployeeError(err(400, { code: 'validation_error' }))).toBe(false);
+    expect(isNotAnEmployeeError(err(500, {}))).toBe(false);
+    expect(isNotAnEmployeeError(new Error('x'))).toBe(false);
+    expect(isNotAnEmployeeError(undefined)).toBe(false);
   });
 });

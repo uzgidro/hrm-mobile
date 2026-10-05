@@ -2,6 +2,7 @@ import { queryOptions, keepPreviousData } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
 import { KPI_MY_SCORECARD, KPI_MY_TEAM, KPI_ENTRY_DETAIL, KPI_BONUSES, KPI_TASK_STATUSES } from '@/api/urls';
 import type { KpiScorecard, KpiTeam, KpiEntry, KpiBonus, KpiTaskStatus } from '@/types';
+import { isNotAnEmployeeError } from '../utils';
 
 // Hierarchical query keys — invalidating `kpiKeys.all` refreshes the scorecard
 // (any period/employee), the team roster, any open entry detail and its bonuses
@@ -21,8 +22,12 @@ export const kpiKeys = {
 // anyone who is neither self, direct supervisor, nor HR/master-admin. Empty
 // period = the current month; the envelope is flat (no pagination). The gauge
 // percent inside is backend-computed — never recompute it client-side.
-export function myScorecardQuery(period: string = '', employeeId?: number) {
+// `enabled: false` — xodim kartasi yo'q hisob (v2 KpiPage `hasEmployee`); `not_an_employee`
+// qayta so'ralmaydi — javob o'zgarmaydi.
+export function myScorecardQuery(period: string = '', employeeId?: number, enabled = true) {
   return queryOptions({
+    enabled,
+    retry: (failureCount, error) => !isNotAnEmployeeError(error) && failureCount < 2,
     queryKey: kpiKeys.scorecard(period, employeeId),
     queryFn: () =>
       apiClient
