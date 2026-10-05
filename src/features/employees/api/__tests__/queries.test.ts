@@ -1,12 +1,13 @@
 import MockAdapter from 'axios-mock-adapter';
 import { apiClient } from '@/api/client';
-import { EMPLOYEE_DETAIL, EMPLOYEES_LIST, TURNSTILE_ATTENDANCE_EVENTS } from '@/api/urls';
+import { DICTIONARY_OPTIONS, EMPLOYEE_DETAIL, EMPLOYEES_LIST, TURNSTILE_ATTENDANCE_EVENTS } from '@/api/urls';
 import { employeesQueryKey } from '@/utils/employees';
 import {
   employeeKeys,
   employeesListQuery,
   employeeDetailQuery,
   employeeAttendanceQuery,
+  nationalityOptionsQuery,
 } from '../queries';
 
 let mock: MockAdapter;
@@ -107,5 +108,15 @@ describe('employeeAttendanceQuery', () => {
     mock.onGet(TURNSTILE_ATTENDANCE_EVENTS).reply(200, { items: [{ id: 1 }] });
     const data = await (employeeAttendanceQuery(9, '2026-07').queryFn as () => Promise<unknown[]>)();
     expect(data).toEqual([{ id: 1 }]);
+  });
+});
+
+describe('nationalityOptionsQuery', () => {
+  it("ma'lumotnoma kaliti ostida, ro'yxatni ochadi; o'chirilishi mumkin", async () => {
+    const q = nationalityOptionsQuery();
+    expect(q.queryKey).toEqual(['dictionaries', 'options', 'nationalities']);
+    expect(nationalityOptionsQuery(false).enabled).toBe(false);
+    mock.onGet(DICTIONARY_OPTIONS('nationalities')).reply(200, { items: [{ code: 'uzbek', name: "O'zbek" }] });
+    expect(await (q.queryFn as () => Promise<unknown>)()).toEqual([{ code: 'uzbek', name: "O'zbek" }]);
   });
 });

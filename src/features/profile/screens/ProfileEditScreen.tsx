@@ -12,7 +12,7 @@ import { ff } from '@/theme/typography';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
-import { LoadingView } from '@/components/StateViews';
+import { EmptyState, LoadingView } from '@/components/StateViews';
 import { getApiErrorMessage } from '@/api/errors';
 import { getMyProfile, useUpdateMyProfile } from '../api/mutations';
 import { toast } from '@/lib/toast';
@@ -61,7 +61,7 @@ export default function ProfileEditScreen() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!employeeId) { setLoading(false); return; }
+    if (!employeeId) return; // kartasiz hisob — yuqorida EmptyState (yuklash holati kerak emas)
     (async () => {
       try {
         const e = await getMyProfile(employeeId);
@@ -138,6 +138,17 @@ export default function ProfileEditScreen() {
       setSaving(false);
     }
   };
+
+  // Xodim kartasi yo'q hisob (master-admin, admin, kiosk) — tahrir qiladigan karta yo'q (v2
+  // MyProfilePage «Sizda xodim profili yo'q»); ilgari bo'sh forma ochilib, saqlash xato berardi.
+  if (!employeeId) {
+    return (
+      <Screen edges={['top', 'bottom']}>
+        <ScreenHeader title={t('profile.editTitle')} />
+        <EmptyState title={t('profile.noEmployee')} />
+      </Screen>
+    );
+  }
 
   if (loading) {
     return (

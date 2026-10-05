@@ -12,6 +12,8 @@ export default {
 
   detailTitle: 'Маълумотнома',
   detailNotFound: 'Маълумот топилмади',
+  noEmployeeCard: 'Бу ҳисобда ходим картаси йўқ',
+  noEmployeeCardHint: 'Маълумотнома ходимлар учун — администратор ва пост ҳисобларида шахсий карта бўлмайди.',
   attendance: 'Давомат',
   presentToDate: 'ҳозирги кунгача',
 

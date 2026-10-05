@@ -12,6 +12,8 @@ export default {
 
   detailTitle: 'Профиль',
   detailNotFound: 'Данные не найдены',
+  noEmployeeCard: 'У этой учётной записи нет карточки сотрудника',
+  noEmployeeCardHint: 'Справка — для сотрудников: у администраторов и постов личной карточки нет.',
   attendance: 'Посещаемость',
   presentToDate: 'по настоящее время',
 

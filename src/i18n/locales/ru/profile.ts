@@ -3,6 +3,14 @@
 export default {
   title: 'Профиль',
   userFallback: 'Пользователь',
+  noEmployee: 'У этой учётной записи нет карточки сотрудника',
+  accountType: {
+    masterAdmin: 'Главный администратор',
+    admin: 'Администратор филиала',
+    kpp: 'Пост КПП',
+    monitoring: 'Пост мониторинга',
+    guest: 'Гость',
+  },
   reference: 'Справка',
   orgFallback: 'Организация',
   branchFallback: 'Текущий филиал',

@@ -3,6 +3,14 @@
 export default {
   title: 'Профил',
   userFallback: 'Фойдаланувчи',
+  noEmployee: 'Бу ҳисобда ходим картаси йўқ',
+  accountType: {
+    masterAdmin: 'Бош администратор',
+    admin: 'Филиал администратори',
+    kpp: 'КПП пости',
+    monitoring: 'Мониторинг пости',
+    guest: 'Меҳмон',
+  },
   reference: 'Маълумотнома',
   orgFallback: 'Ташкилот',
   branchFallback: 'Жорий филиал',

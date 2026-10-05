@@ -447,6 +447,23 @@ export type PageKey =
   | 'dictionaries' | 'tabelSettings' | 'monitoring' | 'kpp' | 'videoGuide' | 'users'
   | 'registrations' | 'auditLog' | 'branches' | 'turnstiles' | 'customFields' | 'sysHealth' | 'lms';
 
+/**
+ * Hisobning ko'rsatiladigan ismi — v2 `getDisplayName` (employee.legal_name || username), mobil
+ * xodim kartasi yo'q hisoblarning o'z yozuvidagi ismni ham o'qiydi: `admin.legal_name`,
+ * kioskning `multi_modal_user.legal_name`; oxirida login, keyin e-pochta. Hech narsa yo'q — `null`.
+ */
+export function userDisplayName(user?: User | null): string | null {
+  const pick = (...xs: (string | null | undefined)[]) => xs.map((x) => (x ?? '').trim()).find(Boolean) || null;
+  return pick(
+    user?.employee?.legal_name,
+    user?.admin?.legal_name,
+    user?.multi_modal_user?.legal_name,
+    user?.username,
+    user?.master_admin?.email,
+    user?.admin?.email,
+  );
+}
+
 /** Web v2 `RoleKey` — the key a module's audience is written in. */
 export type RoleKey =
   | 'masterAdmin' | 'employee' | 'hr' | 'kpp' | 'chancellery' | 'ministr' | 'deputy'

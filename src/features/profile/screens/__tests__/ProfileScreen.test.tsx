@@ -3,6 +3,7 @@ import Constants from 'expo-constants';
 import { renderWithProviders, fireEvent, act, waitFor } from '@/test/renderWithProviders';
 import { useLockStore } from '@/store/lockStore';
 import { useAuthStore } from '@/store/authStore';
+import { usePrefsStore } from '@/store/prefsStore';
 import { getConfirm, answerConfirm, __resetConfirm } from '@/lib/confirm';
 import i18n from '@/i18n';
 import ProfileScreen from '../ProfileScreen';
@@ -98,5 +99,45 @@ describe('ProfileScreen', () => {
 
     expect(logout).not.toHaveBeenCalled();
     expect(getConfirm()).toBeNull();
+  });
+
+  describe('hisob turi bo’yicha (real /auth/me shakllari)', () => {
+    const setUser = (u: Record<string, unknown>) =>
+      useAuthStore.setState({ user: u as never, isAuthenticated: true } as never);
+    afterEach(() => useAuthStore.setState({ user: null } as never));
+
+    it("master-admin (xodim kartasi yo'q): ism — login, «Ma'lumotnoma»/«O'zgartirish» yo'q, izoh bor (v2 MyProfilePage)", async () => {
+      setUser({ id: 1, username: 'master', type: 'master-admin', employee: null, master_admin: { id: 1, email: 'm@x.uz' } });
+      const { getByText, queryByText } = await renderWithProviders(<ProfileScreen />);
+      expect(getByText('master')).toBeTruthy();
+      expect(queryByText(i18n.t('profile.userFallback'))).toBeNull();
+      expect(queryByText(i18n.t('profile.reference'))).toBeNull();
+      expect(queryByText(i18n.t('common.edit'))).toBeNull();
+      expect(getByText(i18n.t('profile.noEmployee'))).toBeTruthy();
+      expect(getByText(i18n.t('profile.accountType.masterAdmin'))).toBeTruthy();
+    });
+
+    it('admin — `admin.legal_name` ko’rsatiladi', async () => {
+      setUser({ id: 2, username: 'admin.fil', type: 'admin', employee: null, admin: { id: 3, legal_name: 'Filial Admin', organization_branch_id: 4 } });
+      const { getByText } = await renderWithProviders(<ProfileScreen />);
+      expect(getByText('Filial Admin')).toBeTruthy();
+      expect(getByText(i18n.t('profile.accountType.admin'))).toBeTruthy();
+    });
+
+    it("oddiy xodim (bo'ysunuvchisi yo'q) — «Faqat bo'ysunuvchilar» yo'q; yoqilib qolgan bo'lsa o'chadi", async () => {
+      usePrefsStore.setState({ onlySubordinates: true });
+      setUser({ id: 3, type: 'employee', is_line_manager: false, employee: { id: 7, legal_name: 'Aliyev Vali' } });
+      const { getByText, queryByText } = await renderWithProviders(<ProfileScreen />);
+      expect(getByText('Aliyev Vali')).toBeTruthy();
+      expect(getByText(i18n.t('profile.reference'))).toBeTruthy();
+      expect(queryByText(i18n.t('profile.onlySubordinates'))).toBeNull();
+      await waitFor(() => expect(usePrefsStore.getState().onlySubordinates).toBe(false));
+    });
+
+    it("rahbar (is_line_manager) — «Faqat bo'ysunuvchilar» bor", async () => {
+      setUser({ id: 4, type: 'employee', is_line_manager: true, employee: { id: 8, legal_name: 'Rahbar' } });
+      const { getByText } = await renderWithProviders(<ProfileScreen />);
+      expect(getByText(i18n.t('profile.onlySubordinates'))).toBeTruthy();
+    });
   });
 });

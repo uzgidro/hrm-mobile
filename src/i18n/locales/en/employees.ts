@@ -12,6 +12,8 @@ export default {
 
   detailTitle: 'Profile',
   detailNotFound: 'Data not found',
+  noEmployeeCard: 'This account has no employee card',
+  noEmployeeCardHint: 'Details are for employees — administrator and post accounts have no personal card.',
   attendance: 'Attendance',
   presentToDate: 'to present',
 

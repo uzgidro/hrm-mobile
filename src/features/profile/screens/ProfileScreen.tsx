@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, Platform,
 } from 'react-native';
@@ -6,6 +7,8 @@ import { useTranslation } from 'react-i18next';
 import { Toggle } from '@/ui';
 import Constants from 'expo-constants';
 import { useAuthStore } from '@/store/authStore';
+import { canSeeTeam, userDisplayName } from '@/utils/roles';
+import type { User } from '@/types';
 import { usePrefsStore } from '@/store/prefsStore';
 import { useLockStore } from '@/store/lockStore';
 import { authenticateBiometric } from '@/auth/biometrics';
@@ -31,10 +34,35 @@ const THEME_OPTIONS: { key: ThemeMode; labelKey: string; icon: IconName }[] = [
   { key: 'dark', labelKey: 'profile.themeDark', icon: 'moon' },
 ];
 
+// Xodim kartasi yo'q hisob turining yorlig'i (`profile.accountType.*`). Tur KODI tarjima qilinmaydi.
+function accountTypeKey(type?: User['type']): string | null {
+  switch (type) {
+    case 'master-admin':
+      return 'masterAdmin';
+    case 'admin':
+      return 'admin';
+    case 'kpp':
+      return 'kpp';
+    case 'monitoring':
+    case 'monitoring-operator':
+      return 'monitoring';
+    case 'guest':
+      return 'guest';
+    default:
+      return null;
+  }
+}
+
 export default function ProfileScreen() {
   const { t } = useTranslation();
   const { user, logout } = useAuthStore();
   const employee = user?.employee;
+  // v2 MyProfilePage: xodim kartasi yo'q hisobga (master-admin, admin, kiosk, mehmon) karta
+  // amallari yo'q — «Ma'lumotnoma» cheksiz skeletonda, «O'zgartirish» bo'sh formada qolardi.
+  const hasCard = !!employee?.id;
+  const typeKey = hasCard ? null : accountTypeKey(user?.type);
+  // «Faqat bo'ysunuvchilar» — faqat rahbarga (`is_line_manager`, «Mening jamoam» bilan bir xil).
+  const manager = canSeeTeam(user);
   const { colors, mode, setMode } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { onlySubordinates, setOnlySubordinates } = usePrefsStore();
@@ -46,6 +74,12 @@ export default function ProfileScreen() {
   const biometricsEnabled = useLockStore((s) => s.biometricsEnabled);
   const setBiometricsEnabled = useLockStore((s) => s.setBiometricsEnabled);
   const isNative = Platform.OS !== 'web';
+
+  // Rahbar emas, lekin filtr avval yoqilgan bo'lsa — o'chiriladi: aks holda yashirin sozlama
+  // tug'ilgan kunlar kabi ro'yxatlarni jimgina bo'shatib qo'yardi.
+  useEffect(() => {
+    if (user && !manager && onlySubordinates) setOnlySubordinates(false);
+  }, [user, manager, onlySubordinates, setOnlySubordinates]);
 
   const handleBiometricsToggle = async (next: boolean) => {
     if (next) {
@@ -79,18 +113,25 @@ export default function ProfileScreen() {
         {/* User card */}
         <View style={styles.card}>
           <View style={styles.userRow}>
-            <EmployeeAvatar emp={employee ?? {}} size={60} />
+            <EmployeeAvatar emp={employee ?? { legal_name: userDisplayName(user) ?? undefined }} size={60} />
             <View style={{ flex: 1 }}>
               <Text style={styles.userName} numberOfLines={1}>
-                {employee?.legal_name || t('profile.userFallback')}
+                {userDisplayName(user) || t('profile.userFallback')}
               </Text>
-              {employee?.job_position?.name && (
+              {employee?.job_position?.name ? (
                 <Text style={styles.userRole} numberOfLines={1}>
                   {employee.job_position.name}
                 </Text>
-              )}
+              ) : typeKey ? (
+                <Text style={styles.userRole} numberOfLines={1}>
+                  {t(`profile.accountType.${typeKey}`)}
+                </Text>
+              ) : null}
             </View>
           </View>
+          {!hasCard ? (
+            <Text style={styles.noCard}>{t('profile.noEmployee')}</Text>
+          ) : (
           <View style={styles.userActions}>
             <TouchableOpacity
               style={styles.actionBtn}
@@ -109,9 +150,11 @@ export default function ProfileScreen() {
               <Text style={styles.actionBtnPrimaryText}>{t('common.edit')}</Text>
             </TouchableOpacity>
           </View>
+          )}
         </View>
 
-        {/* Organization */}
+        {/* Organization — xodim kartasi bor hisobga */}
+        {hasCard && (
         <View style={styles.card}>
           <View style={styles.orgRow}>
             <View style={styles.orgIcon}>
@@ -127,6 +170,7 @@ export default function ProfileScreen() {
             </View>
           </View>
         </View>
+        )}
 
         {/* Appearance */}
         <Text style={styles.sectionLabel}>{t('profile.sectionAppearance')}</Text>
@@ -177,6 +221,7 @@ export default function ProfileScreen() {
         {/* Preferences */}
         <Text style={styles.sectionLabel}>{t('profile.sectionSettings')}</Text>
         <View style={styles.card}>
+          {manager && (
           <View style={[styles.menuItem, styles.menuItemBorder]}>
             <View style={styles.menuItemLeft}>
               <View style={styles.menuIcon}><Icon name="users" size={18} color={colors.textSecondary} /></View>
@@ -191,6 +236,7 @@ export default function ProfileScreen() {
               accessibilityLabel={t('profile.onlySubordinates')}
             />
           </View>
+          )}
 
           {/* QR orqali web'ga kirishni tasdiqlash (TZ 4.2.3) — faqat qurilmada
               (web varianti kamera ochmaydi). */}
@@ -306,6 +352,7 @@ const makeStyles = (c: ThemeColors) =>
     userRole: { fontSize: 13, color: c.textSecondary, marginTop: 2, ...ff('700') },
 
     userActions: { flexDirection: 'row', gap: 10 },
+    noCard: { fontSize: 13, color: c.textMuted, ...ff('700') },
     actionBtn: {
       flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
       gap: 8, paddingVertical: 12, borderRadius: 12,

@@ -3,6 +3,14 @@
 export default {
   title: 'Profile',
   userFallback: 'User',
+  noEmployee: 'This account has no employee card',
+  accountType: {
+    masterAdmin: 'Master administrator',
+    admin: 'Branch administrator',
+    kpp: 'Checkpoint post',
+    monitoring: 'Monitoring post',
+    guest: 'Guest',
+  },
   reference: 'Details',
   orgFallback: 'Organization',
   branchFallback: 'Current branch',

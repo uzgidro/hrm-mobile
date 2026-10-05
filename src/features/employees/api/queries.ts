@@ -1,7 +1,9 @@
 import { queryOptions } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
-import { EMPLOYEE_DETAIL, TURNSTILE_ATTENDANCE_EVENTS } from '@/api/urls';
+import { unwrapList } from '@/api/response';
+import { DICTIONARY_OPTIONS, EMPLOYEE_DETAIL, TURNSTILE_ATTENDANCE_EVENTS } from '@/api/urls';
 import type { AttendanceEvent, EmployeeFull } from '@/types';
+import type { DictionaryOption } from '../utils/format';
 
 // Re-exported so existing importers (`EmployeesListScreen.tsx`) keep working.
 // The factory itself now lives in `@/utils/employees` (beside the
@@ -39,6 +41,21 @@ export function employeeDetailQuery(id: number) {
     enabled: !!id,
     // Employee profile data changes rarely — the calendar screen kept this at
     // 5 min; preserve it so we don't refetch on every remount/focus.
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+/**
+ * Millatlar ma'lumotnomasi (`dictionaries/nationalities/options`) — kartadagi kodni nomga aylantirish
+ * uchun (v2 `useCodeOptions('nationalities')`). Kalit v2 / Ma'lumotnomalar feature'i bilan bir xil
+ * (`['dictionaries', 'options', code]`) — ma'lumotnoma tahrir qilinsa shu ham yangilanadi.
+ */
+export function nationalityOptionsQuery(enabled = true) {
+  return queryOptions({
+    queryKey: ['dictionaries', 'options', 'nationalities'] as const,
+    queryFn: () =>
+      apiClient.get(DICTIONARY_OPTIONS('nationalities')).then((r) => unwrapList<DictionaryOption>(r.data)),
+    enabled,
     staleTime: 5 * 60 * 1000,
   });
 }

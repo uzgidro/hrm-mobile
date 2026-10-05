@@ -12,6 +12,14 @@ export default {
   // ── Home screen ─────────────────────────────────────────────────────────────
   title: 'Profil',
   userFallback: 'Foydalanuvchi',
+  noEmployee: "Bu hisobda xodim kartasi yo'q",
+  accountType: {
+    masterAdmin: 'Bosh administrator',
+    admin: 'Filial administratori',
+    kpp: 'KPP posti',
+    monitoring: 'Monitoring posti',
+    guest: 'Mehmon',
+  },
   reference: "Ma'lumotnoma",
   orgFallback: 'Tashkilot',
   branchFallback: 'Joriy filial',

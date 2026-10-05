@@ -20,6 +20,8 @@ export default {
   // ── Detail screen ───────────────────────────────────────────────────────────
   detailTitle: "Ma'lumotnoma",
   detailNotFound: "Ma'lumot topilmadi",
+  noEmployeeCard: "Bu hisobda xodim kartasi yo'q",
+  noEmployeeCardHint: "Ma'lumotnoma xodimlar uchun — administrator va post hisoblarida shaxsiy karta bo'lmaydi.",
   attendance: 'Davomat',
   presentToDate: 'hozirgi kungacha',
 

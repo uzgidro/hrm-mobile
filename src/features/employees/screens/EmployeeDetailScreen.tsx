@@ -15,9 +15,10 @@ import { WorkExperience, Education } from '@/types';
 import { Icon, type IconName } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader, HeaderAction } from '@/components/ScreenHeader';
-import { LoadingView, ErrorState } from '@/components/StateViews';
+import { LoadingView, ErrorState, EmptyState } from '@/components/StateViews';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
-import { employeeDetailQuery } from '../api/queries';
+import { employeeDetailQuery, nationalityOptionsQuery } from '../api/queries';
+import { nationalityLabel, timeRange } from '../utils/format';
 
 export default function EmployeeDetailScreen() {
   const { t } = useTranslation();
@@ -39,12 +40,22 @@ export default function EmployeeDetailScreen() {
     isOwnProfile || isMasterAdmin(user) || isHR(user) || isDeputy(user) || user?.type === 'admin';
 
   const { data: employee = null, isLoading, refetch } = useQuery(employeeDetailQuery(employeeId ?? 0));
-  // Preserve the original imperative semantics: with no id the fetch never ran
-  // and `loading` stayed true (spinner shown indefinitely). React Query disables
-  // the query when id is falsy, so replicate that "stuck loading" state.
-  const loading = employeeId ? isLoading : true;
+  // Millat kodi ("uzb") → nom: v2 kabi ma'lumotnomadan (faqat maydon ko'rinadigan bo'lsa so'raladi).
+  const nationalities = useQuery(nationalityOptionsQuery(canViewSensitive && !!employee?.nationality));
 
-  if (loading) {
+  // Xodim kartasi yo'q hisob (master-admin, admin, kiosk) o'z «Ma'lumotnoma»sini ochsa — id yo'q.
+  // Ilgari bu holat cheksiz skelet edi (so'rov o'chiq, `loading` doim true); v2 MyProfilePage
+  // bunday hisobga «xodim profili yo'q» deydi.
+  if (!employeeId) {
+    return (
+      <Screen edges={['top', 'bottom']}>
+        <ScreenHeader title={t('employees.detailTitle')} />
+        <EmptyState title={t('employees.noEmployeeCard')} message={t('employees.noEmployeeCardHint')} />
+      </Screen>
+    );
+  }
+
+  if (isLoading) {
     return (
       <Screen edges={['top', 'bottom']}>
         <LoadingView />
@@ -100,7 +111,7 @@ export default function EmployeeDetailScreen() {
             <Divider styles={styles} />
             <InfoRow styles={styles} label={t('employees.field.gender')} value={employee.gender != null ? t(`employees.gender.${employee.gender}`, { defaultValue: '' }) || null : null} />
             <Divider styles={styles} />
-            <InfoRow styles={styles} label={t('employees.field.nationality')} value={employee.nationality} />
+            <InfoRow styles={styles} label={t('employees.field.nationality')} value={nationalityLabel(employee.nationality, nationalities.data)} />
             <Divider styles={styles} />
             <InfoRow styles={styles} label={t('employees.field.marital')} value={employee.maritial_status ? (t(`employees.marital.${employee.maritial_status}`, { defaultValue: '' }) || employee.maritial_status) : null} />
             <Divider styles={styles} />
@@ -124,9 +135,9 @@ export default function EmployeeDetailScreen() {
             <Divider styles={styles} />
             <InfoRow styles={styles} label={t('employees.field.hireDate')} value={employee.job_acceptance_date ? dayjs(employee.job_acceptance_date).format('DD.MM.YYYY') : null} />
             <Divider styles={styles} />
-            <InfoRow styles={styles} label={t('employees.field.workHours')} value={employee.working_hours_start && employee.working_hours_end ? `${employee.working_hours_start} – ${employee.working_hours_end}` : null} />
+            <InfoRow styles={styles} label={t('employees.field.workHours')} value={timeRange(employee.working_hours_start, employee.working_hours_end)} />
             <Divider styles={styles} />
-            <InfoRow styles={styles} label={t('employees.field.lunch')} value={employee.lunch_start_time && employee.lunch_end_time ? `${employee.lunch_start_time} – ${employee.lunch_end_time}` : null} />
+            <InfoRow styles={styles} label={t('employees.field.lunch')} value={timeRange(employee.lunch_start_time, employee.lunch_end_time)} />
             <Divider styles={styles} />
             <InfoRow styles={styles} label={t('employees.field.workDays')} value={workDays || null} />
             <Divider styles={styles} />

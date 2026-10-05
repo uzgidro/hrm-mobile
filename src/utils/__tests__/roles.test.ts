@@ -1,5 +1,6 @@
 import type { User, Employee } from '../../types';
 import {
+  userDisplayName,
   canAdministerBranch,
   canSwitchBranchScope,
   hasSupervisor,
@@ -958,5 +959,32 @@ describe('canAdministerBranch / canSwitchBranchScope (v2 TabelSettingsPage)', ()
     expect(canSwitchBranchScope(hrEmp({}, 1), 1)).toBe(true);
     expect(canSwitchBranchScope(hrEmp({}, 5), 1)).toBe(false);
     expect(canSwitchBranchScope(plainEmp(), 1)).toBe(false);
+  });
+});
+
+// v2 `getDisplayName` (employee.legal_name || username) — mobil admin / kiosk yozuvidagi ismni ham
+// o'qiydi: real QA'da master profili «Foydalanuvchi», admin profili `admin.legal_name` ni e'tiborsiz qoldirardi.
+describe('userDisplayName', () => {
+  it('xodim — legal_name', () => {
+    expect(userDisplayName({ id: 1, type: 'employee', username: 'ali', employee: { id: 2, legal_name: 'Aliyev Vali' } })).toBe('Aliyev Vali');
+  });
+
+  it("admin — admin.legal_name, bo'lmasa login", () => {
+    const admin = { id: 2, type: 'admin', username: 'admin.fil', employee: null, admin: { legal_name: 'Filial Admin', email: 'a@x.uz' } } as User;
+    expect(userDisplayName(admin)).toBe('Filial Admin');
+    expect(userDisplayName({ ...admin, admin: { legal_name: null, email: 'a@x.uz' } })).toBe('admin.fil');
+  });
+
+  it("kiosk — multi_modal_user.legal_name; master — login, bo'lmasa e-pochta", () => {
+    expect(
+      userDisplayName({ id: 3, type: 'kpp', username: 'qa.kpp', employee: null, multi_modal_user: { legal_name: 'QA KPP Post' } } as User),
+    ).toBe('QA KPP Post');
+    expect(userDisplayName({ id: 4, type: 'master-admin', username: 'master', employee: null } as User)).toBe('master');
+    expect(userDisplayName({ id: 4, type: 'master-admin', employee: null, master_admin: { email: 'm@x.uz' } } as User)).toBe('m@x.uz');
+  });
+
+  it("hech narsa yo'q — null (chaqiruvchi t('...userFallback') ni ko'rsatadi)", () => {
+    expect(userDisplayName({ id: 5, type: 'guest' })).toBeNull();
+    expect(userDisplayName(null)).toBeNull();
   });
 });
