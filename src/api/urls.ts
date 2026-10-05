@@ -471,3 +471,9 @@ export const LMS_SETTINGS = 'lms/settings';
 export const LMS_TEST = 'lms/test';
 export const LMS_SYNC = 'lms/sync';
 export const LMS_LOGS = 'lms/logs';
+// Audit jurnali (web v2 AuditLogPage) — faqat o'qish. Ro'yxat server sahifalangan; `stats` toifalar
+// soni (toifa filtrisiz); `online` — hozir tizimdagilar (Redis). Excel eksport — web'da.
+export const AUDIT_LOGS = 'audit-logs';
+export const AUDIT_LOGS_STATS = 'audit-logs/stats';
+export const AUDIT_LOGS_ONLINE = 'audit-logs/online';
+export const AUDIT_LOGS_ONLINE_HISTORY = 'audit-logs/online/history';
