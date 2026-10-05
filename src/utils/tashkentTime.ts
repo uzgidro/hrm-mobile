@@ -26,3 +26,14 @@ export function formatTashkentDateTime(iso?: string | null): string {
   if (!w) return '—';
   return `${w.slice(8, 10)}.${w.slice(5, 7)}.${w.slice(0, 4)} ${w.slice(11, 16)}`;
 }
+
+/**
+ * `DD.MM.YYYY` — vaqt tamg'asi Toshkent kuniga o'tkaziladi; sof sana (`YYYY-MM-DD`, masalan
+ * tug'ilgan sana) mintaqasiz kun, o'zgarishsiz. Bo'sh/yaroqsiz — «—».
+ */
+export function formatTashkentDate(iso?: string | null): string {
+  const s = iso?.trim() ?? '';
+  const day = /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : tashkentWall(s)?.slice(0, 10);
+  if (!day) return '—';
+  return `${day.slice(8, 10)}.${day.slice(5, 7)}.${day.slice(0, 4)}`;
+}

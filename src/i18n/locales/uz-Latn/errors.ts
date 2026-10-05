@@ -77,4 +77,18 @@ export default {
   invalid_price: "Narx noto'g'ri",
   distance_required: 'Masofa kiritilishi shart',
   invalid_distance: "Masofa noto'g'ri",
+  // Foydalanuvchilar (web v2 errors.*) — administrator/kiosk/xodim hisobi kodlari.
+  admin_email_exists: 'Bu e-pochta bilan administrator allaqachon mavjud',
+  cannot_deactivate_self: "O'z hisobingizni faolsizlantirib bo'lmaydi",
+  employee_has_no_account: "Xodimning tizimga kirish hisobi yo'q",
+  multi_modal_user_not_found: 'Topilmadi',
+  organization_branch_forbidden: "Bu amalni bajarishga ruxsat yo'q",
+  organization_branch_not_found: 'Filial topilmadi',
+  user_not_found: 'Foydalanuvchi topilmadi',
+  user_username_exists: 'Ushbu login (email) allaqachon mavjud',
+  username_exists: 'Bunday yozuv allaqachon mavjud',
+  invalid_email_format: "E-pochta formati noto'g'ri",
+  email_already_taken: 'Bu e-pochta allaqachon band',
+  weak_password: "Parol talabga javob bermaydi: kamida 8 belgi, katta va kichik harf hamda raqam bo'lsin; login yoki oddiy so'z bo'lmasin",
+  password_reused: 'Bu parol yaqinda ishlatilgan — oldingi parollardan farq qiladigan yangi parol tanlang',
 } as const;

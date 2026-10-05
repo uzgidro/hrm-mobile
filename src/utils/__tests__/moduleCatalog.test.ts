@@ -170,6 +170,17 @@ describe('modul katalogi — v2 paritet', () => {
     expect(CATALOG.find((e) => e.page === 'auditLog')?.route).toBe('/audit-log');
   });
 
+  it("foydalanuvchilar — v2 ADMIN_ONLY, SYSTEM_ADMIN_KEYS da yo'q: faqat bosh admin; admin hisobi/AKT, kadr yo'q; route /foydalanuvchilar", () => {
+    expect(isModuleReady('users')).toBe(true);
+    expect(canAccessPage(master, 'users')).toBe(true);
+    expect(canAccessPage(emp(), 'users')).toBe(false);
+    expect(canAccessPage(hr, 'users')).toBe(false);
+    expect(canAccessPage(emp({ akt_branch_ids: [1] }), 'users')).toBe(false);
+    expect(canAccessPage(u({ id: 5, type: 'admin' }), 'users')).toBe(false);
+    expect(canAccessPage(kppAcc, 'users')).toBe(false);
+    expect(CATALOG.find((e) => e.page === 'users')?.route).toBe('/foydalanuvchilar');
+  });
+
   it('har katalog yozuvining nomi 4 tilda tarjima qilingan (xom kalit chiqmaydi)', async () => {
     for (const lng of ['uz-Latn', 'uz-Cyrl', 'ru', 'en']) {
       await i18n.changeLanguage(lng);

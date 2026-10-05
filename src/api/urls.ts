@@ -477,3 +477,14 @@ export const AUDIT_LOGS = 'audit-logs';
 export const AUDIT_LOGS_STATS = 'audit-logs/stats';
 export const AUDIT_LOGS_ONLINE = 'audit-logs/online';
 export const AUDIT_LOGS_ONLINE_HISTORY = 'audit-logs/online/history';
+// Foydalanuvchilar (web v2 UsersPage): xodim hisoblari (`employees` + activate/deactivate), administrator
+// hisoblari va kiosk (post) hisoblari — ikkalasi faqat admin/master-admin. «Parol yuborish» — server
+// bir martalik parolni POCHTAGA jo'natadi, javobda parol YO'Q.
+export const ADMINS = 'admins';
+export const ADMIN = (id: number) => `admins/${id}`;
+export const ADMIN_SEND_PASSWORD = (id: number) => `admins/${id}/send-password-email`;
+export const EMPLOYEE_ACTIVATE = (id: number) => `employees/${id}/activate`;
+export const EMPLOYEE_DEACTIVATE = (id: number) => `employees/${id}/deactivate`;
+export const MULTI_MODAL_USERS = 'multi-modal-users';
+export const MULTI_MODAL_USER = (id: number) => `multi-modal-users/${id}`;
+export const MULTI_MODAL_USER_SEND_PASSWORD = (id: number) => `multi-modal-users/${id}/send-password-email`;

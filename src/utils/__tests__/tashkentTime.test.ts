@@ -1,4 +1,4 @@
-import { formatTashkentDateTime, tashkentWall } from '../tashkentTime';
+import { formatTashkentDate, formatTashkentDateTime, tashkentWall } from '../tashkentTime';
 
 describe('tashkentTime', () => {
   it("ofsetli vaqt Toshkentga o'tkaziladi (qurilma TZ'idan mustaqil)", () => {
@@ -17,5 +17,12 @@ describe('tashkentTime', () => {
     expect(formatTashkentDateTime('')).toBe('—');
     expect(formatTashkentDateTime('kecha')).toBe('—');
     expect(tashkentWall('2026-10-05')).toBeNull();
+  });
+
+  it('faqat sana: vaqt Toshkentda, sof sana (YYYY-MM-DD) siljimaydi', () => {
+    expect(formatTashkentDate('2026-10-05T21:10:05Z')).toBe('06.10.2026');
+    expect(formatTashkentDate('1990-03-07')).toBe('07.03.1990');
+    expect(formatTashkentDate(null)).toBe('—');
+    expect(formatTashkentDate('kecha')).toBe('—');
   });
 });
