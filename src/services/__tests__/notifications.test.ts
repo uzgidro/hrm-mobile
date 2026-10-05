@@ -180,6 +180,15 @@ describe('yangi bildirishnoma turlari (2026-08-19)', () => {
     expect(routeForNotification({ notification_type: 'zoom_organizer_changed' })).toBe('/zoom');
   });
 
+  it("avtopark: yoqilg'i narxi — narxlar tabi, mashina so'rovlari — navbat; letter_id bo'lsa xat", () => {
+    expect(routeForNotification({ type: 'fuel_price_pending' })).toBe('/avtopark?tab=fuel');
+    expect(routeForNotification({ type: 'vehicle_approval_needed' })).toBe('/avtopark?tab=requests');
+    expect(routeForNotification({ notification_type: 'vehicle_requested' })).toBe('/avtopark?tab=requests');
+    expect(routeForNotification({ type: 'vehicle_request_answered', letter_id: 7 })).toBe('/letter-detail?id=7');
+    // v2 da `driver_*` uchun qoida yo'q — joyida qoladi.
+    expect(routeForNotification({ type: 'driver_trip_created' })).toBeNull();
+  });
+
   it('safar so\'rovi letter_id bilan xat tafsilotiga, idsiz ro\'yxatga boradi', () => {
     expect(routeForNotification({ type: 'trip_return_confirm_prompt', letter_id: 12 })).toBe(
       '/letter-detail?id=12'

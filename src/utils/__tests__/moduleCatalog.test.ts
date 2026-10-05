@@ -107,6 +107,18 @@ describe('modul katalogi — v2 paritet', () => {
     expect(CATALOG.find((e) => e.page === 'medical')?.route).toBe('/tibbiy-korik');
   });
 
+  it("avtopark — v2 needsFleet (canSeeFleet): bosh admin, transport mas'uli yoki tasdiqlovchi; kadr bayroqsiz yo'q; route /avtopark", () => {
+    expect(isModuleReady('vehicles')).toBe(true);
+    expect(canAccessPage(emp(), 'vehicles')).toBe(false);
+    expect(canAccessPage(hr, 'vehicles')).toBe(false);
+    expect(canAccessPage(emp({ transport_branch_ids: [29] }), 'vehicles')).toBe(true);
+    expect(canAccessPage(emp({ transport_approver_branch_ids: [1] }), 'vehicles')).toBe(true);
+    expect(canAccessPage(emp({ transport_branch_ids: [] }), 'vehicles')).toBe(false);
+    expect(canAccessPage(master, 'vehicles')).toBe(true);
+    expect(canAccessPage(kppAcc, 'vehicles')).toBe(false);
+    expect(CATALOG.find((e) => e.page === 'vehicles')?.route).toBe('/avtopark');
+  });
+
   it("KPI filialda o'chirilgan bo'lsa override ham qaytarolmaydi", () => {
     setNavOverrides({ kpi: { roles: ['employee'] } });
     expect(canAccessPage(emp({ kpi_enabled: false }), 'kpi')).toBe(false);

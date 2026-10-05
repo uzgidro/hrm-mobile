@@ -34,6 +34,7 @@ import password from './password';
 import tabs from './tabs';
 import kpp from './kpp';
 import monitoring from './monitoring';
+import vehicles from './vehicles';
 import reports from './reports';
 import medical from './medical';
 import zoom from './zoom';
@@ -88,6 +89,7 @@ export default {
   tabs,
   kpp,
   monitoring,
+  vehicles,
   reports,
   medical,
   zoom,

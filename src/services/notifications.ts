@@ -246,7 +246,10 @@ export function routeForNotification(data: any): string | null {
   // (kadrga `medical_checkup_due_hr` va h.k.) — reyestr.
   if (type === 'medical_checkup_due' || type === 'medical_result_recorded') return null;
   if (type.startsWith('medical')) return '/tibbiy-korik';
-  // Avtopark moduli mobilда hali yo'q — joyida qolamiz.
+  // Avtopark (v2 notificationRoutes): narx xabarining o'z hujjati yo'q — tasdiqlovchini narxlar
+  // tabiga; mashina so'rovlari (safar `letter_id` bilan kelsa yuqorida xatga ochiladi) — navbatga.
+  if (type.startsWith('fuel_')) return '/avtopark?tab=fuel';
+  if (type.startsWith('vehicle')) return '/avtopark?tab=requests';
   return null;
 }
 
@@ -371,8 +374,7 @@ const NOTIF_META: Record<string, { titleKey: string; icon: IconName }> = {
   // zaxirasi bilan shunchaki "Transport" bo'lib chiqardi.
   vehicle_approval_needed: { titleKey: 'notifications.vehicleApprovalNeeded', icon: 'briefcase' },
   vehicle_approval_answered: { titleKey: 'notifications.vehicleApprovalAnswered', icon: 'check' },
-  // Yoqilg'i narxi tasdiqlanishi kerak — mobilда avtopark ekrani YO'Q, shu bois
-  // faqat sarlavha (bosilganda hech qayerga o'tmaydi, web'да tasdiqlanadi).
+  // Yoqilg'i narxi tasdiqlanishi kerak — bosilganda avtoparkning narxlar tabiga ochiladi.
   fuel_price_pending: { titleKey: 'notifications.fuelPricePending', icon: 'briefcase' },
   driver_trip_created: { titleKey: 'notifications.driverTripCreated', icon: 'briefcase' },
   workspace_deleted: { titleKey: 'notifications.workspaceDeleted', icon: 'close' },

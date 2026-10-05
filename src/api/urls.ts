@@ -437,3 +437,22 @@ export const DASHBOARD_DEPARTMENTS_EMPLOYEE_COUNT = 'dashboard/departments-emplo
 export const DASHBOARD_KPI_MONTHLY_AVERAGE = 'dashboard/kpi-monthly-average';
 export const DASHBOARD_CARDS_SUMMARY = 'dashboard/cards-summary';
 export const DASHBOARD_TASK_EXECUTION_ATTENDANCE = 'dashboard/task-execution-attendance';
+// Avtopark (web v2 VehiclesPage + VehicleProfilePage). Huquq — `vehicles/access` (yuqorida) va
+// so'rov qatorining `can_*` bayroqlari. Xarita/GPS trek/kunlik tarix — web'da (native xarita yo'q).
+export const VEHICLES = 'vehicles';
+export const VEHICLE = (id: number) => `vehicles/${id}`;
+export const VEHICLE_TRIPS = (id: number) => `vehicles/${id}/trips`;
+export const VEHICLE_LIVE = (id: number) => `vehicles/${id}/live`;
+export const VEHICLE_DRIVERS = 'vehicles/drivers';
+export const VEHICLE_GPS_UNITS = 'vehicles/gps-units';
+export const VEHICLE_REQUESTS = 'vehicles/requests';
+export const VEHICLE_REQUEST_RESPOND = (id: number) => `vehicles/requests/${id}/respond`;
+export const VEHICLE_REQUEST_APPROVE = (id: number) => `vehicles/requests/${id}/approve`;
+export const VEHICLE_REQUEST_FINALIZE = (id: number) => `vehicles/requests/${id}/finalize`;
+export const VEHICLE_FUEL_TYPES = 'vehicles/fuel-types';
+export const VEHICLE_FUEL_TYPE = (id: number) => `vehicles/fuel-types/${id}`;
+export const VEHICLE_FUEL_TYPE_APPROVE = (id: number) => `vehicles/fuel-types/${id}/approve`;
+export const VEHICLE_FUEL_LOGS = 'vehicles/fuel-logs';
+export const VEHICLE_VISITS = 'vehicles/visits';
+export const VEHICLE_DRIVER_SCOPES = 'vehicles/driver-scopes';
+export const VEHICLE_DRIVER_SCOPE = (id: number) => `vehicles/driver-scopes/${id}`;
