@@ -35,8 +35,13 @@ describe('visibleTabs — rolga qarab', () => {
   // ariza holatini ko'rsatadi (app/(tabs)/index.tsx), redirect emas — tablar qoladi.
   it('mehmon — Asosiy (ariza holati) + Modullar + Profil', () =>
     expect(visibleTabs(u({ id: 1, type: 'guest' }))).toEqual(['index', 'modules', 'profile']));
-  it('filial admin akkaunti — Modullar va Profil', () =>
-    expect(visibleTabs(u({ id: 1, type: 'admin' }))).toEqual(['modules', 'profile']));
+  // v2 DashboardPage: admin hisobi → /filiallar. Mobil'da Asosiy tabining o'zi Filiallar ekrani.
+  it('filial admin akkaunti — Asosiy (Filiallar) + Modullar + Profil', () =>
+    expect(visibleTabs(u({ id: 1, type: 'admin' }))).toEqual(['index', 'modules', 'profile']));
+  it("filial admin akkaunti, Filiallar moduli o'chirilgan — Asosiy yo'q", () => {
+    setNavOverrides({ branches: { enabled: false } });
+    expect(visibleTabs(u({ id: 1, type: 'admin' }))).toEqual(['modules', 'profile']);
+  });
   it("uchala hujjat moduli o'chirilsa documents tabi yo'q", () => {
     setNavOverrides({ orders: { enabled: false }, letters: { enabled: false }, documents: { enabled: false } });
     expect(visibleTabs(emp)).not.toContain('documents');

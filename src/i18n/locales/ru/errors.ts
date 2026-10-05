@@ -87,4 +87,6 @@ export default {
   branch_not_found: 'Филиал не найден',
   department_not_found: 'Подразделение не найдено',
   job_position_not_found: 'Должность не найдена',
+  location_not_found: 'Адрес не найден',
+  location_without_branch: 'К адресу не привязан филиал',
 } as const;

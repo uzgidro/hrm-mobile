@@ -87,4 +87,6 @@ export default {
   branch_not_found: 'Branch not found',
   department_not_found: 'Department not found',
   job_position_not_found: 'Position not found',
+  location_not_found: 'Location not found',
+  location_without_branch: 'The location is not attached to a branch',
 } as const;

@@ -21,8 +21,8 @@ import {
 } from './roles';
 
 /**
- * chancellery → v2 `/orders` (Hujjatlar); admin → v2 `/filiallar` (hali ekran yo'q —
- * Modullar); guest → v2 RegistrationStatusPage (`/registratsiya-holati`).
+ * chancellery → v2 `/orders` (Hujjatlar); admin → v2 `/filiallar` (Asosiy tabida Filiallar
+ * ekrani); guest → v2 RegistrationStatusPage (Asosiy tabida ariza holati).
  */
 export type HomeBoard = 'monitoring' | 'post' | 'leader' | 'employee' | 'chancellery' | 'admin' | 'guest';
 

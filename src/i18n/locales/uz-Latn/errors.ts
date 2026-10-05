@@ -95,4 +95,7 @@ export default {
   branch_not_found: 'Filial topilmadi',
   department_not_found: "Bo'lim topilmadi",
   job_position_not_found: 'Lavozim topilmadi',
+  // Filiallar / manzillar (web v2 errors.*).
+  location_not_found: 'Manzil topilmadi',
+  location_without_branch: 'Manzilga filial biriktirilmagan',
 } as const;

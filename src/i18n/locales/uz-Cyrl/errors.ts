@@ -87,4 +87,6 @@ export default {
   branch_not_found: 'Филиал топилмади',
   department_not_found: 'Бўлим топилмади',
   job_position_not_found: 'Лавозим топилмади',
+  location_not_found: 'Манзил топилмади',
+  location_without_branch: 'Манзилга филиал бириктирилмаган',
 } as const;

@@ -26,17 +26,17 @@ export function visibleTabs(user: User | null | undefined): TabKey[] {
   // Post/monitoring paneli — birinchi tab o'sha ish ekrani. Qolgan tablar baribir
   // canAccessPage bo'yicha: KPP/monitoring ROLIDAGI xodim v2'da to'liq katalogni
   // ko'radi, kiosk akkaunt esa Modullar orqali ma'lumotnoma/mehmonlarga kiradi.
-  // Devonxona / admin uchun Bosh sahifa yo'q (v2 ularni boshqa sahifaga
-  // yo'naltiradi) — tablar to'g'ridan-to'g'ri o'sha joydan boshlanadi. Mehmonning
-  // Asosiy tabi — ariza holati (v2 RegistrationStatusPage, app/(tabs)/index.tsx).
-  const tabs: TabKey[] =
-    board === 'post'
-      ? ['post']
-      : board === 'monitoring'
-        ? ['monitoring']
-        : board === 'employee' || board === 'leader' || board === 'guest'
-          ? ['index']
-          : [];
+  // Devonxona uchun Bosh sahifa yo'q (v2 uni /orders ga yo'naltiradi) — Asosiy tab
+  // ko'rsatilmaydi, Hujjatlar tabi o'z o'rnida. Mehmonning Asosiy tabi — ariza holati
+  // (v2 RegistrationStatusPage), admin hisobiniki — Filiallar (v2 DashboardPage →
+  // /filiallar); ikkalasi ham app/(tabs)/index.tsx da. Filiallar moduli o'chirilgan
+  // bo'lsa admin Modullardan boshlaydi.
+  const homeTab =
+    board === 'employee' ||
+    board === 'leader' ||
+    board === 'guest' ||
+    (board === 'admin' && canAccessPage(user, 'branches'));
+  const tabs: TabKey[] = board === 'post' ? ['post'] : board === 'monitoring' ? ['monitoring'] : homeTab ? ['index'] : [];
   if (canAccessPage(user, 'timesheet') || canAccessPage(user, 'attendance')) tabs.push('attendance');
   if (canAccessPage(user, 'orders') || canAccessPage(user, 'letters') || canAccessPage(user, 'documents')) {
     tabs.push('documents');

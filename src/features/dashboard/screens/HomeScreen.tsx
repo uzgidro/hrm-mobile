@@ -48,7 +48,9 @@ export default function HomeScreen() {
     post: '/post',
     monitoring: '/monitoring',
     chancellery: '/documents?seg=orders',
-    admin: '/modules', // v2 /filiallar — mobil ekrani W6 da
+    // v2 /filiallar — Asosiy tab admin uchun Filiallar ekranini o'zi ko'rsatadi (app/(tabs)/index.tsx);
+    // bu yerga faqat Filiallar moduli o'chirilganda keladi.
+    admin: '/modules',
     guest: '/registratsiya-holati', // v2 RegistrationStatusPage
   };
   const target = elsewhere[board];

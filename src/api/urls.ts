@@ -493,3 +493,9 @@ export const MULTI_MODAL_USER_SEND_PASSWORD = (id: number) => `multi-modal-users
 export const REGISTRATIONS = 'registrations';
 export const REGISTRATION_APPROVE = (id: number) => `registrations/${id}/approve`;
 export const REGISTRATION_REJECT = (id: number) => `registrations/${id}/reject`;
+// Filiallar va manzillar (web v2 BranchesPage). Ro'yxat har qanday xodimga ochiq; yaratish/o'chirish —
+// `require_roles("admin","master-admin")`, tahrir — filial egaligi; «Hik'ga yuborish» navbatga qo'yiladi.
+// Manzillar — `require_system_admin`, AKT xodimi o'z filiali doirasida (server majburlaydi).
+export const ORGANIZATION_BRANCH = (id: number) => `organization-branches/${id}`;
+export const ORGANIZATION_BRANCH_SYNC_HIK = (id: number) => `organization-branches/${id}/sync-employees-to-hik`;
+export const LOCATION = (id: number) => `locations/${id}`;

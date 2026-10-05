@@ -194,6 +194,19 @@ describe('modul katalogi — v2 paritet', () => {
     expect(CATALOG.find((e) => e.page === 'registrations')?.route).toBe('/registratsiyalar');
   });
 
+  it("filiallar — v2 ADMIN_ONLY + SYSTEM_ADMIN_KEYS: bosh admin, admin hisobi, AKT xodimi; ministr/kadr/xodim/post yo'q; route /filiallar", () => {
+    const ministr = emp({ employee: { id: 10, is_multi_org_user: true, multi_org_employee_role: 'ministr' } });
+    expect(isModuleReady('branches')).toBe(true);
+    expect(canAccessPage(master, 'branches')).toBe(true);
+    expect(canAccessPage(u({ id: 5, type: 'admin' }), 'branches')).toBe(true);
+    expect(canAccessPage(emp({ akt_branch_ids: [1] }), 'branches')).toBe(true);
+    expect(canAccessPage(ministr, 'branches')).toBe(false);
+    expect(canAccessPage(hr, 'branches')).toBe(false);
+    expect(canAccessPage(emp(), 'branches')).toBe(false);
+    expect(canAccessPage(kppAcc, 'branches')).toBe(false);
+    expect(CATALOG.find((e) => e.page === 'branches')?.route).toBe('/filiallar');
+  });
+
   it('har katalog yozuvining nomi 4 tilda tarjima qilingan (xom kalit chiqmaydi)', async () => {
     for (const lng of ['uz-Latn', 'uz-Cyrl', 'ru', 'en']) {
       await i18n.changeLanguage(lng);
