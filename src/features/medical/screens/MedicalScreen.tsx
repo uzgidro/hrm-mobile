@@ -11,7 +11,6 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { useBreakpoint } from '@/utils/responsive';
-import { resolveEmployeeBranchId } from '@/utils/branch';
 import { departmentOptionsQuery, jobPositionOptionsQuery } from '@/utils/employees';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { PickerModal } from '@/components/PickerModal';
@@ -81,9 +80,11 @@ export default function MedicalScreen() {
   const c3 = useQuery(medicalCountQuery(f, TILES[3].status, allowed));
   const counts = [c0, c1, c2, c3];
 
-  // Bo'lim/lavozim ro'yxati tanlangan filial filtri bo'yicha, bo'lmasa o'z filiali
-  // (v2: sarlavhadagi filial — mobil'da sarlavha tanlagichi yo'q).
-  const optionsBranch = filters.branchId ?? resolveEmployeeBranchId(user?.employee);
+  // Bo'lim/lavozim ro'yxati tanlangan filial filtri bo'yicha; filial tanlanmagan bo'lsa filialsiz
+  // so'raladi — reyestr tashkilot bo'yicha, ko'lamni SERVER belgilaydi (`scope_list_query_regular`:
+  // imtiyozli ko'ruvchiga butun tashkilot, oddiy xodimga o'z filiali). Ilgari o'z filialiga
+  // tushib qolardi va boshqa filial bo'limlari tashkilot reyestrida tanlab bo'lmasdi.
+  const optionsBranch = filters.branchId ?? undefined;
   const branches = useQuery(medicalBranchesQuery(allowed && (picker === 'branch' || filters.branchId != null)));
   const departments = useQuery({
     ...departmentOptionsQuery(optionsBranch),
@@ -332,6 +333,8 @@ export default function MedicalScreen() {
           options={pickerOptions}
           loading={pickerLoading}
           selected={pickerSelected}
+          // Filial/bo'lim/lavozim — odam emas: nomlar «"» bilan boshlanadi, bosh harf avatari ma'nosiz.
+          avatars={false}
           onClose={() => setPicker(null)}
           onSelect={onPick}
         />

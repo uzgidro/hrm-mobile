@@ -19,6 +19,7 @@ import {
   MEDICAL_FILE,
   MEDICAL_SPECIALTIES,
   ORGANIZATION_BRANCHES,
+  DEPARTMENTS_LIST,
 } from '@/api/urls';
 import MedicalScreen from '../screens/MedicalScreen';
 
@@ -193,6 +194,23 @@ describe('MedicalScreen (v2 MedicalPage)', () => {
     await waitFor(() => expect(listCalls(mock).some((p) => p?.organization_branch_id === 7)).toBe(true));
     await fireEvent.press(screen.getByTestId('medical-filters-reset'));
     await waitFor(() => expect(listCalls(mock).at(-1)).toEqual({ page: 1, size: 20 }));
+  });
+
+  it("bo'lim tanlagichi: filialsiz — o'z filialiga tushmaydi (ko'lam serverda); filial tanlansa — o'sha filial; avatar yo'q", async () => {
+    mock.onGet(DEPARTMENTS_LIST).reply((cfg) => [
+      200,
+      { items: [{ id: 50, name: cfg.params?.organization_branch_id === 7 ? '"Chorvoq" sexi' : '"Bosh" boshqarma' }], total: 1 },
+    ]);
+    setUser(doctor);
+    await renderWithProviders(<MedicalScreen />);
+    await screen.findByText('Aliyev Vali');
+    await fireEvent.press(screen.getByTestId('medical-filters-toggle'));
+    await fireEvent.press(screen.getByTestId('medical-filter-dept'));
+    expect(await screen.findByText('"Bosh" boshqarma')).toBeTruthy();
+    const deptCalls = () => mock.history.get.filter((r) => r.url === DEPARTMENTS_LIST).map((r) => r.params ?? {});
+    expect(deptCalls().every((p) => p.organization_branch_id === undefined)).toBe(true);
+    // Nom qo'shtirnoq bilan boshlanadi — bosh harf avatari («"») chizilmaydi.
+    expect(screen.queryByText('"')).toBeNull();
   });
 
   it('tafsilot: tarix eng yangisi tepada, bayroqsiz yozuvda tugma yo‘q, yillik indekslar', async () => {
