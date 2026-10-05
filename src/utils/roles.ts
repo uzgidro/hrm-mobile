@@ -629,6 +629,28 @@ function postAccountPages(user: User | null | undefined): PageKey[] {
   return ['home', 'directory', 'guests', user?.type === 'kpp' ? 'kpp' : 'monitoring'];
 }
 
+/**
+ * v2 menyusida YO'Q sahifalar — v2 ularni qayerda ko'rsatsa, shunga ko'ra:
+ *  - `profile`, `notifications` — v2 sarlavhasidagi profil menyusi va qo'ng'iroqcha HAR KIMDA
+ *    (mehmon ham: `Header.tsx` faqat filial tanlagich / qidiruvni yashiradi).
+ *  - `birthdays` — v2 da alohida sahifa yo'q, faqat xodim / kadr bosh panellaridagi
+ *    «Tug'ilgan kunlar» bloki. Mehmon (bosh sahifasi — ariza holati), `admin` hisobi
+ *    (→ /filiallar) va post/kiosk hisoblari (→ /kpp, /monitoring) bu panellarni ko'rmaydi —
+ *    tasdiqlanmagan mehmonga xodimlar ismi/lavozimi chiqmasin.
+ *  - `salary` — v2 da oylik sahifasi umuman yo'q: hech kimga.
+ */
+function offCatalogueAccess(user: User | null | undefined, key: PageKey): boolean {
+  switch (key) {
+    case 'profile':
+    case 'notifications':
+      return true;
+    case 'birthdays':
+      return !!user && user.type !== 'guest' && !isBranchAdmin(user) && !isSeparateAccount(user);
+    default:
+      return false;
+  }
+}
+
 /** Whether the given user may see a page. Mirrors web v2 getNavForUser. */
 export function canAccessPage(
   user: User | null | undefined,
@@ -642,8 +664,8 @@ export function canAccessPage(
   }
   const mod = MODULE_FOR_PAGE[key];
   if (mod?.ready === false) return false;
-  // Mobile-only personal pages (salary, birthdays, notifications, profile).
-  if (!mod) return !isSeparateAccount(user) || key === 'notifications' || key === 'profile';
+  // Pages outside the v2 catalogue — mirrored from where v2 actually shows them.
+  if (!mod) return offCatalogueAccess(user, key);
 
   const cfg = overrides?.[mod.key];
   if (cfg?.enabled === false) return false;

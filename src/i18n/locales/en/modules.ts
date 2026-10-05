@@ -26,7 +26,7 @@ export default {
     requests: 'Requests',
     projects: 'Projects',
     salary: 'Salary',
-    team: 'Team',
+    team: 'My team',
     employees: 'Employees',
     directory: 'Directory',
     guests: 'Guests',

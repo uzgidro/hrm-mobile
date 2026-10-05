@@ -26,7 +26,7 @@ export default {
     requests: 'Заявки',
     projects: 'Проекты',
     salary: 'Зарплата',
-    team: 'Команда',
+    team: 'Моя команда',
     employees: 'Сотрудники',
     directory: 'Справочник',
     guests: 'Гости',

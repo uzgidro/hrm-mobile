@@ -26,7 +26,7 @@ export default {
     requests: "Сўровлар",
     projects: 'Лойиҳалар',
     salary: 'Ойлик',
-    team: 'Жамоа',
+    team: 'Менинг жамоам',
     employees: 'Ходимлар',
     directory: 'Маълумотнома',
     guests: 'Меҳмонлар',

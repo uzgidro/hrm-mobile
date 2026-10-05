@@ -45,13 +45,40 @@ export function visibleTabs(user: User | null | undefined): TabKey[] {
   return tabs;
 }
 
+/** Tabning expo-router yo'li (`index` — guruh ildizi). */
+export function tabRoute(key: TabKey): string {
+  return key === 'index' ? '/(tabs)' : `/(tabs)/${key}`;
+}
+
+/**
+ * Ilova qaysi tabdan boshlanadi. Odatda — birinchi ko'rinadigan tab; devonxona esa
+ * v2 `DashboardPage` kabi buyruqlar reyestridan (`<Navigate to="/orders">`, mobil:
+ * Hujjatlar tabi, Buyruqlar segmenti) — o'z tabelidan emas.
+ */
+export function startTab(user: User | null | undefined, visible: TabKey[] = visibleTabs(user)): TabKey | undefined {
+  if (homeBoardFor(user) === 'chancellery' && visible.includes('documents')) return 'documents';
+  return visible[0];
+}
+
+/** `startTab` ning yo'li; devonxona uchun Buyruqlar segmenti bilan. */
+export function startRoute(user: User | null | undefined, visible: TabKey[] = visibleTabs(user)): string | null {
+  const tab = startTab(user, visible);
+  if (!tab) return null;
+  return homeBoardFor(user) === 'chancellery' && tab === 'documents' ? '/(tabs)/documents?seg=orders' : tabRoute(tab);
+}
+
 /**
  * Faol tab foydalanuvchiga ko'rinmasa (rol auth/me dan keyin o'zgardi — keshdagi
  * foydalanuvchi bilan ochilgan tablar qotib qoladi), qaysi tabga o'tish kerak.
  * Faqat asosiy tablar tekshiriladi; redirect-tablar (orders/letters) va barsiz
- * ekranlar (mehmonlar) o'z yo'lini o'zi hal qiladi.
+ * ekranlar (mehmonlar) o'z yo'lini o'zi hal qiladi. Yo'nalish — boshlang'ich tab
+ * (`startTab`): devonxona `/` ni ochsa (Asosiy tabi yashirin) Hujjatlarga tushadi.
  */
-export function tabRedirect(active: string | undefined, visible: TabKey[]): TabKey | null {
+export function tabRedirect(
+  active: string | undefined,
+  visible: TabKey[],
+  start: TabKey | undefined = visible[0],
+): TabKey | null {
   if (!active || !(ALL_TABS as string[]).includes(active)) return null;
-  return visible.includes(active as TabKey) ? null : (visible[0] ?? null);
+  return visible.includes(active as TabKey) ? null : (start ?? null);
 }

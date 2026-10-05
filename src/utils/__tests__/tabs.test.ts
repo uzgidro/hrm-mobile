@@ -1,4 +1,4 @@
-import { visibleTabs, TAB_META } from '../tabs';
+import { visibleTabs, TAB_META, startTab, startRoute, tabRoute, tabRedirect as redirectFn } from '../tabs';
 import { setNavOverrides } from '@/utils/roles';
 import type { User } from '@/types';
 
@@ -67,4 +67,39 @@ describe('tabRedirect — rol o\u2019zgarsa yashirin tabda qolmaslik', () => {
     ['mehmonlar', ['index', 'modules', 'profile'], null], // barsiz ekran
     [undefined, ['index'], null],
   ])('%s → %s', (active, visible, expected) => expect(tabRedirect(active, visible)).toBe(expected));
+});
+
+describe("startTab / startRoute — ilova qaysi tabdan boshlanadi (v2 DashboardPage)", () => {
+  const ch = u({ id: 4, type: 'employee', employee: { id: 7, is_multi_org_user: true, multi_org_employee_role: 'chancellery' } });
+  // Filial devonxonasi (leadership_role='chancellery') — v2 isAnyChancellery.
+  const branchCh = u({ id: 5, type: 'employee', employee: { id: 8 }, chancellery_branch_ids: [3] });
+
+  it("devonxona — Davomat emas, Hujjatlar · Buyruqlar (v2 <Navigate to=\"/orders\">)", () => {
+    expect(startTab(ch)).toBe('documents');
+    expect(startRoute(ch)).toBe('/(tabs)/documents?seg=orders');
+  });
+  it('filial devonxonasi ham', () => {
+    expect(startTab(branchCh)).toBe('documents');
+    expect(startRoute(branchCh)).toBe('/(tabs)/documents?seg=orders');
+  });
+  it("master-admin devonxona rolida bo'lsa ham — o'z bosh sahifasi (v2: && !isMasterAdmin)", () => {
+    const ma = u({ id: 6, type: 'master-admin', chancellery_branch_ids: [3] });
+    expect(startTab(ma)).toBe('index');
+  });
+  it("devonxonada hujjat modullari o'chirilgan bo'lsa — birinchi ko'rinadigan tab", () => {
+    setNavOverrides({ orders: { enabled: false }, letters: { enabled: false }, documents: { enabled: false } });
+    expect(startTab(ch)).toBe(visibleTabs(ch)[0]);
+    expect(startRoute(ch)).toBe(tabRoute(visibleTabs(ch)[0]!));
+  });
+  it.each<[string, User, string]>([
+    ['xodim', emp, '/(tabs)'],
+    ['kpp kiosk', u({ id: 1, type: 'kpp' }), '/(tabs)/post'],
+    ['monitoring kiosk', u({ id: 1, type: 'monitoring' }), '/(tabs)/monitoring'],
+    ['mehmon', u({ id: 1, type: 'guest' }), '/(tabs)'],
+  ])('%s', (_l, user, route) => expect(startRoute(user)).toBe(route));
+
+  it("devonxona yashirin Asosiy tabda (`/`) qolsa — Hujjatlarga yo'naltiriladi", () => {
+    const visible = visibleTabs(ch);
+    expect(redirectFn('index', visible, startTab(ch, visible))).toBe('documents');
+  });
 });

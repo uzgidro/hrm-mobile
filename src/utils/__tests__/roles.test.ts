@@ -596,7 +596,7 @@ describe('canAccessPage (web v2 defaults)', () => {
   // Pages every signed-in employee-type account gets (audience ALL, no gate).
   const base = {
     home: true, orders: true, letters: true, guests: true, projects: true, requests: true,
-    documents: true, news: true, directory: true, salary: true, birthdays: true,
+    documents: true, news: true, directory: true, salary: false, birthdays: true,
     notifications: true, profile: true,
   };
   const row = (r: Partial<Row>): Row => ({
@@ -655,7 +655,40 @@ describe('canAccessPage (web v2 defaults)', () => {
 
   it('a branch admin account gets the system screens only', () => {
     const admin: User = { id: 21, type: 'admin' as User['type'] };
-    expect(ALL_PAGES.filter((p) => canAccessPage(admin, p))).toEqual(['assistant', 'salary', 'birthdays', 'notifications', 'profile', 'terminals']);
+    expect(ALL_PAGES.filter((p) => canAccessPage(admin, p))).toEqual(['assistant', 'notifications', 'profile', 'terminals']);
+  });
+
+  // v2: mehmonning bosh sahifasi — ariza holati; menyusi `home`, `services`,
+  // `registrationStatus`; sarlavhada profil + bildirishnomalar. Xodimlar ro'yxatiga
+  // (tug'ilgan kunlar) va mavjud bo'lmagan oylik sahifasiga yo'l yo'q.
+  it('a guest gets home, profile and notifications only (no birthdays / salary)', () => {
+    const guest: User = { id: 22, type: 'guest' };
+    expect(ALL_PAGES.filter((p) => canAccessPage(guest, p))).toEqual(['home', 'notifications', 'profile']);
+    expect(canAccessPage(guest, 'services')).toBe(true);
+    expect(canAccessPage(guest, 'registrationStatus')).toBe(true);
+  });
+
+  it('birthdays: v2 shows them only on the employee / HR home boards', () => {
+    expect(canAccessPage(regularUser, 'birthdays')).toBe(true);
+    expect(canAccessPage(masterAdminUser, 'birthdays')).toBe(true);
+    expect(canAccessPage({ id: 22, type: 'guest' }, 'birthdays')).toBe(false);
+    expect(canAccessPage({ id: 21, type: 'admin' as User['type'] }, 'birthdays')).toBe(false);
+    expect(canAccessPage({ id: 20, type: 'kpp' }, 'birthdays')).toBe(false);
+    expect(canAccessPage({ id: 23, type: 'monitoring' as User['type'] }, 'birthdays')).toBe(false);
+  });
+
+  it('salary: v2 has no salary page — hidden for every role', () => {
+    for (const user of [regularUser, hrSingleUser, ministrUser, masterAdminUser, { id: 22, type: 'guest' } as User]) {
+      expect(canAccessPage(user, 'salary')).toBe(false);
+    }
+  });
+
+  it('profile and notifications stay open to every account (v2 header)', () => {
+    for (const type of ['guest', 'admin', 'kpp', 'monitoring', 'employee', 'master-admin']) {
+      const user = { id: 30, type } as unknown as User;
+      expect(canAccessPage(user, 'profile')).toBe(true);
+      expect(canAccessPage(user, 'notifications')).toBe(true);
+    }
   });
 
   it('an AKT employee reaches terminals as a system admin', () => {

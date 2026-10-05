@@ -238,7 +238,7 @@ export default function TeamScreen() {
 
   return (
     <Screen refreshing={refreshing} onRefresh={refetchAll}>
-      <PageHeader title={t('attendance.teamTitle')} />
+      <PageHeader title={t('modules.labels.team')} />
       {onlySubordinates && (
         <View style={[styles.notice, { backgroundColor: colors.brandSoft }]}>
           <Icon name="users" size={16} color={colors.brand} />

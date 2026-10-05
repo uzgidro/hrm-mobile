@@ -32,7 +32,7 @@ export default {
     requests: "So'rovlar",
     projects: 'Loyihalar',
     salary: 'Oylik',
-    team: 'Jamoa',
+    team: 'Mening jamoam',
     employees: 'Xodimlar',
     directory: "Ma'lumotnoma",
     guests: 'Mehmonlar',
