@@ -1,6 +1,9 @@
 // Hisobot parametrlari — sof mantiq (web v2 `paramsUrl.ts` `defaultParams`, `ReportRunPage`
 // `requiredMissing` va filial to'ldirish, `ReportParamsForm` `branchDeps`). URL sinxroni
 // mobil'da yo'q (parametrlar ekran holatida) — qolgan qoidalar aynan v2.
+import type { User } from '@/types';
+import { findExecutiveBranchId, resolveEmployeeBranchId } from '@/utils/branch';
+import { isMasterAdmin } from '@/utils/roles';
 import type {
   DrillRef,
   ParamDef,
@@ -64,16 +67,31 @@ export function defaultParams(defs: ParamDef[], today: Date = new Date()): Repor
 }
 
 /**
- * Boshlang'ich qiymatlar: definitsiya defaultlari + v2 sarlavha filiali o'rnini bosuvchi
- * qoida. Mobil'da sarlavha filiali yo'q: `branch_ids` (ko'p) bo'sh qoladi — server o'zi
- * ko'rish doirasiga toraytiradi (v2 «Barcha filiallar»); `branch_id` (KPI, bitta) —
- * foydalanuvchining o'z filiali (v2 filial foydalanuvchisining sarlavhasi).
+ * v2 sarlavha filialining boshlang'ich qiymati (`useBranchInit`) — mobil'da sarlavha tanlagichi
+ * yo'q, shu bois hisobot formasi shundan boshlanadi: sayt bosh admini (va ministr) — bosh filial
+ * (v2 `1` ni seed qiladi; ministrda o'z filiali bo'lsa — o'sha), filialli admin — o'z filiali,
+ * xodim — o'z filiali. Aniqlab bo'lmasa `undefined` — server ko'rish doirasi.
+ */
+export function reportHomeBranchId(user: User | null | undefined): number | undefined {
+  if (!user) return undefined;
+  if (user.type === 'admin') return user.admin?.organization_branch_id ?? undefined;
+  const own = resolveEmployeeBranchId(user.employee);
+  if (own != null) return own;
+  return isMasterAdmin(user) ? findExecutiveBranchId() : undefined;
+}
+
+/**
+ * Boshlang'ich qiymatlar: definitsiya defaultlari + v2 sarlavha filiali (`ReportRunPage`):
+ * `branch_ids` (ko'p) bo'sh bo'lsa — `[filial]`, `branch_id` (KPI, bitta) — `filial`. Ilgari
+ * `branch_ids` bo'sh qoldirilardi va tabel butun tashkilot bo'yicha (8 MB, 8–10 s) so'ralardi;
+ * v2 esa sarlavha filialini qo'yadi. «Barcha filiallar» — tanlovni tozalash bilan.
  */
 export function initialParams(defs: ParamDef[], ownBranchId: number | null | undefined, today?: Date): ReportParams {
   const next = defaultParams(defs, today);
-  if (ownBranchId != null && defs.some((p) => p.name === 'branch_id') && next.branch_id == null) {
-    next.branch_id = ownBranchId;
-  }
+  if (ownBranchId == null) return next;
+  const has = (n: string) => defs.some((p) => p.name === n);
+  if (has('branch_ids') && !(Array.isArray(next.branch_ids) && next.branch_ids.length)) next.branch_ids = [ownBranchId];
+  if (has('branch_id') && next.branch_id == null) next.branch_id = ownBranchId;
   return next;
 }
 

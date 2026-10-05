@@ -11,7 +11,6 @@ import { useTranslation } from 'react-i18next';
 import { getApiErrorMessage } from '@/api/errors';
 import { toast } from '@/lib/toast';
 import { useAuthStore } from '@/store/authStore';
-import { resolveEmployeeBranchId } from '@/utils/branch';
 import { Button, Card, Chip, EmptyState, ErrorState, LoadingView, PageHeader, Screen, Segmented, Text } from '@/ui';
 import { reportCatalogQuery } from '../api/queries';
 import { useRunReport } from '../api/mutations';
@@ -22,6 +21,7 @@ import {
   buildRunBody,
   canGenerate,
   initialParams,
+  reportHomeBranchId,
   isWebOnlyReport,
   paramErrors,
   reportLang,
@@ -88,8 +88,8 @@ export default function ReportRunScreen() {
     );
   }
 
-  // Parametrlar: definitsiya defaultlari + o'z filiali (`branch_id`); foydalanuvchi o'zgartirgach — qoralama.
-  const params = draft ?? initialParams(defn.params, resolveEmployeeBranchId(user?.employee));
+  // Parametrlar: definitsiya defaultlari + v2 sarlavha filiali (`branch_ids` / `branch_id`); o'zgartirilgach — qoralama.
+  const params = draft ?? initialParams(defn.params, reportHomeBranchId(user));
   const errors = paramErrors(defn.params, params);
   const ready = canGenerate(defn.params, params);
   const lang = reportLang(i18n.language);

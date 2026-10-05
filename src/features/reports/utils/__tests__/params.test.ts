@@ -11,6 +11,7 @@ import {
   isWebOnlyReport,
   localISO,
   paramErrors,
+  reportHomeBranchId,
   reportLang,
   requiredMissing,
   selectionSummary,
@@ -75,13 +76,29 @@ describe('defaultParams (v2 paramsUrl / server resolve_default)', () => {
   });
 });
 
-describe("initialParams — sarlavha filiali o'rnini bosuvchi qoida", () => {
-  it("branch_id (KPI) — o'z filiali; branch_ids bo'sh qoladi (server doirasi)", () => {
+describe("initialParams — sarlavha filiali o'rnini bosuvchi qoida (v2 ReportRunPage)", () => {
+  it("branch_id (KPI) — o'z filiali", () => {
     const defs = [def({ name: 'branch_id', kind: 'int', options_source: 'branches' })];
     expect(initialParams(defs, 7, TODAY)).toEqual({ branch_id: 7 });
-    const multi = [def({ name: 'branch_ids', kind: 'branch_multi', options_source: 'branches' })];
-    expect(initialParams(multi, 7, TODAY)).toEqual({});
     expect(initialParams(defs, undefined, TODAY)).toEqual({});
+  });
+  it("branch_ids (tabel) — v2 kabi sarlavha filiali [o'z filiali], butun tashkilot emas (8 MB); filial yo'q — bo'sh", () => {
+    const multi = [def({ name: 'branch_ids', kind: 'branch_multi', options_source: 'branches' })];
+    expect(initialParams(multi, 7, TODAY)).toEqual({ branch_ids: [7] });
+    expect(initialParams(multi, undefined, TODAY)).toEqual({});
+  });
+});
+
+describe("reportHomeBranchId — v2 sarlavha filialining boshlang'ich qiymati (useBranchInit)", () => {
+  it("xodim — o'z filiali; filialli admin — o'sha filial; sayt bosh admini — bosh filial (1)", () => {
+    expect(reportHomeBranchId({ type: 'employee', employee: { primary_organization_branch_id: 30 } } as never)).toBe(30);
+    expect(reportHomeBranchId({ type: 'admin', admin: { organization_branch_id: 4 } } as never)).toBe(4);
+    expect(reportHomeBranchId({ type: 'master-admin' } as never)).toBe(1);
+  });
+  it("filialsiz admin / mehmon / foydalanuvchi yo'q — undefined (server doirasi)", () => {
+    expect(reportHomeBranchId({ type: 'admin', admin: { organization_branch_id: null } } as never)).toBeUndefined();
+    expect(reportHomeBranchId({ type: 'guest' } as never)).toBeUndefined();
+    expect(reportHomeBranchId(null)).toBeUndefined();
   });
 });
 

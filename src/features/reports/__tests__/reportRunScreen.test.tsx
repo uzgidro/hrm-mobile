@@ -202,7 +202,7 @@ describe('ReportRunScreen (v2 ReportRunPage)', () => {
     __resetToasts();
   });
 
-  it("defaultlar: joriy oy oralig'i; tana — json, prefs null (saqlangan sozlamalar), lang uz", async () => {
+  it("defaultlar: joriy oy oralig'i; filial — o'z filiali (v2 sarlavha filiali); tana — json, prefs null, lang uz", async () => {
     await renderWithProviders(<ReportRunScreen />);
     expect(await screen.findByText('Tabel (davomat jadvali)')).toBeTruthy();
     expect(screen.getByText(dayjs().startOf('month').format('DD.MM.YYYY'))).toBeTruthy();
@@ -215,6 +215,7 @@ describe('ReportRunScreen (v2 ReportRunPage)', () => {
           from: dayjs().startOf('month').format('YYYY-MM-DD'),
           to: dayjs().endOf('month').format('YYYY-MM-DD'),
         },
+        branch_ids: [30],
         job_groups: ['ishchi'],
       },
       prefs: null,
