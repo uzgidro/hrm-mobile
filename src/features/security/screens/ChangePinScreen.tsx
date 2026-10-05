@@ -61,6 +61,9 @@ export default function ChangePinScreen() {
       try {
         const r = await verifyCurrentPin(pin);
         if (r.forceLogout) {
+          // Intentional OS Alert: the app lock (and this screen — the Profile
+          // link is `isNative`-gated) is native-only, so react-native-web's
+          // no-op Alert never applies here.
           Alert.alert(
             t('security.forceLogoutTitle'),
             t('security.forceLogoutMessage'),

@@ -29,6 +29,8 @@ export function fetchCurrentUser(): Promise<User> {
 export function useUpdateMyProfile() {
   const qc = useQueryClient();
   return useMutation({
+    // The screen shows this error itself (toast / inline) — no second global toast.
+    meta: { skipErrorToast: true },
     mutationFn: updateMyProfile,
     onSuccess: async () => {
       // Refresh the cached user so changes show immediately everywhere. This

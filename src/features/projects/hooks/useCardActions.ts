@@ -1,15 +1,15 @@
 import { useCallback, useState } from 'react';
-import { Alert } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import { getApiErrorMessage } from '@/api/errors';
 import { confirm } from '@/lib/confirm';
+import { toast } from '@/lib/toast';
 import { completeCard, uncompleteCard, rejectCard } from '../api/mutations';
 import { projectKeys } from '../api/queries';
 
 // Card status workflow for the card-detail screen — mirrors useLetterActions 1:1:
-//   setBusy(true) → await fn() → invalidate projectKeys.all + refetch → Alert
-//   catch → parse `detail` (string | [{msg}]) → Alert (surfaces the backend's
+//   setBusy(true) → await fn() → invalidate projectKeys.all + refetch → toast
+//   catch → getApiErrorMessage → toast.error (surfaces the backend's
 //           assignee-only 403 message cleanly, no special handling)
 //   finally → setBusy(false)
 // The backend enforces who may act (assignee/creator/admin); if the client shows
@@ -29,9 +29,9 @@ export function useCardActions(cardId: number, refetch: () => void) {
         await fn();
         qc.invalidateQueries({ queryKey: projectKeys.all });
         refetch();
-        Alert.alert(t('projects.actionDoneTitle'), msg);
+        toast.success(msg);
       } catch (e) {
-        Alert.alert(t('projects.actionError'), getApiErrorMessage(e, t('projects.actionError')));
+        toast.error(getApiErrorMessage(e, t('projects.actionError')));
       } finally {
         setBusy(false);
       }

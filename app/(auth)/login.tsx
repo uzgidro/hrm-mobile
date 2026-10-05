@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
   StyleSheet, KeyboardAvoidingView, Platform, ScrollView,
-  ActivityIndicator, Alert, Modal, Pressable, Image,
+  ActivityIndicator, Modal, Pressable, Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Constants from 'expo-constants';
@@ -49,6 +49,9 @@ export default function LoginScreen() {
   // foydalanuvchi yana yoza boshlaganda o'chadi (maskot xafa turib qolmaydi).
   const [focused, setFocused] = useState<'username' | 'password' | null>(null);
   const [result, setResult] = useState<'success' | 'error' | null>(null);
+  // Inline error under the form — the OS Alert showed NOTHING on web, so a
+  // wrong password there looked like a dead button.
+  const [formError, setFormError] = useState<string | null>(null);
   // Adaptive CAPTCHA (self-hosted on the API, core/captcha.py). Nobody sees it
   // on a clean login; after a few wrong passwords the server answers 401 with
   // `params.captcha_required` (or the code `captcha_required`) and from then
@@ -79,13 +82,14 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     if (!username.trim() || !password.trim()) {
-      Alert.alert(t('common.errorTitle'), t('auth.credentialsRequired'));
+      setFormError(t('auth.credentialsRequired'));
       return;
     }
     if (captcha && !captchaAnswer.trim()) {
-      Alert.alert(t('common.errorTitle'), t('auth.captchaRequired'));
+      setFormError(t('auth.captchaRequired'));
       return;
     }
+    setFormError(null);
     setLoading(true);
     try {
       const formData = new URLSearchParams();
@@ -128,17 +132,17 @@ export default function LoginScreen() {
         void loadCaptcha();
       }
       if (code === 'captcha_required') {
-        Alert.alert(t('auth.loginError'), t('auth.captchaRequired'));
+        setFormError(t('auth.captchaRequired'));
       } else if (code === 'captcha_invalid') {
-        Alert.alert(t('auth.loginError'), t('auth.captchaInvalid'));
+        setFormError(t('auth.captchaInvalid'));
       } else if (code === 'too_many_login_attempts') {
-        Alert.alert(t('auth.loginError'), t('auth.tooManyAttempts'));
+        setFormError(t('auth.tooManyAttempts'));
       } else if (code === 'invalid_credentials') {
-        Alert.alert(t('auth.loginError'), t('auth.invalidCredentials'));
+        setFormError(t('auth.invalidCredentials'));
       } else {
         const detail = data?.detail;
         const msg = Array.isArray(detail) ? detail[0]?.msg : (detail || t('auth.invalidCredentials'));
-        Alert.alert(t('auth.loginError'), typeof msg === 'string' ? msg : t('errors.generic'));
+        setFormError(typeof msg === 'string' ? msg : t('errors.generic'));
       }
     } finally {
       setLoading(false);
@@ -146,6 +150,7 @@ export default function LoginScreen() {
   };
 
   const handleOneId = async () => {
+    setFormError(null);
     setLoading(true);
     try {
       const res = await loginWithOneId();
@@ -158,7 +163,7 @@ export default function LoginScreen() {
       void setupPushNotifications();
     } catch {
       setResult('error');
-      Alert.alert(t('auth.loginError'), t('auth.oneIdError'));
+      setFormError(t('auth.oneIdError'));
     } finally {
       setLoading(false);
     }
@@ -210,7 +215,7 @@ export default function LoginScreen() {
               <TextInput
                 style={[styles.input, focused === 'username' && styles.inputFocused]}
                 value={username}
-                onChangeText={(v) => { setUsername(v); setResult(null); }}
+                onChangeText={(v) => { setUsername(v); setResult(null); setFormError(null); }}
                 onFocus={() => setFocused('username')}
                 onBlur={() => setFocused(null)}
                 placeholder={t('auth.usernamePlaceholder')}
@@ -227,7 +232,7 @@ export default function LoginScreen() {
                 <TextInput
                   style={styles.passwordInput}
                   value={password}
-                  onChangeText={(v) => { setPassword(v); setResult(null); }}
+                  onChangeText={(v) => { setPassword(v); setResult(null); setFormError(null); }}
                   onFocus={() => setFocused('password')}
                   onBlur={() => setFocused(null)}
                   placeholder="••••••••"
@@ -264,7 +269,7 @@ export default function LoginScreen() {
                 <TextInput
                   style={[styles.input, styles.captchaInput]}
                   value={captchaAnswer}
-                  onChangeText={setCaptchaAnswer}
+                  onChangeText={(v) => { setCaptchaAnswer(v); setFormError(null); }}
                   placeholder={t('auth.captchaPlaceholder')}
                   placeholderTextColor={colors.textMuted}
                   autoCapitalize="characters"
@@ -272,6 +277,12 @@ export default function LoginScreen() {
                   maxLength={8}
                 />
                 <Text style={styles.captchaHint}>{t('auth.captchaHint')}</Text>
+              </View>
+            )}
+
+            {!!formError && (
+              <View style={styles.formError} accessibilityRole="alert" accessibilityLiveRegion="polite" testID="login-error">
+                <Text style={styles.formErrorText}>{formError}</Text>
               </View>
             )}
 
@@ -406,6 +417,8 @@ const makeStyles = (c: ThemeColors) =>
     },
     captchaInput: { letterSpacing: 4, textTransform: 'uppercase' },
     captchaHint: { fontSize: 12, color: c.fgSubtle, ...ff('400', 'text') },
+    formError: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginTop: 12 },
+    formErrorText: { flex: 1, fontSize: 13, lineHeight: 18, color: c.danger, ...ff('600', 'text') },
 
     loginBtn: { marginTop: 6 },
 

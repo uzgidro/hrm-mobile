@@ -1,4 +1,4 @@
-import { StyleSheet, TextInput } from 'react-native';
+import { StyleSheet, Text, TextInput } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
@@ -24,6 +24,7 @@ export function ReasonModal({
   busy = false,
   confirmLabel,
   destructive = false,
+  error,
   onChangeReason,
   onClose,
   onSubmit,
@@ -38,6 +39,8 @@ export function ReasonModal({
   busy?: boolean;
   confirmLabel: string;
   destructive?: boolean;
+  /** Server xatosi — oyna ochiq qoladi, xato shu yerda (toast oyna ostida qolardi). */
+  error?: string | null;
   onChangeReason: (v: string) => void;
   onClose: () => void;
   onSubmit: () => void;
@@ -71,6 +74,7 @@ export function ReasonModal({
         textAlignVertical="top"
         testID={testID ? `${testID}-input` : undefined}
       />
+      {!!error && <Text style={styles.error} testID={testID ? `${testID}-error` : undefined}>{error}</Text>}
     </ModalCard>
   );
 }
@@ -80,4 +84,5 @@ const makeStyles = (c: ThemeColors) =>
     input: {
       minHeight: 88, borderWidth: 2, borderColor: c.cardBorder, borderRadius: 12,
       paddingHorizontal: 12, paddingVertical: 10, color: c.text, fontSize: 14, ...ff('700') },
+    error: { fontSize: 12, color: c.error, ...ff('700') },
   });

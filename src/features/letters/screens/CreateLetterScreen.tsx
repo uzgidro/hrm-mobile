@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  ScrollView, ActivityIndicator, Alert,
+  ScrollView, ActivityIndicator,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -12,6 +12,7 @@ import { employeeSubLabel, isSiteMasterAdmin } from '@/utils/roles';
 import { branchRegions, regionOptionLabels, branchesInRegions } from '@/utils/tripRegions';
 import { normalizeLetterType } from '@/utils/letterStatus';
 import { getApiErrorMessage } from '@/api/errors';
+import { toast } from '@/lib/toast';
 import { type PickerOption } from '@/components/PickerModal';
 import { AttachmentField, type PickedFile } from '@/components/AttachmentField';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
@@ -298,13 +299,13 @@ export default function CreateLetterScreen() {
 
   // ── Submit ───────────────────────────────────────────────────────────────────
   async function handleCreate() {
-    if (!letterType) { Alert.alert(t('common.errorTitle'), t('letters.typeRequired')); return; }
-    if (!branchId) { Alert.alert(t('common.errorTitle'), t('letters.branchNotFound')); return; }
+    if (!letterType) { toast.error(t('letters.typeRequired')); return; }
+    if (!branchId) { toast.error(t('letters.branchNotFound')); return; }
     // Bildirgi/ariza: ADRESAT majburiy; ARIZAda ustiga kamida bitta KELISHUVCHI
     // ham shart (backend: addressee_required / agreement_required).
-    if (!isTrip && !mainSignerId) { Alert.alert(t('common.errorTitle'), t('letters.mainSignerRequired')); return; }
+    if (!isTrip && !mainSignerId) { toast.error(t('letters.mainSignerRequired')); return; }
     if (!isTrip && letterType === 'application' && ordinarySigners.length === 0) {
-      Alert.alert(t('common.errorTitle'), t('letters.coordinatorsRequired'));
+      toast.error(t('letters.coordinatorsRequired'));
       return;
     }
     if (isTrip) {
@@ -312,13 +313,13 @@ export default function CreateLetterScreen() {
       // submits and signs their own trip — the backend handles it.
       // VILOYAT majburiy (web AddLetterDrawer bilan bir xil): hujjatdagi "hudud"
       // aynan shu tanlovdan yoziladi.
-      if (regions.length === 0) { Alert.alert(t('common.errorTitle'), t('letters.regionRequired')); return; }
+      if (regions.length === 0) { toast.error(t('letters.regionRequired')); return; }
       if (branchRequiredForTrip && destinationIds.length === 0) {
-        Alert.alert(t('common.errorTitle'), t('letters.destinationRequired')); return;
+        toast.error(t('letters.destinationRequired')); return;
       }
       // Soddalashtirilgan safarda rahbariyat YO'Q (backend ham so'ramaydi).
       if (!isSimpleTripForm && rahbariyatIds.length === 0) {
-        Alert.alert(t('common.errorTitle'), t('letters.leadershipRequired')); return;
+        toast.error(t('letters.leadershipRequired')); return;
       }
     }
 
@@ -343,8 +344,9 @@ export default function CreateLetterScreen() {
       }
     }
 
-    const onFilesError = () =>
-      Alert.alert(t('letters.attachmentNoticeTitle'), t('letters.attachmentFailed'));
+    // Xat saqlandi, faqat ilova yuklanmadi — ekran baribir yopiladi, xabar
+    // esa ildizdagi toast orqali keyingi ekranda ham ko'rinib turadi.
+    const onFilesError = () => toast.info(t('letters.attachmentFailed'), 6000);
 
     setSaving(true);
     try {
@@ -357,7 +359,7 @@ export default function CreateLetterScreen() {
         router.replace({ pathname: '/letter-detail', params: { id: String(letterId) } });
       }
     } catch (err) {
-      Alert.alert(t('common.errorTitle'), getApiErrorMessage(err, t('letters.createError')));
+      toast.error(getApiErrorMessage(err, t('letters.createError')));
     } finally {
       setSaving(false);
     }

@@ -45,6 +45,8 @@ export async function validateVisitorPhoto(
 export function useCreateVisitor() {
   const qc = useQueryClient();
   return useMutation({
+    // The screen shows this error itself (toast / inline) — no second global toast.
+    meta: { skipErrorToast: true },
     mutationFn: createVisitor,
     onSuccess: () => qc.invalidateQueries({ queryKey: visitorKeys.all }),
   });
@@ -53,6 +55,8 @@ export function useCreateVisitor() {
 export function useUpdateVisitor(id: number) {
   const qc = useQueryClient();
   return useMutation({
+    // The screen shows this error itself (toast / inline) — no second global toast.
+    meta: { skipErrorToast: true },
     mutationFn: (payload: VisitorPayload) => updateVisitor(id, payload),
     onSuccess: () => qc.invalidateQueries({ queryKey: visitorKeys.all }),
   });
@@ -61,6 +65,8 @@ export function useUpdateVisitor(id: number) {
 export function useDeleteVisitor() {
   const qc = useQueryClient();
   return useMutation({
+    // The screen shows this error itself (toast / inline) — no second global toast.
+    meta: { skipErrorToast: true },
     mutationFn: deleteVisitor,
     onSuccess: () => qc.invalidateQueries({ queryKey: visitorKeys.all }),
   });

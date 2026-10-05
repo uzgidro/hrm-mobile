@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
@@ -35,10 +35,13 @@ export function ConfirmRegistrationModal({
   const [numberValue, setNumberValue] = useState(initialNumber);
   const [dateIso, setDateIso] = useState<string>(letter.registered_date ?? dayjs().toISOString());
   const [datePickerOpen, setDatePickerOpen] = useState(false);
+  // Server xatosi oyna ICHIDA (toast RN Modal ostida ko'rinmasdi).
+  const [error, setError] = useState<string | null>(null);
 
   // Re-seed the fields each time the sheet opens (the letter may have changed).
   useEffect(() => {
     if (visible) {
+      setError(null);
       setNumberValue(letter.registered_number ?? '');
       setDateIso(letter.registered_date ?? dayjs().toISOString());
     }
@@ -71,6 +74,7 @@ export function ConfirmRegistrationModal({
   }, [checkEnabled, checking, availability, t, colors]);
 
   const onSubmit = () => {
+    setError(null);
     confirmM.mutate(
       {
         registered_number: numberValue.trim() || null,
@@ -81,7 +85,7 @@ export function ConfirmRegistrationModal({
           onConfirmed();
           onClose();
         },
-        onError: (e) => Alert.alert(t('letters.actionError'), getApiErrorMessage(e, t('letters.actionError'))),
+        onError: (e) => setError(getApiErrorMessage(e, t('letters.actionError'))),
       },
     );
   };
@@ -119,6 +123,7 @@ export function ConfirmRegistrationModal({
         <TouchableOpacity style={styles.dateField} onPress={() => setDatePickerOpen(true)} activeOpacity={0.7}>
           <Text style={styles.dateText}>{dayjs(dateIso).format('DD.MM.YYYY')}</Text>
         </TouchableOpacity>
+        {!!error && <Text style={styles.error} testID="confirm-registration-error">{error}</Text>}
       </ModalCard>
 
       {/* Sana tanlagich — ModalCard ning YONIDA (ilgari Modal ICHIDA edi;
@@ -149,4 +154,5 @@ const makeStyles = (c: ThemeColors) =>
       paddingHorizontal: 12, paddingVertical: 14, marginBottom: 18,
     },
     dateText: { fontSize: 15, color: c.text, ...ff('700') },
+    error: { fontSize: 12, color: c.error, marginTop: -8, ...ff('700') },
   });

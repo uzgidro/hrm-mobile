@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import { Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -14,6 +14,7 @@ import { PickerModal, type PickerOption } from '@/components/PickerModal';
 import { getApiErrorMessage } from '@/api/errors';
 import { newsBranchesQuery, newsDetailQuery } from '../api/queries';
 import { useCreateNewsPost, useUpdateNewsPost } from '../api/mutations';
+import { toast } from '@/lib/toast';
 
 export default function NewsFormScreen() {
   const { t } = useTranslation();
@@ -50,13 +51,13 @@ export default function NewsFormScreen() {
 
   const submit = () => {
     if (!title.trim()) {
-      Alert.alert(t('common.errorTitle'), t('news.titleRequired'));
+      toast.error(t('news.titleRequired'));
       return;
     }
     const form = { title, description, organization_branch_id: branchId };
     const opts = {
-      onSuccess: () => { Alert.alert(t(editId ? 'news.updated' : 'news.created'), ''); router.back(); },
-      onError: (e: unknown) => Alert.alert(t('common.errorTitle'), getApiErrorMessage(e, t('common.errorTitle'))),
+      onSuccess: () => { toast.success(t(editId ? 'news.updated' : 'news.created')); router.back(); },
+      onError: (e: unknown) => toast.error(getApiErrorMessage(e, t('errors.generic'))),
     };
     if (editId) updateM.mutate(form, opts);
     else createM.mutate(form, opts);

@@ -88,6 +88,8 @@ export function createCardComment(cardId: number, text: string): Promise<CardCom
 export function useCreateWorkspace() {
   const qc = useQueryClient();
   return useMutation({
+    // The screen shows this error itself (toast / inline) — no second global toast.
+    meta: { skipErrorToast: true },
     mutationFn: createWorkspace,
     onSuccess: () => qc.invalidateQueries({ queryKey: projectKeys.all }),
   });
@@ -96,6 +98,8 @@ export function useCreateWorkspace() {
 export function useUpdateWorkspace(id: number) {
   const qc = useQueryClient();
   return useMutation({
+    // The screen shows this error itself (toast / inline) — no second global toast.
+    meta: { skipErrorToast: true },
     mutationFn: (payload: WorkspacePayload) => updateWorkspace(id, payload),
     onSuccess: () => qc.invalidateQueries({ queryKey: projectKeys.all }),
   });
@@ -104,6 +108,8 @@ export function useUpdateWorkspace(id: number) {
 export function useDeleteWorkspace() {
   const qc = useQueryClient();
   return useMutation({
+    // The screen shows this error itself (toast / inline) — no second global toast.
+    meta: { skipErrorToast: true },
     mutationFn: deleteWorkspace,
     onSuccess: () => qc.invalidateQueries({ queryKey: projectKeys.all }),
   });
@@ -112,6 +118,8 @@ export function useDeleteWorkspace() {
 export function useCreateColumn(workspaceId: number) {
   const qc = useQueryClient();
   return useMutation({
+    // The screen shows this error itself (toast / inline) — no second global toast.
+    meta: { skipErrorToast: true },
     mutationFn: (name: string) => createColumn(workspaceId, name),
     // New column shows up under the workspace detail (which carries columns).
     onSuccess: () => qc.invalidateQueries({ queryKey: projectKeys.detail(workspaceId) }),
@@ -121,6 +129,8 @@ export function useCreateColumn(workspaceId: number) {
 export function useCreateCard() {
   const qc = useQueryClient();
   return useMutation({
+    // The screen shows this error itself (toast / inline) — no second global toast.
+    meta: { skipErrorToast: true },
     mutationFn: (payload: CardPayload) => createCard(payload),
     // New card belongs to a single column — refresh that column's list, plus
     // the workspace list whose `cards_count` badges just changed.
@@ -134,6 +144,8 @@ export function useCreateCard() {
 export function useToggleCardComplete() {
   const qc = useQueryClient();
   return useMutation({
+    // The screen shows this error itself (toast / inline) — no second global toast.
+    meta: { skipErrorToast: true },
     // The caller passes the column the card is rendered in — the board reads
     // cards via `columnCardsQuery(col.id)`, and the `card.column_id` field is
     // not guaranteed to come back on that response, so we invalidate off the

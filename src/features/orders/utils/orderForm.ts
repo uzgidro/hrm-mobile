@@ -103,42 +103,52 @@ const filledApprovers = (approvers: OrderApprover[]): OrderApprover[] =>
 /**
  * All blocking checks of the form, in the order v1 applies them.
  *
- * Returns the FIRST failure (or null) — one message at a time keeps the alert
- * and the inline field error in agreement.
+ * Returns EVERY failing field (at most one message per field, in form order)
+ * so the screen can flag all missing inputs at once — QA: flagging only the
+ * first one made the user submit once per empty field.
  */
-export function validateOrderForm(
+export function validateOrderFormAll(
   values: OrderFormValues,
   ctx: OrderFormValidationContext,
-): OrderFormError | null {
-  if (!values.categoryId) return { field: 'category', messageKey: 'categoryRequired' };
-  if (!values.description.trim()) return { field: 'description', messageKey: 'descriptionRequired' };
+): OrderFormError[] {
+  const errors: OrderFormError[] = [];
+  if (!values.categoryId) errors.push({ field: 'category', messageKey: 'categoryRequired' });
+  if (!values.description.trim()) errors.push({ field: 'description', messageKey: 'descriptionRequired' });
 
   // Web parity (AddOrderDrawer, c66c2af) + backend 7b3326f: decree/submit 400s
   // `approver_required` — without at least one kelishuvchi the decree would skip
   // the agreement/sign stages straight to 'approved'.
   const approvers = filledApprovers(values.approvers);
-  if (!approvers.length) return { field: 'approvers', messageKey: 'approverRequired' };
-
-  // The KIRITUVCHI (submitter) introduces the decree and confirms it; agreement
-  // is meant to be an INDEPENDENT control, so the same person cannot be both.
-  // The backend rejects it with `submitter_cannot_be_approver` — catching it
-  // here saves a full round trip on an otherwise complete form
-  // (AddOrderDrawer.jsx:384-392).
-  if (values.submitterId && approvers.some((a) => a.employee_id === values.submitterId)) {
-    return { field: 'approvers', messageKey: 'submitterCannotBeApprover' };
+  if (!approvers.length) {
+    errors.push({ field: 'approvers', messageKey: 'approverRequired' });
+  } else if (values.submitterId && approvers.some((a) => a.employee_id === values.submitterId)) {
+    // The KIRITUVCHI (submitter) introduces the decree and confirms it; agreement
+    // is meant to be an INDEPENDENT control, so the same person cannot be both.
+    // The backend rejects it with `submitter_cannot_be_approver` — catching it
+    // here saves a full round trip on an otherwise complete form
+    // (AddOrderDrawer.jsx:384-392).
+    errors.push({ field: 'approvers', messageKey: 'submitterCannotBeApprover' });
   }
 
-  if (!values.leadershipId) return { field: 'leadership', messageKey: 'leadershipRequired' };
+  if (!values.leadershipId) errors.push({ field: 'leadership', messageKey: 'leadershipRequired' });
 
   // An EMPTY number is allowed (the backend assigns one later); only a number
   // already taken in this branch is refused, and the live check has told us so
   // while the user was still typing.
   if (ctx.numberFieldShown && values.actNumber.trim() && ctx.numberTaken) {
-    return { field: 'actNumber', messageKey: 'actNumberTaken' };
+    errors.push({ field: 'actNumber', messageKey: 'actNumberTaken' });
   }
 
-  if (!ctx.branchId) return { field: 'form', messageKey: 'branchNotFound' };
-  return null;
+  if (!ctx.branchId) errors.push({ field: 'form', messageKey: 'branchNotFound' });
+  return errors;
+}
+
+/** The FIRST failure (or null) — same order as `validateOrderFormAll`. */
+export function validateOrderForm(
+  values: OrderFormValues,
+  ctx: OrderFormValidationContext,
+): OrderFormError | null {
+  return validateOrderFormAll(values, ctx)[0] ?? null;
 }
 
 // `assigned_signers` mixes both signer kinds in one list, approvers first and

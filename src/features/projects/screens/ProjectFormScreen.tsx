@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Alert,
-} from 'react-native';
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -22,6 +21,7 @@ import { getWorkspace, projectKeys } from '../api/queries';
 import {
   useCreateWorkspace, useUpdateWorkspace, addWorkspaceMember, removeWorkspaceMember,
 } from '../api/mutations';
+import { toast } from '@/lib/toast';
 
 export default function LoyihaFormScreen() {
   const { t } = useTranslation();
@@ -123,7 +123,7 @@ export default function LoyihaFormScreen() {
       qc.invalidateQueries({ queryKey: projectKeys.all });
       router.back();
     } catch (e) {
-      Alert.alert(t('common.errorTitle'), getApiErrorMessage(e, t('errors.saveFailed')));
+      toast.error(getApiErrorMessage(e, t('errors.saveFailed')));
     } finally {
       setLoading(false);
     }

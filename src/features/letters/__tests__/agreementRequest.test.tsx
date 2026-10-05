@@ -1,8 +1,8 @@
 import React from 'react';
-import { Alert } from 'react-native';
 import MockAdapter from 'axios-mock-adapter';
 
 import { apiClient } from '@/api/client';
+import { toast } from '@/lib/toast';
 import { renderWithProviders, fireEvent, waitFor } from '@/test/renderWithProviders';
 import { AgreementSection } from '../components/AgreementSection';
 import type { Letter } from '@/types';
@@ -72,7 +72,7 @@ describe('kelishuv so\'rovi', () => {
   });
 
   it('serverning sababi foydalanuvchiga ko\'rsatiladi (umumiy "Xatolik" emas)', async () => {
-    const spy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    const spy = jest.spyOn(toast, 'error');
     // Kod lug'atda BO'LMASA server matni ko'rsatiladi (lug'atdagi kod esa
     // foydalanuvchi tilida tarjima qilinadi — src/api/errors.ts translateCode).
     mock.onPost(/letters\/77\/agree/).reply(403, {
@@ -82,8 +82,22 @@ describe('kelishuv so\'rovi', () => {
 
     await actOn('letter-agree');
     await waitFor(() => expect(spy).toHaveBeenCalled());
-    const [, body] = spy.mock.calls[spy.mock.calls.length - 1];
-    expect(body).toBe("Siz bu hujjatning kelishuvchisi emassiz");
+    // Bitta toast — global MutationCache toasti o'chirilgan (skipErrorToast).
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spy.mock.calls[0][0]).toBe("Siz bu hujjatning kelishuvchisi emassiz");
     spy.mockRestore();
+  });
+
+  it('izoh bo\'sh bo\'lsa — so\'rov ketmaydi, xato oyna ichida ko\'rinadi', async () => {
+    let sent = false;
+    mock.onPost(/letters\/77\/agree/).reply(() => { sent = true; return [200, {}]; });
+    const r = await renderWithProviders(
+      <AgreementSection letter={letter()} employeeId={1} onChanged={jest.fn()} />,
+    );
+    fireEvent.press(r.getByTestId('letter-agree'));
+    await waitFor(() => r.getByPlaceholderText('Fikringizni yozing...'));
+    fireEvent.press(r.getByTestId('agreement-submit'));
+    await waitFor(() => r.getByTestId('agreement-comment-error'));
+    expect(sent).toBe(false);
   });
 });

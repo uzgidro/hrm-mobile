@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
-  TouchableOpacity, ActivityIndicator, Alert, TextInput, Modal,
+  TouchableOpacity, ActivityIndicator, TextInput, Modal,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -18,6 +18,8 @@ import { ScreenHeader } from '@/components/ScreenHeader';
 import { LoadingView, EmptyState } from '@/components/StateViews';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { getApiErrorMessage } from '@/api/errors';
+import { confirm } from '@/lib/confirm';
+import { toast } from '@/lib/toast';
 import { isHR } from '@/utils/roles';
 import { leaveStatusGroup, leaveStatusKind } from '@/utils/leaveStatus';
 import { statusColor } from '@/utils/orderStatus';
@@ -103,9 +105,9 @@ export default function LeaveDetailScreen() {
     setActing(true);
     try {
       await signMutation.mutateAsync();
-      Alert.alert(t('common.success'), t('leaves.approvedSuccess'));
+      toast.success(t('leaves.approvedSuccess'));
     } catch (e) {
-      Alert.alert(t('common.errorTitle'), getApiErrorMessage(e, t('leaves.approveError')));
+      toast.error(getApiErrorMessage(e, t('leaves.approveError')));
     } finally { setActing(false); }
   }, [signMutation, t]);
 
@@ -114,35 +116,30 @@ export default function LeaveDetailScreen() {
     setActing(true);
     try {
       await rejectMutation.mutateAsync(reason);
-      Alert.alert(t('common.success'), t('leaves.rejectedSuccess'));
+      toast.success(t('leaves.rejectedSuccess'));
     } catch (e) {
-      Alert.alert(t('common.errorTitle'), getApiErrorMessage(e, t('leaves.rejectError')));
+      toast.error(getApiErrorMessage(e, t('leaves.rejectError')));
     } finally { setActing(false); }
   }, [rejectMutation, t]);
 
-  const handleDelete = useCallback(() => {
-    Alert.alert(
-      t('leaves.deleteConfirmTitle'),
-      t('leaves.deleteConfirmMessage'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('leaves.delete'),
-          style: 'destructive',
-          onPress: async () => {
-            setActing(true);
-            try {
-              await deleteMutation.mutateAsync();
-              Alert.alert(t('common.success'), t('leaves.deletedSuccess'), [
-                { text: t('common.ok'), onPress: () => router.back() },
-              ]);
-            } catch (e) {
-              Alert.alert(t('common.errorTitle'), getApiErrorMessage(e, t('leaves.deleteError')));
-            } finally { setActing(false); }
-          },
-        },
-      ],
-    );
+  // In-app confirm + toast — the OS `Alert` is a no-op on react-native-web.
+  const handleDelete = useCallback(async () => {
+    const ok = await confirm({
+      title: t('leaves.deleteConfirmTitle'),
+      message: t('leaves.deleteConfirmMessage'),
+      confirmLabel: t('leaves.delete'),
+      cancelLabel: t('common.cancel'),
+      destructive: true,
+    });
+    if (!ok) return;
+    setActing(true);
+    try {
+      await deleteMutation.mutateAsync();
+      toast.success(t('leaves.deletedSuccess'));
+      router.back();
+    } catch (e) {
+      toast.error(getApiErrorMessage(e, t('leaves.deleteError')));
+    } finally { setActing(false); }
   }, [deleteMutation, t]);
 
   const headerBar = <ScreenHeader title={t('leaves.detailTitle')} />;

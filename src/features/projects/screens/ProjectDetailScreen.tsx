@@ -1,8 +1,7 @@
 import { useMemo, useState } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, ActivityIndicator,
-  TouchableOpacity, Modal, TextInput, Alert,
-} from 'react-native';
+  TouchableOpacity, Modal, TextInput, } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useQuery, useQueries } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -25,6 +24,7 @@ import { workspaceDetailQuery, columnCardsQuery } from '../api/queries';
 import {
   useCreateColumn, useCreateCard, useToggleCardComplete, useDeleteWorkspace,
 } from '../api/mutations';
+import { toast } from '@/lib/toast';
 
 export default function LoyihaDetailScreen() {
   const { t } = useTranslation();
@@ -43,6 +43,8 @@ export default function LoyihaDetailScreen() {
   const [field1, setField1] = useState('');
   const [field2, setField2] = useState('');
   const [busy, setBusy] = useState(false);
+  // Save error stays INSIDE the open modal (a toast renders beneath an RN Modal).
+  const [modalError, setModalError] = useState<string | null>(null);
 
   const { data: ws, isLoading } = useQuery(workspaceDetailQuery(workspaceId));
 
@@ -60,11 +62,12 @@ export default function LoyihaDetailScreen() {
   const members = ws?.members ?? [];
   const canDelete = ws?.created_by_id === user?.employee?.id || isMasterAdmin(user);
 
-  const openColumn = () => { setField1(''); setModal({ type: 'column' }); };
-  const openCard = (columnId: number) => { setField1(''); setField2(''); setModal({ type: 'card', columnId }); };
+  const openColumn = () => { setField1(''); setModalError(null); setModal({ type: 'column' }); };
+  const openCard = (columnId: number) => { setField1(''); setField2(''); setModalError(null); setModal({ type: 'card', columnId }); };
 
   const submitModal = async () => {
     if (!field1.trim() || !modal) return;
+    setModalError(null);
     setBusy(true);
     try {
       if (modal.type === 'column') {
@@ -78,7 +81,7 @@ export default function LoyihaDetailScreen() {
       }
       setModal(null);
     } catch (e) {
-      Alert.alert(t('common.errorTitle'), getApiErrorMessage(e, t('errors.saveFailed')));
+      setModalError(getApiErrorMessage(e, t('errors.saveFailed')));
     } finally {
       setBusy(false);
     }
@@ -88,7 +91,7 @@ export default function LoyihaDetailScreen() {
     try {
       await toggleCard.mutateAsync({ card, columnId });
     } catch (e) {
-      Alert.alert(t('common.errorTitle'), getApiErrorMessage(e, t('projects.toggleError')));
+      toast.error(getApiErrorMessage(e, t('projects.toggleError')));
     }
   };
 
@@ -104,7 +107,7 @@ export default function LoyihaDetailScreen() {
     if (!ok) return;
     deleteWs.mutate(workspaceId, {
       onSuccess: () => router.back(),
-      onError: (e) => Alert.alert(t('common.errorTitle'), getApiErrorMessage(e, t('projects.deleteError'))),
+      onError: (e) => toast.error(getApiErrorMessage(e, t('projects.deleteError'))),
     });
   };
 
@@ -244,6 +247,7 @@ export default function LoyihaDetailScreen() {
                 multiline
               />
             )}
+            {!!modalError && <Text style={styles.modalError} testID="project-modal-error">{modalError}</Text>}
             <View style={styles.modalActions}>
               <TouchableOpacity style={styles.modalCancel} onPress={() => setModal(null)} disabled={busy}>
                 <Text style={styles.modalCancelText}>{t('common.cancel')}</Text>
@@ -304,6 +308,7 @@ const makeStyles = (c: ThemeColors) =>
     modalOverlay: { flex: 1, backgroundColor: c.overlay, justifyContent: 'center', paddingHorizontal: 28 },
     modalCard: { backgroundColor: c.card, borderRadius: 18, padding: 18 },
     modalTitle: { fontSize: 17, ...ff('900'), color: c.text, marginBottom: 14 },
+    modalError: { fontSize: 13, color: c.error, marginBottom: 10, ...ff('700') },
     modalInput: { minHeight: 46, backgroundColor: c.bg, borderWidth: 2, borderColor: c.cardBorder, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: c.text, marginBottom: 10, ...ff('700') },
     modalMultiline: { minHeight: 80, textAlignVertical: 'top' },
     modalActions: { flexDirection: 'row', gap: 10, marginTop: 4 },

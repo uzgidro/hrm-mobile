@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert, Linking, KeyboardAvoidingView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Linking, KeyboardAvoidingView } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
 import dayjs from 'dayjs';
@@ -21,6 +21,7 @@ import { KEYBOARD_BEHAVIOR } from '@/utils/keyboard';
 import { ticketDetailQuery } from '../api/queries';
 import { TicketChat } from '../components/TicketChat';
 import { useRateTicket, useReopenTicket, useTakeTicket, useDoneTicket } from '../api/mutations';
+import { toast } from '@/lib/toast';
 
 export default function SupportDetailScreen() {
   const { t } = useTranslation();
@@ -58,7 +59,7 @@ export default function SupportDetailScreen() {
 
   const onTake = () =>
     takeM.mutate(undefined, {
-      onSuccess: () => { Alert.alert(t('support.takeDone'), ''); refetch(); },
+      onSuccess: () => { toast.success(t('support.takeDone')); refetch(); },
     });
   const onDone = async () => {
     const ok = await confirm({
@@ -69,7 +70,7 @@ export default function SupportDetailScreen() {
     });
     if (!ok) return;
     doneM.mutate(undefined, {
-      onSuccess: () => { Alert.alert(t('support.markDoneDone'), ''); refetch(); },
+      onSuccess: () => { toast.success(t('support.markDoneDone')); refetch(); },
     });
   };
 
@@ -78,8 +79,8 @@ export default function SupportDetailScreen() {
     rateM.mutate(
       { rating, note: note.trim() || null },
       {
-        onSuccess: () => { setNote(''); Alert.alert(t('support.rateDone'), ''); refetch(); },
-        onError: (e) => Alert.alert(t('support.actionError'), getApiErrorMessage(e, t('support.actionError'))),
+        onSuccess: () => { setNote(''); toast.success(t('support.rateDone')); refetch(); },
+        onError: (e) => toast.error(getApiErrorMessage(e, t('support.actionError'))),
       },
     );
   };
@@ -93,8 +94,8 @@ export default function SupportDetailScreen() {
     });
     if (!ok) return;
     reopenM.mutate(undefined, {
-      onSuccess: () => { Alert.alert(t('support.reopenDone'), ''); refetch(); },
-      onError: (e) => Alert.alert(t('support.actionError'), getApiErrorMessage(e, t('support.actionError'))),
+      onSuccess: () => { toast.success(t('support.reopenDone')); refetch(); },
+      onError: (e) => toast.error(getApiErrorMessage(e, t('support.actionError'))),
     });
   };
 

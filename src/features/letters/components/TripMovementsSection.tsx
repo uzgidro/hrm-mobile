@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
@@ -10,6 +10,8 @@ import { ModalCard } from '@/components/ModalCard';
 import type { Letter, BusinessTripMovement, User } from '@/types';
 import { Icon } from '@/components/Icon';
 import { getApiErrorMessage } from '@/api/errors';
+import { confirm } from '@/lib/confirm';
+import { toast } from '@/lib/toast';
 import { isSiteMasterAdmin, isBranchHr } from '@/utils/roles';
 import { normalizeLetterType, canConfirmTripReturn } from '@/utils/letterStatus';
 import { canFixReturnDate } from '@/utils/tripStatus';
@@ -93,53 +95,42 @@ export function TripMovementsSection({
   // yozilardi (foydalanuvchi hisoboti 2026-08-27).
   const selfFinishOptions = letter.available_actions?.self_finish_date_options ?? [];
 
-  const askSelfFinish = () => {
-    // Bir nechta o'tish kuni bor — xodim qaysi kuni qaytganini tanlaydi.
+  // Ilova ichidagi tasdiq/oyna + toast — OS `Alert` web'da hech narsa
+  // ko'rsatmasdi (kun tanlash ham, tasdiq ham, xato ham).
+  const askSelfFinish = async () => {
+    // Bir nechta o'tish kuni bor — xodim qaysi kuni qaytganini tanlaydi
+    // (oyna kunlar ro'yxati bilan ochiladi; standart — server taklif qilgani).
     if (selfFinishDate && selfFinishOptions.length > 1) {
-      Alert.alert(
-        t('letters.selfFinishTitle'),
-        t('letters.selfFinishPickDay'),
-        [
-          ...selfFinishOptions.map((d) => ({
-            text: dayjs(d).format('DD.MM.YYYY'),
-            onPress: () =>
-              selfFinishM.mutate(dayjs(d).format('YYYY-MM-DD'), {
-                onSuccess: () => onChanged(),
-                onError: (e) =>
-                  Alert.alert(t('letters.actionError'), getApiErrorMessage(e, t('letters.actionError'))),
-              }),
-          })),
-          { text: t('common.cancel'), style: 'cancel' as const },
-        ],
-      );
+      setEditMode(false);
+      setSelfMode(true);
+      setPickDay(true);
+      setDateError(null);
+      setReturnDate(dayjs(selfFinishDate).format('YYYY-MM-DD'));
+      setModalOpen(true);
       return;
     }
     // Turniket sanasi YO'Q — sanani xodim tanlaydi (modal ochiladi).
     if (!selfFinishDate) {
       setEditMode(false);
       setSelfMode(true);
+      setPickDay(false);
+      setDateError(null);
       setReturnDate(dayjs().format('YYYY-MM-DD'));
       setModalOpen(true);
       return;
     }
-    Alert.alert(
-      t('letters.selfFinishTitle'),
-      t('letters.selfFinishConfirm', {
-        date: selfFinishDate ? dayjs(selfFinishDate).format('DD.MM.YYYY') : '—',
-      }),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('letters.selfFinishYes'),
-          onPress: () =>
-            selfFinishM.mutate(undefined, {
-              onSuccess: () => onChanged(),
-              onError: (e) =>
-                Alert.alert(t('letters.actionError'), getApiErrorMessage(e, t('letters.actionError'))),
-            }),
-        },
-      ],
-    );
+    const ok = await confirm({
+      title: t('letters.selfFinishTitle'),
+      message: t('letters.selfFinishConfirm', { date: dayjs(selfFinishDate).format('DD.MM.YYYY') }),
+      confirmLabel: t('letters.selfFinishYes'),
+      cancelLabel: t('common.cancel'),
+      icon: 'check',
+    });
+    if (!ok) return;
+    selfFinishM.mutate(undefined, {
+      onSuccess: () => onChanged(),
+      onError: (e) => toast.error(getApiErrorMessage(e, t('letters.actionError'))),
+    });
   };
 
   const editDateM = useUpdateReturnDate(letter.id);
@@ -151,6 +142,9 @@ export function TripMovementsSection({
      turniketdan o'tish sharti qo'llanmaydi, shu bois `self_finish_date` bo'sh
      keladi va qaytgan sanani XODIMNING O'ZI belgilaydi (web bilan bir xil). */
   const [selfMode, setSelfMode] = useState(false);
+  // Bir necha o'tish kuni — sana maydoni o'rniga kunlar ro'yxati ko'rsatiladi.
+  const [pickDay, setPickDay] = useState(false);
+  const [dateError, setDateError] = useState<string | null>(null);
   const [returnDate, setReturnDate] = useState(dayjs().format('YYYY-MM-DD'));
   const [note, setNote] = useState('');
 
@@ -158,16 +152,18 @@ export function TripMovementsSection({
 
   const submitConfirm = () => {
     if (!returnDate.trim()) {
-      Alert.alert(t('letters.actionError'), t('letters.confirmReturnDateLabel'));
+      setDateError(t('letters.confirmReturnDateLabel'));
       return;
     }
+    setDateError(null);
     setModalOpen(false);
     if (selfMode) {
       setSelfMode(false);
+      setPickDay(false);
       selfFinishM.mutate(returnDate.trim(), {
         onSuccess: () => onChanged(),
         onError: (e) =>
-          Alert.alert(t('letters.actionError'), getApiErrorMessage(e, t('letters.actionError'))),
+          toast.error(getApiErrorMessage(e, t('letters.actionError'))),
       });
       return;
     }
@@ -175,7 +171,7 @@ export function TripMovementsSection({
       editDateM.mutate(returnDate.trim(), {
         onSuccess: () => onChanged(),
         onError: (e) =>
-          Alert.alert(t('letters.actionError'), getApiErrorMessage(e, t('letters.actionError'))),
+          toast.error(getApiErrorMessage(e, t('letters.actionError'))),
       });
       return;
     }
@@ -186,7 +182,7 @@ export function TripMovementsSection({
           setNote('');
           onChanged();
         },
-        onError: (e) => Alert.alert(t('letters.actionError'), getApiErrorMessage(e, t('letters.actionError'))),
+        onError: (e) => toast.error(getApiErrorMessage(e, t('letters.actionError'))),
       },
     );
   };
@@ -280,18 +276,42 @@ export function TripMovementsSection({
           : selfMode
             ? t('letters.selfFinishTitle')
             : t('letters.confirmReturn')}
-        hint={t('letters.confirmReturnDateLabel')}
-        confirmLabel={t('common.confirm')}
-        onClose={() => { setModalOpen(false); setSelfMode(false); }}
+        hint={pickDay ? t('letters.selfFinishPickDay') : t('letters.confirmReturnDateLabel')}
+        confirmLabel={pickDay ? t('letters.selfFinishYes') : t('common.confirm')}
+        onClose={() => { setModalOpen(false); setSelfMode(false); setPickDay(false); setDateError(null); }}
         onSubmit={submitConfirm}
+        testID="trip-return-submit"
       >
-        <TextInput
-          style={styles.input}
-          value={returnDate}
-          onChangeText={setReturnDate}
-          placeholder="YYYY-MM-DD"
-          placeholderTextColor={colors.textMuted}
-        />
+        {pickDay ? (
+          <View style={styles.dayList}>
+            {selfFinishOptions.map((d) => {
+              const iso = dayjs(d).format('YYYY-MM-DD');
+              const on = iso === returnDate;
+              return (
+                <TouchableOpacity
+                  key={iso}
+                  style={[styles.dayOpt, on && styles.dayOptOn]}
+                  onPress={() => setReturnDate(iso)}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: on }}
+                  testID={`self-finish-day-${iso}`}
+                >
+                  <Icon name={on ? 'check' : 'calendar'} size={15} color={on ? colors.primary : colors.textMuted} />
+                  <Text style={[styles.dayOptText, on && styles.dayOptTextOn]}>{dayjs(d).format('DD.MM.YYYY')}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        ) : (
+          <TextInput
+            style={[styles.input, dateError ? styles.inputError : null]}
+            value={returnDate}
+            onChangeText={(v) => { setReturnDate(v); if (dateError && v.trim()) setDateError(null); }}
+            placeholder="YYYY-MM-DD"
+            placeholderTextColor={colors.textMuted}
+          />
+        )}
+        {!!dateError && <Text style={styles.errorText}>{dateError}</Text>}
         {!editMode && !selfMode && (
           <TextInput
             style={[styles.input, { minHeight: 60 }]}
@@ -327,4 +347,11 @@ const makeStyles = (c: ThemeColors) =>
     confirmBtn: { marginTop: 12, backgroundColor: c.primary, borderRadius: 12, paddingVertical: 13, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderBottomWidth: 4, borderBottomColor: c.primaryShadow },
     confirmBtnText: { color: c.onPrimary, fontSize: 14, ...ff('800') },
     input: { backgroundColor: c.bg, borderRadius: 10, borderWidth: 2, borderColor: c.cardBorder, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, color: c.text, ...ff('700') },
+    inputError: { borderColor: c.error },
+    errorText: { fontSize: 12, color: c.error, ...ff('700') },
+    dayList: { gap: 8 },
+    dayOpt: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 10, borderWidth: 2, borderColor: c.cardBorder, backgroundColor: c.bg, paddingHorizontal: 12, paddingVertical: 10 },
+    dayOptOn: { borderColor: c.primary, backgroundColor: c.primarySoft },
+    dayOptText: { fontSize: 14, color: c.text, ...ff('700') },
+    dayOptTextOn: { color: c.primary, ...ff('800') },
   });

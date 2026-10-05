@@ -144,6 +144,8 @@ export function useAddOrderComment(id: number) {
   return useMutation({
     mutationFn: (text: string) => addOrderComment(id, text),
     onSuccess: () => invalidateAfterAction(qc, orderKeys.all),
+    // CommentsSection toasts its own error — no second global toast.
+    meta: { skipErrorToast: true },
   });
 }
 
@@ -183,7 +185,7 @@ export async function updateOrder(
 // ── Thin mutation hooks ───────────────────────────────────────────────────────
 // Each invalidates the whole order subtree on success (one call refreshes the
 // list and any open detail via the hierarchical key). The decree detail screen
-// uses `useDecreeActions` instead of these for its busy/Alert orchestration;
+// uses `useDecreeActions` instead of these for its busy/toast orchestration;
 // these remain available for callers that only need fire-and-invalidate.
 
 export function useAssignFamiliarizers(id: number) {
@@ -201,6 +203,8 @@ export function useUpdateOrder() {
       id: number; payload: Partial<CreateOrderPayload>; files?: PickedFile[]; onFilesError?: () => void;
     }) => updateOrder(args.id, args.payload, args.files, args.onFilesError),
     onSuccess: () => invalidateAfterAction(qc, orderKeys.all),
+    // Same as useCreateOrder: the screen toasts its own error.
+    meta: { skipErrorToast: true },
   });
 }
 
@@ -210,7 +214,7 @@ export function useCreateOrder() {
     mutationFn: (args: { payload: CreateOrderPayload; files?: PickedFile[]; onFilesError?: () => void }) =>
       createOrder(args.payload, args.files, args.onFilesError),
     onSuccess: () => invalidateAfterAction(qc, orderKeys.all),
-    // CreateOrderScreen already shows the error via its own Alert in the catch
+    // CreateOrderScreen already shows the error via its own toast in the catch
     // block; skip the global mutation toast so a failed submit isn't surfaced twice.
     meta: { skipErrorToast: true },
   });

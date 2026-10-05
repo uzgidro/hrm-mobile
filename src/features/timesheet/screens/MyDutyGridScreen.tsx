@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, Alert,
-} from 'react-native';
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, } from 'react-native';
 import dayjs from 'dayjs';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -117,10 +116,12 @@ export default function MyDutyGridScreen({ embedded = false }: { embedded?: bool
           entry?.id,
         );
       } catch {
-        Alert.alert(t('timesheet.dutySaveError'));
+        // The global MutationCache toast already reports it (with the server's
+        // reason) — a second local message would only duplicate it. (The OS
+        // Alert that used to be here showed nothing on web anyway.)
       }
     },
-    [assign, clear, dayMap, deptMode, groupHasDam, groupWeekdays, isPending, readOnly, selectedGroup, t],
+    [assign, clear, dayMap, deptMode, groupHasDam, groupWeekdays, isPending, readOnly, selectedGroup],
   );
 
   const onRefresh = useCallback(async () => {

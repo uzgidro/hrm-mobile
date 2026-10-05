@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Image,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Image,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
@@ -29,6 +29,7 @@ import {
 import { PickerModal } from '@/components/PickerModal';
 import { employeeOptionsSearchQuery, type EmployeeOptionRow } from '@/utils/employees';
 import { useQuery } from '@tanstack/react-query';
+import { toast } from '@/lib/toast';
 
 export default function MehmonFormScreen() {
   const { t } = useTranslation();
@@ -108,7 +109,7 @@ export default function MehmonFormScreen() {
 
   const pickPhoto = async () => {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) { Alert.alert(t('visitors.photoPermTitle'), t('visitors.photoPermMessage')); return; }
+    if (!perm.granted) { toast.error(t('visitors.photoPermMessage')); return; }
     const res = await ImagePicker.launchImageLibraryAsync({ allowsEditing: true, aspect: [1, 1], quality: 0.6, base64: true });
     if (res.canceled || !res.assets?.[0]?.base64) return;
     const asset = res.assets[0];
@@ -119,7 +120,7 @@ export default function MehmonFormScreen() {
     try {
       const { accepted, message } = await validateVisitorPhoto(asset.base64!);
       if (!accepted) {
-        Alert.alert(t('visitors.photoRejectedTitle'), message || t('visitors.photoRejectedMessage'));
+        toast.error(message || t('visitors.photoRejectedMessage'));
         setPhotoBase64('');
         setPhotoPreview(existingPhoto);
       }
@@ -131,11 +132,11 @@ export default function MehmonFormScreen() {
   const save = async () => {
     if (!legalName.trim()) { setError(t('visitors.nameRequired')); return; }
     if (validFrom && validUntil && dayjs(validFrom).isAfter(dayjs(validUntil))) {
-      Alert.alert(t('common.errorTitle'), t('visitors.untilBeforeFrom'));
+      toast.error(t('visitors.untilBeforeFrom'));
       return;
     }
     if (!isEdit && mode === 'employee' && !sourceEmployee) {
-      Alert.alert(t('common.errorTitle'), t('visitors.pickEmployeeFirst'));
+      toast.error(t('visitors.pickEmployeeFirst'));
       return;
     }
     setLoading(true);
@@ -167,7 +168,7 @@ export default function MehmonFormScreen() {
         else router.back();
       }
     } catch (e) {
-      Alert.alert(t('common.errorTitle'), getApiErrorMessage(e, t('errors.saveFailed')));
+      toast.error(getApiErrorMessage(e, t('errors.saveFailed')));
     } finally {
       setLoading(false);
     }

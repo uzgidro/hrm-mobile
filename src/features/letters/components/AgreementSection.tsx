@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, Alert,
+  View, Text, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator,
 } from 'react-native';
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
@@ -11,6 +11,7 @@ import { ModalCard } from '@/components/ModalCard';
 import type { Letter, LetterSigner } from '@/types';
 import { Icon } from '@/components/Icon';
 import { getApiErrorMessage } from '@/api/errors';
+import { toast } from '@/lib/toast';
 import {
   canAgreeLetter, canSendAgreementLetter, canSubmitAgreementDraft,
   getLetterAgreements, isAgreementLetter,
@@ -42,6 +43,7 @@ export function AgreementSection({
 
   const [modal, setModal] = useState<null | 'agree' | 'disagree'>(null);
   const [comment, setComment] = useState('');
+  const [commentError, setCommentError] = useState<string | null>(null);
 
   if (!isAgreementLetter(letter)) return null;
 
@@ -57,17 +59,17 @@ export function AgreementSection({
   const submitDecision = () => {
     const text = comment.trim();
     if (!text) {
-      Alert.alert(t('letters.actionError'), t('letters.agreementCommentRequired'));
+      setCommentError(t('letters.agreementCommentRequired'));
       return;
     }
+    setCommentError(null);
     const agreed = modal === 'agree';
     setModal(null);
     agreeM.mutate(
       { agreed, comment: text },
       {
         onSuccess: () => { setComment(''); onChanged(); },
-        onError: (e) =>
-          Alert.alert(t('letters.actionError'), getApiErrorMessage(e, t('letters.actionError'))),
+        onError: (e) => toast.error(getApiErrorMessage(e, t('letters.actionError'))),
       },
     );
   };
@@ -75,8 +77,7 @@ export function AgreementSection({
   const run = (m: { mutate: (v: undefined, o: object) => void }) =>
     m.mutate(undefined, {
       onSuccess: () => onChanged(),
-      onError: (e: unknown) =>
-        Alert.alert(t('letters.actionError'), getApiErrorMessage(e, t('letters.actionError'))),
+      onError: (e: unknown) => toast.error(getApiErrorMessage(e, t('letters.actionError'))),
     });
 
   const busy = agreeM.isPending || submitM.isPending || sendM.isPending;
@@ -111,7 +112,7 @@ export function AgreementSection({
           <TouchableOpacity
             style={[styles.btn, styles.btnDecline]}
             disabled={busy}
-            onPress={() => { setComment(''); setModal('disagree'); }}
+            onPress={() => { setComment(''); setCommentError(null); setModal('disagree'); }}
             activeOpacity={0.85}
             testID="letter-disagree"
           >
@@ -120,7 +121,7 @@ export function AgreementSection({
           <TouchableOpacity
             style={[styles.btn, styles.btnAgree]}
             disabled={busy}
-            onPress={() => { setComment(''); setModal('agree'); }}
+            onPress={() => { setComment(''); setCommentError(null); setModal('agree'); }}
             activeOpacity={0.85}
             testID="letter-agree"
           >
@@ -154,7 +155,8 @@ export function AgreementSection({
       )}
 
       {/* Izoh MAJBURIY — backend `comment` min_length=1 talab qiladi. Tekshiruv
-          `submitDecision` da Alert orqali qoladi (asl xulq saqlandi). */}
+          `submitDecision` da — xato oyna ichida, maydon ostida ko'rsatiladi
+          (OS Alert web'da hech narsa ko'rsatmasdi). */}
       <ModalCard
         visible={modal !== null}
         title={modal === 'agree' ? t('letters.agree') : t('letters.disagree')}
@@ -165,14 +167,15 @@ export function AgreementSection({
         testID="agreement-submit"
       >
         <TextInput
-          style={styles.input}
+          style={[styles.input, commentError ? styles.inputError : null]}
           value={comment}
-          onChangeText={setComment}
+          onChangeText={(v) => { setComment(v); if (commentError && v.trim()) setCommentError(null); }}
           placeholder={t('letters.agreementCommentPlaceholder')}
           placeholderTextColor={colors.textMuted}
           multiline
           textAlignVertical="top"
         />
+        {!!commentError && <Text style={styles.errorText} testID="agreement-comment-error">{commentError}</Text>}
       </ModalCard>
     </Section>
   );
@@ -192,4 +195,6 @@ const makeStyles = (c: ThemeColors) =>
     btnDecline: { backgroundColor: c.errorSoft },
     btnDeclineText: { color: c.error, fontSize: 14, ...ff('800') },
     input: { minHeight: 90, borderWidth: 2, borderColor: c.cardBorder, borderRadius: 10, padding: 12, color: c.text, fontSize: 14, ...ff('700') },
+    inputError: { borderColor: c.error },
+    errorText: { fontSize: 12, color: c.error, ...ff('700') },
   });

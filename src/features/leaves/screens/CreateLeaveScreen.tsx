@@ -1,13 +1,14 @@
 import { useState, useCallback, useMemo } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
-  TouchableOpacity, TextInput, ActivityIndicator, Alert,
+  TouchableOpacity, TextInput, ActivityIndicator,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { getApiErrorMessage } from '@/api/errors';
+import { toast } from '@/lib/toast';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { ff } from '@/theme/typography';
@@ -44,6 +45,9 @@ export default function CreateLeaveScreen() {
   const [startDate, setStartDate] = useState(now.minute(0).second(0));
   const [endDate, setEndDate] = useState(now.add(1, 'hour').minute(0).second(0));
   const [description, setDescription] = useState('');
+  // Inline «Izoh» error — the OS `Alert` showed nothing on web (QA), so the
+  // empty-comment submit gave no feedback at all.
+  const [descError, setDescError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [showTypeSheet, setShowTypeSheet] = useState(false);
   const [activePicker, setActivePicker] = useState<'start' | 'end' | null>(null);
@@ -57,17 +61,19 @@ export default function CreateLeaveScreen() {
   const earliest = earliestLeaveStart(rules);
   const maxBack = earliest ? rules!.max_days_back : null;
 
+  // The date errors already render inline under the pickers (endBeforeStart /
+  // tooFarBack); the comment gets its own inline slot. Errors and success go
+  // through toast — the OS `Alert` is a no-op on react-native-web.
   const handleSubmit = useCallback(async () => {
+    const descMissing = !description.trim();
+    setDescError(descMissing ? t('leaves.descRequired') : null);
     if (!endDate.isAfter(startDate)) {
-      Alert.alert(t('common.errorTitle'), t('leaves.endMustBeAfterStart'));
+      toast.error(t('leaves.endMustBeAfterStart'));
       return;
     }
-    if (!description.trim()) {
-      Alert.alert(t('common.errorTitle'), t('leaves.descRequired'));
-      return;
-    }
+    if (descMissing) return;
     if (earliest && startDate.isBefore(earliest)) {
-      Alert.alert(t('common.errorTitle'), t('leaves.tooFarBack', { count: maxBack ?? 0 }));
+      toast.error(t('leaves.tooFarBack', { count: maxBack ?? 0 }));
       return;
     }
     setSubmitting(true);
@@ -79,9 +85,10 @@ export default function CreateLeaveScreen() {
         description: description.trim(),
       };
       await createLeaveMut.mutateAsync(payload);
-      Alert.alert(t('common.success'), t('leaves.createdSuccess'), [{ text: t('common.ok'), onPress: () => router.back() }]);
+      toast.success(t('leaves.createdSuccess'));
+      router.back();
     } catch (e) {
-      Alert.alert(t('common.errorTitle'), getApiErrorMessage(e, t('errors.sendFailed')));
+      toast.error(getApiErrorMessage(e, t('errors.sendFailed')));
     } finally {
       setSubmitting(false);
     }
@@ -159,16 +166,17 @@ export default function CreateLeaveScreen() {
 
         <Text style={s.label}>{t('leaves.commentLabel')}</Text>
         <TextInput
-          style={s.textarea}
+          style={[s.textarea, descError ? s.textareaError : null]}
           placeholder={t('leaves.commentPlaceholder')}
           placeholderTextColor={colors.textMuted}
           value={description}
-          onChangeText={setDescription}
+          onChangeText={(v) => { setDescription(v); if (descError && v.trim()) setDescError(null); }}
           multiline
           numberOfLines={4}
           textAlignVertical="top"
           testID="leave-description"
         />
+        {descError && <Text style={s.errorText} testID="leave-description-error">{descError}</Text>}
 
         {/* Routing notice — who the request goes to (not a choice, web v2). */}
         <View style={s.routeCard} testID="leave-route-notice">
@@ -236,6 +244,7 @@ const makeS = (c: ThemeColors) =>
       paddingHorizontal: 14, paddingVertical: 12, color: c.text, fontSize: 15, minHeight: 104,
       ...NO_WEB_OUTLINE, ...ff('700'),
     },
+    textareaError: { borderColor: c.error },
     routeCard: {
       flexDirection: 'row', gap: 12, marginTop: 18, padding: 14, borderRadius: 16,
       borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder, backgroundColor: c.card,

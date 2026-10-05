@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 import {
-  View, Text, ScrollView, StyleSheet, Image, Alert,
-  TouchableOpacity, Linking, Share,
+  View, Text, ScrollView, StyleSheet, Image, TouchableOpacity, Linking, Share,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -18,6 +17,7 @@ import { getApiErrorMessage } from '@/api/errors';
 import { confirm } from '@/lib/confirm';
 import { visitorDetailQuery } from '../api/queries';
 import { useDeleteVisitor } from '../api/mutations';
+import { toast } from '@/lib/toast';
 
 function Row({ icon, label, value, styles, colors }: {
   icon: IconName; label: string; value?: string | null; styles: any; colors: ThemeColors;
@@ -64,7 +64,7 @@ export function VisitorDetailView({ id, embedded = false }: { id: number; embedd
     if (!ok) return;
     del.mutate(visitorId, {
       onSuccess: () => router.back(),
-      onError: (e) => Alert.alert(t('common.errorTitle'), getApiErrorMessage(e, t('visitors.deleteError'))),
+      onError: (e) => toast.error(getApiErrorMessage(e, t('visitors.deleteError'))),
     });
   };
 

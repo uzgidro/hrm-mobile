@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Text, StyleSheet, TouchableOpacity, TextInput, Alert } from 'react-native';
+import { Text, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
@@ -44,6 +44,8 @@ export function BasisDecreeModal({
   const [number, setNumber] = useState(initialNumber ?? '');
   const [date, setDate] = useState<string | null>(initialDate ?? null);
   const [pickerOpen, setPickerOpen] = useState(false);
+  // Server xatosi oyna ICHIDA (toast RN Modal ostida ko'rinmasdi).
+  const [error, setError] = useState<string | null>(null);
 
   // Oyna har ochilganda joriy qiymatlardan boshlansin. `visible` false dan
   // true ga o'tgan payt qayta seed qilamiz — aks holda ikkinchi ochilishda
@@ -52,6 +54,7 @@ export function BasisDecreeModal({
   if (visible !== wasVisible) {
     setWasVisible(visible);
     if (visible) {
+      setError(null);
       setNumber(initialNumber ?? '');
       setDate(initialDate ?? null);
     }
@@ -61,12 +64,12 @@ export function BasisDecreeModal({
 
   const submit = () => {
     if (!canSave) return;
+    setError(null);
     saveM.mutate(
       { number, date: date! },
       {
         onSuccess: () => { onClose(); onSaved(); },
-        onError: (e) =>
-          Alert.alert(t('letters.actionError'), getApiErrorMessage(e, t('letters.actionError'))),
+        onError: (e) => setError(getApiErrorMessage(e, t('letters.actionError'))),
       },
     );
   };
@@ -104,6 +107,7 @@ export function BasisDecreeModal({
             {date ? dayjs(date).format('DD.MM.YYYY') : t('letters.placeholderSelectDate')}
           </Text>
         </TouchableOpacity>
+        {!!error && <Text style={styles.error} testID="basis-decree-error">{error}</Text>}
       </ModalCard>
 
       <DatePickerModal
@@ -123,4 +127,5 @@ const makeStyles = (c: ThemeColors) =>
     input: { borderWidth: 2, borderColor: c.cardBorder, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 12, color: c.text, fontSize: 14, justifyContent: 'center', ...ff('700') },
     inputText: { color: c.text, fontSize: 14, ...ff('700') },
     inputPlaceholder: { color: c.textMuted, fontSize: 14, ...ff('700') },
+    error: { fontSize: 12, color: c.error, ...ff('700') },
   });

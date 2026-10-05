@@ -1,5 +1,5 @@
 // Minimal imperative confirm store — the in-app replacement for a two-button
-// OS `Alert.alert(title, msg, [cancel, confirm])`, usable from ANYWHERE:
+// OS `Alert` (title, msg, [cancel, confirm]), usable from ANYWHERE:
 // components, hooks (useLetterActions), and non-React services (appUpdates.ts,
 // which only has the i18n singleton). Modeled on `toast.ts` + `<ToastHost/>`.
 //

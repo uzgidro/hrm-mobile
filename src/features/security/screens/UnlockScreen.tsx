@@ -36,6 +36,10 @@ export default function UnlockScreen() {
 
   // On the final failure the store only REPORTS forceLogout — the caller wipes
   // the lock footprint and logs out; the auth guard then redirects.
+  //
+  // Intentional OS Alert: the lock overlay is native-only (lockStore reports
+  // `unlocked` on web), and the in-app confirm() is force-dismissed while the
+  // lock is engaged — a native Alert is the one dialog that shows over it.
   const forceLogout = () => {
     Alert.alert(
       t('security.forceLogoutTitle'),

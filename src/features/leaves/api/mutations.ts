@@ -36,9 +36,14 @@ export function deleteLeave(id: number): Promise<unknown> {
 // `leaveKeys.all`, this ONE invalidate refreshes all of them via the
 // hierarchical key — replacing the four manual invalidations the old detail
 // screen did by hand.
+//
+// Every hook here has ONE caller that toasts its own error with a
+// leave-specific fallback, so the global MutationCache toast is switched off
+// (`skipErrorToast`) — otherwise one failure would show two toasts.
 export function useSignLeave(id: number) {
   const qc = useQueryClient();
   return useMutation({
+    meta: { skipErrorToast: true },
     mutationFn: () => signLeave(id),
     onSuccess: () => invalidateAfterAction(qc, leaveKeys.all),
   });
@@ -47,6 +52,7 @@ export function useSignLeave(id: number) {
 export function useRejectLeave(id: number) {
   const qc = useQueryClient();
   return useMutation({
+    meta: { skipErrorToast: true },
     mutationFn: (reason: string) => rejectLeave(id, reason),
     onSuccess: () => invalidateAfterAction(qc, leaveKeys.all),
   });
@@ -55,6 +61,7 @@ export function useRejectLeave(id: number) {
 export function useCreateLeave() {
   const qc = useQueryClient();
   return useMutation({
+    meta: { skipErrorToast: true },
     mutationFn: createLeave,
     onSuccess: () => invalidateAfterAction(qc, leaveKeys.all),
   });
@@ -63,6 +70,7 @@ export function useCreateLeave() {
 export function useDeleteLeave(id: number) {
   const qc = useQueryClient();
   return useMutation({
+    meta: { skipErrorToast: true },
     mutationFn: () => deleteLeave(id),
     onSuccess: () => invalidateAfterAction(qc, leaveKeys.all),
   });

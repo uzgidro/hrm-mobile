@@ -25,6 +25,8 @@ export function createNewsPost(form: NewsPostForm): Promise<NewsPost> {
 export function useCreateNewsPost() {
   const qc = useQueryClient();
   return useMutation({
+    // The screen shows this error itself (toast / inline) — no second global toast.
+    meta: { skipErrorToast: true },
     mutationFn: (form: NewsPostForm) => createNewsPost(form),
     onSuccess: () => qc.invalidateQueries({ queryKey: newsKeys.all }),
   });
@@ -49,6 +51,8 @@ export function deleteNewsPost(id: number): Promise<void> {
 export function useUpdateNewsPost(id: number) {
   const qc = useQueryClient();
   return useMutation({
+    // The screen shows this error itself (toast / inline) — no second global toast.
+    meta: { skipErrorToast: true },
     mutationFn: (form: NewsPostForm) => updateNewsPost(id, form),
     onSuccess: () => qc.invalidateQueries({ queryKey: newsKeys.all }),
   });

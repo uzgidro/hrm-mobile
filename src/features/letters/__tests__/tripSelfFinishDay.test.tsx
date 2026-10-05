@@ -1,11 +1,14 @@
 import React from 'react';
-import { Alert } from 'react-native';
 import MockAdapter from 'axios-mock-adapter';
 
 import { apiClient } from '@/api/client';
+import { confirm } from '@/lib/confirm';
 import { renderWithProviders, fireEvent, waitFor } from '@/test/renderWithProviders';
 import { TripMovementsSection } from '../components/TripMovementsSection';
 import type { Letter } from '@/types';
+
+// Ilova ichidagi tasdiq (OS Alert web'da hech narsa ko'rsatmasdi).
+jest.mock('@/lib/confirm', () => ({ confirm: jest.fn(() => Promise.resolve(true)) }));
 
 // Safarni yakunlashda QAYSI KUNI qaytgani. Foydalanuvchi hisoboti 2026-08-27:
 // xodim 27-da qaytib, yakunlashni 28-da bosса, sana 28 bo'lib yozilardi.
@@ -44,31 +47,33 @@ async function pressSelfFinish(letter: Letter) {
 }
 
 describe('safarni yakunlash — qaytgan kun', () => {
+  beforeEach(() => (confirm as jest.Mock).mockClear());
   it('bir necha kun o\'tilgan bo\'lsa KUN TANLATADI va tanlangani yuboriladi', async () => {
-    const spy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
     let body: unknown;
     mock.onPost(/letters\/5\/self-confirm-return/).reply((cfg) => {
       body = JSON.parse(String(cfg.data));
       return [200, { id: 5 }];
     });
 
-    await pressSelfFinish(trip({
-      self_finish_date: '2026-08-27',
+    const r = await pressSelfFinish(trip({
+      self_finish_date: '2026-08-28',
       self_finish_date_options: ['2026-08-27', '2026-08-28'],
     }));
 
-    const [, , buttons] = spy.mock.calls[spy.mock.calls.length - 1] as unknown as [
-      string, string, { text: string; onPress?: () => void }[],
-    ];
-    expect(buttons.map((b) => b.text)).toEqual(['27.08.2026', '28.08.2026', 'Bekor']);
+    // Oyna kunlar ro'yxati bilan ochiladi (ikki tugmali tasdiq emas).
+    await waitFor(() => r.getByText('Qaysi kuni qaytgansiz?'));
+    expect(r.getByText('27.08.2026')).toBeTruthy();
+    expect(r.getByText('28.08.2026')).toBeTruthy();
+    expect(confirm).not.toHaveBeenCalled();
 
-    buttons[0].onPress?.();     // xodim 27-ni tanladi
+    fireEvent.press(r.getByTestId('self-finish-day-2026-08-27'));   // xodim 27-ni tanladi
+    await waitFor(() =>
+      expect(r.getByTestId('self-finish-day-2026-08-27').props.accessibilityState).toEqual({ selected: true }));
+    fireEvent.press(r.getByTestId('trip-return-submit'));
     await waitFor(() => expect(body).toEqual({ return_date: '2026-08-27' }));
-    spy.mockRestore();
   });
 
   it('bitta kun bo\'lsa — eskicha oddiy tasdiq (sana serverdan)', async () => {
-    const spy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
     let body: unknown = 'YUBORILMADI';
     mock.onPost(/letters\/5\/self-confirm-return/).reply((cfg) => {
       body = cfg.data ? JSON.parse(String(cfg.data)) : null;
@@ -80,12 +85,18 @@ describe('safarni yakunlash — qaytgan kun', () => {
       self_finish_date_options: ['2026-08-27'],
     }));
 
-    const [, , buttons] = spy.mock.calls[spy.mock.calls.length - 1] as unknown as [
-      string, string, { text: string; onPress?: () => void }[],
-    ];
-    expect(buttons.map((b) => b.text)).toEqual(['Bekor', 'Ha, yakunlayman']);
-    buttons[1].onPress?.();
+    await waitFor(() => expect(confirm).toHaveBeenCalledWith(
+      expect.objectContaining({ confirmLabel: 'Ha, yakunlayman', cancelLabel: 'Bekor' })));
     await waitFor(() => expect(body).not.toBe('YUBORILMADI'));
-    spy.mockRestore();
+  });
+
+  it('tasdiq bekor qilinsa — so\'rov ketmaydi', async () => {
+    (confirm as jest.Mock).mockResolvedValueOnce(false);
+    let sent = false;
+    mock.onPost(/letters\/5\/self-confirm-return/).reply(() => { sent = true; return [200, {}]; });
+    await pressSelfFinish(trip({ self_finish_date: '2026-08-27', self_finish_date_options: ['2026-08-27'] }));
+    await waitFor(() => expect(confirm).toHaveBeenCalled());
+    await new Promise((res) => setTimeout(res, 0));
+    expect(sent).toBe(false);
   });
 });

@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, Alert,
-} from 'react-native';
+  View, Text, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
@@ -12,6 +11,7 @@ import { getApiErrorMessage } from '@/api/errors';
 import { orderCommentsQuery, orderHistoryQuery } from '../api/queries';
 import { useAddOrderComment } from '../api/mutations';
 import { Section } from './DetailParts';
+import { toast } from '@/lib/toast';
 
 // IZOHLAR + MATN TAHRIRI TARIXI — ikkalasi ham webda ko'rinadi, mobilда umuman
 // yo'q edi. Izoh yozish buyruqni ko'ra oladigan HAR KIMga ochiq (backend
@@ -32,8 +32,7 @@ export function CommentsSection({ orderId }: { orderId: number }) {
     if (!trimmed) return;
     addM.mutate(trimmed, {
       onSuccess: () => setText(''),
-      onError: (e) =>
-        Alert.alert(t('orders.actionError'), getApiErrorMessage(e, t('orders.actionError'))),
+      onError: (e) => toast.error(getApiErrorMessage(e, t('orders.actionError'))),
     });
   };
 

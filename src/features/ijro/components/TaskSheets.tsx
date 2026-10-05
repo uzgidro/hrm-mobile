@@ -52,7 +52,7 @@ export function TaskDetailSheet({
     }
   };
 
-  // Ilova ichidagi tasdiq (`confirm`) — `Alert.alert` web'da hech narsa ko'rsatmasdi.
+  // Ilova ichidagi tasdiq (`confirm`) — OS `Alert` web'da hech narsa ko'rsatmasdi.
   const confirmDelete = async () => {
     const ok = await confirm({
       title: t('ijro.remove'),

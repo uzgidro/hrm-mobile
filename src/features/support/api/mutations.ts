@@ -71,6 +71,8 @@ export function doneTicket(id: number): Promise<unknown> {
 export function useCreateTicket() {
   const qc = useQueryClient();
   return useMutation({
+    // The screen shows this error itself (toast / inline) — no second global toast.
+    meta: { skipErrorToast: true },
     mutationFn: (args: { form: CreateTicketForm; files?: PickedFile[] }) =>
       createTicket(args.form, args.files),
     onSuccess: () => invalidateAfterAction(qc, supportKeys.all),
@@ -80,9 +82,9 @@ export function useCreateTicket() {
 export function useRateTicket(id: number) {
   const qc = useQueryClient();
   return useMutation({
-    // Bu mutatsiya XATONI O'ZI ko'rsatadi (chaqiruvchi `Alert.alert`),
+    // Bu mutatsiya XATONI O'ZI ko'rsatadi (chaqiruvchi o'z `toast.error`ini chiqaradi),
     // shuning uchun global toast o'chiriladi — aks holda foydalanuvchi
-    // bitta xato uchun HAM toast, HAM bloklovchi Alert ko'rardi.
+    // bitta xato uchun ikki xil toast ko'rardi.
     meta: { skipErrorToast: true },
     mutationFn: (form: RateTicketForm) => rateTicket(id, form),
     onSuccess: () => invalidateAfterAction(qc, supportKeys.all),
@@ -92,9 +94,9 @@ export function useRateTicket(id: number) {
 export function useReopenTicket(id: number) {
   const qc = useQueryClient();
   return useMutation({
-    // Bu mutatsiya XATONI O'ZI ko'rsatadi (chaqiruvchi `Alert.alert`),
+    // Bu mutatsiya XATONI O'ZI ko'rsatadi (chaqiruvchi o'z `toast.error`ini chiqaradi),
     // shuning uchun global toast o'chiriladi — aks holda foydalanuvchi
-    // bitta xato uchun HAM toast, HAM bloklovchi Alert ko'rardi.
+    // bitta xato uchun ikki xil toast ko'rardi.
     meta: { skipErrorToast: true },
     mutationFn: () => reopenTicket(id),
     onSuccess: () => invalidateAfterAction(qc, supportKeys.all),
@@ -134,9 +136,9 @@ export function markTicketRead(id: number): Promise<unknown> {
 export function useSendTicketMessage(id: number) {
   const qc = useQueryClient();
   return useMutation({
-    // Bu mutatsiya XATONI O'ZI ko'rsatadi (chaqiruvchi `Alert.alert`),
+    // Bu mutatsiya XATONI O'ZI ko'rsatadi (chaqiruvchi o'z `toast.error`ini chiqaradi),
     // shuning uchun global toast o'chiriladi — aks holda foydalanuvchi
-    // bitta xato uchun HAM toast, HAM bloklovchi Alert ko'rardi.
+    // bitta xato uchun ikki xil toast ko'rardi.
     meta: { skipErrorToast: true },
     mutationFn: (body: string) => sendTicketMessage(id, body),
     onSuccess: () => {

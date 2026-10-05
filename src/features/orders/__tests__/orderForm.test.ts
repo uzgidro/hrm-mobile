@@ -6,6 +6,7 @@ import {
   seedFamiliarizerDeptIds,
   existingOrderDocuments,
   validateOrderForm,
+  validateOrderFormAll,
   buildCreateOrderPayload,
   buildUpdateOrderPayload,
   type OrderFormValues,
@@ -138,6 +139,36 @@ describe('validateOrderForm', () => {
   it('reports a missing branch last, once the form itself is valid', () => {
     expect(validateOrderForm(values(), { ...ctx, branchId: undefined }))
       .toEqual({ field: 'form', messageKey: 'branchNotFound' });
+  });
+});
+
+describe('validateOrderFormAll', () => {
+  // QA: only the FIRST missing field was flagged — the user had to submit once
+  // per empty field. Every failing field is now reported in one pass.
+  it('flags every missing field at once, in form order', () => {
+    const empty = values({
+      categoryId: null, description: ' ', leadershipId: null,
+      approvers: [{ employee_id: 0, can_edit_document: false }],
+    });
+    expect(validateOrderFormAll(empty, { ...ctx, branchId: undefined })).toEqual([
+      { field: 'category', messageKey: 'categoryRequired' },
+      { field: 'description', messageKey: 'descriptionRequired' },
+      { field: 'approvers', messageKey: 'approverRequired' },
+      { field: 'leadership', messageKey: 'leadershipRequired' },
+      { field: 'form', messageKey: 'branchNotFound' },
+    ]);
+  });
+
+  it('one message per field; empty for a valid form', () => {
+    expect(validateOrderFormAll(values(), ctx)).toEqual([]);
+    const both = validateOrderFormAll(
+      values({ submitterId: 11, actNumber: '1/2026' }),
+      { ...ctx, numberFieldShown: true, numberTaken: true },
+    );
+    expect(both).toEqual([
+      { field: 'approvers', messageKey: 'submitterCannotBeApprover' },
+      { field: 'actNumber', messageKey: 'actNumberTaken' },
+    ]);
   });
 });
 

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TextInput,
-  TouchableOpacity, ActivityIndicator, Alert, KeyboardAvoidingView, Platform,
+  TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -15,6 +15,7 @@ import { ScreenHeader } from '@/components/ScreenHeader';
 import { LoadingView } from '@/components/StateViews';
 import { getApiErrorMessage } from '@/api/errors';
 import { getMyProfile, useUpdateMyProfile } from '../api/mutations';
+import { toast } from '@/lib/toast';
 
 // `key` is the API `maritial_status` enum code (never translated); `labelKey`
 // is a profile.maritalStatus.* catalog key resolved via t() at render time.
@@ -92,7 +93,7 @@ export default function ProfileEditScreen() {
 
   const handleSave = async () => {
     if (!form.legal_name.trim()) {
-      Alert.alert(t('common.errorTitle'), t('profile.nameRequired'));
+      toast.error(t('profile.nameRequired'));
       return;
     }
     setSaving(true);
@@ -129,11 +130,10 @@ export default function ProfileEditScreen() {
       // the employee-detail cache on success.
       await updateMut.mutateAsync(payload);
 
-      Alert.alert(t('profile.savedTitle'), t('profile.savedMessage'), [
-        { text: t('common.ok'), onPress: () => router.back() },
-      ]);
+      toast.success(t('profile.savedMessage'));
+      router.back();
     } catch (e) {
-      Alert.alert(t('profile.saveErrorTitle'), getApiErrorMessage(e, t('errors.saveFailed')));
+      toast.error(getApiErrorMessage(e, t('errors.saveFailed')));
     } finally {
       setSaving(false);
     }

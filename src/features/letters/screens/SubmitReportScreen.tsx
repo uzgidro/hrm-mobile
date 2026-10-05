@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Alert,
-} from 'react-native';
+  View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -22,6 +21,7 @@ import { PickerModal } from '@/components/PickerModal';
 import { employeeSubLabel } from '@/utils/roles';
 import { useSubmitReport, uploadReport } from '../api/mutations';
 import { KeyboardAvoider } from '@/components/KeyboardAvoider';
+import { toast } from '@/lib/toast';
 
 // Business-trip report submission (xizmat safari, OLD flow — web LetterReportDrawer).
 // Four fields: date (optional), summary (optional), task (optional), content
@@ -91,7 +91,7 @@ export default function SubmitReportScreen() {
 
   const handleSubmit = async () => {
     if (!content.trim()) {
-      Alert.alert(t('common.errorTitle'), t('letters.reportContentRequired'));
+      toast.error(t('letters.reportContentRequired'));
       return;
     }
     setBusy(true);
@@ -109,13 +109,14 @@ export default function SubmitReportScreen() {
         try {
           await uploadReport(letterId, file);
         } catch {
-          Alert.alert(t('letters.actionDoneTitle'), t('letters.reportFileFailed'));
+          // Hisobot saqlandi, faqat fayl yuklanmadi — ekran yopiladi, toast qoladi.
+          toast.info(t('letters.reportFileFailed'), 6000);
         }
       }
       refetch();
       router.back();
     } catch (e) {
-      Alert.alert(t('letters.actionError'), getApiErrorMessage(e, t('letters.reportSubmitError')));
+      toast.error(getApiErrorMessage(e, t('letters.reportSubmitError')));
     } finally {
       setBusy(false);
     }

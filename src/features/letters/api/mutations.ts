@@ -78,6 +78,9 @@ export async function updateLetter(
 export function useUpdateLetter() {
   const qc = useQueryClient();
   return useMutation({
+    // Chaqiruvchi xatoni O'ZI toast qiladi (aniq matn bilan) — global toast
+    // o'chiriladi, aks holda bitta xato uchun ikki toast chiqardi.
+    meta: { skipErrorToast: true },
     mutationFn: (args: {
       id: number; payload: CreateLetterPayload; files?: PickedFile[]; onFilesError?: () => void;
     }) => updateLetter(args.id, args.payload, args.files, args.onFilesError),
@@ -165,12 +168,15 @@ export function uploadReport(id: number, file: PickedFile): Promise<unknown> {
 // ── Thin mutation hooks ───────────────────────────────────────────────────────
 // Each invalidates the whole letter subtree on success (one call refreshes the
 // list and any open detail via the hierarchical key). The detail screen uses
-// `useLetterActions` for its busy/Alert orchestration; these remain available
+// `useLetterActions` for its busy/toast orchestration; these remain available
 // for callers that only need fire-and-invalidate.
 
 export function useCreateLetter() {
   const qc = useQueryClient();
   return useMutation({
+    // Chaqiruvchi xatoni O'ZI toast qiladi (aniq matn bilan) — global toast
+    // o'chiriladi, aks holda bitta xato uchun ikki toast chiqardi.
+    meta: { skipErrorToast: true },
     mutationFn: (args: { payload: CreateLetterPayload; files?: PickedFile[]; onFilesError?: () => void }) =>
       createLetter(args.payload, args.files, args.onFilesError),
     onSuccess: () => invalidateAfterAction(qc, letterKeys.all),
@@ -180,6 +186,9 @@ export function useCreateLetter() {
 export function useSubmitReport(id: number) {
   const qc = useQueryClient();
   return useMutation({
+    // Chaqiruvchi xatoni O'ZI toast qiladi (aniq matn bilan) — global toast
+    // o'chiriladi, aks holda bitta xato uchun ikki toast chiqardi.
+    meta: { skipErrorToast: true },
     mutationFn: (form: ReportForm) => submitReport(id, form),
     onSuccess: () => invalidateAfterAction(qc, letterKeys.all),
   });
@@ -188,9 +197,9 @@ export function useSubmitReport(id: number) {
 export function useResetReport(id: number) {
   const qc = useQueryClient();
   return useMutation({
-    // Bu mutatsiya XATONI O'ZI ko'rsatadi (chaqiruvchi `Alert.alert`),
+    // Bu mutatsiya XATONI O'ZI ko'rsatadi (chaqiruvchi o'z `toast.error`ini chiqaradi),
     // shuning uchun global toast o'chiriladi — aks holda foydalanuvchi
-    // bitta xato uchun HAM toast, HAM bloklovchi Alert ko'rardi.
+    // bitta xato uchun ikki xil toast ko'rardi.
     meta: { skipErrorToast: true },
     mutationFn: () => resetReport(id),
     onSuccess: () => invalidateAfterAction(qc, letterKeys.all),
@@ -210,6 +219,9 @@ export function confirmReturn(id: number, form: ConfirmReturnForm): Promise<unkn
 export function useConfirmReturn(id: number) {
   const qc = useQueryClient();
   return useMutation({
+    // Chaqiruvchi xatoni O'ZI toast qiladi (aniq matn bilan) — global toast
+    // o'chiriladi, aks holda bitta xato uchun ikki toast chiqardi.
+    meta: { skipErrorToast: true },
     mutationFn: (form: ConfirmReturnForm) => confirmReturn(id, form),
     onSuccess: () => invalidateAfterAction(qc, letterKeys.all),
   });
@@ -233,6 +245,9 @@ export function selfConfirmReturn(id: number, returnDate?: string | null): Promi
 export function useSelfConfirmReturn(id: number) {
   const qc = useQueryClient();
   return useMutation({
+    // Chaqiruvchi xatoni O'ZI toast qiladi (aniq matn bilan) — global toast
+    // o'chiriladi, aks holda bitta xato uchun ikki toast chiqardi.
+    meta: { skipErrorToast: true },
     mutationFn: (returnDate?: string | null) => selfConfirmReturn(id, returnDate),
     onSuccess: () => invalidateAfterAction(qc, letterKeys.all),
   });
@@ -250,6 +265,9 @@ export function updateReturnDate(id: number, returnDate: string): Promise<unknow
 export function useUpdateReturnDate(id: number) {
   const qc = useQueryClient();
   return useMutation({
+    // Chaqiruvchi xatoni O'ZI toast qiladi (aniq matn bilan) — global toast
+    // o'chiriladi, aks holda bitta xato uchun ikki toast chiqardi.
+    meta: { skipErrorToast: true },
     mutationFn: (returnDate: string) => updateReturnDate(id, returnDate),
     onSuccess: () => invalidateAfterAction(qc, letterKeys.all),
   });
@@ -282,6 +300,9 @@ export function sendLetterToRegistry(id: number): Promise<unknown> {
 export function useAgreeLetter(id: number) {
   const qc = useQueryClient();
   return useMutation({
+    // Chaqiruvchi xatoni O'ZI toast qiladi (aniq matn bilan) — global toast
+    // o'chiriladi, aks holda bitta xato uchun ikki toast chiqardi.
+    meta: { skipErrorToast: true },
     mutationFn: ({ agreed, comment }: { agreed: boolean; comment: string }) =>
       (agreed ? agreeLetter : disagreeLetter)(id, comment),
     onSuccess: () => invalidateAfterAction(qc, letterKeys.all),
@@ -291,6 +312,9 @@ export function useAgreeLetter(id: number) {
 export function useSubmitAgreement(id: number) {
   const qc = useQueryClient();
   return useMutation({
+    // Chaqiruvchi xatoni O'ZI toast qiladi (aniq matn bilan) — global toast
+    // o'chiriladi, aks holda bitta xato uchun ikki toast chiqardi.
+    meta: { skipErrorToast: true },
     mutationFn: () => submitAgreementLetter(id),
     onSuccess: () => invalidateAfterAction(qc, letterKeys.all),
   });
@@ -299,6 +323,9 @@ export function useSubmitAgreement(id: number) {
 export function useSendToRegistry(id: number) {
   const qc = useQueryClient();
   return useMutation({
+    // Chaqiruvchi xatoni O'ZI toast qiladi (aniq matn bilan) — global toast
+    // o'chiriladi, aks holda bitta xato uchun ikki toast chiqardi.
+    meta: { skipErrorToast: true },
     mutationFn: () => sendLetterToRegistry(id),
     onSuccess: () => invalidateAfterAction(qc, letterKeys.all),
   });
@@ -324,9 +351,9 @@ export function confirmRegistration(id: number, form: ConfirmRegistrationForm): 
 export function useConfirmRegistration(id: number) {
   const qc = useQueryClient();
   return useMutation({
-    // Bu mutatsiya XATONI O'ZI ko'rsatadi (chaqiruvchi `Alert.alert`),
+    // Bu mutatsiya XATONI O'ZI ko'rsatadi (chaqiruvchi o'z `toast.error`ini chiqaradi),
     // shuning uchun global toast o'chiriladi — aks holda foydalanuvchi
-    // bitta xato uchun HAM toast, HAM bloklovchi Alert ko'rardi.
+    // bitta xato uchun ikki xil toast ko'rardi.
     meta: { skipErrorToast: true },
     mutationFn: (form: ConfirmRegistrationForm) => confirmRegistration(id, form),
     onSuccess: () => invalidateAfterAction(qc, letterKeys.all),
@@ -344,9 +371,9 @@ export function submitTrip(id: number): Promise<unknown> {
 export function useSubmitTrip(id: number) {
   const qc = useQueryClient();
   return useMutation({
-    // Bu mutatsiya XATONI O'ZI ko'rsatadi (chaqiruvchi `Alert.alert`),
+    // Bu mutatsiya XATONI O'ZI ko'rsatadi (chaqiruvchi o'z `toast.error`ini chiqaradi),
     // shuning uchun global toast o'chiriladi — aks holda foydalanuvchi
-    // bitta xato uchun HAM toast, HAM bloklovchi Alert ko'rardi.
+    // bitta xato uchun ikki xil toast ko'rardi.
     meta: { skipErrorToast: true },
     mutationFn: () => submitTrip(id),
     onSuccess: () => invalidateAfterAction(qc, letterKeys.all),
@@ -402,9 +429,9 @@ export function deleteLetter(id: number): Promise<unknown> {
 export function useReturnLetter(id: number) {
   const qc = useQueryClient();
   return useMutation({
-    // Bu mutatsiya XATONI O'ZI ko'rsatadi (chaqiruvchi `Alert.alert`),
+    // Bu mutatsiya XATONI O'ZI ko'rsatadi (chaqiruvchi o'z `toast.error`ini chiqaradi),
     // shuning uchun global toast o'chiriladi — aks holda foydalanuvchi
-    // bitta xato uchun HAM toast, HAM bloklovchi Alert ko'rardi.
+    // bitta xato uchun ikki xil toast ko'rardi.
     meta: { skipErrorToast: true },
     mutationFn: (reason: string) => returnLetter(id, reason),
     onSuccess: () => invalidateAfterAction(qc, letterKeys.all),
@@ -414,9 +441,9 @@ export function useReturnLetter(id: number) {
 export function useReturnReport(id: number) {
   const qc = useQueryClient();
   return useMutation({
-    // Bu mutatsiya XATONI O'ZI ko'rsatadi (chaqiruvchi `Alert.alert`),
+    // Bu mutatsiya XATONI O'ZI ko'rsatadi (chaqiruvchi o'z `toast.error`ini chiqaradi),
     // shuning uchun global toast o'chiriladi — aks holda foydalanuvchi
-    // bitta xato uchun HAM toast, HAM bloklovchi Alert ko'rardi.
+    // bitta xato uchun ikki xil toast ko'rardi.
     meta: { skipErrorToast: true },
     mutationFn: (reason: string) => returnReport(id, reason),
     onSuccess: () => invalidateAfterAction(qc, letterKeys.all),
@@ -426,9 +453,9 @@ export function useReturnReport(id: number) {
 export function useCancelTrip(id: number) {
   const qc = useQueryClient();
   return useMutation({
-    // Bu mutatsiya XATONI O'ZI ko'rsatadi (chaqiruvchi `Alert.alert`),
+    // Bu mutatsiya XATONI O'ZI ko'rsatadi (chaqiruvchi o'z `toast.error`ini chiqaradi),
     // shuning uchun global toast o'chiriladi — aks holda foydalanuvchi
-    // bitta xato uchun HAM toast, HAM bloklovchi Alert ko'rardi.
+    // bitta xato uchun ikki xil toast ko'rardi.
     meta: { skipErrorToast: true },
     mutationFn: (reason?: string | null) => cancelTrip(id, reason),
     onSuccess: () => invalidateAfterAction(qc, letterKeys.all),
@@ -438,9 +465,9 @@ export function useCancelTrip(id: number) {
 export function useDeleteLetter(id: number) {
   const qc = useQueryClient();
   return useMutation({
-    // Bu mutatsiya XATONI O'ZI ko'rsatadi (chaqiruvchi `Alert.alert`),
+    // Bu mutatsiya XATONI O'ZI ko'rsatadi (chaqiruvchi o'z `toast.error`ini chiqaradi),
     // shuning uchun global toast o'chiriladi — aks holda foydalanuvchi
-    // bitta xato uchun HAM toast, HAM bloklovchi Alert ko'rardi.
+    // bitta xato uchun ikki xil toast ko'rardi.
     meta: { skipErrorToast: true },
     mutationFn: () => deleteLetter(id),
     onSuccess: () => invalidateAfterAction(qc, letterKeys.all),
@@ -467,9 +494,9 @@ export function decideExtension(id: number, approve: boolean): Promise<unknown> 
 export function useExtendTrip(id: number) {
   const qc = useQueryClient();
   return useMutation({
-    // Bu mutatsiya XATONI O'ZI ko'rsatadi (chaqiruvchi `Alert.alert`),
+    // Bu mutatsiya XATONI O'ZI ko'rsatadi (chaqiruvchi o'z `toast.error`ini chiqaradi),
     // shuning uchun global toast o'chiriladi — aks holda foydalanuvchi
-    // bitta xato uchun HAM toast, HAM bloklovchi Alert ko'rardi.
+    // bitta xato uchun ikki xil toast ko'rardi.
     meta: { skipErrorToast: true },
     mutationFn: (args: { arrivalDate: string; note?: string | null }) =>
       extendTrip(id, args.arrivalDate, args.note),
@@ -480,9 +507,9 @@ export function useExtendTrip(id: number) {
 export function useDecideExtension(id: number) {
   const qc = useQueryClient();
   return useMutation({
-    // Bu mutatsiya XATONI O'ZI ko'rsatadi (chaqiruvchi `Alert.alert`),
+    // Bu mutatsiya XATONI O'ZI ko'rsatadi (chaqiruvchi o'z `toast.error`ini chiqaradi),
     // shuning uchun global toast o'chiriladi — aks holda foydalanuvchi
-    // bitta xato uchun HAM toast, HAM bloklovchi Alert ko'rardi.
+    // bitta xato uchun ikki xil toast ko'rardi.
     meta: { skipErrorToast: true },
     mutationFn: (approve: boolean) => decideExtension(id, approve),
     onSuccess: () => invalidateAfterAction(qc, letterKeys.all),
@@ -505,9 +532,9 @@ export function setBasisDecree(id: number, numberValue: string, dateIso: string)
 export function useSetBasisDecree(id: number) {
   const qc = useQueryClient();
   return useMutation({
-    // Bu mutatsiya XATONI O'ZI ko'rsatadi (chaqiruvchi `Alert.alert`),
+    // Bu mutatsiya XATONI O'ZI ko'rsatadi (chaqiruvchi o'z `toast.error`ini chiqaradi),
     // shuning uchun global toast o'chiriladi — aks holda foydalanuvchi
-    // bitta xato uchun HAM toast, HAM bloklovchi Alert ko'rardi.
+    // bitta xato uchun ikki xil toast ko'rardi.
     meta: { skipErrorToast: true },
     mutationFn: (args: { number: string; date: string }) =>
       setBasisDecree(id, args.number, args.date),

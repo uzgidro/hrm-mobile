@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';
@@ -17,6 +17,7 @@ import type { CreateTicketForm } from '../api/mutations';
 import { useCreateTicket } from '../api/mutations';
 import { useFormDraft } from '@/lib/formDraft';
 import { DraftPrompt } from '@/components/DraftPrompt';
+import { toast } from '@/lib/toast';
 
 const PRIORITIES: CreateTicketForm['priority'][] = ['urgent', 'normal', 'low'];
 
@@ -27,6 +28,8 @@ export default function SupportFormScreen() {
 
   const [priority, setPriority] = useState<CreateTicketForm['priority']>('normal');
   const [description, setDescription] = useState('');
+  // Inline «Tavsif» error (the OS Alert showed nothing on web).
+  const [descError, setDescError] = useState<string | undefined>(undefined);
   const [uge, setUge] = useState('');
   const [room, setRoom] = useState('');
   const [files, setFiles] = useState<PickedFile[]>([]);
@@ -60,18 +63,19 @@ export default function SupportFormScreen() {
 
   const submit = () => {
     if (!description.trim()) {
-      Alert.alert(t('support.actionError'), t('support.descriptionRequired'));
+      setDescError(t('support.descriptionRequired'));
       return;
     }
+    setDescError(undefined);
     createM.mutate(
       { form: { priority, description, uge_number: uge, room_number: room }, files },
       {
         onSuccess: (ticket) => {
           void draft.clear();
-          Alert.alert(t('support.createdTitle'), t('support.createdMessage'));
+          toast.success(t('support.createdMessage'));
           router.replace({ pathname: '/texnik-yordam-detail', params: { id: String(ticket.id) } });
         },
-        onError: (e) => Alert.alert(t('support.actionError'), getApiErrorMessage(e, t('support.actionError'))),
+        onError: (e) => toast.error(getApiErrorMessage(e, t('support.actionError'))),
       },
     );
   };
@@ -102,9 +106,11 @@ export default function SupportFormScreen() {
           label={t('support.descriptionLabel')}
           required
           value={description}
-          onChangeText={setDescription}
+          onChangeText={(v) => { setDescription(v); if (descError && v.trim()) setDescError(undefined); }}
           placeholder={t('support.descriptionPlaceholder')}
           multiline
+          error={descError}
+          testID="support-description"
         />
         <FormInput label={t('support.ugeLabel')} value={uge} onChangeText={setUge} placeholder={t('support.ugePlaceholder')} />
         <FormInput label={t('support.roomLabel')} value={room} onChangeText={setRoom} placeholder={t('support.roomPlaceholder')} />

@@ -30,6 +30,8 @@ export function deleteChairmanTask(id: number): Promise<void> {
 export function useCreateChairmanTask() {
   const qc = useQueryClient();
   return useMutation({
+    // The screen shows this error itself (toast / inline) — no second global toast.
+    meta: { skipErrorToast: true },
     mutationFn: (payload: ChairmanTaskPayload) => createChairmanTask(payload),
     onSuccess: () => qc.invalidateQueries({ queryKey: chairmanTaskKeys.all }),
   });
@@ -38,6 +40,8 @@ export function useCreateChairmanTask() {
 export function useUpdateChairmanTask(id: number) {
   const qc = useQueryClient();
   return useMutation({
+    // The screen shows this error itself (toast / inline) — no second global toast.
+    meta: { skipErrorToast: true },
     mutationFn: (payload: Partial<ChairmanTaskPayload>) => updateChairmanTask(id, payload),
     onSuccess: () => qc.invalidateQueries({ queryKey: chairmanTaskKeys.all }),
   });
@@ -46,6 +50,8 @@ export function useUpdateChairmanTask(id: number) {
 export function useDeleteChairmanTask() {
   const qc = useQueryClient();
   return useMutation({
+    // The screen shows this error itself (toast / inline) — no second global toast.
+    meta: { skipErrorToast: true },
     mutationFn: (id: number) => deleteChairmanTask(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: chairmanTaskKeys.all }),
   });

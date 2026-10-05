@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
-  ScrollView, ActivityIndicator, Alert,
-} from 'react-native';
+  ScrollView, ActivityIndicator, } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
@@ -33,11 +32,12 @@ import { DraftPrompt } from '@/components/DraftPrompt';
 import { OrderPickers, type PickerKind } from '../components/OrderPickers';
 import {
   buildCreateOrderPayload, buildUpdateOrderPayload, existingOrderDocuments,
-  seedFamiliarizerDeptIds, validateOrderForm,
+  seedFamiliarizerDeptIds, validateOrderFormAll,
   type OrderFormError, type OrderFormValues,
 } from '../utils/orderForm';
 import { KeyboardAvoider } from '@/components/KeyboardAvoider';
 import { resolveEmployeeBranchId } from '@/utils/branch';
+import { toast } from '@/lib/toast';
 
 export default function CreateOrderScreen() {
   const { user } = useAuthStore();
@@ -76,7 +76,8 @@ export default function CreateOrderScreen() {
   const [actNumber, setActNumber] = useState('');
   const [actDate, setActDate] = useState<string | null>(null);
   const [actDatePickerOpen, setActDatePickerOpen] = useState(false);
-  const [formError, setFormError] = useState<OrderFormError | null>(null);
+  // Every failing field at once (QA: only the first missing field was flagged).
+  const [formErrors, setFormErrors] = useState<OrderFormError[]>([]);
 
   // Unsaved-draft autosave (CREATE only — an edit re-seeds from the server).
   // Files are not restored (picker URIs are transient).
@@ -185,8 +186,10 @@ export default function CreateOrderScreen() {
   // fayllar ularning USTIGA qo'shiladi, shuning uchun ro'yxat ko'rinib turishi shart.
   const existingDocs = useMemo(() => existingOrderDocuments(editing), [editing]);
 
-  const fieldError = (field: OrderFormError['field']) =>
-    formError?.field === field ? t(`orders.${formError.messageKey}`) : undefined;
+  const fieldError = (field: OrderFormError['field']) => {
+    const e = formErrors.find((x) => x.field === field);
+    return e ? t(`orders.${e.messageKey}`) : undefined;
+  };
 
   // ── Submit ───────────────────────────────────────────────────────────────────
   async function handleCreate() {
@@ -194,19 +197,24 @@ export default function CreateOrderScreen() {
       categoryId, summary, description, submitterId, leadershipId,
       familiarizerDeptIds, approvers, actNumber, actDate,
     };
-    // One source of truth for every blocking rule (see `validateOrderForm`) —
+    // One source of truth for every blocking rule (see `validateOrderFormAll`) —
     // including the ones the backend would only answer with a 400 after the
     // whole form was filled in: a taken decree number and a submitter who is
     // also an approver (`submitter_cannot_be_approver`).
-    const invalid = validateOrderForm(values, { branchId, numberFieldShown, numberTaken });
-    setFormError(invalid);
-    if (invalid) {
-      Alert.alert(t('common.errorTitle'), t(`orders.${invalid.messageKey}`));
+    const invalid = validateOrderFormAll(values, { branchId, numberFieldShown, numberTaken });
+    setFormErrors(invalid);
+    if (invalid.length) {
+      // Every field error renders inline under its input; the toast names the
+      // first one so a long form still gives feedback while scrolled to the
+      // button (the OS Alert showed nothing on web). `form`-level errors
+      // (branch not found) have no field slot — the toast is their only voice.
+      toast.error(t(`orders.${invalid[0].messageKey}`));
       return;
     }
 
-    const onFilesError = () =>
-      Alert.alert(t('orders.filesPartialTitle'), t('orders.filesPartialMessage'));
+    // Buyruq saqlandi, faqat fayl(lar) yuklanmadi — ekran baribir yopiladi,
+    // xabar esa ildizdagi toast orqali keyingi ekranda ko'rinadi.
+    const onFilesError = () => toast.info(t('orders.filesPartialMessage'), 6000);
 
     setSaving(true);
     try {
@@ -227,7 +235,7 @@ export default function CreateOrderScreen() {
         router.replace({ pathname: '/order-detail', params: { id: String(orderId) } });
       }
     } catch (err) {
-      Alert.alert(t('common.errorTitle'), getApiErrorMessage(err, t('errors.generic')));
+      toast.error(getApiErrorMessage(err, t('errors.generic')));
     } finally {
       setSaving(false);
     }

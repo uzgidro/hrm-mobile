@@ -4,7 +4,7 @@
 // ko'rib ham, o'chirib ham bo'lmasdi (backendда `DELETE /order-acts/{id}/
 // documents/{docId}` bor). Asosiy buyruq hujjati (`decree_*`) ro'yxatdan
 // CHIQARILADI — u alohida OnlyOffice ekranida ochiladi va o'chirilmaydi.
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Linking, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Linking, ActivityIndicator } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
@@ -13,6 +13,7 @@ import type { OrderAct } from '@/types';
 import { Icon } from '@/components/Icon';
 import { Section } from './DetailParts';
 import { useDeleteOrderDocument } from '../api/mutations';
+import { confirm } from '@/lib/confirm';
 
 const isMainDecree = (objectName?: string | null) =>
   !!objectName && objectName.startsWith('decree_');
@@ -41,22 +42,22 @@ export function AttachmentsSection({
     return base.length > 34 ? `…${base.slice(-30)}` : base;
   };
 
-  const confirmDelete = (docId: number) => {
-    Alert.alert(t('orders.attachmentDeleteTitle'), t('orders.attachmentDeleteBody'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('common.delete'),
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await del.mutateAsync(docId);
-            onChanged();
-          } catch {
-            /* xato toast'i QueryClient onError orqali */
-          }
-        },
-      },
-    ]);
+  // Ilova ichidagi tasdiq — OS Alert web'da hech narsa ko'rsatmasdi.
+  const confirmDelete = async (docId: number) => {
+    const ok = await confirm({
+      title: t('orders.attachmentDeleteTitle'),
+      message: t('orders.attachmentDeleteBody'),
+      confirmLabel: t('common.delete'),
+      cancelLabel: t('common.cancel'),
+      destructive: true,
+    });
+    if (!ok) return;
+    try {
+      await del.mutateAsync(docId);
+      onChanged();
+    } catch {
+      /* xato toast'i QueryClient onError orqali */
+    }
   };
 
   return (

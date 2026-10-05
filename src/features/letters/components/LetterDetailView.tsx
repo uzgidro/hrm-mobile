@@ -1,6 +1,6 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, type ReactNode } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import dayjs from 'dayjs';
@@ -41,6 +41,7 @@ import { ConfirmRegistrationModal } from './ConfirmRegistrationModal';
 import { ReasonModal } from './ReasonModal';
 import { BasisDecreeModal } from './BasisDecreeModal';
 import { DatePickerModal } from '@/components/DatePicker';
+import { toast } from '@/lib/toast';
 
 // The body of the letter detail — extracted so it can render either as the
 // pushed route's content (phone / push-notification deep links, `embedded`
@@ -68,6 +69,7 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
   const cancelTripM = useCancelTrip(letterId);
   const deleteLetterM = useDeleteLetter(letterId);
   const [reasonModal, setReasonModal] = useState<null | 'return' | 'returnReport' | 'cancelTrip' | 'reject'>(null);
+  const [reasonError, setReasonError] = useState<string | null>(null);
   const [reasonText, setReasonText] = useState('');
   // Safarni uzaytirish: KADR yangi qaytish sanasini tanlaydi.
   const extendM = useExtendTrip(letterId);
@@ -158,11 +160,12 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
   const openDoc = (kind: 'main' | 'report' | 'guvohnoma' | 'attachment') =>
     router.push({ pathname: '/letter-document', params: { id: String(letterId), kind } });
 
-  const closeReason = () => { setReasonModal(null); setReasonText(''); };
+  const closeReason = () => { setReasonModal(null); setReasonText(''); setReasonError(null); };
   const runReason = () => {
     const reason = reasonText.trim();
-    const onError = (e: unknown) =>
-      Alert.alert(t('letters.actionError'), getApiErrorMessage(e, t('letters.actionError')));
+    // Oyna ochiq qoladi — xato uning ICHIDA (toast RN Modal ostida ko'rinmasdi).
+    const onError = (e: unknown) => setReasonError(getApiErrorMessage(e, t('letters.actionError')));
+    setReasonError(null);
     const opts = { onSuccess: () => { closeReason(); refetch(); }, onError };
     if (reasonModal === 'return') returnLetterM.mutate(reason, opts);
     else if (reasonModal === 'returnReport') returnReportM.mutate(reason, opts);
@@ -172,7 +175,7 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
   const onExtendConfirm = (iso: string) => {
     extendM.mutate({ arrivalDate: iso }, {
       onSuccess: () => refetch(),
-      onError: (e) => Alert.alert(t('letters.actionError'), getApiErrorMessage(e, t('letters.actionError'))),
+      onError: (e) => toast.error(getApiErrorMessage(e, t('letters.actionError'))),
     });
   };
   const onDecideExtension = async (approve: boolean) => {
@@ -187,7 +190,7 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
     if (!ok) return;
     decideExtM.mutate(approve, {
       onSuccess: () => refetch(),
-      onError: (e) => Alert.alert(t('letters.actionError'), getApiErrorMessage(e, t('letters.actionError'))),
+      onError: (e) => toast.error(getApiErrorMessage(e, t('letters.actionError'))),
     });
   };
   const onDeleteLetter = async () => {
@@ -203,7 +206,7 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
     deleteLetterM.mutate(undefined, {
       // Hujjat endi yo'q — ro'yxatga qaytamiz (tafsilot 404 bo'lib qolmasin).
       onSuccess: () => router.back(),
-      onError: (e) => Alert.alert(t('letters.actionError'), getApiErrorMessage(e, t('letters.actionError'))),
+      onError: (e) => toast.error(getApiErrorMessage(e, t('letters.actionError'))),
     });
   };
   const onSubmitTrip = async () => {
@@ -217,7 +220,7 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
     if (!ok) return;
     submitTripM.mutate(undefined, {
       onSuccess: () => refetch(),
-      onError: (e) => Alert.alert(t('letters.actionError'), getApiErrorMessage(e, t('letters.actionError'))),
+      onError: (e) => toast.error(getApiErrorMessage(e, t('letters.actionError'))),
     });
   };
   const hasReport = !!(letter.report_content || letter.report_summary || letter.report_task);
@@ -234,7 +237,7 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
     if (!ok) return;
     resetReportM.mutate(undefined, {
       onSuccess: () => refetch(),
-      onError: (e) => Alert.alert(t('letters.actionError'), getApiErrorMessage(e, t('letters.actionError'))),
+      onError: (e) => toast.error(getApiErrorMessage(e, t('letters.actionError'))),
     });
   };
 
@@ -637,7 +640,8 @@ export function LetterDetailView({ id, embedded = false }: { id: number; embedde
         busy={returnLetterM.isPending || returnReportM.isPending || cancelTripM.isPending || busy}
         confirmLabel={t('common.confirm')}
         destructive={reasonModal === 'cancelTrip' || reasonModal === 'reject'}
-        onChangeReason={setReasonText}
+        error={reasonError}
+        onChangeReason={(v) => { setReasonText(v); if (reasonError) setReasonError(null); }}
         onClose={closeReason}
         onSubmit={runReason}
         testID="letter-reason-submit"

@@ -1,10 +1,10 @@
 import { useCallback, useState } from 'react';
-import { Alert } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import { invalidateAfterAction } from '@/lib/invalidateAfterAction';
 import { getApiErrorMessage } from '@/api/errors';
 import { confirm } from '@/lib/confirm';
+import { toast } from '@/lib/toast';
 import {
   signLetter, rejectLetter, approveTripRegistration, approveReport, approveGuvohnoma,
 } from '../api/mutations';
@@ -13,8 +13,8 @@ import { letterKeys } from '../api/queries';
 // Encapsulates the letter sign/reject workflow — the extracted, web-parity flow.
 //
 // It mirrors the old letter-detail `run(fn, msg)` helper 1:1:
-//   setBusy(true) → await fn() → invalidate + refetch → Alert(done, msg)
-//   catch → parse `detail` (string | [{msg}]) → Alert(error, msg)
+//   setBusy(true) → await fn() → invalidate + refetch → toast.success(msg)
+//   catch → getApiErrorMessage → toast.error(msg)
 //   finally → setBusy(false)
 // A single `busy` flag gates both actions. Invalidation hits `letterKeys.all`
 // (which the detail + list both live under) AND calls the passed `refetch` so
@@ -22,8 +22,8 @@ import { letterKeys } from '../api/queries';
 // invalidate(['letter-detail',id]) + invalidate(['letters']) + refetch().
 //
 // `reject` awaits the global confirm() sheet before firing (destructive) —
-// replacing the old OS confirmation Alert. The done/error notices stay as
-// Alert. Copy is localized via t().
+// replacing the old OS confirmation Alert. The done/error notices are toasts
+// (the OS `Alert` is a no-op on react-native-web). Copy is localized via t().
 export function useLetterActions(letterId: number, refetch: () => void) {
   const { t } = useTranslation();
   const qc = useQueryClient();
@@ -36,9 +36,9 @@ export function useLetterActions(letterId: number, refetch: () => void) {
         await fn();
         void invalidateAfterAction(qc, letterKeys.all);
         refetch();
-        Alert.alert(t('letters.actionDoneTitle'), msg);
+        toast.success(msg);
       } catch (e) {
-        Alert.alert(t('letters.actionError'), getApiErrorMessage(e, t('letters.actionError')));
+        toast.error(getApiErrorMessage(e, t('letters.actionError')));
       } finally {
         setBusy(false);
       }

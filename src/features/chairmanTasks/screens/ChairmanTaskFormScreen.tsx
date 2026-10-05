@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import dayjs from 'dayjs';
@@ -18,6 +18,7 @@ import { getApiErrorMessage } from '@/api/errors';
 import { canManageChairmanTasks } from '@/utils/roles';
 import { chairmanTasksListQuery } from '../api/queries';
 import { useCreateChairmanTask, useUpdateChairmanTask, useDeleteChairmanTask } from '../api/mutations';
+import { toast } from '@/lib/toast';
 
 const COLORS = ['#0DA9AA', '#6366F1', '#F59E0B', '#EF4444', '#10B981'];
 
@@ -69,14 +70,19 @@ export default function ChairmanTaskFormScreen() {
     setColor(existing.color ?? COLORS[0]);
   }, [existing]);
 
+  const [fieldErrors, setFieldErrors] = useState<{ title?: string; date?: string }>({});
   const createM = useCreateChairmanTask();
   const updateM = useUpdateChairmanTask(taskId ?? 0);
   const deleteM = useDeleteChairmanTask();
   const busy = createM.isPending || updateM.isPending || deleteM.isPending;
 
   const submit = () => {
-    if (!title.trim()) { Alert.alert(t('common.errorTitle'), t('chairman.titleRequired')); return; }
-    if (!taskDate.trim()) { Alert.alert(t('common.errorTitle'), t('chairman.dateRequired')); return; }
+    // Both required fields are flagged inline at once (the OS Alert showed
+    // nothing on web, and only ever named the first missing field).
+    const titleErr = title.trim() ? undefined : t('chairman.titleRequired');
+    const dateErr = taskDate.trim() ? undefined : t('chairman.dateRequired');
+    setFieldErrors({ title: titleErr, date: dateErr });
+    if (titleErr || dateErr) return;
     const payload = {
       title: title.trim(),
       task_date: taskDate.trim(),
@@ -86,8 +92,8 @@ export default function ChairmanTaskFormScreen() {
       end_time: endTime.trim() || null,
       color,
     };
-    const onSuccess = () => { Alert.alert(t(editing ? 'chairman.updated' : 'chairman.created'), ''); router.back(); };
-    const onError = (e: unknown) => Alert.alert(t('common.errorTitle'), getApiErrorMessage(e, t('chairman.actionError')));
+    const onSuccess = () => { toast.success(t(editing ? 'chairman.updated' : 'chairman.created')); router.back(); };
+    const onError = (e: unknown) => toast.error(getApiErrorMessage(e, t('chairman.actionError')));
     if (editing) updateM.mutate(payload, { onSuccess, onError });
     else createM.mutate(payload, { onSuccess, onError });
   };
@@ -103,8 +109,8 @@ export default function ChairmanTaskFormScreen() {
     });
     if (!ok) return;
     deleteM.mutate(taskId!, {
-      onSuccess: () => { Alert.alert(t('chairman.deleted'), ''); router.back(); },
-      onError: (e) => Alert.alert(t('common.errorTitle'), getApiErrorMessage(e, t('chairman.actionError'))),
+      onSuccess: () => { toast.success(t('chairman.deleted')); router.back(); },
+      onError: (e) => toast.error(getApiErrorMessage(e, t('chairman.actionError'))),
     });
   };
 
@@ -115,10 +121,18 @@ export default function ChairmanTaskFormScreen() {
         right={editing ? <HeaderAction icon="trash" onPress={onDelete} disabled={busy} /> : undefined}
       />
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <FormInput label={t('chairman.titleLabel')} required value={title} onChangeText={setTitle} placeholder={t('chairman.titlePlaceholder')} />
+        <FormInput
+          label={t('chairman.titleLabel')} required value={title}
+          onChangeText={(v) => { setTitle(v); if (fieldErrors.title && v.trim()) setFieldErrors((p) => ({ ...p, title: undefined })); }}
+          placeholder={t('chairman.titlePlaceholder')} error={fieldErrors.title} testID="chairman-title"
+        />
         <FormInput label={t('chairman.descriptionLabel')} value={description} onChangeText={setDescription} placeholder={t('chairman.descriptionPlaceholder')} multiline />
         <FormInput label={t('chairman.participantsLabel')} value={participants} onChangeText={setParticipants} placeholder={t('chairman.participantsPlaceholder')} />
-        <FormInput label={t('chairman.dateLabel')} required value={taskDate} onChangeText={setTaskDate} placeholder="YYYY-MM-DD" />
+        <FormInput
+          label={t('chairman.dateLabel')} required value={taskDate}
+          onChangeText={(v) => { setTaskDate(v); if (fieldErrors.date && v.trim()) setFieldErrors((p) => ({ ...p, date: undefined })); }}
+          placeholder="YYYY-MM-DD" error={fieldErrors.date} testID="chairman-date"
+        />
 
         <View style={styles.timeRow}>
           <View style={{ flex: 1 }}>

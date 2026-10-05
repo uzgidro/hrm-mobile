@@ -12,9 +12,12 @@ import { ModalCard } from '@/components/ModalCard';
 //
 // Oyna korpusi (overlay/karta/tugmalar) — `@/components/ModalCard`.
 export function RejectModal({
-  visible, reason, onChangeReason, onClose, onSubmit,
+  visible, reason, error, onChangeReason, onClose, onSubmit,
 }: {
-  visible: boolean; reason: string; onChangeReason: (t: string) => void;
+  visible: boolean; reason: string;
+  /** Inline validation text — a toast would render beneath the open modal. */
+  error?: string | null;
+  onChangeReason: (t: string) => void;
   onClose: () => void; onSubmit: () => void;
 }) {
   const { colors } = useTheme();
@@ -29,13 +32,14 @@ export function RejectModal({
       onSubmit={onSubmit}
     >
       <TextInput
-        style={styles.modalInput}
+        style={[styles.modalInput, error ? styles.modalInputError : null]}
         placeholder={t('orders.rejectPlaceholder')}
         placeholderTextColor={colors.textMuted}
         value={reason}
         onChangeText={onChangeReason}
         multiline
       />
+      {!!error && <Text style={styles.errorText} testID="order-reject-error">{error}</Text>}
     </ModalCard>
   );
 }
@@ -177,4 +181,5 @@ const makeStyles = (c: ThemeColors) =>
       backgroundColor: c.bg, borderWidth: 2, borderColor: c.cardBorder, borderRadius: 12,
       padding: 12, fontSize: 15, color: c.text, minHeight: 48, textAlignVertical: 'top', ...ff('700') },
     modalInputError: { borderColor: c.error },
+    errorText: { fontSize: 12, color: c.error, ...ff('700') },
   });

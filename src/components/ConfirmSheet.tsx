@@ -1,6 +1,6 @@
 // Reusable bottom-sheet confirmation dialog, styled like the rest of the app —
-// the in-app replacement for the plain OS `Alert.alert(title, msg, [cancel,
-// confirm])`. A soft brand/danger circle with an icon, a title, an optional
+// the in-app replacement for the plain two-button OS `Alert` (title, msg, [cancel,
+// confirm]). A soft brand/danger circle with an icon, a title, an optional
 // message, a filled action button and a quiet cancel button.
 //
 // Presentational + controlled: the parent owns `visible` and the callbacks.

@@ -63,7 +63,7 @@ function OrderTypeSheet({ row, onClose }: { row: OrderType | null | undefined; o
     }
   };
 
-  // Ilova ichidagi tasdiq (`confirm`) — `Alert.alert` web'da hech narsa ko'rsatmasdi.
+  // Ilova ichidagi tasdiq (`confirm`) — OS `Alert` web'da hech narsa ko'rsatmasdi.
   const confirmDelete = async () => {
     if (!row) return;
     const ok = await confirm({

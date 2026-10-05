@@ -1,8 +1,8 @@
 import { useCallback, useState } from 'react';
-import { Alert } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import { invalidateAfterAction } from '@/lib/invalidateAfterAction';
 import { getApiErrorMessage } from '@/api/errors';
+import { toast } from '@/lib/toast';
 import i18n from '@/i18n';
 import {
   approveDecree,
@@ -19,9 +19,10 @@ import { orderKeys } from '../api/queries';
 // Encapsulates the decree approval chain — the extracted, web-parity workflow.
 //
 // It mirrors the old order-detail `runAction(fn, successMsg)` helper 1:1:
-//   setBusy(true) → await fn() → invalidate + refetch → Alert('Bajarildi', msg)
-//   catch → parse `detail` (string | [{msg}]) → Alert('Xatolik', msg)
+//   setBusy(true) → await fn() → invalidate + refetch → toast.success(msg)
+//   catch → getApiErrorMessage → toast.error(msg)
 //   finally → setBusy(false)
+// (toasts, not the OS `Alert` — that is a no-op on react-native-web)
 // A single `busy` flag gates all six actions. Invalidation hits `orderKeys.all`
 // (which the detail + list both live under) AND calls the passed `refetch` so
 // the open detail updates immediately — matching the old
@@ -39,9 +40,9 @@ export function useDecreeActions(orderId: number, refetch: () => void) {
         await fn();
         void invalidateAfterAction(qc, orderKeys.all);
         refetch();
-        Alert.alert(i18n.t('orders.actionDoneTitle'), successMsg);
+        toast.success(successMsg);
       } catch (e) {
-        Alert.alert(i18n.t('errors.generic'), getApiErrorMessage(e, i18n.t('orders.actionError')));
+        toast.error(getApiErrorMessage(e, i18n.t('orders.actionError')));
       } finally {
         setBusy(false);
       }
@@ -54,13 +55,13 @@ export function useDecreeActions(orderId: number, refetch: () => void) {
     [runAction, orderId]
   );
 
-  // Validates a non-empty reason (Alert 'Sababni kiriting') before firing, then
+  // Validates a non-empty reason (toast 'Sababni kiriting') before firing, then
   // sends the trimmed comment. Returns the runAction promise for the caller.
   const reject = useCallback(
     (reason: string) => {
       const trimmed = reason.trim();
       if (!trimmed) {
-        Alert.alert(i18n.t('common.errorTitle'), i18n.t('orders.reasonRequired'));
+        toast.error(i18n.t('orders.reasonRequired'));
         return Promise.resolve();
       }
       return runAction(() => rejectDecree(orderId, trimmed), i18n.t('orders.rejectSuccess'));

@@ -5,7 +5,7 @@
 // shundan keyin tasdiqlash tugmasi chiqadi. Begona qurilmani bilmasdan
 // tasdiqlab qo'yishning oldini oladi.
 import { useCallback, useRef, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -23,6 +23,7 @@ import {
   type QrBrowserInfo,
   type QrPayload,
 } from '../api/mutations';
+import { toast } from '@/lib/toast';
 
 type Phase = 'scanning' | 'confirm' | 'sending' | 'done';
 
@@ -83,7 +84,7 @@ export default function QrScanScreen() {
     } catch {
       /* rad etish muvaffaqiyatsiz bo'lsa ham kanal o'zi eskiradi */
     }
-    Alert.alert(t('qrLogin.rejectedTitle'), t('qrLogin.rejectedBody'));
+    toast.info(t('qrLogin.rejectedBody'));
     if (router.canGoBack()) router.back();
     else router.replace('/(tabs)');
   };

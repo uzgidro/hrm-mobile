@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import {
-  View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Alert,
-} from 'react-native';
+  View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
@@ -13,6 +12,7 @@ import { Icon } from '@/components/Icon';
 import { getApiErrorMessage } from '@/api/errors';
 import { ticketMessagesQuery } from '../api/queries';
 import { markTicketRead, useSendTicketMessage } from '../api/mutations';
+import { toast } from '@/lib/toast';
 
 // Ticket YOZISHMASI (AKT ↔ murojaatchi). Backendда 2026-08-16 dan beri bor
 // (`support_ticket_messages`), mobilда esa umuman ko'rinmasdi: AKT xodimi
@@ -43,8 +43,7 @@ export function TicketChat({ ticketId }: { ticketId: number }) {
     if (!body) return;
     sendM.mutate(body, {
       onSuccess: () => setText(''),
-      onError: (e) =>
-        Alert.alert(t('support.actionError'), getApiErrorMessage(e, t('support.actionError'))),
+      onError: (e) => toast.error(getApiErrorMessage(e, t('support.actionError'))),
     });
   };
 

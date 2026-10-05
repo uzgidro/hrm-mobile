@@ -45,6 +45,7 @@ export function OrderDetailView({ id, embedded = false }: { id: number; embedded
 
   const [rejectOpen, setRejectOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
+  const [rejectError, setRejectError] = useState<string | null>(null);
   const [registerOpen, setRegisterOpen] = useState(false);
   const [actNumber, setActNumber] = useState('');
   // Web stamp-modal parity: the registration date defaults to today, editable.
@@ -137,12 +138,13 @@ export function OrderDetailView({ id, embedded = false }: { id: number; embedded
   };
 
   const onReject = async () => {
-    // Blank reason: keep the modal open and let reject() show the original
-    // "Sababni kiriting" Alert (matches the pre-decomposition behavior).
+    // Blank reason: keep the modal open and say "Sababni kiriting" INSIDE it
+    // (an OS Alert showed nothing on web; a toast would sit beneath the modal).
     if (!rejectReason.trim()) {
-      await reject(rejectReason);
+      setRejectError(t('orders.reasonRequired'));
       return;
     }
+    setRejectError(null);
     setRejectOpen(false);
     await reject(rejectReason);
     setRejectReason('');
@@ -337,7 +339,7 @@ export function OrderDetailView({ id, embedded = false }: { id: number; embedded
         submitLabel={submitLabel}
         onSubmit={submit}
         onApprove={approve}
-        onReject={() => setRejectOpen(true)}
+        onReject={() => { setRejectError(null); setRejectOpen(true); }}
         onResubmit={resubmit}
         onConfirmSubmission={confirmSubmission}
         onForward={forward}
@@ -351,7 +353,8 @@ export function OrderDetailView({ id, embedded = false }: { id: number; embedded
       <RejectModal
         visible={rejectOpen}
         reason={rejectReason}
-        onChangeReason={setRejectReason}
+        error={rejectError}
+        onChangeReason={(v) => { setRejectReason(v); if (rejectError && v.trim()) setRejectError(null); }}
         onClose={() => setRejectOpen(false)}
         onSubmit={onReject}
       />
