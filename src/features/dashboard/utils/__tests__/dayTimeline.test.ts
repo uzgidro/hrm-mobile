@@ -1,4 +1,4 @@
-import { dayTimeline, weekSummary } from '../dayTimeline';
+import { dayStatusFromCode, dayTimeline, weekSummary } from '../dayTimeline';
 
 const ev = (t: string, d: 'entrance' | 'exit', day = '2026-09-29') => ({
   happen_time: `${day}T${t}:00`,
@@ -72,5 +72,34 @@ describe('weekSummary', () => {
   it("ish kunida kelinmagan — none", () => {
     // 2026-09-30 — chorshanba
     expect(weekSummary([], '2026-09-30', '09:00', 1)[0].status).toBe('none');
+  });
+});
+
+// QA 2026-10-05: an approved-leave day read «Bugun — Kelmagan» on Home while the
+// Davomat tab (the tabel) said «Ruxsat». v2 useEmployeeBoard takes the day's
+// status from the normalized calendar; events only give the times.
+describe('weekSummary + tabel calendar (v2 useEmployeeBoard)', () => {
+  it('a tabel code wins over the events: approved leave → leave (with its code), not «none»', () => {
+    const w = weekSummary([], '2026-10-05', '09:00', 3, {
+      '2026-10-05': 'work_leave',
+      '2026-10-04': 'day_off',
+      '2026-10-03': 'absent',
+    });
+    expect(w[0]).toMatchObject({ status: 'leave', code: 'work_leave' });
+    expect(w[1].status).toBe('off');
+    expect(w[2].status).toBe('none');
+  });
+
+  it('times still come from the events; a day without a code falls back to them', () => {
+    const w = weekSummary([ev('09:30', 'entrance', '2026-10-05')], '2026-10-05', '09:00', 2, { '2026-10-05': 'late' });
+    expect(w[0]).toMatchObject({ status: 'late', firstIn: '09:30' });
+    expect(w[1].status).toBe('off'); // 04.10 — yakshanba, kod yo'q
+  });
+
+  it('dayStatusFromCode follows v2 mapCalStatus groups', () => {
+    expect(dayStatusFromCode('early_leave').status).toBe('present');
+    expect(dayStatusFromCode('progul').status).toBe('none');
+    expect(dayStatusFromCode('holiday').status).toBe('off');
+    expect(dayStatusFromCode('sick_leave')).toEqual({ status: 'leave', code: 'sick_leave' });
   });
 });

@@ -5,7 +5,13 @@ import { apiClient } from '@/api/client';
 import { renderWithProviders, screen, waitFor } from '@/test/renderWithProviders';
 import { useAuthStore } from '@/store/authStore';
 import i18n from '@/i18n';
-import { TURNSTILE_ATTENDANCE_EVENTS, WORK_LEAVES, MENU_BADGES, EMPLOYEES_BIRTHDAYS } from '@/api/urls';
+import {
+  TURNSTILE_ATTENDANCE_EVENTS,
+  TURNSTILE_ATTENDANCE_NORMALIZED,
+  WORK_LEAVES,
+  MENU_BADGES,
+  EMPLOYEES_BIRTHDAYS,
+} from '@/api/urls';
 import { EmployeeBoard } from '../components/EmployeeBoard';
 
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
@@ -55,5 +61,23 @@ describe('EmployeeBoard', () => {
     await renderWithProviders(<EmployeeBoard />);
     expect(await screen.findByText(i18n.t('common.retry'))).toBeTruthy();
     expect(screen.getByText('Nodirboyev Javoxir Nurmuhammad')).toBeTruthy();
+  });
+
+  // QA 2026-10-05: an approved-leave day read «Bugun — Kelmagan» on Home while the
+  // Davomat tab said «Ruxsat» — the day status now comes from MY tabel (v2 useEmployeeBoard).
+  it('«Oxirgi kunlar»: tasdiqlangan ruxsat kuni — «Ruxsat», «Kelmagan» emas', async () => {
+    mock.onGet(EMPLOYEES_BIRTHDAYS).reply(200, []);
+    mock.onGet(TURNSTILE_ATTENDANCE_EVENTS).reply(200, { items: [], total: 0 });
+    mock.onGet(TURNSTILE_ATTENDANCE_NORMALIZED).reply(200, {
+      items: [
+        { id: 99, attendance: { calendar: { [today]: 'absent' } } }, // someone else — never used
+        { id: 7, attendance: { calendar: { [today]: 'work_leave' } } },
+      ],
+      total: 2,
+    });
+    await renderWithProviders(<EmployeeBoard />);
+    await waitFor(() => expect(screen.getByTestId(`week-${today}`)).toHaveTextContent(i18n.t('timesheet.codeWorkLeave')));
+    const req = mock.history.get.find((g) => g.url === TURNSTILE_ATTENDANCE_NORMALIZED);
+    expect(req?.params).toMatchObject({ employee_id: 7, date_to: today });
   });
 });

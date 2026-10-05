@@ -48,16 +48,47 @@ export function dayTimeline(events: Ev[], fromHour = 7, toHour = 23, now: Date =
   };
 }
 
+
 export type DaySummary = {
   date: string;
   firstIn: string | null;
   lastOut: string | null;
-  /** off — dam olish kuni (shanba/yakshanba) va kelinmagan; kechikish dam olish kunida hisoblanmaydi. */
-  status: 'present' | 'late' | 'none' | 'off';
+  /**
+   * off — dam olish kuni; leave — tabelda sababli yo'qlik (ruxsat, ta'til, safar, kasallik…,
+   * aniq kodi `code` da). Tabel kodi bo'lsa holat SHUNDAN (v2 useEmployeeBoard:
+   * `mapCalStatus(calendar[iso])`), bo'lmasa turniket voqealaridan.
+   */
+  status: 'present' | 'late' | 'none' | 'off' | 'leave';
+  /** Tabel kodi (`work_leave`, `sick_leave` …) — status 'leave' bo'lganda yorliq uchun. */
+  code?: string;
 };
 
-/** Oxirgi `days` kun (bugundan orqaga). `workStart` (HH:mm) bo'lsa kechikish belgilanadi. */
-export function weekSummary(events: Ev[], today: string, workStart: string | null | undefined, days = 7): DaySummary[] {
+const DAY_OFF = new Set(['day_off', 'dam_olish', 'holiday', 'off', 'otgul']);
+const ABSENT = new Set(['absent', 'progul', 'noaniq_sabab', 'kelmadi']);
+
+/** Server tabel kodi → kun holati (web v2 `mapCalStatus` guruhlari). */
+export function dayStatusFromCode(code: string): Pick<DaySummary, 'status' | 'code'> {
+  const k = code.toLowerCase();
+  if (k === 'present' || k === 'early_leave') return { status: 'present' };
+  if (k === 'late') return { status: 'late' };
+  if (ABSENT.has(k)) return { status: 'none' };
+  if (DAY_OFF.has(k)) return { status: 'off' };
+  return { status: 'leave', code: k };
+}
+
+/**
+ * Oxirgi `days` kun (bugundan orqaga). `calendar` — xodimning normalized tabeli
+ * (`{ 'YYYY-MM-DD': kod }`): kod bo'lsa holat undan (QA 2026-10-05: tasdiqlangan ruxsat
+ * kuni Davomatda «Ruxsat», bosh sahifada «Kelmagan» edi). Kod bo'lmasa — voqealardan;
+ * `workStart` (HH:mm) bo'lsa kechikish belgilanadi.
+ */
+export function weekSummary(
+  events: Ev[],
+  today: string,
+  workStart: string | null | undefined,
+  days = 7,
+  calendar?: Record<string, string | null | undefined> | null,
+): DaySummary[] {
   const byDay = new Map<string, Ev[]>();
   for (const e of events) {
     const k = dayjs(e.happen_time).format('YYYY-MM-DD');
@@ -68,6 +99,8 @@ export function weekSummary(events: Ev[], today: string, workStart: string | nul
     const date = d.format('YYYY-MM-DD');
     const weekend = d.day() === 0 || d.day() === 6;
     const t = dayTimeline(byDay.get(date) ?? []);
+    const code = calendar?.[date];
+    if (code) return { date, firstIn: t.firstIn, lastOut: t.lastOut, ...dayStatusFromCode(code) };
     const late = !weekend && !!(t.firstIn && workStart && t.firstIn > workStart.slice(0, 5));
     return {
       date,

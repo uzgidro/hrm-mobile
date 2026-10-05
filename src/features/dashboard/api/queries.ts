@@ -6,6 +6,7 @@ import {
   WORK_LEAVES,
   NOTIFICATIONS_LIST,
   TURNSTILE_ATTENDANCE_EVENTS,
+  TURNSTILE_ATTENDANCE_NORMALIZED,
   EMPLOYEES_BIRTHDAYS,
   TURNSTILE_DAY_BOARD,
   DASHBOARD_EMPLOYEES_BY_CATEGORY,
@@ -19,7 +20,7 @@ import type { DayBoard, EmployeesByCategory } from '../utils/attendanceBoard';
 import { fetchAllAttendanceEvents, attendanceQueryKey, dayRosterQuery } from '@/utils/attendance';
 import { leaveStatusGroup } from '@/utils/leaveStatus';
 import { menuBadgesQuery } from '@/lib/menuBadges';
-import type { AttendanceEvent, WorkLeave, Notification, EmployeeBirthday } from '@/types';
+import type { AttendanceEvent, EmployeeAttendance, WorkLeave, Notification, EmployeeBirthday } from '@/types';
 
 // Per-feature queryOptions factories for the home dashboard. The home tab is a
 // COMPOSITE screen — it stitches together attendance, leaves, notifications,
@@ -53,6 +54,28 @@ export function homeAttendanceQuery(
           params: { date_from: from, date_to: to, employee_id: employeeId },
         })
         .then((r) => unwrapList<AttendanceEvent>(r.data)),
+    enabled: !!employeeId,
+    staleTime: 2 * 60 * 1000,
+  });
+}
+
+// My own tabel for a window — the day STATUS of «Oxirgi kunlar» (web v2
+// useEmployeeBoard reads `attendance.calendar` of the normalized row; the raw
+// events only give the times). QA 2026-10-05: an approved-leave day read
+// «Kelmagan» on Home while the Davomat tab showed «Ruxsat». Strictly MY row
+// (v2: `rows.find(r => r.id === employeeId)`, never `rows[0]`).
+export function homeMyCalendarQuery(employeeId: number | undefined, from: string, to: string) {
+  return queryOptions({
+    queryKey: ['attendance', 'my-calendar', employeeId ?? null, from, to] as const,
+    queryFn: () =>
+      apiClient
+        .get(TURNSTILE_ATTENDANCE_NORMALIZED, {
+          params: { date_from: from, date_to: to, employee_id: employeeId, page: 1, size: 1 },
+        })
+        .then((r) => {
+          const mine = unwrapList<EmployeeAttendance>(r.data).find((row) => row.id === employeeId);
+          return (mine?.attendance?.calendar ?? {}) as Record<string, string>;
+        }),
     enabled: !!employeeId,
     staleTime: 2 * 60 * 1000,
   });

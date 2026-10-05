@@ -6,19 +6,23 @@ import { router, type Href } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeProvider';
 import { weekdayName } from '@/i18n/dates';
+import { tabelCodeMeta } from '@/utils/tabelCodes';
 import { Badge, Card, Text } from '@/ui';
 import type { DaySummary } from '../../utils/dayTimeline';
 
 export function MyWeekCard({ days }: { days: DaySummary[] }) {
   const { t } = useTranslation();
   const { colors: c } = useTheme();
-  const tone = { present: 'success', late: 'warning', none: 'danger', off: 'neutral' } as const;
-  const label = {
-    present: t('dashboard.home.weekPresent'),
-    late: t('dashboard.home.weekLate'),
-    none: t('dashboard.home.weekNone'),
-    off: t('dashboard.home.weekOff'),
-  };
+  const tone = { present: 'success', late: 'warning', none: 'danger', off: 'neutral', leave: 'info' } as const;
+  const label = (d: DaySummary) =>
+    ({
+      present: t('dashboard.home.weekPresent'),
+      late: t('dashboard.home.weekLate'),
+      none: t('dashboard.home.weekNone'),
+      off: t('dashboard.home.weekOff'),
+      // Sababli yo'qlik — tabel kodi yorlig'i (Ruxsat, Ta'til, Safar …), Davomat tabi bilan bir xil.
+      leave: t(tabelCodeMeta(d.code).labelKey),
+    })[d.status];
   return (
     <Card
       title={t('dashboard.home.myWeek')}
@@ -29,7 +33,15 @@ export function MyWeekCard({ days }: { days: DaySummary[] }) {
       {days.map((d, i) => {
         const date = dayjs(d.date);
         const bar =
-          d.status === 'none' ? c.dangerMark : d.status === 'late' ? c.warningMark : d.status === 'off' ? c.borderStrong : c.successMark;
+          d.status === 'none'
+            ? c.dangerMark
+            : d.status === 'late'
+              ? c.warningMark
+              : d.status === 'off'
+                ? c.borderStrong
+                : d.status === 'leave'
+                  ? c.brand
+                  : c.successMark;
         return (
           <View key={d.date} style={[styles.row, i > 0 && { borderTopColor: c.border, borderTopWidth: StyleSheet.hairlineWidth }]}>
             <View style={[styles.bar, { backgroundColor: bar }]} />
@@ -41,7 +53,7 @@ export function MyWeekCard({ days }: { days: DaySummary[] }) {
                 {d.firstIn ? `${d.firstIn} – ${d.lastOut ?? '…'}` : '—'}
               </Text>
             </View>
-            <Badge label={label[d.status]} tone={tone[d.status]} />
+            <Badge label={label(d)} tone={tone[d.status]} testID={`week-${d.date}`} />
           </View>
         );
       })}

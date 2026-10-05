@@ -15,12 +15,25 @@ import { visibleCatalog } from '@/utils/moduleCatalog';
 import { moduleTint } from '@/theme/tokens';
 import { Icon } from '@/components/Icon';
 import { IconButton, ListRow, SearchField, Sheet, Text } from '@/ui';
+import { userDisplayName } from '@/utils/roles';
+import type { User } from '@/types';
 import { givenName } from '../utils/shiftProgress';
 
 export function greetingKey(hour: number): string {
   if (hour < 12) return 'dashboard.home.greetingMorning';
   if (hour < 18) return 'dashboard.home.greetingDay';
   return 'dashboard.home.greetingEvening';
+}
+
+/**
+ * Whom the greeting addresses. A person's card (employee, or the admin account's own
+ * `legal_name`) → the given name; any other account → `userDisplayName` as is (kiosk
+ * name, login, e-mail — v2 getDisplayName). Master/admin used to read «Foydalanuvchi».
+ */
+export function greetingName(user?: User | null): string {
+  const personal = (user?.employee?.legal_name ?? user?.admin?.legal_name ?? '').trim();
+  if (personal) return givenName(personal);
+  return userDisplayName(user) ?? '';
 }
 
 export function HomeHeader() {
@@ -34,7 +47,7 @@ export function HomeHeader() {
   const [query, setQuery] = useState('');
 
   const now = dayjs();
-  const name = givenName(user?.employee?.legal_name) || t('dashboard.userFallback');
+  const name = greetingName(user) || t('dashboard.userFallback');
   const dateLine = `${weekdayName(now.day())}, ${now.date()} ${monthName(now.month(), { genitive: true })}`;
   const dept = user?.employee?.department?.name;
 

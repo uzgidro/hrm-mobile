@@ -12,7 +12,7 @@ import { leaveStatusGroup } from '@/utils/leaveStatus';
 import { timeRange } from '@/utils/timeText';
 import { Bento } from '@/ui';
 import { useBreakpoint } from '@/utils/responsive';
-import { homeAttendanceQuery, homeMyLeavesQuery } from '../api/queries';
+import { homeAttendanceQuery, homeMyCalendarQuery, homeMyLeavesQuery } from '../api/queries';
 import { dayTimeline, weekSummary } from '../utils/dayTimeline';
 import { isExitEvent } from '../utils/attendanceBoard';
 import { MyDayHero } from './employee/MyDayHero';
@@ -32,13 +32,20 @@ export function EmployeeBoard() {
   const monthStart = now.startOf('month');
   // Oy boshidan (yoki 6 kun oldindan — hafta oy chegarasidan o'tsa) bugungacha.
   const from = (monthStart.isBefore(now.subtract(6, 'day')) ? monthStart : now.subtract(6, 'day')).format('YYYY-MM-DD');
-  const events = useQuery(homeAttendanceQuery(employee?.id, `${from}_${today}`, from, today)).data ?? [];
+  const eventsData = useQuery(homeAttendanceQuery(employee?.id, `${from}_${today}`, from, today)).data;
+  const events = useMemo(() => eventsData ?? [], [eventsData]);
+  // «Oxirgi kunlar»: day status from MY tabel (approved leave → «Ruxsat», like Davomat).
+  const weekFrom = now.subtract(4, 'day').format('YYYY-MM-DD');
+  const { data: calendar } = useQuery(homeMyCalendarQuery(employee?.id, weekFrom, today));
   const myLeaves = useQuery(homeMyLeavesQuery(employee?.id)).data ?? [];
   const { data: badges } = useQuery(menuBadgesQuery());
 
   const todayEvents = useMemo(() => events.filter((e) => dayjs(e.happen_time).format('YYYY-MM-DD') === today), [events, today]);
   const timeline = useMemo(() => dayTimeline(todayEvents), [todayEvents]);
-  const week = useMemo(() => weekSummary(events, today, employee?.working_hours_start, 5), [events, today, employee?.working_hours_start]);
+  const week = useMemo(
+    () => weekSummary(events, today, employee?.working_hours_start, 5, calendar),
+    [events, today, employee?.working_hours_start, calendar],
+  );
   const daysPresent = useMemo(() => {
     const days = new Set<string>();
     for (const e of events) {
