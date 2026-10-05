@@ -18,7 +18,7 @@ import DictionariesScreen from '../screens/DictionariesScreen';
 
 jest.mock('expo-router', () => ({ router: { push: jest.fn(), back: jest.fn(), canGoBack: () => true } }));
 jest.mock('@/lib/confirm', () => ({ confirm: jest.fn(() => Promise.resolve(true)) }));
-jest.mock('@/lib/toast', () => ({ toast: { success: jest.fn(), error: jest.fn() } }));
+jest.mock('@/lib/toast', () => ({ ...jest.requireActual('@/lib/toast'), toast: { success: jest.fn(), error: jest.fn() } }));
 
 const hr = {
   id: 2,

@@ -17,7 +17,7 @@ import BranchesScreen from '../screens/BranchesScreen';
 
 jest.mock('expo-router', () => ({ router: { push: jest.fn(), back: jest.fn(), canGoBack: () => true } }));
 jest.mock('@/lib/confirm', () => ({ confirm: jest.fn(() => Promise.resolve(true)) }));
-jest.mock('@/lib/toast', () => ({ toast: { success: jest.fn(), error: jest.fn() } }));
+jest.mock('@/lib/toast', () => ({ ...jest.requireActual('@/lib/toast'), toast: { success: jest.fn(), error: jest.fn() } }));
 
 const master = { id: 2, type: 'master-admin', employee: { id: 6 } };
 const akt = { id: 3, type: 'employee', employee: { id: 7 }, akt_branch_ids: [2] };

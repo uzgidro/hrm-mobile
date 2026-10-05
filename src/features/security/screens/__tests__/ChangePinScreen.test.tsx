@@ -12,7 +12,7 @@ import ChangePinScreen from '../ChangePinScreen';
 // doesn't pull in expo-router's untranspiled ESM navigation internals.
 // (jest.mock is hoisted above the imports, so `router` above is the mock.)
 jest.mock('expo-router', () => ({ router: { back: jest.fn() } }));
-jest.mock('@/lib/toast', () => ({ toast: { success: jest.fn(), error: jest.fn() } }));
+jest.mock('@/lib/toast', () => ({ ...jest.requireActual('@/lib/toast'), toast: { success: jest.fn(), error: jest.fn() } }));
 
 // Typed views of the mocked singletons for assertions.
 const mockRouterBack = router.back as jest.Mock;

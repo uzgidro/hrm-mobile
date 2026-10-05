@@ -14,7 +14,7 @@ import CreateLeaveScreen from '../CreateLeaveScreen';
 
 jest.mock('expo-router', () => ({ router: { back: jest.fn(), replace: jest.fn() } }));
 jest.mock('react-native/Libraries/Utilities/useWindowDimensions');
-jest.mock('@/lib/toast', () => ({ toast: { error: jest.fn(), success: jest.fn(), info: jest.fn() } }));
+jest.mock('@/lib/toast', () => ({ ...jest.requireActual('@/lib/toast'), toast: { error: jest.fn(), success: jest.fn(), info: jest.fn() } }));
 
 describe('CreateLeaveScreen — web-safe feedback', () => {
   const mock = new MockAdapter(apiClient);
