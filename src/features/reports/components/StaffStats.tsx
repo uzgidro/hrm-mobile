@@ -7,7 +7,7 @@ import { StyleSheet, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useBreakpoint } from '@/utils/responsive';
-import { Card, EmptyState, Skeleton, StatTile, Text } from '@/ui';
+import { Card, EmptyState, ErrorState, Skeleton, StatTile, Text } from '@/ui';
 import {
   cardsSummaryQuery,
   dashboardMainQuery,
@@ -90,14 +90,16 @@ export function StaffStats() {
 
   const dist = (
     title: string,
-    loading: boolean,
+    q: { isPending: boolean; isError: boolean; refetch: () => unknown },
     data: { name: string; value: number }[],
     color: 'brand' | 'drop',
     id: string,
   ) => (
     <View style={sizeClass === 'compact' ? undefined : styles.halfCard}>
       <Card title={title} icon="chart" tint="violet">
-        {loading ? (
+        {q.isError ? (
+          <ErrorState onRetry={() => void q.refetch()} />
+        ) : q.isPending ? (
           <Skeleton height={200} />
         ) : data.length === 0 ? (
           <EmptyState title={t('reports.noData')} />
@@ -121,8 +123,8 @@ export function StaffStats() {
         ))}
       </View>
       <View style={sizeClass === 'compact' ? styles.stack : styles.row}>
-        {dist(t('reports.byDepartment'), depts.isPending, deptData, 'brand', 'staff-by-dept')}
-        {dist(t('reports.byPosition'), pos.isPending, posData, 'drop', 'staff-by-pos')}
+        {dist(t('reports.byDepartment'), depts, deptData, 'brand', 'staff-by-dept')}
+        {dist(t('reports.byPosition'), pos, posData, 'drop', 'staff-by-pos')}
       </View>
       <Text variant="caption" tone="subtle">
         {t('reports.staffWebOnly')}

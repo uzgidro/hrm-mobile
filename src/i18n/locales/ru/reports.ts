@@ -80,6 +80,7 @@ export default {
   timeFrom: 'Начало',
   timeTo: 'Окончание',
   loadMore: 'Загрузить ещё',
+  showMore: 'Показать ещё',
   drillHint: 'Нажмите на выделенную ячейку-ссылку, чтобы открыть подробный список.',
   // Katalog izohlari (kod bo'yicha)
   desc: {
@@ -254,6 +255,7 @@ export default {
     branches: 'Филиалы',
     divisions: 'Отделы',
     jobs: 'Должности',
+    employee: 'Сотрудник',
     employees: 'Сотрудники',
     generated_at: 'Сформировано',
     no: '№',

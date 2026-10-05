@@ -76,6 +76,7 @@ export default {
   timeFrom: 'Boshlanishi',
   timeTo: 'Tugashi',
   loadMore: 'Yana yuklash',
+  showMore: "Yana ko'rsatish",
   drillHint: "Rangli havola-katakni bosib batafsil ro'yxatni oching.",
   // Katalog izohlari (kod bo'yicha)
   desc: {
@@ -250,6 +251,7 @@ export default {
     branches: 'Filiallar',
     divisions: "Bo'limlar",
     jobs: 'Lavozimlar',
+    employee: 'Xodim',
     employees: 'Xodimlar',
     generated_at: 'Shakllantirildi',
     no: '№',

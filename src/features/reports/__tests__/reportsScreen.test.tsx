@@ -216,6 +216,59 @@ describe('ReportsScreen (v2 ReportsPage)', () => {
     );
   });
 
+  it("murojaatlar: ro'yxat 50 talab (yana ko'rsatish), 31 kundan ko'p davr — oylar bo'yicha diagramma", async () => {
+    setUser(hr);
+    mock.onGet(REPORTS_CATALOG).reply(200, { items: [], roles: [] });
+    const d0 = Date.parse('2026-08-01T00:00:00Z');
+    const many = Array.from({ length: 60 }, (_, i) => ({
+      date: new Date(d0 + i * 86_400_000).toISOString().slice(0, 10),
+      service_type: 'work_certificate',
+      service_label: 'X',
+      status: 'issued',
+      status_label: 'B',
+      count: 1,
+    }));
+    mock.onGet(SERVICE_REQUEST_STATISTICS).reply(200, { rows: many, service_types: [], statuses: [] });
+    await renderWithProviders(<ReportsScreen />);
+    await waitFor(() => expect(within(screen.getByTestId('requests-tile-total')).getByText('60')).toBeTruthy());
+    // 60 kun → 2 oy (08.2026: 31, 09.2026: 29).
+    const chart = screen.getByTestId('requests-chart');
+    expect(within(chart).getByText('08.2026')).toBeTruthy();
+    expect(within(chart).getByText('09.2026')).toBeTruthy();
+    expect(within(chart).queryByText('01.08.2026')).toBeNull();
+    expect(screen.getByTestId('requests-row-49')).toBeTruthy();
+    expect(screen.queryByTestId('requests-row-50')).toBeNull();
+    await fireEvent.press(screen.getByTestId('requests-more'));
+    expect(screen.getByTestId('requests-row-59')).toBeTruthy();
+    expect(screen.queryByTestId('requests-more')).toBeNull();
+  });
+
+  it('murojaatlar xatosi — plitkalarda «—» (0 emas)', async () => {
+    setUser(hr);
+    mock.onGet(REPORTS_CATALOG).reply(200, { items: [], roles: [] });
+    mock.onGet(SERVICE_REQUEST_STATISTICS).reply(500, {});
+    await renderWithProviders(<ReportsScreen />);
+    expect(await screen.findByText(i18n.t('common.retry'))).toBeTruthy();
+    expect(within(screen.getByTestId('requests-tile-total')).getByText('—')).toBeTruthy();
+    expect(within(screen.getByTestId('requests-tile-done')).queryByText('0')).toBeNull();
+  });
+
+  it("kadrlar tarkibi: taqsimot xatosi — «Ma'lumot yo'q» emas, qayta urinish", async () => {
+    setUser(manager);
+    mock.onGet(REPORTS_CATALOG).reply(200, { items: [], roles: [] });
+    mock.onGet(DASHBOARD_DEPARTMENTS_EMPLOYEE_COUNT).reply(500, {});
+    await renderWithProviders(<ReportsScreen />);
+    expect(await screen.findByText(i18n.t('common.retry'))).toBeTruthy();
+    expect(screen.queryByText(i18n.t('reports.noData'))).toBeNull();
+    // Lavozim taqsimoti — o'z ma'lumoti bilan.
+    expect(await screen.findByTestId('staff-by-pos')).toBeTruthy();
+    mock
+      .onGet(DASHBOARD_DEPARTMENTS_EMPLOYEE_COUNT)
+      .reply(200, [{ department_id: 1, department_name: 'Kadrlar bo‘limi', total_count: 12 }]);
+    await fireEvent.press(screen.getByText(i18n.t('common.retry')));
+    expect(await screen.findByTestId('staff-by-dept')).toBeTruthy();
+  });
+
   it("murojaatlar 403 — «ruxsat yo'q», bo'sh diagramma emas", async () => {
     setUser(hr);
     mock.onGet(REPORTS_CATALOG).reply(200, { items: [], roles: [] });

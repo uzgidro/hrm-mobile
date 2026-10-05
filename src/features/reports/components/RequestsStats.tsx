@@ -10,7 +10,19 @@ import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 import { DatePickerModal } from '@/components/DatePicker';
 import { useBreakpoint } from '@/utils/responsive';
-import { Card, Chip, EmptyState, ErrorState, ListRow, Segmented, SelectField, Skeleton, StatTile, Text } from '@/ui';
+import {
+  Button,
+  Card,
+  Chip,
+  EmptyState,
+  ErrorState,
+  ListRow,
+  Segmented,
+  SelectField,
+  Skeleton,
+  StatTile,
+  Text,
+} from '@/ui';
 import { requestStatsQuery } from '../api/queries';
 import { isRangeInvalid } from '../utils/params';
 import { fmtCell } from '../utils/table';
@@ -18,8 +30,10 @@ import {
   DEFAULT_SORT,
   EMPTY_REQUEST_FILTERS,
   activeRequestFilters,
+  bucketPeriods,
   chartData,
   nextSort,
+  periodLabel,
   requestSummary,
   sortRows,
   type GroupBy,
@@ -31,6 +45,8 @@ import { BarList } from './BarList';
 import { OptionsSheet } from './OptionsSheet';
 
 const fmtDate = (iso: string) => fmtCell({ v: iso, f: 'date' });
+/** Ro'yxat bo'laklari: butun davr yig'masi minglab qator bo'lishi mumkin — Screen ichida hammasi chizilmaydi. */
+const ROWS_STEP = 50;
 const SORTS: { key: SortKey; labelKey: string }[] = [
   { key: 'date', labelKey: 'reports.colDate' },
   { key: 'service', labelKey: 'reports.colType' },
@@ -59,11 +75,16 @@ export function RequestsStats() {
   );
   const rows = useMemo(() => stats.data?.rows ?? [], [stats.data]);
   const sum = requestSummary(rows);
-  const chart = useMemo(
-    () => chartData(rows, groupBy, labels).map((d) => (groupBy === 'date' ? { ...d, name: fmtDate(d.name) } : d)),
-    [rows, groupBy, labels],
-  );
+  // Davr bo'yicha: 31 dan ko'p kun — oylar (undan ko'pi — yillar), ustunlar soni chegaralangan.
+  const chart = useMemo(() => {
+    const data = chartData(rows, groupBy, labels);
+    return groupBy === 'date' ? bucketPeriods(data).map((d) => ({ ...d, name: periodLabel(d.name) })) : data;
+  }, [rows, groupBy, labels]);
   const sorted = useMemo(() => sortRows(rows, sort, labels), [rows, sort, labels]);
+  // Yangi to'plam yoki saralash — yana birinchi 50 ta.
+  const [more, setMore] = useState<{ src: unknown; n: number }>({ src: sorted, n: ROWS_STEP });
+  const limit = more.src === sorted ? more.n : ROWS_STEP;
+  const visible = sorted.length > limit ? sorted.slice(0, limit) : sorted;
   const denied = (stats.error as { response?: { status?: number } } | null)?.response?.status === 403;
 
   if (denied) {
@@ -155,7 +176,7 @@ export function RequestsStats() {
             <StatTile
               testID={`requests-tile-${x.key}`}
               label={x.label}
-              value={stats.isPending ? '—' : x.value}
+              value={!stats.isSuccess ? '—' : x.value}
               icon={x.icon}
               tint={x.tint}
             />
@@ -185,7 +206,8 @@ export function RequestsStats() {
               ) : chart.length === 0 ? (
                 <EmptyState title={t('reports.noData')} message={t('reports.noDataHint')} />
               ) : (
-                <BarList data={chart} testID="requests-chart" />
+                // Vaqt qatori — bitta ton (rang ma'no bildirmaydi); tur/holat — navbatma-navbat.
+                <BarList data={chart} color={groupBy === 'date' ? 'brand' : undefined} testID="requests-chart" />
               )}
             </View>
           </Card>
@@ -208,7 +230,7 @@ export function RequestsStats() {
               <EmptyState title={t('reports.noData')} message={t('reports.noDataHint')} />
             ) : (
               <>
-                {sorted.map((r, i) => (
+                {visible.map((r, i) => (
                   <ListRow
                     key={`${r.date}-${r.service_type}-${r.status}-${i}`}
                     testID={`requests-row-${i}`}
@@ -221,6 +243,15 @@ export function RequestsStats() {
                     }
                   />
                 ))}
+                {sorted.length > visible.length && (
+                  <Button
+                    testID="requests-more"
+                    label={`${t('reports.showMore')} (${sorted.length - visible.length})`}
+                    variant="ghost"
+                    size="sm"
+                    onPress={() => setMore({ src: sorted, n: limit + ROWS_STEP })}
+                  />
+                )}
                 <ListRow
                   testID="requests-total"
                   title={t('reports.totalRow')}

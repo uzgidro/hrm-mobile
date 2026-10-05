@@ -1,5 +1,6 @@
 import {
   HEADER_ROW_H,
+  ROW_H,
   bodyCount,
   cellAlign,
   cellText,
@@ -9,12 +10,16 @@ import {
   fmtCell,
   fmtNumber,
   fmtStamp,
+  freezeLayout,
+  hasDrillCells,
+  sheetContentHeight,
   layoutHeader,
   leafLabels,
   popTo,
   prefixSums,
   pushLevel,
   rowLayout,
+  splitSpan,
   startStack,
   styleTone,
 } from '../table';
@@ -170,5 +175,63 @@ describe('drill stack', () => {
         ],
       }),
     ).toBe(2);
+  });
+});
+
+describe('muzlatilgan ustunlar (freeze_cols)', () => {
+  it("freeze yo'q yoki kenglik noma'lum — muzlatilmaydi", () => {
+    expect(freezeLayout(0, [50, 200, 40], 360)).toEqual({ count: 0, widths: [50, 200, 40] });
+    expect(freezeLayout(2, [50, 200, 40], 0)).toEqual({ count: 0, widths: [50, 200, 40] });
+  });
+  it("sig'sa — barchasi, kengliklar o'zgarmaydi", () => {
+    expect(freezeLayout(2, [50, 100, 40, 40], 1000)).toEqual({ count: 2, widths: [50, 100, 40, 40] });
+  });
+  it('tabel telefonda: nom ustuni qolgan joyga toraytiriladi (ekranning 55%)', () => {
+    // 360 * 0.55 = 198 → № 52 + nom 146.
+    expect(freezeLayout(2, [52, 261, 36, 36], 360)).toEqual({ count: 2, widths: [52, 146, 36, 36] });
+  });
+  it('qolgan joy juda tor — keyingi ustun muzlatilmaydi', () => {
+    // 300 * 0.55 = 165 → 120 + 45 (< 80) — faqat birinchisi.
+    expect(freezeLayout(3, [120, 200, 30, 30], 300)).toEqual({ count: 1, widths: [120, 200, 30, 30] });
+  });
+  it('kamida bitta ustun aylanib turadi', () => {
+    expect(freezeLayout(3, [40, 40, 40], 1000).count).toBe(2);
+  });
+  it("splitSpan — chegarani kesib o'tgan katak ikkiga bo'linadi, yorliq muzlatilgan qismda", () => {
+    const prefix = prefixSums([50, 100, 40, 40]);
+    expect(splitSpan(0, 1, 2, prefix)).toEqual([{ col: 0, x: 0, w: 50, frozen: true, label: true, edge: false }]);
+    expect(splitSpan(1, 1, 2, prefix)).toEqual([{ col: 1, x: 50, w: 100, frozen: true, label: true, edge: true }]);
+    expect(splitSpan(2, 2, 2, prefix)).toEqual([{ col: 2, x: 150, w: 80, frozen: false, label: true, edge: false }]);
+    expect(splitSpan(1, 3, 2, prefix)).toEqual([
+      { col: 1, x: 50, w: 100, frozen: true, label: true, edge: true },
+      { col: 2, x: 150, w: 80, frozen: false, label: false, edge: false },
+    ]);
+    // Muzlatish yo'q — bitta bo'lak.
+    expect(splitSpan(0, 4, 0, prefix)).toEqual([{ col: 0, x: 0, w: 230, frozen: false, label: true, edge: false }]);
+  });
+});
+
+describe('drill izohi va jadval balandligi', () => {
+  const sheet = (rows: unknown[], footer: unknown[] = [], header: unknown[][] = [[{ v: 'A' }]]) =>
+    ({ name: 's', ncols: 1, widths: [10], header, rows, footer, freeze_rows: 0, freeze_cols: 0, legend: [] }) as never;
+  it("hasDrillCells — faqat `p` li katak bo'lsa (tana yoki jami)", () => {
+    const table = (sheets: unknown[]) => ({ sheets }) as never;
+    expect(hasDrillCells(table([sheet([{ kind: 'body', c: [{ v: 1 }] }])]))).toBe(false);
+    expect(
+      hasDrillCells(table([sheet([]), sheet([{ kind: 'body', c: [{ v: 1, p: { report: 'x', params: {} } }] }])])),
+    ).toBe(true);
+  });
+  it('sheetContentHeight — sarlavha + qatorlar + jami (+ chegara)', () => {
+    expect(
+      sheetContentHeight(
+        sheet(
+          [
+            { kind: 'body', c: [] },
+            { kind: 'body', c: [] },
+          ],
+          [{ kind: 'footer', c: [] }],
+        ),
+      ),
+    ).toBe(HEADER_ROW_H + 3 * ROW_H + 2);
   });
 });

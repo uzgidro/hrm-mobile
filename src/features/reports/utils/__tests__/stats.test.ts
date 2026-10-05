@@ -1,11 +1,13 @@
 import {
   activeRequestFilters,
   barRatio,
+  bucketPeriods,
   chartData,
   DEFAULT_SORT,
   kpiRange,
   lastKpi,
   nextSort,
+  periodLabel,
   requestStatsParams,
   requestSummary,
   sortRows,
@@ -147,5 +149,36 @@ describe('katalog', () => {
     expect(catalogMatch(it0, 'lateness', 'X', '')).toBe(true);
     expect(catalogMatch(it0, 'zzz', 'X', '')).toBe(false);
     expect(catalogMatch(it0, '  ', 'X', '')).toBe(true);
+  });
+});
+
+describe('davr diagrammasi chegarasi', () => {
+  const days = (n: number, start = '2026-01-01') => {
+    const d0 = Date.parse(`${start}T00:00:00Z`);
+    return Array.from({ length: n }, (_, i) => ({
+      name: new Date(d0 + i * 86_400_000).toISOString().slice(0, 10),
+      value: 1,
+    }));
+  };
+  it("31 tagacha kun — o'zgarishsiz", () => {
+    const d = days(31);
+    expect(bucketPeriods(d)).toBe(d);
+  });
+  it("31 dan ko'p kun — oylar bo'yicha yig'indi, tartib saqlanadi", () => {
+    expect(bucketPeriods(days(40))).toEqual([
+      { name: '2026-01', value: 31 },
+      { name: '2026-02', value: 9 },
+    ]);
+  });
+  it("31 dan ko'p oy — yillar bo'yicha", () => {
+    const d = days(1200, '2024-01-01');
+    const out = bucketPeriods(d);
+    expect(out.map((x) => x.name)).toEqual(['2024', '2025', '2026', '2027']);
+    expect(out.reduce((n, x) => n + x.value, 0)).toBe(1200);
+  });
+  it('periodLabel — kun, oy, yil', () => {
+    expect(periodLabel('2026-09-02')).toBe('02.09.2026');
+    expect(periodLabel('2026-09')).toBe('09.2026');
+    expect(periodLabel('2026')).toBe('2026');
   });
 });

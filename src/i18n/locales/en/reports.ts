@@ -76,6 +76,7 @@ export default {
   timeFrom: 'Start',
   timeTo: 'End',
   loadMore: 'Load more',
+  showMore: 'Show more',
   drillHint: 'Tap a highlighted link cell to open the detailed list.',
   // Katalog izohlari (kod bo'yicha)
   desc: {
@@ -247,6 +248,7 @@ export default {
     branches: 'Branches',
     divisions: 'Divisions',
     jobs: 'Positions',
+    employee: 'Employee',
     employees: 'Employees',
     generated_at: 'Generated',
     no: 'No.',

@@ -2,7 +2,7 @@
 // `reportStyles` porti). Ekran faqat shu hisob-kitob natijasini chizadi: ustun kengligi,
 // sarlavha katakchalarining (cs/rs) koordinatalari, qator katakchalari, matn, ton, tekislash.
 import type { ThemeColors } from '@/theme/palettes';
-import type { CellJson, CellStyle, DrillLevel, RowJson, SheetJson } from './types';
+import type { CellJson, CellStyle, DrillLevel, ReportTableJson, RowJson, SheetJson } from './types';
 
 export const ROW_H = 34;
 export const HEADER_ROW_H = 40;
@@ -79,6 +79,79 @@ export function rowLayout(row: RowJson, prefix: number[]): { cell: CellJson; col
     col += cs;
     return out;
   });
+}
+
+/** Muzlatilgan blok ekran kengligining ko'pi bilan shu ulushi (qolgani — aylanadigan ustunlar). */
+export const FREEZE_MAX_RATIO = 0.55;
+/** Toraytirilgan muzlatilgan ustun bundan tor bo'lmaydi (aks holda u muzlatilmaydi). */
+export const FREEZE_MIN_COL = 80;
+
+/**
+ * v2 `freeze_cols` (tabelda №, F.I.Sh. …): chapdagi ustunlar gorizontal aylantirishda joyida
+ * qoladi. v2 kabi blok ekranning yarmidan oshmaydi, lekin telefonda tabel nomi (34 belgi ≈ 260px)
+ * hech qachon sig'masdi — shuning uchun sig'magan ustun qolgan joyga TORAYTIRILADI (kamida
+ * `FREEZE_MIN_COL`), matn qisqartiriladi. Kenglik noma'lum (0) — muzlatilmaydi; kamida bitta
+ * ustun aylanib turadi.
+ */
+export function freezeLayout(
+  freezeCols: number,
+  widths: number[],
+  viewport: number,
+): { count: number; widths: number[] } {
+  if (!freezeCols || viewport <= 0) return { count: 0, widths };
+  const limit = viewport * FREEZE_MAX_RATIO;
+  const out = [...widths];
+  let acc = 0;
+  let count = 0;
+  for (let i = 0; i < Math.min(freezeCols, widths.length - 1); i++) {
+    const w = widths[i]!;
+    if (acc + w <= limit) {
+      acc += w;
+      count++;
+      continue;
+    }
+    const room = Math.floor(limit - acc);
+    if (room >= FREEZE_MIN_COL) {
+      out[i] = room;
+      count++;
+    }
+    break;
+  }
+  return count ? { count, widths: out } : { count: 0, widths };
+}
+
+export interface SpanPart {
+  col: number;
+  x: number;
+  w: number;
+  /** Muzlatilgan qism (gorizontal aylantirishda joyida turadi). */
+  frozen: boolean;
+  /** Matn shu qismda: chegarani kesib o'tgan katakning yorlig'i muzlatilgan bo'lakda. */
+  label: boolean;
+  /** Muzlatilgan blokning o'ng qirrasi (ajratuvchi chiziq). */
+  edge: boolean;
+}
+
+/**
+ * Katak (`col`, `cs`) ni muzlatish chegarasi (`freeze` ustun) bo'yicha bo'ladi: to'liq chapda —
+ * muzlatilgan, to'liq o'ngda — aylanadigan, kesib o'tsa — ikki bo'lak (matn chapda, o'ng bo'lak
+ * bo'sh, o'sha tonda). Sarlavha va tana/jami qatorlari uchun bir xil.
+ */
+export function splitSpan(col: number, cs: number, freeze: number, prefix: number[]): SpanPart[] {
+  const last = prefix.length - 1;
+  const at = (c: number) => prefix[Math.min(Math.max(c, 0), last)]!;
+  const end = col + cs;
+  const part = (a: number, b: number, frozen: boolean, label: boolean): SpanPart => ({
+    col: a,
+    x: at(a),
+    w: at(b) - at(a),
+    frozen,
+    label,
+    edge: frozen && b === freeze,
+  });
+  if (freeze <= 0 || col >= freeze) return [part(col, end, false, true)];
+  if (end <= freeze) return [part(col, end, true, true)];
+  return [part(col, freeze, true, true), part(freeze, end, false, false)];
 }
 
 /** Har ustunning eng pastki sarlavha yorlig'i (drill breadcrumb: «Ayollar · 23»). */
@@ -203,6 +276,19 @@ export function cellTone(cell: CellJson, row: RowJson, footer: boolean): CellTon
 /** Jami qatori yoki bo'sh katak yorliq kalitini (`k`) ko'rsatadi; aks holda formatlangan qiymat. */
 export function cellText(c: CellJson, footer: boolean, label: (key: string, fallback: unknown) => string): string {
   return c.k && (footer || c.v === '' || c.v == null) ? label(c.k, c.v) : fmtCell(c);
+}
+
+/** Jadvalda drill havolasi bormi — «katakni bosing» izohi faqat shunda (v2 da ham faqat havolali kataklar). */
+export const hasDrillCells = (table: Pick<ReportTableJson, 'sheets'>): boolean =>
+  table.sheets.some((s) => [...s.rows, ...s.footer].some((r) => r.c.some((c) => !!c.p)));
+
+/**
+ * Varaqning to'liq (virtualizatsiyasiz) balandligi: sarlavha + qatorlar + jami + chegara. Qisqa
+ * jadval shu balandlikda (jami oxirgi qatordan keyin), uzuni — ekranga sig'adigan qismida.
+ */
+export function sheetContentHeight(sheet: Pick<SheetJson, 'header' | 'rows' | 'footer'>): number {
+  const body = sheet.rows.length ? sheet.rows.length * ROW_H : HEADER_ROW_H + 48;
+  return sheet.header.length * HEADER_ROW_H + body + sheet.footer.length * ROW_H + 2;
 }
 
 export const bodyCount = (sheet: Pick<SheetJson, 'rows'>): number => sheet.rows.filter((r) => r.kind === 'body').length;

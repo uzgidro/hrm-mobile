@@ -301,7 +301,9 @@ function PickerParam({
   const { t } = useTranslation();
   const [open, setOpen] = useState<number | null>(null);
   const [q, setQ] = useState('');
-  const dq = useDebouncedValue(q);
+  const debounced = useDebouncedValue(q);
+  // Bo'sh qidiruv kechiktirilmaydi: qayta ochilganda 400 ms davomida eski filtr ko'rinmasin.
+  const dq = q === '' ? '' : debounced;
   const [limit, setLimit] = useState(50);
   const remote = def.kind === 'employee_multi';
   const multiple = !(def.kind === 'int' || (def.kind === 'enum' && !def.multiple));
@@ -322,9 +324,8 @@ function PickerParam({
       open != null || (!remote && selected.length > 0),
     ),
   );
-  const chosen = useQuery(
-    reportOptionsQuery(code, def.name, { branch_ids: deps, ids: selected }, remote && selected.length > 0),
-  );
+  // Tanlanganlar nomi — filialsiz: filial o'zgargach boshqa filialdagi tanlangan xodim «#123» bo'lib qolmasin.
+  const chosen = useQuery(reportOptionsQuery(code, def.name, { ids: selected }, remote && selected.length > 0));
 
   const labels = useMemo(() => {
     const m: Record<string, string> = {};

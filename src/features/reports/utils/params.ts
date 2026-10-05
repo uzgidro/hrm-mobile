@@ -162,6 +162,10 @@ export function selectionSummary(selected: (string | number)[], labels: Record<s
 
 export type TreeNode = { branch: ReportOption; depts: ReportOption[] };
 
+/**
+ * Ikki daraja yetarli: server `divisions` manbai (`services/reports/options.py`) bo'limlarni
+ * filialga TEKIS beradi (`parent` har doim `b<filial>`; bo'lim ostida bo'lim yo'q) — v2 ham shunday.
+ */
 /** v2 `DivisionTreeSelect` daraxti: filial → bo'limlar; qidiruv bo'lim nomini toraytiradi, filial nomi mos bo'lsa filial qoladi. */
 export function divisionTree(options: ReportOption[], term: string): TreeNode[] {
   const byParent: Record<string, ReportOption[]> = {};

@@ -76,6 +76,7 @@ export default {
   timeFrom: 'Бошланиши',
   timeTo: 'Тугаши',
   loadMore: 'Яна юклаш',
+  showMore: 'Яна кўрсатиш',
   drillHint: 'Рангли ҳавола-катакни босиб батафсил рўйхатни очинг.',
   // Katalog izohlari (kod bo'yicha)
   desc: {
@@ -247,6 +248,7 @@ export default {
     branches: 'Филиаллар',
     divisions: 'Бўлимлар',
     jobs: 'Лавозимлар',
+    employee: 'Ходим',
     employees: 'Ходимлар',
     generated_at: 'Шакллантирилди',
     no: '№',

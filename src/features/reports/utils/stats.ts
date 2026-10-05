@@ -80,6 +80,37 @@ export function chartData(
     .sort((a, b) => (groupBy === 'date' ? a.name.localeCompare(b.name) : b.value - a.value));
 }
 
+/** Davr diagrammasida ko'pi bilan shuncha ustun: undan ko'p kun — oylar, undan ko'p oy — yillar. */
+export const MAX_PERIOD_BARS = 31;
+
+/**
+ * Butun davr (filtrsiz — yillar) kunma-kun chizilsa yuzlab ustun bo'lardi: kunlar
+ * `MAX_PERIOD_BARS` dan ko'p bo'lsa oy (`YYYY-MM`), oylar ham ko'p bo'lsa yil (`YYYY`)
+ * bo'yicha yig'iladi. Kirish o'sish tartibida (`chartData` 'date'), tartib saqlanadi.
+ */
+export function bucketPeriods(
+  data: { name: string; value: number }[],
+  max = MAX_PERIOD_BARS,
+): { name: string; value: number }[] {
+  let out = data;
+  for (const len of [7, 4]) {
+    if (out.length <= max) return out;
+    const map = new Map<string, number>();
+    for (const d of out) map.set(d.name.slice(0, len), (map.get(d.name.slice(0, len)) ?? 0) + d.value);
+    out = [...map.entries()].map(([name, value]) => ({ name, value }));
+  }
+  return out;
+}
+
+/** Davr yorlig'i: `YYYY-MM-DD` → `DD.MM.YYYY`, `YYYY-MM` → `MM.YYYY`, yil — o'zi. */
+export function periodLabel(name: string): string {
+  const m = /^(\d{4})(?:-(\d{2}))?(?:-(\d{2}))?/.exec(name);
+  if (!m) return name;
+  if (m[3]) return `${m[3]}.${m[2]}.${m[1]}`;
+  if (m[2]) return `${m[2]}.${m[1]}`;
+  return m[1]!;
+}
+
 export type SortKey = 'date' | 'service' | 'status' | 'count';
 export type Sort = { key: SortKey; dir: 'asc' | 'desc' };
 export const DEFAULT_SORT: Sort = { key: 'date', dir: 'desc' };

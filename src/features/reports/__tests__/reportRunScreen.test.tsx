@@ -257,6 +257,65 @@ describe('ReportRunScreen (v2 ReportRunPage)', () => {
     expect(runs(mock)).toHaveLength(2);
   });
 
+  it("drill — jadvalni BERGAN parametrlar bilan, keyin o'zgartirilgan qoralama bilan emas", async () => {
+    await renderWithProviders(<ReportRunScreen />);
+    await fireEvent.press(await screen.findByTestId('report-generate'));
+    await screen.findByTestId('report-table');
+    // Parametrlarga qaytib, qoralamani o'zgartirib (shakllantirmasdan) — ko'rishga.
+    await fireEvent.press(screen.getByText(i18n.t('reports.modeParams')));
+    await fireEvent.press(await screen.findByTestId('report-param-job_groups-ishchi'));
+    await fireEvent.press(screen.getByText(i18n.t('reports.modeView')));
+    await fireEvent.press(await screen.findByTestId('report-drill-timesheet_employee_detail'));
+    await waitFor(() => expect(runs(mock)).toHaveLength(2));
+    expect(runs(mock)[1].params).toEqual(runs(mock)[0].params);
+    expect(runs(mock)[1].params.job_groups).toBeUndefined();
+  });
+
+  it("drill kutilayotganda ikkinchi bosish yangi daraja qo'shmaydi", async () => {
+    let release: (() => void) | null = null;
+    mock.onPost(REPORT_RUN('timesheet')).reply((cfg) =>
+      JSON.parse(cfg.data).drill
+        ? new Promise((resolve) => {
+            release = () => resolve([200, DETAIL]);
+          })
+        : [200, TABLE],
+    );
+    await renderWithProviders(<ReportRunScreen />);
+    await fireEvent.press(await screen.findByTestId('report-generate'));
+    const cell = await screen.findByTestId('report-drill-timesheet_employee_detail');
+    await fireEvent.press(cell);
+    await fireEvent.press(cell);
+    await waitFor(() => expect(release).not.toBeNull());
+    expect(runs(mock)).toHaveLength(2);
+    await act(async () => {
+      release!();
+    });
+    expect(await screen.findByTestId('report-crumb-1')).toBeTruthy();
+    expect(screen.queryByTestId('report-crumb-2')).toBeNull();
+    expect(runs(mock)).toHaveLength(2);
+  });
+
+  it("freeze_cols: o'lchangach chapdagi ustunlar muzlatiladi; drill izohi faqat havolali jadvalda", async () => {
+    await renderWithProviders(<ReportRunScreen />);
+    await fireEvent.press(await screen.findByTestId('report-generate'));
+    await screen.findByTestId('report-table');
+    expect(screen.getByText(i18n.t('reports.drillHint'))).toBeTruthy();
+    // Kenglik noma'lum — muzlatish yo'q.
+    expect(screen.queryByTestId('report-frozen-head-0')).toBeNull();
+    await fireEvent(screen.getByTestId('report-sheet'), 'layout', {
+      nativeEvent: { layout: { x: 0, y: 0, width: 360, height: 500 } },
+    });
+    // № (45) + F.I.Sh. (232 → 153 ga toraytirilgan) — ikkalasi muzlatilgan.
+    expect(screen.getByTestId('report-frozen-head-0')).toBeTruthy();
+    expect(screen.getByTestId('report-frozen-head-1')).toBeTruthy();
+    expect(screen.queryByTestId('report-frozen-head-2')).toBeNull();
+    expect(within(screen.getByTestId('report-table')).getByText('F.I.Sh.')).toBeTruthy();
+    // Muzlatilgan katakdagi drill ishlaydi; batafsil jadvalda havola yo'q — izoh ham yo'q.
+    await fireEvent.press(screen.getByTestId('report-drill-timesheet_employee_detail'));
+    expect(await screen.findByText('01.09.2026')).toBeTruthy();
+    expect(screen.queryByText(i18n.t('reports.drillHint'))).toBeNull();
+  });
+
   it('til: ru — ru, en va kirill — uz (server faqat uz/ru biladi)', async () => {
     await i18n.changeLanguage('ru');
     await renderWithProviders(<ReportRunScreen />);
@@ -300,6 +359,17 @@ describe('ReportRunScreen (v2 ReportRunPage)', () => {
     await waitFor(() =>
       expect(within(screen.getByTestId('report-param-employee_ids')).getByText('Aliyev Vali')).toBeTruthy(),
     );
+
+    // Tanlanganlar nomi filialsiz so'raladi (filial almashsa ham nom qoladi).
+    const idsCall = mock.history.get.find(
+      (r) => r.url === REPORT_OPTIONS('kpi_report', 'employee_ids') && r.params?.ids === '11',
+    );
+    expect(idsCall?.params?.branch_ids).toBeUndefined();
+    // Qayta ochish — eski «Ali» filtri kechikish davomida ham ko'rinmaydi: to'liq ro'yxat darhol.
+    await fireEvent.press(screen.getByTestId('report-param-employee_ids'));
+    // (debouns 400 ms — bu muddatdan oldin to'liq ro'yxat chiqishi kerak)
+    expect(await screen.findByTestId('report-option-12', {}, { timeout: 250 })).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('report-options-done'));
 
     await fireEvent.press(screen.getByTestId('report-generate'));
     await waitFor(() => expect(runs(mock, 'kpi_report')).toHaveLength(1));

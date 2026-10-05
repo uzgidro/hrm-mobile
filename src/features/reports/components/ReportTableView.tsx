@@ -2,8 +2,21 @@
 // qatorlari, uslubli katakchalar va drill havolalari, jami qatorlari, rang izohi, imzo/QR.
 // Faqat RN View'lar: gorizontal ScrollView ichida qat'iy kenglikli ustunlar, tana — virtual
 // FlatList (bir necha yuz qator, har biri qat'iy balandlikda — `getItemLayout`).
+// Muzlatilgan ustunlar (`freeze_cols`): gorizontal siljish (RN Animated qiymati) shu kataklarga
+// teskari `translateX` bo'lib beriladi — ular ekranning chap chetida turadi, qolgani tagidan
+// o'tadi. Bitta FlatList — qator balandligi va vertikal siljish o'z-o'zidan bir xil.
 import React, { memo, useMemo, useState } from 'react';
-import { FlatList, Image, Pressable, ScrollView, StyleSheet, View, type ViewStyle } from 'react-native';
+import {
+  Animated,
+  FlatList,
+  Image,
+  Platform,
+  Pressable,
+  StyleSheet,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
@@ -20,15 +33,24 @@ import {
   columnWidths,
   crumbLabel,
   fmtStamp,
+  freezeLayout,
   layoutHeader,
   leafLabels,
   prefixSums,
+  sheetContentHeight,
   rowLayout,
+  splitSpan,
   styleTone,
 } from '../utils/table';
 import type { DrillRef, ReportTableJson, RowJson, SheetJson } from '../utils/types';
 
 type OnDrill = (ref: DrillRef, label: string) => void;
+type Pin = Animated.WithAnimatedValue<StyleProp<ViewStyle>>;
+
+// Web'da native driver yo'q (RN Web JS orqali yangilaydi).
+const NATIVE_DRIVER = Platform.OS !== 'web';
+// Web'da gorizontal aylantirish chizig'i balandlikdan joy oladi.
+const WEB_SCROLLBAR = 12;
 
 export function ReportTableView({ table, onDrill }: { table: ReportTableJson; onDrill?: OnDrill }) {
   const { t } = useTranslation();
@@ -126,8 +148,12 @@ export function ReportTableView({ table, onDrill }: { table: ReportTableJson; on
 function SheetView({ sheet, onDrill }: { sheet: SheetJson; onDrill?: OnDrill }) {
   const { t, i18n } = useTranslation();
   const { colors: c } = useTheme();
-  const [height, setHeight] = useState(0);
-  const widths = useMemo(() => columnWidths(sheet), [sheet]);
+  const [box, setBox] = useState({ w: 0, h: 0 });
+  const base = useMemo(() => columnWidths(sheet), [sheet]);
+  // Muzlatish ekran kengligiga bog'liq (o'lchangach): blok ko'pi bilan ~yarim ekran.
+  const frz = useMemo(() => freezeLayout(sheet.freeze_cols ?? 0, base, box.w), [sheet.freeze_cols, base, box.w]);
+  const widths = frz.widths;
+  const freeze = frz.count;
   const prefix = useMemo(() => prefixSums(widths), [widths]);
   const total = prefix[prefix.length - 1] ?? 0;
   const header = useMemo(() => layoutHeader(sheet.header, widths), [sheet.header, widths]);
@@ -137,27 +163,66 @@ function SheetView({ sheet, onDrill }: { sheet: SheetJson; onDrill?: OnDrill }) 
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [header.cells, sheet.ncols, i18n.language],
   );
+  const [scrollX] = useState(() => new Animated.Value(0));
+  const onScroll = useMemo(
+    () => Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], { useNativeDriver: NATIVE_DRIVER }),
+    [scrollX],
+  );
+  const pin = useMemo<Pin>(() => ({ transform: [{ translateX: scrollX }] }), [scrollX]);
+  const viewW = box.w ? Math.min(box.w, total) : total;
+  const extra = useMemo(() => ({ leaf, prefix, freeze, viewW }), [leaf, prefix, freeze, viewW]);
+  const rowProps = { prefix, total, leaf, freeze, pin, viewW, onDrill, c };
 
+  // Qisqa jadval o'z balandligida (jami oxirgi qatordan keyin, bo'sh joy ostida emas); uzuni
+  // mavjud joyga qisqaradi va tana FlatList'da virtual qoladi.
+  const contentH = sheetContentHeight(sheet) + (Platform.OS === 'web' ? WEB_SCROLLBAR : 0);
   return (
-    <View style={styles.sheet} onLayout={(e) => setHeight(e.nativeEvent.layout.height)}>
-      <ScrollView horizontal style={[styles.hscroll, { borderColor: c.border }]} testID="report-sheet-scroll">
-        <View style={{ width: total, height: height || undefined }}>
+    <View
+      style={[styles.sheet, { height: contentH, minHeight: Math.min(contentH, 160) }]}
+      testID="report-sheet"
+      onLayout={(e) => {
+        const { width: w, height: h } = e.nativeEvent.layout;
+        setBox((b) => (b.w === w && b.h === h ? b : { w, h }));
+      }}
+    >
+      <Animated.ScrollView
+        horizontal
+        style={[styles.hscroll, { borderColor: c.border }]}
+        testID="report-sheet-scroll"
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+      >
+        <View style={{ width: total, height: box.h || undefined }}>
           <View style={{ height: header.height, width: total, backgroundColor: c.bg }}>
-            {header.cells.map((pc, i) => (
-              <View
-                key={i}
-                style={[styles.headCell, { left: pc.x, top: pc.y, width: pc.w, height: pc.h, borderColor: c.border }]}
-              >
-                <Text
-                  variant="caption"
-                  weight="600"
-                  numberOfLines={2 * Math.max(1, pc.cell.rs ?? 1)}
-                  style={[styles.headText, { color: pc.cell.s === 'header_danger' ? c.danger : c.fgMuted }]}
-                >
-                  {reportLabel(pc.cell.k, pc.cell.v)}
-                </Text>
-              </View>
-            ))}
+            {header.cells.flatMap((pc, i) =>
+              splitSpan(pc.col, pc.cell.cs ?? 1, freeze, prefix).map((part, k) => {
+                const style: StyleProp<ViewStyle> = [
+                  styles.headCell,
+                  { left: part.x, top: pc.y, width: part.w, height: pc.h, borderColor: c.border },
+                  part.frozen && [styles.frozen, { backgroundColor: c.bg }],
+                  part.edge && { borderRightWidth: 1, borderRightColor: c.borderStrong },
+                ];
+                const label = part.label ? (
+                  <Text
+                    variant="caption"
+                    weight="600"
+                    numberOfLines={2 * Math.max(1, pc.cell.rs ?? 1)}
+                    style={[styles.headText, { color: pc.cell.s === 'header_danger' ? c.danger : c.fgMuted }]}
+                  >
+                    {reportLabel(pc.cell.k, pc.cell.v)}
+                  </Text>
+                ) : null;
+                return part.frozen ? (
+                  <Animated.View key={`${i}.${k}`} style={[style, pin]} testID={`report-frozen-head-${part.col}`}>
+                    {label}
+                  </Animated.View>
+                ) : (
+                  <View key={`${i}.${k}`} style={style}>
+                    {label}
+                  </View>
+                );
+              }),
+            )}
           </View>
           {sheet.rows.length === 0 ? (
             <View style={[styles.empty, { width: total }]}>
@@ -169,11 +234,9 @@ function SheetView({ sheet, onDrill }: { sheet: SheetJson; onDrill?: OnDrill }) 
             <FlatList
               style={styles.flex}
               data={sheet.rows}
-              extraData={leaf}
+              extraData={extra}
               keyExtractor={(_, i) => String(i)}
-              renderItem={({ item }) => (
-                <TableRow row={item} prefix={prefix} total={total} leaf={leaf} footer={false} onDrill={onDrill} c={c} />
-              )}
+              renderItem={({ item }) => <TableRow row={item} footer={false} {...rowProps} />}
               getItemLayout={(_, i) => ({ length: ROW_H, offset: ROW_H * i, index: i })}
               initialNumToRender={30}
               maxToRenderPerBatch={30}
@@ -181,10 +244,10 @@ function SheetView({ sheet, onDrill }: { sheet: SheetJson; onDrill?: OnDrill }) 
             />
           )}
           {sheet.footer.map((r, i) => (
-            <TableRow key={`f${i}`} row={r} prefix={prefix} total={total} leaf={leaf} footer onDrill={onDrill} c={c} />
+            <TableRow key={`f${i}`} row={r} footer {...rowProps} />
           ))}
         </View>
-      </ScrollView>
+      </Animated.ScrollView>
     </View>
   );
 }
@@ -195,6 +258,9 @@ const TableRow = memo(function TableRow({
   total,
   leaf,
   footer,
+  freeze,
+  pin,
+  viewW,
   onDrill,
   c,
 }: {
@@ -203,6 +269,11 @@ const TableRow = memo(function TableRow({
   total: number;
   leaf: string[];
   footer: boolean;
+  /** Muzlatilgan ustunlar soni (0 — yo'q). */
+  freeze: number;
+  /** Gorizontal siljishga teskari `translateX` — muzlatilgan kataklar va bo'lim nomi joyida turadi. */
+  pin: Pin;
+  viewW: number;
   onDrill?: OnDrill;
   c: ThemeColors;
 }) {
@@ -210,48 +281,72 @@ const TableRow = memo(function TableRow({
     const tone = styleTone('section');
     return (
       <View style={[styles.row, { width: total, backgroundColor: c[tone.bg!], borderColor: c.border }]}>
-        <Text variant="caption" weight="700" numberOfLines={1} style={[styles.sectionText, { color: c[tone.fg!] }]}>
-          {String(row.c[0]?.v ?? '')}
-        </Text>
+        {/* v2 «sticky» ichki element: bo'lim nomi gorizontal siljishda ham ko'rinib turadi. */}
+        <Animated.View style={[{ width: viewW }, pin]}>
+          <Text variant="caption" weight="700" numberOfLines={1} style={[styles.sectionText, { color: c[tone.fg!] }]}>
+            {String(row.c[0]?.v ?? '')}
+          </Text>
+        </Animated.View>
       </View>
     );
   }
   return (
     <View style={[styles.row, { width: total, borderColor: c.border }]}>
-      {rowLayout(row, prefix).map(({ cell, col, w }, i) => {
+      {rowLayout(row, prefix).flatMap(({ cell, col }, i) => {
         const tone = cellTone(cell, row, footer);
         const text = cellText(cell, footer, reportLabel);
         const drill = cell.p && onDrill ? cell.p : null;
-        const style: ViewStyle = { width: w, backgroundColor: tone.bg ? c[tone.bg] : c.surface, borderColor: c.border };
-        const body = (
-          <Text
-            variant="caption"
-            weight={tone.bold ? '700' : undefined}
-            numberOfLines={1}
-            style={{
-              textAlign: cellAlign(cell),
-              color: drill ? c.drop : tone.fg ? c[tone.fg] : c.fg,
-              textDecorationLine: drill ? 'underline' : 'none',
-            }}
-          >
-            {text}
-          </Text>
-        );
-        return drill ? (
-          <Pressable
-            key={i}
-            testID={`report-drill-${drill.report}`}
-            accessibilityRole="link"
-            onPress={() => onDrill!(drill, crumbLabel(leaf[col], text))}
-            style={[styles.cell, style]}
-          >
-            {body}
-          </Pressable>
-        ) : (
-          <View key={i} style={[styles.cell, style]}>
-            {body}
-          </View>
-        );
+        return splitSpan(col, cell.cs ?? 1, freeze, prefix).map((part, k) => {
+          const style: ViewStyle = {
+            width: part.w,
+            backgroundColor: tone.bg ? c[tone.bg] : c.surface,
+            borderColor: c.border,
+            ...(part.edge ? { borderRightWidth: 1, borderRightColor: c.borderStrong } : null),
+          };
+          const key = `${i}.${k}`;
+          let el: React.ReactElement;
+          if (!part.label) {
+            // Chegarani kesib o'tgan katakning o'ng (bo'sh) bo'lagi — o'sha tonda.
+            el = <View key={key} style={[styles.cell, style]} />;
+          } else {
+            const body = (
+              <Text
+                variant="caption"
+                weight={tone.bold ? '700' : undefined}
+                numberOfLines={1}
+                style={{
+                  textAlign: cellAlign(cell),
+                  color: drill ? c.drop : tone.fg ? c[tone.fg] : c.fg,
+                  textDecorationLine: drill ? 'underline' : 'none',
+                }}
+              >
+                {text}
+              </Text>
+            );
+            el = drill ? (
+              <Pressable
+                key={key}
+                testID={`report-drill-${drill.report}`}
+                accessibilityRole="link"
+                onPress={() => onDrill!(drill, crumbLabel(leaf[col], text))}
+                style={[styles.cell, style]}
+              >
+                {body}
+              </Pressable>
+            ) : (
+              <View key={key} style={[styles.cell, style]}>
+                {body}
+              </View>
+            );
+          }
+          return part.frozen ? (
+            <Animated.View key={key} style={[styles.frozen, { width: part.w }, pin]}>
+              {el}
+            </Animated.View>
+          ) : (
+            el
+          );
+        });
       })}
     </View>
   );
@@ -262,7 +357,7 @@ const styles = StyleSheet.create({
   head: { gap: 4 },
   info: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 14, rowGap: 2 },
   chips: { gap: 6 },
-  sheet: { flex: 1, minHeight: 160 },
+  sheet: { flexGrow: 0, flexShrink: 1 },
   hscroll: { flex: 1, borderWidth: StyleSheet.hairlineWidth, borderRadius: 10 },
   headCell: {
     position: 'absolute',
@@ -272,6 +367,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   headText: { textAlign: 'center', fontSize: 11, lineHeight: 14 },
+  frozen: { zIndex: 1 },
   row: { flexDirection: 'row', height: ROW_H, borderBottomWidth: StyleSheet.hairlineWidth },
   cell: { height: ROW_H, justifyContent: 'center', paddingHorizontal: 6, borderRightWidth: StyleSheet.hairlineWidth },
   sectionText: { paddingHorizontal: 8, lineHeight: ROW_H },

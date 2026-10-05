@@ -3,7 +3,7 @@
 // esa saqlangan jadvalga QAYTA SO'ROVSIZ qaytadi (v2 `useReportRun` stack). Ruxsat — server
 // katalogi (`reports/catalog` da yo'q hisobot — «topilmadi yoki ruxsat yo'q»).
 // Excel/CSV, shablonlar, ustun sozlamalari (prefs), chop etish, KPI hisobotini saqlash — web.
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
@@ -12,7 +12,6 @@ import { getApiErrorMessage } from '@/api/errors';
 import { toast } from '@/lib/toast';
 import { useAuthStore } from '@/store/authStore';
 import { resolveEmployeeBranchId } from '@/utils/branch';
-import { ChipScroll } from '@/components/ChipScroll';
 import { Button, Card, Chip, EmptyState, ErrorState, LoadingView, PageHeader, Screen, Segmented, Text } from '@/ui';
 import { reportCatalogQuery } from '../api/queries';
 import { useRunReport } from '../api/mutations';
@@ -28,7 +27,7 @@ import {
   reportLang,
   requiredMissing,
 } from '../utils/params';
-import { popTo, pushLevel, startStack } from '../utils/table';
+import { hasDrillCells, popTo, pushLevel, startStack } from '../utils/table';
 import type { DrillLevel, DrillRef, ReportParams } from '../utils/types';
 
 type Mode = 'params' | 'view';
@@ -43,7 +42,11 @@ export default function ReportRunScreen() {
   const [draft, setDraft] = useState<ReportParams | null>(null);
   const [mode, setMode] = useState<Mode>('params');
   const [stack, setStack] = useState<DrillLevel[]>([]);
+  // 0-darajani BERGAN parametrlar: drill shular bilan (keyin tahrirlangan qoralama bilan emas).
+  const [ranParams, setRanParams] = useState<ReportParams | null>(null);
   const run = useRunReport();
+  // Bir vaqtda bitta so'rov: tez ikki bosish ikki daraja qo'shmasin (holat hali yangilanmagan bo'ladi).
+  const busy = useRef(false);
 
   if (catalog.isPending) {
     return (
@@ -93,21 +96,31 @@ export default function ReportRunScreen() {
   const current = stack[stack.length - 1] ?? null;
 
   const generate = async () => {
+    if (busy.current) return;
+    busy.current = true;
+    const used = params;
     try {
-      const table = await run.mutateAsync({ code, body: buildRunBody(params, lang) });
+      const table = await run.mutateAsync({ code, body: buildRunBody(used, lang) });
       setStack(startStack({ drill: null, label: title, table }));
+      setRanParams(used);
       setMode('view');
     } catch (e) {
       toast.error(getApiErrorMessage(e, t('reports.runFailed')));
+    } finally {
+      busy.current = false;
     }
   };
 
   const drill = async (ref: DrillRef, label: string) => {
+    if (busy.current || run.isPending) return;
+    busy.current = true;
     try {
-      const table = await run.mutateAsync({ code, body: buildRunBody(params, lang, ref) });
+      const table = await run.mutateAsync({ code, body: buildRunBody(ranParams ?? params, lang, ref) });
       setStack((s) => pushLevel(s, { drill: ref, label, table }));
     } catch (e) {
       toast.error(getApiErrorMessage(e, t('reports.runFailed')));
+    } finally {
+      busy.current = false;
     }
   };
 
@@ -155,7 +168,8 @@ export default function ReportRunScreen() {
       ) : (
         <View style={styles.view}>
           {stack.length > 1 && (
-            <ChipScroll contentContainerStyle={styles.crumbs} testID="report-crumbs">
+            // O'raladi (gorizontal lentada uzun ism ekran chetida kesilardi).
+            <View style={styles.crumbs} testID="report-crumbs">
               {stack.map((lvl, i) => (
                 <Chip
                   key={i}
@@ -165,13 +179,13 @@ export default function ReportRunScreen() {
                   onPress={() => i < stack.length - 1 && setStack((s) => popTo(s, i))}
                 />
               ))}
-            </ChipScroll>
+            </View>
           )}
           {run.isPending && !current ? (
             <LoadingView />
           ) : current ? (
-            <View style={[styles.flex, run.isPending && styles.busy]}>
-              {defn.drills.length > 0 && (
+            <View style={[styles.flex, run.isPending && styles.busy]} pointerEvents={run.isPending ? 'none' : 'auto'}>
+              {hasDrillCells(current.table) && (
                 <Text variant="caption" tone="subtle" style={styles.hint}>
                   {t('reports.drillHint')}
                 </Text>
@@ -195,7 +209,7 @@ const styles = StyleSheet.create({
   modes: { marginBottom: 12 },
   params: { gap: 12 },
   view: { flex: 1, gap: 8, paddingBottom: 12 },
-  crumbs: { gap: 6 },
+  crumbs: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   flex: { flex: 1 },
   busy: { opacity: 0.6 },
   hint: { marginBottom: 6 },
