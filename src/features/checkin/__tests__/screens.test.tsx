@@ -135,6 +135,30 @@ describe('mobil «Keldim»', () => {
     expect(await screen.findByText(/Noto'g'ri joy/)).toBeTruthy();
   });
 
+  // 2026-10-06: «kadr tasdiqlamasa sababi kesilib tashlanmoqda … bosib ko'ra olsin».
+  it('xodim tarixi: qator bosilsa to\'liq sabab, kim bekor qilgani, joy va xarita; bekor qilish tugmasi YO\'Q', async () => {
+    setUser(emp);
+    const long = "Belgi Chorvoq GES hududidan emas, uydan qo'yilgan — ertaga kadrlar bo'limiga tushuntirish xati bilan keling";
+    const row = ck(31, {
+      status: 'cancelled',
+      cancel_reason: long,
+      cancelled_by: { id: 6, legal_name: 'Kadr Hodimova' },
+      nearest_location: { id: 1, name: 'Chorvoq GES', organization_branch: { id: 9, name: 'Chorvoq filiali' } },
+      accuracy_m: 12,
+    });
+    mock.onGet(MOBILE_CHECKINS_ME_STATUS).reply(200, status({ can_check_in: false, trip: null }));
+    mock.onGet(MOBILE_CHECKINS_ME).reply(200, { items: [row], total: 1, pages: 1 });
+    mock.onGet(`${MOBILE_CHECKINS}/31`).reply(200, row);
+    await renderWithProviders(<CheckinScreen />);
+    await fireEvent.press(await screen.findByTestId('checkin-row-31'));
+    const sheet = await screen.findByTestId('hr-checkin-detail');
+    expect(screen.getByText(long)).toBeTruthy();
+    expect(sheet).toHaveTextContent(/Kadr Hodimova/);
+    expect(sheet).toHaveTextContent(/Chorvoq GES · Chorvoq filiali/);
+    expect(sheet).toHaveTextContent(/±12 m/);
+    expect(screen.queryByTestId('hr-checkin-cancel')).toBeNull();
+  });
+
   it('kadr: ro\'yxat filtrlari serverga, tafsilotdan sabab bilan bekor qilish', async () => {
     setUser(hr);
     const row = ck(21, { employee: { id: 5, legal_name: 'Karimov Vali' }, is_far: true, distance_m: 3200 });

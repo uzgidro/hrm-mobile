@@ -44,6 +44,7 @@ import {
 import { newClientUuid, submitCheckin } from '../lib/queue';
 import { reloadPending } from '../lib/useCheckinQueue';
 import { nextDirection } from '../components/TripCheckinCard';
+import { CheckinDetailSheet } from '../components/CheckinDetailSheet';
 import { checkinPlace, type CheckinDirection, type MobileCheckin } from '../types';
 
 type LocState =
@@ -334,6 +335,7 @@ function SuccessCard({
 function History() {
   const { t } = useTranslation();
   const [page, setPage] = useState(1);
+  const [viewing, setViewing] = useState<number | null>(null);
   const to = dayjs().format('YYYY-MM-DD');
   const from = dayjs().subtract(30, 'day').format('YYYY-MM-DD');
   const q = useQuery(myCheckinsQuery({ dateFrom: from, dateTo: to, page }));
@@ -348,9 +350,11 @@ function History() {
           {t('checkin.historyEmpty')}
         </Text>
       ) : (
-        q.data.items.map((r) => <CheckinRow key={r.id} item={r} />)
+        // Qator bosilsa — to'liq tafsilot (bekor qilish sababi kesilmaydi, joy, masofa, xarita).
+        q.data.items.map((r) => <CheckinRow key={r.id} item={r} onPress={() => setViewing(r.id)} />)
       )}
       <Pager page={page} pages={q.data?.pages ?? 1} onPage={setPage} />
+      {viewing !== null && <CheckinDetailSheet key={viewing} id={viewing} onClose={() => setViewing(null)} />}
     </Card>
   );
 }
@@ -397,6 +401,7 @@ export function CheckinRow({ item, onPress, showName }: { item: MobileCheckin; o
           <Badge label={t('checkin.statusActive')} tone="success" />
         )}
       </View>
+      {!!onPress && <Icon name="chevronRight" size={16} color={c.textMuted} />}
     </View>
   );
   return onPress ? (
