@@ -37,4 +37,5 @@ export default {
   filtersApply: "Natijani ko'rsatish",
   filtersCount: "Filtrlar ({{count}})",
   showAllCount: "Barchasini ko'rsatish ({{count}})",
+  loadMoreCount: "Yana yuklash ({{shown}} / {{total}})",
 } as const;

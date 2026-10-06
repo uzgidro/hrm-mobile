@@ -64,7 +64,7 @@ describe('homeMyLeavesQuery', () => {
     mock.onGet(WORK_LEAVES).reply(200, { items: Array.from({ length: 8 }, (_, i) => ({ id: i })) });
     const data = await (opts.queryFn as () => Promise<unknown[]>)();
     expect(data).toHaveLength(5);
-    expect(mock.history.get[0].params).toEqual({ employee_id: 7, size: 5 });
+    expect(mock.history.get[0].params).toEqual({ employee_id: 7, size: 5, slim: true });
   });
 
   it('slices a bare-array response to 5 as well', async () => {
@@ -92,7 +92,7 @@ describe('homeAssignedLeavesQuery', () => {
     mock.onGet(WORK_LEAVES).reply(200, { items: [{ id: 1 }, { id: 2 }] });
     const data = await (opts.queryFn as () => Promise<unknown[]>)();
     expect(data).toHaveLength(2);
-    expect(mock.history.get[0].params).toEqual({ assigned_signer: true, size: 50 });
+    expect(mock.history.get[0].params).toEqual({ assigned_signer: true, size: 50, slim: true });
   });
 
   it('returns a bare-array response as-is', async () => {

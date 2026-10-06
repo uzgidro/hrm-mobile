@@ -15,6 +15,8 @@ import { formatTashkentDateTime } from '@/utils/tashkentTime';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { DatePickerModal } from '@/components/DatePicker';
 import { PickerModal, type PickerOption } from '@/components/PickerModal';
+import { useEmployeeListPicker } from '@/lib/useInfinitePicker';
+import type { Employee } from '@/types';
 import {
   Avatar,
   Badge,
@@ -32,7 +34,7 @@ import {
   Skeleton,
   Text,
 } from '@/ui';
-import { auditBranchesQuery, auditLogsQuery, auditStatsQuery, auditUserSearchQuery } from '../api/queries';
+import { auditBranchesQuery, auditLogsQuery, auditStatsQuery } from '../api/queries';
 import { AuditDetailSheet } from '../components/AuditDetailSheet';
 import { OnlineNowCard } from '../components/OnlineNowCard';
 import {
@@ -72,7 +74,9 @@ export default function AuditLogScreen() {
   const list = useQuery(auditLogsQuery(auditParams(filters, debounced), page, !rangeInvalid));
   const denied = list.isError && !list.data && isAxiosError(list.error) && list.error.response?.status === 403;
   const stats = useQuery(auditStatsQuery(auditParams(filters, debounced, false), !rangeInvalid && !denied));
-  const users = useQuery(auditUserSearchQuery(userQuery, picker === 'user'));
+  // Sahifalab (2026-10-06): ilgari 20 ta. Logini yo'q xodim jurnalda bo'lmaydi — tashlanadi (v2).
+  const userPicker = useEmployeeListPicker<Employee & { user_id?: number | null }>({ key: 'audit-users', search: userQuery, enabled: picker === 'user' });
+  const users = { ...userPicker, data: userPicker.data.filter((e) => e.user_id != null) };
   const branches = useQuery(auditBranchesQuery(picker === 'branch' || filters.branchId != null));
 
   const patch = (p: Partial<AuditFilters>) => {
@@ -118,7 +122,7 @@ export default function AuditLogScreen() {
             value: e.user_id as number,
             label: e.legal_name || `#${e.id}`,
             subLabel: e.job_position?.name ?? undefined,
-            photo: e.photo_path,
+            photo: e.photo_path, photoThumb: e.photo_thumb_path,
           })),
         ],
         selected: filters.userId ?? ALL,
@@ -392,6 +396,8 @@ export default function AuditLogScreen() {
           title={pc.title}
           options={pc.options}
           loading={picker === 'user' ? users.isFetching : picker === 'branch' ? branches.isFetching : false}
+          loadingMore={picker === 'user' ? users.loadingMore : false}
+          onEndReached={picker === 'user' ? users.onEndReached : undefined}
           selected={pc.selected}
           onClose={() => setPicker(null)}
           onSelect={onPick}

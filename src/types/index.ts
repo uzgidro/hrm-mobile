@@ -100,6 +100,8 @@ export interface Employee {
   id: number;
   legal_name: string;
   photo_path?: string;
+  /** 160×160 nusxa — ro'yxat avatarlari uchun (Avatar `thumb`). */
+  photo_thumb_path?: string | null;
   birth_date?: string;
   email?: string;
   phone_number?: string;
@@ -617,6 +619,7 @@ export interface EmployeeBirthday {
   legal_name: string;
   birth_date?: string;
   photo_path?: string;
+  photo_thumb_path?: string | null;
   days_left: number;
   job_position?: { id: number; name: string };
 }
@@ -625,6 +628,7 @@ export interface EmployeeBirthday {
 export interface Visitor {
   id: number;
   legal_name?: string;
+  photo_thumb_path?: string | null;
   personal_identification_number?: string;
   organization_name?: string;
   job_position?: string;

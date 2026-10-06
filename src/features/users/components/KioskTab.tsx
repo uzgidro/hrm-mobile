@@ -44,7 +44,7 @@ export function KioskTab({ branchId }: { branchId: number | null }) {
       <ListRow
         key={r.id}
         testID={`kiosk-row-${r.id}`}
-        left={<Avatar name={r.legal_name || r.username || '?'} uri={r.photo_thumb_path || r.photo_path} size={36} />}
+        left={<Avatar name={r.legal_name || r.username || '?'} uri={r.photo_path} thumb={r.photo_thumb_path} size={36} />}
         title={r.legal_name || r.username || '—'}
         subtitle={[r.username, branchesLabel(r)].filter(Boolean).join(' · ')}
         below={compact ? <View style={styles.below}>{roleBadge(r)}</View> : undefined}

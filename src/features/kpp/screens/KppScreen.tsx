@@ -5,7 +5,7 @@
 import React, { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import dayjs from 'dayjs';
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeProvider';
@@ -16,6 +16,7 @@ import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import {
   Avatar,
   Badge,
+  Button,
   Bento,
   Card,
   EmptyState,
@@ -28,6 +29,7 @@ import {
   Skeleton,
   Text,
 } from '@/ui';
+import { flattenPages, pagesTotal } from '@/lib/pagedList';
 import { kppVisitorsQuery, visitorEventsQuery, type VisitFilter } from '../api/queries';
 import { countPasses, groupVisitorsByDay, kppBranchId, NO_VISIT } from '../utils/kpp';
 
@@ -57,10 +59,12 @@ export default function KppScreen({ showBack = false }: { showBack?: boolean } =
   const [visit, setVisit] = useState<VisitFilter>('all');
   const [selected, setSelected] = useState<{ id: number; name: string } | null>(null);
 
-  const visitorsQ = useQuery(kppVisitorsQuery({ search: debounced, visit, branchId }));
+  const visitorsQ = useInfiniteQuery(kppVisitorsQuery({ search: debounced, visit, branchId }));
+  const visitors = useMemo(() => flattenPages(visitorsQ.data?.pages), [visitorsQ.data]);
+  const visitorsTotal = pagesTotal(visitorsQ.data?.pages) ?? visitors.length;
   const eventsQ = useQuery(visitorEventsQuery(today, selected?.id ?? null));
   const events = eventsQ.data ?? [];
-  const groups = useMemo(() => groupVisitorsByDay(visitorsQ.data ?? []), [visitorsQ.data]);
+  const groups = useMemo(() => groupVisitorsByDay(visitors), [visitors]);
   const passes = countPasses(events);
 
   const dayLabel = (key: string) => {
@@ -111,7 +115,7 @@ export default function KppScreen({ showBack = false }: { showBack?: boolean } =
                     testID={`kpp-guest-${v.id}`}
                     title={v.legal_name ?? '—'}
                     subtitle={sub}
-                    left={<Avatar name={v.legal_name ?? '?'} uri={v.photo_path} size={36} />}
+                    left={<Avatar name={v.legal_name ?? '?'} uri={v.photo_path} thumb={v.photo_thumb_path} size={36} />}
                     right={
                       v.last_visit_time ? (
                         <View style={styles.right}>
@@ -133,6 +137,15 @@ export default function KppScreen({ showBack = false }: { showBack?: boolean } =
             })}
           </View>
         ))
+      )}
+      {visitorsQ.hasNextPage && (
+        <Button
+          testID="kpp-guests-more"
+          label={t('common.loadMoreCount', { shown: visitors.length, total: visitorsTotal })}
+          variant="link"
+          loading={visitorsQ.isFetchingNextPage}
+          onPress={() => void visitorsQ.fetchNextPage()}
+        />
       )}
     </Card>
   );
@@ -164,7 +177,7 @@ export default function KppScreen({ showBack = false }: { showBack?: boolean } =
               key={String(e.event_id ?? e.id ?? i)}
               title={name}
               subtitle={e.turnstile?.display_name || e.turnstile?.acs_dev_name || undefined}
-              left={<Avatar name={name} uri={e.visitor?.photo_path} size={32} />}
+              left={<Avatar name={name} uri={e.visitor?.photo_path} thumb={e.visitor?.photo_thumb_path} size={32} />}
               right={
                 <View style={styles.right}>
                   <Text variant="label" style={styles.time}>

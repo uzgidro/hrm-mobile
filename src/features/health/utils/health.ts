@@ -13,6 +13,7 @@ export interface HealthRosterRow {
   check_id?: number | null;
   legal_name?: string | null;
   photo_path?: string | null;
+  photo_thumb_path?: string | null;
   position?: string | null;
   status?: string | null;
   label?: string | null;

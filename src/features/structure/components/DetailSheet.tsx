@@ -48,7 +48,7 @@ export function DepartmentDetail({
             <View style={styles.heads}>
               {heads.map((h) => (
                 <View key={h.id} style={styles.head}>
-                  <Avatar name={h.legal_name ?? '?'} uri={h.photo_thumb_path ?? h.photo_path} size={28} />
+                  <Avatar name={h.legal_name ?? '?'} uri={h.photo_path} thumb={h.photo_thumb_path} size={28} />
                   <Text variant="body">{h.legal_name ?? '—'}</Text>
                 </View>
               ))}

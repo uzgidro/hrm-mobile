@@ -229,7 +229,7 @@ function RequestRow({ r, onPress }: { r: VehicleRequest; onPress: () => void }) 
       style={({ pressed }) => [styles.req, { borderBottomColor: c.border }, pressed && { opacity: 0.7 }]}
     >
       <View style={styles.reqHead}>
-        <Avatar name={r.employee_name || '?'} uri={r.employee_photo_thumb_path || r.employee_photo_path} size={28} />
+        <Avatar name={r.employee_name || '?'} uri={r.employee_photo_path} thumb={r.employee_photo_thumb_path} size={28} />
         <Text variant="body" weight="600" numberOfLines={1} style={styles.flex}>
           {r.employee_name || '—'}
         </Text>

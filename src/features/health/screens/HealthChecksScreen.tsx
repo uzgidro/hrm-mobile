@@ -168,7 +168,7 @@ export default function HealthChecksScreen() {
         <ListRow
           key={r.employee_id}
           testID={`health-row-${r.employee_id}`}
-          left={<Avatar name={r.legal_name || '?'} uri={r.photo_path} size={40} />}
+          left={<Avatar name={r.legal_name || '?'} uri={r.photo_path} thumb={r.photo_thumb_path} size={40} />}
           title={r.legal_name || '—'}
           subtitle={subtitle || undefined}
           // Telefonda nishon ism ostida — o'ng ustunda ismni «Amirsaidov B…» gacha qisardi.

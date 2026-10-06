@@ -15,7 +15,8 @@ import { radii } from '@/theme/tokens';
 import { isSiteMasterAdmin } from '@/utils/roles';
 import { PickerModal } from '@/components/PickerModal';
 import { Avatar, Badge, Button, EmptyState, IconButton, ListRow, SelectField, Sheet, Skeleton, Text } from '@/ui';
-import { branchLeadersQuery, leaderCandidatesQuery } from '../api/queries';
+import { useEmployeeListPicker } from '@/lib/useInfinitePicker';
+import { branchLeadersQuery } from '../api/queries';
 import { useSaveLeaders } from '../api/mutations';
 import {
   addPending,
@@ -56,7 +57,13 @@ export function LeadersSheet({ branch, onClose }: { branch: TabelBranch; onClose
   const [error, setError] = useState<string | null>(null);
 
   const crossBranch = isSiteMasterAdmin(user) && role === 'akt';
-  const candidates = useQuery(leaderCandidatesQuery(branch.id, search, crossBranch, picker?.kind === 'employee'));
+  // Sahifalab (2026-10-06): ilgari faqat 20 ta nomzod — qidiruvsiz qolganlari ko'rinmasdi.
+  const candidates = useEmployeeListPicker<PickedEmployee & { photo_thumb_path?: string | null }>({
+    key: 'tabel-leader-candidates',
+    search,
+    enabled: picker?.kind === 'employee',
+    params: crossBranch ? undefined : { organization_branch_id: branch.id },
+  });
   const roleName = (r: string) => {
     const key = roleLabelKey(r);
     return key ? t(key) : r;
@@ -113,7 +120,7 @@ export function LeadersSheet({ branch, onClose }: { branch: TabelBranch; onClose
           testID={`leader-row-${key}`}
           title={name}
           subtitle={l.employee?.job_position?.name ?? undefined}
-          left={<Avatar name={name} uri={l.employee?.photo_thumb_path || l.employee?.photo_path} size={36} />}
+          left={<Avatar name={name} uri={l.employee?.photo_path} thumb={l.employee?.photo_thumb_path} size={36} />}
           below={
             <View style={styles.badges}>
               <Badge label={roleName(l.leadership_role)} tone="info" />
@@ -201,12 +208,14 @@ export function LeadersSheet({ branch, onClose }: { branch: TabelBranch; onClose
         <PickerModal
           visible
           title={t('tabelSettings.leaderSelectEmp')}
-          loading={candidates.isPending}
+          loading={candidates.isLoading}
+          loadingMore={candidates.loadingMore}
+          onEndReached={candidates.onEndReached}
           options={(candidates.data ?? []).map((e) => ({
             value: e.id,
             label: e.legal_name || `#${e.id}`,
             subLabel: typeof e.job_position === 'object' ? (e.job_position?.name ?? undefined) : undefined,
-            photo: e.photo_thumb_path || e.photo_path,
+            photo: e.photo_path, photoThumb: e.photo_thumb_path,
           }))}
           selected={employee?.id ?? null}
           onSearchChange={setSearch}

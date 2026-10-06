@@ -1,8 +1,9 @@
 import { useMemo, useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, Modal, TextInput, FlatList,
-  TouchableOpacity, Image, ActivityIndicator,
+  TouchableOpacity, ActivityIndicator, type ImageStyle,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
@@ -12,12 +13,21 @@ import { Icon } from './Icon';
 import { useBreakpoint } from '../utils/responsive';
 import { KeyboardAvoider } from './KeyboardAvoider';
 import { useDebouncedValue } from '../lib/useDebouncedValue';
+import { useThumbFallback } from '../lib/useThumbFallback';
 
 export interface PickerOption {
   value: number;
   label: string;
   subLabel?: string;
   photo?: string | null;
+  /** Kichik nusxa (`photo_thumb_path`) — bo'lsa shu yuklanadi, xatoda `photo` ga qaytadi. */
+  photoThumb?: string | null;
+}
+
+// expo-image (xotira+disk keshi) + kichik nusxa: 50 qatorlik sahifa ~1.35 MB → ~80 KB.
+function PickerPhoto({ thumb, full, style }: { thumb?: string | null; full?: string | null; style: ImageStyle }) {
+  const { uri, onError } = useThumbFallback(thumb, full);
+  return uri ? <Image source={{ uri }} onError={onError} style={style} cachePolicy="memory-disk" /> : null;
 }
 
 interface Props {
@@ -138,8 +148,8 @@ export function PickerModal({
                       else onSelect(item.value);
                     }}
                   >
-                    {!avatars ? null : item.photo ? (
-                      <Image source={{ uri: item.photo }} style={styles.photo} />
+                    {!avatars ? null : item.photo || item.photoThumb ? (
+                      <PickerPhoto thumb={item.photoThumb} full={item.photo} style={styles.photo} />
                     ) : (
                       <View style={styles.photoPlaceholder}>
                         <Text style={styles.photoInitial}>{item.label.charAt(0).toUpperCase()}</Text>

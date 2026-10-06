@@ -160,7 +160,7 @@ export default function VehicleProfileScreen() {
           >
             <Avatar
               name={v.driver.legal_name ?? '?'}
-              uri={v.driver.photo_thumb_path || v.driver.photo_path}
+              uri={v.driver.photo_path} thumb={v.driver.photo_thumb_path}
               size={38}
             />
             <View style={styles.flex}>

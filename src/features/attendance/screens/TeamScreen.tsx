@@ -207,7 +207,7 @@ export default function TeamScreen() {
               // The raw `type` is an untranslated preset value — show its label.
               title={leave.type ? leaveTypeLabel(t, leave.type) : t('attendance.requestFallback')}
               subtitle={`${leaveRangeText(leave.start_date, leave.end_date)} · ${leave.employee?.legal_name ?? '—'}`}
-              left={<Avatar name={leave.employee?.legal_name ?? '?'} uri={leave.employee?.photo_path} size={40} />}
+              left={<Avatar name={leave.employee?.legal_name ?? '?'} uri={leave.employee?.photo_path} thumb={leave.employee?.photo_thumb_path} size={40} />}
               right={<Badge label={t(`attendance.status.${group}`)} tone={STATUS_TONE[group]} />}
               onPress={() => router.push({ pathname: '/leave-detail', params: { id: leave.id } })}
             />
@@ -279,7 +279,7 @@ export default function TeamScreen() {
             key={emp.id}
             title={emp.legal_name}
             subtitle={emp.job_position?.name ?? '—'}
-            left={<Avatar name={emp.legal_name} uri={emp.photo_path} size={40} />}
+            left={<Avatar name={emp.legal_name} uri={emp.photo_path} thumb={emp.photo_thumb_path} size={40} />}
             right={
               <View style={styles.bday}>
                 <Text variant="caption" tone="muted">

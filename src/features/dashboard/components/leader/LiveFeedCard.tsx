@@ -59,7 +59,7 @@ export function LiveFeedCard({ board, loading, limit = 8 }: { board: HydratedBoa
                       .join(' · ')
                   : (e.employee?.job_position?.name ?? e.turnstile_name)
               }
-              left={<Avatar name={name} uri={e.employee?.photo_path} size={36} />}
+              left={<Avatar name={name} uri={e.employee?.photo_path} thumb={e.employee?.photo_thumb_path} size={36} />}
               right={
                 <View style={styles.right}>
                   <Text variant="label" style={styles.time}>

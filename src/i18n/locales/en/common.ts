@@ -35,4 +35,5 @@ export default {
   filtersApply: "Show results",
   filtersCount: "Filters ({{count}})",
   showAllCount: "Show all ({{count}})",
+  loadMoreCount: "Load more ({{shown}} / {{total}})",
 } as const;

@@ -58,6 +58,9 @@ export function workLeavesServerParams(p: LeavesListParams): ListParams {
   // Meni kutayotgan (imzom kerak) so'rovlar har doim tepada — menyu raqami bilan bir xil
   // shart (backend 0191286, WorkLeaveService.awaiting_me_clause). Eski server e'tiborsiz qoldiradi.
   out.action_first = true;
+  // Yengil qator (backend 4148f4b, `WorkLeaveListItem`): ~6.8 KB → ~2.4 KB. Kartochka to'liq
+  // javobni `GET /work-leaves/{id}` dan oladi.
+  out.slim = true;
   if (p.month) {
     const start = dayjs(`${p.month}-01`);
     out.date_from = start.format('YYYY-MM-DD');

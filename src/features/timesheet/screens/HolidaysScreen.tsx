@@ -93,7 +93,7 @@ export default function HolidaysScreen() {
                 <ListRow
                   key={emp.id}
                   title={emp.legal_name ?? '—'}
-                  left={<Avatar name={emp.legal_name ?? '?'} uri={emp.photo_thumb_path ?? emp.photo_path} size={36} />}
+                  left={<Avatar name={emp.legal_name ?? '?'} uri={emp.photo_path} thumb={emp.photo_thumb_path} size={36} />}
                 />
               ))}
             </Card>

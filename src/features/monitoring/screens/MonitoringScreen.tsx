@@ -166,7 +166,7 @@ export default function MonitoringScreen({ showBack = false }: { showBack?: bool
               key={`${r.employee_id}-${r.happen_time}`}
               title={name}
               subtitle={r.employee?.job_position?.name ?? r.employee?.department?.name ?? undefined}
-              left={<Avatar name={name} uri={r.employee?.photo_path} size={34} />}
+              left={<Avatar name={name} uri={r.employee?.photo_path} thumb={r.employee?.photo_thumb_path} size={34} />}
               right={
                 <View style={styles.right}>
                   <Text variant="label" style={styles.time}>
@@ -209,7 +209,7 @@ export default function MonitoringScreen({ showBack = false }: { showBack?: bool
               key={r.employee_id ?? i}
               title={name}
               subtitle={r.job_position_name ?? r.department_name ?? undefined}
-              left={<Avatar name={name} uri={r.photo_path} size={34} />}
+              left={<Avatar name={name} uri={r.photo_path} thumb={r.photo_thumb_path} size={34} />}
               right={<Badge label={t('monitoring.lateCount', { count: r.late_count ?? 0 })} tone="danger" />}
             />
           );
@@ -237,7 +237,7 @@ export default function MonitoringScreen({ showBack = false }: { showBack?: bool
               key={String(e.event_id ?? e.id ?? i)}
               title={name}
               subtitle={e.turnstile?.display_name || e.turnstile?.acs_dev_name || undefined}
-              left={<Avatar name={name} uri={e.visitor?.photo_path} size={34} />}
+              left={<Avatar name={name} uri={e.visitor?.photo_path} thumb={e.visitor?.photo_thumb_path} size={34} />}
               right={
                 <View style={styles.right}>
                   <Text variant="label" style={styles.time}>

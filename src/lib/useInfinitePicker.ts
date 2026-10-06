@@ -56,14 +56,14 @@ export function useEmployeeOptionsPicker(search: string, opts: { enabled?: boole
  * `isLoading`) qaytaradi, ustiga `onEndReached` / `loadingMore`. Eski «size: 30» tanlagichlar
  * shu bilan almashtirildi (birinchi 30 xodimdan keyingilari ko'rinmasdi).
  */
-export function useEmployeeListPicker(opts: {
+export function useEmployeeListPicker<T = Employee>(opts: {
   key: string;
   search: string;
   enabled: boolean;
   params?: ListParams;
 }) {
   const q = opts.search.trim();
-  const p = useInfinitePicker<Employee>({
+  const p = useInfinitePicker<T>({
     queryKey: [opts.key, 'employee-picker', 'infinite', q, opts.params ?? null],
     url: EMPLOYEES_LIST,
     params: { ...(opts.params ?? {}), search: q || undefined },

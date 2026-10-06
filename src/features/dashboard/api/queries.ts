@@ -93,7 +93,7 @@ export function homeMyLeavesQuery(employeeId: number | undefined) {
     queryKey: ['work-leaves', 'home', 'mine', employeeId ?? null] as const,
     queryFn: () =>
       apiClient
-        .get(WORK_LEAVES, { params: { employee_id: employeeId, size: 5 } })
+        .get(WORK_LEAVES, { params: { employee_id: employeeId, size: 5, slim: true } })
         .then((r) => unwrapList<WorkLeave>(r.data).slice(0, 5)),
     // Xodim kartasi yo'q akkaunt (admin, mehmon) — so'rov yo'q.
     enabled: !!employeeId,
@@ -110,7 +110,7 @@ export function homeAssignedLeavesQuery(employeeId: number | undefined) {
     queryKey: ['work-leaves', 'home', 'assigned', employeeId ?? null] as const,
     queryFn: () =>
       apiClient
-        .get(WORK_LEAVES, { params: { assigned_signer: true, size: 50 } })
+        .get(WORK_LEAVES, { params: { assigned_signer: true, size: 50, slim: true } })
         .then((r) => unwrapList<WorkLeave>(r.data)),
     staleTime: 30 * 1000,
   });

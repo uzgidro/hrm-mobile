@@ -60,10 +60,10 @@ export default function SubmitReportScreen() {
   );
   const effectiveManagerId = managerId ?? currentManagerId;
   const managerOptions = useMemo(() => {
-    const opts = managers.map((e) => ({ value: e.id, label: e.legal_name ?? '', subLabel: employeeSubLabel(e), photo: e.photo_path }));
+    const opts = managers.map((e) => ({ value: e.id, label: e.legal_name ?? '', subLabel: employeeSubLabel(e), photo: e.photo_path, photoThumb: e.photo_thumb_path }));
     // Joriy rahbar ro'yxatda bo'lmasa ham ko'rinsin (boshqa filial rahbari).
     if (currentManagerId && !opts.some((o) => o.value === currentManagerId)) {
-      opts.unshift({ value: currentManagerId, label: currentManager?.employee?.legal_name ?? '—', subLabel: '', photo: currentManager?.employee?.photo_path });
+      opts.unshift({ value: currentManagerId, label: currentManager?.employee?.legal_name ?? '—', subLabel: '', photo: currentManager?.employee?.photo_path, photoThumb: currentManager?.employee?.photo_thumb_path });
     }
     return opts;
   }, [managers, currentManagerId, currentManager]);

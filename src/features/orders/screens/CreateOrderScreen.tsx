@@ -167,7 +167,7 @@ export default function CreateOrderScreen() {
   // Stable per language so the memoised option lists below re-map on a
   // language switch (the fallback label is translated) and on nothing else.
   const empOption = useCallback((e: Employee): PickerOption => ({
-    value: e.id, label: e.legal_name || t('status.unknown'), subLabel: employeeSubLabel(e), photo: e.photo_path ?? null,
+    value: e.id, label: e.legal_name || t('status.unknown'), subLabel: employeeSubLabel(e), photo: e.photo_path ?? null, photoThumb: e.photo_thumb_path,
   }), [t]);
   const employeeOptions = useMemo(() => (empData?.items ?? []).map(empOption), [empData, empOption]);
   const leadershipOptions = useMemo(() => leadership.map(empOption), [leadership, empOption]);

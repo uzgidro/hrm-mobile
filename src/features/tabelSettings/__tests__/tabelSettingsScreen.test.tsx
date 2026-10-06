@@ -211,7 +211,8 @@ describe('TabelSettingsScreen (v2 TabelSettingsPage)', () => {
     await waitFor(() => expect(mock.history.get.some((r) => r.url === EMPLOYEES_LIST)).toBe(true));
     expect(mock.history.get.find((r) => r.url === EMPLOYEES_LIST)?.params).toEqual({
       organization_branch_id: 2,
-      size: 20,
+      page: 1,
+      size: 50,
     });
     await fireEvent.press(await screen.findByText('Olim Sobirov'));
     await fireEvent.press(screen.getByTestId('leader-add'));
@@ -233,7 +234,8 @@ describe('TabelSettingsScreen (v2 TabelSettingsPage)', () => {
     await fireEvent.press(screen.getByTestId('leader-employee'));
     await waitFor(() =>
       expect(mock.history.get.filter((r) => r.url === EMPLOYEES_LIST).map((r) => r.params)).toContainEqual({
-        size: 20,
+        page: 1,
+        size: 50,
       }),
     );
     await fireEvent.press((await screen.findAllByText('Olim Sobirov')).slice(-1)[0]!);

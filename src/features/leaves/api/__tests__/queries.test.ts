@@ -63,7 +63,7 @@ describe('workLeavesServerParams (web v2 leaveListParams)', () => {
   });
   it('mine: NO scope param — never employee_id / assigned_signer (server default = filed by me OR mine to decide)', () => {
     const p = workLeavesServerParams({ scope: 'mine', status: 'pending', search: ' ali ' });
-    expect(p).toEqual({ status: 'pending', search: 'ali', action_first: true });
+    expect(p).toEqual({ status: 'pending', search: 'ali', action_first: true, slim: true });
     expect(p).not.toHaveProperty('employee_id');
     expect(p).not.toHaveProperty('assigned_signer');
     expect(workLeavesServerParams({ scope: 'mine', status: 'all' }).status).toBeUndefined();
@@ -96,7 +96,7 @@ describe('leavesListQuery (server-paged)', () => {
     expect(opts.queryKey.slice(0, 1)).toEqual(leaveKeys.all);
     mock.onGet(WORK_LEAVES).reply(200, { items: [{ id: 1 }], total: 1, page: 1, size: 30, pages: 1 });
     const page = await (opts.queryFn as unknown as PageFn)({ pageParam: 1 });
-    expect(mock.history.get[0].params).toEqual({ supervised: true, status: 'pending', action_first: true, page: 1, size: 30 });
+    expect(mock.history.get[0].params).toEqual({ supervised: true, status: 'pending', action_first: true, slim: true, page: 1, size: 30 });
     expect(page.items).toEqual([{ id: 1 }]);
   });
 

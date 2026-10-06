@@ -220,7 +220,7 @@ export default function CreateLetterScreen() {
 
   // ── Options ──────────────────────────────────────────────────────────────────
   const empOption = useCallback(
-    (e: Employee): PickerOption => ({ value: e.id, label: e.legal_name || t('status.unknown'), subLabel: employeeSubLabel(e), photo: e.photo_path ?? null }),
+    (e: Employee): PickerOption => ({ value: e.id, label: e.legal_name || t('status.unknown'), subLabel: employeeSubLabel(e), photo: e.photo_path ?? null, photoThumb: e.photo_thumb_path }),
     [t]
   );
   const signerOptions = useMemo(() => signerEmps.map(empOption), [signerEmps, empOption]);

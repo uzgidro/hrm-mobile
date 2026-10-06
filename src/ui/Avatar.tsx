@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { useTheme } from '@/theme/ThemeProvider';
 import { moduleTint, type ModuleTintKey } from '@/theme/tokens';
+import { useThumbFallback } from '@/lib/useThumbFallback';
 import { Text } from './Text';
 
 export function initials(name: string): string {
@@ -23,13 +24,16 @@ function tintFor(name: string): ModuleTintKey {
   return TINTS[Math.abs(h) % TINTS.length]!;
 }
 
-export function Avatar({ name, uri, size = 40 }: { name: string; uri?: string | null; size?: number }) {
+/** `thumb` — kichik nusxa (`photo_thumb_path`): bo'lsa shu yuklanadi, xatoda `uri` ga qaytadi. */
+export function Avatar({ name, uri: full, thumb, size = 40 }: { name: string; uri?: string | null; thumb?: string | null; size?: number }) {
   const { colors: c } = useTheme();
+  const { uri, onError } = useThumbFallback(thumb, full);
   const box = { width: size, height: size, borderRadius: size / 2 };
   if (uri) {
     return (
       <Image
         source={{ uri }}
+        onError={onError}
         style={[box, { backgroundColor: c.surface2 }]}
         contentFit="cover"
         accessibilityLabel={name}

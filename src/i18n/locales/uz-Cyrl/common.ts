@@ -35,4 +35,5 @@ export default {
   filtersApply: "Натижани кўрсатиш",
   filtersCount: "Филтрлар ({{count}})",
   showAllCount: "Барчасини кўрсатиш ({{count}})",
+  loadMoreCount: "Яна юклаш ({{shown}} / {{total}})",
 } as const;

@@ -120,7 +120,7 @@ export default function TempOrdersScreen() {
                           ? `${range.text} – ${t('tempOrders.openEnded')}`
                           : range.text
                     }
-                    left={<Avatar name={name} uri={r.employee?.photo_thumb_path ?? r.employee?.photo_path} size={36} />}
+                    left={<Avatar name={name} uri={r.employee?.photo_path} thumb={r.employee?.photo_thumb_path} size={36} />}
                     right={
                       <Badge
                         label={r.type ? t(`tempOrders.type_${r.type}`, { defaultValue: r.type }) : '—'}
