@@ -26,8 +26,24 @@ export interface RosterEmployee {
   legal_name?: string | null;
   photo_path?: string | null;
   photo_thumb_path?: string | null;
-  job_position?: { id?: number; name?: string | null } | null;
+  /** `razryad` — by-category (backend 943ffd4) va /normalized (to'liq lavozim) beradi. */
+  job_position?: { id?: number; name?: string | null; razryad?: number | null } | null;
   department?: { id?: number; name?: string | null } | null;
+}
+
+/**
+ * «Mening bo'limim» tartibi (foydalanuvchi 2026-10-06): lavozim razryadi kamayish bo'yicha
+ * (rahbar tepada), razryadsizlar oxirida, keyin ism — backend `sort_by_razryad` bilan bir qoida.
+ */
+export function compareByRazryad(a: RosterRow, b: RosterRow): number {
+  const ra = a.employee.job_position?.razryad;
+  const rb = b.employee.job_position?.razryad;
+  if (ra != null || rb != null) {
+    if (ra == null) return 1;
+    if (rb == null) return -1;
+    if (ra !== rb) return rb - ra;
+  }
+  return (a.employee.legal_name ?? '').localeCompare(b.employee.legal_name ?? '');
 }
 
 export interface RosterRow {

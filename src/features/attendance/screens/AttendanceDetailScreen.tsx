@@ -11,7 +11,7 @@ import { usePrefsStore } from '@/store/prefsStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { ff } from '@/theme/typography';
-import { type AttendanceStatus, type RosterRow as RosterRowData } from '@/utils/attendanceRoster';
+import { compareByRazryad, type AttendanceStatus, type RosterRow as RosterRowData } from '@/utils/attendanceRoster';
 import { matchesQuery } from '@/utils/searchFold';
 import { useDayRoster } from '@/lib/useDayRoster';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
@@ -78,8 +78,13 @@ export default function AttendanceDetailScreen({ embedded = false }: { embedded?
       matchesQuery(query, r.employee.legal_name, r.employee.job_position?.name, r.employee.department?.name),
     [scope, myDeptId, query],
   );
-  const scopedRows = useMemo(() => rows.filter(inScope), [rows, inScope]);
-  const scopedDayOff = useMemo(() => dayOff.filter(inScope), [dayOff, inScope]);
+  // «Mening bo'limim» — razryad bo'yicha (rahbar tepada); filial ro'yxati alifbo tartibida qoladi.
+  const order = useCallback(
+    (list: RosterRowData[]) => (scope === 'department' ? [...list].sort(compareByRazryad) : list),
+    [scope],
+  );
+  const scopedRows = useMemo(() => order(rows.filter(inScope)), [rows, inScope, order]);
+  const scopedDayOff = useMemo(() => order(dayOff.filter(inScope)), [dayOff, inScope, order]);
   const counts = useMemo(() => rosterCounts(scopedRows), [scopedRows]);
   // One alphabetical list; the donut zone (sectionFilter) narrows it.
   const visibleRows = useMemo(
