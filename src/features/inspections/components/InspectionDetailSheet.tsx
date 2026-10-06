@@ -99,7 +99,7 @@ export function InspectionDetailSheet({ id, onClose }: { id: number; onClose: ()
   const open = r && !['completed', 'cancelled'].includes(r.status);
 
   return (
-    <Sheet visible onClose={onClose} title={r?.title ?? t('inspections.title')}>
+    <Sheet scroll visible onClose={onClose} title={r?.title ?? t('inspections.title')}>
       {q.isError ? (
         <ErrorState onRetry={() => q.refetch()} />
       ) : !r ? (

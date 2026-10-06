@@ -56,7 +56,7 @@ export function StaffDetailSheet({
   const contact = [row.contact_person, row.contact_phone, row.contact_email].filter(Boolean).join(' · ');
 
   return (
-    <Sheet visible onClose={onClose} title={`${row.department_name ?? '—'} · ${row.job_position_name ?? '—'}`}>
+    <Sheet scroll visible onClose={onClose} title={`${row.department_name ?? '—'} · ${row.job_position_name ?? '—'}`}>
       <View style={styles.body}>
         <View style={styles.badges}>
           <Badge label={t(st.key)} tone={st.tone} />

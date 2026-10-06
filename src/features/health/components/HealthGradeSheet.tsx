@@ -69,7 +69,7 @@ export function HealthGradeSheet({ row, day, onClose }: { row: HealthRosterRow; 
   };
 
   return (
-    <Sheet visible onClose={onClose} title={row.legal_name || '—'}>
+    <Sheet scroll visible onClose={onClose} title={row.legal_name || '—'}>
       <View style={styles.form}>
         {!!row.position && (
           <Text variant="caption" tone="subtle">

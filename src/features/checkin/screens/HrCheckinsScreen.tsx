@@ -3,7 +3,7 @@
 // filiallari; uzoqdan belgi rad etilmaydi, shu yerda «Uzoqdan» bo'lib ko'rinadi va kerak bo'lsa
 // sabab bilan bekor qilinadi (davomatdagi hodisa o'chadi, xodimga xabar boradi).
 import React, { useState } from 'react';
-import { Linking, StyleSheet, View } from 'react-native';
+import { Linking, ScrollView, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -148,7 +148,14 @@ function CheckinDetailSheet({ id, onClose }: { id: number; onClose: () => void }
       ) : !r ? (
         <Skeleton height={260} />
       ) : (
-        <View style={styles.sheet} testID="hr-checkin-detail">
+        // Varaqda skroll yo'q — haqiqiy surat + bekor qilish formasi bilan tasdiq tugmasi ekrandan
+        // tashqarida qolardi (jonli sinov 2026-10-06).
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.sheet}
+          keyboardShouldPersistTaps="handled"
+          testID="hr-checkin-detail"
+        >
           {!!(r.photo_path || r.photo_thumb_path) && (
             <Image source={{ uri: r.photo_path || r.photo_thumb_path! }} style={styles.photo} contentFit="cover" />
           )}
@@ -216,7 +223,7 @@ function CheckinDetailSheet({ id, onClose }: { id: number; onClose: () => void }
                 onPress={() => setCancelling(true)}
               />
             ))}
-        </View>
+        </ScrollView>
       )}
     </Sheet>
   );
@@ -227,7 +234,8 @@ const styles = StyleSheet.create({
   filters: { gap: 10, marginBottom: 12 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   sheet: { gap: 10 },
-  photo: { width: '100%', aspectRatio: 3 / 4, maxHeight: 360, borderRadius: 16 },
+  photo: { width: '100%', height: 240, borderRadius: 16 },
+  scroll: { flexShrink: 1 },
   badges: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   kv: { flexDirection: 'row', justifyContent: 'space-between', gap: 12 },
   kvValue: { flexShrink: 1, textAlign: 'right' },

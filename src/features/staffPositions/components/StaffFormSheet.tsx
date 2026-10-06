@@ -62,7 +62,7 @@ export function StaffFormSheet({
   const pickList = picker === 'dept' ? departments : positions;
 
   return (
-    <Sheet visible onClose={onClose} title={isEdit ? t('staff.editRow') : t('staff.newRow')}>
+    <Sheet scroll visible onClose={onClose} title={isEdit ? t('staff.editRow') : t('staff.newRow')}>
       <View style={styles.form}>
         {isEdit ? (
           <Text

@@ -92,7 +92,7 @@ export function ServiceDetailSheet({
   const next = r ? nextStates(r.status) : [];
 
   return (
-    <Sheet visible onClose={onClose} title={r?.number ?? t('services.request')}>
+    <Sheet scroll visible onClose={onClose} title={r?.number ?? t('services.request')}>
       {q.isError ? (
         <ErrorState onRetry={() => q.refetch()} />
       ) : !r ? (

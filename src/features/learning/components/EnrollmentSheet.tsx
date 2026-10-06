@@ -37,7 +37,7 @@ export function EnrollmentSheet({ id, onClose }: { id: number; onClose: () => vo
   };
 
   return (
-    <Sheet visible onClose={onClose} title={e?.course_title ?? t('learning.title')}>
+    <Sheet scroll visible onClose={onClose} title={e?.course_title ?? t('learning.title')}>
       {q.isError ? (
         <ErrorState onRetry={() => q.refetch()} />
       ) : !e ? (

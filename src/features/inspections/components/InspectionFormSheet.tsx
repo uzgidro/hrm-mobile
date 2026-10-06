@@ -66,7 +66,7 @@ export function InspectionFormSheet({ branchId, onClose }: { branchId?: number; 
   };
 
   return (
-    <Sheet visible onClose={onClose} title={t('inspections.add')}>
+    <Sheet scroll visible onClose={onClose} title={t('inspections.add')}>
       <View style={styles.form}>
         <FormInput
           testID="inspection-title"

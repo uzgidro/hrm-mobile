@@ -73,7 +73,7 @@ export function TrainingDetailSheet({
   };
 
   return (
-    <Sheet visible onClose={onClose} title={r.program_name}>
+    <Sheet scroll visible onClose={onClose} title={r.program_name}>
       <View style={styles.body}>
         <View style={styles.badges}>
           <Badge label={t(`trainings.type_${r.training_type}`, { defaultValue: r.training_type })} />

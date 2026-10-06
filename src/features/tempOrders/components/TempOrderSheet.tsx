@@ -184,7 +184,7 @@ export function TempOrderSheet({
   const archiving = isArchiving(form.type);
 
   return (
-    <Sheet visible={visible} onClose={onClose} title={isEdit ? t('tempOrders.editTitle') : t('tempOrders.add')}>
+    <Sheet scroll visible={visible} onClose={onClose} title={isEdit ? t('tempOrders.editTitle') : t('tempOrders.add')}>
       <View style={styles.form}>
         {isTrip ? (
           <>

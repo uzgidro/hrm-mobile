@@ -74,7 +74,7 @@ export function TaskDetailSheet({
   );
 
   return (
-    <Sheet visible onClose={onClose} title={task.task_index || t('ijro.title')}>
+    <Sheet scroll visible onClose={onClose} title={task.task_index || t('ijro.title')}>
       <View style={styles.form}>
         <View style={styles.badges}>
           <Badge label={t(`ijro.status_${status}`)} tone={STATUS_TONE[status]} />
@@ -177,7 +177,7 @@ export function TaskFormSheet({ task, onClose }: { task: IjroTask | null | undef
   };
 
   return (
-    <Sheet visible={visible} onClose={onClose} title={task ? t('ijro.editTitle') : t('ijro.create')}>
+    <Sheet scroll visible={visible} onClose={onClose} title={task ? t('ijro.editTitle') : t('ijro.create')}>
       <View style={styles.form}>
         <FormInput label={t('ijro.fieldIndex')} value={form.index} onChangeText={(v) => set({ index: v })} required />
         <SelectField

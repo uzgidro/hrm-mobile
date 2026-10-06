@@ -28,7 +28,7 @@ export function CloseDepartmentSheet({ dept, onClose }: { dept: Department; onCl
   };
 
   return (
-    <Sheet visible onClose={onClose} title={t('structure.closeTitle')}>
+    <Sheet scroll visible onClose={onClose} title={t('structure.closeTitle')}>
       <View style={styles.form}>
         <Text variant="label">{dept.name}</Text>
         <Text variant="body" tone="muted">

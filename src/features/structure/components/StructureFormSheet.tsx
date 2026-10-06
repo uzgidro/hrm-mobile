@@ -109,7 +109,7 @@ export function StructureFormSheet({
   const categoryOptions = JOB_CATEGORIES.map((c, i) => ({ value: i + 1, label: t(`structure.cat_${c}`) }));
 
   return (
-    <Sheet visible onClose={onClose} title={title}>
+    <Sheet scroll visible onClose={onClose} title={title}>
       <View style={styles.form}>
         <FormInput
           testID="structure-name"

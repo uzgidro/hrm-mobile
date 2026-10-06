@@ -1,6 +1,6 @@
 // Sheet: telefonda pastki varaq, planshetda markazlangan modal (max 560).
 import React from 'react';
-import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeProvider';
@@ -16,11 +16,18 @@ export function Sheet({
   onClose,
   title,
   children,
+  scroll = false,
 }: {
   visible: boolean;
   onClose: () => void;
   title?: string;
   children: React.ReactNode;
+  /**
+   * Mazmun panel balandligidan (90%) oshsa skroll. Varaq o'zi skroll qilmaydi — uzun forma /
+   * tafsilotda pastdagi tugmalar ekrandan tushib qolardi (jonli sinov 2026-10-06). Ichida o'z
+   * ScrollView/FlatList bor varaqlar `false` qoldiradi (ichma-ich skroll bo'lmasin).
+   */
+  scroll?: boolean;
 }) {
   const { colors: c } = useTheme();
   const { t } = useTranslation();
@@ -51,7 +58,13 @@ export function Sheet({
               <IconButton icon="close" onPress={onClose} accessibilityLabel={t('common.close')} />
             </View>
           )}
-          {children}
+          {scroll ? (
+            <ScrollView style={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+              {children}
+            </ScrollView>
+          ) : (
+            children
+          )}
         </View>
         {/* Toast'lar varaq USTIDA: ildizdagi ToastHost'ni Modal yopib qo'yadi. */}
         <ModalToasts visible={visible} />
@@ -62,6 +75,7 @@ export function Sheet({
 
 const styles = StyleSheet.create({
   backdrop: { flex: 1 },
+  scroll: { flexShrink: 1 },
   center: { alignItems: 'center', justifyContent: 'center', padding: 24 },
   bottom: { justifyContent: 'flex-end' },
   panel: { padding: 16 },

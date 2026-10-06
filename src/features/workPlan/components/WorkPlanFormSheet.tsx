@@ -78,7 +78,7 @@ export function WorkPlanFormSheet({
   };
 
   return (
-    <Sheet visible onClose={onClose} title={plan ? t('workPlan.editTitle') : t('workPlan.create')}>
+    <Sheet scroll visible onClose={onClose} title={plan ? t('workPlan.editTitle') : t('workPlan.create')}>
       <View style={styles.form}>
         <FormInput
           testID="workplan-title"

@@ -84,7 +84,7 @@ export function TrainingFormSheet({ training, onClose }: { training: Training | 
   };
 
   return (
-    <Sheet visible onClose={onClose} title={isEdit ? t('trainings.editTitle') : t('trainings.add')}>
+    <Sheet scroll visible onClose={onClose} title={isEdit ? t('trainings.editTitle') : t('trainings.add')}>
       <View style={styles.form}>
         {isEdit ? (
           <Text variant="label" tone="muted">

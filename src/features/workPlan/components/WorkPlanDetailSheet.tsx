@@ -74,7 +74,7 @@ export function WorkPlanDetailSheet({
   };
 
   return (
-    <Sheet visible onClose={onClose} title={plan.title ?? '—'}>
+    <Sheet scroll visible onClose={onClose} title={plan.title ?? '—'}>
       <View style={styles.body}>
         <View style={styles.badges}>
           <Badge

@@ -81,7 +81,7 @@ export function HomeHeader() {
         onPress={() => setMode(isDark ? 'light' : 'dark')}
       />
 
-      <Sheet visible={searchOpen} onClose={() => setSearchOpen(false)} title={t('dashboard.home.searchTitle')}>
+      <Sheet scroll visible={searchOpen} onClose={() => setSearchOpen(false)} title={t('dashboard.home.searchTitle')}>
         <SearchField value={query} onChangeText={setQuery} placeholder={t('dashboard.home.searchPlaceholder')} autoFocus />
         <View style={styles.results}>
           {results.map((m) => {

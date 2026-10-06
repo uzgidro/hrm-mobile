@@ -68,7 +68,7 @@ export function ServiceCreateSheet({
   };
 
   return (
-    <Sheet visible onClose={onClose} title={t('services.newRequest')}>
+    <Sheet scroll visible onClose={onClose} title={t('services.newRequest')}>
       <View style={styles.form}>
         <Text variant="label" tone="muted">
           {t('services.serviceType')}

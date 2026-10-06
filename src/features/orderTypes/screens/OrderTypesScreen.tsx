@@ -84,7 +84,7 @@ function OrderTypeSheet({ row, onClose }: { row: OrderType | null | undefined; o
   };
 
   return (
-    <Sheet visible={visible} onClose={onClose} title={row ? t('orderTypes.editTitle') : t('orderTypes.createTitle')}>
+    <Sheet scroll visible={visible} onClose={onClose} title={row ? t('orderTypes.editTitle') : t('orderTypes.createTitle')}>
       <View style={styles.form}>
         <FormInput
           label={t('orderTypes.fieldName')}

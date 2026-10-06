@@ -32,7 +32,7 @@ export function DepartmentDetail({
   if (!dept) return null;
   const heads = dept.heads ?? [];
   return (
-    <Sheet visible onClose={onClose} title={dept.name || '—'}>
+    <Sheet scroll visible onClose={onClose} title={dept.name || '—'}>
       <View style={styles.body}>
         <View style={styles.badges}>
           {dept.is_secretariat && <Badge label={t('structure.flagSecretariat')} tone="brand" />}
@@ -81,7 +81,7 @@ export function PositionDetail({
   const { t } = useTranslation();
   if (!pos) return null;
   return (
-    <Sheet visible onClose={onClose} title={pos.name || '—'}>
+    <Sheet scroll visible onClose={onClose} title={pos.name || '—'}>
       <View style={styles.body}>
         <Row label={t('structure.colShortName')}>{pos.short_name || '—'}</Row>
         <Row label={t('structure.colRazryad')}>{pos.razryad != null ? String(pos.razryad) : '—'}</Row>
