@@ -164,4 +164,6 @@ export default {
   rejectedByLabel: 'Отклонил(а)',
   sectionFamiliarizerDepartments: 'Ознакомляемые отделы',
   deletionRequestedNote: 'Запрошено удаление приказа',
+  filterCategoryTitle: "Тип приказа",
+  filterStatusTitle: "Статус",
 } as const;

@@ -75,10 +75,9 @@ describe('OrdersListScreen', () => {
 
     const { findAllByText, queryByText } = await renderWithProviders(<OrdersListScreen />);
 
-    // Each category name appears twice: as a filter chip AND as the card title,
-    // so the card is present iff there are >= 2 matches (chip alone would be 1).
-    expect((await findAllByText('First decree')).length).toBeGreaterThanOrEqual(2);
-    expect((await findAllByText('Second decree')).length).toBeGreaterThanOrEqual(2);
+    // Turlar endi «Filtr» varag'ida (2026-10-06) — ro'yxat ustida chip yo'q, nom faqat kartada.
+    expect((await findAllByText('First decree')).length).toBeGreaterThanOrEqual(1);
+    expect((await findAllByText('Second decree')).length).toBeGreaterThanOrEqual(1);
     // No detail pane / placeholder text rendered outside split mode.
     expect(queryByText('First decree, №')).toBeNull();
   });

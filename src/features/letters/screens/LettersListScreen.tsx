@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
 } from 'react-native';
-import { ChipScroll } from '@/components/ChipScroll';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -15,8 +14,7 @@ import { Screen } from '@/components/Screen';
 import { SplitLayout } from '@/components/SplitLayout';
 import { SelectItemPlaceholder } from '@/components/SelectItemPlaceholder';
 import { Segmented } from '@/ui';
-import { FilterChip } from '@/components/FilterChip';
-import { SearchBox } from '@/components/SearchBox';
+import { ListFilterBar } from '@/components/ListFilterBar';
 import { PagedList, usePagedRows } from '@/components/PagedList';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { menuBadgesQuery } from '@/lib/menuBadges';
@@ -132,28 +130,33 @@ export default function LettersListScreen({ embedded = false }: { embedded?: boo
         {embedded && createBtn}
       </View>
 
-      <View style={styles.searchWrap}>
-        <SearchBox value={search} onChangeText={setSearch} placeholder={t('letters.searchPlaceholder')} />
-      </View>
-
-      <ChipScroll contentContainerStyle={styles.chipRow}>
-        {TYPE_FILTERS.map((tf) => (
-          <FilterChip
-            key={tf}
-            label={tf === 'all' ? t('letters.filterAllTypes') : letterTypeLabel(tf)}
-            active={typeFilter === tf}
-            onPress={() => setTypeFilter(tf)}
-            styles={styles}
-          />
-        ))}
-      </ChipScroll>
-
-      <ChipScroll contentContainerStyle={styles.chipRow}>
-        <FilterChip label={t('letters.filterAllStatuses')} active={effectiveStatus === 'all'} onPress={() => setStatusFilter('all')} styles={styles} subtle />
-        {statusOptions.map((s) => (
-          <FilterChip key={s.value} label={s.label} active={effectiveStatus === s.value} onPress={() => setStatusFilter(s.value)} styles={styles} subtle />
-        ))}
-      </ChipScroll>
+      {/* Tur va holat — bitta «Filtr» tugmasi ortida (ilgari 2 ta aylanadigan chip qatori edi). */}
+      <ListFilterBar
+        testID="letters-filters"
+        search={search}
+        onSearch={setSearch}
+        placeholder={t('letters.searchPlaceholder')}
+        groups={[
+          {
+            key: 'type',
+            title: t('letters.filterTypeTitle'),
+            allValue: 'all',
+            allLabel: t('letters.filterAllTypes'),
+            options: TYPE_FILTERS.filter((tf) => tf !== 'all').map((tf) => ({ value: tf, label: letterTypeLabel(tf) })),
+            value: typeFilter,
+            onChange: (v: string) => setTypeFilter(v as TypeFilter),
+          },
+          {
+            key: 'status',
+            title: t('letters.filterStatusTitle'),
+            allValue: 'all',
+            allLabel: t('letters.filterAllStatuses'),
+            options: statusOptions,
+            value: effectiveStatus,
+            onChange: setStatusFilter,
+          },
+        ]}
+      />
 
       <PagedList
         query={query}

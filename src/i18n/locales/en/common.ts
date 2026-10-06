@@ -31,4 +31,7 @@ export default {
   back: 'Back',
   // Split (master-detail) detail pane before a row is picked.
   selectToView: 'Select an item from the list to view it',
+  filters: "Filters",
+  filtersApply: "Show results",
+  filtersCount: "Filters ({{count}})",
 } as const;

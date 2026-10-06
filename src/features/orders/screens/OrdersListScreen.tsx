@@ -3,7 +3,6 @@ import {
   View, Text, StyleSheet,
   TouchableOpacity,
 } from 'react-native';
-import { ChipScroll } from '@/components/ChipScroll';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -16,8 +15,7 @@ import { Screen } from '@/components/Screen';
 import { SplitLayout } from '@/components/SplitLayout';
 import { SelectItemPlaceholder } from '@/components/SelectItemPlaceholder';
 import { Segmented } from '@/ui';
-import { FilterChip } from '@/components/FilterChip';
-import { SearchBox } from '@/components/SearchBox';
+import { ListFilterBar } from '@/components/ListFilterBar';
 import { PagedList, usePagedRows } from '@/components/PagedList';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { menuBadgesQuery } from '@/lib/menuBadges';
@@ -126,25 +124,35 @@ export default function OrdersListScreen({ embedded = false }: { embedded?: bool
         {embedded && createBtn}
       </View>
 
-      <View style={styles.searchWrap}>
-        <SearchBox value={search} onChangeText={setSearch} placeholder={t('orders.searchPlaceholder')} />
-      </View>
-
-      {categoryOptions.length > 0 && (
-        <ChipScroll contentContainerStyle={styles.chipRow}>
-          <FilterChip label={t('orders.filterAllCategories')} active={categoryFilter === 'all'} onPress={() => setCategoryFilter('all')} styles={styles} />
-          {categoryOptions.map((c) => (
-            <FilterChip key={c.id} label={c.name} active={categoryFilter === c.id} onPress={() => setCategoryFilter(c.id)} styles={styles} />
-          ))}
-        </ChipScroll>
-      )}
-
-      <ChipScroll contentContainerStyle={styles.chipRow}>
-        <FilterChip label={t('orders.filterAllStatuses')} active={statusFilter === 'all'} onPress={() => setStatusFilter('all')} styles={styles} subtle />
-        {statusOptions.map((s) => (
-          <FilterChip key={s.value} label={s.label} active={statusFilter === s.value} onPress={() => setStatusFilter(s.value)} styles={styles} subtle />
-        ))}
-      </ChipScroll>
+      {/* Tur va holat — bitta «Filtr» tugmasi ortida (ilgari 2 ta aylanadigan chip qatori edi). */}
+      <ListFilterBar
+        testID="orders-filters"
+        search={search}
+        onSearch={setSearch}
+        placeholder={t('orders.searchPlaceholder')}
+        groups={[
+          ...(categoryOptions.length
+            ? [{
+                key: 'category',
+                title: t('orders.filterCategoryTitle'),
+                allValue: 'all',
+                allLabel: t('orders.filterAllCategories'),
+                options: categoryOptions.map((c) => ({ value: String(c.id), label: c.name })),
+                value: categoryFilter === 'all' ? 'all' : String(categoryFilter),
+                onChange: (v: string) => setCategoryFilter(v === 'all' ? 'all' : Number(v)),
+              }]
+            : []),
+          {
+            key: 'status',
+            title: t('orders.filterStatusTitle'),
+            allValue: 'all',
+            allLabel: t('orders.filterAllStatuses'),
+            options: statusOptions,
+            value: statusFilter,
+            onChange: setStatusFilter,
+          },
+        ]}
+      />
 
       <PagedList
         query={query}

@@ -283,4 +283,6 @@ export default {
   tripAttHourShort: 'ч',
   tripAttMore: 'Ещё {{count}} дн.',
   tripAttLess: 'Свернуть',
+  filterTypeTitle: "Тип документа",
+  filterStatusTitle: "Статус",
 } as const;

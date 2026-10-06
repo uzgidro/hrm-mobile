@@ -31,4 +31,7 @@ export default {
   back: 'Назад',
   // Split (master-detail) detail pane before a row is picked.
   selectToView: 'Выберите запись в списке, чтобы открыть её',
+  filters: "Фильтры",
+  filtersApply: "Показать результаты",
+  filtersCount: "Фильтры ({{count}})",
 } as const;

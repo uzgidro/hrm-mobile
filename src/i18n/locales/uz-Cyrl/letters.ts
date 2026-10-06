@@ -278,4 +278,6 @@ export default {
   tripAttHourShort: 'соат',
   tripAttMore: 'Яна {{count}} кун',
   tripAttLess: 'Камроқ',
+  filterTypeTitle: "Ҳужжат тури",
+  filterStatusTitle: "Ҳолат",
 } as const;

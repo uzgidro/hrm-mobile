@@ -125,10 +125,10 @@ describe('LettersListScreen (tablet-landscape split)', () => {
 
     await waitFor(async () => {
       const matches = await findAllByText('Ariza');
-      expect(matches.length).toBeGreaterThanOrEqual(3); // type-filter chip + master row + re-anchored detail pane
+      expect(matches.length).toBeGreaterThanOrEqual(2); // master row + re-anchored detail pane (tur chipi endi «Filtr» varag'ida)
     });
-    // Letter 1 (card + detail pane) is gone — only the persistent type-filter
-    // chip labelled "Xizmat safari" remains.
-    expect(queryAllByText('Xizmat safari')).toHaveLength(1);
+    // Letter 1 (card + detail pane) is gone; the type filter now lives in the closed
+    // «Filtr» sheet (2026-10-06), so nothing labelled "Xizmat safari" is on screen.
+    expect(queryAllByText('Xizmat safari')).toHaveLength(0);
   }, 15000);
 });

@@ -167,4 +167,6 @@ export default {
   rejectedByLabel: 'Rad etdi',
   sectionFamiliarizerDepartments: "Tanishtiriladigan bo'limlar",
   deletionRequestedNote: "Buyruqni o'chirish so'ralgan",
+  filterCategoryTitle: "Buyruq turi",
+  filterStatusTitle: "Holat",
 } as const;

@@ -163,4 +163,6 @@ export default {
   rejectedByLabel: 'Rejected',
   sectionFamiliarizerDepartments: 'Departments to acknowledge',
   deletionRequestedNote: 'Deletion of this order was requested',
+  filterCategoryTitle: "Order type",
+  filterStatusTitle: "Status",
 } as const;

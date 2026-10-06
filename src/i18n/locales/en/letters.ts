@@ -278,4 +278,6 @@ export default {
   tripAttHourShort: 'h',
   tripAttMore: '{{count}} more days',
   tripAttLess: 'Less',
+  filterTypeTitle: "Document type",
+  filterStatusTitle: "Status",
 } as const;

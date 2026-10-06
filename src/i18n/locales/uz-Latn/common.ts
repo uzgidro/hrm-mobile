@@ -33,4 +33,7 @@ export default {
   back: 'Orqaga',
   // Split (master-detail) detail pane before a row is picked.
   selectToView: "Ko'rish uchun ro'yxatdan birini tanlang",
+  filters: "Filtrlar",
+  filtersApply: "Natijani ko'rsatish",
+  filtersCount: "Filtrlar ({{count}})",
 } as const;

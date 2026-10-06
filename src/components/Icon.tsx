@@ -63,6 +63,7 @@ export type IconName =
   | 'backspace'
   | 'mapPin'
   | 'camera'
+  | 'filter'
   | 'refresh';
 
 type Props = {
@@ -275,6 +276,14 @@ function render(name: IconName, p: any) {
         <>
           <Path d="M5 19h3l9-9-3-3-9 9Z" {...p} />
           <Path d="m14 7 3 3" {...p} />
+        </>
+      );
+    case 'filter':
+      return (
+        <>
+          <Line x1="4" y1="7" x2="20" y2="7" {...p} />
+          <Line x1="7" y1="12" x2="17" y2="12" {...p} />
+          <Line x1="10" y1="17" x2="14" y2="17" {...p} />
         </>
       );
     case 'camera':

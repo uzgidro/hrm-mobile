@@ -31,4 +31,7 @@ export default {
   back: 'Орқага',
   // Split (master-detail) detail pane before a row is picked.
   selectToView: 'Кўриш учун рўйхатдан бирини танланг',
+  filters: "Филтрлар",
+  filtersApply: "Натижани кўрсатиш",
+  filtersCount: "Филтрлар ({{count}})",
 } as const;

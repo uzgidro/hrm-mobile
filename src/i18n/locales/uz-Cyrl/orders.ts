@@ -163,4 +163,6 @@ export default {
   rejectedByLabel: 'Рад этди',
   sectionFamiliarizerDepartments: 'Таништириладиган бўлимлар',
   deletionRequestedNote: 'Буйруқни ўчириш сўралган',
+  filterCategoryTitle: "Буйруқ тури",
+  filterStatusTitle: "Ҳолат",
 } as const;

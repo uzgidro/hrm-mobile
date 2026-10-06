@@ -287,4 +287,6 @@ export default {
   tripAttHourShort: 'soat',
   tripAttMore: 'Yana {{count}} kun',
   tripAttLess: 'Kamroq',
+  filterTypeTitle: "Hujjat turi",
+  filterStatusTitle: "Holat",
 } as const;
