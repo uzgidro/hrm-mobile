@@ -101,4 +101,23 @@ describe('TempOrdersScreen', () => {
     await waitFor(() => expect(mock.history.delete).toHaveLength(1));
     expect(confirm).toHaveBeenCalled();
   });
+
+  // v2 6110410 pariteti: «Xizmat safari» turida xodim maydoni ko'p tanlovli, saqlash ommaviy yo'ldan;
+  // yaratilmaganlar sababi bilan varaqda qoladi.
+  it("xizmat safari: xodim maydoni ko'p tanlovli, tugmada soni; validatsiya ommaviy yo'lda ham", async () => {
+    useAuthStore.setState({ user: hr as never, isAuthenticated: true } as never);
+    mock.onGet(EMPLOYEES_LIST).reply(200, { items: [{ id: 7, legal_name: 'Aliyev Ali' }, { id: 8, legal_name: 'Valiyev Vali' }], total: 2 });
+    await renderWithProviders(<TempOrdersScreen />);
+    await fireEvent.press(await screen.findByTestId('temp-order-add'));
+    await fireEvent.press(screen.getAllByText(i18n.t('tempOrders.type_kasal')).at(-1)!);
+    await fireEvent.press((await screen.findAllByText(i18n.t('tempOrders.type_xizmat_safari'))).at(-1)!);
+    await fireEvent.press(screen.getByTestId('temp-order-employee'));
+    await fireEvent.press((await screen.findAllByText('Aliyev Ali')).at(-1)!);
+    await fireEvent.press(screen.getAllByText('Valiyev Vali').at(-1)!);
+    // Ikki xodim tanlangan — tugma soni bilan; tugash sanasi tanlanmagan — xato, so'rov yo'q.
+    expect(screen.getByText(new RegExp(`${i18n.t('checkin.bulk.submit')} · 2`))).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('temp-order-save'));
+    expect(await screen.findByText(i18n.t('tempOrders.endRequired'))).toBeTruthy();
+    expect(mock.history.post).toHaveLength(0);
+  });
 });

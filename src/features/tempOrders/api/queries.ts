@@ -11,6 +11,8 @@ export type TempOrder = {
   start_date?: string | null;
   end_date?: string | null;
   type?: string | null;
+  /** Xizmat safari manzili (backend 2026-10-06, WorkLeaveReadFull). */
+  destination_branch?: { id: number; name?: string | null } | null;
   description?: string | null;
   status?: string | null;
 };

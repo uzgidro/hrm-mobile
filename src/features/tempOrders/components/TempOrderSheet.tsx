@@ -13,15 +13,17 @@ import { getApiErrorMessage } from '@/api/errors';
 import { toast } from '@/lib/toast';
 import { confirm } from '@/lib/confirm';
 import { PickerModal } from '@/components/PickerModal';
+import { SelectedChips } from '@/components/SelectedChips';
 import { DatePickerModal } from '@/components/DatePicker';
 import { FormInput } from '@/components/FormInput';
-import { Button, SelectField, Sheet, Text } from '@/ui';
+import { Badge, Button, SelectField, Sheet, Text } from '@/ui';
 import type { Employee } from '@/types';
-import { useDeleteTempOrder, useSaveTempOrder } from '../api/mutations';
+import { useBulkTrip, useDeleteTempOrder, useSaveTempOrder, type BulkTripResult } from '../api/mutations';
 import { useBranchOptions, type TempOrder } from '../api/queries';
 import {
   TEMP_ORDER_TYPES,
   TRIP_TYPE,
+  buildBulkTripBody,
   buildCreateBody,
   buildUpdateBody,
   isArchiving,
@@ -66,6 +68,11 @@ export function TempOrderSheet({
   const [empSearch, setEmpSearch] = useState('');
   const save = useSaveTempOrder();
   const remove = useDeleteTempOrder();
+  const bulk = useBulkTrip();
+  // v2 pariteti (6110410): yangi buyruqda tur «Xizmat safari» bo'lsa xodim maydoni KO'P tanlovli,
+  // saqlash `hr-bulk-create` orqali; yaratilmaganlar sababi bilan shu varaqda qoladi.
+  const [tripPicked, setTripPicked] = useState<{ value: number; label: string }[]>([]);
+  const [tripResult, setTripResult] = useState<BulkTripResult | null>(null);
 
   // Holat boshlang'ich qiymatdan: varaq har ochilishda `key` bilan yangidan mount qilinadi
   // (TempOrdersScreen), shuning uchun effektda qayta to'ldirish shart emas.
@@ -87,6 +94,14 @@ export function TempOrderSheet({
 
   const isTrip = form.type === TRIP_TYPE && !isEdit;
   const branches = useBranchOptions(isTrip && (picker === 'destination' || !!form.destinationBranchId));
+  const tripLabel = (id: number) =>
+    tripPicked.find((p) => p.value === id)?.label ?? employees.data?.find((e) => e.id === id)?.legal_name ?? `#${id}`;
+  const toggleTrip = (id: number) => {
+    setError(null);
+    setTripPicked((cur) =>
+      cur.some((p) => p.value === id) ? cur.filter((p) => p.value !== id) : [...cur, { value: id, label: tripLabel(id) }],
+    );
+  };
   const destinationName = branches.data?.find((b) => b.id === form.destinationBranchId)?.name ?? '';
 
   const typeOptions = useMemo(
@@ -103,7 +118,34 @@ export function TempOrderSheet({
     setError(null);
   };
 
+  const submitTrip = async () => {
+    const err = validateTempOrder({ ...form, employeeId: tripPicked[0]?.value ?? null }, false);
+    if (err) return setError(t(`tempOrders.${err}`));
+    try {
+      const res = await bulk.mutateAsync(
+        buildBulkTripBody({
+          employeeIds: tripPicked.map((p) => p.value),
+          start: form.start,
+          end: form.end || form.start,
+          note: form.note,
+          destinationBranchId: form.destinationBranchId ?? null,
+        }),
+      );
+      if (!res.skipped.length) {
+        toast.success(t('checkin.bulk.result', { created: res.created.length, skipped: 0 }));
+        return onClose();
+      }
+      // Yaratilmaganlar tanlovda qoladi — sababini ko'rib, sanani o'zgartirib qayta saqlash mumkin.
+      const skipped = new Set(res.skipped.map((x) => x.employee_id));
+      setTripResult({ ...res, skipped: res.skipped.map((x) => ({ ...x, message: x.message ?? null })) });
+      setTripPicked((cur) => cur.filter((p) => skipped.has(p.value)));
+    } catch (e) {
+      setError(getApiErrorMessage(e, t('errors.generic')));
+    }
+  };
+
   const submit = async () => {
+    if (isTrip) return submitTrip();
     const err = validateTempOrder(form, isEdit);
     if (err) return setError(t(`tempOrders.${err}`));
     try {
@@ -144,14 +186,27 @@ export function TempOrderSheet({
   return (
     <Sheet visible={visible} onClose={onClose} title={isEdit ? t('tempOrders.editTitle') : t('tempOrders.add')}>
       <View style={styles.form}>
-        <SelectField
-          testID="temp-order-employee"
-          label={t('tempOrders.employee')}
-          value={employeeName}
-          placeholder={t('tempOrders.pickEmployee')}
-          onPress={() => setPicker('employee')}
-          disabled={isEdit}
-        />
+        {isTrip ? (
+          <>
+            <SelectField
+              testID="temp-order-employee"
+              label={t('checkin.bulk.employees')}
+              value={tripPicked.length ? t('checkin.bulk.selected', { count: tripPicked.length }) : ''}
+              placeholder={t('checkin.bulk.pickEmployees')}
+              onPress={() => setPicker('employee')}
+            />
+            {!!tripPicked.length && <SelectedChips items={tripPicked} onRemove={toggleTrip} />}
+          </>
+        ) : (
+          <SelectField
+            testID="temp-order-employee"
+            label={t('tempOrders.employee')}
+            value={employeeName}
+            placeholder={t('tempOrders.pickEmployee')}
+            onPress={() => setPicker('employee')}
+            disabled={isEdit}
+          />
+        )}
         <SelectField
           label={t('tempOrders.type')}
           value={t(`tempOrders.type_${form.type}`)}
@@ -208,15 +263,38 @@ export function TempOrderSheet({
           </View>
         )}
         {isTrip && (
-          <SelectField
-            testID="temp-order-destination"
-            label={t('checkin.bulk.destination')}
-            value={destinationName}
-            placeholder={t('checkin.bulk.destinationNone')}
-            onPress={() => setPicker('destination')}
-          />
+          <>
+            <Text variant="caption" tone="muted">
+              {t('checkin.bulk.hint')}
+            </Text>
+            <SelectField
+              testID="temp-order-destination"
+              label={t('checkin.bulk.destination')}
+              value={destinationName}
+              placeholder={t('checkin.bulk.destinationNone')}
+              onPress={() => setPicker('destination')}
+            />
+          </>
+        )}
+        {isEdit && !!row?.destination_branch?.name && (
+          <SelectField label={t('checkin.bulk.destination')} value={row.destination_branch.name} disabled onPress={() => {}} />
         )}
         <FormInput label={t('tempOrders.note')} value={form.note} onChangeText={(v) => set({ note: v })} multiline />
+        {!!tripResult && (
+          <View style={styles.result} testID="bulk-trip-result">
+            <Text variant="label">
+              {t('checkin.bulk.result', { created: tripResult.created.length, skipped: tripResult.skipped.length })}
+            </Text>
+            {tripResult.skipped.map((x) => (
+              <View key={x.employee_id} style={styles.skip}>
+                <Text variant="caption" style={styles.flex} numberOfLines={1}>
+                  {tripLabel(x.employee_id)}
+                </Text>
+                <Badge label={x.message || t(`errors.${x.code}`, { defaultValue: x.code })} tone="warning" />
+              </View>
+            ))}
+          </View>
+        )}
         {!!error && (
           <Text variant="label" tone="danger">
             {error}
@@ -224,9 +302,9 @@ export function TempOrderSheet({
         )}
         <Button
           testID="temp-order-save"
-          label={t('common.save')}
+          label={isTrip && tripPicked.length > 1 ? `${t('checkin.bulk.submit')} · ${tripPicked.length}` : t('common.save')}
           onPress={submit}
-          loading={save.isPending}
+          loading={save.isPending || bulk.isPending}
           full
           size="lg"
         />
@@ -244,15 +322,18 @@ export function TempOrderSheet({
       <PickerModal
         visible={picker === 'employee'}
         title={t('tempOrders.pickEmployee')}
-        options={(employees.data ?? []).map((e) => ({
-          value: e.id,
-          label: e.legal_name,
-        }))}
+        options={[
+          ...(isTrip ? tripPicked.filter((p) => !(employees.data ?? []).some((e) => e.id === p.value)) : []),
+          ...(employees.data ?? []).map((e) => ({ value: e.id, label: e.legal_name })),
+        ]}
         loading={employees.isFetching}
-        selected={form.employeeId}
+        multiple={isTrip}
+        selected={isTrip ? tripPicked.map((p) => p.value) : form.employeeId}
+        onToggle={toggleTrip}
         onClose={() => setPicker(null)}
         onSearchChange={setEmpSearch}
         onSelect={(id) => {
+          if (isTrip) return toggleTrip(id);
           const emp = employees.data?.find((e) => e.id === id);
           set({ employeeId: id });
           setEmployeeName(emp?.legal_name ?? '');
@@ -267,7 +348,12 @@ export function TempOrderSheet({
         selected={TEMP_ORDER_TYPES.indexOf(form.type as (typeof TEMP_ORDER_TYPES)[number])}
         onClose={() => setPicker(null)}
         onSelect={(i) => {
-          set({ type: TEMP_ORDER_TYPES[i] });
+          const next = TEMP_ORDER_TYPES[i];
+          if (next === TRIP_TYPE && !isEdit && !tripPicked.length && form.employeeId) {
+            setTripPicked([{ value: form.employeeId, label: employeeName || `#${form.employeeId}` }]);
+          }
+          setTripResult(null);
+          set({ type: next });
           setPicker(null);
         }}
       />
@@ -312,4 +398,6 @@ const styles = StyleSheet.create({
   form: { gap: 12, paddingBottom: 8 },
   row: { flexDirection: 'row', gap: 10 },
   flex: { flex: 1 },
+  result: { gap: 6 },
+  skip: { flexDirection: 'row', alignItems: 'center', gap: 8 },
 });

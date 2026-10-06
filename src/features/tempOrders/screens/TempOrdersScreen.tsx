@@ -32,7 +32,6 @@ import {
 import { tempOrdersQuery, type TempOrder } from '../api/queries';
 import { TEMP_ORDER_TYPES, tempOrderRange } from '../utils/tempOrder';
 import { TempOrderSheet } from '../components/TempOrderSheet';
-import { BulkTripSheet } from '../components/BulkTripSheet';
 
 export default function TempOrdersScreen() {
   const { t } = useTranslation();
@@ -45,7 +44,6 @@ export default function TempOrdersScreen() {
   const [type, setType] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [typePicker, setTypePicker] = useState(false);
-  const [bulkOpen, setBulkOpen] = useState(false);
   const [editing, setEditing] = useState<TempOrder | null | undefined>(undefined); // undefined — yopiq
 
   const q = useQuery({ ...tempOrdersQuery({ search: debounced, type, page, branchId }), enabled: allowed });
@@ -89,14 +87,6 @@ export default function TempOrdersScreen() {
             label={t('tempOrders.type')}
             value={type ? t(`tempOrders.type_${type}`) : t('tempOrders.allTypes')}
             onPress={() => setTypePicker(true)}
-          />
-          <Button
-            testID="bulk-trip-open"
-            label={t('checkin.bulk.open')}
-            icon="briefcase"
-            variant="soft"
-            full
-            onPress={() => setBulkOpen(true)}
           />
         </View>
         <Card padded>
@@ -176,7 +166,6 @@ export default function TempOrdersScreen() {
           setTypePicker(false);
         }}
       />
-      {bulkOpen && <BulkTripSheet branchId={branchId} onClose={() => setBulkOpen(false)} />}
       {editing !== undefined && (
         <TempOrderSheet
           key={editing?.id ?? 'new'}
