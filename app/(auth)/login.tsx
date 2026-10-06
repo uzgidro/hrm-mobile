@@ -7,7 +7,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Constants from 'expo-constants';
 import { useTranslation } from 'react-i18next';
-import { getRunningOtaInfo } from '@/services/otaUpdates';
 import { apiClient } from '../../src/api/client';
 import { useAuthStore } from '../../src/store/authStore';
 import { useLangStore } from '../../src/store/langStore';
@@ -170,11 +169,6 @@ export default function LoginScreen() {
   };
 
   const mood = moodForLogin({ focused, passwordVisible: showPass, result });
-  const ota = getRunningOtaInfo();
-  const otaLabel =
-    ota.kind === 'ota'
-      ? t('ota.otaBuild', { date: ota.date ?? '', id: ota.shortId ?? '' })
-      : t('ota.embeddedBuild');
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
@@ -313,7 +307,6 @@ export default function LoginScreen() {
 
           <View style={styles.footer}>
             <Text style={styles.version}>O&apos;zbekgidroenergo · v{Constants.expoConfig?.version ?? '1.0.0'}</Text>
-            <Text style={styles.otaBuild}>{otaLabel}</Text>
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -424,5 +417,4 @@ const makeStyles = (c: ThemeColors) =>
 
     footer: { marginTop: 'auto', paddingTop: 28, alignItems: 'center' },
     version: { color: c.fgSubtle, fontSize: 12, ...ff('500', 'text') },
-    otaBuild: { color: c.fgSubtle, fontSize: 11, marginTop: 2, ...ff('400', 'text') },
   });
