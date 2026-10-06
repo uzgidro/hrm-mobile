@@ -291,3 +291,16 @@ describe('routeForNotification — v2 pariteti: xizmat, kurs, vakansiya, o\'tkaz
     }
   });
 });
+
+describe("routeForNotification — o'chirilgan / ruxsati olingan loyiha yozuvi", () => {
+  it.each([
+    [{ type: 'card_deleted', card_id: 7 }],
+    [{ type: 'card_member_removed', card_id: 7 }],
+    [{ type: 'workspace_member_removed', workspace_id: 3 }],
+  ])('%j → ro\'yxat (tafsilot 404/403 bermasin)', (data) => {
+    expect(routeForNotification(data)).toBe('/loyihalar');
+  });
+  it('tirik karta hali ham tafsilotga ochiladi', () => {
+    expect(routeForNotification({ type: 'card_updated', card_id: 7, workspace_id: 3 })).toBe('/loyiha-card-detail?id=7');
+  });
+});

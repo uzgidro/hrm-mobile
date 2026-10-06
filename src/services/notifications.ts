@@ -216,6 +216,11 @@ export function routeForNotification(data: any): string | null {
   // Loyiha ekranlari mobilда BOR (loyihalar / loyiha-detail / karta tafsiloti) —
   // ilgari bu yerda "hali ekran yo'q" deb null qaytarilardi va loyiha
   // bildirishnomasini bosish hech qayerga olib bormasdi.
+  // O'chirilgan karta / a'zolikdan chiqarilgan foydalanuvchi: push payloadida id bor, lekin
+  // u yozuv endi yo'q yoki ko'rinmaydi — tafsilot «Topilmadi»/403 berardi. Ro'yxatga.
+  if (type === 'card_deleted' || type === 'card_member_removed' || type === 'workspace_member_removed') {
+    return '/loyihalar';
+  }
   if (cardId) return `/loyiha-card-detail?id=${cardId}`;
   if (workspaceId) return `/loyiha-detail?id=${workspaceId}`;
   // `visitor_arrived` pushes carry the visitor id — open the guest, not the list.
