@@ -92,6 +92,14 @@ describe('leaveTypeLabel', () => {
     await i18n.changeLanguage('uz-Latn');
     expect(leaveTypeLabel(i18n.t, "Ta'til")).toBe("Ta'til");
   });
+
+  // QA 2026-10-06: buyruq qo'llanganda yaratilgan kadr so'rovi xom kod bilan ko'rinardi.
+  it("kadr buyrug'i turi (vaqtinchalik buyruq kodi) tarjima qilinadi", async () => {
+    expect(leaveTypeLabel(i18n.t, 'qoshimcha_tatil')).toBe("Qo'shimcha ta'til");
+    await i18n.changeLanguage('ru');
+    expect(leaveTypeLabel(i18n.t, 'qoshimcha_tatil')).toBe('Дополнительный отпуск');
+    await i18n.changeLanguage('uz-Latn');
+  });
 });
 
 describe('leaveRangeText', () => {

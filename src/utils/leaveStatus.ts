@@ -84,8 +84,13 @@ export function leaveStatusKind(status?: string): StatusKind {
 // `leaves.presetType.<value>`; anything without an entry (a dictionary reason,
 // free text) is shown as-is. Shared here so screens outside the leaves feature
 // (attendance Team screen) show the same label without a cross-feature import.
+// Kadr buyrug'i (vaqtinchalik buyruq qo'llanganda yaratiladigan `qoshimcha_tatil`,
+// `mehnat_tatili` …) ham shu ro'yxatda keladi — ularning yorlig'i `tempOrders.type_*`
+// da; ilgari xom kod («qoshimcha_tatil») ko'rinardi.
 export function leaveTypeLabel(t: TFunction, value: string): string {
-  return t(`leaves.presetType.${value}`, { defaultValue: value });
+  return t(`leaves.presetType.${value}`, {
+    defaultValue: t(`tempOrders.type_${value}`, { defaultValue: value }),
+  });
 }
 
 /**
