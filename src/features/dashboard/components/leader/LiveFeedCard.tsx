@@ -51,7 +51,12 @@ export function LiveFeedCard({ board, loading, limit = 8 }: { board: HydratedBoa
               title={name}
               subtitle={
                 e.mobile_checkin
-                  ? [t('checkin.viaPhone'), e.mobile_checkin.destination_branch?.name].filter(Boolean).join(' · ')
+                  ? [
+                      t('checkin.viaPhone'),
+                      e.mobile_checkin.nearest_location?.name || e.mobile_checkin.destination_branch?.name,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')
                   : (e.employee?.job_position?.name ?? e.turnstile_name)
               }
               left={<Avatar name={name} uri={e.employee?.photo_path} size={36} />}

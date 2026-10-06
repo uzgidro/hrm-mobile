@@ -3,6 +3,9 @@
 export default {
   title: "Safar belgisi",
   eyebrow: "Xizmat safari",
+  cardTitle: "Bugun xizmat safaridasiz",
+  nearest: "Eng yaqin joy",
+  distanceByServer: "Eng yaqin filial / GES gacha masofani server hisoblaydi va belgida ko'rsatadi.",
   noDestination: "Manzil ko'rsatilmagan",
   arrive: "Keldim",
   leave: "Ketdim",

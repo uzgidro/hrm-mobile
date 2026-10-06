@@ -17,7 +17,7 @@ import { Button, Text } from '@/ui';
 import { checkinStatusQuery } from '../api/queries';
 import { useCheckinQueue } from '../lib/useCheckinQueue';
 import { formatDistance } from '../lib/capture';
-import type { CheckinDirection, MobileCheckin } from '../types';
+import { checkinPlace, type CheckinDirection, type MobileCheckin } from '../types';
 
 /** Bugungi oxirgi FAOL belgi «Keldim» bo'lsa keyingi taklif — «Ketdim», aks holda «Keldim». */
 export function nextDirection(today: MobileCheckin[]): CheckinDirection {
@@ -39,7 +39,8 @@ export function TripCheckinCard() {
   const trip = status.trip;
   const dir = nextDirection(today);
   const last = [...today].sort((a, b) => a.happen_time.localeCompare(b.happen_time)).at(-1);
-  const place = trip?.destination_branch?.name || t('checkin.noDestination');
+  // Manzil endi tanlanmaydi — bo'lsa nomi, bo'lmasa umumiy sarlavha.
+  const place = trip?.destination_branch?.name || t('checkin.cardTitle');
   const range = trip
     ? t('checkin.tripDates', { from: dayjs(trip.start_date).format('D MMM'), to: dayjs(trip.end_date).format('D MMM') })
     : null;
@@ -70,7 +71,12 @@ export function TripCheckinCard() {
       <View style={styles.status}>
         <Text variant="label" tone="onBrand" style={styles.dim}>
           {last
-            ? t('checkin.last', { time: dayjs(last.happen_time).format('HH:mm'), dir: t(`checkin.dir_${last.direction_type}`) })
+            ? [
+                t('checkin.last', { time: dayjs(last.happen_time).format('HH:mm'), dir: t(`checkin.dir_${last.direction_type}`) }),
+                checkinPlace(last),
+              ]
+                .filter(Boolean)
+                .join(' · ')
             : t('checkin.todayNone')}
         </Text>
         {last?.distance_m != null && (

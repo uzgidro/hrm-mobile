@@ -3,6 +3,9 @@
 export default {
   title: "Trip check-in",
   eyebrow: "Business trip",
+  cardTitle: "You are on a business trip today",
+  nearest: "Nearest place",
+  distanceByServer: "The server measures the distance to the nearest branch / HPP and shows it on the check-in.",
   noDestination: "No destination set",
   arrive: "I'm here",
   leave: "Leaving",

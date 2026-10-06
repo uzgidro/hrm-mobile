@@ -165,6 +165,7 @@ export interface EventMobileCheckin {
   received_at?: string | null;
   work_leave_id?: number | null;
   destination_branch?: { id: number; name?: string | null } | null;
+  nearest_location?: { id: number; name?: string | null; organization_branch?: { id: number; name?: string | null } | null } | null;
 }
 
 export interface AttendanceEvent {

@@ -19,7 +19,7 @@ import { FormInput } from '@/components/FormInput';
 import { Badge, Button, SelectField, Sheet, Text } from '@/ui';
 import type { Employee } from '@/types';
 import { useBulkTrip, useDeleteTempOrder, useSaveTempOrder, type BulkTripResult } from '../api/mutations';
-import { useBranchOptions, type TempOrder } from '../api/queries';
+import type { TempOrder } from '../api/queries';
 import {
   TEMP_ORDER_TYPES,
   TRIP_TYPE,
@@ -64,7 +64,7 @@ export function TempOrderSheet({
   const [form, setForm] = useState<TempOrderForm>(() => initialForm(row));
   const [employeeName, setEmployeeName] = useState(row?.employee?.legal_name ?? '');
   const [error, setError] = useState<string | null>(null);
-  const [picker, setPicker] = useState<null | 'employee' | 'type' | 'start' | 'end' | 'destination'>(null);
+  const [picker, setPicker] = useState<null | 'employee' | 'type' | 'start' | 'end'>(null);
   const [empSearch, setEmpSearch] = useState('');
   const save = useSaveTempOrder();
   const remove = useDeleteTempOrder();
@@ -93,7 +93,6 @@ export function TempOrderSheet({
   });
 
   const isTrip = form.type === TRIP_TYPE && !isEdit;
-  const branches = useBranchOptions(isTrip && (picker === 'destination' || !!form.destinationBranchId));
   const tripLabel = (id: number) =>
     tripPicked.find((p) => p.value === id)?.label ?? employees.data?.find((e) => e.id === id)?.legal_name ?? `#${id}`;
   const toggleTrip = (id: number) => {
@@ -102,7 +101,6 @@ export function TempOrderSheet({
       cur.some((p) => p.value === id) ? cur.filter((p) => p.value !== id) : [...cur, { value: id, label: tripLabel(id) }],
     );
   };
-  const destinationName = branches.data?.find((b) => b.id === form.destinationBranchId)?.name ?? '';
 
   const typeOptions = useMemo(
     () =>
@@ -128,7 +126,8 @@ export function TempOrderSheet({
           start: form.start,
           end: form.end || form.start,
           note: form.note,
-          destinationBranchId: form.destinationBranchId ?? null,
+          // Manzil tanlanmaydi (foydalanuvchi qarori, v2/backend 3f1e582) — masofa eng yaqin nuqtaga.
+          destinationBranchId: null,
         }),
       );
       if (!res.skipped.length) {
@@ -267,13 +266,6 @@ export function TempOrderSheet({
             <Text variant="caption" tone="muted">
               {t('checkin.bulk.hint')}
             </Text>
-            <SelectField
-              testID="temp-order-destination"
-              label={t('checkin.bulk.destination')}
-              value={destinationName}
-              placeholder={t('checkin.bulk.destinationNone')}
-              onPress={() => setPicker('destination')}
-            />
           </>
         )}
         {isEdit && !!row?.destination_branch?.name && (
@@ -354,19 +346,6 @@ export function TempOrderSheet({
           }
           setTripResult(null);
           set({ type: next });
-          setPicker(null);
-        }}
-      />
-      <PickerModal
-        visible={picker === 'destination'}
-        title={t('checkin.bulk.destination')}
-        avatars={false}
-        options={(branches.data ?? []).map((b) => ({ value: b.id, label: b.name ?? `#${b.id}` }))}
-        loading={branches.isFetching}
-        selected={form.destinationBranchId ?? null}
-        onClose={() => setPicker(null)}
-        onSelect={(id) => {
-          set({ destinationBranchId: id === form.destinationBranchId ? null : id });
           setPicker(null);
         }}
       />

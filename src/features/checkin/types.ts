@@ -12,6 +12,8 @@ export interface MobileCheckin {
   employee_id: number;
   work_leave_id?: number | null;
   destination_branch?: BranchRef | null;
+  /** Belgiga eng yaqin filial/GES nuqtasi (backend 3f1e582) — masofa shunga o'lchanadi. */
+  nearest_location?: NearestLocation | null;
   /** Server qiymati — `entrance` | `exit`. */
   direction_type: string;
   /** Telefonda olingan payt (oflayn navbatdan kelsa ham o'z vaqti). */
@@ -39,6 +41,17 @@ export interface MobileCheckin {
     photo_thumb_path?: string | null;
     job_position?: { name?: string | null } | null;
   } | null;
+}
+
+export interface NearestLocation {
+  id: number;
+  name?: string | null;
+  organization_branch?: BranchRef | null;
+}
+
+/** Belgi joyi nomi: eng yaqin nuqta (yangi), bo'lmasa safar manzili (eski yozuvlar). */
+export function checkinPlace(c: { nearest_location?: NearestLocation | null; destination_branch?: BranchRef | null }): string | null {
+  return c.nearest_location?.name || c.destination_branch?.name || null;
 }
 
 export interface TripLocation {

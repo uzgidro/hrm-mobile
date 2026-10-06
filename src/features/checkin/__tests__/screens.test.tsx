@@ -158,4 +158,18 @@ describe('mobil «Keldim»', () => {
     await waitFor(() => expect(mock.history.post).toHaveLength(1));
     expect(JSON.parse(mock.history.post[0].data)).toEqual({ reason: 'Boshqa joydan belgilagan' });
   });
+
+  it('manzilsiz safar (2026-10-06 qarori): oldindan masofa yo\'q, yuborilgach eng yaqin joy ko\'rinadi', async () => {
+    setUser(emp);
+    mock.onGet(MOBILE_CHECKINS_ME_STATUS).reply(200, status({ trip: { ...TRIP, destination_branch: null, destination_locations: [] } }));
+    mock.onGet(MOBILE_CHECKINS_ME).reply(200, { items: [], total: 0, pages: 1 });
+    mock.onPost(MOBILE_CHECKINS).reply(200, ck(11, { destination_branch: null, nearest_location: { id: 5, name: 'Gazalkent GES-28' }, distance_m: 52 }));
+    await renderWithProviders(<CheckinScreen />);
+    expect(await screen.findByTestId('checkin-distance-server')).toBeTruthy();
+    expect(screen.queryByTestId('checkin-far-warning')).toBeNull();
+    await fireEvent.press(screen.getByTestId('checkin-take-photo'));
+    await screen.findByTestId('checkin-photo');
+    await fireEvent.press(screen.getByTestId('checkin-submit'));
+    expect(await screen.findByText(/Gazalkent GES-28 · 52 m/)).toBeTruthy();
+  });
 });

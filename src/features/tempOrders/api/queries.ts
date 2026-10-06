@@ -1,8 +1,7 @@
 // Vaqtinchalik buyruqlar ro'yxati — v2 `useTempOrders` (work-leaves/hr-list).
-import { queryOptions, keepPreviousData, useQuery } from '@tanstack/react-query';
+import { queryOptions, keepPreviousData } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
-import { ORGANIZATION_BRANCHES, WORK_LEAVES_HR_LIST } from '@/api/urls';
-import { unwrapList } from '@/api/response';
+import { WORK_LEAVES_HR_LIST } from '@/api/urls';
 
 export type TempOrder = {
   id: number;
@@ -48,13 +47,3 @@ export function tempOrdersQuery(p: { search: string; type: string | null; page: 
   });
 }
 
-/** Filiallar (xizmat safari manzili tanlagichi) — kam o'zgaradi, 10 daqiqa kesh. */
-export function useBranchOptions(enabled: boolean) {
-  return useQuery({
-    queryKey: ['temp-orders', 'branch-options'],
-    queryFn: () =>
-      apiClient.get(ORGANIZATION_BRANCHES).then((r) => unwrapList<{ id: number; name?: string | null }>(r.data)),
-    enabled,
-    staleTime: 10 * 60_000,
-  });
-}

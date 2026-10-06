@@ -170,6 +170,12 @@ function CheckinDetailSheet({ id, onClose }: { id: number; onClose: () => void }
           </View>
           {kv(t('checkin.hr.captured'), dayjs(r.happen_time).format('DD.MM.YYYY HH:mm'))}
           {kv(t('checkin.hr.received'), dayjs(r.received_at).format('DD.MM.YYYY HH:mm'))}
+          {kv(
+            t('checkin.nearest'),
+            r.nearest_location?.name
+              ? [r.nearest_location.name, r.nearest_location.organization_branch?.name].filter(Boolean).join(' · ')
+              : null,
+          )}
           {kv(t('checkin.hr.destination'), r.destination_branch?.name)}
           {kv(t('checkin.hr.distance'), formatDistance(r.distance_m))}
           {kv(t('checkin.hr.accuracy'), r.accuracy_m != null ? `±${Math.round(r.accuracy_m)} m` : null)}

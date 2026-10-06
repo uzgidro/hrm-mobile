@@ -44,7 +44,7 @@ import {
 import { newClientUuid, submitCheckin } from '../lib/queue';
 import { reloadPending } from '../lib/useCheckinQueue';
 import { nextDirection } from '../components/TripCheckinCard';
-import type { CheckinDirection, MobileCheckin } from '../types';
+import { checkinPlace, type CheckinDirection, type MobileCheckin } from '../types';
 
 type LocState =
   | { kind: 'locating' }
@@ -178,7 +178,7 @@ export default function CheckinScreen() {
       ) : done ? (
         <SuccessCard
           done={done}
-          place={status?.trip?.destination_branch?.name}
+          place={done.kind === 'sent' ? checkinPlace(done.checkin) : status?.trip?.destination_branch?.name}
           direction={direction}
           onClose={() => goBackOr('/')}
         />
@@ -263,8 +263,10 @@ export default function CheckinScreen() {
                     })}
                   </Text>
                 ) : (
-                  <Text variant="caption" tone="muted">
-                    {t('checkin.noCoords')}
+                  // Manzil endi tanlanmaydi (2026-10-06): eng yaqin filial/GES ni server topadi —
+                  // xodimga barcha nuqtalar ko'rinmaydi, shuning uchun oldindan hisoblab bo'lmaydi.
+                  <Text variant="caption" tone="muted" testID="checkin-distance-server">
+                    {t('checkin.distanceByServer')}
                   </Text>
                 )}
                 {far && (
@@ -382,7 +384,7 @@ export function CheckinRow({ item, onPress, showName }: { item: MobileCheckin; o
           {`${isToday ? t('checkin.today') : at.format('DD.MM')} ${at.format('HH:mm')} · ${t(`checkin.dir_${item.direction_type}`, { defaultValue: item.direction_type })}`}
         </Text>
         <Text variant="caption" tone="muted" numberOfLines={2}>
-          {[item.destination_branch?.name, formatDistance(item.distance_m)].filter(Boolean).join(' · ')}
+          {[checkinPlace(item), formatDistance(item.distance_m)].filter(Boolean).join(' · ')}
           {cancelled && item.cancel_reason ? `\n${t('checkin.cancelReasonLabel')}: ${item.cancel_reason}` : ''}
         </Text>
       </View>
