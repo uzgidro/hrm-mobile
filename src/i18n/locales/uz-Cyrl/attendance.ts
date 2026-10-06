@@ -22,6 +22,11 @@ export default {
     onLeaveTeam: 'бошқа сабаб',
   },
   clearFilter: 'тозалаш учун босинг',
+  searchPlaceholder: "Ходим, лавозим ёки бўлим…",
+  scopeBranch: "Бутун филиал",
+  scopeDepartment: "Менинг бўлимим",
+  tabMine: "Менинг табелим",
+  tabTeam: "Жамоа",
   showAll: 'Барчасини кўрсатиш',
   allEmployees: 'Барча ходимлар',
 

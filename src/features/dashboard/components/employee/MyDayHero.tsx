@@ -2,7 +2,7 @@
 // binafsha→tomchi gradient, ism va lavozim, ish vaqti chipi, ikki mini tile
 // (bugun keldim / ish vaqti), o'ngda Tomchi maskoti, pastda oq lab'li tugma.
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, type Href } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -41,9 +41,17 @@ export function MyDayHero({
     >
       <View style={styles.top}>
         {/* Oq halqa — gradient ustida avatar (bosh harflar) ko'rinsin. */}
-        <View style={styles.avatarRing}>
+        {/* Rasmni bosish — profil (foydalanuvchi talabi 2026-10-06). */}
+        <Pressable
+          testID="hero-avatar"
+          onPress={() => router.push('/(tabs)/profile' as Href)}
+          accessibilityRole="button"
+          accessibilityLabel={t('tabs.profile')}
+          hitSlop={6}
+          style={({ pressed }) => [styles.avatarRing, pressed && styles.pressed]}
+        >
           <Avatar name={name} uri={photo} size={50} />
-        </View>
+        </Pressable>
         <View style={styles.who}>
           <Text variant="caption" tone="onBrand" style={styles.eyebrow}>
             {t('dashboard.home.myDay')}
@@ -103,6 +111,7 @@ const styles = StyleSheet.create({
   hero: { borderRadius: radii.xl, padding: 16, gap: 12, overflow: 'hidden' },
   top: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   avatarRing: { padding: 3, borderRadius: 30, backgroundColor: 'rgba(255,255,255,0.92)' },
+  pressed: { opacity: 0.8, transform: [{ scale: 0.96 }] },
   who: { flex: 1, minWidth: 0 },
   eyebrow: { opacity: 0.85, textTransform: 'uppercase', letterSpacing: 0.6, fontWeight: '700' },
   name: { fontSize: 19, lineHeight: 24 },

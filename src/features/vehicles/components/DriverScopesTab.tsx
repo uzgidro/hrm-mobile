@@ -10,7 +10,8 @@ import { getApiErrorMessage } from '@/api/errors';
 import { confirm } from '@/lib/confirm';
 import { toast } from '@/lib/toast';
 import { PickerModal } from '@/components/PickerModal';
-import { departmentOptionsQuery, employeeOptionsSearchQuery, jobPositionOptionsQuery } from '@/utils/employees';
+import { departmentOptionsQuery, jobPositionOptionsQuery } from '@/utils/employees';
+import { useEmployeeOptionsPicker } from '@/lib/useInfinitePicker';
 import { useTheme } from '@/theme/ThemeProvider';
 import { Badge, Card, EmptyState, ErrorState, IconButton, Segmented, SelectField, Skeleton, Text } from '@/ui';
 import { driverScopesQuery } from '../api/queries';
@@ -29,17 +30,17 @@ export function DriverScopesTab({ fleetBranchId }: { fleetBranchId: number | nul
   const branch = fleetBranchId ?? undefined;
   const departments = useQuery({ ...departmentOptionsQuery(branch), enabled: picking && kind === 'department' });
   const positions = useQuery({ ...jobPositionOptionsQuery(branch), enabled: picking && kind === 'job_position' });
-  const employees = useQuery({ ...employeeOptionsSearchQuery(empSearch), enabled: picking && kind === 'employee' });
+  const employees = useEmployeeOptionsPicker(empSearch, { enabled: picking && kind === 'employee' });
 
   const options =
     kind === 'employee'
-      ? (employees.data ?? []).map((e) => ({ value: e.id, label: e.legal_name || `#${e.id}` }))
+      ? employees.rows.map((e) => ({ value: e.id, label: e.legal_name || `#${e.id}` }))
       : ((kind === 'department' ? departments.data : positions.data) ?? []).map((o) => ({
           value: o.id,
           label: o.name || `#${o.id}`,
         }));
   const loading =
-    kind === 'employee' ? employees.isFetching : kind === 'department' ? departments.isFetching : positions.isFetching;
+    kind === 'employee' ? employees.loading : kind === 'department' ? departments.isFetching : positions.isFetching;
 
   // Tanlash huquqni darhol beradi — avval so'raymiz (v2).
   const onPick = async (id: number) => {
@@ -146,6 +147,8 @@ export function DriverScopesTab({ fleetBranchId }: { fleetBranchId: number | nul
           onClose={() => setPicking(false)}
           onSelect={(id) => void onPick(id)}
           onSearchChange={kind === 'employee' ? setEmpSearch : undefined}
+          onEndReached={kind === 'employee' ? employees.onEndReached : undefined}
+          loadingMore={kind === 'employee' && employees.loadingMore}
         />
       )}
     </View>

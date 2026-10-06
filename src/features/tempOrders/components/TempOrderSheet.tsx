@@ -4,11 +4,10 @@
 import React, { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import dayjs from 'dayjs';
-import { useQuery } from '@tanstack/react-query';
+
+import { useEmployeeListPicker } from '@/lib/useInfinitePicker';
 import { useTranslation } from 'react-i18next';
-import { apiClient } from '@/api/client';
-import { unwrapList } from '@/api/response';
-import { EMPLOYEES_LIST } from '@/api/urls';
+
 import { getApiErrorMessage } from '@/api/errors';
 import { toast } from '@/lib/toast';
 import { confirm } from '@/lib/confirm';
@@ -17,7 +16,7 @@ import { SelectedChips } from '@/components/SelectedChips';
 import { DatePickerModal } from '@/components/DatePicker';
 import { FormInput } from '@/components/FormInput';
 import { Badge, Button, SelectField, Sheet, Text } from '@/ui';
-import type { Employee } from '@/types';
+
 import { useBulkTrip, useDeleteTempOrder, useSaveTempOrder, type BulkTripResult } from '../api/mutations';
 import type { TempOrder } from '../api/queries';
 import {
@@ -77,19 +76,12 @@ export function TempOrderSheet({
   // Holat boshlang'ich qiymatdan: varaq har ochilishda `key` bilan yangidan mount qilinadi
   // (TempOrdersScreen), shuning uchun effektda qayta to'ldirish shart emas.
 
-  const employees = useQuery({
-    queryKey: ['temp-orders', 'employee-picker', empSearch, branchId ?? null],
-    queryFn: () =>
-      apiClient
-        .get(EMPLOYEES_LIST, {
-          params: {
-            size: 30,
-            ...(empSearch ? { search: empSearch } : {}),
-            ...(branchId ? { organization_branch_id: branchId } : {}),
-          },
-        })
-        .then((r) => unwrapList<Employee>(r.data)),
+  // Sahifalab: ro'yxat oxiriga yetganda keyingi sahifa (ilgari faqat birinchi 30 xodim edi).
+  const employees = useEmployeeListPicker({
+    key: 'temp-orders',
+    search: empSearch,
     enabled: picker === 'employee',
+    params: branchId ? { organization_branch_id: branchId } : undefined,
   });
 
   const isTrip = form.type === TRIP_TYPE && !isEdit;
@@ -312,6 +304,8 @@ export function TempOrderSheet({
       </View>
 
       <PickerModal
+        onEndReached={employees.onEndReached}
+        loadingMore={employees.loadingMore}
         visible={picker === 'employee'}
         title={t('tempOrders.pickEmployee')}
         options={[

@@ -4,10 +4,9 @@
 import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
+import { useEmployeeListPicker } from '@/lib/useInfinitePicker';
 import { useTranslation } from 'react-i18next';
-import { apiClient } from '@/api/client';
-import { unwrapList } from '@/api/response';
-import { EMPLOYEES_LIST } from '@/api/urls';
+
 import { getApiErrorMessage } from '@/api/errors';
 import { toast } from '@/lib/toast';
 import { confirm } from '@/lib/confirm';
@@ -30,7 +29,7 @@ import {
   Skeleton,
   Text,
 } from '@/ui';
-import type { Employee } from '@/types';
+
 import { RESPONSIBLE_SCOPES, responsiblesQuery, type Responsible, type ResponsibleScope } from '../api/queries';
 import { useAddResponsible, useRemoveResponsible } from '../api/mutations';
 
@@ -57,12 +56,10 @@ export default function ResponsiblesScreen() {
   const list = useQuery(responsiblesQuery(MODULE, allowed));
   const departments = useQuery({ ...departmentOptionsQuery(branchId), enabled: picking && scope === 'department' });
   const positions = useQuery({ ...jobPositionOptionsQuery(branchId), enabled: picking && scope === 'job_position' });
-  const employees = useQuery({
-    queryKey: ['responsibles', 'employee-picker', empSearch],
-    queryFn: () =>
-      apiClient
-        .get(EMPLOYEES_LIST, { params: { size: 30, ...(empSearch ? { search: empSearch } : {}) } })
-        .then((r) => unwrapList<Employee>(r.data)),
+  // Sahifalab: ro'yxat oxiriga yetganda keyingi sahifa (ilgari faqat birinchi 30 xodim edi).
+  const employees = useEmployeeListPicker({
+    key: 'responsibles',
+    search: empSearch,
     enabled: picking && scope === 'employee',
   });
   const add = useAddResponsible();
@@ -199,6 +196,8 @@ export default function ResponsiblesScreen() {
         selected={null}
         onClose={() => setPicking(false)}
         onSearchChange={scope === 'employee' ? setEmpSearch : undefined}
+        onEndReached={scope === 'employee' ? employees.onEndReached : undefined}
+        loadingMore={scope === 'employee' && employees.loadingMore}
         onSelect={(id) => void onPick(id)}
       />
     </Screen>

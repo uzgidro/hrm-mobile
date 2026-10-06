@@ -4,18 +4,17 @@
 import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import dayjs from 'dayjs';
-import { useQuery } from '@tanstack/react-query';
+
+import { useEmployeeListPicker } from '@/lib/useInfinitePicker';
 import { useTranslation } from 'react-i18next';
-import { apiClient } from '@/api/client';
-import { unwrapList } from '@/api/response';
-import { EMPLOYEES_LIST } from '@/api/urls';
+
 import { getApiErrorMessage } from '@/api/errors';
 import { toast } from '@/lib/toast';
 import { DatePickerModal } from '@/components/DatePicker';
 import { FormInput } from '@/components/FormInput';
 import { PickerModal } from '@/components/PickerModal';
 import { Button, Chip, SelectField, Sheet, Text } from '@/ui';
-import type { Employee } from '@/types';
+
 import type { Training } from '../api/queries';
 import { useSaveTraining } from '../api/mutations';
 import {
@@ -53,12 +52,10 @@ export function TrainingFormSheet({ training, onClose }: { training: Training | 
   const [picker, setPicker] = useState<Pick>(null);
   const [empSearch, setEmpSearch] = useState('');
   const save = useSaveTraining();
-  const employees = useQuery({
-    queryKey: ['trainings', 'employee-picker', empSearch],
-    queryFn: () =>
-      apiClient
-        .get(EMPLOYEES_LIST, { params: { size: 30, ...(empSearch ? { search: empSearch } : {}) } })
-        .then((r) => unwrapList<Employee>(r.data)),
+  // Sahifalab: ro'yxat oxiriga yetganda keyingi sahifa (ilgari faqat birinchi 30 xodim edi).
+  const employees = useEmployeeListPicker({
+    key: 'trainings',
+    search: empSearch,
     enabled: picker === 'employee',
   });
 
@@ -217,6 +214,8 @@ export function TrainingFormSheet({ training, onClose }: { training: Training | 
       </View>
 
       <PickerModal
+        onEndReached={employees.onEndReached}
+        loadingMore={employees.loadingMore}
         visible={picker === 'employee'}
         title={t('trainings.employee')}
         options={(employees.data ?? []).map((e) => ({

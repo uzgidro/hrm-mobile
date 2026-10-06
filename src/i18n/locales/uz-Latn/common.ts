@@ -36,4 +36,5 @@ export default {
   filters: "Filtrlar",
   filtersApply: "Natijani ko'rsatish",
   filtersCount: "Filtrlar ({{count}})",
+  showAllCount: "Barchasini ko'rsatish ({{count}})",
 } as const;

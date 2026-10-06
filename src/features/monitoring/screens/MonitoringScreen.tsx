@@ -30,6 +30,7 @@ import {
   Card,
   EmptyState,
   ErrorState,
+  Button,
   IconButton,
   ListRow,
   Screen,
@@ -51,6 +52,8 @@ export default function MonitoringScreen({ showBack = false }: { showBack?: bool
   const { sizeClass } = useBreakpoint();
   const user = useAuthStore((s) => s.user);
   const [picked, setPicked] = useState<number | null>(null);
+  // Kech qolganlar: avval 20 ta, «Barchasini ko'rsatish» bilan hammasi (ilgari 20 dan keyingisi ko'rinmasdi).
+  const [lateAll, setLateAll] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const own = userBranchIds(user);
   const global = hasGlobalBranchScope(user);
@@ -155,7 +158,8 @@ export default function MonitoringScreen({ showBack = false }: { showBack?: bool
           {t('monitoring.noLateToday')}
         </Text>
       ) : (
-        (late.data ?? []).slice(0, 20).map((r) => {
+        <>
+        {(late.data ?? []).slice(0, lateAll ? undefined : 20).map((r) => {
           const name = r.employee?.legal_name ?? '—';
           return (
             <ListRow
@@ -173,7 +177,16 @@ export default function MonitoringScreen({ showBack = false }: { showBack?: bool
               }
             />
           );
-        })
+        })}
+        {!lateAll && (late.data ?? []).length > 20 && (
+          <Button
+            testID="monitoring-late-all"
+            label={t('common.showAllCount', { count: (late.data ?? []).length })}
+            variant="link"
+            onPress={() => setLateAll(true)}
+          />
+        )}
+        </>
       )}
     </Card>
   ) : null;

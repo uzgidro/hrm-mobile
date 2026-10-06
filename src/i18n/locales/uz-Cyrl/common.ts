@@ -34,4 +34,5 @@ export default {
   filters: "Филтрлар",
   filtersApply: "Натижани кўрсатиш",
   filtersCount: "Филтрлар ({{count}})",
+  showAllCount: "Барчасини кўрсатиш ({{count}})",
 } as const;

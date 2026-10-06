@@ -3,7 +3,7 @@
 // bor qatorlar), Muammolar (reyestr nuqsonlari — faqat HR / bosh admin).
 // Eksport, import, ommaviy tahrir, xabarnoma va vakansiya e'loni tahriri — web'da.
 import React, { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { getApiErrorMessage } from '@/api/errors';
@@ -49,6 +49,8 @@ export default function StaffPositionsScreen() {
   const [category, setCategory] = useState('');
   const [includeClosed, setIncludeClosed] = useState(false);
   const [page, setPage] = useState(1);
+  // «Muammolar» guruhida 40 dan ortig'i «+N» bosilganda ochiladi.
+  const [openIssues, setOpenIssues] = useState<Record<string, boolean>>({});
   const [viewing, setViewing] = useState<StaffPosition | null>(null);
   const [editing, setEditing] = useState<{ row: StaffPosition | null; n: number } | null>(null);
 
@@ -196,13 +198,21 @@ export default function StaffPositionsScreen() {
                     </Text>
                   )}
                   <View style={styles.chips}>
-                    {g.rows.slice(0, 40).map((r, i) => (
+                    {g.rows.slice(0, openIssues[g.code] ? undefined : 40).map((r, i) => (
                       <Badge
                         key={`${g.code}-${r.id ?? i}`}
                         label={`${r.name ?? '—'}${r.count ? ` · ${r.count}` : ''}`}
                       />
                     ))}
-                    {g.rows.length > 40 && <Badge label={`+${g.rows.length - 40}`} />}
+                    {g.rows.length > 40 && !openIssues[g.code] && (
+                      <Pressable
+                        testID={`staff-issue-more-${g.code}`}
+                        accessibilityRole="button"
+                        onPress={() => setOpenIssues((o) => ({ ...o, [g.code]: true }))}
+                      >
+                        <Badge label={`+${g.rows.length - 40}`} tone="brand" />
+                      </Pressable>
+                    )}
                   </View>
                 </View>
               ))

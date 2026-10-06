@@ -22,6 +22,11 @@ export default {
     onLeaveTeam: 'other reason',
   },
   clearFilter: 'tap to clear',
+  searchPlaceholder: "Employee, position or department…",
+  scopeBranch: "Whole branch",
+  scopeDepartment: "My department",
+  tabMine: "My timesheet",
+  tabTeam: "Team",
   showAll: 'Show all',
   allEmployees: 'All employees',
 

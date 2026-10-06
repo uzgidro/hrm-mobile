@@ -3,16 +3,15 @@
 import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
+import { useEmployeeListPicker } from '@/lib/useInfinitePicker';
 import { useTranslation } from 'react-i18next';
-import { apiClient } from '@/api/client';
-import { unwrapList } from '@/api/response';
-import { EMPLOYEES_LIST } from '@/api/urls';
+
 import { getApiErrorMessage } from '@/api/errors';
 import { toast } from '@/lib/toast';
 import { FormInput } from '@/components/FormInput';
 import { PickerModal } from '@/components/PickerModal';
 import { Button, Chip, SelectField, Sheet, Text } from '@/ui';
-import type { Employee } from '@/types';
+
 import { JOB_CATEGORIES, branchesQuery, type Department, type JobPosition } from '../api/queries';
 import { useSaveDepartment, useSavePosition } from '../api/mutations';
 import {
@@ -61,19 +60,12 @@ export function StructureFormSheet({
 
   const branches = useQuery({ ...branchesQuery(), enabled: true });
   const branchId = isDept ? dept.branchId : pos.branchId;
-  const employees = useQuery({
-    queryKey: ['structure', 'heads-picker', branchId, empSearch],
-    queryFn: () =>
-      apiClient
-        .get(EMPLOYEES_LIST, {
-          params: {
-            size: 30,
-            ...(branchId ? { organization_branch_id: branchId } : {}),
-            ...(empSearch ? { search: empSearch } : {}),
-          },
-        })
-        .then((r) => unwrapList<Employee>(r.data)),
+  // Sahifalab: ro'yxat oxiriga yetganda keyingi sahifa (ilgari faqat birinchi 30 xodim edi).
+  const employees = useEmployeeListPicker({
+    key: 'structure',
+    search: empSearch,
     enabled: picker === 'heads',
+    params: branchId ? { organization_branch_id: branchId } : undefined,
   });
 
   const setD = (p: Partial<DeptForm>) => {
@@ -200,6 +192,8 @@ export function StructureFormSheet({
         }}
       />
       <PickerModal
+        onEndReached={employees.onEndReached}
+        loadingMore={employees.loadingMore}
         visible={picker === 'heads'}
         title={t('structure.pickHeads')}
         multiple

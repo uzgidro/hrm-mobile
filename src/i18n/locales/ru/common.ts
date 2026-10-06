@@ -34,4 +34,5 @@ export default {
   filters: "Фильтры",
   filtersApply: "Показать результаты",
   filtersCount: "Фильтры ({{count}})",
+  showAllCount: "Показать все ({{count}})",
 } as const;

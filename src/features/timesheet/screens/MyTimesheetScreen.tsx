@@ -24,7 +24,8 @@ import { tabelCodeMeta, tabelCodeColor, legendCodesFor, tabelSummary, dayAttenda
 // Hafta sarlavhasi dushanbadan (dayjs: yakshanba = 0).
 const WEEKDAY_INDICES = [1, 2, 3, 4, 5, 6, 0];
 
-export default function MyTimesheetScreen() {
+/** `embedded` — Davomat tabining «Mening tabelim» segmenti ichida (sarlavha va yuqori safe-area tabda). */
+export default function MyTimesheetScreen({ embedded = false }: { embedded?: boolean } = {}) {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const employeeId = user?.employee?.id;
@@ -234,8 +235,12 @@ export default function MyTimesheetScreen() {
   );
 
   return (
-    <Screen refreshing={isRefetching} onRefresh={() => void Promise.all([refetch(), refetchEvents()])}>
-      <PageHeader title={t('timesheet.myTitle')} subtitle={t('timesheet.mySubtitle')} />
+    <Screen
+      refreshing={isRefetching}
+      onRefresh={() => void Promise.all([refetch(), refetchEvents()])}
+      edges={embedded ? [] : ['top']}
+    >
+      {!embedded && <PageHeader title={t('timesheet.myTitle')} subtitle={t('timesheet.mySubtitle')} />}
       {isError ? (
         <ErrorState title={t('timesheet.loadError')} onRetry={() => refetch()} />
       ) : isLoading ? (

@@ -40,6 +40,11 @@ interface Props {
    *  the API with it. Used for organisation-wide employee pickers, which used
    *  to download every page (15 × 100 rows) just to filter in JS. */
   onSearchChange?: (query: string) => void;
+  /** Server sahifalash: ro'yxat oxiriga yetganda keyingi sahifa (ilgari faqat 1-sahifa —
+   *  30/100 ta — ko'rinib, qolgani «kesilib» qolardi; 2026-10-06). `useInfinitePicker` beradi. */
+  onEndReached?: () => void;
+  /** Keyingi sahifa yuklanmoqda — ro'yxat ostida spinner. */
+  loadingMore?: boolean;
   /** Bosh harfli avatar (odamlar ro'yxati). Soat / daqiqa / holat kabi ro'yxatlarda
    *  `false` — aks holda har qatorda ma'nosiz «0», «1» doirasi chiziladi. */
   avatars?: boolean;
@@ -47,7 +52,7 @@ interface Props {
 
 export function PickerModal({
   visible, title, options, loading, multiple, selected, onClose, onSelect, onToggle,
-  disabledValues, onSearchChange, avatars = true,
+  disabledValues, onSearchChange, avatars = true, onEndReached, loadingMore,
 }: Props) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -112,6 +117,12 @@ export function PickerModal({
               data={filtered}
               keyExtractor={(o) => String(o.value)}
               keyboardShouldPersistTaps="handled"
+              testID="picker-list"
+              onEndReached={onEndReached}
+              onEndReachedThreshold={0.5}
+              ListFooterComponent={loadingMore ? <ActivityIndicator style={{ marginVertical: 16 }} color={colors.primaryLight} /> : null}
+              initialNumToRender={20}
+              windowSize={9}
               renderItem={({ item }) => {
                 const sel = isSelected(item.value);
                 const locked = !!disabledValues?.includes(item.value);

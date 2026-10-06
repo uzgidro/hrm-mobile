@@ -22,6 +22,11 @@ export default {
     onLeaveTeam: 'другая причина',
   },
   clearFilter: 'нажмите, чтобы сбросить',
+  searchPlaceholder: "Сотрудник, должность или отдел…",
+  scopeBranch: "Весь филиал",
+  scopeDepartment: "Мой отдел",
+  tabMine: "Мой табель",
+  tabTeam: "Команда",
   showAll: 'Показать все',
   allEmployees: 'Все сотрудники',
 

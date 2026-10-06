@@ -55,6 +55,9 @@ export function workLeavesServerParams(p: LeavesListParams): ListParams {
   const out: ListParams = { ...(leaveScopeParams(p.scope, p.branchId) as ListParams) };
   out.status = !p.status || p.status === 'all' ? undefined : p.status;
   out.search = p.search?.trim() || undefined;
+  // Meni kutayotgan (imzom kerak) so'rovlar har doim tepada — menyu raqami bilan bir xil
+  // shart (backend 0191286, WorkLeaveService.awaiting_me_clause). Eski server e'tiborsiz qoldiradi.
+  out.action_first = true;
   if (p.month) {
     const start = dayjs(`${p.month}-01`);
     out.date_from = start.format('YYYY-MM-DD');

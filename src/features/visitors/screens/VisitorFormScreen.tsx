@@ -27,8 +27,8 @@ import {
   type VisitorPayload,
 } from '../api/mutations';
 import { PickerModal } from '@/components/PickerModal';
-import { employeeOptionsSearchQuery, type EmployeeOptionRow } from '@/utils/employees';
-import { useQuery } from '@tanstack/react-query';
+import type { EmployeeOptionRow } from '@/utils/employees';
+import { useEmployeeOptionsPicker } from '@/lib/useInfinitePicker';
 import { toast } from '@/lib/toast';
 
 export default function MehmonFormScreen() {
@@ -64,10 +64,9 @@ export default function MehmonFormScreen() {
   const [sourceEmployee, setSourceEmployee] = useState<EmployeeOptionRow | null>(null);
   const [empPickerOpen, setEmpPickerOpen] = useState(false);
   const [empSearch, setEmpSearch] = useState('');
-  const { data: empOptions = [], isFetching: empLoading } = useQuery({
-    ...employeeOptionsSearchQuery(empSearch),
-    enabled: !isEdit && mode === 'employee',
-  });
+  // Butun tashkilot bo'yicha, sahifalab (ilgari faqat birinchi 100 ta ko'rinardi).
+  const empPicker = useEmployeeOptionsPicker(empSearch, { enabled: !isEdit && mode === 'employee' });
+  const empOptions = empPicker.rows;
   const pickSourceEmployee = (id: number) => {
     const emp = empOptions.find((e) => e.id === id);
     setEmpPickerOpen(false);
@@ -297,7 +296,9 @@ export default function MehmonFormScreen() {
           subLabel: [e.job_position_name, e.organization_name].filter(Boolean).join(' · '),
           photo: e.photo_path,
         }))}
-        loading={empLoading}
+        loading={empPicker.loading}
+        loadingMore={empPicker.loadingMore}
+        onEndReached={empPicker.onEndReached}
         onSearchChange={setEmpSearch}
         selected={sourceEmployee?.id ?? null}
         onSelect={pickSourceEmployee}

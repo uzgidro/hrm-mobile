@@ -3,11 +3,10 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import dayjs from 'dayjs';
-import { useQuery } from '@tanstack/react-query';
+
+import { useEmployeeListPicker } from '@/lib/useInfinitePicker';
 import { useTranslation } from 'react-i18next';
-import { apiClient } from '@/api/client';
-import { unwrapList } from '@/api/response';
-import { EMPLOYEES_LIST } from '@/api/urls';
+
 import { getApiErrorMessage } from '@/api/errors';
 import { toast } from '@/lib/toast';
 import { confirm } from '@/lib/confirm';
@@ -15,7 +14,7 @@ import { PickerModal } from '@/components/PickerModal';
 import { DatePickerModal } from '@/components/DatePicker';
 import { FormInput } from '@/components/FormInput';
 import { Badge, Button, SelectField, Sheet, Text } from '@/ui';
-import type { Employee } from '@/types';
+
 import { useDeleteTask, useSaveTask, useSetTaskCompleted } from '../api/mutations';
 import { buildTaskBody, delayDays, statusOf, validateTask, type IjroTask, type TaskForm } from '../utils/ijro';
 import { STATUS_TONE } from './statusTone';
@@ -145,14 +144,10 @@ export function TaskFormSheet({ task, onClose }: { task: IjroTask | null | undef
     }
   }, [visible, task]);
 
-  const employees = useQuery({
-    queryKey: ['ijro', 'employee-picker', empSearch],
-    queryFn: () =>
-      apiClient
-        .get(EMPLOYEES_LIST, {
-          params: { size: 30, ...(empSearch ? { search: empSearch } : {}) },
-        })
-        .then((r) => unwrapList<Employee>(r.data)),
+  // Sahifalab: ro'yxat oxiriga yetganda keyingi sahifa (ilgari faqat birinchi 30 xodim edi).
+  const employees = useEmployeeListPicker({
+    key: 'ijro',
+    search: empSearch,
     enabled: picker === 'employee',
   });
 
@@ -220,6 +215,8 @@ export function TaskFormSheet({ task, onClose }: { task: IjroTask | null | undef
       </View>
 
       <PickerModal
+        onEndReached={employees.onEndReached}
+        loadingMore={employees.loadingMore}
         visible={picker === 'employee'}
         title={t('ijro.pickEmployee')}
         options={(employees.data ?? []).map((e) => ({
