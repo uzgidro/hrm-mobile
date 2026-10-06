@@ -368,8 +368,17 @@ export function CheckinRow({ item, onPress, showName }: { item: MobileCheckin; o
         <View style={[styles.thumb, { backgroundColor: c.skeleton }]} />
       )}
       <View style={styles.flex}>
-        <Text variant="label" numberOfLines={1} style={cancelled ? styles.struck : undefined}>
-          {showName && item.employee?.legal_name ? `${item.employee.legal_name} · ` : ''}
+        {/* Kadr ro'yxatida ism — alohida sarlavha (vaqt bilan bir qatorda kesilib qolardi). */}
+        {showName && !!item.employee?.legal_name && (
+          <Text variant="label" numberOfLines={1}>
+            {item.employee.legal_name}
+          </Text>
+        )}
+        <Text
+          variant={showName ? 'caption' : 'label'}
+          numberOfLines={1}
+          style={cancelled ? styles.struck : undefined}
+        >
           {`${isToday ? t('checkin.today') : at.format('DD.MM')} ${at.format('HH:mm')} · ${t(`checkin.dir_${item.direction_type}`, { defaultValue: item.direction_type })}`}
         </Text>
         <Text variant="caption" tone="muted" numberOfLines={2}>
@@ -413,7 +422,8 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
   },
   photoWrap: { gap: 10 },
-  photo: { width: '100%', aspectRatio: 3 / 4, borderRadius: radii.lg, maxHeight: 420 },
+  // Ixcham — yuborish tugmasi telefon ekranidan tushib ketmasin.
+  photo: { width: '100%', height: 220, borderRadius: radii.lg },
   warn: { padding: 10, borderRadius: radii.md },
   success: { alignItems: 'center', gap: 10, paddingVertical: 8 },
   history: { marginTop: 12 },
