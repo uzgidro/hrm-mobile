@@ -35,18 +35,21 @@ const ALLOW = {
   // our own build. Revisit when metro widens its range to image-size 2.x.
   'GHSA-w3rx-r6r6-pgpr': 'image-size (metro bundler, build-time only) — ICNS infinite loop; fix is 2.x, metro pins ^1',
   'GHSA-5p2g-fcmc-qvqq': 'image-size (metro bundler, build-time only) — JXL/HEIF infinite loop; fix is 2.x, metro pins ^1',
-  // js-yaml via eslint (@eslint/eslintrc, 4.3.1), @expo/cli (@expo/xcpretty, 4.3.1)
-  // and jest coverage (@istanbuljs/load-nyc-config, 3.15.0). All lint/CLI/test —
-  // never in the bundle. 4.3.1 is the newest 4.x and is STILL flagged: the omap
-  // quadratic-CPU fix (CVE-2026-59870) was only shipped in js-yaml 5.x and NOT
-  // backported to 3.x/4.x, which these consumers require. Revisit when eslint /
-  // @expo/cli / istanbul move to js-yaml 5.
-  'GHSA-5p4m-2wfm-xmqj': 'js-yaml (eslint/@expo-cli/jest-coverage, build-time only) — omap quadratic CPU; fix only in 5.x, consumers pin 3.x/4.x',
-  // 2026-09-13: a second js-yaml advisory on the same 3.x/4.x consumers —
-  // `maxTotalMergeKeys` does not bound CPU for empty merge sources. Same
-  // situation: fixed only in 5.x, eslint / @expo/cli / istanbul pin 3.x/4.x;
-  // lint/CLI/test only, never in the shipped bundle.
-  'GHSA-2883-xcg3-v3hh': 'js-yaml (eslint/@expo-cli/jest-coverage, build-time only) — merge-key CPU; fix only in 5.x, consumers pin 3.x/4.x',
+  // 2026-10-06: js-yaml FIXED, not allowlisted any more — 3.15.2 / 4.3.2 finally
+  // backported both CPU fixes (GHSA-5p4m-2wfm-xmqj, GHSA-2883-xcg3-v3hh), pinned
+  // via `overrides: js-yaml@3 / js-yaml@4`. Same day: brace-expansion, compression,
+  // source-map-js fixed by overrides and axios (runtime) bumped to ^1.20.0.
+  //
+  // braces 3.0.3 via micromatch -> metro / jest-haste-map / @expo/cli. 3.0.3 is
+  // the newest release and is itself in the vulnerable range (<=3.0.3) — no fix
+  // exists. Glob matching on the developer's/CI machine only (bundler, test
+  // runner); never in the shipped bundle. Revisit when braces publishes a fix.
+  'GHSA-vfj7-8cjw-p6xm': 'braces (micromatch in metro/jest/@expo-cli, build-time only) — nested-pattern stack exhaustion; no fixed release (latest 3.0.3 is affected)',
+  // node-forge 1.4.0 via @expo/code-signing-certificates (expo-updates `cli/` —
+  // `generate-code-signing`/`configure-code-signing` commands) and @expo/cli
+  // (dev-server HTTPS certs). Newest release, still affected (<=1.4.0). Node CLI
+  // only — the app bundle never imports it (we don't use EAS code signing either).
+  'GHSA-86w9-cpqp-85rv': 'node-forge (expo-updates CLI / @expo/cli, build-time only) — PKCS#1 v1.5 DigestAlgorithm leniency; no fixed release (latest 1.4.0 is affected)',
 };
 
 const BLOCKING = new Set(['high', 'critical']);
