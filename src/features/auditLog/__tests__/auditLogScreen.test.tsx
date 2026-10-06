@@ -87,7 +87,7 @@ describe('AuditLogScreen (v2 AuditLogPage)', () => {
 
   it('onlayn: son, bugungi va rekord; toifa plitkasi bosilsa — filtr (stats toifasiz)', async () => {
     await renderWithProviders(<AuditLogScreen />);
-    expect(await screen.findByTestId('audit-online-peaks')).toHaveTextContent('Bugungi eng yuqori: 9 · Rekord: 31');
+    await waitFor(async () => expect(await screen.findByTestId('audit-online-peaks')).toHaveTextContent('Bugungi eng yuqori: 9 · Rekord: 31'));
     await waitFor(() => expect(screen.getByTestId('audit-online-count')).toHaveTextContent('7'));
     await fireEvent.press(await screen.findByTestId('audit-cat-errors'));
     await waitFor(() => expect(lastList(mock)).toEqual({ category: 'errors', page: 1, size: 25 }));
