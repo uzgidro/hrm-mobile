@@ -23,6 +23,11 @@ export type FilterGroup = {
   onChange: (v: string) => void;
 };
 
+/** Variantlar ko'p yoki nomlari uzun bo'lsa — chip emas, ro'yxat. */
+function asList(g: FilterGroup): boolean {
+  return g.options.length > 10 || g.options.some((o) => o.label.length > 28);
+}
+
 export function ListFilterBar({
   search,
   onSearch,
@@ -96,17 +101,42 @@ export function ListFilterBar({
               <Text variant="label" tone="muted">
                 {g.title}
               </Text>
-              <View style={styles.chips}>
-                {[{ value: g.allValue, label: g.allLabel }, ...g.options].map((o) => (
-                  <Chip
-                    key={o.value}
-                    testID={`${testID}-${g.key}-${o.value}`}
-                    label={o.label}
-                    selected={g.value === o.value}
-                    onPress={() => g.onChange(o.value)}
-                  />
-                ))}
-              </View>
+              {asList(g) ? (
+                // Ko'p / uzun variantlar (buyruq turlari — 25+ ta, 60 belgigacha) chip bo'lib varaqdan
+                // chiqib ketardi — belgili vertikal ro'yxat.
+                <View style={[styles.list, { borderColor: c.border }]}>
+                  {[{ value: g.allValue, label: g.allLabel }, ...g.options].map((o, i) => {
+                    const sel = g.value === o.value;
+                    return (
+                      <Pressable
+                        key={o.value}
+                        testID={`${testID}-${g.key}-${o.value}`}
+                        onPress={() => g.onChange(o.value)}
+                        accessibilityRole="radio"
+                        accessibilityState={{ selected: sel }}
+                        style={[styles.option, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.border }]}
+                      >
+                        <Text variant="body" style={[styles.flex, sel && { color: c.brandStrong, fontWeight: '700' }]} numberOfLines={2}>
+                          {o.label}
+                        </Text>
+                        {sel && <Icon name="check" size={18} color={c.brandStrong} />}
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              ) : (
+                <View style={styles.chips}>
+                  {[{ value: g.allValue, label: g.allLabel }, ...g.options].map((o) => (
+                    <Chip
+                      key={o.value}
+                      testID={`${testID}-${g.key}-${o.value}`}
+                      label={o.label}
+                      selected={g.value === o.value}
+                      onPress={() => g.onChange(o.value)}
+                    />
+                  ))}
+                </View>
+              )}
             </View>
           ))}
           <View style={styles.footer}>
@@ -166,5 +196,7 @@ const styles = StyleSheet.create({
   sheet: { gap: 16, paddingBottom: 8 },
   group: { gap: 8 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  list: { borderWidth: StyleSheet.hairlineWidth, borderRadius: radii.md, overflow: 'hidden' },
+  option: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, paddingVertical: 11, minHeight: 44 },
   footer: { flexDirection: 'row', gap: 10, marginTop: 4 },
 });
