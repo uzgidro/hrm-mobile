@@ -250,6 +250,17 @@ export function routeForNotification(data: any): string | null {
   // tabiga; mashina so'rovlari (safar `letter_id` bilan kelsa yuqorida xatga ochiladi) — navbatga.
   if (type.startsWith('fuel_')) return '/avtopark?tab=fuel';
   if (type.startsWith('vehicle')) return '/avtopark?tab=requests';
+  // v2 notificationRoutes pariteti (2026-10-06): bu oilalar sarlavha olgan, lekin bosilganda
+  // hech qayerga olib bormasdi — v3 da ekranlari bor. `service_request` TEST'da 168 qator.
+  if (type.startsWith('service_request')) return '/interaktiv-xizmatlar';
+  if (type.startsWith('learning_')) return '/oquv-markazi';
+  // Nomzodga o'z arizasi holati (nomzodlik arizasi interaktiv xizmatlarda); `vacancy` — kadrga.
+  if (type === 'vacancy_application') return '/interaktiv-xizmatlar';
+  if (type.startsWith('vacancy')) return '/shtat';
+  if (type.startsWith('employee_transfer_order')) return '/vaqtinchalik-buyruqlar';
+  if (type.startsWith('employee_transfer')) return '/employees-list';
+  // Kunlik «Sizni kutmoqda» xulosasi — kutilayotganlar bosh sahifada.
+  if (type === 'pending_action_digest') return '/';
   return null;
 }
 

@@ -267,3 +267,27 @@ describe("routeForNotification — v3 yo'llari mavjud", () => {
     }
   });
 });
+
+describe('routeForNotification — v2 pariteti: xizmat, kurs, vakansiya, o\'tkazish, xulosa', () => {
+  it.each([
+    ['service_request', '/interaktiv-xizmatlar'],
+    ['learning_course_assigned', '/oquv-markazi'],
+    ['vacancy', '/shtat'],
+    ['vacancy_application', '/interaktiv-xizmatlar'],
+    ['employee_transfer_order_pending', '/vaqtinchalik-buyruqlar'],
+    ['employee_transfer_created', '/employees-list'],
+    ['employee_transfer_rejected', '/employees-list'],
+    ['pending_action_digest', '/'],
+  ])('%s → %s', (type, route) => {
+    expect(routeForNotification({ type })).toBe(route);
+  });
+  it("yangi yo'llar app/ da fayl sifatida bor", () => {
+    const fs = require('fs') as typeof import('fs');
+    const path = require('path') as typeof import('path');
+    const root = path.join(__dirname, '../../..');
+    for (const r of ['/interaktiv-xizmatlar', '/oquv-markazi', '/shtat', '/vaqtinchalik-buyruqlar', '/employees-list']) {
+      const clean = r.replace(/^\//, '');
+      expect({ r, ok: fs.existsSync(path.join(root, `app/${clean}.tsx`)) }).toEqual({ r, ok: true });
+    }
+  });
+});
