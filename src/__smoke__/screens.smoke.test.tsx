@@ -73,7 +73,6 @@ const SCREENS: [string, () => any][] = [
   ['letters/LetterDocumentScreen', () => require('@/features/letters/screens/LetterDocumentScreen')],
   ['letters/LettersListScreen', () => require('@/features/letters/screens/LettersListScreen')],
   ['letters/SubmitReportScreen', () => require('@/features/letters/screens/SubmitReportScreen')],
-  ['news/NewsFormScreen', () => require('@/features/news/screens/NewsFormScreen')],
   ['news/NewsScreen', () => require('@/features/news/screens/NewsScreen')],
   ['notifications/NotificationsScreen', () => require('@/features/notifications/screens/NotificationsScreen')],
   ['orders/CreateOrderScreen', () => require('@/features/orders/screens/CreateOrderScreen')],

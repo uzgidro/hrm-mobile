@@ -28,7 +28,7 @@ export default {
     salary: 'Salary',
     team: 'My team',
     employees: 'Employees',
-    directory: 'Directory',
+    directory: 'Phones',
     guests: 'Guests',
     documents: 'Documents',
     support: 'Support',

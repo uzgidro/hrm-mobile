@@ -1,7 +1,8 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-  View, Text, StyleSheet, ActivityIndicator,
+  View, Text, StyleSheet, ActivityIndicator, Platform, useWindowDimensions,
 } from 'react-native';
+import { onlyOfficeDeviceParams } from '@/utils/onlyOffice';
 import { useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -46,13 +47,15 @@ export default function LetterDocumentScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
+  const { width } = useWindowDimensions();
+  const deviceParams = onlyOfficeDeviceParams(Platform.OS, width);
   const { data: config, isLoading, isError, refetch } = useQuery<any>({
-    queryKey: ['letter-editor-config', letterId, kind, mode],
+    queryKey: ['letter-editor-config', letterId, kind, mode, deviceParams.device ?? null],
     // Guvohnoma/ilova konfiglari `mode` ni umuman qabul qilmaydi (server doim
     // ko'rish beradi) — ortiqcha parametr yubormaymiz.
     queryFn: () => apiClient
       .get(CONFIG_URL[kind](letterId), {
-        params: kind === 'main' || kind === 'report' ? { mode } : undefined,
+        params: kind === 'main' || kind === 'report' ? { mode, ...deviceParams } : deviceParams,
       })
       .then((r) => r.data),
     enabled: !!letterId,

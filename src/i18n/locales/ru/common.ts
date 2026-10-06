@@ -36,4 +36,6 @@ export default {
   filtersCount: "Фильтры ({{count}})",
   showAllCount: "Показать все ({{count}})",
   loadMoreCount: "Загрузить ещё ({{shown}} / {{total}})",
+  openInBrowser: "Открыть в браузере",
+  mediaLoadFailed: "Не удалось загрузить. Проверьте интернет и повторите.",
 } as const;

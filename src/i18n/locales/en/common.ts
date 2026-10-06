@@ -36,4 +36,6 @@ export default {
   filtersCount: "Filters ({{count}})",
   showAllCount: "Show all ({{count}})",
   loadMoreCount: "Load more ({{shown}} / {{total}})",
+  openInBrowser: "Open in browser",
+  mediaLoadFailed: "Could not load. Check your connection and try again.",
 } as const;

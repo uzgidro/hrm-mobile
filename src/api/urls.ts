@@ -78,9 +78,8 @@ export const DICTIONARY_OPTIONS = (code: string) => `dictionaries/${code}/option
 export const SYSTEM_SETTINGS = 'system-settings';
 
 // News
-export const NEWS_POSTS = 'news-posts';
-// Yangilikni tahrirlash / o'chirish (web NewsPage pariteti, 2026-09-13).
-export const NEWS_POST_DETAIL = (id: number) => `news-posts/${id}`;
+// Kompaniya yangiliklari — uzgidro.uz saytidan (web v2 bilan bitta manba, 2026-09-24 qarori).
+export const COMPANY_NEWS_PAGE = 'dashboard/company-news/page';
 
 // Chairman tasks (Raisning kun tartibi — agenda). Calendar-style entries: no
 // detail endpoint (the list carries everything). Manage = secretariat / admin.

@@ -34,7 +34,7 @@ export default {
     salary: 'Oylik',
     team: 'Mening jamoam',
     employees: 'Xodimlar',
-    directory: "Ma'lumotnoma",
+    directory: "Telefon",
     guests: 'Mehmonlar',
     documents: 'Hujjatlar',
     support: 'Texnik yordam',

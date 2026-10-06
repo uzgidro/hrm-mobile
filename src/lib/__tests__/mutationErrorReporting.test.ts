@@ -67,7 +67,6 @@ describe('xatoni o\'zi ko\'rsatadigan mutatsiyalar global toastni o\'chiradi', (
     ['src/features/orders/api/mutations.ts', [
       'useCreateOrder', 'useUpdateOrder', 'useAddOrderComment',
     ]],
-    ['src/features/news/api/mutations.ts', ['useCreateNewsPost', 'useUpdateNewsPost']],
     ['src/features/projects/api/mutations.ts', [
       'useCreateWorkspace', 'useUpdateWorkspace', 'useDeleteWorkspace', 'useCreateColumn',
       'useCreateCard', 'useToggleCardComplete',

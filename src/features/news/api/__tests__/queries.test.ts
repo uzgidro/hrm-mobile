@@ -1,7 +1,8 @@
 import MockAdapter from 'axios-mock-adapter';
 import { apiClient } from '@/api/client';
-import { NEWS_POSTS } from '@/api/urls';
-import { newsKeys, newsListQuery } from '../queries';
+import { COMPANY_NEWS_PAGE } from '@/api/urls';
+import { Env } from '@/config/env';
+import { newsImageUrl, newsKeys, newsLang, newsListQuery } from '../queries';
 
 let mock: MockAdapter;
 beforeEach(() => {
@@ -9,47 +10,25 @@ beforeEach(() => {
 });
 afterEach(() => mock.restore());
 
-describe('newsKeys', () => {
-  it('builds a hierarchical key tree so `all` is a prefix of list and detail', () => {
-    expect(newsKeys.all).toEqual(['news']);
-    expect(newsKeys.list(5)).toEqual(['news', 'list', 5, null]);
-    expect(newsKeys.list(undefined, 'suv')).toEqual(['news', 'list', null, 'suv']);
-    expect(newsKeys.detail(9)).toEqual(['news', 'detail', 9]);
-    // all is a prefix of both → invalidating it matches list and detail
-    expect(newsKeys.detail(9).slice(0, 1)).toEqual(newsKeys.all);
-    expect(newsKeys.list(5).slice(0, 1)).toEqual(newsKeys.all);
+// 2026-10-06: «Yangiliklar chiqmayapti mobilda. Webda yangiliklar barcha filiallarga birdek
+// apidan ketadigan qilingan edi» — mobil ham sayt manbasidan, filial filtrisiz.
+describe('kompaniya yangiliklari', () => {
+  it("sayt manbasi: til bilan, 20 tadan sahifalab, filial parametri YO'Q", async () => {
+    mock.onGet(COMPANY_NEWS_PAGE).reply(200, { items: [{ id: 1, title: 'A', url: 'https://uzgidro.uz/news/view/1' }], page: 1, pages: 3, size: 20 });
+    const q = newsListQuery('ru');
+    const r = await (q.queryFn as unknown as (c: { pageParam: number }) => Promise<{ items: unknown[]; pages: number }>)({ pageParam: 1 });
+    expect(mock.history.get[0].params).toEqual({ lang: 'ru', page: 1, size: 20 });
+    expect(r.items).toHaveLength(1);
+    expect(q.getNextPageParam(r as never, [], 1, [])).toBe(2);
+    expect(newsKeys.list('ru')).toEqual(['news', 'company', 'ru']);
+  });
+
+  it('til xaritasi va rasm manzili', () => {
+    expect(newsLang('uz-Cyrl')).toBe('uz');
+    expect(newsLang('ru')).toBe('ru');
+    expect(newsLang('en')).toBe('en');
+    expect(newsImageUrl({ image: '/dashboard/company-news/5/image' })).toBe(`${Env.apiUrl.replace(/\/$/, '')}/dashboard/company-news/5/image`);
+    expect(newsImageUrl({ image: null, image_source: 'https://upload.uzgidro.uz/a.jpg' })).toBe('https://upload.uzgidro.uz/a.jpg');
+    expect(newsImageUrl({})).toBeNull();
   });
 });
-
-describe('newsListQuery (server-paged, server search)', () => {
-  type PageFn = (ctx: { pageParam: number }) => Promise<{ items: unknown[] }>;
-
-  it('carries the list key with branch + search', () => {
-    expect(newsListQuery(7, ' suv ').queryKey).toEqual(['news', 'list', 7, 'suv']);
-  });
-
-  it('returns a bare array response as one page', async () => {
-    mock.onGet(NEWS_POSTS).reply(200, [{ id: 1 }, { id: 2 }]);
-    const page = await (newsListQuery().queryFn as unknown as PageFn)({ pageParam: 1 });
-    expect(page.items).toHaveLength(2);
-  });
-
-  it('unwraps an { items } envelope and tolerates an empty object', async () => {
-    mock.onGet(NEWS_POSTS).reply(200, { items: [{ id: 1 }], total: 1, page: 1, size: 30, pages: 1 });
-    expect((await (newsListQuery().queryFn as unknown as PageFn)({ pageParam: 1 })).items).toEqual([{ id: 1 }]);
-    mock.resetHistory();
-    mock.onGet(NEWS_POSTS).reply(200, {});
-    expect((await (newsListQuery().queryFn as unknown as PageFn)({ pageParam: 1 })).items).toEqual([]);
-  });
-
-  it('sends organization_branch_id / search only when provided, plus page/size', async () => {
-    mock.onGet(NEWS_POSTS).reply(200, []);
-    await (newsListQuery(3, 'suv').queryFn as unknown as PageFn)({ pageParam: 1 });
-    expect(mock.history.get[0].params).toEqual({ organization_branch_id: 3, search: 'suv', page: 1, size: 30 });
-
-    mock.resetHistory();
-    await (newsListQuery().queryFn as unknown as PageFn)({ pageParam: 1 });
-    expect(mock.history.get[0].params).toEqual({ page: 1, size: 30 });
-  });
-});
-

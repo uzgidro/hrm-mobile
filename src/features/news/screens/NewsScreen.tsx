@@ -1,137 +1,91 @@
-import { memo, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+// Yangiliklar — kompaniya sayti uzgidro.uz dan (web v2 NewsPage bilan bir manba, hamma filialga
+// bir xil). Karta bosilsa maqola ilova ichida ochiladi (/media, WebView).
+import { memo, useState } from 'react';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { Image } from 'expo-image';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { router } from 'expo-router';
 import dayjs from 'dayjs';
-import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { ff } from '@/theme/typography';
 import { useBreakpoint } from '@/utils/responsive';
-import type { NewsPost } from '@/types';
-import { ScreenHeader, HeaderAction } from '@/components/ScreenHeader';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { Screen } from '@/components/Screen';
-import { router } from 'expo-router';
-import { isNewsManager } from '@/utils/roles';
 import { PagedList } from '@/components/PagedList';
-import { SearchBox } from '@/components/SearchBox';
-import { useDebouncedValue } from '@/lib/useDebouncedValue';
-import { newsListQuery, newsBranchesQuery } from '../api/queries';
-import { useDeleteNewsPost } from '../api/mutations';
 import { Icon } from '@/components/Icon';
-import { confirm } from '@/lib/confirm';
+import { newsImageUrl, newsLang, newsListQuery, type CompanyNews } from '../api/queries';
 
 type Styles = ReturnType<typeof makeStyles>;
 
-const NewsCard = memo(function NewsCard(
-  { item, styles, grid, branchName, onEdit, onDelete }:
-  { item: NewsPost; styles: Styles; grid?: boolean; branchName?: string; onEdit?: () => void; onDelete?: () => void },
-) {
+const NewsCard = memo(function NewsCard({ item, styles, grid }: { item: CompanyNews; styles: Styles; grid?: boolean }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  // `GET news-posts` has no author (web does not show one either) — the card
-  // leads with the date; the branch tag below says who it was addressed to.
+  // Bizning kichik rasm ochilmasa — saytdagi asl rasm.
+  const [useSource, setUseSource] = useState(false);
+  const img = useSource ? item.image_source : newsImageUrl(item);
+  const open = () =>
+    router.push({ pathname: '/media', params: { kind: 'page', url: item.url, title: t('news.title') } });
   return (
-    <View style={[styles.card, grid && styles.cardGrid]}>
-      <View style={styles.cardHeader}>
-        <View style={styles.authorInfo}>
-          <Text style={styles.newsDate}>{dayjs(item.created_at).format('DD.MM.YYYY HH:mm')}</Text>
+    <Pressable
+      onPress={open}
+      accessibilityRole="link"
+      accessibilityLabel={item.title}
+      testID={`news-${item.id}`}
+      style={({ pressed }) => [styles.card, grid && styles.cardGrid, pressed && styles.pressed]}
+    >
+      {img ? (
+        <Image
+          source={{ uri: img }}
+          style={styles.image}
+          contentFit="cover"
+          cachePolicy="memory-disk"
+          onError={() => !useSource && item.image_source && setUseSource(true)}
+        />
+      ) : null}
+      <View style={styles.body}>
+        <View style={styles.meta}>
+          {!!item.date && <Text style={styles.date}>{dayjs(item.date).format('DD.MM.YYYY HH:mm')}</Text>}
+          {item.views != null && (
+            <View style={styles.views}>
+              <Icon name="eye" size={13} color={colors.textMuted} />
+              <Text style={styles.date}>{item.views}</Text>
+            </View>
+          )}
         </View>
-        {/* Manager actions (web NewsPage edit/delete parity). */}
-        {!!onEdit && (
-          <TouchableOpacity onPress={onEdit} hitSlop={8} accessibilityLabel={t('common.edit')} style={styles.cardAction}>
-            <Icon name="edit" size={16} color={colors.primary} />
-          </TouchableOpacity>
-        )}
-        {!!onDelete && (
-          <TouchableOpacity onPress={onDelete} hitSlop={8} accessibilityLabel={t('common.delete')} style={styles.cardAction}>
-            <Icon name="trash" size={16} color={colors.error} />
-          </TouchableOpacity>
+        <Text style={styles.title}>{item.title}</Text>
+        {!!item.excerpt && (
+          <Text style={styles.excerpt} numberOfLines={3}>
+            {item.excerpt}
+          </Text>
         )}
       </View>
-
-      <Text style={styles.newsTitle}>{item.title}</Text>
-      {item.description ? <Text style={styles.newsDesc} numberOfLines={4}>{item.description}</Text> : null}
-
-      <View style={styles.tagWrapper}>
-        {/* Filial NOMI ro'yxat javobida yo'q (faqat organization_branch_id) —
-            web ham uni filiallar ro'yxatidan qidiradi (NewsPage branchName).
-            Aks holda filialga yo'naltirilgan yangilik ham "Barcha xodimlarga"
-            deb ko'rinardi. */}
-        <Text style={styles.tag}>
-          {branchName || t('news.allEmployees')}
-        </Text>
-      </View>
-    </View>
+    </Pressable>
   );
 });
 
 export default function NewsScreen() {
-  const { t } = useTranslation();
-  const user = useAuthStore((s) => s.user);
-  const branchId = user?.employee?.department?.organization_branch_id;
+  const { t, i18n } = useTranslation();
   const styles = useThemedStyles(makeStyles);
   const bp = useBreakpoint();
   const cols = bp.isTablet ? (bp.isLandscape ? 3 : 2) : 1;
-  const canManage = isNewsManager(user);
-
-  const [search, setSearch] = useState('');
-  const debouncedSearch = useDebouncedValue(search);
-  const query = useInfiniteQuery(newsListQuery(branchId, debouncedSearch));
-  const deleteM = useDeleteNewsPost();
-  const onDelete = async (item: NewsPost) => {
-    if (deleteM.isPending) return;
-    const ok = await confirm({
-      title: t('news.deleteConfirmTitle'),
-      message: item.title,
-      confirmLabel: t('common.delete'),
-      cancelLabel: t('common.cancel'),
-      destructive: true,
-    });
-    if (ok) deleteM.mutate(item.id);
-  };
-  // Filial nomlari — yangilik qaysi filialga yo'naltirilganini yozish uchun
-  // (ro'yxat javobida faqat `organization_branch_id` bor). Forma ham shu
-  // keshdan foydalanadi.
-  const { data: branches = [] } = useQuery(newsBranchesQuery(true));
-  const branchNameById = useMemo(
-    () => new Map(branches.map((b) => [Number(b.id), b.name])),
-    [branches],
-  );
+  const query = useInfiniteQuery(newsListQuery(newsLang(i18n.language)));
 
   return (
     <Screen edges={['top']}>
-      <ScreenHeader
-        title={t('news.title')}
-        right={canManage ? <HeaderAction icon="plus" onPress={() => router.push('/create-news')} /> : undefined}
-      />
-      <View style={styles.searchWrap}>
-        <SearchBox value={search} onChangeText={setSearch} placeholder={t('news.searchPlaceholder')} />
-      </View>
+      <ScreenHeader title={t('news.title')} subtitle={t('news.sourceSubtitle')} />
       <PagedList
         query={query}
         keyExtractor={(item) => String(item.id)}
-        filtersActive={!!search.trim()}
-        onClearFilters={() => setSearch('')}
         numColumns={cols}
         columnWrapperStyle={cols > 1 ? styles.gridRow : undefined}
         contentContainerStyle={styles.content}
         emptyIcon="news"
-        emptyTitle={search ? t('common.notFound') : t('news.empty')}
-        emptyMessage={search ? undefined : t('news.emptyMessage')}
+        emptyTitle={t('news.empty')}
+        emptyMessage={t('news.emptyMessage')}
         hideCount
-        renderItem={(item) => (
-          <NewsCard
-            item={item}
-            styles={styles}
-            grid={cols > 1}
-            branchName={item.organization_branch_id != null
-              ? branchNameById.get(Number(item.organization_branch_id))
-              : undefined}
-            onEdit={canManage ? () => router.push({ pathname: '/create-news', params: { id: String(item.id) } }) : undefined}
-            onDelete={canManage ? () => onDelete(item) : undefined}
-          />
-        )}
+        renderItem={(item) => <NewsCard item={item} styles={styles} grid={cols > 1} />}
       />
     </Screen>
   );
@@ -139,20 +93,16 @@ export default function NewsScreen() {
 
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    searchWrap: { paddingHorizontal: 16, paddingBottom: 8 },
     content: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 32 },
     gridRow: { gap: 12 },
-
-    card: { backgroundColor: c.card, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder },
+    card: { backgroundColor: c.card, borderRadius: 16, marginBottom: 12, borderWidth: 2, borderBottomWidth: 4, borderColor: c.cardBorder, overflow: 'hidden' },
     cardGrid: { flex: 1 },
-    cardAction: { padding: 6, borderRadius: 8 },
-    cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
-    authorInfo: { flex: 1 },
-    newsDate: { fontSize: 12, color: c.textMuted, marginTop: 2, ...ff('700') },
-
-    newsTitle: { fontSize: 16, ...ff('800'), color: c.text, lineHeight: 23, marginBottom: 8 },
-    newsDesc: { fontSize: 13, color: c.textSecondary, lineHeight: 20, marginBottom: 10, ...ff('700') },
-
-    tagWrapper: { marginTop: 4, alignSelf: 'flex-start', backgroundColor: c.primarySoft, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
-    tag: { fontSize: 12, color: c.primary, ...ff('700') },
+    pressed: { opacity: 0.85 },
+    image: { width: '100%', aspectRatio: 16 / 9, backgroundColor: c.skeleton },
+    body: { padding: 14, gap: 6 },
+    meta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    views: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    date: { fontSize: 12, color: c.textMuted, ...ff('700') },
+    title: { fontSize: 16, ...ff('800'), color: c.text, lineHeight: 22 },
+    excerpt: { fontSize: 13, color: c.textSecondary, lineHeight: 19, ...ff('700') },
   });

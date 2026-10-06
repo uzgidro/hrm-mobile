@@ -421,18 +421,6 @@ export function canManageChairmanTasks(user?: User | null): boolean {
   return isSecretariat(user) || isSiteMasterAdmin(user);
 }
 
-// May create/edit news posts. `/me` carries the resolved `is_news_manager` flag
-// (backend can_manage_news = master-admin | admin | HR | department news-manager);
-// we OR in the coarse roles so the gate holds even if the flag is absent.
-export function isNewsManager(user?: User | null): boolean {
-  return (
-    !!user?.is_news_manager ||
-    isMasterAdmin(user) ||
-    isHR(user) ||
-    user?.type === 'admin'
-  );
-}
-
 // ── Page visibility — web v2 module catalogue (navConfig.ts MODULES) ─────────
 export type PageKey =
   | 'home' | 'orders' | 'letters' | 'guests' | 'projects'

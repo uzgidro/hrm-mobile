@@ -155,7 +155,6 @@ function ThemedNavigation() {
                 <Stack.Screen name="leave-detail" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="order-detail" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="create-order" options={{ animation: 'slide_from_bottom' }} />
-                <Stack.Screen name="create-news" options={{ animation: 'slide_from_bottom' }} />
                 {/* QR orqali web'ga kirishni tasdiqlash (kamera) — faqat kirgan foydalanuvchi. */}
                 <Stack.Screen name="qr-scan" options={{ animation: 'slide_from_bottom' }} />
                 <Stack.Screen name="order-document" options={{ animation: 'slide_from_bottom' }} />
@@ -165,6 +164,7 @@ function ThemedNavigation() {
                 <Stack.Screen name="submit-report" options={{ animation: 'slide_from_bottom' }} />
                 <Stack.Screen name="notifications" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="news" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="media" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="mehmon-detail" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="mehmon-form" options={{ animation: 'slide_from_bottom' }} />
                 <Stack.Screen name="texnik-yordam" options={{ animation: 'slide_from_right' }} />

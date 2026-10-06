@@ -1,25 +1,8 @@
 // English translation of the news feature strings.
 // See uz-Latn/news.ts for the meaning of each key.
 export default {
-  searchPlaceholder: 'Search news...',
   title: 'News',
-
-  allEmployees: 'To all employees',
-
+  sourceSubtitle: 'From uzgidro.uz',
   empty: 'No news',
   emptyMessage: 'No news yet',
-
-  createTitle: 'New post',
-  titleLabel: 'Title',
-  titlePlaceholder: 'Post title',
-  descriptionLabel: 'Text',
-  descriptionPlaceholder: 'Post text...',
-  branchLabel: 'Branch',
-  branchAllOption: 'All branches',
-  save: 'Save',
-  created: 'Post published',
-  titleRequired: 'A title is required',
-  editTitle: 'Edit news',
-  updated: 'Saved',
-  deleteConfirmTitle: 'Delete this news post?',
 } as const;

@@ -38,4 +38,6 @@ export default {
   filtersCount: "Filtrlar ({{count}})",
   showAllCount: "Barchasini ko'rsatish ({{count}})",
   loadMoreCount: "Yana yuklash ({{shown}} / {{total}})",
+  openInBrowser: "Brauzerda ochish",
+  mediaLoadFailed: "Yuklab bo'lmadi. Internetni tekshirib, qayta urinib ko'ring.",
 } as const;

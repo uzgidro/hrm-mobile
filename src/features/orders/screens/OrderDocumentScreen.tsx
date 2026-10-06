@@ -1,7 +1,8 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-  View, Text, StyleSheet, ActivityIndicator,
+  View, Text, StyleSheet, ActivityIndicator, Platform, useWindowDimensions,
 } from 'react-native';
+import { onlyOfficeDeviceParams } from '@/utils/onlyOffice';
 import { useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -21,11 +22,13 @@ export default function OrderDocumentScreen() {
   const styles = useThemedStyles(makeStyles);
   const { t } = useTranslation();
 
+  const { width } = useWindowDimensions();
+  const deviceParams = onlyOfficeDeviceParams(Platform.OS, width);
   const { data: config, isLoading, isError, refetch } = useQuery({
-    queryKey: ['order-editor-config', orderId, mode],
+    queryKey: ['order-editor-config', orderId, mode, deviceParams.device ?? null],
     queryFn: () =>
       apiClient
-        .get(ORDER_ACT_EDITOR_CONFIG(orderId), { params: { mode } })
+        .get(ORDER_ACT_EDITOR_CONFIG(orderId), { params: { mode, ...deviceParams } })
         .then((r) => r.data),
     enabled: !!orderId,
     staleTime: 0,

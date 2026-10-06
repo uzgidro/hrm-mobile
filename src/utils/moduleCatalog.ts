@@ -124,7 +124,6 @@ export const DETAIL_OWNER: Readonly<Record<string, PageKey>> = {
   '/leave-detail': 'requests',
   '/create-leave': 'requests',
   '/team-leaves': 'requests',
-  '/create-news': 'news',
   '/employee-calendar': 'employees',
 };
 

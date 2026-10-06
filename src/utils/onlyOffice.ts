@@ -17,6 +17,16 @@ export function onlyOfficeEditorType(os: string, width: number): OnlyOfficeEdito
   return os === 'web' && width >= 600 ? 'desktop' : 'mobile';
 }
 
+/**
+ * `editor-config` so'roviga qo'shiladigan parametr: mobil muharrirda `device=mobile` — server
+ * `type: mobile` va (Community versiyasida) `mode: view` ni IMZO ichiga qo'yadi. Aks holda
+ * «бесплатную версию Community … только на просмотр» ogohlantirishi chiqardi (2026-10-06);
+ * mode'ni mijoz o'zgartirsa DS hujjatni ochmaydi.
+ */
+export function onlyOfficeDeviceParams(os: string, width: number): { device?: 'mobile' } {
+  return onlyOfficeEditorType(os, width) === 'mobile' ? { device: 'mobile' } : {};
+}
+
 /** Ko'ruvchi qaysi usulda chiziladi: vebda asosiy hujjatdagi DocEditor, qolganida native WebView. */
 export function onlyOfficeFrameKind(os: string): 'dom' | 'webview' {
   return os === 'web' ? 'dom' : 'webview';

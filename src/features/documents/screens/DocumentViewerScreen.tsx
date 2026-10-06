@@ -1,7 +1,8 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-  View, Text, StyleSheet, ActivityIndicator,
+  View, Text, StyleSheet, ActivityIndicator, Platform, useWindowDimensions,
 } from 'react-native';
+import { onlyOfficeDeviceParams } from '@/utils/onlyOffice';
 import { useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -28,9 +29,11 @@ export default function DocumentViewerScreen() {
   const styles = useThemedStyles(makeStyles);
   const { t } = useTranslation();
 
+  const { width } = useWindowDimensions();
+  const deviceParams = onlyOfficeDeviceParams(Platform.OS, width);
   const { data: config, isLoading, isError, error, refetch } = useQuery({
-    queryKey: [...documentKeys.all, 'editor-config', fileId],
-    queryFn: () => apiClient.get(FILE_EDITOR_CONFIG(fileId)).then((r) => r.data),
+    queryKey: [...documentKeys.all, 'editor-config', fileId, deviceParams.device ?? null],
+    queryFn: () => apiClient.get(FILE_EDITOR_CONFIG(fileId), { params: deviceParams }).then((r) => r.data),
     enabled: !!fileId,
     staleTime: 0,
     gcTime: 0,

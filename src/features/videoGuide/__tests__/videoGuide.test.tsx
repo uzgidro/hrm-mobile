@@ -1,5 +1,4 @@
 import React from 'react';
-import { Linking } from 'react-native';
 import MockAdapter from 'axios-mock-adapter';
 import { apiClient } from '@/api/client';
 import { renderWithProviders, screen, fireEvent, waitFor } from '@/test/renderWithProviders';
@@ -9,7 +8,8 @@ import { __resetToasts, getToasts } from '@/lib/toast';
 import VideoGuideScreen from '../screens/VideoGuideScreen';
 import { formatDuration, isSafeVideoUrl } from '../utils/format';
 
-jest.mock('expo-router', () => ({ router: { push: jest.fn(), back: jest.fn(), canGoBack: () => true } }));
+const mockPush = jest.fn();
+jest.mock('expo-router', () => ({ router: { push: (...a: unknown[]) => mockPush(...a), back: jest.fn(), canGoBack: () => true } }));
 
 describe('formatDuration (v2 lib/format)', () => {
   it.each([
@@ -41,7 +41,7 @@ describe('VideoGuideScreen (v2 VideoGuidePage)', () => {
   beforeEach(async () => {
     await i18n.changeLanguage('uz-Latn');
     __resetToasts();
-    jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
+    mockPush.mockClear();
     mock.onGet(VIDEO_GUIDES).reply(200, {
       items: [
         {
@@ -71,10 +71,13 @@ describe('VideoGuideScreen (v2 VideoGuidePage)', () => {
     expect(screen.getByText('Buyruq yaratish')).toBeTruthy();
   });
 
-  it("ochish: ko'rish hisoblagichi bir marta yuboriladi va video URL ochiladi", async () => {
+  // 2026-10-06: «video qo'llanmani mobilning o'zidan ko'rish … hozir link bilan hr-minioga o'tib ketyapti».
+  it("ochish: ko'rish hisoblagichi bir marta yuboriladi va video ILOVA ICHIDA (/media) ochiladi", async () => {
     await renderWithProviders(<VideoGuideScreen />);
     await fireEvent.press(await screen.findByText('Davomatni yuritish'));
-    await waitFor(() => expect(Linking.openURL).toHaveBeenCalledWith('https://cdn/x.mp4'));
+    await waitFor(() =>
+      expect(mockPush).toHaveBeenCalledWith({ pathname: '/media', params: { kind: 'video', url: 'https://cdn/x.mp4', title: 'Davomatni yuritish' } }),
+    );
     expect(mock.history.post).toHaveLength(1);
   });
 
@@ -82,14 +85,14 @@ describe('VideoGuideScreen (v2 VideoGuidePage)', () => {
     mock.onPost(`${VIDEO_GUIDES}/1/view`).reply(500);
     await renderWithProviders(<VideoGuideScreen />);
     await fireEvent.press(await screen.findByText('Davomatni yuritish'));
-    await waitFor(() => expect(Linking.openURL).toHaveBeenCalled());
+    await waitFor(() => expect(mockPush).toHaveBeenCalled());
   });
 
   it("video_url yo'q — ochilmaydi, xabar beriladi, hisoblagich yuborilmaydi", async () => {
     await renderWithProviders(<VideoGuideScreen />);
     await fireEvent.press(await screen.findByText('Buyruq yaratish'));
     await waitFor(() => expect(getToasts().map((x) => x.message)).toContain(i18n.t('videoGuide.noVideo')));
-    expect(Linking.openURL).not.toHaveBeenCalled();
+    expect(mockPush).not.toHaveBeenCalled();
     expect(mock.history.post).toHaveLength(0);
   });
 
@@ -98,7 +101,7 @@ describe('VideoGuideScreen (v2 VideoGuidePage)', () => {
     await renderWithProviders(<VideoGuideScreen />);
     await fireEvent.press(await screen.findByText('Zararli'));
     await waitFor(() => expect(getToasts().length).toBeGreaterThan(0));
-    expect(Linking.openURL).not.toHaveBeenCalled();
+    expect(mockPush).not.toHaveBeenCalled();
   });
 
   it("so'rov xato — ErrorState", async () => {
