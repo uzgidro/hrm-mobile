@@ -103,4 +103,10 @@ export default {
   pushTestSent_other: 'Yuborildi ({{count}} ta qurilma) — bir necha soniyada kelishi kerak',
   pushTestHint: "Sinov xabari serverdagi barcha qurilmalaringizga yuboriladi. Kelmasa — yuqoridagi qizil bo'g'inni tuzating (ruxsat yo'q bo'lsa Sozlamalardan yoqing, token yo'q bo'lsa ilovani do'kondan yangilang).",
   pushServerUnknown: "Server hali bu tekshiruvni qo'llamaydi",
+  pushHeadsUp: "Ekran tepasida chiqishi",
+  pushHeadsUp_heads_up: "Yoqilgan",
+  pushHeadsUp_silent: "O'chiq — faqat ro'yxatda, tepada chiqmaydi",
+  pushHeadsUp_off: "Kanal o'chirilgan",
+  pushOpenChannelSettings: "Bildirishnoma sozlamasini ochish",
+  pushHeadsUpHint: "Xabar kelib, lekin Telegram kabi ekran tepasida chiqmasa: Sozlamalar → Ilovalar → HRM Uzgidro → Bildirishnomalar → «Qalqib chiquvchi» / «Ekran tepasida» (Xiaomi, Redmi: «Qalqib chiquvchi bildirishnomalar», Samsung: «Qalqib chiquvchi»), ovoz va qulf ekranini yoqing. Batareya tejash rejimida ilovani «Cheklovsiz» qiling.",
 } as const;

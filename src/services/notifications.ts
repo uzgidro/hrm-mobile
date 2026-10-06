@@ -1,6 +1,6 @@
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
-import { Platform } from 'react-native';
+import { Linking, Platform } from 'react-native';
 import { apiClient } from '../api/client';
 import { PUSH_TOKENS } from '../api/urls';
 import type { IconName } from '../components/Icon';
@@ -77,6 +77,50 @@ export async function ensureAndroidChannel(): Promise<void> {
     });
   } catch (e) {
     pushWarn('android channel', e);
+  }
+}
+
+/**
+ * Tepada (heads-up) chiqadimi? Android 8+ da buni KANAL muhimligi belgilaydi va kanal yaratilgach
+ * ilova uni ko'tara olmaydi — foydalanuvchi yoki telefon (MIUI/EMUI tejamkor rejimi) pasaytirgan
+ * bo'lsa push faqat pastki ro'yxatga tushadi (2026-10-06: «telegramga o'xshab top panelda chiqmayapti»).
+ * `heads_up` = HIGH/MAX, `silent` = DEFAULT va past, `off` = NONE, `unavailable` = iOS/web/modul yo'q.
+ */
+export type ChannelAlert = 'heads_up' | 'silent' | 'off' | 'unavailable';
+
+export async function getAndroidChannelAlert(): Promise<ChannelAlert> {
+  if (Platform.OS !== 'android') return 'unavailable';
+  const N = getNotifications();
+  if (!N) return 'unavailable';
+  try {
+    let ch = await N.getNotificationChannelAsync(ANDROID_CHANNEL_ID);
+    if (!ch) {
+      await ensureAndroidChannel();
+      ch = await N.getNotificationChannelAsync(ANDROID_CHANNEL_ID);
+    }
+    if (!ch) return 'unavailable';
+    if (ch.importance <= N.AndroidImportance.NONE && ch.importance !== N.AndroidImportance.UNKNOWN) return 'off';
+    return ch.importance >= N.AndroidImportance.HIGH ? 'heads_up' : 'silent';
+  } catch (e) {
+    pushWarn('android channel read', e);
+    return 'unavailable';
+  }
+}
+
+/** Shu kanalning tizim sozlamalari («Qalqib chiquvchi», ovoz); bo'lmasa ilova bildirishnomalari. */
+export async function openChannelSettings(packageName: string): Promise<void> {
+  const pkg = { key: 'android.provider.extra.APP_PACKAGE', value: packageName };
+  try {
+    await Linking.sendIntent('android.settings.CHANNEL_NOTIFICATION_SETTINGS', [
+      pkg,
+      { key: 'android.provider.extra.CHANNEL_ID', value: ANDROID_CHANNEL_ID },
+    ]);
+  } catch {
+    try {
+      await Linking.sendIntent('android.settings.APP_NOTIFICATION_SETTINGS', [pkg]);
+    } catch {
+      await Linking.openSettings();
+    }
   }
 }
 

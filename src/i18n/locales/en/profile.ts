@@ -87,4 +87,10 @@ export default {
   pushTestSent_other: 'Sent ({{count}} devices) — should arrive within seconds',
   pushTestHint: 'The test goes to every device registered for you. If nothing arrives, fix the red link above (no permission — enable it in Settings; no token — update the app from the store).',
   pushServerUnknown: 'The server does not support this check yet',
+  pushHeadsUp: "Pop-up on screen",
+  pushHeadsUp_heads_up: "On",
+  pushHeadsUp_silent: "Off — tray only, no pop-up",
+  pushHeadsUp_off: "Channel disabled",
+  pushOpenChannelSettings: "Open notification settings",
+  pushHeadsUpHint: "If a notification arrives but does not pop up at the top like Telegram: Settings → Apps → HRM Uzgidro → Notifications → enable “Pop-up” / “Floating” (Xiaomi, Redmi: “Floating notifications”, Samsung: “Pop-up”), sound and lock screen. In battery saver set the app to “Unrestricted”.",
 } as const;

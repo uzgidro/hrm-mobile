@@ -15,10 +15,14 @@ import { Icon, type IconName } from '@/components/Icon';
 import { toast } from '@/lib/toast';
 import { getApiErrorMessage } from '@/api/errors';
 import { setupPushNotifications } from '@/auth/push';
+import Constants from 'expo-constants';
 import {
   getNotificationPermissionStatus,
   getRegisteredToken,
   getLastPushError,
+  getAndroidChannelAlert,
+  openChannelSettings,
+  type ChannelAlert,
 } from '@/services/notifications';
 import { fetchMyPushTokens, sendTestPush, type ServerPushTokens } from '../api/pushDiagnostics';
 
@@ -34,11 +38,13 @@ export default function PushDiagnosticsScreen() {
   const [server, setServer] = useState<ServerPushTokens | null>(null);
   const [serverError, setServerError] = useState<string | null>(null);
   const [busy, setBusy] = useState<'register' | 'test' | null>(null);
+  const [alertMode, setAlertMode] = useState<ChannelAlert | '…'>('…');
 
   const refresh = useCallback(async () => {
     setPermission(await getNotificationPermissionStatus());
     setToken(getRegisteredToken());
     setLastError(getLastPushError());
+    setAlertMode(await getAndroidChannelAlert());
     try {
       setServer(await fetchMyPushTokens());
       setServerError(null);
@@ -84,6 +90,8 @@ export default function PushDiagnosticsScreen() {
   const permTone: Tone = permission === 'granted' ? 'ok' : permission === '…' ? 'muted' : 'bad';
   const tokenTone: Tone = token ? 'ok' : 'bad';
   const serverTone: Tone = server ? (server.count > 0 ? 'ok' : 'bad') : 'muted';
+  const alertTone: Tone = alertMode === 'heads_up' ? 'ok' : alertMode === 'silent' || alertMode === 'off' ? 'bad' : 'muted';
+  const packageName = Constants.expoConfig?.android?.package ?? 'uz.uzgidro.hrm';
 
   return (
     <Screen edges={['top', 'bottom']}>
@@ -122,6 +130,25 @@ export default function PushDiagnosticsScreen() {
             }
             styles={styles} colors={colors}
           />
+          {alertMode !== 'unavailable' && (
+            <Row
+              icon="bell"
+              tone={alertTone}
+              label={t('profile.pushHeadsUp')}
+              value={alertMode === '…' ? '…' : t(`profile.pushHeadsUp_${alertMode}`)}
+              styles={styles} colors={colors}
+            />
+          )}
+          {alertTone === 'bad' && (
+            <TouchableOpacity
+              style={styles.linkBtn}
+              onPress={() => void openChannelSettings(packageName)}
+              hitSlop={8}
+              testID="push-channel-settings"
+            >
+              <Text style={styles.linkText}>{t('profile.pushOpenChannelSettings')}</Text>
+            </TouchableOpacity>
+          )}
           {server && server.tokens.length > 0 && (
             <Text style={styles.devices}>
               {server.tokens.map((d) => `${d.platform ?? '?'} …${d.token_tail ?? ''}`).join('  ·  ')}
@@ -148,6 +175,7 @@ export default function PushDiagnosticsScreen() {
           <Text style={styles.btnPrimaryText}>{busy === 'test' ? '…' : t('profile.pushSendTest')}</Text>
         </TouchableOpacity>
         <Text style={styles.hint}>{t('profile.pushTestHint')}</Text>
+        {Platform.OS === 'android' && <Text style={styles.hint}>{t('profile.pushHeadsUpHint')}</Text>}
       </ScrollView>
     </Screen>
   );
