@@ -14,7 +14,6 @@ export default {
 
   dayTitle: 'Day status',
   lateByMinutes: '{{value}} min late',
-  legendTitle: 'Legend',
 
   // ── Duty roster (navbatchilik, Wave 2) ────────────────────────────────────
   dutyTitle: 'Duty roster',

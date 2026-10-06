@@ -21,7 +21,6 @@ export default {
   // ── Legend ───────────────────────────────────────────────────────────────
   dayTitle: 'Kun holati',
   lateByMinutes: '{{value}} daqiqa kechikkan',
-  legendTitle: 'Belgilar',
 
   // ── Duty roster (navbatchilik, Wave 2) ────────────────────────────────────
   dutyTitle: 'Navbatchilik',

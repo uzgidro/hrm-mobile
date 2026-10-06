@@ -19,7 +19,7 @@ import { AttendanceEventRow } from '@/components/AttendanceEventRow';
 import { MonthNavigator } from '@/components/MonthNavigator';
 import { Card, EmptyState, ErrorState, PageHeader, Screen, Skeleton, StatTile, Text } from '@/ui';
 import { myTimesheetQuery, myTimesheetEventsQuery } from '../api/queries';
-import { tabelCodeMeta, tabelCodeColor, legendCodesFor, tabelSummary, dayAttendanceDetail } from '../utils';
+import { tabelCodeMeta, tabelCodeColor, tabelSummary, dayAttendanceDetail } from '../utils';
 
 // Hafta sarlavhasi dushanbadan (dayjs: yakshanba = 0).
 const WEEKDAY_INDICES = [1, 2, 3, 4, 5, 6, 0];
@@ -54,7 +54,6 @@ export default function MyTimesheetScreen({ embedded = false }: { embedded?: boo
   const calendar = useMemo(() => row?.attendance?.calendar ?? {}, [row?.attendance?.calendar]);
   const lateMinutes = row?.attendance?.daily_late_minutes ?? {};
   const summary = useMemo(() => tabelSummary(row?.attendance), [row?.attendance]);
-  const legendCodes = useMemo(() => legendCodesFor(calendar), [calendar]);
 
   const daysInMonth = currentMonth.daysInMonth();
   const firstDayOfWeek = (currentMonth.day() + 6) % 7;
@@ -213,24 +212,6 @@ export default function MyTimesheetScreen({ embedded = false }: { embedded?: boo
           ))
         )}
       </Card>
-      {legendCodes.length > 0 && (
-        <Card title={t('timesheet.legendTitle')}>
-          {legendCodes.map((code) => {
-            const meta = tabelCodeMeta(code);
-            return (
-              <View key={code} style={styles.legendRow}>
-                <View style={[styles.legendDot, { backgroundColor: tabelCodeColor(code, colors) }]} />
-                <Text variant="label" style={styles.legendLetter}>
-                  {meta.letter}
-                </Text>
-                <Text variant="body" tone="muted" style={styles.flex}>
-                  {t(meta.labelKey)}
-                </Text>
-              </View>
-            );
-          })}
-        </Card>
-      )}
     </>
   );
 
@@ -301,7 +282,4 @@ const styles = StyleSheet.create({
   tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   tile: { flexBasis: '47%', flexGrow: 1 },
   schedule: { flexDirection: 'row', gap: 20 },
-  legendRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 5 },
-  legendDot: { width: 10, height: 10, borderRadius: 5 },
-  legendLetter: { width: 28 },
 });

@@ -59,11 +59,3 @@ export function tabelCodeMeta(code?: string | null): TabelCodeMeta {
 export function tabelCodeColor(code: string | null | undefined, c: ThemeColors): string {
   return c[tabelCodeMeta(code).colorKey];
 }
-
-
-/** Canonical display order of the known codes (present/late/absent first). */
-export const CODE_ORDER = Object.keys(CODE_META);
-
-export function isKnownTabelCode(code: string): boolean {
-  return !!CODE_META[code];
-}

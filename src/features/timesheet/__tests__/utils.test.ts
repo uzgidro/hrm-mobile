@@ -1,7 +1,6 @@
 import {
   tabelCodeMeta,
   tabelCodeColor,
-  legendCodesFor,
   tabelSummary,
 } from '../utils';
 import type { ThemeColors } from '@/theme/palettes';
@@ -44,29 +43,6 @@ describe('tabelCodeColor', () => {
 
   it('resolves unknown codes to the muted slot', () => {
     expect(tabelCodeColor('nope', colors)).toBe('#888');
-  });
-});
-
-describe('legendCodesFor', () => {
-  it('returns the distinct codes present, in canonical display order', () => {
-    const cal = { '2026-07-01': 'absent', '2026-07-02': 'present', '2026-07-03': 'late', '2026-07-04': 'present' };
-    // canonical order is present, late, ..., absent — not calendar insertion order
-    expect(legendCodesFor(cal)).toEqual(['present', 'late', 'absent']);
-  });
-
-  it('is empty for a null / empty calendar', () => {
-    expect(legendCodesFor(null)).toEqual([]);
-    expect(legendCodesFor(undefined)).toEqual([]);
-    expect(legendCodesFor({})).toEqual([]);
-  });
-
-  it('appends unknown (future) codes after the known ones, sorted', () => {
-    const cal = { a: 'present', b: 'zeta_code', c: 'alpha_code' };
-    expect(legendCodesFor(cal)).toEqual(['present', 'alpha_code', 'zeta_code']);
-  });
-
-  it('ignores empty-string values', () => {
-    expect(legendCodesFor({ a: '', b: 'present' })).toEqual(['present']);
   });
 });
 

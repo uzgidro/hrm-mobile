@@ -14,7 +14,6 @@ export default {
 
   dayTitle: 'Кун ҳолати',
   lateByMinutes: '{{value}} дақиқа кечиккан',
-  legendTitle: 'Белгилар',
 
   // ── Duty roster (navbatchilik, Wave 2) ────────────────────────────────────
   dutyTitle: 'Навбатчилик',
