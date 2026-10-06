@@ -74,6 +74,7 @@ export default {
     customFields: 'Қўшимча майдонлар',
     sysHealth: 'Тизим ҳолати',
     lms: 'LMS интеграцияси',
+    mobileCheckins: "Мобил белгилар",
   },
 
   salary: {

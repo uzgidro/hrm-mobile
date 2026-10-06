@@ -48,6 +48,7 @@ import medical from './medical';
 import zoom from './zoom';
 import health from './health';
 import inspections from './inspections';
+import checkin from './checkin';
 import learning from './learning';
 import trainings from './trainings';
 import workPlan from './workPlan';
@@ -113,6 +114,7 @@ export default {
   zoom,
   health,
   inspections,
+  checkin,
   learning,
   trainings,
   workPlan,

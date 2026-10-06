@@ -212,4 +212,9 @@ export default {
   workspace_not_found: 'Project not found',
   workspace_owner_forbidden: "Only the project's creator can manage the project and its columns",
   wrong_letter_type: 'The document type does not fit this action',
+  no_active_business_trip: "You have no HR business trip today — phone check-in is unavailable",
+  checkin_time_invalid: "Invalid check-in time — check the phone clock and date",
+  mobile_checkin_already_cancelled: "The check-in is already cancelled",
+  mobile_checkin_not_found: "Check-in not found",
+  destination_only_for_trip: "A destination can only be set for a business trip",
 } as const;

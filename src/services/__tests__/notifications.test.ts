@@ -304,3 +304,15 @@ describe("routeForNotification — o'chirilgan / ruxsati olingan loyiha yozuvi",
     expect(routeForNotification({ type: 'card_updated', card_id: 7, workspace_id: 3 })).toBe('/loyiha-card-detail?id=7');
   });
 });
+
+describe('routeForNotification — telefon belgisi (mobile_checkin_*)', () => {
+  it('kadrga uzoqdan belgi — Mobil belgilar ro\'yxati', () => {
+    expect(routeForNotification({ type: 'mobile_checkin_far', mobile_checkin_id: 5 })).toBe('/mobil-belgilar');
+  });
+  it('xodimga bekor qilindi — o\'z belgilari', () => {
+    expect(routeForNotification({ notification_type: 'mobile_checkin_cancelled' })).toBe('/keldim');
+  });
+  it('sarlavhasi bor (umumiy «Bildirishnoma» emas)', () => {
+    expect(notificationMeta('mobile_checkin_far').title).not.toBe(notificationMeta('zzz_unknown').title);
+  });
+});

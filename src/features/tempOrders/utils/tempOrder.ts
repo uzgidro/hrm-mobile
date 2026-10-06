@@ -85,7 +85,12 @@ export type TempOrderForm = {
   startTime: string; // HH:mm
   endTime: string; // HH:mm
   note: string;
+  /** Xizmat safari manzili (filial / GES) — faqat `xizmat_safari` da yuboriladi (backend 2026-10-06). */
+  destinationBranchId?: number | null;
 };
+
+/** Telefondan «Keldim» shu turdagi KADR buyrug'i kunlarida ochiladi. */
+export const TRIP_TYPE = 'xizmat_safari';
 
 export type TempOrderError =
   'employeeRequired' | 'startRequired' | 'endRequired' | 'endBeforeStart' | 'timeInvalid' | 'timeOrder';
@@ -118,6 +123,25 @@ export function buildCreateBody(f: TempOrderForm) {
     start_time: hourly ? `${f.startTime}:00` : null,
     end_time: hourly ? `${f.endTime}:00` : null,
     note: f.note.trim() || null,
+    // Server boshqa turda manzilni 400 `destination_only_for_trip` bilan rad etadi.
+    ...(f.type === TRIP_TYPE && f.destinationBranchId ? { destination_branch_id: f.destinationBranchId } : {}),
+  };
+}
+
+/** POST work-leaves/hr-bulk-create — bir nechta xodimga bir xil kunlarda xizmat safari. */
+export function buildBulkTripBody(f: {
+  employeeIds: number[];
+  start: string;
+  end: string;
+  note: string;
+  destinationBranchId: number | null;
+}) {
+  return {
+    employee_ids: f.employeeIds,
+    start_date: f.start,
+    end_date: f.end,
+    ...(f.note.trim() ? { note: f.note.trim() } : {}),
+    ...(f.destinationBranchId ? { destination_branch_id: f.destinationBranchId } : {}),
   };
 }
 

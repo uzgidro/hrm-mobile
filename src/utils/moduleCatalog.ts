@@ -67,6 +67,7 @@ export const CATALOG: CatalogEntry[] = [
   e('trainings', 'trainings', '/malaka-oshirish', 'graduation', 'drop', 'stats'),
   e('learning', 'learning', '/oquv-markazi', 'graduation', 'green', 'stats'),
   e('inspections', 'inspections', '/auditlar', 'checklist', 'amber', 'stats'),
+  e('mobileCheckins', 'mobileCheckins', '/mobil-belgilar', 'mapPin', 'green', 'stats'),
   e('reports', 'reports', '/hisobotlar', 'chart', 'violet', 'stats'),
   e('kpp', 'kpp', '/kpp', 'lock', 'amber', 'stats'),
 
@@ -165,6 +166,7 @@ export function activeModule(pathname: string, seg?: string | string[]): PageKey
 // ro'yxat so'rovi boshqalarga 403, filiali yo'q `admin` esa «Yuqoridan filial tanlang» da qolardi.
 const GATED_PAGES: ReadonlySet<PageKey> = new Set<PageKey>([
   'reports',
+  'mobileCheckins',
   'health',
   'users',
   'registrations',

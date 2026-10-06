@@ -212,4 +212,9 @@ export default {
   workspace_not_found: 'Лойиҳа топилмади',
   workspace_owner_forbidden: 'Лойиҳани ва унинг устунларини фақат лойиҳани яратган ходим бошқара олади',
   wrong_letter_type: 'Ҳужжат тури бу амалга тўғри келмайди',
+  no_active_business_trip: "Бугун сизга кадр қўйган хизмат сафари йўқ — телефондан белгилаб бўлмайди",
+  checkin_time_invalid: "Белги вақти нотўғри — телефон соати ва санасини текширинг",
+  mobile_checkin_already_cancelled: "Белги аллақачон бекор қилинган",
+  mobile_checkin_not_found: "Белги топилмади",
+  destination_only_for_trip: "Манзил фақат хизмат сафари учун кўрсатилади",
 } as const;

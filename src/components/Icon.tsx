@@ -62,6 +62,7 @@ export type IconName =
   | 'help'
   | 'backspace'
   | 'mapPin'
+  | 'camera'
   | 'refresh';
 
 type Props = {
@@ -274,6 +275,13 @@ function render(name: IconName, p: any) {
         <>
           <Path d="M5 19h3l9-9-3-3-9 9Z" {...p} />
           <Path d="m14 7 3 3" {...p} />
+        </>
+      );
+    case 'camera':
+      return (
+        <>
+          <Path d="M4 8.5A2.5 2.5 0 0 1 6.5 6h1.8l1.4-2h4.6l1.4 2h1.8A2.5 2.5 0 0 1 20 8.5v9a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 17.5z" {...p} />
+          <Circle cx="12" cy="13" r="3.6" {...p} />
         </>
       );
     case 'mapPin':

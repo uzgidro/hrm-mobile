@@ -151,6 +151,22 @@ export interface TurnstileLocation {
   organization_branch?: { id?: number; name?: string | null } | null;
 }
 
+/** Turniket hodisasiga biriktirilgan telefon belgisi (virtual «Mobil ilova» qurilmasi, 2026-10-06).
+ *  Oddiy turniket hodisasida `null`/yo'q. */
+export interface EventMobileCheckin {
+  id: number;
+  status: string;
+  latitude: number;
+  longitude: number;
+  accuracy_m?: number | null;
+  distance_m?: number | null;
+  is_far: boolean;
+  map_url: string;
+  received_at?: string | null;
+  work_leave_id?: number | null;
+  destination_branch?: { id: number; name?: string | null } | null;
+}
+
 export interface AttendanceEvent {
   id: number;
   happen_time: string;
@@ -172,6 +188,7 @@ export interface AttendanceEvent {
   // filial nomiga tayanamiz.
   terminal_branch_id?: number | null;
   employee_branch_id?: number | null;
+  mobile_checkin?: EventMobileCheckin | null;
 }
 
 export interface WorkLeave {

@@ -118,4 +118,6 @@ export default {
   vacancy: 'Вакансия',
   vacancyApplication: 'Вакансияга ариза',
   learningCourseAssigned: 'Курс бириктирилди',
+  mobileCheckinCancelled: "Белгингиз бекор қилинди",
+  mobileCheckinFar: "Узоқдан белги",
 } as const;

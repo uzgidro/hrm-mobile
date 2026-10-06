@@ -224,4 +224,9 @@ export default {
   workspace_not_found: 'Loyiha topilmadi',
   workspace_owner_forbidden: 'Loyihani va uning ustunlarini faqat loyihani yaratgan xodim boshqara oladi',
   wrong_letter_type: "Hujjat turi bu amalga to'g'ri kelmaydi",
+  no_active_business_trip: "Bugun sizga kadr qo'ygan xizmat safari yo'q — telefondan belgilab bo'lmaydi",
+  checkin_time_invalid: "Belgi vaqti noto'g'ri — telefon soati va sanasini tekshiring",
+  mobile_checkin_already_cancelled: "Belgi allaqachon bekor qilingan",
+  mobile_checkin_not_found: "Belgi topilmadi",
+  destination_only_for_trip: "Manzil faqat xizmat safari uchun ko'rsatiladi",
 } as const;

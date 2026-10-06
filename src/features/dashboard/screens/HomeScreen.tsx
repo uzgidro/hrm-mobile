@@ -15,6 +15,9 @@ import { dashboardKeys, prefetchHomeData } from '../api/queries';
 import { HomeHeader } from '../components/HomeHeader';
 import { EmployeeBoard } from '../components/EmployeeBoard';
 import { LeaderBoard } from '../components/LeaderBoard';
+// Xizmat safari «Keldim» kartasi — checkin feature'idan (notifications → orders kabi istisno):
+// tugma bosh sahifada turishi kerak, mantiq esa o'z feature'ida.
+import { TripCheckinCard } from '@/features/checkin/components/TripCheckinCard';
 
 export default function HomeScreen() {
   const user = useAuthStore((s) => s.user);
@@ -34,7 +37,7 @@ export default function HomeScreen() {
     setRefreshing(true);
     try {
       await Promise.all(
-        [dashboardKeys.all, ['attendance'], ['birthdays'], ['work-leaves'], MENU_BADGES_KEY].map((queryKey) =>
+        [dashboardKeys.all, ['attendance'], ['birthdays'], ['work-leaves'], ['mobile-checkins'], MENU_BADGES_KEY].map((queryKey) =>
           queryClient.invalidateQueries({ queryKey: [...queryKey] }),
         ),
       );
@@ -59,6 +62,7 @@ export default function HomeScreen() {
   return (
     <Screen refreshing={refreshing} onRefresh={onRefresh} testID="home-screen">
       <HomeHeader />
+      <TripCheckinCard />
       {board === 'leader' ? <LeaderBoard /> : <EmployeeBoard />}
     </Screen>
   );

@@ -118,4 +118,6 @@ export default {
   vacancy: 'Vacancy',
   vacancyApplication: 'Vacancy application',
   learningCourseAssigned: 'Course assigned',
+  mobileCheckinCancelled: "Your check-in was cancelled",
+  mobileCheckinFar: "Remote check-in",
 } as const;

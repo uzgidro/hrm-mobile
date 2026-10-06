@@ -445,7 +445,9 @@ export type PageKey =
   | 'registrationStatus' | 'orderTypes' | 'tempOrders' | 'staffPositions' | 'structure'
   | 'responsibles' | 'hrQuality' | 'trainings' | 'learning' | 'inspections' | 'reports'
   | 'dictionaries' | 'tabelSettings' | 'monitoring' | 'kpp' | 'videoGuide' | 'users'
-  | 'registrations' | 'auditLog' | 'branches' | 'turnstiles' | 'customFields' | 'sysHealth' | 'lms';
+  | 'registrations' | 'auditLog' | 'branches' | 'turnstiles' | 'customFields' | 'sysHealth' | 'lms'
+  // 2026-10-06: telefondan «Keldim» belgilari (kadr ro'yxati). v2 bilan bir xil modul kaliti.
+  | 'mobileCheckins';
 
 /**
  * Hisobning ko'rsatiladigan ismi — v2 `getDisplayName` (employee.legal_name || username), mobil
@@ -600,6 +602,8 @@ const MODULE_FOR_PAGE: Partial<Record<PageKey, ModuleDef>> = {
   trainings: { key: 'trainings', defaultRoles: ALL },
   learning: { key: 'learning', defaultRoles: ALL },
   inspections: { key: 'inspections', defaultRoles: ADMIN_HR_LEAD },
+  // Xizmat safaridagi xodimlarning telefon belgilari — kadr ko'radi va bekor qiladi (v2 `mobileCheckins`).
+  mobileCheckins: { key: 'mobileCheckins', defaultRoles: ADMIN_HR },
   reports: {
     key: 'reports',
     defaultRoles: ['masterAdmin', 'ministr', 'deputy', 'hr', 'accounting', 'employee'],

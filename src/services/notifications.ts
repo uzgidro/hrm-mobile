@@ -266,6 +266,10 @@ export function routeForNotification(data: any): string | null {
   if (type.startsWith('employee_transfer')) return '/employees-list';
   // Kunlik «Sizni kutmoqda» xulosasi — kutilayotganlar bosh sahifada.
   if (type === 'pending_action_digest') return '/';
+  // Telefondan «Keldim» (2026-10-06): kadrga «uzoqdan belgi» — ro'yxat; xodimga «belgingiz
+  // bekor qilindi» — o'z belgilari (sabab shu yerda ko'rinadi).
+  if (type === 'mobile_checkin_far') return '/mobil-belgilar';
+  if (type.startsWith('mobile_checkin')) return '/keldim';
   return null;
 }
 
@@ -412,6 +416,8 @@ const NOTIF_META: Record<string, { titleKey: string; icon: IconName }> = {
   vacancy: { titleKey: 'notifications.vacancy', icon: 'briefcase' },
   vacancy_application: { titleKey: 'notifications.vacancyApplication', icon: 'briefcase' },
   learning_course_assigned: { titleKey: 'notifications.learningCourseAssigned', icon: 'checklist' },
+  mobile_checkin_cancelled: { titleKey: 'notifications.mobileCheckinCancelled', icon: 'close' },
+  mobile_checkin_far: { titleKey: 'notifications.mobileCheckinFar', icon: 'mapPin' },
 };
 
 // Human-readable title + icon for an in-app notification, derived from its

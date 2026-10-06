@@ -118,4 +118,6 @@ export default {
   vacancy: 'Вакансия',
   vacancyApplication: 'Заявка на вакансию',
   learningCourseAssigned: 'Назначен курс',
+  mobileCheckinCancelled: "Ваша отметка отменена",
+  mobileCheckinFar: "Отметка издалека",
 } as const;

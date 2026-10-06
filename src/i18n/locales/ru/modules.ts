@@ -74,6 +74,7 @@ export default {
     customFields: 'Дополнительные поля',
     sysHealth: 'Состояние системы',
     lms: 'Интеграция LMS',
+    mobileCheckins: "Мобильные отметки",
   },
 
   salary: {

@@ -548,3 +548,13 @@ export const DICTIONARY_ENTRY_USAGE = (id: number) => `dictionaries/entries/${id
 export const WORK_LEAVE_REOPEN = (id: number) => `work-leaves/${id}/reopen`;
 // «Mening jamoam» — rahbarning odamlari va kun holati (v2 MyTeamPage, server my_team).
 export const EMPLOYEES_MY_TEAM = 'employees/my-team';
+
+// Telefondan «Keldim / Ketdim» — kadr qo'ygan xizmat safaridagi xodim (backend 2026-10-06,
+// mob1checkin2trip3). Belgi davomatga virtual «Mobil ilova» qurilmasidagi hodisa bo'lib tushadi.
+export const MOBILE_CHECKINS = 'mobile-checkins';
+export const MOBILE_CHECKINS_ME = 'mobile-checkins/me';
+export const MOBILE_CHECKINS_ME_STATUS = 'mobile-checkins/me/status';
+export const MOBILE_CHECKIN_DETAIL = (id: number) => `mobile-checkins/${id}`;
+export const MOBILE_CHECKIN_CANCEL = (id: number) => `mobile-checkins/${id}/cancel`;
+// Kadr: bir nechta xodimga bir xil sana oralig'ida xizmat safari (vaqtinchalik buyruq).
+export const WORK_LEAVES_HR_BULK_CREATE = 'work-leaves/hr-bulk-create';

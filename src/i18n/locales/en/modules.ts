@@ -74,6 +74,7 @@ export default {
     customFields: 'Custom fields',
     sysHealth: 'System health',
     lms: 'LMS integration',
+    mobileCheckins: "Mobile check-ins",
   },
 
   salary: {

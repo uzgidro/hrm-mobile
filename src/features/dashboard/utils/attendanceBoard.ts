@@ -3,7 +3,7 @@
 // qator, donut hisoblagichlari, status belgisi. Hisob-kitob web bilan AYNAN bir xil
 // bo'lishi shart (paritet) — o'zgartirsangiz v2 da ham o'zgartiring.
 import dayjs from 'dayjs';
-import type { Employee } from '@/types';
+import type { Employee, EventMobileCheckin } from '@/types';
 
 export type BoardEvent = {
   id?: number;
@@ -17,6 +17,8 @@ export type BoardEvent = {
   turnstile?: { acs_dev_name?: string; name?: string } | null;
   turnstile_name?: string;
   turnstile_id?: number | null;
+  /** Telefondan «Keldim» belgisi bo'lsa (day-board / WS payload, 2026-10-06). */
+  mobile_checkin?: EventMobileCheckin | null;
 };
 
 export type DayBoard = {

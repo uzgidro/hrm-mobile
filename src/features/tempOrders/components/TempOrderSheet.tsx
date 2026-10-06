@@ -18,9 +18,10 @@ import { FormInput } from '@/components/FormInput';
 import { Button, SelectField, Sheet, Text } from '@/ui';
 import type { Employee } from '@/types';
 import { useDeleteTempOrder, useSaveTempOrder } from '../api/mutations';
-import type { TempOrder } from '../api/queries';
+import { useBranchOptions, type TempOrder } from '../api/queries';
 import {
   TEMP_ORDER_TYPES,
+  TRIP_TYPE,
   buildCreateBody,
   buildUpdateBody,
   isArchiving,
@@ -61,7 +62,7 @@ export function TempOrderSheet({
   const [form, setForm] = useState<TempOrderForm>(() => initialForm(row));
   const [employeeName, setEmployeeName] = useState(row?.employee?.legal_name ?? '');
   const [error, setError] = useState<string | null>(null);
-  const [picker, setPicker] = useState<null | 'employee' | 'type' | 'start' | 'end'>(null);
+  const [picker, setPicker] = useState<null | 'employee' | 'type' | 'start' | 'end' | 'destination'>(null);
   const [empSearch, setEmpSearch] = useState('');
   const save = useSaveTempOrder();
   const remove = useDeleteTempOrder();
@@ -83,6 +84,10 @@ export function TempOrderSheet({
         .then((r) => unwrapList<Employee>(r.data)),
     enabled: picker === 'employee',
   });
+
+  const isTrip = form.type === TRIP_TYPE && !isEdit;
+  const branches = useBranchOptions(isTrip && (picker === 'destination' || !!form.destinationBranchId));
+  const destinationName = branches.data?.find((b) => b.id === form.destinationBranchId)?.name ?? '';
 
   const typeOptions = useMemo(
     () =>
@@ -202,6 +207,15 @@ export function TempOrderSheet({
             </View>
           </View>
         )}
+        {isTrip && (
+          <SelectField
+            testID="temp-order-destination"
+            label={t('checkin.bulk.destination')}
+            value={destinationName}
+            placeholder={t('checkin.bulk.destinationNone')}
+            onPress={() => setPicker('destination')}
+          />
+        )}
         <FormInput label={t('tempOrders.note')} value={form.note} onChangeText={(v) => set({ note: v })} multiline />
         {!!error && (
           <Text variant="label" tone="danger">
@@ -254,6 +268,19 @@ export function TempOrderSheet({
         onClose={() => setPicker(null)}
         onSelect={(i) => {
           set({ type: TEMP_ORDER_TYPES[i] });
+          setPicker(null);
+        }}
+      />
+      <PickerModal
+        visible={picker === 'destination'}
+        title={t('checkin.bulk.destination')}
+        avatars={false}
+        options={(branches.data ?? []).map((b) => ({ value: b.id, label: b.name ?? `#${b.id}` }))}
+        loading={branches.isFetching}
+        selected={form.destinationBranchId ?? null}
+        onClose={() => setPicker(null)}
+        onSelect={(id) => {
+          set({ destinationBranchId: id === form.destinationBranchId ? null : id });
           setPicker(null);
         }}
       />

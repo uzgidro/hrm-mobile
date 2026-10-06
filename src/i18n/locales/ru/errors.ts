@@ -212,4 +212,9 @@ export default {
   workspace_not_found: 'Проект не найден',
   workspace_owner_forbidden: 'Проектом и его колонками управляет только его автор',
   wrong_letter_type: 'Тип документа не подходит для этого действия',
+  no_active_business_trip: "На сегодня нет командировки от отдела кадров — отметка с телефона недоступна",
+  checkin_time_invalid: "Неверное время отметки — проверьте часы и дату телефона",
+  mobile_checkin_already_cancelled: "Отметка уже отменена",
+  mobile_checkin_not_found: "Отметка не найдена",
+  destination_only_for_trip: "Место назначения указывается только для командировки",
 } as const;

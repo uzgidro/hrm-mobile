@@ -135,4 +135,6 @@ export default {
   vacancy: 'Vakansiya',
   vacancyApplication: 'Vakansiyaga ariza',
   learningCourseAssigned: 'Kurs biriktirildi',
+  mobileCheckinCancelled: "Belgingiz bekor qilindi",
+  mobileCheckinFar: "Uzoqdan belgi",
 } as const;

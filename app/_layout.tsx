@@ -201,6 +201,8 @@ function ThemedNavigation() {
                 <Stack.Screen name="malaka-oshirish" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="oquv-markazi" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="auditlar" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="keldim" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="mobil-belgilar" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="sogliq-korigi" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="zoom" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="tibbiy-korik" options={{ animation: 'slide_from_right' }} />

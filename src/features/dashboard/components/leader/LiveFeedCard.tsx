@@ -49,7 +49,11 @@ export function LiveFeedCard({ board, loading, limit = 8 }: { board: HydratedBoa
             <ListRow
               key={e.id ?? i}
               title={name}
-              subtitle={e.employee?.job_position?.name ?? e.turnstile_name}
+              subtitle={
+                e.mobile_checkin
+                  ? [t('checkin.viaPhone'), e.mobile_checkin.destination_branch?.name].filter(Boolean).join(' · ')
+                  : (e.employee?.job_position?.name ?? e.turnstile_name)
+              }
               left={<Avatar name={name} uri={e.employee?.photo_path} size={36} />}
               right={
                 <View style={styles.right}>
@@ -57,6 +61,7 @@ export function LiveFeedCard({ board, loading, limit = 8 }: { board: HydratedBoa
                     {formatTime(e.happen_time)}
                   </Text>
                   <Badge label={out ? t('dashboard.home.exited') : t('dashboard.home.entered')} tone={out ? 'brand' : 'success'} />
+                  {e.mobile_checkin?.is_far && <Badge label={t('checkin.far')} tone="warning" />}
                 </View>
               }
             />

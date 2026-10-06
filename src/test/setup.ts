@@ -46,6 +46,7 @@ jest.mock('expo-crypto', () => {
     digestStringAsync: jest.fn(async (_alg: string, data: string) =>
       createHash('sha256').update(data, 'utf8').digest('hex')
     ),
+    randomUUID: jest.fn(() => require('crypto').randomUUID()),
     getRandomBytesAsync: jest.fn(async (n: number) =>
       Uint8Array.from({ length: n }, (_, i) => (i * 31 + 7) % 256)
     ),

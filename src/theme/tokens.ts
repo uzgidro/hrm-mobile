@@ -32,6 +32,9 @@ export const gradients = {
   hero: ['#6247D9', '#7C5CFF', '#1B87C9'] as const,
   heroDark: ['#7C5CFF', '#57C8FF', '#5FE39C'] as const,
   accent: ['#8D70FF', '#7958FF', '#6247D9'] as const,
+  // Xizmat safari «Keldim» kartasi — yashil (yetib keldim) → tomchi ko'k (yo'l).
+  trip: ['#0E8F63', '#12A877', '#1B87C9'] as const,
+  tripDark: ['#1FB67F', '#2BC79A', '#57C8FF'] as const,
 };
 
 export type ModuleTintKey = 'violet' | 'green' | 'orange' | 'drop' | 'pink' | 'amber' | 'cyan' | 'grey';

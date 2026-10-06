@@ -80,6 +80,7 @@ export default {
     customFields: "Qo'shimcha maydonlar",
     sysHealth: 'Tizim holati',
     lms: 'LMS integratsiyasi',
+    mobileCheckins: "Mobil belgilar",
   },
 
   // Salary placeholder screen (module under development)
