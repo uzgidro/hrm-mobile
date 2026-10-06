@@ -27,4 +27,19 @@ describe('OrderDetailView (embedded)', () => {
     const { findByText } = await renderWithProviders(<OrderDetailView id={1} embedded />);
     expect(await findByText('Test decree')).toBeTruthy();
   }, 15000);
+
+  // QA 2026-10-06: o'chirilgan buyruqning eski bildirishnomasi bosilsa server 404
+  // `order_act_not_found` beradi — «Xatolik yuz berdi + Qayta urinish» o'rniga
+  // xat kabi tushunarli bo'sh holat, qayta so'rovsiz.
+  it('404 order_act_not_found: friendly empty state, no retry', async () => {
+    mock.onGet(new RegExp('order-acts/9')).reply(404, {
+      code: 'order_act_not_found', i18n_key: 'errors.order_act_not_found', params: {}, message: 'Order act not found',
+    });
+    mock.onGet(new RegExp('employees')).reply(200, { items: [], total: 0 });
+    const { findByText, queryByText } = await renderWithProviders(<OrderDetailView id={9} embedded />);
+    expect(await findByText('Buyruq akti topilmadi')).toBeTruthy();
+    expect(queryByText(/ko'rinmasligi mumkin/)).toBeTruthy();
+    expect(queryByText('Qayta urinish')).toBeNull();
+    expect(mock.history.get.filter((r) => /order-acts\/9$/.test(r.url ?? ''))).toHaveLength(1);
+  }, 15000);
 });

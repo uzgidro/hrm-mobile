@@ -1,6 +1,7 @@
 import { queryOptions } from '@tanstack/react-query';
 import { pagedListOptions, cleanParams, type ListParams } from '@/lib/pagedList';
 import { apiClient } from '@/api/client';
+import { retryUnlessMissing } from '@/api/errors';
 import { unwrapList } from '@/api/response';
 import {
   ORDER_ACTS,
@@ -137,6 +138,8 @@ export function orderDetailQuery(id: number) {
     // Decree state must reflect the server on every open — another signer in the
     // approval chain may have acted. Override the global staleTime.
     refetchOnMount: 'always',
+    // 404 (o'chirilgan buyruq) qayta so'ralsa ham o'zgarmaydi.
+    retry: retryUnlessMissing,
   });
 }
 

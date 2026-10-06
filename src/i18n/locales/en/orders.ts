@@ -1,6 +1,7 @@
 // Orders (Buyruqlar) feature — English translation.
 // See uz-Latn/orders.ts for the meaning of each key.
 export default {
+  notFoundHint: 'The order was deleted or is not visible to you.',
   chancelleryReturn: 'Return',
   sectionAttachments: 'Attachments',
   attachmentFallback: 'File',

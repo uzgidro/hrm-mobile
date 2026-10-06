@@ -1,6 +1,7 @@
 // Orders (Buyruqlar) feature — uz-Cyrl transliteration of uz-Latn/orders.ts.
 // See uz-Latn/orders.ts for the meaning of each key.
 export default {
+  notFoundHint: 'Буйруқ ўчирилган ёки сизга кўринмаслиги мумкин.',
   chancelleryReturn: 'Қайтариш',
   sectionAttachments: 'Илова файллар',
   attachmentFallback: 'Файл',

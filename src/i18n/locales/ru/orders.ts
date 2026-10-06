@@ -1,6 +1,7 @@
 // Orders (Buyruqlar) feature — Russian translation.
 // See uz-Latn/orders.ts for the meaning of each key.
 export default {
+  notFoundHint: 'Приказ удалён или недоступен вам.',
   chancelleryReturn: 'Вернуть',
   sectionAttachments: 'Вложения',
   attachmentFallback: 'Файл',

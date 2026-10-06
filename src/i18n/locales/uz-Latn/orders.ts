@@ -5,6 +5,7 @@
 // errors.*. Order STATUS labels live in the `status` namespace (via the
 // orderStatus util) and are not repeated here.
 export default {
+  notFoundHint: "Buyruq o'chirilgan yoki sizga ko'rinmasligi mumkin.",
   chancelleryReturn: 'Qaytarish',
   sectionAttachments: 'Ilova fayllar',
   attachmentFallback: 'Fayl',

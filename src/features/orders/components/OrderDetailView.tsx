@@ -12,8 +12,8 @@ import type { ThemeColors } from '@/theme/palettes';
 import { ff } from '@/theme/typography';
 import type { Employee, OrderAct } from '@/types';
 import { Icon } from '@/components/Icon';
-import { LoadingView, ErrorState } from '@/components/StateViews';
-import { getApiErrorMessage } from '@/api/errors';
+import { LoadingView, ErrorState, EmptyState } from '@/components/StateViews';
+import { getApiErrorMessage, toApiError } from '@/api/errors';
 import { PickerModal, type PickerOption } from '@/components/PickerModal';
 import { DatePickerModal } from '@/components/DatePicker';
 import { statusMeta, statusColor, decreePermissions, decreeSubmitTarget } from '@/utils/orderStatus';
@@ -227,6 +227,17 @@ export function OrderDetailView({ id, embedded = false }: { id: number; embedded
       </SafeAreaView>
     );
 
+  // 404/403 — buyruq o'chirilgan yoki bu o'quvchiga ko'rinmaydi (eski bildirishnomadan ochilgan).
+  // Xat/mehmon kabi tushunarli bo'sh holat; qayta urinish befoyda, shuning uchun tugmasiz.
+  const errStatus = toApiError(error).status;
+  if (isError && (errStatus === 404 || errStatus === 403)) {
+    return renderRoot(
+      <>
+        <DetailHeader embedded={embedded} />
+        <EmptyState icon="doc" title={t('errors.order_act_not_found')} message={t('orders.notFoundHint')} />
+      </>,
+    );
+  }
   if (isError || (!isLoading && !order)) {
     return renderRoot(
       <>
