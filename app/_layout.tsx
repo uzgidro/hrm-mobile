@@ -165,6 +165,7 @@ function ThemedNavigation() {
                 <Stack.Screen name="notifications" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="news" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="media" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="jonli-tashrif" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="mehmon-detail" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="mehmon-form" options={{ animation: 'slide_from_bottom' }} />
                 <Stack.Screen name="texnik-yordam" options={{ animation: 'slide_from_right' }} />

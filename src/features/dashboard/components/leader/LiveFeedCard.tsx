@@ -5,8 +5,9 @@ import { router, type Href } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeProvider';
 import { moduleTint, radii } from '@/theme/tokens';
-import { Avatar, Badge, Card, ListRow, Skeleton, Text } from '@/ui';
-import { formatTime, isExitEvent, type HydratedBoard } from '../../utils/attendanceBoard';
+import { Card, Skeleton, Text } from '@/ui';
+import { type HydratedBoard } from '../../utils/attendanceBoard';
+import { LiveEventRow } from './LiveEventRow';
 
 export function LiveFeedCard({ board, loading, limit = 8 }: { board: HydratedBoard; loading: boolean; limit?: number }) {
   const { t } = useTranslation();
@@ -19,7 +20,8 @@ export function LiveFeedCard({ board, loading, limit = 8 }: { board: HydratedBoa
       icon="eye"
       tint="green"
       testID="card-live"
-      action={{ label: t('common.all'), onPress: () => router.push('/attendance-detail' as Href) }}
+      // «Barchasi» — kunning barcha o'tishlari (ilgari xodimlar ro'yxatiga olib borardi).
+      action={{ label: t('common.all'), onPress: () => router.push('/jonli-tashrif' as Href) }}
     >
       <View style={styles.counters}>
         <View style={[styles.counter, { backgroundColor: g.wash }]} testID="live-entries">
@@ -42,36 +44,8 @@ export function LiveFeedCard({ board, loading, limit = 8 }: { board: HydratedBoa
           {t('dashboard.home.noLive')}
         </Text>
       ) : (
-        board.latest.slice(0, limit).map((e, i) => {
-          const name = e.employee?.legal_name ?? '—';
-          const out = isExitEvent(e);
-          return (
-            <ListRow
-              key={e.id ?? i}
-              title={name}
-              subtitle={
-                e.mobile_checkin
-                  ? [
-                      t('checkin.viaPhone'),
-                      e.mobile_checkin.nearest_location?.name || e.mobile_checkin.destination_branch?.name,
-                    ]
-                      .filter(Boolean)
-                      .join(' · ')
-                  : (e.employee?.job_position?.name ?? e.turnstile_name)
-              }
-              left={<Avatar name={name} uri={e.employee?.photo_path} thumb={e.employee?.photo_thumb_path} size={36} />}
-              right={
-                <View style={styles.right}>
-                  <Text variant="label" style={styles.time}>
-                    {formatTime(e.happen_time)}
-                  </Text>
-                  <Badge label={out ? t('dashboard.home.exited') : t('dashboard.home.entered')} tone={out ? 'brand' : 'success'} />
-                  {e.mobile_checkin?.is_far && <Badge label={t('checkin.far')} tone="warning" />}
-                </View>
-              }
-            />
-          );
-        })
+        // Qator bosilsa — o'tish surati, joy, xarita (2026-10-07).
+        board.latest.slice(0, limit).map((e, i) => <LiveEventRow key={e.id ?? i} e={e} />)
       )}
     </Card>
   );
@@ -80,6 +54,4 @@ export function LiveFeedCard({ board, loading, limit = 8 }: { board: HydratedBoa
 const styles = StyleSheet.create({
   counters: { flexDirection: 'row', gap: 10, marginBottom: 8 },
   counter: { flex: 1, borderRadius: radii.md, padding: 12 },
-  right: { alignItems: 'flex-end', gap: 4 },
-  time: { fontVariant: ['tabular-nums'], fontWeight: '700' },
 });

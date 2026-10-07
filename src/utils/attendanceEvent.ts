@@ -47,6 +47,16 @@ function firstLocation(
  * unda yo'nalish so'zi ham bor va u qatorda ikki marta takrorlanardi.
  */
 export function eventPlace(ev: AttendanceEvent, catalog?: Map<number, TurnstileLocation>): AttendancePlace {
+  // Telefondan «Keldim» belgisi: joy — telefon koordinatasi, nomi — eng yaqin filial/GES (2026-10-07).
+  const mc = ev.mobile_checkin;
+  if (mc && mc.latitude != null && mc.longitude != null) {
+    return {
+      name: mc.nearest_location?.name?.trim() || mc.destination_branch?.name?.trim() || null,
+      address: mc.nearest_location?.organization_branch?.name?.trim() || null,
+      latitude: mc.latitude,
+      longitude: mc.longitude,
+    };
+  }
   const loc = firstLocation(ev, catalog);
   const name =
     loc?.name?.trim() ||

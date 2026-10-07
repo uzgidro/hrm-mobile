@@ -11,6 +11,7 @@ import type { ThemeColors } from '@/theme/palettes';
 import { ff } from '@/theme/typography';
 import type { AttendanceEvent, TurnstileLocation } from '@/types';
 import { Icon } from '@/components/Icon';
+import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import {
   eventPhotoUrl, eventPlace, isEntryEvent, mapAppUrl, mapViewerUrl,
 } from '@/utils/attendanceEvent';
@@ -43,13 +44,7 @@ export function AttendanceEventRow({
   const entry = isEntryEvent(event);
   const place = eventPlace(event, locations);
   const photo = eventPhotoUrl(event);
-  const viewer = mapViewerUrl(place);
   const time = dayjs(event.happen_time).format('HH:mm');
-
-  const openInMaps = () => {
-    const url = mapAppUrl(place, Platform.OS === 'ios' ? 'ios' : Platform.OS === 'android' ? 'android' : 'web');
-    if (url) Linking.openURL(url).catch(() => {});
-  };
 
   return (
     <>
@@ -79,66 +74,118 @@ export function AttendanceEventRow({
         <Icon name="chevronRight" size={16} color={colors.textMuted} />
       </TouchableOpacity>
 
-      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
-        <View style={styles.overlay}>
-          <View style={styles.card}>
-            <View style={styles.cardHeader}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.cardTitle}>
-                  {entry ? t('timesheet.entryTitle') : t('timesheet.exitTitle')} · {time}
-                </Text>
-                <Text style={styles.cardDate}>{dayjs(event.happen_time).format('DD.MM.YYYY')}</Text>
+      <AttendanceEventDetailModal event={event} locations={locations} visible={open} onClose={() => setOpen(false)} />
+    </>
+  );
+}
+
+/** Tafsilot oynasidagi shaxs sarlavhasi (jonli lenta: kim o'tgani). */
+export interface EventPerson {
+  name: string;
+  subtitle?: string | null;
+  photo?: string | null;
+  photoThumb?: string | null;
+}
+
+// Hodisa tafsiloti: o'tish surati (turniket kamerasi / telefon), joy, xarita. «Mening tabelim»,
+// xodim kalendari va bosh sahifadagi «Jonli tashrif» (2026-10-07) shu oynani ishlatadi.
+export function AttendanceEventDetailModal({
+  event,
+  visible,
+  onClose,
+  locations,
+  person,
+  note,
+}: {
+  event: AttendanceEvent;
+  visible: boolean;
+  onClose: () => void;
+  locations?: Map<number, TurnstileLocation>;
+  person?: EventPerson;
+  /** Qo'shimcha qator (masalan «Telefon · Uzoqdan: 3.2 km»). */
+  note?: string | null;
+}) {
+  const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const entry = isEntryEvent(event);
+  const place = eventPlace(event, locations);
+  const photo = eventPhotoUrl(event);
+  const viewer = mapViewerUrl(place);
+  const time = dayjs(event.happen_time).format('HH:mm');
+  const openInMaps = () => {
+    const url = mapAppUrl(place, Platform.OS === 'ios' ? 'ios' : Platform.OS === 'android' ? 'android' : 'web');
+    if (url) Linking.openURL(url).catch(() => {});
+  };
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <View style={styles.overlay}>
+        <View style={styles.card} testID="attendance-event-detail">
+          <View style={styles.cardHeader}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.cardTitle}>
+                {entry ? t('timesheet.entryTitle') : t('timesheet.exitTitle')} · {time}
+              </Text>
+              <Text style={styles.cardDate}>{dayjs(event.happen_time).format('DD.MM.YYYY')}</Text>
+            </View>
+            <TouchableOpacity onPress={onClose} hitSlop={10} accessibilityLabel={t('common.close')}>
+              <Icon name="close" size={20} color={colors.textSecondary} />
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView contentContainerStyle={styles.cardBody} showsVerticalScrollIndicator={false}>
+            {person && (
+              <View style={styles.personRow}>
+                <EmployeeAvatar emp={{ legal_name: person.name, photo_path: person.photo, photo_thumb_path: person.photoThumb }} size={44} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.personName} numberOfLines={2}>{person.name}</Text>
+                  {!!person.subtitle && <Text style={styles.address} numberOfLines={2}>{person.subtitle}</Text>}
+                </View>
               </View>
-              <TouchableOpacity onPress={() => setOpen(false)} hitSlop={10}>
-                <Icon name="close" size={20} color={colors.textSecondary} />
-              </TouchableOpacity>
+            )}
+            {photo ? (
+              <Image source={{ uri: photo }} style={styles.photo} contentFit="cover" cachePolicy="memory-disk" />
+            ) : (
+              <View style={[styles.photo, styles.photoEmpty]}>
+                <Text style={styles.mutedText}>{t('timesheet.photoMissing')}</Text>
+              </View>
+            )}
+            {!!note && <Text style={styles.address}>{note}</Text>}
+
+            <View style={styles.placeBlock}>
+              <Text style={styles.placeLabel}>{t('timesheet.placeLabel')}</Text>
+              <Text style={styles.placeName}>{place.name ?? t('timesheet.placeUnknown')}</Text>
+              {!!place.address && <Text style={styles.address}>{place.address}</Text>}
             </View>
 
-            <ScrollView contentContainerStyle={styles.cardBody} showsVerticalScrollIndicator={false}>
-              {photo ? (
-                <Image source={{ uri: photo }} style={styles.photo} contentFit="cover" cachePolicy="memory-disk" />
-              ) : (
-                <View style={[styles.photo, styles.photoEmpty]}>
-                  <Text style={styles.mutedText}>{t('timesheet.photoMissing')}</Text>
-                </View>
-              )}
-
-              <View style={styles.placeBlock}>
-                <Text style={styles.placeLabel}>{t('timesheet.placeLabel')}</Text>
-                <Text style={styles.placeName}>{place.name ?? t('timesheet.placeUnknown')}</Text>
-                {!!place.address && <Text style={styles.address}>{place.address}</Text>}
-              </View>
-
-              {viewer ? (
-                <>
-                  <View style={styles.mapWrap} pointerEvents="none">
-                    <WebView
-                      source={{ uri: viewer }}
-                      style={styles.map}
-                      scrollEnabled={false}
-                      javaScriptEnabled
-                      domStorageEnabled
-                      originWhitelist={['*']}
-                    />
-                    {/* Ko'ruvchi markazga belgi qo'ymaydi — belgini o'zimiz
-                        chizamiz (xarita aynan koordinataga markazlashtirilgan). */}
-                    <View style={styles.pin}>
-                      <Icon name="mapPin" size={28} color={colors.error} />
-                    </View>
+            {viewer ? (
+              <>
+                <View style={styles.mapWrap} pointerEvents="none">
+                  <WebView
+                    source={{ uri: viewer }}
+                    style={styles.map}
+                    scrollEnabled={false}
+                    javaScriptEnabled
+                    domStorageEnabled
+                    originWhitelist={['*']}
+                  />
+                  {/* Ko'ruvchi markazga belgi qo'ymaydi — belgini o'zimiz chizamiz. */}
+                  <View style={styles.pin}>
+                    <Icon name="mapPin" size={28} color={colors.error} />
                   </View>
-                  <TouchableOpacity style={styles.mapBtn} onPress={openInMaps} activeOpacity={0.85}>
-                    <Icon name="mapPin" size={16} color={colors.primaryLight} />
-                    <Text style={styles.mapBtnText}>{t('timesheet.openInMaps')}</Text>
-                  </TouchableOpacity>
-                </>
-              ) : (
-                <Text style={styles.mutedText}>{t('timesheet.mapMissing')}</Text>
-              )}
-            </ScrollView>
-          </View>
+                </View>
+                <TouchableOpacity style={styles.mapBtn} onPress={openInMaps} activeOpacity={0.85}>
+                  <Icon name="mapPin" size={16} color={colors.primaryLight} />
+                  <Text style={styles.mapBtnText}>{t('timesheet.openInMaps')}</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <Text style={styles.mutedText}>{t('timesheet.mapMissing')}</Text>
+            )}
+          </ScrollView>
         </View>
-      </Modal>
-    </>
+      </View>
+    </Modal>
   );
 }
 
@@ -172,4 +219,6 @@ const makeStyles = (c: ThemeColors) =>
     pin: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
     mapBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 11, borderRadius: 12, borderWidth: 2, borderColor: c.cardBorder },
     mapBtnText: { fontSize: 13, ...ff('700'), color: c.primaryLight },
+    personRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    personName: { fontSize: 15, ...ff('800'), color: c.text },
   });

@@ -231,6 +231,7 @@ export function prefetchHomeData(
 export const dashboardKeys = {
   all: ['dashboard'] as const,
   day: (branchId: number | undefined, day: string) => ['dashboard', 'day-board', branchId ?? null, day] as const,
+  feed: (branchId: number | undefined, day: string) => ['dashboard', 'day-feed', branchId ?? null, day] as const,
   categories: (branchId: number | undefined) => ['dashboard', 'categories', branchId ?? null] as const,
   composition: (branchId: number | undefined) => ['dashboard', 'composition', branchId ?? null] as const,
   overdue: (branchId: number | undefined) => ['dashboard', 'overdue', branchId ?? null] as const,
@@ -254,6 +255,25 @@ export function boardDayQuery(branchId: number | undefined, day: string) {
         .then((r) => r.data),
     staleTime: 60 * 1000,
     refetchInterval: 300_000,
+  });
+}
+
+/**
+ * «Jonli tashrif» to'liq ekrani (2026-10-07): kunning BARCHA o'tishlari (`latest: -1`, web v2
+ * LiveFeed bilan bir manba). Har hodisada o'tish surati (`photo_path`/`photo_thumb_path`) bor.
+ * O'lchov (TEST, 1-filial 02.09): 485 hodisa ≈ 477 KB — faqat ekran ochilganda so'raladi.
+ */
+export function dayFeedQuery(branchId: number | undefined, day: string, live: boolean) {
+  return queryOptions({
+    queryKey: dashboardKeys.feed(branchId, day),
+    queryFn: () =>
+      apiClient
+        .get<DayBoard>(TURNSTILE_DAY_BOARD, {
+          params: { ...branchParams(branchId), day, include_cross_branch: true, latest: -1 },
+        })
+        .then((r) => r.data),
+    staleTime: 30 * 1000,
+    refetchInterval: live ? 60_000 : false,
   });
 }
 
