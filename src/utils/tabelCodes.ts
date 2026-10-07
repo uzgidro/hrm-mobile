@@ -22,37 +22,49 @@ export interface TabelCodeMeta {
   letter: string;
 }
 
-// Canonical code → display meta. Unknown codes fall back to `unknownCode` so a
-// new backend code renders as a neutral cell rather than crashing.
+// Canonical code → display meta. Harflar = HR tabel kodlari (backend `tabel_template.STATUS_META`,
+// filial shabloni «Kodlar» varag'i bilan bir xil). 2026-10-06: ilgari bu yerda eski kirill
+// harflari edi — xizmat safari «БС» chiqib HR'dagi «BS» (haqsiz ta'til) bilan, «kech qolgan» «К»
+// esa HR'dagi «K» (xizmat safari) bilan adashardi. HR'da kodi soat yoki bo'sh bo'lgan holatlar
+// (kelgan, kech qolgan, kelmagan, dam olish) harfsiz belgi bilan ko'rsatiladi. Filial o'z kodini
+// bergan bo'lsa — `useTabelCodes()` (GET organization-branches/tabel-codes) ustun.
 const CODE_META: Record<string, TabelCodeMeta> = {
-  present: { labelKey: 'timesheet.codePresent', colorKey: 'present', letter: '·' },
-  late: { labelKey: 'timesheet.codeLate', colorKey: 'warning', letter: 'К' },
-  early_leave: { labelKey: 'timesheet.codeEarlyLeave', colorKey: 'warning', letter: 'Э' },
-  absent: { labelKey: 'timesheet.codeAbsent', colorKey: 'error', letter: 'Ҳ' },
-  progul: { labelKey: 'timesheet.codeProgul', colorKey: 'error', letter: 'П' },
-  day_off: { labelKey: 'timesheet.codeDayOff', colorKey: 'textMuted', letter: 'Д' },
-  business_trip: { labelKey: 'timesheet.codeBusinessTrip', colorKey: 'primaryLight', letter: 'БС' },
-  annual_leave: { labelKey: 'timesheet.codeAnnualLeave', colorKey: 'primaryLight', letter: 'ОТ' },
-  sick_leave: { labelKey: 'timesheet.codeSickLeave', colorKey: 'primaryLight', letter: 'Б' },
-  unpaid_leave: { labelKey: 'timesheet.codeUnpaidLeave', colorKey: 'primaryLight', letter: 'О' },
-  tolanmaydigan_tatil: { labelKey: 'timesheet.codeUnpaidLeave', colorKey: 'primaryLight', letter: 'О' },
-  work_leave: { labelKey: 'timesheet.codeWorkLeave', colorKey: 'primaryLight', letter: 'Р' },
-  dekret: { labelKey: 'timesheet.codeDekret', colorKey: 'primaryLight', letter: 'ДТ' },
-  oquv_tatil: { labelKey: 'timesheet.codeStudyLeave', colorKey: 'primaryLight', letter: 'У' },
-  malaka_oshirish: { labelKey: 'timesheet.codeTraining', colorKey: 'primaryLight', letter: 'ПК' },
-  harbiy_xizmat: { labelKey: 'timesheet.codeMilitary', colorKey: 'primaryLight', letter: 'ВС' },
-  malumotnoma: { labelKey: 'timesheet.codeReference', colorKey: 'primaryLight', letter: 'С' },
-  ish_haqi_saqlangan: { labelKey: 'timesheet.codePaidAbsence', colorKey: 'primaryLight', letter: 'ОС' },
-  noaniq_sabab: { labelKey: 'timesheet.codeUnknownReason', colorKey: 'textMuted', letter: '?' },
-  dismissed: { labelKey: 'timesheet.codeDismissed', colorKey: 'textMuted', letter: '—' },
+  present: { labelKey: 'timesheet.codePresent', colorKey: 'present', letter: '✓' },
+  late: { labelKey: 'timesheet.codeLate', colorKey: 'warning', letter: '!' },
+  early_leave: { labelKey: 'timesheet.codeEarlyLeave', colorKey: 'warning', letter: '!' },
+  absent: { labelKey: 'timesheet.codeAbsent', colorKey: 'error', letter: '×' },
+  progul: { labelKey: 'timesheet.codeProgul', colorKey: 'error', letter: 'PR' },
+  day_off: { labelKey: 'timesheet.codeDayOff', colorKey: 'textMuted', letter: '–' },
+  business_trip: { labelKey: 'timesheet.codeBusinessTrip', colorKey: 'primaryLight', letter: 'K' },
+  annual_leave: { labelKey: 'timesheet.codeAnnualLeave', colorKey: 'primaryLight', letter: 'OT' },
+  sick_leave: { labelKey: 'timesheet.codeSickLeave', colorKey: 'primaryLight', letter: 'B' },
+  unpaid_leave: { labelKey: 'timesheet.codeUnpaidLeave', colorKey: 'primaryLight', letter: 'BS' },
+  tolanmaydigan_tatil: { labelKey: 'timesheet.codeNonPaidLeave', colorKey: 'primaryLight', letter: 'TT' },
+  work_leave: { labelKey: 'timesheet.codeWorkLeave', colorKey: 'primaryLight', letter: '8' },
+  dekret: { labelKey: 'timesheet.codeDekret', colorKey: 'primaryLight', letter: 'DT' },
+  oquv_tatil: { labelKey: 'timesheet.codeStudyLeave', colorKey: 'primaryLight', letter: 'UT' },
+  malaka_oshirish: { labelKey: 'timesheet.codeTraining', colorKey: 'primaryLight', letter: 'MO' },
+  harbiy_xizmat: { labelKey: 'timesheet.codeMilitary', colorKey: 'primaryLight', letter: 'XX' },
+  malumotnoma: { labelKey: 'timesheet.codeReference', colorKey: 'primaryLight', letter: 'MA' },
+  ish_haqi_saqlangan: { labelKey: 'timesheet.codePaidAbsence', colorKey: 'primaryLight', letter: 'IT' },
+  otgul: { labelKey: 'timesheet.codeOtgul', colorKey: 'primaryLight', letter: 'OG' },
+  noaniq_sabab: { labelKey: 'timesheet.codeUnknownReason', colorKey: 'textMuted', letter: 'NS' },
+  dismissed: { labelKey: 'timesheet.codeDismissed', colorKey: 'textMuted', letter: 'O' },
 };
 
 const UNKNOWN_META: TabelCodeMeta = { labelKey: 'timesheet.codeUnknown', colorKey: 'textMuted', letter: '?' };
 
+/** Filial kodlari (`useTabelCodes`): kalit → HR kodi. Soat qolipi (`{hours}`) yoki bo'sh kod
+ *  harf emas — u holatlarda standart belgi qoladi. */
+export type TabelCodeOverrides = Readonly<Record<string, string>>;
+
 /** Display meta for a calendar status code. Empty/unknown → neutral fallback. */
-export function tabelCodeMeta(code?: string | null): TabelCodeMeta {
+export function tabelCodeMeta(code?: string | null, overrides?: TabelCodeOverrides): TabelCodeMeta {
   if (!code) return UNKNOWN_META;
-  return CODE_META[code] ?? UNKNOWN_META;
+  const meta = CODE_META[code];
+  const own = overrides?.[code]?.trim();
+  if (own && !own.includes('{')) return { ...(meta ?? UNKNOWN_META), letter: own };
+  return meta ?? UNKNOWN_META;
 }
 
 /** Resolve a code's palette color slot to a concrete hex from the theme. */

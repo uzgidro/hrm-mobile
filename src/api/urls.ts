@@ -77,6 +77,9 @@ export const DICTIONARY_OPTIONS = (code: string) => `dictionaries/${code}/option
 /** System settings (`{ values, schema }`); `values['nav.modules']` is the web v2 module matrix. */
 export const SYSTEM_SETTINGS = 'system-settings';
 
+// Davomat (tabel) kodlari — HR manbasi + filial shabloni «Kodlar» varag'i (backend 3de99d9).
+export const TABEL_CODES = 'organization-branches/tabel-codes';
+
 // News
 // Kompaniya yangiliklari — uzgidro.uz saytidan (web v2 bilan bitta manba, 2026-09-24 qarori).
 export const COMPANY_NEWS_PAGE = 'dashboard/company-news/page';

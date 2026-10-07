@@ -8,10 +8,10 @@ import type { AttendanceSummary } from '@/types';
 
 describe('tabelCodeMeta', () => {
   it('maps known codes to a label key, color slot and tabel letter', () => {
-    expect(tabelCodeMeta('present')).toEqual({ labelKey: 'timesheet.codePresent', colorKey: 'present', letter: '·' });
+    expect(tabelCodeMeta('present')).toEqual({ labelKey: 'timesheet.codePresent', colorKey: 'present', letter: '✓' });
     expect(tabelCodeMeta('late').colorKey).toBe('warning');
     expect(tabelCodeMeta('absent').colorKey).toBe('error');
-    expect(tabelCodeMeta('annual_leave').letter).toBe('ОТ');
+    expect(tabelCodeMeta('annual_leave').letter).toBe('OT');
     expect(tabelCodeMeta('business_trip').colorKey).toBe('primaryLight');
   });
 
@@ -23,11 +23,25 @@ describe('tabelCodeMeta', () => {
     expect(tabelCodeMeta('some_future_code')).toEqual(fallback);
   });
 
-  it('maps the label-only cyrillic-letter codes (CALENDAR_TO_LABEL family)', () => {
-    // these arrive from the backend's CALENDAR_TO_LABEL map
-    expect(tabelCodeMeta('tolanmaydigan_tatil').letter).toBe('О');
+  // 2026-10-06: «Xizmat safari БС bo'lib chiqyapti … hr bazasidagi ma'lumotlar bilan moslashtir».
+  it('harflar HR tabel kodlari (backend STATUS_META) bilan bir xil', () => {
+    const hr: Record<string, string> = {
+      business_trip: 'K', sick_leave: 'B', annual_leave: 'OT', dekret: 'DT', unpaid_leave: 'BS',
+      dismissed: 'O', tolanmaydigan_tatil: 'TT', noaniq_sabab: 'NS', harbiy_xizmat: 'XX', progul: 'PR',
+      malumotnoma: 'MA', ish_haqi_saqlangan: 'IT', malaka_oshirish: 'MO', oquv_tatil: 'UT', otgul: 'OG',
+    };
+    for (const [k, v] of Object.entries(hr)) expect(tabelCodeMeta(k).letter).toBe(v);
+    // «kech qolgan» endi HR'dagi «K» (xizmat safari) bilan adashmaydi.
+    expect(tabelCodeMeta('late').letter).not.toBe('K');
     expect(tabelCodeMeta('progul').colorKey).toBe('error');
-    expect(tabelCodeMeta('malaka_oshirish').letter).toBe('ПК');
+  });
+
+  it('filial kodi (GET tabel-codes) ustun; soat qolipi yoki bo\'sh kod harf emas', () => {
+    const own = { business_trip: 'XS', present: '{hours}', absent: '' };
+    expect(tabelCodeMeta('business_trip', own).letter).toBe('XS');
+    expect(tabelCodeMeta('present', own).letter).toBe('✓');
+    expect(tabelCodeMeta('absent', own).letter).toBe('×');
+    expect(tabelCodeMeta('business_trip', own).labelKey).toBe('timesheet.codeBusinessTrip');
   });
 });
 

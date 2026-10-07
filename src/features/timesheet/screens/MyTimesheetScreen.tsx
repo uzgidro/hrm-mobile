@@ -19,6 +19,7 @@ import { AttendanceEventRow } from '@/components/AttendanceEventRow';
 import { MonthNavigator } from '@/components/MonthNavigator';
 import { Card, EmptyState, ErrorState, PageHeader, Screen, Skeleton, StatTile, Text } from '@/ui';
 import { myTimesheetQuery, myTimesheetEventsQuery } from '../api/queries';
+import { useTabelCodes } from '@/lib/useTabelCodes';
 import { tabelCodeMeta, tabelCodeColor, tabelSummary, dayAttendanceDetail } from '../utils';
 
 // Hafta sarlavhasi dushanbadan (dayjs: yakshanba = 0).
@@ -69,7 +70,8 @@ export default function MyTimesheetScreen({ embedded = false }: { embedded?: boo
   }, [currentMonth, firstDayOfWeek, daysInMonth, calendar]);
 
   const selectedCode = calendar[selectedDate];
-  const selectedMeta = tabelCodeMeta(selectedCode);
+  const hrCodes = useTabelCodes();
+  const selectedMeta = tabelCodeMeta(selectedCode, hrCodes);
   const selectedLate = lateMinutes[selectedDate] ?? 0;
   const hasData = Object.keys(calendar).length > 0;
   const time = (iso?: string) => (iso ? dayjs(iso).format('HH:mm') : '--:--');
