@@ -108,25 +108,38 @@ export function resultColorKey(value: number | null | undefined): ResultColorKey
 // OR it in so a manager is never blocked. Mirrors the web EntryTasksPage, which
 // reads the same flags off entry.my_access instead of re-deriving from roles.
 
-// Add/rename/delete a task.
+// Rename/delete a task.
 export function canEditTask(access: KpiEntryAccess | null | undefined): boolean {
   return !!access && (access.edit_access || access.manage_access);
 }
 
-// Set a task score (set-grade). Owners grade their own on create (edit_access);
-// approvers grade on review (task_approve_access).
-export function canGradeTask(access: KpiEntryAccess | null | undefined): boolean {
-  return !!access && (access.task_approve_access || access.edit_access || access.manage_access);
+// Verifix (UI_VHR868 / Hpm_Watcher): the server now sends the task rights it
+// enforces — prefer them; the older flags are the fallback for an older API.
+
+// Add a task: fact_insert or edit (the owner too).
+export function canAddTask(access: KpiEntryAccess | null | undefined): boolean {
+  if (!access) return false;
+  if (access.task_add_access != null) return access.task_add_access;
+  return access.edit_access || access.manage_access;
 }
 
-// Move a task through the status catalog (set-status).
+// Set a task score (set-grade): fact_insert or edit — the grade is a fact.
+export function canGradeTask(access: KpiEntryAccess | null | undefined): boolean {
+  if (!access) return false;
+  if (access.task_grade_access != null) return access.task_grade_access;
+  return access.task_approve_access || access.edit_access || access.manage_access;
+}
+
+// Move a task through the status catalog (set-status): task_approve or edit.
 export function canSetStatus(access: KpiEntryAccess | null | undefined): boolean {
-  return !!access && (access.task_approve_access || access.status_change_access || access.manage_access);
+  if (!access) return false;
+  if (access.task_status_access != null) return access.task_status_access;
+  return access.task_approve_access || access.status_change_access || access.manage_access;
 }
 
 // Add a new task: needs edit rights AND a has_tasks indicator AND an open entry.
 export function canAddTaskV2(access: KpiEntryAccess | null | undefined, entry: KpiEntry): boolean {
-  return canEditTask(access) && !!entry.indicator?.has_tasks && !isEntryLocked(entry);
+  return canAddTask(access) && !!entry.indicator?.has_tasks && !isEntryLocked(entry);
 }
 
 // Parse a grade input for display/validation. Empty = 0 (score is optional and

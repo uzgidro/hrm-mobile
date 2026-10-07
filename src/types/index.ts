@@ -825,6 +825,11 @@ export interface KpiEntryAccess {
   status_change_access: boolean;
   task_approve_access: boolean;
   manage_access: boolean;
+  // Verifix task rules, computed by the server (absent on an older backend):
+  // add — fact_insert/edit; status — task_approve/edit; grade — fact_insert/edit.
+  task_add_access?: boolean;
+  task_status_access?: boolean;
+  task_grade_access?: boolean;
 }
 
 // One employee × indicator × period plan/fact row. Status carries BOTH legacy

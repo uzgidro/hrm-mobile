@@ -230,7 +230,9 @@ export default function KpiEntryScreen() {
 
                       <View style={styles.taskMeta}>
                         {/* Score — tappable for graders, otherwise a plain label */}
-                        {canGrade && !locked ? (
+                        {/* Verifix keeps the grade of a task already in the
+                            «done» (counting) status — the server refuses it. */}
+                        {canGrade && !locked && !task.task_status?.counts_for_fact ? (
                           <TouchableOpacity
                             onPress={() => setGrading({ id: task.id, score: task.score != null ? String(task.score) : '' })}
                             hitSlop={6}
