@@ -14,6 +14,7 @@ import {
   isSiteMasterAdmin,
 } from '@/utils/roles';
 import type { BranchBlank } from './blank';
+import { foldText } from '@/utils/searchFold';
 
 export type Coord = [number, number];
 
@@ -141,8 +142,8 @@ export function branchScope(user: User | null | undefined, branches: TabelBranch
 
 /** v2: filial nomi bo'yicha qidiruv, mijozda. */
 export function filterTabelBranches(rows: TabelBranch[], search: string): TabelBranch[] {
-  const q = search.trim().toLowerCase();
-  return q ? rows.filter((b) => (b.name || '').toLowerCase().includes(q)) : rows;
+  const q = foldText(search.trim());
+  return q ? rows.filter((b) => foldText((b.name || '')).includes(q)) : rows;
 }
 
 /** Ro'yxat ustunlari (v2): tasdiqlovchi ismi (bo'lmasa — «Standart»), imzo egalari soni (konfiguratsiyasiz — 3). */

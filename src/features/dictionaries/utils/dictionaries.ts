@@ -6,6 +6,7 @@
 // (master-admin, kadr). Tashqi manbali (filiallar, bo'limlar, lavozimlar — boshqa modul egasi) va tizim
 // (`is_editable: false`) ma'lumotnomalari hech kimga yozilmaydi.
 import type { DictionaryType } from '@/utils/dictionaries';
+import { foldText } from '@/utils/searchFold';
 
 export const DICT_PAGE_SIZE = 25;
 
@@ -35,13 +36,13 @@ export type StatusFilter = '' | 'active' | 'inactive';
 
 /** v2: ma'lumotnoma ro'yxatidagi qidiruv — nom, ruscha nom yoki kod bo'yicha, mijozda. */
 export function filterTypes(types: DictionaryType[], query: string): DictionaryType[] {
-  const s = query.trim().toLowerCase();
+  const s = foldText(query.trim());
   if (!s) return types;
   return types.filter(
     (x) =>
-      (x.name ?? '').toLowerCase().includes(s) ||
-      (x.name_ru ?? '').toLowerCase().includes(s) ||
-      x.code.toLowerCase().includes(s),
+      foldText((x.name ?? '')).includes(s) ||
+      foldText((x.name_ru ?? '')).includes(s) ||
+      foldText(x.code).includes(s),
   );
 }
 

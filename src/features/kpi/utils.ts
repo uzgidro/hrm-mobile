@@ -1,4 +1,5 @@
 import type { KpiEntry, KpiTask, KpiEntryAccess, KpiTeamMember, User } from '@/types';
+import { foldText } from '@/utils/searchFold';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Pure presentation/permission logic for the KPI feature. Mirrors the web
@@ -160,15 +161,15 @@ export function filterTeamMembers(
   search: string,
   status: TeamStatusFilter,
 ): KpiTeamMember[] {
-  const q = search.trim().toLowerCase();
+  const q = foldText(search.trim());
   return (members ?? []).filter((m) => {
     if (status === 'pending' && !(Number(m.pending_tasks || 0) > 0)) return false;
     if (status === 'done' && !m.all_done) return false;
     if (!q) return true;
     return (
-      (m.legal_name?.toLowerCase().includes(q) ?? false) ||
-      (m.job_position_name?.toLowerCase().includes(q) ?? false) ||
-      (m.department_name?.toLowerCase().includes(q) ?? false)
+      foldText(m.legal_name ?? '').includes(q) ||
+      foldText(m.job_position_name ?? '').includes(q) ||
+      foldText(m.department_name ?? '').includes(q)
     );
   });
 }

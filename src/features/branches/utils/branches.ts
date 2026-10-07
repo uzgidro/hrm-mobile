@@ -7,6 +7,7 @@
 // (server o'z filialiga toraytiradi).
 import type { User } from '@/types';
 import { isBranchAdmin, isSiteMasterAdmin } from '@/utils/roles';
+import { foldText } from '@/utils/searchFold';
 
 /** `GET /organization-branches` qatori (to'liq `OrganizationBranchReadFull`). */
 export interface BranchRow {
@@ -62,8 +63,8 @@ export function knownRegions(rows: BranchRow[]): string[] {
 
 /** v2: qidiruv faqat filial nomi bo'yicha, mijozda (ro'yxat bitta so'rovda keladi). */
 export function filterBranches(rows: BranchRow[], search: string): BranchRow[] {
-  const q = search.trim().toLowerCase();
-  return q ? rows.filter((b) => (b.name ?? '').toLowerCase().includes(q)) : rows;
+  const q = foldText(search.trim());
+  return q ? rows.filter((b) => foldText((b.name ?? '')).includes(q)) : rows;
 }
 
 /** Manzilning filial id si — eski javobda faqat ichki obyekt bo'lishi mumkin. */

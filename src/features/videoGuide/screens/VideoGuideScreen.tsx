@@ -14,6 +14,7 @@ import { Icon } from '@/components/Icon';
 import { Card, EmptyState, ErrorState, PageHeader, Screen, SearchField, Skeleton, Text } from '@/ui';
 import { trackVideoView, videoGuidesQuery, type VideoGuide } from '../api/queries';
 import { formatDuration, isSafeVideoUrl } from '../utils/format';
+import { foldText } from '@/utils/searchFold';
 
 export default function VideoGuideScreen() {
   const { t } = useTranslation();
@@ -21,9 +22,9 @@ export default function VideoGuideScreen() {
   const [search, setSearch] = useState('');
   const q = useQuery(videoGuidesQuery());
   const videos = useMemo(() => {
-    const term = search.trim().toLowerCase();
+    const term = foldText(search.trim());
     const all = q.data ?? [];
-    return term ? all.filter((v) => v.title?.toLowerCase().includes(term)) : all;
+    return term ? all.filter((v) => foldText(v.title ?? '').includes(term)) : all;
   }, [q.data, search]);
 
   const open = (v: VideoGuide) => {

@@ -10,6 +10,7 @@ import { Icon } from '@/components/Icon';
 import { Button, SearchField, Sheet, Text } from '@/ui';
 import { divisionTree, toggleMany, toggleOne } from '../utils/params';
 import type { ReportOption } from '../utils/types';
+import { foldText } from '@/utils/searchFold';
 
 type Value = string | number;
 type Item =
@@ -62,11 +63,11 @@ export function OptionsSheet({
       }
       return out;
     }
-    const term = q.trim().toLowerCase();
+    const term = foldText(q.trim());
     const list =
       onSearchChange || !term
         ? options
-        : options.filter((o) => o.label.toLowerCase().includes(term) || (o.sub ?? '').toLowerCase().includes(term));
+        : options.filter((o) => foldText(o.label).includes(term) || foldText((o.sub ?? '')).includes(term));
     return list.map((o) => ({ type: 'option', option: o, indent: false }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options, q, tree, selected, onSearchChange]);

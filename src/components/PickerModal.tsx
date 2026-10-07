@@ -14,6 +14,7 @@ import { useBreakpoint } from '../utils/responsive';
 import { KeyboardAvoider } from './KeyboardAvoider';
 import { useDebouncedValue } from '../lib/useDebouncedValue';
 import { useThumbFallback } from '../lib/useThumbFallback';
+import { foldText } from '@/utils/searchFold';
 
 export interface PickerOption {
   value: number;
@@ -78,10 +79,10 @@ export function PickerModal({
 
   const filtered = useMemo(() => {
     if (onSearchChange) return options; // server already filtered
-    const q = search.trim().toLowerCase();
+    const q = foldText(search.trim());
     if (!q) return options;
     return options.filter(
-      (o) => o.label.toLowerCase().includes(q) || (o.subLabel ?? '').toLowerCase().includes(q)
+      (o) => foldText(o.label).includes(q) || foldText((o.subLabel ?? '')).includes(q)
     );
   }, [options, search, onSearchChange]);
 
