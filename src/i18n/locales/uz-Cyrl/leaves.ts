@@ -63,6 +63,11 @@ export default {
   deleteConfirmTitle: 'Сўровни ўчириш',
   deleteConfirmMessage: 'Ушбу сўровни ўчирмоқчимисиз? Бу амални бекор қилиб бўлмайди.',
   actionNeeded: 'Тасдиқлаш керак',
+  homeTitle: "Рухсат сўровлари",
+  homeAll: "Барчаси",
+  homeAwaiting: "Тасдиғингизни кутмоқда: {{count}}",
+  homeNoneAwaiting: "Тасдиғингизни кутаётган сўров йўқ",
+  homeCreate: "Рухсат сўраш",
   rejectReasonTitle: 'Рад этиш сабаби',
   rejectReasonPlaceholder: 'Сабабни ёзинг...',
 

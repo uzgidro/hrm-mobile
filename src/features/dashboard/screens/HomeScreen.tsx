@@ -6,7 +6,9 @@ import React, { useCallback, useEffect, useState } from 'react';
 import dayjs from 'dayjs';
 import { Redirect, type Href } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
+import { StyleSheet, View } from 'react-native';
 import { useAuthStore } from '@/store/authStore';
+import { canAccessPage } from '@/utils/roles';
 import { homeBoardFor } from '@/utils/homeBoard';
 import { MENU_BADGES_KEY } from '@/lib/menuBadges';
 import { Screen } from '@/ui';
@@ -17,6 +19,7 @@ import { LeaderBoard } from '../components/LeaderBoard';
 // Xizmat safari «Keldim» kartasi — checkin feature'idan (notifications → orders kabi istisno):
 // tugma bosh sahifada turishi kerak, mantiq esa o'z feature'ida.
 import { TripCheckinCard } from '@/features/checkin/components/TripCheckinCard';
+import { HomeLeavesCard } from '@/features/leaves/components/HomeLeavesCard';
 import { useActiveBranchId } from '@/lib/useActiveBranch';
 
 export default function HomeScreen() {
@@ -64,7 +67,17 @@ export default function HomeScreen() {
     <Screen refreshing={refreshing} onRefresh={onRefresh} testID="home-screen">
       <HomeHeader />
       <TripCheckinCard />
+      {/* Qo'shimcha roli bor xodim (rahbar paneli): o'zi uchun ruxsat so'rash va tasdig'ini
+          kutayotgan so'rovlar shu yerda (2026-10-07). Oddiy xodim panelida «So'rovlarim» bor. */}
+      {board === 'leader' && !!user?.employee && canAccessPage(user, 'requests') ? (
+        <View style={styles.leaves}>
+          <HomeLeavesCard />
+        </View>
+      ) : null}
       {board === 'leader' ? <LeaderBoard /> : <EmployeeBoard />}
     </Screen>
   );
 }
+
+// Keyingi panel bilan oraliq — kartalar orasi 12 (safar kartasi bilan bir xil).
+const styles = StyleSheet.create({ leaves: { marginBottom: 12 } });

@@ -68,6 +68,11 @@ export default {
   deleteConfirmTitle: 'Удалить заявку',
   deleteConfirmMessage: 'Удалить эту заявку? Это действие нельзя отменить.',
   actionNeeded: 'Требует утверждения',
+  homeTitle: "Запросы на отлучку",
+  homeAll: "Все",
+  homeAwaiting: "Ждут вашего решения: {{count}}",
+  homeNoneAwaiting: "Нет запросов, ожидающих вашего решения",
+  homeCreate: "Запросить отлучку",
   rejectReasonTitle: 'Причина отклонения',
   rejectReasonPlaceholder: 'Укажите причину...',
 

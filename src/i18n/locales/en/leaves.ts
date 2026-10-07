@@ -63,6 +63,11 @@ export default {
   deleteConfirmTitle: 'Delete request',
   deleteConfirmMessage: 'Delete this request? This action cannot be undone.',
   actionNeeded: 'Approval needed',
+  homeTitle: "Leave requests",
+  homeAll: "All",
+  homeAwaiting: "Awaiting your approval: {{count}}",
+  homeNoneAwaiting: "Nothing awaiting your approval",
+  homeCreate: "Request leave",
   rejectReasonTitle: 'Rejection reason',
   rejectReasonPlaceholder: 'Enter a reason...',
 
