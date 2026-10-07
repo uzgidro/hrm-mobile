@@ -222,6 +222,8 @@ export function TaskFormSheet({ task, onClose }: { task: IjroTask | null | undef
         options={(employees.data ?? []).map((e) => ({
           value: e.id,
           label: e.legal_name,
+          photo: e.photo_path,
+          photoThumb: e.photo_thumb_path,
         }))}
         loading={employees.isFetching}
         selected={form.employeeId}

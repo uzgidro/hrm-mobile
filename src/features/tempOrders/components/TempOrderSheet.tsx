@@ -310,7 +310,12 @@ export function TempOrderSheet({
         title={t('tempOrders.pickEmployee')}
         options={[
           ...(isTrip ? tripPicked.filter((p) => !(employees.data ?? []).some((e) => e.id === p.value)) : []),
-          ...(employees.data ?? []).map((e) => ({ value: e.id, label: e.legal_name })),
+          ...(employees.data ?? []).map((e) => ({
+            value: e.id,
+            label: e.legal_name,
+            photo: e.photo_path,
+            photoThumb: e.photo_thumb_path,
+          })),
         ]}
         loading={employees.isFetching}
         multiple={isTrip}

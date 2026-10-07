@@ -27,11 +27,12 @@ function tintFor(name: string): ModuleTintKey {
 /** `thumb` — kichik nusxa (`photo_thumb_path`): bo'lsa shu yuklanadi, xatoda `uri` ga qaytadi. */
 export function Avatar({ name, uri: full, thumb, size = 40 }: { name: string; uri?: string | null; thumb?: string | null; size?: number }) {
   const { colors: c } = useTheme();
-  const { uri, onError } = useThumbFallback(thumb, full);
+  const { uri, key, onError } = useThumbFallback(thumb, full);
   const box = { width: size, height: size, borderRadius: size / 2 };
   if (uri) {
     return (
       <Image
+        key={key}
         source={{ uri }}
         onError={onError}
         style={[box, { backgroundColor: c.surface2 }]}

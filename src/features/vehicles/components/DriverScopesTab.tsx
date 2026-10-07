@@ -34,7 +34,7 @@ export function DriverScopesTab({ fleetBranchId }: { fleetBranchId: number | nul
 
   const options =
     kind === 'employee'
-      ? employees.rows.map((e) => ({ value: e.id, label: e.legal_name || `#${e.id}` }))
+      ? employees.rows.map((e) => ({ value: e.id, label: e.legal_name || `#${e.id}`, photo: e.photo_path }))
       : ((kind === 'department' ? departments.data : positions.data) ?? []).map((o) => ({
           value: o.id,
           label: o.name || `#${o.id}`,

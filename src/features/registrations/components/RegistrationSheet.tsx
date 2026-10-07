@@ -323,6 +323,7 @@ export function RegistrationSheet({ row, onClose }: { row: RegistrationRow; onCl
       </ScrollView>
       {picker && (
         <PickerModal
+          avatars={false}
           visible
           {...pickerProps}
           onClose={() => setPicker(null)}

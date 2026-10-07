@@ -159,6 +159,8 @@ export function InspectionFormSheet({ branchId, onClose }: { branchId?: number; 
           value: e.id,
           label: e.legal_name,
           subLabel: e.job_position?.name,
+          photo: e.photo_path,
+          photoThumb: e.photo_thumb_path,
         }))}
         loading={employees.isFetching}
         selected={form.employeeId}
@@ -171,6 +173,7 @@ export function InspectionFormSheet({ branchId, onClose }: { branchId?: number; 
         }}
       />
       <PickerModal
+        avatars={false}
         visible={picker === 'dept'}
         title={t('inspections.object_department')}
         options={(departments.data ?? []).map((d) => ({ value: d.id, label: d.name || `#${d.id}` }))}

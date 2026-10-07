@@ -244,6 +244,7 @@ export default function HealthChecksScreen() {
       )}
       {picker === 'branch' && (
         <PickerModal
+          avatars={false}
           visible
           title={t('health.branch')}
           options={(anyBranch ? (branches.data ?? []).map((b) => b.id) : candidates).map((id) => ({

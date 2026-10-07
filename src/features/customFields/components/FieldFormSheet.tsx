@@ -212,6 +212,7 @@ export function FieldFormSheet({
       </ScrollView>
       {picking && (
         <PickerModal
+          avatars={false}
           visible
           title={t('customFields.dictionaryType')}
           options={(dicts.data ?? []).map((d) => ({ value: d.id, label: d.name || d.code, subLabel: d.code }))}

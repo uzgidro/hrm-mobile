@@ -96,6 +96,7 @@ export default function MonitoringScreen({ showBack = false }: { showBack?: bool
 
   const branchPicker = pickerOpen ? (
     <PickerModal
+      avatars={false}
       visible
       title={t('monitoring.branch')}
       options={pickerIds.map((id) => ({ value: id, label: branchName(id) }))}

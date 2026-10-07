@@ -288,6 +288,7 @@ export default function StructureScreen() {
         <DepartmentDetail dept={dept} onClose={() => setDept(null)} actions={deptActions} />
         <PositionDetail pos={pos} onClose={() => setPos(null)} actions={posActions} />
         <PickerModal
+          avatars={false}
           visible={pickBranch}
           title={t('structure.branch')}
           options={(branches.data ?? []).map((b) => ({ value: b.id, label: b.name ?? `#${b.id}` }))}

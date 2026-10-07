@@ -27,11 +27,12 @@ type Props = {
 export const EmployeeAvatar = React.memo(function EmployeeAvatar({ emp, size = 44, testID }: Props) {
   const { colors } = useTheme();
   const radius = size / 2;
-  const { uri, onError } = useThumbFallback(size <= THUMB_MAX_SIZE ? emp.photo_thumb_path : null, emp.photo_path);
+  const { uri, key, onError } = useThumbFallback(size <= THUMB_MAX_SIZE ? emp.photo_thumb_path : null, emp.photo_path);
 
   if (uri) {
     return (
       <Image
+        key={key}
         testID={testID}
         source={{ uri }}
         onError={onError}

@@ -229,6 +229,7 @@ export function LeadersSheet({ branch, onClose }: { branch: TabelBranch; onClose
       )}
       {(picker?.kind === 'role' || picker?.kind === 'rowRole') && (
         <PickerModal
+          avatars={false}
           visible
           title={t('tabelSettings.leaderRole')}
           options={roleOptions}

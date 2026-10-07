@@ -392,6 +392,7 @@ export default function AuditLogScreen() {
 
       {pc && (
         <PickerModal
+          avatars={picker === 'user'}
           visible
           title={pc.title}
           options={pc.options}

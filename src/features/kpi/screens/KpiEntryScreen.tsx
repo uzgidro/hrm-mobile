@@ -331,6 +331,7 @@ export default function KpiEntryScreen() {
       )}
 
       <PickerModal
+        avatars={false}
         visible={statusPickerFor != null}
         title={t('kpi.pickStatusTitle')}
         options={statusOptions}

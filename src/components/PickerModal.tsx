@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, Modal, TextInput, FlatList,
   TouchableOpacity, ActivityIndicator, type ImageStyle,
@@ -26,9 +26,12 @@ export interface PickerOption {
 }
 
 // expo-image (xotira+disk keshi) + kichik nusxa: 50 qatorlik sahifa ~1.35 MB → ~80 KB.
-function PickerPhoto({ thumb, full, style }: { thumb?: string | null; full?: string | null; style: ImageStyle }) {
-  const { uri, onError } = useThumbFallback(thumb, full);
-  return uri ? <Image source={{ uri }} onError={onError} style={style} cachePolicy="memory-disk" /> : null;
+// Ikkala surat ham ochilmasa — bosh harf (bo'sh kulrang doira emas).
+function PickerPhoto({ thumb, full, style, fallback }: {
+  thumb?: string | null; full?: string | null; style: ImageStyle; fallback: React.ReactElement;
+}) {
+  const { uri, key, onError } = useThumbFallback(thumb, full);
+  return uri ? <Image key={key} testID="picker-photo" source={{ uri }} onError={onError} style={style} cachePolicy="memory-disk" /> : fallback;
 }
 
 interface Props {
@@ -149,12 +152,17 @@ export function PickerModal({
                       else onSelect(item.value);
                     }}
                   >
-                    {!avatars ? null : item.photo || item.photoThumb ? (
-                      <PickerPhoto thumb={item.photoThumb} full={item.photo} style={styles.photo} />
-                    ) : (
-                      <View style={styles.photoPlaceholder}>
-                        <Text style={styles.photoInitial}>{item.label.charAt(0).toUpperCase()}</Text>
-                      </View>
+                    {!avatars ? null : (
+                      <PickerPhoto
+                        thumb={item.photoThumb}
+                        full={item.photo}
+                        style={styles.photo}
+                        fallback={
+                          <View style={styles.photoPlaceholder}>
+                            <Text style={styles.photoInitial}>{item.label.charAt(0).toUpperCase()}</Text>
+                          </View>
+                        }
+                      />
                     )}
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.label, sel && styles.labelActive]} numberOfLines={1}>{item.label}</Text>

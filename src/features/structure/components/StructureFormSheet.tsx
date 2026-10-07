@@ -179,6 +179,7 @@ export function StructureFormSheet({
       </View>
 
       <PickerModal
+        avatars={false}
         visible={picker === 'branch'}
         title={t('structure.fieldBranch')}
         options={(branches.data ?? []).map((b) => ({ value: b.id, label: b.name ?? `#${b.id}` }))}
@@ -201,6 +202,8 @@ export function StructureFormSheet({
           value: e.id,
           label: e.legal_name,
           subLabel: e.job_position?.name,
+          photo: e.photo_path,
+          photoThumb: e.photo_thumb_path,
         }))}
         loading={employees.isFetching}
         selected={dept.headIds}
@@ -214,6 +217,7 @@ export function StructureFormSheet({
         }}
       />
       <PickerModal
+        avatars={false}
         visible={picker === 'category'}
         title={t('structure.category')}
         options={categoryOptions}

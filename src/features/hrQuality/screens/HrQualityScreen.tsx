@@ -179,6 +179,7 @@ export default function HrQualityScreen() {
         </View>
       )}
       <PickerModal
+        avatars={false}
         visible={picking}
         title={t('hrQuality.department')}
         options={(departments.data ?? []).map((d) => ({ value: d.id, label: d.name || `#${d.id}` }))}

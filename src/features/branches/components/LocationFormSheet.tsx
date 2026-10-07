@@ -107,6 +107,7 @@ export function LocationFormSheet({ row, onClose }: { row: LocationRow | null; o
       </ScrollView>
       {picking && (
         <PickerModal
+          avatars={false}
           visible
           title={t('branches.fieldBranch')}
           options={[

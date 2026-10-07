@@ -76,7 +76,13 @@ export default function ResponsiblesScreen() {
 
   const options =
     scope === 'employee'
-      ? (employees.data ?? []).map((e) => ({ value: e.id, label: e.legal_name, subLabel: e.job_position?.name }))
+      ? (employees.data ?? []).map((e) => ({
+          value: e.id,
+          label: e.legal_name,
+          subLabel: e.job_position?.name,
+          photo: e.photo_path,
+          photoThumb: e.photo_thumb_path,
+        }))
       : ((scope === 'department' ? departments.data : positions.data) ?? []).map((o) => ({
           value: o.id,
           label: o.name || `#${o.id}`,
