@@ -6,7 +6,6 @@ import { useLocalSearchParams } from 'expo-router';
 import { filterFromParam } from '../utils/filterParam';
 import dayjs from 'dayjs';
 import { useAuthStore } from '@/store/authStore';
-import { resolveEmployeeBranchId } from '@/utils/branch';
 import { usePrefsStore } from '@/store/prefsStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
@@ -24,6 +23,7 @@ import { LoadingView, ErrorState } from '@/components/StateViews';
 import { AttendanceDonut } from '@/components/AttendanceDonut';
 import { RosterRow } from '@/components/RosterRow';
 import { Chip } from '@/ui';
+import { useActiveBranchId } from '@/lib/useActiveBranch';
 
 type StatusGroup = AttendanceStatus;
 type Scope = 'branch' | 'department';
@@ -44,12 +44,13 @@ export function rosterCounts(rows: RosterRowData[]) {
 export default function AttendanceDetailScreen({ embedded = false }: { embedded?: boolean } = {}) {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
+  const activeBranchId = useActiveBranchId();
   const onlySubordinates = usePrefsStore((s) => s.onlySubordinates);
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const myId = user?.employee?.id;
   const myDeptId = user?.employee?.department?.id ?? null;
-  const orgBranchId = resolveEmployeeBranchId(user?.employee);
+  const orgBranchId = activeBranchId;
 
   const [selectedDate, setSelectedDate] = useState(dayjs().format('YYYY-MM-DD'));
   // Bosh sahifa tile'idan (`?filter=late` …) kelsa — shu holat bilan ochiladi.

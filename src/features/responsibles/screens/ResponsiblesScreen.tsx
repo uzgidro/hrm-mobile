@@ -12,7 +12,6 @@ import { toast } from '@/lib/toast';
 import { confirm } from '@/lib/confirm';
 import { useAuthStore } from '@/store/authStore';
 import { isHR, isSiteMasterAdmin } from '@/utils/roles';
-import { resolveEmployeeBranchId } from '@/utils/branch';
 import { departmentOptionsQuery, jobPositionOptionsQuery } from '@/utils/employees';
 import { PickerModal } from '@/components/PickerModal';
 import {
@@ -32,6 +31,7 @@ import {
 
 import { RESPONSIBLE_SCOPES, responsiblesQuery, type Responsible, type ResponsibleScope } from '../api/queries';
 import { useAddResponsible, useRemoveResponsible } from '../api/mutations';
+import { useActiveBranchId } from '@/lib/useActiveBranch';
 
 const MODULE = 'ijro';
 const SCOPE_LABEL: Record<ResponsibleScope, string> = {
@@ -48,8 +48,9 @@ const SCOPE_HINT: Record<ResponsibleScope, string> = {
 export default function ResponsiblesScreen() {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
+  const activeBranchId = useActiveBranchId();
   const allowed = isHR(user) || isSiteMasterAdmin(user);
-  const branchId = resolveEmployeeBranchId(user?.employee);
+  const branchId = activeBranchId;
   const [scope, setScope] = useState<ResponsibleScope>('department');
   const [picking, setPicking] = useState(false);
   const [empSearch, setEmpSearch] = useState('');

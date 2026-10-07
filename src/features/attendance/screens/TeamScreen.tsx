@@ -22,7 +22,6 @@ import { useAuthStore } from '@/store/authStore';
 import { usePrefsStore } from '@/store/prefsStore';
 import { useTheme } from '@/theme/ThemeProvider';
 import { radii } from '@/theme/tokens';
-import { resolveEmployeeBranchId } from '@/utils/branch';
 import { useBreakpoint } from '@/utils/responsive';
 import { buildRosterFromMyTeam, type RosterRow } from '@/utils/attendanceRoster';
 import { leaveStatusGroup, leaveRangeText, leaveTypeLabel } from '@/utils/leaveStatus';
@@ -44,6 +43,7 @@ import {
   type Tone,
 } from '@/ui';
 import { myTeamQuery, teamLeavesQuery } from '../api/queries';
+import { useActiveBranchId } from '@/lib/useActiveBranch';
 
 const birthdaysListKey = (orgBranchId?: number) => ['birthdays', 'list', orgBranchId ?? null] as const;
 const STATUS_TONE: Record<'pending' | 'approved' | 'rejected', Tone> = {
@@ -61,12 +61,13 @@ const ROW_TONE: Record<RosterRow['status'], Tone> = {
 export default function TeamScreen() {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
+  const activeBranchId = useActiveBranchId();
   const onlySubordinates = usePrefsStore((s) => s.onlySubordinates);
   const { colors } = useTheme();
   const { sizeClass } = useBreakpoint();
   const wide = sizeClass !== 'compact';
   const myId = user?.employee?.id;
-  const orgBranchId = resolveEmployeeBranchId(user?.employee);
+  const orgBranchId = activeBranchId;
   const today = dayjs().format('YYYY-MM-DD');
   const [day, setDay] = useState(today);
   const sel = dayjs(day);

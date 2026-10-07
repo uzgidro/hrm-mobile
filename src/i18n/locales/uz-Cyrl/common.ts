@@ -37,5 +37,7 @@ export default {
   showAllCount: "Барчасини кўрсатиш ({{count}})",
   loadMoreCount: "Яна юклаш ({{shown}} / {{total}})",
   openInBrowser: "Браузерда очиш",
+  branch: "Филиал",
+  allBranches: "Барча филиаллар",
   mediaLoadFailed: "Юклаб бўлмади. Интернетни текшириб, қайта уриниб кўринг.",
 } as const;

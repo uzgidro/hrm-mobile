@@ -25,11 +25,12 @@ import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { visitorsListQuery, visitorsSummaryQuery, type VisitorFilter } from '../api/queries';
 import { VisitorDetailView } from '../components/VisitorDetailView';
-import { resolveEmployeeBranchId } from '@/utils/branch';
+import { useActiveBranchId } from '@/lib/useActiveBranch';
 
 export default function MehmonlarScreen() {
   const { t } = useTranslation();
   const { user } = useAuthStore();
+  const activeBranchId = useActiveBranchId();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const bp = useBreakpoint();
@@ -55,7 +56,7 @@ export default function MehmonlarScreen() {
   // master-admin) uchun o'z filiali — webdagi tanlangan filialning ekvivalenti.
   const skipBranchParam = isEmployeeLike(user) || isKPP(user);
   const ownBranchId =
-    resolveEmployeeBranchId(user?.employee);
+    activeBranchId;
   const orgBranchId = skipBranchParam ? undefined : ownBranchId;
 
   const debouncedSearch = useDebouncedValue(search);

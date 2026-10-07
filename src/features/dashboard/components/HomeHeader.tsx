@@ -14,6 +14,7 @@ import { monthName, weekdayName } from '@/i18n/dates';
 import { visibleCatalog } from '@/utils/moduleCatalog';
 import { moduleTint } from '@/theme/tokens';
 import { Icon } from '@/components/Icon';
+import { BranchSwitcher } from '@/components/BranchSwitcher';
 import { IconButton, ListRow, SearchField, Sheet, Text } from '@/ui';
 import { userDisplayName } from '@/utils/roles';
 import type { User } from '@/types';
@@ -68,6 +69,8 @@ export function HomeHeader() {
         <Text variant="caption" tone="subtle" numberOfLines={1}>
           {dept ? `${dateLine} · ${dept}` : dateLine}
         </Text>
+        {/* Global / ko'p filialli hisob — faol filialni tanlash (boshqalarda chizilmaydi). */}
+        <BranchSwitcher />
       </View>
       <IconButton icon="search" accessibilityLabel={t('dashboard.home.searchTitle')} onPress={() => setSearchOpen(true)} />
       <IconButton

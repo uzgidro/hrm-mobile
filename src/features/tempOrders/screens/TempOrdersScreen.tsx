@@ -8,7 +8,6 @@ import { router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
-import { resolveEmployeeBranchId } from '@/utils/branch';
 import { isHR, isMasterAdmin } from '@/utils/roles';
 import { monthName } from '@/i18n/dates';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
@@ -32,12 +31,14 @@ import {
 import { tempOrdersQuery, type TempOrder } from '../api/queries';
 import { TEMP_ORDER_TYPES, tempOrderRange } from '../utils/tempOrder';
 import { TempOrderSheet } from '../components/TempOrderSheet';
+import { useActiveBranchId } from '@/lib/useActiveBranch';
 
 export default function TempOrdersScreen() {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
+  const activeBranchId = useActiveBranchId();
   const allowed = isHR(user) || isMasterAdmin(user);
-  const branchId = resolveEmployeeBranchId(user?.employee) ?? undefined;
+  const branchId = activeBranchId ?? undefined;
 
   const [search, setSearch] = useState('');
   const debounced = useDebouncedValue(search);

@@ -3,8 +3,6 @@
 // so'rovi va o'z xatosi bilan. compact — bitta ustun; medium — 2; expanded — 3.
 import React from 'react';
 import { View } from 'react-native';
-import { useAuthStore } from '@/store/authStore';
-import { resolveEmployeeBranchId } from '@/utils/branch';
 import { useBreakpoint } from '@/utils/responsive';
 import { Bento, ErrorState } from '@/ui';
 import { useBoardDay } from './leader/useBoardDay';
@@ -14,10 +12,11 @@ import { TodayStatusCard } from './leader/TodayStatusCard';
 import { CompositionCard } from './leader/CompositionCard';
 import { DisciplineCard } from './leader/DisciplineCard';
 import { BirthdaysCard } from './shared/BirthdaysCard';
+import { useActiveBranchId } from '@/lib/useActiveBranch';
 
 export function LeaderBoard() {
-  const user = useAuthStore((s) => s.user);
-  const branchId = resolveEmployeeBranchId(user?.employee) ?? undefined;
+  const activeBranchId = useActiveBranchId();
+  const branchId = activeBranchId ?? undefined;
   const { sizeClass } = useBreakpoint();
   const day = useBoardDay(branchId);
 

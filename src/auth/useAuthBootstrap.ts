@@ -16,6 +16,7 @@
 import { useEffect } from 'react';
 import * as SplashScreen from 'expo-splash-screen';
 import { useAuthStore } from '../store/authStore';
+import { useBranchStore } from '@/store/branchStore';
 import { usePrefsStore } from '../store/prefsStore';
 import { useLockStore } from '../store/lockStore';
 import { useLangStore } from '../store/langStore';
@@ -52,6 +53,9 @@ export function useAuthBootstrap() {
       await applyPendingUpdateOnLaunch();
 
       usePrefsStore.getState().hydrate();
+      // Saqlangan faol filial BIRINCHI ekrandan oldin — aks holda global hisob avval butun
+      // tashkilotni so'rab, keyin filialga o'tardi (qotish, 2026-10-07).
+      await useBranchStore.getState().hydrate();
 
       // Resolve the language BEFORE any hideSplash() below, same flash invariant
       // as the lock: the first visible frame must already be in the right

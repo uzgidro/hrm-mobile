@@ -32,7 +32,7 @@ import { useFormDraft } from '@/lib/formDraft';
 import { DraftPrompt } from '@/components/DraftPrompt';
 import { LetterPickers, type PickerKind, type DateKind } from '../components/LetterPickers';
 import { buildLetterCreatePayload } from './letterCreatePayload';
-import { resolveEmployeeBranchId } from '@/utils/branch';
+import { useActiveBranchId } from '@/lib/useActiveBranch';
 
 type LetterType = 'explanatory' | 'application' | 'business_trip';
 // Value/labelKey pairs — the numeric picker values are internal (never sent to
@@ -49,6 +49,7 @@ const VALUE_BY_TYPE: Record<LetterType, number> = { explanatory: 1, application:
 export default function CreateLetterScreen() {
   const { t } = useTranslation();
   const { user } = useAuthStore();
+  const activeBranchId = useActiveBranchId();
   const employee = user?.employee;
   // TAHRIR rejimi: `id` berilsa mavjud hujjat yuklanadi va POST o'rniga PATCH
   // yuboriladi (web AddLetterDrawer `editId` bilan bir xil). Filial tahrirda
@@ -57,7 +58,7 @@ export default function CreateLetterScreen() {
   const editId = editIdParam ? Number(editIdParam) : null;
   const { data: editing } = useQuery({ ...letterDetailQuery(editId ?? 0), enabled: !!editId });
   const branchId = editing?.organization_branch_id
-    ?? resolveEmployeeBranchId(employee);
+    ?? activeBranchId;
 
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);

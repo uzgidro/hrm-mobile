@@ -11,7 +11,6 @@ import { toast } from '@/lib/toast';
 import { confirm } from '@/lib/confirm';
 import { useAuthStore } from '@/store/authStore';
 import { canManageStaff } from '@/utils/roles';
-import { resolveEmployeeBranchId } from '@/utils/branch';
 import { fmtUnits } from '@/utils/units';
 import { useBreakpoint } from '@/utils/responsive';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
@@ -37,10 +36,12 @@ import { useToggleStaffRow } from '../api/mutations';
 import { STAFF_CATEGORIES, rowKey } from '../utils/staff';
 import { StaffDetailSheet, stateBadge } from '../components/StaffDetailSheet';
 import { StaffFormSheet } from '../components/StaffFormSheet';
+import { useActiveBranchId } from '@/lib/useActiveBranch';
 
 export default function StaffPositionsScreen() {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
+  const activeBranchId = useActiveBranchId();
   const manage = canManageStaff(user);
   const { sizeClass } = useBreakpoint();
   const [tab, setTab] = useState<StaffTab>('shtat');
@@ -276,7 +277,7 @@ export default function StaffPositionsScreen() {
         <StaffFormSheet
           key={editing.n}
           row={editing.row}
-          branchId={resolveEmployeeBranchId(user?.employee)}
+          branchId={activeBranchId}
           onClose={() => setEditing(null)}
         />
       )}

@@ -6,7 +6,6 @@ import { useTranslation } from 'react-i18next';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useAuthStore } from '@/store/authStore';
-import { resolveEmployeeBranchId } from '@/utils/branch';
 import { usePrefsStore } from '@/store/prefsStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
@@ -23,10 +22,12 @@ import { SearchBox } from '@/components/SearchBox';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { canAccessPage } from '@/utils/roles';
 import { employeesPagedQuery, departmentsQuery, jobPositionsQuery } from '@/utils/employees';
+import { useActiveBranchId } from '@/lib/useActiveBranch';
 
 export default function EmployeesListScreen() {
   const { t } = useTranslation();
   const { user } = useAuthStore();
+  const activeBranchId = useActiveBranchId();
   const { onlySubordinates } = usePrefsStore();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -34,7 +35,7 @@ export default function EmployeesListScreen() {
   const cols = bp.isTablet ? (bp.isLandscape ? 3 : 2) : 1;
   const myId = user?.employee?.id;
   const orgBranchId =
-    resolveEmployeeBranchId(user?.employee);
+    activeBranchId;
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebouncedValue(search);
   const [deptFilter, setDeptFilter] = useState<number | 'all'>('all');

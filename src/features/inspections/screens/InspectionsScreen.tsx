@@ -7,7 +7,6 @@ import { StyleSheet, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
-import { resolveEmployeeBranchId } from '@/utils/branch';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import {
   Badge,
@@ -27,10 +26,12 @@ import { inspectionsQuery } from '../api/queries';
 import { InspectionDetailSheet, STATUS_TONE } from '../components/InspectionDetailSheet';
 import { InspectionFormSheet } from '../components/InspectionFormSheet';
 import { INSPECTION_OBJECTS, INSPECTION_STATUSES, canCreateInspection } from '../utils/inspections';
+import { useActiveBranchId } from '@/lib/useActiveBranch';
 
 export default function InspectionsScreen() {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
+  const activeBranchId = useActiveBranchId();
   const [search, setSearch] = useState('');
   const debounced = useDebouncedValue(search);
   const [status, setStatus] = useState('');
@@ -124,7 +125,7 @@ export default function InspectionsScreen() {
       {canCreate && creating !== null && (
         <InspectionFormSheet
           key={creating}
-          branchId={resolveEmployeeBranchId(user?.employee)}
+          branchId={activeBranchId}
           onClose={() => setCreating(null)}
         />
       )}

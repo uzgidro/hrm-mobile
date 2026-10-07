@@ -7,7 +7,6 @@ import dayjs from 'dayjs';
 import { Redirect, type Href } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/authStore';
-import { resolveEmployeeBranchId } from '@/utils/branch';
 import { homeBoardFor } from '@/utils/homeBoard';
 import { MENU_BADGES_KEY } from '@/lib/menuBadges';
 import { Screen } from '@/ui';
@@ -18,12 +17,14 @@ import { LeaderBoard } from '../components/LeaderBoard';
 // Xizmat safari «Keldim» kartasi — checkin feature'idan (notifications → orders kabi istisno):
 // tugma bosh sahifada turishi kerak, mantiq esa o'z feature'ida.
 import { TripCheckinCard } from '@/features/checkin/components/TripCheckinCard';
+import { useActiveBranchId } from '@/lib/useActiveBranch';
 
 export default function HomeScreen() {
   const user = useAuthStore((s) => s.user);
+  const activeBranchId = useActiveBranchId();
   const queryClient = useQueryClient();
   const board = homeBoardFor(user);
-  const branchId = resolveEmployeeBranchId(user?.employee) ?? undefined;
+  const branchId = activeBranchId ?? undefined;
   const [refreshing, setRefreshing] = useState(false);
 
   // Keyingi ekranlar (davomat, jamoa, tug'ilgan kunlar) keshini isitish.

@@ -11,7 +11,6 @@ import { canManageStructure } from '@/utils/roles';
 import { getApiErrorMessage } from '@/api/errors';
 import { toast } from '@/lib/toast';
 import { confirm } from '@/lib/confirm';
-import { resolveEmployeeBranchId } from '@/utils/branch';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { PickerModal } from '@/components/PickerModal';
 import { Icon } from '@/components/Icon';
@@ -49,12 +48,14 @@ import { OrgTree } from '../components/OrgTree';
 import { StructureFormSheet, formTargetKey, type FormTarget } from '../components/StructureFormSheet';
 import { CloseDepartmentSheet } from '../components/CloseDepartmentSheet';
 import { useReopenDepartment } from '../api/mutations';
+import { useActiveBranchId } from '@/lib/useActiveBranch';
 
 type Tab = 'departments' | 'positions' | 'chart';
 
 export default function StructureScreen() {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
+  const activeBranchId = useActiveBranchId();
   const { colors } = useTheme();
   const [tab, setTab] = useState<Tab>('departments');
   const [search, setSearch] = useState('');
@@ -64,7 +65,7 @@ export default function StructureScreen() {
   const [category, setCategory] = useState('');
   const [dept, setDept] = useState<Department | null>(null);
   const [pos, setPos] = useState<JobPosition | null>(null);
-  const [branchId, setBranchId] = useState<number | null>(resolveEmployeeBranchId(user?.employee) ?? null);
+  const [branchId, setBranchId] = useState<number | null>(activeBranchId ?? null);
   const [pickBranch, setPickBranch] = useState(false);
   const canWrite = canManageStructure(user);
   const [form, setForm] = useState<FormTarget | undefined>(undefined);

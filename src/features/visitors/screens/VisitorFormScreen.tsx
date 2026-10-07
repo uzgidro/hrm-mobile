@@ -6,7 +6,6 @@ import { router, useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
-import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { ff } from '@/theme/typography';
@@ -19,7 +18,6 @@ import { DateTimePickerModal } from '@/components/DateTimePicker';
 import { useBreakpoint } from '@/utils/responsive';
 import { getApiErrorMessage } from '@/api/errors';
 import { getVisitor } from '../api/queries';
-import { resolveEmployeeBranchId } from '@/utils/branch';
 import {
   useCreateVisitor,
   useUpdateVisitor,
@@ -30,13 +28,14 @@ import { PickerModal } from '@/components/PickerModal';
 import type { EmployeeOptionRow } from '@/utils/employees';
 import { useEmployeeOptionsPicker } from '@/lib/useInfinitePicker';
 import { toast } from '@/lib/toast';
+import { useActiveBranchId } from '@/lib/useActiveBranch';
 
 export default function MehmonFormScreen() {
   const { t } = useTranslation();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const isEdit = !!id;
   const visitorId = Number(id);
-  const { user } = useAuthStore();
+  const activeBranchId = useActiveBranchId();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const createMut = useCreateVisitor();
@@ -140,7 +139,7 @@ export default function MehmonFormScreen() {
     }
     setLoading(true);
     const orgBranchId =
-      resolveEmployeeBranchId(user?.employee);
+      activeBranchId;
     const payload: VisitorPayload = {
       legal_name: legalName.trim(),
       organization_name: orgName.trim(),

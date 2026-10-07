@@ -23,11 +23,12 @@ import { getApiErrorMessage } from '@/api/errors';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { SearchBox } from '@/components/SearchBox';
 import { birthdaysListQuery } from '../api/queries';
-import { resolveEmployeeBranchId } from '@/utils/branch';
+import { useActiveBranchId } from '@/lib/useActiveBranch';
 
 export default function BirthdaysScreen() {
   const { t } = useTranslation();
   const { user } = useAuthStore();
+  const activeBranchId = useActiveBranchId();
   const { onlySubordinates } = usePrefsStore();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -35,7 +36,7 @@ export default function BirthdaysScreen() {
   const cols = bp.isTablet ? (bp.isLandscape ? 3 : 2) : 1;
   const myId = user?.employee?.id;
   const orgBranchId =
-    resolveEmployeeBranchId(user?.employee);
+    activeBranchId;
   const [search, setSearch] = useState('');
 
   const debouncedSearch = useDebouncedValue(search);

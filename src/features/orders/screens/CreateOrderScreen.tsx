@@ -36,12 +36,12 @@ import {
   type OrderFormError, type OrderFormValues,
 } from '../utils/orderForm';
 import { KeyboardAvoider } from '@/components/KeyboardAvoider';
-import { resolveEmployeeBranchId } from '@/utils/branch';
 import { toast } from '@/lib/toast';
+import { useActiveBranchId } from '@/lib/useActiveBranch';
 
 export default function CreateOrderScreen() {
   const { user } = useAuthStore();
-  const employee = user?.employee;
+  const activeBranchId = useActiveBranchId();
   // TAHRIR rejimi: `id` berilsa mavjud buyruq yuklanadi va POST o'rniga PATCH
   // yuboriladi (web AddOrderDrawer `editId` bilan bir xil).
   const { id: editIdParam } = useLocalSearchParams<{ id?: string }>();
@@ -49,7 +49,7 @@ export default function CreateOrderScreen() {
   const { data: editing } = useQuery({ ...orderDetailQuery(editId ?? 0), enabled: !!editId });
   const branchId =
     editing?.organization_branch_id ??
-    resolveEmployeeBranchId(employee);
+    activeBranchId;
   const hr = isHR(user);
   const creatorRole = hr ? 'hr' : 'employee';
 

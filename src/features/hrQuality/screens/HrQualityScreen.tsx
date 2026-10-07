@@ -14,7 +14,6 @@ import { radii } from '@/theme/tokens';
 import { useAuthStore } from '@/store/authStore';
 import { useNavSettings } from '@/lib/navSettings';
 import { canAccessPage, isHR, isSiteMasterAdmin } from '@/utils/roles';
-import { resolveEmployeeBranchId } from '@/utils/branch';
 import { departmentOptionsQuery } from '@/utils/employees';
 import { useBreakpoint } from '@/utils/responsive';
 import { PickerModal } from '@/components/PickerModal';
@@ -36,12 +35,14 @@ import {
 } from '@/ui';
 import { qualityQuery } from '../api/queries';
 import { groupByPerson, type QualityRow } from '../utils/groupByPerson';
+import { useActiveBranchId } from '@/lib/useActiveBranch';
 
 type Severity = '' | 'error' | 'warning';
 
 export default function HrQualityScreen() {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
+  const activeBranchId = useActiveBranchId();
   const allowed = isHR(user) || isSiteMasterAdmin(user);
   useNavSettings(allowed);
   const { sizeClass } = useBreakpoint();
@@ -50,7 +51,7 @@ export default function HrQualityScreen() {
   const [rule, setRule] = useState('');
   const [picking, setPicking] = useState(false);
   const q = useQuery(qualityQuery({ severity, departmentId: dept?.id, rule }, allowed));
-  const departments = useQuery({ ...departmentOptionsQuery(resolveEmployeeBranchId(user?.employee)), enabled: picking });
+  const departments = useQuery({ ...departmentOptionsQuery(activeBranchId), enabled: picking });
   const people = useMemo(() => groupByPerson(q.data?.items ?? []), [q.data]);
   const canOpenCard = canAccessPage(user, 'employees');
 

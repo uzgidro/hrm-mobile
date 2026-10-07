@@ -15,7 +15,6 @@ import type { ThemeColors } from '@/theme/palettes';
 import { ff } from '@/theme/typography';
 import { useBreakpoint } from '@/utils/responsive';
 import { subordinateIdsQuery } from '@/utils/employees';
-import { resolveEmployeeBranchId } from '@/utils/branch';
 import { availableLeaveScopes, type LeaveScope } from '@/utils/workLeaveScope';
 import { Segmented } from '@/ui';
 import { Icon } from '@/components/Icon';
@@ -32,6 +31,7 @@ import { statusColor } from '@/utils/orderStatus';
 import { leavesListQuery } from '../api/queries';
 import { canActOnLeave } from '../utils';
 import { leaveTypeLabel } from '../components/LeaveTypeSheet';
+import { useActiveBranchId } from '@/lib/useActiveBranch';
 
 type StatusFilter = 'all' | 'pending' | 'approved' | 'rejected';
 
@@ -118,9 +118,10 @@ function LeaveCard({ leave, showEmployee, actionNeeded, styles, colors }: {
 // the server routes such a request to the department head / HR).
 export default function WorkLeavesScreen() {
   const { user } = useAuthStore();
+  const activeBranchId = useActiveBranchId();
   const employee = user?.employee;
   const employeeId = employee?.id;
-  const branchId = resolveEmployeeBranchId(employee);
+  const branchId = activeBranchId;
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { t } = useTranslation();

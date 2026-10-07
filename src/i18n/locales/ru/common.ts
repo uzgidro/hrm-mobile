@@ -37,5 +37,7 @@ export default {
   showAllCount: "Показать все ({{count}})",
   loadMoreCount: "Загрузить ещё ({{shown}} / {{total}})",
   openInBrowser: "Открыть в браузере",
+  branch: "Филиал",
+  allBranches: "Все филиалы",
   mediaLoadFailed: "Не удалось загрузить. Проверьте интернет и повторите.",
 } as const;
