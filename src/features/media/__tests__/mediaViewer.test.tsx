@@ -23,7 +23,7 @@ describe('ilova ichidagi ko\'rsatkich', () => {
   });
 
   it('video: WebView sarlavha bilan; xavfli URL — xato holati, WebView yo\'q', async () => {
-    mockParams = { kind: 'video', url: 'https://cdn/x.mp4', title: 'Davomat' };
+    mockParams = { kind: 'video', url: 'https://hr-minio.uzgidro.uz/v/x.mp4', title: 'Davomat' };
     await renderWithProviders(<MediaViewerScreen />);
     expect(screen.getByText('Davomat')).toBeTruthy();
     expect(screen.getByTestId('media-viewer')).toBeTruthy();
@@ -32,5 +32,16 @@ describe('ilova ichidagi ko\'rsatkich', () => {
     await renderWithProviders(<MediaViewerScreen />);
     expect(screen.queryByTestId('media-viewer')).toBeNull();
     expect(screen.getByText(i18n.t('common.mediaLoadFailed'))).toBeTruthy();
+  });
+
+  it('deep-link fishing: begona https sayt ilova ichida OCHILMAYDI', async () => {
+    for (const url of ['https://evil.example/login', 'https://uzgidro.uz.evil.example/', 'https://uzgidro.uz@evil.example/']) {
+      mockParams = { kind: 'page', url };
+      await renderWithProviders(<MediaViewerScreen />);
+      expect(screen.queryByTestId('media-viewer')).toBeNull();
+    }
+    mockParams = { kind: 'page', url: 'https://uzgidro.uz/news/view/12' };
+    await renderWithProviders(<MediaViewerScreen />);
+    expect(screen.getByTestId('media-viewer')).toBeTruthy();
   });
 });

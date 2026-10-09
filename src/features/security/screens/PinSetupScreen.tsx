@@ -24,6 +24,8 @@ export default function PinSetupScreen() {
   const styles = useThemedStyles(makeStyles);
   const { colors } = useTheme();
   const setupPin = useLockStore((s) => s.setupPin);
+  // Eski 4 raqamli PIN bilan ochilgan — nega yangi PIN so'ralayotganini aytamiz.
+  const pinUpgrade = useLockStore((s) => s.pinUpgrade);
   const setBiometricsEnabled = useLockStore((s) => s.setBiometricsEnabled);
 
   const [step, setStep] = useState<Step>('enter');
@@ -85,7 +87,7 @@ export default function PinSetupScreen() {
   const title = step === 'enter' ? t('security.setupTitle') : t('security.setupConfirmTitle');
   const subtitle =
     step === 'enter'
-      ? t('security.setupSubtitle')
+      ? t(pinUpgrade ? 'security.pinUpgradeSubtitle' : 'security.setupSubtitle')
       : t('security.setupConfirmSubtitle');
 
   return (

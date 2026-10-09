@@ -20,6 +20,9 @@ jest.mock('expo-linear-gradient', () => {
   return { LinearGradient: (p: object) => require('react').createElement(View, p) };
 });
 jest.mock('@/lib/formDraft', () => ({
+  getDraftOwner: () => 'u1',
+  setDraftOwner: jest.fn(),
+  clearOwnerDrafts: jest.fn(async () => undefined),
   loadDraft: jest.fn(async () => null),
   saveDraft: jest.fn(async () => undefined),
   clearDraft: jest.fn(async () => undefined),

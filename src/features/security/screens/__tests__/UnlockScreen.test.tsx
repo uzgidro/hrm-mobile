@@ -62,9 +62,9 @@ describe('UnlockScreen', () => {
     useLockStore.setState({ unlockWithPin });
 
     const { getByTestId } = await renderWithProviders(<UnlockScreen />);
-    await enterPin(getByTestId, '1234');
+    await enterPin(getByTestId, '123456');
 
-    await waitFor(() => expect(unlockWithPin).toHaveBeenCalledWith('1234'));
+    await waitFor(() => expect(unlockWithPin).toHaveBeenCalledWith('123456'));
   });
 
   it('shows the remaining-attempts error on a wrong PIN', async () => {
@@ -75,7 +75,7 @@ describe('UnlockScreen', () => {
     });
 
     const { getByTestId } = await renderWithProviders(<UnlockScreen />);
-    await enterPin(getByTestId, '1234');
+    await enterPin(getByTestId, '123456');
 
     await waitFor(() =>
       expect(getByTestId('pin-error')).toHaveTextContent(
@@ -98,7 +98,7 @@ describe('UnlockScreen', () => {
     const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
 
     const { getByTestId } = await renderWithProviders(<UnlockScreen />);
-    await enterPin(getByTestId, '1234');
+    await enterPin(getByTestId, '123456');
 
     await waitFor(() => expect(alertSpy).toHaveBeenCalledTimes(1));
     expect(alertSpy).toHaveBeenCalledWith(

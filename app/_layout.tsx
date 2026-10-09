@@ -10,6 +10,7 @@ import { useAuthStore } from '../src/store/authStore';
 import { useLockStore } from '../src/store/lockStore';
 import { createAppQueryClient } from '../src/lib/queryClient';
 import { wireQueryFocusToAppState } from '../src/lib/queryFocus';
+import { wireSessionCleanup } from '../src/lib/sessionCleanup';
 import { ThemeProvider, useTheme } from '../src/theme/ThemeProvider';
 // Importing the service also installs the foreground notification handler (side effect).
 import { addNotificationListeners } from '../src/services/notifications';
@@ -54,6 +55,10 @@ function ThemedNavigation() {
   // while the app sits in the background. Wire it to AppState so polling pauses
   // when the app is backgrounded (battery + mobile data for field staff).
   useEffect(() => wireQueryFocusToAppState(), []);
+
+  // Chiqish / boshqa foydalanuvchi kirishi: oldingi sessiyaning so'rov va rasm
+  // keshi keyingi foydalanuvchiga ko'rinmasin (src/lib/sessionCleanup).
+  useEffect(() => wireSessionCleanup(queryClient), [queryClient]);
 
   // The mandatory PIN gate. Native-only (SecureStore + the lock store report
   // 'unlocked' on web), rendered as a full-screen sibling of the navigator so

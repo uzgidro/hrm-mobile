@@ -9,7 +9,7 @@ import {
 
 describe('lock policy constants', () => {
   it('pins the policy numbers the rest of the feature relies on', () => {
-    expect(PIN_LENGTH).toBe(4);
+    expect(PIN_LENGTH).toBe(6);
     expect(MAX_ATTEMPTS).toBe(5);
     expect(RELOCK_AFTER_MS).toBe(60_000);
   });
@@ -62,8 +62,12 @@ describe('attemptsRemaining', () => {
 });
 
 describe('isValidPin', () => {
-  it('accepts exactly four digits', () => {
-    expect(isValidPin('1234')).toBe(true);
+  it('accepts exactly six digits', () => {
+    expect(isValidPin('123456')).toBe(true);
+  });
+
+  it('rejects the legacy four-digit length for NEW pins', () => {
+    expect(isValidPin('1234')).toBe(false);
   });
 
   it('rejects a too-short pin', () => {
@@ -71,11 +75,11 @@ describe('isValidPin', () => {
   });
 
   it('rejects a too-long pin', () => {
-    expect(isValidPin('12345')).toBe(false);
+    expect(isValidPin('1234567')).toBe(false);
   });
 
   it('rejects non-digit characters', () => {
-    expect(isValidPin('12a4')).toBe(false);
+    expect(isValidPin('12a456')).toBe(false);
   });
 
   it('rejects the empty string', () => {

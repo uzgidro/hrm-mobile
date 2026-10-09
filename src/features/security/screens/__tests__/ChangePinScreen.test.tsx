@@ -18,7 +18,7 @@ jest.mock('@/lib/toast', () => ({ ...jest.requireActual('@/lib/toast'), toast: {
 const mockRouterBack = router.back as jest.Mock;
 const mockToastSuccess = toast.success as jest.Mock;
 
-// Enter a 4-digit PIN by pressing each digit key in turn. PinPad is controlled,
+// Enter a 6-digit PIN by pressing each digit key in turn. PinPad is controlled,
 // so the parent's value only reaches the pad on the next commit — flush after
 // every press so the following key builds on the accumulated value (and the
 // final digit's async submit settles) instead of the stale render.
@@ -50,17 +50,17 @@ describe('ChangePinScreen', () => {
   it('advances to the "new" step after the correct current PIN', async () => {
     const { getByTestId, getByText } = await renderWithProviders(<ChangePinScreen />);
 
-    await enterPin(getByTestId, '9999');
+    await enterPin(getByTestId, '999999');
 
     await waitFor(() => expect(getByText(i18n.t('security.changeNewTitle'))).toBeTruthy());
-    expect(verifyCurrentPin).toHaveBeenCalledWith('9999');
+    expect(verifyCurrentPin).toHaveBeenCalledWith('999999');
   });
 
   it('shows an error with the remaining count and stays on "current" for a wrong PIN', async () => {
     verifyCurrentPin.mockResolvedValue({ ok: false, remaining: 3, forceLogout: false });
     const { getByTestId, getByText } = await renderWithProviders(<ChangePinScreen />);
 
-    await enterPin(getByTestId, '0000');
+    await enterPin(getByTestId, '000000');
 
     await waitFor(() =>
       expect(getByText(i18n.t('security.attemptsLeft', { count: 3 }))).toBeTruthy()
@@ -73,17 +73,17 @@ describe('ChangePinScreen', () => {
     const { getByTestId, getByText } = await renderWithProviders(<ChangePinScreen />);
 
     // current
-    await enterPin(getByTestId, '1111');
+    await enterPin(getByTestId, '111111');
     await waitFor(() => expect(getByText(i18n.t('security.changeNewTitle'))).toBeTruthy());
 
     // new
-    await enterPin(getByTestId, '1234');
+    await enterPin(getByTestId, '123456');
     await waitFor(() => expect(getByText(i18n.t('security.changeConfirmTitle'))).toBeTruthy());
 
     // confirm (matching)
-    await enterPin(getByTestId, '1234');
+    await enterPin(getByTestId, '123456');
 
-    await waitFor(() => expect(setupPin).toHaveBeenCalledWith('1234'));
+    await waitFor(() => expect(setupPin).toHaveBeenCalledWith('123456'));
     expect(mockToastSuccess).toHaveBeenCalledWith(i18n.t('security.changeSuccess'));
     expect(mockRouterBack).toHaveBeenCalledTimes(1);
   });
@@ -91,14 +91,14 @@ describe('ChangePinScreen', () => {
   it('shows a mismatch error and returns to the "new" step when confirmation differs', async () => {
     const { getByTestId, getByText } = await renderWithProviders(<ChangePinScreen />);
 
-    await enterPin(getByTestId, '1111');
+    await enterPin(getByTestId, '111111');
     await waitFor(() => expect(getByText(i18n.t('security.changeNewTitle'))).toBeTruthy());
 
-    await enterPin(getByTestId, '1234');
+    await enterPin(getByTestId, '123456');
     await waitFor(() => expect(getByText(i18n.t('security.changeConfirmTitle'))).toBeTruthy());
 
     // confirm with a different PIN
-    await enterPin(getByTestId, '5678');
+    await enterPin(getByTestId, '567890');
 
     await waitFor(() =>
       expect(getByText(i18n.t('security.mismatch'))).toBeTruthy()
@@ -113,7 +113,7 @@ describe('ChangePinScreen', () => {
     const alertSpy = jest.spyOn(Alert, 'alert');
     const { getByTestId } = await renderWithProviders(<ChangePinScreen />);
 
-    await enterPin(getByTestId, '0000');
+    await enterPin(getByTestId, '000000');
 
     await waitFor(() => expect(alertSpy).toHaveBeenCalledTimes(1));
     const [title, message, buttons] = alertSpy.mock.calls[0];

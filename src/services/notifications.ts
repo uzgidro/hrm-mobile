@@ -57,11 +57,18 @@ try {
   });
 } catch {}
 
-// The channel id the backend stamps on every Expo message (`channelId: 'default'`
-// in worker/tasks.send_expo_push). Android 8+ takes importance/sound from the
-// CHANNEL, not the message: with no channel of our own, pushes landed in an
-// implicit low-importance one — tray-only, no heads-up banner, no sound.
-export const ANDROID_CHANNEL_ID = 'default';
+// The channel id the backend stamps on every Expo message (`EXPO_ANDROID_CHANNEL_ID`
+// in worker/tasks.py). Android 8+ takes importance/sound from the CHANNEL, not
+// the message: with no channel of our own, pushes landed in an implicit
+// low-importance one — tray-only, no heads-up banner, no sound.
+//
+// 2026-10-09 (xavfsizlik auditi): `default` kanali `lockscreenVisibility: PUBLIC`
+// edi — bloklangan ekranda buyruq/xat matni, xodim ismi ko'rinardi. Kanal
+// sozlamalarini yaratilgandan keyin O'ZGARTIRIB BO'LMAYDI, shuning uchun yangi id
+// bilan PRIVATE kanal ochiladi (bloklangan ekranda faqat «HRM Uzgidro — yangi
+// bildirishnoma»), eskisi o'chiriladi. Backend ham shu id'ni yuboradi.
+export const ANDROID_CHANNEL_ID = 'hrm_private_v1';
+const LEGACY_ANDROID_CHANNEL_IDS = ['default'];
 
 export async function ensureAndroidChannel(): Promise<void> {
   if (Platform.OS !== 'android') return;
@@ -73,8 +80,11 @@ export async function ensureAndroidChannel(): Promise<void> {
       importance: N.AndroidImportance.MAX,
       sound: 'default',
       vibrationPattern: [0, 250, 250, 250],
-      lockscreenVisibility: N.AndroidNotificationVisibility.PUBLIC,
+      lockscreenVisibility: N.AndroidNotificationVisibility.PRIVATE,
     });
+    for (const id of LEGACY_ANDROID_CHANNEL_IDS) {
+      await N.deleteNotificationChannelAsync(id).catch(() => {});
+    }
   } catch (e) {
     pushWarn('android channel', e);
   }

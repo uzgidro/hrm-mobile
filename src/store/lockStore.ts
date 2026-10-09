@@ -22,7 +22,7 @@ import {
   clearPinRecord,
   verifyPin,
 } from '../auth/pin';
-import { MAX_ATTEMPTS, attemptsRemaining } from '../auth/lockPolicy';
+import { MAX_ATTEMPTS, PIN_LENGTH, attemptsRemaining } from '../auth/lockPolicy';
 import { isBiometricAvailable, authenticateBiometric } from '../auth/biometrics';
 import { dismissAllConfirms } from '../lib/confirm';
 
@@ -40,6 +40,10 @@ interface LockState {
   biometricsEnabled: boolean;
   biometricsSupported: boolean;
   hydrated: boolean;
+  /** Saqlangan PIN uzunligi — ochish ekrani shuncha nuqta ko'rsatadi. */
+  currentPinLength: number;
+  /** Eski (PIN_LENGTH dan qisqa) PIN bilan ochildi — yangisini o'rnatish majburiy. */
+  pinUpgrade: boolean;
   hydrate: () => Promise<void>;
   setupPin: (pin: string) => Promise<void>;
   unlockWithPin: (pin: string) => Promise<UnlockResult>;
@@ -83,7 +87,11 @@ export const useLockStore = create<LockState>((set, get) => {
     }
     if (await verifyPin(pin, record)) {
       await clearAttempts();
-      if (mode === 'unlock') set({ status: 'unlocked' });
+      if (mode === 'unlock') {
+        // Eski 4 raqamli PIN to'g'ri — lekin ilovaga emas, yangi PIN o'rnatishga o'tadi.
+        if (record.len < PIN_LENGTH) set({ status: 'setup-required', pinUpgrade: true });
+        else set({ status: 'unlocked' });
+      }
       return { ok: true, remaining: MAX_ATTEMPTS, forceLogout: false };
     }
     // Functional increment so two concurrent wrong attempts (e.g. a double
@@ -101,6 +109,8 @@ export const useLockStore = create<LockState>((set, get) => {
     biometricsEnabled: false,
     biometricsSupported: false,
     hydrated: false,
+    currentPinLength: PIN_LENGTH,
+    pinUpgrade: false,
 
     // Awaited by the auth bootstrap before the splash hides — must never throw.
     hydrate: async () => {
@@ -117,6 +127,7 @@ export const useLockStore = create<LockState>((set, get) => {
         ]);
         set({
           status: record ? 'locked' : 'setup-required',
+          currentPinLength: record?.len ?? PIN_LENGTH,
           failedAttempts: parseAttempts(rawAttempts),
           biometricsSupported: supported,
           // The stored flag only counts while the hardware can still honor it.
@@ -133,7 +144,7 @@ export const useLockStore = create<LockState>((set, get) => {
     setupPin: async (pin) => {
       await writePinRecord(pin);
       await clearAttempts();
-      set({ status: 'unlocked' });
+      set({ status: 'unlocked', currentPinLength: pin.length, pinUpgrade: false });
     },
 
     unlockWithPin: (pin) => attemptPin(pin, 'unlock'),
@@ -147,7 +158,10 @@ export const useLockStore = create<LockState>((set, get) => {
       if (get().status !== 'locked') return false;
       if (!(await authenticateBiometric())) return false;
       await clearAttempts();
-      set({ status: 'unlocked' });
+      // Biometrika eski PIN'ni yangilashni chetlab o'tmasin.
+      const record = await readPinRecord();
+      if (record && record.len < PIN_LENGTH) set({ status: 'setup-required', pinUpgrade: true });
+      else set({ status: 'unlocked' });
       return true;
     },
 
@@ -184,6 +198,8 @@ export const useLockStore = create<LockState>((set, get) => {
       set({
         failedAttempts: 0,
         biometricsEnabled: false,
+        currentPinLength: PIN_LENGTH,
+        pinUpgrade: false,
         status: Platform.OS === 'web' ? 'unlocked' : 'setup-required',
       });
     },

@@ -9,7 +9,7 @@ import { useTheme } from '@/theme/ThemeProvider';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader, HeaderAction } from '@/components/ScreenHeader';
 import { ErrorState } from '@/ui/StateViews';
-import { isSafeVideoUrl } from '@/features/videoGuide/utils/format';
+import { guardWebViewNavigation, isTrustedAppUrl } from '@/lib/trustedUrl';
 import { buildVideoHtml } from '../videoHtml';
 
 export default function MediaViewerScreen() {
@@ -18,7 +18,8 @@ export default function MediaViewerScreen() {
   const params = useLocalSearchParams<{ kind?: string; url?: string; title?: string }>();
   const kind = params.kind === 'video' ? 'video' : 'page';
   const url = typeof params.url === 'string' ? params.url : '';
-  const safe = !!url && isSafeVideoUrl(url);
+  // Faqat o'z domenimiz — begona sayt ilova ichida ochilmaydi (src/lib/trustedUrl).
+  const safe = isTrustedAppUrl(url);
   const [failed, setFailed] = useState(false);
   const [loading, setLoading] = useState(true);
   const source = useMemo(
@@ -49,7 +50,8 @@ export default function MediaViewerScreen() {
           <WebView
             source={source}
             style={[styles.flex, kind === 'video' && styles.black]}
-            originWhitelist={['https://*', 'http://*']}
+            originWhitelist={['https://*']}
+            onShouldStartLoadWithRequest={guardWebViewNavigation}
             allowsInlineMediaPlayback
             allowsFullscreenVideo
             mediaPlaybackRequiresUserAction={false}
