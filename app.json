@@ -28,7 +28,6 @@
         "android.permission.RECORD_AUDIO",
         "android.permission.SYSTEM_ALERT_WINDOW",
         "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.READ_MEDIA_IMAGES"
       ]
     },
@@ -88,7 +87,8 @@
           "locationWhenInUsePermission": "Xizmat safarida «Keldim» belgisi qayerda qo'yilganini davomatga yozish uchun joylashuvingiz kerak."
         }
       ],
-      "./plugins/withNetworkSecurity"
+      "./plugins/withNetworkSecurity",
+      "./plugins/withLegacyStoragePermission"
     ],
     "experiments": {
       "typedRoutes": true

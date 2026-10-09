@@ -52,13 +52,25 @@ ${PINS.map((p) => `      <pin digest="SHA-256">${p}</pin>`).join('\n')}
 </network-security-config>
 `;
 
+// Faqat DEBUG build (`app/src/debug/res` main'ni almashtiradi): telefon Wi-Fi
+// orqali kompyuterdagi Metro'ga (http://192.168.x.x:8081) ulanishi uchun cleartext
+// ruxsat. Reliz build'ga bu fayl KIRMAYDI. Pinlar debug'da ham qoladi.
+const DEBUG_XML = XML.replace(
+  '<base-config cleartextTrafficPermitted="false">',
+  '<base-config cleartextTrafficPermitted="true">',
+).replace('qo\'lda tahrirlamang. -->', 'qo\'lda tahrirlamang. FAQAT DEBUG. -->');
+
 function withNetworkSecurity(config) {
   config = withDangerousMod(config, [
     'android',
     async (cfg) => {
-      const dir = path.join(cfg.modRequest.platformProjectRoot, 'app', 'src', 'main', 'res', 'xml');
-      fs.mkdirSync(dir, { recursive: true });
-      fs.writeFileSync(path.join(dir, 'network_security_config.xml'), XML);
+      const write = (variant, xml) => {
+        const dir = path.join(cfg.modRequest.platformProjectRoot, 'app', 'src', variant, 'res', 'xml');
+        fs.mkdirSync(dir, { recursive: true });
+        fs.writeFileSync(path.join(dir, 'network_security_config.xml'), xml);
+      };
+      write('main', XML);
+      write('debug', DEBUG_XML);
       return cfg;
     },
   ]);
