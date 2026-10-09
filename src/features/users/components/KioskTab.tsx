@@ -15,11 +15,14 @@ import { useDeleteKiosk, useSendKioskPassword } from '../api/mutations';
 import { isForbidden, kioskRoleKey, type KioskUser } from '../utils/users';
 import { KioskFormSheet } from './KioskFormSheet';
 import { Denied, KeyValue, useBranchName } from './UsersBits';
+import { useSensitiveScreen } from '@/lib/screenPrivacy';
 
 type Kiosk = KioskUser & { id: number };
 type Open = { kind: 'view'; row: Kiosk; n: number } | { kind: 'form'; row: Kiosk | null; n: number } | null;
 
 export function KioskTab({ branchId }: { branchId: number | null }) {
+  // KioskFormSheet'da JShShIR kiritiladi — sheet FLAG_SECURE ni shu ekrandan oladi.
+  useSensitiveScreen();
   const { t } = useTranslation();
   const compact = useBreakpoint().sizeClass === 'compact';
   const list = useQuery(kioskUsersQuery(branchId));

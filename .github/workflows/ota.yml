@@ -55,8 +55,25 @@ jobs:
         # dies with "syntax error near unexpected token" before eas even runs.
         # In an env var the value is literal. We also take only the SUBJECT
         # (first line) of the commit so a long body can't derail the command.
+        #
+        # Code signing (2.0.3+, xavfsizlik auditi 2026-10-09): ilova ichida
+        # certs/certificate.pem bor va u IMZOSIZ yoki boshqa kalit bilan
+        # imzolangan yangilanishni RAD ETADI — Expo hisobiga kirgan begona odam
+        # ham telefonlarga kod yubora olmaydi. Maxfiy kalit faqat GitHub
+        # secret'da (EXPO_UPDATES_PRIVATE_KEY); repoda YO'Q. Secret bo'lmasa —
+        # imzosiz yangilanish 2.0.3 telefonlarida baribir rad etiladi, shuning
+        # uchun jim o'tkazmay, qadamni yiqitamiz.
         env:
           RAW_MESSAGE: ${{ github.event.head_commit.message || github.event.inputs.message }}
+          EXPO_UPDATES_PRIVATE_KEY: ${{ secrets.EXPO_UPDATES_PRIVATE_KEY }}
         run: |
+          if [ -z "$EXPO_UPDATES_PRIVATE_KEY" ]; then
+            echo "::error::EXPO_UPDATES_PRIVATE_KEY secret yo'q — OTA imzolanmaydi va 2.0.3+ ilovalar uni rad etadi."
+            exit 1
+          fi
+          KEY_FILE="$RUNNER_TEMP/ota-private-key.pem"
+          umask 077
+          printf '%s\n' "$EXPO_UPDATES_PRIVATE_KEY" > "$KEY_FILE"
           MSG="$(printf '%s' "$RAW_MESSAGE" | head -n1)"
-          eas update --channel production --message "$MSG" --non-interactive
+          eas update --channel production --message "$MSG" --non-interactive --private-key-path "$KEY_FILE"
+          rm -f "$KEY_FILE"

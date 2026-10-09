@@ -19,8 +19,11 @@ import { LoadingView, ErrorState, EmptyState } from '@/components/StateViews';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { employeeDetailQuery, nationalityOptionsQuery } from '../api/queries';
 import { nationalityLabel, timeRange } from '../utils/format';
+import { useSensitiveScreen } from '@/lib/screenPrivacy';
 
 export default function EmployeeDetailScreen() {
+  // JShShIR / pasport / manzil — skrinshot va ilovalar almashtirgichida yopiq.
+  useSensitiveScreen();
   const { t } = useTranslation();
   const { user } = useAuthStore();
   const params = useLocalSearchParams<{ id?: string }>();

@@ -22,7 +22,14 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "package": "uz.uzgidro.hrm",
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "allowBackup": false,
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -70,7 +77,8 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Kompyuterdagi QR-kodni skanerlab tizimga kirish uchun kameraga ruxsat bering."
+          "cameraPermission": "Kompyuterdagi QR-kodni skanerlab tizimga kirish uchun kameraga ruxsat bering.",
+          "recordAudioAndroid": false
         }
       ],
       [
@@ -78,13 +86,19 @@
         {
           "locationWhenInUsePermission": "Xizmat safarida «Keldim» belgisi qayerda qo'yilganini davomatga yozish uchun joylashuvingiz kerak."
         }
-      ]
+      ],
+      "./plugins/withNetworkSecurity"
     ],
     "experiments": {
       "typedRoutes": true
     },
     "updates": {
-      "url": "https://u.expo.dev/cf579f3d-bd8a-41b9-9ff6-8facfb41af7a"
+      "url": "https://u.expo.dev/cf579f3d-bd8a-41b9-9ff6-8facfb41af7a",
+      "codeSigningCertificate": "./certs/certificate.pem",
+      "codeSigningMetadata": {
+        "keyid": "main",
+        "alg": "rsa-v1_5-sha256"
+      }
     },
     "extra": {
       "router": {},
