@@ -7,6 +7,14 @@
 // ⚠️ Pastki oyna (ui/Sheet = RN Modal) Android'da ALOHIDA oyna: u FLAG_SECURE ni
 // faqat OCHILISH paytida asosiy oynadan ko'chiradi. Shuning uchun maxfiy
 // sheet'lar uchun hook sheet ichida emas, uni ochadigan EKRANDA chaqiriladi.
+//
+// Ruxsatlar: modul manifestga READ_MEDIA_IMAGES / READ_EXTERNAL_STORAGE qo'shadi
+// (skrinshot KUZATUVCHISI uchun — biz ishlatmaymiz) — app.json blockedPermissions
+// ularni olib tashlaydi (Play «Photo and video permissions» siyosati); modul
+// ruxsat yo'qligini tekshirib faqat log yozadi. DETECT_SCREEN_CAPTURE esa
+// QOLADI: Android 14+ da modul ishga tushganda registerScreenCaptureCallback
+// chaqiradi va ruxsatsiz SecurityException otadi (normal ruxsat, siyosatga
+// tushmaydi).
 import { useEffect, useId } from 'react';
 import { Platform } from 'react-native';
 import * as ScreenCapture from 'expo-screen-capture';
