@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "HRM Uzgidro",
-    "slug": "hrm-mobile",
+    "slug": "uzgidro-hrm",
     "version": "2.0.3",
     "runtimeVersion": {
       "policy": "appVersion"
@@ -94,7 +94,7 @@
       "typedRoutes": true
     },
     "updates": {
-      "url": "https://u.expo.dev/cf579f3d-bd8a-41b9-9ff6-8facfb41af7a",
+      "url": "https://u.expo.dev/a67e12d1-02d2-4c39-96b1-eb5a465274fc",
       "codeSigningCertificate": "./certs/certificate.pem",
       "codeSigningMetadata": {
         "keyid": "main",
@@ -104,9 +104,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "cf579f3d-bd8a-41b9-9ff6-8facfb41af7a"
+        "projectId": "a67e12d1-02d2-4c39-96b1-eb5a465274fc"
       }
     },
-    "owner": "sukhrob.normurodov"
+    "owner": "uzbekgidroenergos-team"
   }
 }
