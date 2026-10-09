@@ -6,7 +6,9 @@ import type { CheckinCreateBody } from '../types';
 
 // Disk o'rniga xotira (formDraft native/web yo'llari bu yerda sinalmaydi).
 const mockStore = new Map<string, unknown>();
+let mockOwner: string | null = 'u1';
 jest.mock('@/lib/formDraft', () => ({
+  getDraftOwner: () => mockOwner,
   loadDraft: jest.fn(async (k: string) => (mockStore.has(k) ? JSON.parse(JSON.stringify(mockStore.get(k))) : null)),
   saveDraft: jest.fn(async (k: string, v: unknown) => void mockStore.set(k, v)),
   clearDraft: jest.fn(async (k: string) => void mockStore.delete(k)),
@@ -24,7 +26,10 @@ const body = (uuid: string, captured_at = new Date().toISOString()): CheckinCrea
 
 describe('oflayn navbat', () => {
   const mock = new MockAdapter(apiClient);
-  beforeEach(() => mockStore.clear());
+  beforeEach(() => {
+    mockStore.clear();
+    mockOwner = 'u1';
+  });
   afterEach(() => mock.reset());
 
   it('yuborildi — navbatga tushmaydi; tana aynan shartnoma kalitlari (strict 422 bo\'lmasin)', async () => {
@@ -79,5 +84,22 @@ describe('oflayn navbat', () => {
     expect(r.failed).toHaveLength(1);
     expect((r.failed[0].error as Error).message).toBe('too_old');
     expect(mock.history.post).toHaveLength(0);
+  });
+
+  it('yuborish davomida sessiya almashsa — qolgani BOSHQA xodim nomidan ketmaydi', async () => {
+    mock.onPost(MOBILE_CHECKINS).networkError();
+    await submitCheckin(body('uuid-a-1'));
+    await submitCheckin(body('uuid-a-2'));
+    mock.reset();
+    mock.onPost(MOBILE_CHECKINS).reply(() => {
+      mockOwner = 'u2'; // A chiqdi, B kirdi
+      return [200, { id: 1 }];
+    });
+    const r = await flushQueue();
+    expect(mock.history.post).toHaveLength(1);
+    expect(r.sent).toHaveLength(1);
+    // A ning navbati tegilmagan: A qayta kirganda davom etadi (server client_uuid bo'yicha takrorni rad etadi).
+    mockOwner = 'u1';
+    expect((await readQueue()).map((q) => q.body.client_uuid)).toEqual(['uuid-a-1', 'uuid-a-2']);
   });
 });

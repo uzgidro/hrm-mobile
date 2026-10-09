@@ -14,6 +14,7 @@ import {
   FAILED_ATTEMPTS_KEY,
   readPinRecord,
   writePinRecord,
+  hashPin,
 } from '../../auth/pin';
 import { MAX_ATTEMPTS } from '../../auth/lockPolicy';
 import { confirm, getConfirm, __resetConfirm } from '../../lib/confirm';
@@ -58,28 +59,28 @@ describe('hydrate', () => {
   });
 
   it('lands on locked when a PIN record exists', async () => {
-    await writePinRecord('1234');
+    await writePinRecord('123456');
     await useLockStore.getState().hydrate();
     expect(useLockStore.getState().status).toBe('locked');
     expect(useLockStore.getState().hydrated).toBe(true);
   });
 
   it('restores the persisted failed-attempt count', async () => {
-    await writePinRecord('1234');
+    await writePinRecord('123456');
     await storage.setItem(FAILED_ATTEMPTS_KEY, '3');
     await useLockStore.getState().hydrate();
     expect(useLockStore.getState().failedAttempts).toBe(3);
   });
 
   it('treats a corrupt failed-attempt value as zero', async () => {
-    await writePinRecord('1234');
+    await writePinRecord('123456');
     await storage.setItem(FAILED_ATTEMPTS_KEY, 'abc');
     await useLockStore.getState().hydrate();
     expect(useLockStore.getState().failedAttempts).toBe(0);
   });
 
   it('enables biometrics when the flag is set and hardware + enrollment exist', async () => {
-    await writePinRecord('1234');
+    await writePinRecord('123456');
     await storage.setItem(BIOMETRICS_KEY, '1');
     mockHasHardware.mockResolvedValue(true);
     mockIsEnrolled.mockResolvedValue(true);
@@ -89,7 +90,7 @@ describe('hydrate', () => {
   });
 
   it('keeps biometrics disabled when the flag is set but hardware is gone', async () => {
-    await writePinRecord('1234');
+    await writePinRecord('123456');
     await storage.setItem(BIOMETRICS_KEY, '1');
     mockHasHardware.mockResolvedValue(false);
     await useLockStore.getState().hydrate();
@@ -123,7 +124,7 @@ describe('setupPin', () => {
     await storage.setItem(FAILED_ATTEMPTS_KEY, '2');
     useLockStore.setState({ status: 'setup-required', failedAttempts: 2 });
 
-    await useLockStore.getState().setupPin('1234');
+    await useLockStore.getState().setupPin('123456');
 
     expect(useLockStore.getState().status).toBe('unlocked');
     expect(useLockStore.getState().failedAttempts).toBe(0);
@@ -132,13 +133,44 @@ describe('setupPin', () => {
   });
 });
 
+describe('eski 4 raqamli PIN (2026-10-09 gacha)', () => {
+  // `len` maydonisiz yozuv — 6 raqamga o'tishdan oldingi formatda.
+  async function writeLegacyRecord(pin: string) {
+    const salt = 'legacysalt';
+    const hash = await hashPin(pin, salt);
+    await storage.setItem(PIN_RECORD_KEY, JSON.stringify({ salt, hash }));
+  }
+
+  it('hydrate: ochish ekrani 4 nuqta ko\'rsatadi', async () => {
+    await writeLegacyRecord('1234');
+    await useLockStore.getState().hydrate();
+    expect(useLockStore.getState().status).toBe('locked');
+    expect(useLockStore.getState().currentPinLength).toBe(4);
+  });
+
+  it('to\'g\'ri eski PIN — ilovaga emas, yangi 6 raqamli PIN o\'rnatishga', async () => {
+    await writeLegacyRecord('1234');
+    useLockStore.setState({ status: 'locked' });
+    const r = await useLockStore.getState().unlockWithPin('1234');
+    expect(r.ok).toBe(true);
+    expect(useLockStore.getState().status).toBe('setup-required');
+    expect(useLockStore.getState().pinUpgrade).toBe(true);
+
+    await useLockStore.getState().setupPin('123456');
+    expect(useLockStore.getState().status).toBe('unlocked');
+    expect(useLockStore.getState().pinUpgrade).toBe(false);
+    expect(useLockStore.getState().currentPinLength).toBe(6);
+    expect((await readPinRecord())?.len).toBe(6);
+  });
+});
+
 describe('unlockWithPin', () => {
   it('unlocks and resets attempts (state + storage) on the correct PIN', async () => {
-    await writePinRecord('1234');
+    await writePinRecord('123456');
     await storage.setItem(FAILED_ATTEMPTS_KEY, '2');
     useLockStore.setState({ status: 'locked', failedAttempts: 2 });
 
-    const result = await useLockStore.getState().unlockWithPin('1234');
+    const result = await useLockStore.getState().unlockWithPin('123456');
 
     expect(result).toEqual({ ok: true, remaining: MAX_ATTEMPTS, forceLogout: false });
     expect(useLockStore.getState().status).toBe('unlocked');
@@ -147,10 +179,10 @@ describe('unlockWithPin', () => {
   });
 
   it('stays locked, counts, and persists a wrong PIN', async () => {
-    await writePinRecord('1234');
+    await writePinRecord('123456');
     useLockStore.setState({ status: 'locked' });
 
-    const result = await useLockStore.getState().unlockWithPin('0000');
+    const result = await useLockStore.getState().unlockWithPin('000000');
 
     expect(result).toEqual({ ok: false, remaining: MAX_ATTEMPTS - 1, forceLogout: false });
     expect(useLockStore.getState().status).toBe('locked');
@@ -159,12 +191,12 @@ describe('unlockWithPin', () => {
   });
 
   it('reports forceLogout on the MAX_ATTEMPTSth wrong PIN', async () => {
-    await writePinRecord('1234');
+    await writePinRecord('123456');
     useLockStore.setState({ status: 'locked' });
 
     const results: UnlockResult[] = [];
     for (let i = 0; i < MAX_ATTEMPTS; i++) {
-      results.push(await useLockStore.getState().unlockWithPin('0000'));
+      results.push(await useLockStore.getState().unlockWithPin('000000'));
     }
 
     expect(results[MAX_ATTEMPTS - 2]).toEqual(
@@ -175,10 +207,10 @@ describe('unlockWithPin', () => {
   });
 
   it('keeps the attempt count across an app restart (fresh hydrate)', async () => {
-    await writePinRecord('1234');
+    await writePinRecord('123456');
     useLockStore.setState({ status: 'locked' });
-    await useLockStore.getState().unlockWithPin('0000');
-    await useLockStore.getState().unlockWithPin('0000');
+    await useLockStore.getState().unlockWithPin('000000');
+    await useLockStore.getState().unlockWithPin('000000');
 
     // Simulate a cold start: wipe in-memory state, re-hydrate from storage.
     useLockStore.setState({ status: 'unknown', failedAttempts: 0, hydrated: false });
@@ -191,22 +223,22 @@ describe('unlockWithPin', () => {
   it('falls back to setup-required when the record is missing/corrupt', async () => {
     useLockStore.setState({ status: 'locked' });
 
-    const result = await useLockStore.getState().unlockWithPin('1234');
+    const result = await useLockStore.getState().unlockWithPin('123456');
 
     expect(result).toEqual({ ok: false, remaining: MAX_ATTEMPTS, forceLogout: false });
     expect(useLockStore.getState().status).toBe('setup-required');
   });
 
   it('counts every concurrent wrong attempt (no lost increment)', async () => {
-    await writePinRecord('1234');
+    await writePinRecord('123456');
     useLockStore.setState({ status: 'locked' });
 
     // Two sequential wrong attempts each consume one from the budget. (Note:
     // this can't reproduce a true lost-update race — the read-modify-write in
     // attemptPin is synchronous, so a same-process test never interleaves it.
     // The functional set((s) => ...) in the impl is defensive belt-and-braces.)
-    await useLockStore.getState().unlockWithPin('0000');
-    await useLockStore.getState().unlockWithPin('0000');
+    await useLockStore.getState().unlockWithPin('000000');
+    await useLockStore.getState().unlockWithPin('000000');
 
     expect(useLockStore.getState().failedAttempts).toBe(2);
     expect(await storage.getItem(FAILED_ATTEMPTS_KEY)).toBe('2');
@@ -215,11 +247,11 @@ describe('unlockWithPin', () => {
 
 describe('verifyCurrentPin', () => {
   it('accepts the correct PIN, resets the counter, and never touches status', async () => {
-    await writePinRecord('1234');
+    await writePinRecord('123456');
     await storage.setItem(FAILED_ATTEMPTS_KEY, '2');
     useLockStore.setState({ status: 'unlocked', failedAttempts: 2 });
 
-    const result = await useLockStore.getState().verifyCurrentPin('1234');
+    const result = await useLockStore.getState().verifyCurrentPin('123456');
 
     expect(result).toEqual({ ok: true, remaining: MAX_ATTEMPTS, forceLogout: false });
     expect(useLockStore.getState().status).toBe('unlocked');
@@ -228,10 +260,10 @@ describe('verifyCurrentPin', () => {
   });
 
   it('shares the attempt counter on a wrong PIN, status unchanged', async () => {
-    await writePinRecord('1234');
+    await writePinRecord('123456');
     useLockStore.setState({ status: 'unlocked' });
 
-    const result = await useLockStore.getState().verifyCurrentPin('0000');
+    const result = await useLockStore.getState().verifyCurrentPin('000000');
 
     expect(result).toEqual({ ok: false, remaining: MAX_ATTEMPTS - 1, forceLogout: false });
     expect(useLockStore.getState().status).toBe('unlocked');
@@ -240,11 +272,11 @@ describe('verifyCurrentPin', () => {
   });
 
   it('reports forceLogout on the MAX_ATTEMPTSth wrong entry (caller logs out)', async () => {
-    await writePinRecord('1234');
+    await writePinRecord('123456');
     await storage.setItem(FAILED_ATTEMPTS_KEY, String(MAX_ATTEMPTS - 1));
     useLockStore.setState({ status: 'unlocked', failedAttempts: MAX_ATTEMPTS - 1 });
 
-    const result = await useLockStore.getState().verifyCurrentPin('0000');
+    const result = await useLockStore.getState().verifyCurrentPin('000000');
 
     expect(result).toEqual({ ok: false, remaining: 0, forceLogout: true });
     // The store only reports — status stays until the caller performs the logout.
@@ -321,7 +353,7 @@ describe('lock', () => {
 
 describe('reset', () => {
   it('clears all three storage keys and returns to setup-required', async () => {
-    await useLockStore.getState().setupPin('1234');
+    await useLockStore.getState().setupPin('123456');
     await useLockStore.getState().setBiometricsEnabled(true);
     await storage.setItem(FAILED_ATTEMPTS_KEY, '2');
 

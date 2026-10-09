@@ -5,7 +5,8 @@ export default {
 
   setupTitle: 'Установите PIN-код',
   setupConfirmTitle: 'Подтвердите PIN-код',
-  setupSubtitle: 'Введите 4-значный PIN-код для защиты приложения',
+  setupSubtitle: 'Введите 6-значный PIN-код для защиты приложения',
+  pinUpgradeSubtitle: 'Для безопасности PIN-код теперь 6-значный. Задайте новый PIN-код',
   setupConfirmSubtitle: 'Введите PIN-код ещё раз',
 
   changeTitle: 'Изменить PIN-код',

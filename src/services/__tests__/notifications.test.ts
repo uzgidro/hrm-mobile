@@ -316,3 +316,15 @@ describe('routeForNotification — telefon belgisi (mobile_checkin_*)', () => {
     expect(notificationMeta('mobile_checkin_far').title).not.toBe(notificationMeta('zzz_unknown').title);
   });
 });
+
+describe('push payloadidagi id bilan yo\'nalish (2026-10-09 yangi push oqimlari)', () => {
+  it('doimiy o\'tkazish buyrug\'i push\'i — work_leave_id bo\'lsa ham qaror navbatiga', () => {
+    expect(routeForNotification({ type: 'employee_transfer_order_pending', work_leave_id: 7 })).toBe('/vaqtinchalik-buyruqlar');
+    // Oddiy ruxsat/ta'til push'i esa avvalgidek tafsilotga.
+    expect(routeForNotification({ type: 'work_leave_signed', work_leave_id: 7 })).toBe('/leave-detail?id=7');
+  });
+  it('o\'rindoshlik push\'i — kadrga o\'sha xodim kartochkasi', () => {
+    expect(routeForNotification({ type: 'employee_assignment_added', employee_id: 42, employee_assignment_id: 3 })).toBe('/profile-detail?id=42');
+    expect(routeForNotification({ notification_type: 'employee_assignment_added' })).toBe('/profile-detail');
+  });
+});

@@ -12,6 +12,7 @@ import { createElement, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Platform, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { ONLYOFFICE_SERVER_URL } from '@/api/urls';
+import { guardWebViewNavigation } from '@/lib/trustedUrl';
 import { useTheme } from '@/theme/ThemeProvider';
 import { ErrorState } from '@/ui/StateViews';
 import {
@@ -50,6 +51,8 @@ export function OnlyOfficeFrame({ config, errorLabel, title }: FrameProps) {
     <WebView
       originWhitelist={['*']}
       source={{ html, baseUrl: ONLYOFFICE_SERVER_URL }}
+      // Hujjat ichidagi havola muharrir o'rnini begona sayt bilan almashtirmasin.
+      onShouldStartLoadWithRequest={guardWebViewNavigation}
       javaScriptEnabled
       domStorageEnabled
       startInLoadingState

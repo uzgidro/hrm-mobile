@@ -16,7 +16,7 @@ import {
 export async function setupPushNotifications(): Promise<void> {
   try {
     // Create the channel FIRST: on Android 8+ importance and sound come from
-    // the channel, and the backend stamps `channelId: 'default'` on every push.
+    // the channel, and the backend stamps `channelId: ANDROID_CHANNEL_ID` on every push.
     await ensureAndroidChannel();
     const granted = await requestNotificationPermissions();
     if (!granted) return;

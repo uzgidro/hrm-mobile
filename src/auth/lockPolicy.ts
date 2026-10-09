@@ -3,7 +3,11 @@
 // Pure constants + functions with zero imports so it stays trivially testable;
 // change policy here, never inline in screens or stores.
 
-export const PIN_LENGTH = 4;
+// 6 raqam (xavfsizlik auditi 2026-10-09; ilgari 4). 4 raqamli eski PIN'lar
+// ishlashda davom etadi — lekin bir marta ochilgach yangi 6 raqamli PIN
+// o'rnatish majburiy (lockStore.pinUpgrade).
+export const PIN_LENGTH = 6;
+export const LEGACY_PIN_LENGTH = 4;
 export const MAX_ATTEMPTS = 5;
 // Re-lock after 1 minute in background.
 export const RELOCK_AFTER_MS = 60_000;

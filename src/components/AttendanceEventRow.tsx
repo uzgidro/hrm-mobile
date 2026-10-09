@@ -12,6 +12,7 @@ import { ff } from '@/theme/typography';
 import type { AttendanceEvent, TurnstileLocation } from '@/types';
 import { Icon } from '@/components/Icon';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
+import { guardWebViewNavigation } from '@/lib/trustedUrl';
 import {
   eventPhotoUrl, eventPlace, isEntryEvent, mapAppUrl, mapViewerUrl,
 } from '@/utils/attendanceEvent';
@@ -167,7 +168,8 @@ export function AttendanceEventDetailModal({
                     scrollEnabled={false}
                     javaScriptEnabled
                     domStorageEnabled
-                    originWhitelist={['*']}
+                    originWhitelist={['https://*']}
+                    onShouldStartLoadWithRequest={guardWebViewNavigation}
                   />
                   {/* Ko'ruvchi markazga belgi qo'ymaydi — belgini o'zimiz chizamiz. */}
                   <View style={styles.pin}>

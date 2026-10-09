@@ -5,7 +5,8 @@ export default {
 
   setupTitle: 'Set a PIN code',
   setupConfirmTitle: 'Confirm PIN code',
-  setupSubtitle: 'Enter a 4-digit PIN code to protect the app',
+  setupSubtitle: 'Enter a 6-digit PIN code to protect the app',
+  pinUpgradeSubtitle: 'For security, the PIN is now 6 digits. Set a new PIN code',
   setupConfirmSubtitle: 'Enter the PIN code again',
 
   changeTitle: 'Change PIN code',
