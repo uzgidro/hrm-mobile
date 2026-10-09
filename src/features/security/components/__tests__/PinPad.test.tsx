@@ -15,21 +15,21 @@ describe('PinPad', () => {
 
   it('renders title, subtitle and maxLength dots', async () => {
     const { getByText, getByTestId, queryByTestId } = await renderWithProviders(
-      <PinPad {...baseProps} subtitle="Yordamchi matn" maxLength={4} />
+      <PinPad {...baseProps} subtitle="Yordamchi matn" maxLength={6} />
     );
 
     expect(getByText('PIN kodni kiriting')).toBeTruthy();
     expect(getByText('Yordamchi matn')).toBeTruthy();
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 6; i++) {
       expect(getByTestId(`pin-dot-${i}`)).toBeTruthy();
     }
-    expect(queryByTestId('pin-dot-4')).toBeNull();
+    expect(queryByTestId('pin-dot-6')).toBeNull();
   });
 
-  it('defaults to 6 dots when maxLength is omitted', async () => {
+  it('defaults to 4 dots when maxLength is omitted', async () => {
     const { getByTestId, queryByTestId } = await renderWithProviders(<PinPad {...baseProps} />);
-    expect(getByTestId('pin-dot-5')).toBeTruthy();
-    expect(queryByTestId('pin-dot-6')).toBeNull();
+    expect(getByTestId('pin-dot-3')).toBeTruthy();
+    expect(queryByTestId('pin-dot-4')).toBeNull();
   });
 
   it('pressing a digit calls onChange with value + digit', async () => {

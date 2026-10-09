@@ -3,10 +3,14 @@
 // Pure constants + functions with zero imports so it stays trivially testable;
 // change policy here, never inline in screens or stores.
 
-// 6 raqam (xavfsizlik auditi 2026-10-09; ilgari 4). 4 raqamli eski PIN'lar
-// ishlashda davom etadi — lekin bir marta ochilgach yangi 6 raqamli PIN
-// o'rnatish majburiy (lockStore.pinUpgrade).
-export const PIN_LENGTH = 6;
+// Yangi PIN — 4 raqam (foydalanuvchi qarori 2026-10-09: 6 raqam kerak emas).
+// 10-09 dagi OTA qisqa muddat 6 raqam talab qilgan — o'shanda 6 raqamli PIN
+// qo'yganlar uni ishlatishda DAVOM ETADI: ochish ekrani saqlangan uzunlikni oladi
+// (pin.ts `len`, lockStore.currentPinLength), PIN o'zgartirilganda esa yangisi
+// yana 4 raqam. Saqlangan PIN shu qiymatdan QISQA bo'lsagina yangilash
+// so'raladi (lockStore.pinUpgrade) — 4 da bunday holat yo'q.
+export const PIN_LENGTH = 4;
+// `len` maydonisiz (2026-10-09 gacha) yozuvlar uzunligi.
 export const LEGACY_PIN_LENGTH = 4;
 export const MAX_ATTEMPTS = 5;
 // Re-lock after 1 minute in background.

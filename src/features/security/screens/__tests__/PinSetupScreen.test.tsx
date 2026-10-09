@@ -34,12 +34,12 @@ describe('PinSetupScreen', () => {
     jest.spyOn(biometrics, 'isBiometricAvailable').mockResolvedValue(false);
   });
 
-  it('advances from the enter step to the confirm step after 6 digits', async () => {
+  it('advances from the enter step to the confirm step after 4 digits', async () => {
     const { getByTestId, getByText, queryByText } = await renderWithProviders(<PinSetupScreen />);
 
     expect(getByText(i18n.t('security.setupTitle'))).toBeTruthy();
 
-    await enterPin(getByTestId, '123456');
+    await enterPin(getByTestId, '1234');
 
     await waitFor(() => expect(getByText(i18n.t('security.setupConfirmTitle'))).toBeTruthy());
     expect(queryByText(i18n.t('security.setupTitle'))).toBeNull();
@@ -51,11 +51,11 @@ describe('PinSetupScreen', () => {
 
     const { getByTestId, getByText } = await renderWithProviders(<PinSetupScreen />);
 
-    await enterPin(getByTestId, '123456');
+    await enterPin(getByTestId, '1234');
     await waitFor(() => expect(getByText(i18n.t('security.setupConfirmTitle'))).toBeTruthy());
 
-    await enterPin(getByTestId, '123456');
-    await waitFor(() => expect(setupPin).toHaveBeenCalledWith('123456'));
+    await enterPin(getByTestId, '1234');
+    await waitFor(() => expect(setupPin).toHaveBeenCalledWith('1234'));
   });
 
   it('shows the mismatch error and returns to the enter step on a wrong confirm', async () => {
@@ -64,10 +64,10 @@ describe('PinSetupScreen', () => {
 
     const { getByTestId, getByText } = await renderWithProviders(<PinSetupScreen />);
 
-    await enterPin(getByTestId, '123456');
+    await enterPin(getByTestId, '1234');
     await waitFor(() => expect(getByText(i18n.t('security.setupConfirmTitle'))).toBeTruthy());
 
-    await enterPin(getByTestId, '999999');
+    await enterPin(getByTestId, '9999');
 
     await waitFor(() =>
       expect(getByTestId('pin-error')).toHaveTextContent(
@@ -88,9 +88,9 @@ describe('PinSetupScreen', () => {
 
     const { getByTestId, getByText } = await renderWithProviders(<PinSetupScreen />);
 
-    await enterPin(getByTestId, '123456');
+    await enterPin(getByTestId, '1234');
     await waitFor(() => expect(getByText(i18n.t('security.setupConfirmTitle'))).toBeTruthy());
-    await enterPin(getByTestId, '123456');
+    await enterPin(getByTestId, '1234');
 
     // The native biometric prompt is invoked (no in-app question), and a
     // successful scan enables biometric unlock.
@@ -106,11 +106,11 @@ describe('PinSetupScreen', () => {
 
     const { getByTestId, getByText } = await renderWithProviders(<PinSetupScreen />);
 
-    await enterPin(getByTestId, '123456');
+    await enterPin(getByTestId, '1234');
     await waitFor(() => expect(getByText(i18n.t('security.setupConfirmTitle'))).toBeTruthy());
-    await enterPin(getByTestId, '123456');
+    await enterPin(getByTestId, '1234');
 
-    await waitFor(() => expect(setupPin).toHaveBeenCalledWith('123456'));
+    await waitFor(() => expect(setupPin).toHaveBeenCalledWith('1234'));
     expect(authSpy).not.toHaveBeenCalled();
   });
 
@@ -122,9 +122,9 @@ describe('PinSetupScreen', () => {
 
     const { getByTestId, getByText } = await renderWithProviders(<PinSetupScreen />);
 
-    await enterPin(getByTestId, '123456');
+    await enterPin(getByTestId, '1234');
     await waitFor(() => expect(getByText(i18n.t('security.setupConfirmTitle'))).toBeTruthy());
-    await enterPin(getByTestId, '123456');
+    await enterPin(getByTestId, '1234');
 
     await waitFor(() => expect(authSpy).toHaveBeenCalledTimes(1));
     expect(setBiometricsEnabled).not.toHaveBeenCalled();

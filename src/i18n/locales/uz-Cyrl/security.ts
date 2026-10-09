@@ -5,7 +5,7 @@ export default {
 
   setupTitle: 'PIN код ўрнатинг',
   setupConfirmTitle: 'PIN кодни тасдиқланг',
-  setupSubtitle: 'Иловани ҳимоялаш учун 6 хонали PIN код киритинг',
+  setupSubtitle: 'Иловани ҳимоялаш учун 4 хонали PIN код киритинг',
   pinUpgradeSubtitle: 'Хавфсизлик учун PIN энди 6 хонали. Янги PIN код ўрнатинг',
   setupConfirmSubtitle: 'PIN кодни қайтадан киритинг',
 
