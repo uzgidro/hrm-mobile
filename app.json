@@ -1,8 +1,8 @@
 {
   "expo": {
     "name": "HRM Uzgidro",
-    "slug": "hrm-mobile",
-    "version": "2.0.2",
+    "slug": "uzgidro-hrm",
+    "version": "2.0.3",
     "runtimeVersion": {
       "policy": "appVersion"
     },
@@ -22,7 +22,15 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "package": "uz.uzgidro.hrm",
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "allowBackup": false,
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_IMAGES"
+      ],
+      "versionCode": 11
     },
     "web": {
       "bundler": "metro",
@@ -70,7 +78,8 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Kompyuterdagi QR-kodni skanerlab tizimga kirish uchun kameraga ruxsat bering."
+          "cameraPermission": "Kompyuterdagi QR-kodni skanerlab tizimga kirish uchun kameraga ruxsat bering.",
+          "recordAudioAndroid": false
         }
       ],
       [
@@ -78,20 +87,27 @@
         {
           "locationWhenInUsePermission": "Xizmat safarida «Keldim» belgisi qayerda qo'yilganini davomatga yozish uchun joylashuvingiz kerak."
         }
-      ]
+      ],
+      "./plugins/withNetworkSecurity",
+      "./plugins/withLegacyStoragePermission"
     ],
     "experiments": {
       "typedRoutes": true
     },
     "updates": {
-      "url": "https://u.expo.dev/cf579f3d-bd8a-41b9-9ff6-8facfb41af7a"
+      "url": "https://u.expo.dev/a67e12d1-02d2-4c39-96b1-eb5a465274fc",
+      "codeSigningCertificate": "./certs/certificate.pem",
+      "codeSigningMetadata": {
+        "keyid": "main",
+        "alg": "rsa-v1_5-sha256"
+      }
     },
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "cf579f3d-bd8a-41b9-9ff6-8facfb41af7a"
+        "projectId": "a67e12d1-02d2-4c39-96b1-eb5a465274fc"
       }
     },
-    "owner": "sukhrob.normurodov"
+    "owner": "uzbekgidroenergos-team"
   }
 }

@@ -18,6 +18,7 @@ import { useCreateTicket } from '../api/mutations';
 import { useFormDraft } from '@/lib/formDraft';
 import { DraftPrompt } from '@/components/DraftPrompt';
 import { toast } from '@/lib/toast';
+import { ensureMediaLibraryAccess } from '@/lib/mediaLibraryAccess';
 
 const PRIORITIES: CreateTicketForm['priority'][] = ['urgent', 'normal', 'low'];
 
@@ -49,8 +50,7 @@ export default function SupportFormScreen() {
   const MAX_FILES = 5; // backend rejects >5 (support_ticket service); block client-side like the web
   const pickFile = async () => {
     if (files.length >= MAX_FILES) return;
-    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) return;
+    if (!(await ensureMediaLibraryAccess())) return;
     const res = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images', 'videos'],
       quality: 0.6,

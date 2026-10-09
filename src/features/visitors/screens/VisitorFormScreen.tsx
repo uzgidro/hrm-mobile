@@ -29,6 +29,7 @@ import type { EmployeeOptionRow } from '@/utils/employees';
 import { useEmployeeOptionsPicker } from '@/lib/useInfinitePicker';
 import { toast } from '@/lib/toast';
 import { useActiveBranchId } from '@/lib/useActiveBranch';
+import { ensureMediaLibraryAccess } from '@/lib/mediaLibraryAccess';
 
 export default function MehmonFormScreen() {
   const { t } = useTranslation();
@@ -106,8 +107,7 @@ export default function MehmonFormScreen() {
   }, [isEdit, visitorId]);
 
   const pickPhoto = async () => {
-    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) { toast.error(t('visitors.photoPermMessage')); return; }
+    if (!(await ensureMediaLibraryAccess())) { toast.error(t('visitors.photoPermMessage')); return; }
     const res = await ImagePicker.launchImageLibraryAsync({ allowsEditing: true, aspect: [1, 1], quality: 0.6, base64: true });
     if (res.canceled || !res.assets?.[0]?.base64) return;
     const asset = res.assets[0];
