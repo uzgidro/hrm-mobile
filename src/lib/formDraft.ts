@@ -16,7 +16,11 @@
 // yuborilardi, A ning xat qoralamasi esa B ga taklif qilinardi. Endi har bir
 // yozuv foydalanuvchi papkasida (`form-drafts/u<id>/`); egasiz (sessiyasiz)
 // holatda hech narsa o'qilmaydi ham, yozilmaydi ham. Egasi noma'lum eski
-// (`form-drafts/<kalit>.json`) fayllar birinchi ega o'rnatilganda o'chiriladi.
+// (`form-drafts/<kalit>.json`) fayllar birinchi ega o'rnatilganda o'chiriladi —
+// BITTA istisno: ilova yangilanishdan keyin TIKLANGAN sessiya (2.0.2 da kirgan
+// o'sha xodim) uchun bootstrap «Keldim» navbatini ko'chirib olishni so'raydi
+// (`adoptLegacyDraftsForRestoredSession`) — aks holda oflayn qo'yilgan, hali
+// yuborilmagan belgilar OTA o'rnatilishi bilan jimgina yo'qolardi.
 import { Platform } from 'react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -25,13 +29,30 @@ const AUTOSAVE_MS = 800;
 
 let owner: string | null = null;
 let legacyPurged = false;
+let legacyAdoptKeys: string[] = [];
+
+/**
+ * Bootstrap chaqiradi (sessiya xotiradan tiklanayotganda, ega o'rnatilishidan
+ * OLDIN): birinchi ega shu tiklangan sessiya bo'lsa, `keys` dagi egasiz eski
+ * fayllar o'chirilmaydi, unga ko'chiriladi. Yangi login'da chaqirilmaydi.
+ */
+export function adoptLegacyDraftsForRestoredSession(keys: string[]): void {
+  if (!legacyPurged) legacyAdoptKeys = keys;
+}
+
+/** Tiklanadigan sessiya bo'lmadi (login ekrani) — ko'chirish so'rovini bekor qiladi. */
+export function cancelLegacyDraftAdoption(): void {
+  legacyAdoptKeys = [];
+}
 
 /** authStore chaqiradi: joriy foydalanuvchi id'si (yoki sessiya yo'q — null). */
 export function setDraftOwner(userId: number | string | null | undefined): void {
   owner = userId == null || userId === '' ? null : `u${userId}`;
   if (owner && !legacyPurged) {
     legacyPurged = true;
-    void purgeLegacyDrafts();
+    const adopt = legacyAdoptKeys;
+    legacyAdoptKeys = [];
+    void purgeLegacyDrafts(owner, adopt);
   }
 }
 
@@ -55,8 +76,12 @@ async function fileFor(o: string, key: string) {
   return new fs.File(dir, `${encodeURIComponent(key)}.json`);
 }
 
-/** Egasi noma'lum (scoping'dan oldingi) qoralamalarni o'chiradi. */
-async function purgeLegacyDrafts(): Promise<void> {
+/**
+ * Egasi noma'lum (scoping'dan oldingi) qoralamalarni o'chiradi; `adopt` dagi
+ * kalitlar (tiklangan sessiya) `o` ga ko'chiriladi (u yerda allaqachon fayl
+ * bo'lmasa).
+ */
+async function purgeLegacyDrafts(o: string, adopt: string[]): Promise<void> {
   try {
     if (Platform.OS === 'web') {
       const ls = globalThis.localStorage;
@@ -66,14 +91,30 @@ async function purgeLegacyDrafts(): Promise<void> {
         const k = ls.key(i);
         if (k && k.startsWith('draft:') && !/^draft:u[^:]+:/.test(k)) stale.push(k);
       }
-      stale.forEach((k) => ls.removeItem(k));
+      for (const k of stale) {
+        const key = k.slice('draft:'.length);
+        const raw = ls.getItem(k);
+        if (adopt.includes(key) && raw != null && ls.getItem(webKey(o, key)) == null) {
+          ls.setItem(webKey(o, key), raw);
+        }
+        ls.removeItem(k);
+      }
       return;
     }
     const fs = await import('expo-file-system');
     const root = new fs.Directory(fs.Paths.document, DRAFT_DIR);
     if (!root.exists) return;
+    const adoptNames = new Set(adopt.map((k) => `${encodeURIComponent(k)}.json`));
     for (const entry of root.list()) {
-      if (entry instanceof fs.File) entry.delete();
+      if (!(entry instanceof fs.File)) continue;
+      if (adoptNames.has(entry.name)) {
+        const { dir } = await ownerDir(o);
+        const target = new fs.File(dir, entry.name);
+        // move() o'rniga o'qib-yozamiz: qoralama yo'li allaqachon ishlatadigan
+        // API (text/write) — OTA tushadigan 2.0.2 binarida ham bor.
+        if (!target.exists) target.write(await entry.text());
+      }
+      entry.delete();
     }
   } catch {
     /* ignore */

@@ -23,6 +23,8 @@ import { useLangStore } from '../store/langStore';
 import { resolveBootstrap, readCachedUser } from './bootstrap';
 import { setupPushNotifications } from './push';
 import { applyPendingUpdateOnLaunch } from '../services/otaUpdates';
+import { adoptLegacyDraftsForRestoredSession, cancelLegacyDraftAdoption } from '../lib/formDraft';
+import { QUEUE_KEY } from '../features/checkin/lib/queue';
 
 // Keep the (default, unconfigured) splash up until we've decided the initial
 // auth state. Errors (already hidden, etc.) are non-fatal.
@@ -68,6 +70,10 @@ export function useAuthBootstrap() {
       // never throws (fail-closed to 'setup-required').
       await useLockStore.getState().hydrate();
 
+      // Bu sessiya ilova yangilanishidan OLDIN kirgan xodimniki: egasiz eski
+      // «Keldim» navbati unga ko'chiriladi (o'chirilmaydi) — lib/formDraft.
+      adoptLegacyDraftsForRestoredSession([QUEUE_KEY]);
+
       // Fast path: seed a cached user and drop the splash right away so a
       // returning user lands on their dashboard without waiting on the network.
       const cached = await readCachedUser();
@@ -85,11 +91,13 @@ export function useAuthBootstrap() {
       } else {
         // No valid session. If we had optimistically seeded a cached user,
         // clear it so the guard flips back to the login screen.
+        cancelLegacyDraftAdoption();
         await logout();
         setLoading(false);
       }
       hideSplash();
     })().catch(() => {
+      cancelLegacyDraftAdoption();
       // Never leave startup hanging: the root layout keeps the navigator
       // unmounted while isLoading (AuthResolvedGate — deep links), so an
       // unexpected throw here (storage / OTA module) must still release it.

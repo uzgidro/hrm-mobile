@@ -11,13 +11,19 @@ import { Env } from '@/config/env';
 const TRUSTED_SUFFIX = 'uzgidro.uz';
 
 function hostOf(url: string): string | null {
+  // Teskari slesh / bo'shliq / boshqaruv belgisi bo'lsa — RAD. WebView (Chromium,
+  // WHATWG) `\` ni `/` deb o'qiydi: `https://evil.com\.uzgidro.uz/` bizning
+  // ajratishda `….uzgidro.uz` bo'lib ko'rinardi, brauzer esa evil.com ni ochardi
+  // (kod ko'rigi 2026-10-09). Tab/yangi qator ham brauzerda tashlab yuboriladi.
+  if (/[\\\s\u0000-\u001f\u007f]/.test(url)) return null;
   // RN'ning URL polifili `hostname` ni hamma versiyada bermaydi — qo'lda ajratamiz.
-  const m = /^https:\/\/([^/?#]*)/i.exec(url.trim());
+  const m = /^https:\/\/([^/?#]*)/i.exec(url);
   if (!m) return null;
-  const authority = m[1];
-  // `https://uzgidro.uz@evil.com` — foydalanuvchi qismi bilan aldash.
-  if (!authority || authority.includes('@')) return null;
-  return authority.replace(/:\d+$/, '').toLowerCase();
+  // Faqat oddiy xost[:port] — `user@`, `%`-kodlangan, IDN va boshqa g'aroyib
+  // ko'rinishlar ishonchli manzil bo'la olmaydi.
+  const authority = m[1].toLowerCase();
+  if (!/^[a-z0-9.-]+(:\d{1,5})?$/.test(authority)) return null;
+  return authority.replace(/:\d+$/, '');
 }
 
 const envHosts = [Env.apiUrl, Env.onlyOfficeUrl, Env.mapViewerUrl]

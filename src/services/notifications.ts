@@ -265,6 +265,10 @@ export function routeForNotification(data: any): string | null {
   if (orderId) return `/order-detail?id=${orderId}`;
   if (letterId) return `/letter-detail?id=${letterId}`;
   if (kpiEntryId) return `/kpi-entry?id=${kpiEntryId}`;
+  // Doimiy o'tkazish buyrug'i: push `work_leave_id` bilan keladi, lekin qabul
+  // qiluvchi filial kadri bu buyruqning egasi/imzolovchisi emas — tafsilot unga
+  // «Topilmadi» beradi. Qaror navbatiga ochamiz (in-app qator bilan bir xil).
+  if (type.startsWith('employee_transfer_order')) return '/vaqtinchalik-buyruqlar';
   if (workLeaveId) return `/leave-detail?id=${workLeaveId}`;
   if (ticketId) return `/texnik-yordam-detail?id=${ticketId}`;
   // Loyiha ekranlari mobilда BOR (loyihalar / loyiha-detail / karta tafsiloti) —
@@ -297,7 +301,11 @@ export function routeForNotification(data: any): string | null {
   if (type.startsWith('card') || type.startsWith('workspace')) return '/loyihalar';
   // Both screens exist on mobile; these used to return null (tap did nothing).
   if (type.startsWith('navbatchilik')) return '/navbatchilik';
-  if (type.startsWith('employee_assignment')) return '/profile-detail';
+  // Kadrga «xodimingiz boshqa filialda o'rindosh» — push o'sha xodimning id'si bilan
+  // keladi; id'siz (in-app) qatorda — o'z profili (xodimning o'ziga kelgan xabar).
+  if (type.startsWith('employee_assignment')) {
+    return data.employee_id ? `/profile-detail?id=${data.employee_id}` : '/profile-detail';
+  }
   // Zoom yig'ilishlari (zoom_decision, zoom_organizer_changed) — umumiy jadval.
   if (type.startsWith('zoom')) return '/zoom';
   // Tibbiy ko'rik (v2 notificationRoutes): xodimning O'Z xabarlari (muddat / natija) v2 da
