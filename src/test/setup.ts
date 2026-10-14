@@ -54,6 +54,12 @@ jest.mock('expo-crypto', () => {
 });
 
 // expo-local-authentication → configurable stub; tests flip the mocks per case.
+// Maxfiy ekranlarda skrinshot taqiqi (src/lib/screenPrivacy) — native modul jest'da yo'q.
+jest.mock('expo-screen-capture', () => ({
+  preventScreenCaptureAsync: jest.fn(async () => {}),
+  allowScreenCaptureAsync: jest.fn(async () => {}),
+}));
+
 jest.mock('expo-local-authentication', () => ({
   hasHardwareAsync: jest.fn(async () => false),
   isEnrolledAsync: jest.fn(async () => false),

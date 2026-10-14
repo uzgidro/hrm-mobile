@@ -16,6 +16,7 @@ import { EmptyState, LoadingView } from '@/components/StateViews';
 import { getApiErrorMessage } from '@/api/errors';
 import { getMyProfile, useUpdateMyProfile } from '../api/mutations';
 import { toast } from '@/lib/toast';
+import { useSensitiveScreen } from '@/lib/screenPrivacy';
 
 // `key` is the API `maritial_status` enum code (never translated); `labelKey`
 // is a profile.maritalStatus.* catalog key resolved via t() at render time.
@@ -49,6 +50,8 @@ const EMPTY: Form = {
 };
 
 export default function ProfileEditScreen() {
+  // JShShIR / pasport / manzil — skrinshot va ilovalar almashtirgichida yopiq.
+  useSensitiveScreen();
   const { t } = useTranslation();
   const { user } = useAuthStore();
   const employeeId = user?.employee?.id;

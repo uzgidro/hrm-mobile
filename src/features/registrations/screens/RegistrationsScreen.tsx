@@ -31,8 +31,12 @@ import {
 import { registrationsQuery } from '../api/queries';
 import { RegistrationSheet } from '../components/RegistrationSheet';
 import { REGISTRATION_FILTERS, claimText, type RegistrationFilter, type RegistrationRow } from '../utils/registrations';
+import { useSensitiveScreen } from '@/lib/screenPrivacy';
 
 export default function RegistrationsScreen() {
+  // RegistrationSheet JShShIR/pasportni ko'rsatadi; sheet (Modal) FLAG_SECURE ni
+  // ochilishda shu ekrandan oladi — shuning uchun himoya ekranda (lib/screenPrivacy).
+  useSensitiveScreen();
   const { t } = useTranslation();
   const compact = useBreakpoint().sizeClass === 'compact';
   const [status, setStatus] = useState<RegistrationFilter>('pending');

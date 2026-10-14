@@ -21,6 +21,7 @@ import { useDeleteVisitor } from '../api/mutations';
 import { toast } from '@/lib/toast';
 import { goBackOr } from '@/lib/goBack';
 import type { Visitor } from '@/types';
+import { useSensitiveScreen } from '@/lib/screenPrivacy';
 
 function Row({ icon, label, value, styles, colors }: {
   icon: IconName; label: string; value?: string | null; styles: any; colors: ThemeColors;
@@ -44,6 +45,8 @@ function Row({ icon, label, value, styles, colors }: {
 // safe area) and hides the header's back button (there's nothing to "back" to
 // inside a split pane). Mirrors OrderDetailView (T13) / LetterDetailView 1:1.
 export function VisitorDetailView({ id, embedded = false }: { id: number; embedded?: boolean }) {
+  // Mehmon hujjati (pasport/JShShIR) — skrinshot yopiq; planshetda ro'yxat ichida ham.
+  useSensitiveScreen();
   const { t } = useTranslation();
   const visitorId = id;
   const { colors } = useTheme();
