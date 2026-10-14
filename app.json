@@ -95,12 +95,7 @@
       "typedRoutes": true
     },
     "updates": {
-      "url": "https://u.expo.dev/a67e12d1-02d2-4c39-96b1-eb5a465274fc",
-      "codeSigningCertificate": "./certs/certificate.pem",
-      "codeSigningMetadata": {
-        "keyid": "main",
-        "alg": "rsa-v1_5-sha256"
-      }
+      "url": "https://u.expo.dev/a67e12d1-02d2-4c39-96b1-eb5a465274fc"
     },
     "extra": {
       "router": {},

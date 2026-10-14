@@ -29,8 +29,8 @@ yarn-error.*
 # macOS
 .DS_Store
 *.pem
-# OTA code signing — OCHIQ sertifikat ilova ichiga kiradi va EAS build'ga kerak.
-# Maxfiy kalit (private-key.pem) repoda YO'Q — GitHub secret EXPO_UPDATES_PRIVATE_KEY.
+# OTA code-signing public cert — currently UNUSED (needs a paid EAS plan), kept for
+# re-enabling. The private key is never in the repo (EXPO_UPDATES_PRIVATE_KEY secret).
 !certs/certificate.pem
 
 # IDE
