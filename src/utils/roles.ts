@@ -429,7 +429,7 @@ export type PageKey =
   | 'notifications' | 'profile' | 'support' | 'chairman' | 'directory' | 'terminals'
   | 'duty' | 'holidays'
   // v3: web v2 katalogining qolgan modullari (ekranlari to'lqinlarda — `ready`).
-  | 'services' | 'zoom' | 'vehicles' | 'ijro' | 'workPlan' | 'medical' | 'health'
+  | 'services' | 'zoom' | 'vehicles' | 'ijro' | 'chrono' | 'workPlan' | 'medical' | 'health'
   | 'registrationStatus' | 'orderTypes' | 'tempOrders' | 'staffPositions' | 'structure'
   | 'responsibles' | 'hrQuality' | 'trainings' | 'learning' | 'inspections' | 'reports'
   | 'dictionaries' | 'tabelSettings' | 'monitoring' | 'kpp' | 'videoGuide' | 'users'
@@ -577,6 +577,9 @@ const MODULE_FOR_PAGE: Partial<Record<PageKey, ModuleDef>> = {
   zoom: { key: 'zoom', defaultRoles: ALL },
   vehicles: { key: 'vehicles', defaultRoles: ALL, gates: [needsFleet] },
   ijro: { key: 'ijro', defaultRoles: ALL },
+  // Topshiriqlar xronologiyasi (v2 2026-10-26): executors come from any branch;
+  // the server shows each person only the tasks they take part in.
+  chrono: { key: 'chrono', defaultRoles: ALL },
   workPlan: { key: 'workPlan', defaultRoles: ADMIN_HR_LEAD },
   medical: { key: 'medical', defaultRoles: ALL, gates: [needsMedical] },
   health: { key: 'health', defaultRoles: ALL, gates: [needsHealth] },

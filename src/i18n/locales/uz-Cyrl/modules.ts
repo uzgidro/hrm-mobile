@@ -47,6 +47,7 @@ export default {
     zoom: 'Zoom йиғилишлари',
     vehicles: 'Автопарк',
     ijro: 'Ижро интизоми',
+    chrono: 'Топшириқлар хронологияси',
     workPlan: 'Иш режаси',
     medical: 'Тиббий кўрик',
     health: 'Соғлиқ кўриги',

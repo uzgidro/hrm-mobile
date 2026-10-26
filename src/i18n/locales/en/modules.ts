@@ -47,6 +47,7 @@ export default {
     zoom: 'Zoom meetings',
     vehicles: 'Fleet',
     ijro: 'Execution discipline',
+    chrono: 'Task chronology',
     workPlan: 'Work plan',
     medical: 'Medical check',
     health: 'Health check',

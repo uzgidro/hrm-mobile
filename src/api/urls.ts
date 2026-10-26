@@ -362,6 +362,12 @@ export const WORK_LEAVES_HR_LIST = 'work-leaves/hr-list';
 export const WORK_LEAVES_HR_CREATE = 'work-leaves/hr-create';
 // Ijro intizomi — topshiriqlar va muddatlar (web v2 IjroPage).
 export const TASKS_OVERDUE = 'tasks-overdue';
+// Topshiriqlar xronologiyasi — a main job with a tree of jobs (web v2 /topshiriqlar-xronologiyasi).
+export const TASK_CHRONOLOGY = 'task-chronology';
+export const TASK_CHRONOLOGY_ITEM = (id: number) => `task-chronology/${id}`;
+export const CHRONO_STEP = (id: number) => `task-chronology/steps/${id}`;
+export const CHRONO_EXTENSION = (id: number) => `task-chronology/extension-requests/${id}`;
+export const CHRONO_FILE_VIEWER_CONFIG = (id: number) => `task-chronology/attachments/${id}/viewer-config`;
 
 // ── W4 Xodimlar ──────────────────────────────────────────────────────────────
 export const REGISTRATION_ME = 'registrations/me';

@@ -53,6 +53,7 @@ export default {
     zoom: "Zoom yig'ilishlari",
     vehicles: 'Avtopark',
     ijro: 'Ijro intizomi',
+    chrono: 'Topshiriqlar xronologiyasi',
     workPlan: 'Ish rejasi',
     medical: "Tibbiy ko'rik",
     health: "Sog'liq ko'rigi",
