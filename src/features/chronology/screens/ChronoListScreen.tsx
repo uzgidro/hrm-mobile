@@ -32,10 +32,12 @@ import {
 import { chronoCalendarQuery, chronoSummaryQuery, chronoTasksQuery } from '../api/queries';
 import { useDueText } from '../components/dueText';
 import {
+  CHRONO_KINDS,
   TASK_BADGE,
   TASK_FILTERS,
   TONE_BADGE,
   type ChronoCalendarItem,
+  type ChronoKind,
   type ChronoTaskRow,
   type TaskFilter,
 } from '../utils/chrono';
@@ -49,10 +51,13 @@ export default function ChronoListScreen() {
   const debounced = useDebouncedValue(search);
   const [status, setStatus] = useState<TaskFilter>('');
   const [mine, setMine] = useState(false);
-  const summary = useQuery(chronoSummaryQuery(debounced, mine));
-  const list = useQuery({ ...chronoTasksQuery(debounced, status, mine), enabled: view === 'list' });
+  // Asosiy / Texnik / Sayyor never mix (web v2 parity, 2026-10-27).
+  const [kind, setKind] = useState<ChronoKind>('main');
+  const summary = useQuery(chronoSummaryQuery(debounced, mine, kind));
+  const list = useQuery({ ...chronoTasksQuery(debounced, status, mine, kind), enabled: view === 'list' });
   const s = summary.data;
   const canManage = !!s?.can_manage;
+  const seesAll = s?.sees_all ?? canManage;
 
   return (
     <View style={styles.root}>
@@ -67,6 +72,12 @@ export default function ChronoListScreen() {
           </Text>
         </View>
         <View style={styles.filters}>
+          <Segmented<ChronoKind>
+            testID="chrono-kind"
+            options={CHRONO_KINDS.map((k) => ({ value: k, label: t(`chrono.kind_${k}`) }))}
+            value={kind}
+            onChange={setKind}
+          />
           <Segmented<View_>
             options={[
               { value: 'list', label: t('chrono.viewList') },
@@ -94,8 +105,8 @@ export default function ChronoListScreen() {
               <SearchField value={search} onChangeText={setSearch} placeholder={t('chrono.searchPlaceholder')} />
             </>
           )}
-          {/* Only the responsibles see every task; for anyone else «all» already IS «mine». */}
-          {canManage && (
+          {/* Only those who see every task get the switch; for anyone else «all» already IS «mine». */}
+          {seesAll && (
             <ChipScroll contentContainerStyle={styles.chips}>
               <Chip label={t('chrono.scopeAll')} selected={!mine} onPress={() => setMine(false)} />
               <Chip label={t('chrono.scopeMine')} selected={mine} onPress={() => setMine(true)} />
@@ -104,7 +115,7 @@ export default function ChronoListScreen() {
         </View>
 
         {view === 'calendar' ? (
-          <ChronoCalendar mine={mine} />
+          <ChronoCalendar mine={mine} kind={kind} />
         ) : (
           <Card>
             {list.isError ? (
@@ -133,6 +144,7 @@ function TaskRow({ row }: { row: ChronoTaskRow }) {
   const due = useDueText()(row);
   const cause = row.status !== 'done' ? row.causes[0] : undefined;
   const name = row.main_executor?.legal_name ?? '—';
+  const turn = row.status !== 'done' ? turnText(t, row) : null;
   return (
     <ListRow
       testID={`chrono-task-${row.id}`}
@@ -175,11 +187,25 @@ function TaskRow({ row }: { row: ChronoTaskRow }) {
                 .join(' · ')}
             </Text>
           ) : null}
+          {!!turn && (
+            <Text variant="caption" tone="muted" numberOfLines={1}>
+              {turn}
+            </Text>
+          )}
         </View>
       }
       onPress={() => router.push(`/topshiriq?id=${row.id}`)}
     />
   );
+}
+
+/** «Navbat: <name>» — whose move it is, readable without opening the task. */
+function turnText(t: (k: string, o?: Record<string, unknown>) => string, row: ChronoTaskRow): string | null {
+  const tn = row.turn;
+  if (!tn || tn.kind === 'done') return null;
+  if (tn.kind === 'control') return t('chrono.turnControl');
+  if (tn.kind === 'final') return t('chrono.turnFinal');
+  return tn.person?.legal_name ? t('chrono.turnOf', { name: tn.person.legal_name }) : null;
 }
 
 /* ─────────────────────────── calendar ─────────────────────────── */
@@ -189,7 +215,7 @@ function TaskRow({ row }: { row: ChronoTaskRow }) {
  * as coloured dots; tapping a day lists its entries, an entry opens the task
  * on that very job.
  */
-function ChronoCalendar({ mine }: { mine: boolean }) {
+function ChronoCalendar({ mine, kind }: { mine: boolean; kind: ChronoKind }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const [month, setMonth] = useState<Dayjs>(dayjs().startOf('month'));
@@ -200,7 +226,7 @@ function ChronoCalendar({ mine }: { mine: boolean }) {
   const days = Array.from({ length: weeks * 7 }, (_, i) => first.subtract(lead, 'day').add(i, 'day'));
   const from = days[0].format('YYYY-MM-DD');
   const to = days[days.length - 1].format('YYYY-MM-DD');
-  const cal = useQuery(chronoCalendarQuery(from, to, mine));
+  const cal = useQuery(chronoCalendarQuery(from, to, mine, kind));
   const byDay = useMemo(() => {
     const m = new Map<string, ChronoCalendarItem[]>();
     for (const it of cal.data ?? []) m.set(it.deadline, [...(m.get(it.deadline) ?? []), it]);

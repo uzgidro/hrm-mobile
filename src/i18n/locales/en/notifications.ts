@@ -137,4 +137,10 @@ export default {
   learningCourseAssigned: 'Course assigned',
   mobileCheckinCancelled: "Your check-in was cancelled",
   mobileCheckinFar: "Remote check-in",
+  chronoFinalReview: 'Awaiting final approval',
+  chronoExtAgreement: 'Agree on a deadline extension',
+  chronoExtChair: 'An extension awaits your decision',
+  chronoOrderChanged: 'The order changed',
+  chronoCoexecutorAdded: 'You were added as a co-executor',
+  chronoReuploaded: 'The task was uploaded again',
 } as const;

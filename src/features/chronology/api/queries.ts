@@ -5,51 +5,55 @@ import { keepPreviousData, queryOptions } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
 import { unwrapList } from '@/api/response';
 import { TASK_CHRONOLOGY, TASK_CHRONOLOGY_ITEM } from '@/api/urls';
-import type { ChronoCalendarItem, ChronoSummary, ChronoTask, ChronoTaskRow, TaskFilter } from '../utils/chrono';
+import type { ChronoCalendarItem, ChronoKind, ChronoSummary, ChronoTask, ChronoTaskRow, TaskFilter } from '../utils/chrono';
 
 export const chronoKeys = {
   all: ['chrono'] as const,
-  list: (search: string, status: TaskFilter, mine: boolean) => ['chrono', 'list', search, status, mine] as const,
-  summary: (search: string, mine: boolean) => ['chrono', 'summary', search, mine] as const,
-  calendar: (from: string, to: string, mine: boolean) => ['chrono', 'calendar', from, to, mine] as const,
+  list: (search: string, status: TaskFilter, mine: boolean, kind?: ChronoKind) => ['chrono', 'list', search, status, mine, kind ?? ''] as const,
+  summary: (search: string, mine: boolean, kind?: ChronoKind) => ['chrono', 'summary', search, mine, kind ?? ''] as const,
+  calendar: (from: string, to: string, mine: boolean, kind?: ChronoKind) => ['chrono', 'calendar', from, to, mine, kind ?? ''] as const,
   task: (id: number) => ['chrono', 'task', id] as const,
 };
 
-export const fetchChronoTasks = (search: string, status: TaskFilter, mine: boolean) =>
+export const fetchChronoTasks = (search: string, status: TaskFilter, mine: boolean, kind?: ChronoKind) =>
   apiClient
     .get(TASK_CHRONOLOGY, {
-      params: { ...(search ? { search } : {}), ...(status ? { status } : {}), ...(mine ? { mine: true } : {}) },
+      params: { ...(search ? { search } : {}), ...(status ? { status } : {}), ...(mine ? { mine: true } : {}), ...(kind ? { kind } : {}) },
     })
     .then((r) => unwrapList<ChronoTaskRow>(r.data));
 
-export const fetchChronoSummary = (search: string, mine: boolean) =>
+export const fetchChronoSummary = (search: string, mine: boolean, kind?: ChronoKind) =>
   apiClient
-    .get<ChronoSummary>(`${TASK_CHRONOLOGY}/summary`, { params: { ...(search ? { search } : {}), ...(mine ? { mine: true } : {}) } })
+    .get<ChronoSummary>(`${TASK_CHRONOLOGY}/summary`, {
+      params: { ...(search ? { search } : {}), ...(mine ? { mine: true } : {}), ...(kind ? { kind } : {}) },
+    })
     .then((r) => r.data);
 
-export const fetchChronoCalendar = (from: string, to: string, mine: boolean) =>
+export const fetchChronoCalendar = (from: string, to: string, mine: boolean, kind?: ChronoKind) =>
   apiClient
-    .get<ChronoCalendarItem[]>(`${TASK_CHRONOLOGY}/calendar`, { params: { date_from: from, date_to: to, ...(mine ? { mine: true } : {}) } })
+    .get<ChronoCalendarItem[]>(`${TASK_CHRONOLOGY}/calendar`, {
+      params: { date_from: from, date_to: to, ...(mine ? { mine: true } : {}), ...(kind ? { kind } : {}) },
+    })
     .then((r) => r.data);
 
 export const fetchChronoTask = (id: number) => apiClient.get<ChronoTask>(TASK_CHRONOLOGY_ITEM(id)).then((r) => r.data);
 
-export function chronoTasksQuery(search: string, status: TaskFilter, mine: boolean) {
+export function chronoTasksQuery(search: string, status: TaskFilter, mine: boolean, kind?: ChronoKind) {
   return queryOptions({
-    queryKey: chronoKeys.list(search, status, mine),
-    queryFn: () => fetchChronoTasks(search, status, mine),
+    queryKey: chronoKeys.list(search, status, mine, kind),
+    queryFn: () => fetchChronoTasks(search, status, mine, kind),
     placeholderData: keepPreviousData,
   });
 }
 
-export function chronoSummaryQuery(search: string, mine: boolean) {
-  return queryOptions({ queryKey: chronoKeys.summary(search, mine), queryFn: () => fetchChronoSummary(search, mine) });
+export function chronoSummaryQuery(search: string, mine: boolean, kind?: ChronoKind) {
+  return queryOptions({ queryKey: chronoKeys.summary(search, mine, kind), queryFn: () => fetchChronoSummary(search, mine, kind) });
 }
 
-export function chronoCalendarQuery(from: string, to: string, mine: boolean) {
+export function chronoCalendarQuery(from: string, to: string, mine: boolean, kind?: ChronoKind) {
   return queryOptions({
-    queryKey: chronoKeys.calendar(from, to, mine),
-    queryFn: () => fetchChronoCalendar(from, to, mine),
+    queryKey: chronoKeys.calendar(from, to, mine, kind),
+    queryFn: () => fetchChronoCalendar(from, to, mine, kind),
     placeholderData: keepPreviousData,
   });
 }

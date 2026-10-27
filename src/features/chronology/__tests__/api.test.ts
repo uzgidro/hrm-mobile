@@ -3,6 +3,7 @@ import { apiClient } from '@/api/client';
 import { fetchChronoCalendar, fetchChronoSummary, fetchChronoTask, fetchChronoTasks } from '../api/queries';
 import {
   addFiles,
+  agreeExtension,
   buildForm,
   comment,
   createTask,
@@ -10,6 +11,7 @@ import {
   decideStep,
   decideTask,
   deleteTask,
+  finalDecideTask,
   requestExtension,
   saveSteps,
   setDeadline,
@@ -33,6 +35,20 @@ describe('queries', () => {
     expect(mock.history.get[0].params).toEqual({});
     await fetchChronoTasks('hisobot', 'late', true);
     expect(mock.history.get[1].params).toEqual({ search: 'hisobot', status: 'late', mine: true });
+  });
+
+  it('a kind narrows the list, summary and calendar', async () => {
+    mock.onGet('task-chronology').reply(200, { items: [], total: 0 });
+    mock.onGet('task-chronology/summary').reply(200, { all: 0, can_manage: false });
+    mock.onGet('task-chronology/calendar').reply(200, []);
+    await fetchChronoTasks('', '', false, 'technical');
+    await fetchChronoSummary('', false, 'field');
+    await fetchChronoCalendar('2026-10-01', '2026-10-31', false, 'main');
+    expect(mock.history.get.map((r) => r.params)).toEqual([
+      { kind: 'technical' },
+      { kind: 'field' },
+      { date_from: '2026-10-01', date_to: '2026-10-31', kind: 'main' },
+    ]);
   });
 
   it('summary, calendar and one task', async () => {
@@ -115,5 +131,19 @@ describe('writes', () => {
     } finally {
       append.mockRestore();
     }
+  });
+
+  it('agreement and the two-stage completion', async () => {
+    mock.onPost(/.*/).reply(200, task);
+    await agreeExtension(3);
+    await agreeExtension(3, 'Roziman');
+    await finalDecideTask(5, 'final-approve');
+    await finalDecideTask(5, 'final-reject', 'Hisobot yo‘q');
+    expect(mock.history.post.map((r) => [r.url, JSON.parse(r.data)])).toEqual([
+      ['task-chronology/extension-requests/3/agree', { deadline: null, note: null }],
+      ['task-chronology/extension-requests/3/agree', { deadline: null, note: 'Roziman' }],
+      ['task-chronology/5/final-approve', { note: null }],
+      ['task-chronology/5/final-reject', { note: 'Hisobot yo‘q' }],
+    ]);
   });
 });

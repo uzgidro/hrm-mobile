@@ -57,6 +57,12 @@ export const requestExtension = (stepId: number, deadline: string, reason: strin
   apiClient.post<ChronoTask>(`${CHRONO_STEP(stepId)}/extension-requests`, { requested_deadline: deadline, reason }).then(data);
 export const setDeadline = (stepId: number, deadline: string, reason: string) =>
   apiClient.post<ChronoTask>(`${CHRONO_STEP(stepId)}/deadline`, { deadline, reason }).then(data);
+/** The control department / the main executor agree; the last one sends it to the chairman. */
+export const agreeExtension = (extId: number, note?: string) =>
+  apiClient.post<ChronoTask>(`${CHRONO_EXTENSION(extId)}/agree`, { deadline: null, note: note || null }).then(data);
+/** The final approver closes a task the control department accepted, or returns it. */
+export const finalDecideTask = (taskId: number, action: 'final-approve' | 'final-reject', note?: string) =>
+  apiClient.post<ChronoTask>(`${TASK_CHRONOLOGY_ITEM(taskId)}/${action}`, { note: note || null }).then(data);
 export const decideExtension = (extId: number, action: 'approve' | 'reject', args: { deadline?: string; note?: string }) =>
   apiClient
     .post<ChronoTask>(`${CHRONO_EXTENSION(extId)}/${action}`, { deadline: args.deadline || null, note: args.note || null })

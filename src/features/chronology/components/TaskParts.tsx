@@ -130,6 +130,7 @@ export function Composer({
   submitLabel,
   busy,
   allowEmpty,
+  requireFile,
   people,
   onSubmit,
 }: {
@@ -137,6 +138,8 @@ export function Composer({
   submitLabel: string;
   busy: boolean;
   allowEmpty?: boolean;
+  /** The job may only be handed in with a file attached. */
+  requireFile?: boolean;
   people?: ChronoPerson[];
   onSubmit: (text: string, files: UploadFile[], mentionIds: number[]) => Promise<unknown>;
 }) {
@@ -167,6 +170,7 @@ export function Composer({
     setPicked((xs) => (xs.some((x) => x.id === p.id) ? xs : [...xs, p]));
   };
   const send = async () => {
+    if (requireFile && !files.length) return setErr(t('chrono.errFileRequired'));
     if (!text.trim() && !files.length && !allowEmpty) return setErr(t('chrono.errEmptyComment'));
     try {
       await onSubmit(text.trim(), files, mentionIds(text, picked));

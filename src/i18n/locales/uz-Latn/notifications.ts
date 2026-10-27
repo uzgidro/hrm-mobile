@@ -154,4 +154,10 @@ export default {
   learningCourseAssigned: 'Kurs biriktirildi',
   mobileCheckinCancelled: "Belgingiz bekor qilindi",
   mobileCheckinFar: "Uzoqdan belgi",
+  chronoFinalReview: 'Yakuniy tasdiq kutilmoqda',
+  chronoExtAgreement: 'Muddat uzaytirishni kelishing',
+  chronoExtChair: 'Muddat uzaytirish bo‘yicha qaror kutilmoqda',
+  chronoOrderChanged: 'Navbat o‘zgardi',
+  chronoCoexecutorAdded: 'Ham-ijrochi etib qo‘shildingiz',
+  chronoReuploaded: 'Topshiriq qayta yuklandi',
 } as const;

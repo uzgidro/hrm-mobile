@@ -21,11 +21,11 @@ import { PickerModal } from '@/components/PickerModal';
 import { useEmployeeOptionsPicker } from '@/lib/useInfinitePicker';
 import { toast } from '@/lib/toast';
 import { useTheme } from '@/theme/ThemeProvider';
-import { Avatar, Button, Card, Chip, IconButton, Screen, Segmented, SelectField, Sheet, Skeleton, Text } from '@/ui';
+import { Avatar, Button, Card, Chip, IconButton, Screen, Segmented, SelectField, Sheet, Skeleton, Text, Toggle } from '@/ui';
 import { chronoTaskQuery } from '../api/queries';
 import { addFiles, createTask, saveSteps, updateTask, useChronoWrite } from '../api/mutations';
 import { pickFiles } from '../components/TaskParts';
-import { subtree, treeOrder, type ChronoPerson, type ChronoTask, type StepInput } from '../utils/chrono';
+import { CHRONO_KINDS, subtree, treeOrder, type ChronoKind, type ChronoPerson, type ChronoTask, type StepInput } from '../utils/chrono';
 
 type Stage = 'task' | 'people' | 'steps';
 const STAGES: Stage[] = ['task', 'people', 'steps'];
@@ -41,7 +41,25 @@ type Draft = {
   /** The saved deadline — moves only through «Muddatni o'zgartirish». */
   lockedDeadline?: string;
   parent: string | null;
+  /** The executor must attach a file to hand the job in. */
+  requiresFile: boolean;
 };
+
+function SwitchRow({ label, hint, value, onChange, testID }: { label: string; hint?: string; value: boolean; onChange: (v: boolean) => void; testID?: string }) {
+  return (
+    <View style={styles.switchRow}>
+      <View style={styles.flex}>
+        <Text variant="label">{label}</Text>
+        {!!hint && (
+          <Text variant="caption" tone="subtle">
+            {hint}
+          </Text>
+        )}
+      </View>
+      <Toggle testID={testID} value={value} onValueChange={onChange} accessibilityLabel={label} />
+    </View>
+  );
+}
 
 const fmt = (d: string) => (d ? dayjs(d).format('DD.MM.YYYY') : '');
 
@@ -74,6 +92,8 @@ function Form({ task, onDone }: { task: ChronoTask | null; onDone: () => void })
   const [deadlineReason, setDeadlineReason] = useState('');
   const [members, setMembers] = useState<ChronoPerson[]>(task?.members ?? []);
   const [mainId, setMainId] = useState<number | null>(task?.main_executor?.id ?? null);
+  const [kind, setKind] = useState<ChronoKind>(task?.kind ?? 'main');
+  const [sequential, setSequential] = useState(task?.sequential ?? true);
   const [files, setFiles] = useState<UploadFile[]>([]);
   const [steps, setSteps] = useState<Draft[]>(() =>
     task
@@ -87,6 +107,7 @@ function Form({ task, onDone }: { task: ChronoTask | null; onDone: () => void })
           deadline: s.deadline,
           lockedDeadline: s.deadline,
           parent: s.parent_id != null ? String(s.parent_id) : null,
+          requiresFile: !!s.requires_file,
         }))
       : [],
   );
@@ -167,7 +188,7 @@ function Form({ task, onDone }: { task: ChronoTask | null; onDone: () => void })
   /* ── jobs ── */
   const patch = (handle: string, p: Partial<Draft>) => setSteps((xs) => xs.map((x) => (x.handle === handle ? { ...x, ...p } : x)));
   const add = (parent: Draft | null) => {
-    const d: Draft = { handle: newHandle(), title: '', description: '', assigneeId: null, start_date: '', deadline: parent?.deadline ?? '', parent: parent?.handle ?? null };
+    const d: Draft = { handle: newHandle(), title: '', description: '', assigneeId: null, start_date: '', deadline: parent?.deadline ?? '', parent: parent?.handle ?? null, requiresFile: false };
     setSteps((xs) => [...xs, d]);
     setEditing(d.handle);
   };
@@ -197,6 +218,7 @@ function Form({ task, onDone }: { task: ChronoTask | null; onDone: () => void })
       start_date: s.start_date || null,
       deadline: s.deadline,
       parent: s.parent,
+      requires_file: s.requiresFile,
     }));
     const fields = {
       title: title.trim(),
@@ -205,6 +227,8 @@ function Form({ task, onDone }: { task: ChronoTask | null; onDone: () => void })
       main_executor_id: mainId,
       start_date: startDate || null,
       deadline,
+      kind,
+      sequential,
     };
     const memberIds = members.map((m) => m.id);
     try {
@@ -269,6 +293,12 @@ function Form({ task, onDone }: { task: ChronoTask | null; onDone: () => void })
         {stage === 'task' && (
           <Card>
             <View style={styles.gap}>
+              <Segmented<ChronoKind>
+                testID="chrono-form-kind"
+                options={CHRONO_KINDS.map((k) => ({ value: k, label: t(`chrono.kind_${k}`) }))}
+                value={kind}
+                onChange={setKind}
+              />
               <FormInput label={t('chrono.fTitle')} value={title} onChangeText={setTitle} placeholder={t('chrono.fTitlePh')} required />
               <FormInput label={t('chrono.fDoc')} value={docNumber} onChangeText={setDocNumber} />
               <View style={styles.row}>
@@ -288,6 +318,13 @@ function Form({ task, onDone }: { task: ChronoTask | null; onDone: () => void })
                 <FormInput label={t('chrono.fDeadlineReason')} value={deadlineReason} onChangeText={setDeadlineReason} multiline required />
               )}
               <FormInput label={t('chrono.fDescription')} value={description} onChangeText={setDescription} multiline />
+              <SwitchRow
+                testID="chrono-form-sequential"
+                label={t('chrono.fSequential')}
+                hint={t(sequential ? 'chrono.fSequentialOn' : 'chrono.fSequentialOff')}
+                value={sequential}
+                onChange={setSequential}
+              />
               <AttachmentField
                 label={t('chrono.taskFiles')}
                 files={files}
@@ -513,6 +550,13 @@ function JobEditSheet({
           )
         )}
         <FormInput label={t('chrono.fStepDesc')} value={draft.description} onChangeText={(v) => onChange({ description: v })} multiline />
+        <SwitchRow
+          testID="chrono-job-requires-file"
+          label={t('chrono.fileRequired')}
+          hint={t('chrono.fileRequiredHint')}
+          value={draft.requiresFile}
+          onChange={(v) => onChange({ requiresFile: v })}
+        />
         <Button label={t('common.done')} full onPress={onClose} />
       </View>
       <PickerModal
@@ -556,6 +600,7 @@ function JobEditSheet({
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
+  switchRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   flex: { flex: 1 },
   header: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingTop: 8, paddingBottom: 8 },
   hint: { marginTop: 8, marginBottom: 12 },

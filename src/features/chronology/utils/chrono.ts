@@ -13,7 +13,13 @@ export type ChronoPerson = {
   photo_thumb_path?: string | null;
   position_name?: string | null;
   branch_name?: string | null;
+  /** Away today: leave / sick / trip / maternity / order / other. */
+  absence?: 'leave' | 'sick' | 'trip' | 'maternity' | 'order' | 'other' | null;
 };
+
+/** Asosiy / Texnik / Sayyor — separate registers (web v2 parity, 2026-10-27). */
+export type ChronoKind = 'main' | 'technical' | 'field';
+export const CHRONO_KINDS: ChronoKind[] = ['main', 'technical', 'field'];
 
 export type StepStatus = 'active' | 'submitted' | 'returned' | 'approved';
 export type TaskStatus = 'active' | 'late' | 'review' | 'done';
@@ -33,6 +39,18 @@ export type ChronoExtension = {
   decided_by?: ChronoPerson | null;
   created_at?: string | null;
   decided_at?: string | null;
+  /** agreement (control department + main executor) → chair → done; null = moved directly. */
+  stage?: 'agreement' | 'chair' | 'done' | null;
+  votes?: {
+    role: 'control' | 'responsible' | 'chair';
+    person?: ChronoPerson | null;
+    decision?: 'agree' | 'disagree' | null;
+    note?: string | null;
+    acted_at?: string | null;
+  }[];
+  /** The viewer may agree now / may give the chairman's decision now. */
+  can_agree?: boolean;
+  can_decide?: boolean;
 };
 
 export type ChronoStep = {
@@ -58,6 +76,21 @@ export type ChronoStep = {
   days_left?: number | null;
   on_critical_path: boolean;
   extensions: ChronoExtension[];
+  /** 1, 2, 3 … among the jobs on the same job. */
+  order_no?: number;
+  requires_file?: boolean;
+  /** A job before it is not accepted yet — a sequential task waits. */
+  waiting_turn?: boolean;
+  coexecutors?: { employee?: ChronoPerson | null; reason?: string | null }[];
+};
+
+/** Whose move it is now. */
+export type ChronoTurn = {
+  kind: 'step' | 'review' | 'main' | 'control' | 'final' | 'done';
+  step_id?: number | null;
+  title?: string;
+  person?: ChronoPerson | null;
+  late_days?: number;
 };
 
 export type ChronoCause = {
@@ -117,6 +150,12 @@ export type ChronoTaskRow = {
   days_left?: number | null;
   causes: ChronoCause[];
   assignees: ChronoPerson[];
+  kind?: ChronoKind;
+  /** Jobs on the same job are done one after another (1, 2, 3 …). */
+  sequential?: boolean;
+  /** executing → control → final → done */
+  stage?: 'executing' | 'control' | 'final' | 'done';
+  turn?: ChronoTurn | null;
 };
 
 export type ChronoTask = ChronoTaskRow & {
@@ -131,6 +170,9 @@ export type ChronoTask = ChronoTaskRow & {
   is_main_executor: boolean;
   jobs_open: number;
   main_own_late_days: number;
+  /** May give the final approval (after the control department). */
+  can_final?: boolean;
+  final_step?: boolean;
 };
 
 export type ChronoSummary = {
@@ -141,6 +183,8 @@ export type ChronoSummary = {
   done: number;
   all: number;
   can_manage: boolean;
+  /** Manager, chairman or final approver — the scope switch makes sense. */
+  sees_all?: boolean;
 };
 
 export type ChronoCalendarItem = {
@@ -166,6 +210,7 @@ export type StepInput = {
   start_date?: string | null;
   deadline: string;
   parent: string | null;
+  requires_file?: boolean;
 };
 
 /* ─────────────────────────── states ─────────────────────────── */

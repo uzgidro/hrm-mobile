@@ -9,12 +9,25 @@ import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeProvider';
 import { Avatar, Badge, Button, Sheet, Text } from '@/ui';
-import { useChronoWrite, comment, decideExtension, decideStep, decideTask, requestExtension, setDeadline, submitStep, submitTask } from '../api/mutations';
+import {
+  useChronoWrite,
+  agreeExtension,
+  comment,
+  decideExtension,
+  decideStep,
+  decideTask,
+  finalDecideTask,
+  requestExtension,
+  setDeadline,
+  submitStep,
+  submitTask,
+} from '../api/mutations';
 import {
   TONE_BADGE,
   mentionablePeople,
   rootTone,
   stepTone,
+  type ChronoExtension,
   type ChronoPerson,
   type ChronoStep,
   type ChronoTask,
@@ -23,14 +36,15 @@ import { Composer, DateReasonForm, ExtensionHistory, NoteForm, Timeline, runWrit
 
 const fmt = (d?: string | null) => (d ? dayjs(d).format('DD.MM.YYYY') : '—');
 
-type Mode = null | 'submit' | 'comment' | 'extension' | 'approve' | 'reject' | 'deadline' | 'reopen';
+type Mode = null | 'submit' | 'comment' | 'extension' | 'approve' | 'reject' | 'deadline' | 'reopen' | 'finalApprove' | 'finalReject';
 
-function PersonLine({ p }: { p?: ChronoPerson | null }) {
+function PersonLine({ p, note, size = 34 }: { p?: ChronoPerson | null; note?: string | null; size?: number }) {
+  const { t } = useTranslation();
   if (!p) return <Text tone="subtle">—</Text>;
   const sub = [p.position_name, p.branch_name].filter(Boolean).join(' · ');
   return (
     <View style={styles.person}>
-      <Avatar name={p.legal_name ?? '?'} uri={p.photo_path} thumb={p.photo_thumb_path} size={34} />
+      <Avatar name={p.legal_name ?? '?'} uri={p.photo_path} thumb={p.photo_thumb_path} size={size} />
       <View style={styles.flex}>
         <Text variant="label" numberOfLines={1}>
           {p.legal_name}
@@ -40,7 +54,39 @@ function PersonLine({ p }: { p?: ChronoPerson | null }) {
             {sub}
           </Text>
         )}
+        {!!note && (
+          <Text variant="caption" tone="muted" numberOfLines={2}>
+            {note}
+          </Text>
+        )}
       </View>
+      {!!p.absence && <Badge label={t(`chrono.absence_${p.absence}`)} tone="warning" />}
+    </View>
+  );
+}
+
+/** Who has signed a pending extension, and who still has to (control → main executor → chairman). */
+function ExtensionVotes({ ext }: { ext: ChronoExtension }) {
+  const { t } = useTranslation();
+  if (!ext.votes?.length) return null;
+  return (
+    <View style={styles.gap6}>
+      <Text variant="caption" tone="subtle">
+        {t(ext.stage === 'chair' ? 'chrono.extStageChair' : 'chrono.extStageAgreement')}
+      </Text>
+      {ext.votes.map((v, i) => (
+        <View key={i} style={styles.voteRow}>
+          <Badge
+            label={t(v.decision === 'agree' ? 'chrono.voteAgreed' : v.decision === 'disagree' ? 'chrono.voteDisagreed' : 'chrono.voteWaiting')}
+            tone={v.decision === 'agree' ? 'success' : v.decision === 'disagree' ? 'danger' : 'neutral'}
+          />
+          <Text variant="caption" style={styles.flex} numberOfLines={2}>
+            {t(`chrono.voteRole_${v.role}`)}
+            {v.person?.legal_name ? ` · ${v.person.legal_name}` : ''}
+            {v.note ? ` — ${v.note}` : ''}
+          </Text>
+        </View>
+      ))}
     </View>
   );
 }
@@ -74,7 +120,11 @@ export function JobSheet({ task, step, onClose }: { task: ChronoTask; step: Chro
   const mine = task.my_step_ids.includes(step.id);
   const manage = task.can_manage;
   const tone = stepTone(step);
+  const waiting = !!step.waiting_turn && step.status !== 'approved';
   const pending = step.extensions.find((e) => e.status === 'pending') ?? null;
+  // Old payloads (before the agreement flow) carry no flags: the officer decides.
+  const canAgree = pending?.can_agree ?? false;
+  const canDecide = pending?.can_decide ?? (pending ? manage : false);
   const lastReturn = useMemo(
     () => (step.status === 'returned' ? task.events.find((e) => e.step_id === step.id && e.kind === 'returned') : undefined),
     [task.events, step],
@@ -88,10 +138,27 @@ export function JobSheet({ task, step, onClose }: { task: ChronoTask; step: Chro
     <Sheet scroll visible onClose={onClose} title={step.title}>
       <View style={styles.body}>
         <View style={styles.badges}>
+          {!!step.order_no && <Badge label={t('chrono.orderNo', { n: step.order_no })} tone="brand" />}
           <Badge label={stepLabel(t as never, step)} tone={TONE_BADGE[tone]} />
           {mine && <Badge label={t('chrono.mine')} tone="brand" />}
+          {step.requires_file && <Badge label={t('chrono.fileRequired')} tone="info" />}
         </View>
         <PersonLine p={step.assignee} />
+        {!!step.coexecutors?.length && (
+          <View style={styles.gap6}>
+            <Text variant="caption" tone="subtle">
+              {t('chrono.coexecutors')}
+            </Text>
+            {step.coexecutors.map((c, i) => (
+              <PersonLine key={c.employee?.id ?? i} p={c.employee} note={c.reason} size={28} />
+            ))}
+          </View>
+        )}
+        {waiting && (
+          <View style={[styles.alert, { backgroundColor: colors.warningSoft }]}>
+            <Text variant="caption">{t('chrono.waitingTurnHint')}</Text>
+          </View>
+        )}
         <View style={styles.grid}>
           <KV label={t('chrono.fStart')} value={fmt(step.start_date)} />
           <KV
@@ -148,7 +215,26 @@ export function JobSheet({ task, step, onClose }: { task: ChronoTask; step: Chro
             <Text variant="body" numberOfLines={5}>
               {pending.reason}
             </Text>
-            {manage && (
+            <ExtensionVotes ext={pending} />
+            {canAgree && (
+              <>
+                <NoteForm
+                  label={t('chrono.agreeNote')}
+                  submitLabel={t('chrono.extAgree')}
+                  busy={write.isPending}
+                  onSubmit={(note) => go(() => agreeExtension(pending.id, note), 'chrono.extAgreed')}
+                />
+                <NoteForm
+                  label={t('chrono.rejectNote')}
+                  required
+                  danger
+                  submitLabel={t('chrono.extDisagree')}
+                  busy={write.isPending}
+                  onSubmit={(note) => go(() => decideExtension(pending.id, 'reject', { note }), 'chrono.extRejected')}
+                />
+              </>
+            )}
+            {canDecide && (
               <>
                 <DateReasonForm
                   dateLabel={t('chrono.grantDeadline')}
@@ -179,7 +265,7 @@ export function JobSheet({ task, step, onClose }: { task: ChronoTask; step: Chro
               testID="chrono-submit"
               label={t('chrono.submit')}
               icon="check"
-              disabled={step.blocked}
+              disabled={step.blocked || waiting}
               onPress={() => toggle('submit')}
             />
           )}
@@ -206,6 +292,7 @@ export function JobSheet({ task, step, onClose }: { task: ChronoTask; step: Chro
             placeholder={t('chrono.submitPh')}
             submitLabel={t('chrono.submitSend')}
             allowEmpty
+            requireFile={step.requires_file}
             busy={write.isPending}
             onSubmit={(text, files) => go(() => submitStep(step.id, text, files), 'chrono.submitted')}
           />
@@ -297,6 +384,9 @@ export function MainJobSheet({ task, onClose }: { task: ChronoTask; onClose: () 
     runWrite(write.mutateAsync(run), t(ok), t('errors.generic')).then(() => setMode(null));
   const toggle = (m: Mode) => setMode(mode === m ? null : m);
   const canHandIn = task.is_main_executor && !task.submitted_at && !task.completed_at;
+  // executing → control (the control department) → final (the final approver) → done.
+  const stage = task.stage ?? (task.completed_at ? 'done' : task.submitted_at ? 'control' : 'executing');
+  const controlOnly = !!task.final_step && !task.can_final;
 
   return (
     <Sheet scroll visible onClose={onClose} title={t('chrono.mainJob')}>
@@ -334,6 +424,11 @@ export function MainJobSheet({ task, onClose }: { task: ChronoTask; onClose: () 
             <Text variant="body">{lastReturn.text}</Text>
           </View>
         )}
+        {stage === 'final' && (
+          <View style={[styles.alert, { backgroundColor: colors.infoSoft }]}>
+            <Text variant="caption">{t('chrono.stageFinalHint')}</Text>
+          </View>
+        )}
         <View style={styles.actions}>
           {canHandIn && (
             <Button
@@ -344,13 +439,19 @@ export function MainJobSheet({ task, onClose }: { task: ChronoTask; onClose: () 
               onPress={() => toggle('submit')}
             />
           )}
-          {task.can_manage && task.submitted_at && !task.completed_at && (
+          {task.can_manage && stage === 'control' && (
             <>
-              <Button label={t('chrono.approve')} icon="check" onPress={() => toggle('approve')} />
+              <Button label={t(controlOnly ? 'chrono.controlApprove' : 'chrono.approve')} icon="check" onPress={() => toggle('approve')} />
               <Button label={t('chrono.reject')} variant="dangerGhost" onPress={() => toggle('reject')} />
             </>
           )}
-          {task.can_manage && task.completed_at && (
+          {task.can_final && stage === 'final' && (
+            <>
+              <Button label={t('chrono.finalApprove')} icon="checkDouble" onPress={() => toggle('finalApprove')} />
+              <Button label={t('chrono.reject')} variant="dangerGhost" onPress={() => toggle('finalReject')} />
+            </>
+          )}
+          {task.can_manage && (stage === 'done' || stage === 'final') && (
             <Button label={t('chrono.reopen')} icon="refresh" variant="soft" onPress={() => toggle('reopen')} />
           )}
         </View>
@@ -368,7 +469,25 @@ export function MainJobSheet({ task, onClose }: { task: ChronoTask; onClose: () 
             label={t('chrono.approveNote')}
             submitLabel={t('chrono.approve')}
             busy={write.isPending}
-            onSubmit={(note) => go(() => decideTask(task.id, 'approve', note), 'chrono.taskDone')}
+            onSubmit={(note) => go(() => decideTask(task.id, 'approve', note), controlOnly ? 'chrono.controlApproved' : 'chrono.taskDone')}
+          />
+        )}
+        {mode === 'finalApprove' && (
+          <NoteForm
+            label={t('chrono.approveNote')}
+            submitLabel={t('chrono.finalApprove')}
+            busy={write.isPending}
+            onSubmit={(note) => go(() => finalDecideTask(task.id, 'final-approve', note), 'chrono.taskDone')}
+          />
+        )}
+        {mode === 'finalReject' && (
+          <NoteForm
+            label={t('chrono.rejectNote')}
+            required
+            danger
+            submitLabel={t('chrono.reject')}
+            busy={write.isPending}
+            onSubmit={(note) => go(() => finalDecideTask(task.id, 'final-reject', note), 'chrono.returned')}
           />
         )}
         {mode === 'reject' && (
@@ -405,4 +524,6 @@ const styles = StyleSheet.create({
   request: { gap: 8, borderRadius: 12, padding: 10 },
   actions: { gap: 8 },
   section: { gap: 8, marginTop: 4 },
+  gap6: { gap: 6 },
+  voteRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
 });

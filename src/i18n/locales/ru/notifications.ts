@@ -137,4 +137,10 @@ export default {
   learningCourseAssigned: 'Назначен курс',
   mobileCheckinCancelled: "Ваша отметка отменена",
   mobileCheckinFar: "Отметка издалека",
+  chronoFinalReview: 'Ждёт окончательного утверждения',
+  chronoExtAgreement: 'Согласуйте продление срока',
+  chronoExtChair: 'Ждёт решения о продлении срока',
+  chronoOrderChanged: 'Очерёдность изменилась',
+  chronoCoexecutorAdded: 'Вас добавили соисполнителем',
+  chronoReuploaded: 'Поручение загружено повторно',
 } as const;

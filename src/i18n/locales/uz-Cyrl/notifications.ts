@@ -137,4 +137,10 @@ export default {
   learningCourseAssigned: 'Курс бириктирилди',
   mobileCheckinCancelled: "Белгингиз бекор қилинди",
   mobileCheckinFar: "Узоқдан белги",
+  chronoFinalReview: 'Якуний тасдиқ кутилмоқда',
+  chronoExtAgreement: 'Муддат узайтиришни келишинг',
+  chronoExtChair: 'Муддат узайтириш бўйича қарор кутилмоқда',
+  chronoOrderChanged: 'Навбат ўзгарди',
+  chronoCoexecutorAdded: 'Ҳам-ижрочи этиб қўшилдингиз',
+  chronoReuploaded: 'Топшириқ қайта юкланди',
 } as const;
