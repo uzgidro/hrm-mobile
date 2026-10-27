@@ -1,6 +1,6 @@
 import {
   View, Text, ScrollView, StyleSheet,
-  TouchableOpacity,
+  TouchableOpacity, Linking,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
@@ -17,6 +17,7 @@ import { Screen } from '@/components/Screen';
 import { ScreenHeader, HeaderAction } from '@/components/ScreenHeader';
 import { LoadingView, ErrorState, EmptyState } from '@/components/StateViews';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
+import { formatUzPhone, telUrl } from '@/utils/phone';
 import { employeeDetailQuery, nationalityOptionsQuery } from '../api/queries';
 import { nationalityLabel, timeRange } from '../utils/format';
 import { useSensitiveScreen } from '@/lib/screenPrivacy';
@@ -123,7 +124,7 @@ export default function EmployeeDetailScreen() {
         )}
 
         <Section styles={styles} title={t('employees.section.contact')} icon="phone">
-          <InfoRow styles={styles} label={t('employees.field.phone')} value={employee.phone_number} />
+          <InfoRow styles={styles} label={t('employees.field.phone')} value={formatUzPhone(employee.phone_number)} callable />
           <Divider styles={styles} />
           <InfoRow styles={styles} label={t('employees.field.internalPhone')} value={employee.internal_phone_number} />
           <Divider styles={styles} />
@@ -213,8 +214,26 @@ function Section({ styles, title, icon, children }: { styles: any; title: string
   );
 }
 
-function InfoRow({ styles, label, value }: { styles: any; label: string; value?: string | null }) {
+function InfoRow({ styles, label, value, callable }: { styles: any; label: string; value?: string | null; callable?: boolean }) {
   if (!value) return null;
+  if (callable) {
+    // Tap opens the dialer with tel:+998XXXXXXXXX (see utils/phone).
+    const url = telUrl(value);
+    if (url) {
+      return (
+        <TouchableOpacity
+          style={styles.infoRow}
+          activeOpacity={0.7}
+          onPress={() => { Linking.openURL(url).catch(() => {}); }}
+          accessibilityRole="link"
+          testID="employee-phone-call"
+        >
+          <Text style={styles.infoLabel}>{label}</Text>
+          <Text style={[styles.infoValue, styles.infoValueLink]}>{value}</Text>
+        </TouchableOpacity>
+      );
+    }
+  }
   return (
     <View style={styles.infoRow}>
       <Text style={styles.infoLabel}>{label}</Text>
@@ -260,6 +279,7 @@ const makeStyles = (c: ThemeColors) =>
 
     infoRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingVertical: 11, gap: 12 },
     infoLabel: { fontSize: 13, color: c.textMuted, flex: 1, ...ff('700') },
+    infoValueLink: { color: c.primary },
     infoValue: { fontSize: 13, ...ff('700'), color: c.text, flex: 2, textAlign: 'right' },
     divider: { height: 1, backgroundColor: c.cardBorder },
 
