@@ -62,6 +62,7 @@ import hrQuality from './hrQuality';
 import responsibles from './responsibles';
 import regStatus from './regStatus';
 import ijro from './ijro';
+import chrono from './chrono';
 import orderTypes from './orderTypes';
 import tempOrders from './tempOrders';
 
@@ -128,6 +129,7 @@ export default {
   responsibles,
   regStatus,
   ijro,
+  chrono,
   orderTypes,
   tempOrders,
 } as const;

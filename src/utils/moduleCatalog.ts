@@ -42,6 +42,7 @@ export const CATALOG: CatalogEntry[] = [
   e('projects', 'projects', '/loyihalar', 'board', 'violet', 'main'),
   e('news', 'news', '/news', 'news', 'orange', 'main'),
   e('ijro', 'ijro', '/ijro', 'checklist', 'pink', 'main'),
+  e('chrono', 'chrono', '/topshiriqlar-xronologiyasi', 'target', 'cyan', 'main'),
   e('workPlan', 'workPlan', '/ish-rejasi', 'calendar', 'green', 'main'),
   e('medical', 'medical', '/tibbiy-korik', 'check', 'green', 'stats'),
   e('health', 'health', '/sogliq-korigi', 'check', 'pink', 'stats'),

@@ -261,8 +261,11 @@ export function routeForNotification(data: any): string | null {
   const cardId = data.card_id; // loyiha vazifasi
   const workspaceId = data.workspace_id; // loyiha
   const visitorId = data.visitor_id; // mehmon keldi (push payload)
+  const chronoTaskId = data.chrono_task_id; // topshiriqlar xronologiyasi (push payload)
 
   if (orderId) return `/order-detail?id=${orderId}`;
+  // The push carries the task; the in-app row (no id column) opens the list.
+  if (type.startsWith('chrono_')) return chronoTaskId ? `/topshiriq?id=${chronoTaskId}` : '/topshiriqlar-xronologiyasi';
   if (letterId) return `/letter-detail?id=${letterId}`;
   if (kpiEntryId) return `/kpi-entry?id=${kpiEntryId}`;
   // Doimiy o'tkazish buyrug'i: push `work_leave_id` bilan keladi, lekin qabul
@@ -480,6 +483,30 @@ const NOTIF_META: Record<string, { titleKey: string; icon: IconName }> = {
   learning_course_assigned: { titleKey: 'notifications.learningCourseAssigned', icon: 'checklist' },
   mobile_checkin_cancelled: { titleKey: 'notifications.mobileCheckinCancelled', icon: 'close' },
   mobile_checkin_far: { titleKey: 'notifications.mobileCheckinFar', icon: 'mapPin' },
+  // Topshiriqlar xronologiyasi (2026-10-26)
+  chrono_assigned_main: { titleKey: 'notifications.chronoAssignedMain', icon: 'target' },
+  chrono_assigned: { titleKey: 'notifications.chronoAssigned', icon: 'target' },
+  chrono_member_added: { titleKey: 'notifications.chronoMemberAdded', icon: 'users' },
+  chrono_comment: { titleKey: 'notifications.chronoComment', icon: 'mail' },
+  chrono_mention: { titleKey: 'notifications.chronoMention', icon: 'mail' },
+  chrono_submitted: { titleKey: 'notifications.chronoSubmitted', icon: 'checklist' },
+  chrono_task_submitted: { titleKey: 'notifications.chronoTaskSubmitted', icon: 'checklist' },
+  chrono_approved: { titleKey: 'notifications.chronoApproved', icon: 'check' },
+  chrono_returned: { titleKey: 'notifications.chronoReturned', icon: 'close' },
+  chrono_task_returned: { titleKey: 'notifications.chronoTaskReturned', icon: 'close' },
+  chrono_reopened: { titleKey: 'notifications.chronoReopened', icon: 'refresh' },
+  chrono_completed: { titleKey: 'notifications.chronoCompleted', icon: 'checkDouble' },
+  chrono_children_done: { titleKey: 'notifications.chronoChildrenDone', icon: 'checkDouble' },
+  chrono_extension_requested: { titleKey: 'notifications.chronoExtRequested', icon: 'clock' },
+  chrono_extension_approved: { titleKey: 'notifications.chronoExtApproved', icon: 'calendar' },
+  chrono_extension_rejected: { titleKey: 'notifications.chronoExtRejected', icon: 'close' },
+  chrono_deadline_changed: { titleKey: 'notifications.chronoDeadlineChanged', icon: 'calendar' },
+  chrono_final_review: { titleKey: 'notifications.chronoFinalReview', icon: 'checkDouble' },
+  chrono_extension_agreement: { titleKey: 'notifications.chronoExtAgreement', icon: 'clock' },
+  chrono_extension_chair: { titleKey: 'notifications.chronoExtChair', icon: 'clock' },
+  chrono_order_changed: { titleKey: 'notifications.chronoOrderChanged', icon: 'refresh' },
+  chrono_coexecutor_added: { titleKey: 'notifications.chronoCoexecutorAdded', icon: 'users' },
+  chrono_reuploaded: { titleKey: 'notifications.chronoReuploaded', icon: 'refresh' },
 };
 
 // Human-readable title + icon for an in-app notification, derived from its

@@ -196,6 +196,10 @@ function ThemedNavigation() {
                 <Stack.Screen name="vaqtinchalik-buyruqlar" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="buyruq-turlari" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="ijro" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="topshiriqlar-xronologiyasi" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="topshiriq" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="topshiriq-form" options={{ animation: 'slide_from_bottom' }} />
+                <Stack.Screen name="topshiriq-fayl" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="registratsiya-holati" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="masullar" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="kadr-nazorati" options={{ animation: 'slide_from_right' }} />
