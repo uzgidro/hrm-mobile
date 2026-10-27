@@ -19,6 +19,7 @@ import { PagedList } from '@/components/PagedList';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { SearchBox } from '@/components/SearchBox';
 import type { PhoneDirectoryEntry } from '@/types';
+import { formatUzPhone, telUrl } from '@/utils/phone';
 import { phoneDirectoryQuery, directoryBranchesQuery } from '../api/queries';
 import { useActiveBranchId } from '@/lib/useActiveBranch';
 
@@ -84,7 +85,10 @@ export default function PhoneDirectoryScreen() {
     enabled: isSearching || scopeReady,
   });
 
-  const dial = (phone: string) => Linking.openURL(`tel:${phone.replace(/\s+/g, '')}`);
+  const dial = (phone: string) => {
+    const url = telUrl(phone);
+    if (url) Linking.openURL(url).catch(() => {});
+  };
   const branchName = (id?: number | null) => branches.find((b) => b.id === id)?.name ?? null;
   // Branch named in headers only when the list spans several branches
   // ("all system branches"); a single-branch scope already says which one.
@@ -195,7 +199,7 @@ export function groupLabel(
 function phoneNumbers(e: PhoneDirectoryEntry): { key: 'internal' | 'personal'; value: string }[] {
   const out: { key: 'internal' | 'personal'; value: string }[] = [];
   if (e.internal_phone_number) out.push({ key: 'internal', value: e.internal_phone_number });
-  if (e.phone_number) out.push({ key: 'personal', value: e.phone_number });
+  if (e.phone_number) out.push({ key: 'personal', value: formatUzPhone(e.phone_number) });
   return out;
 }
 

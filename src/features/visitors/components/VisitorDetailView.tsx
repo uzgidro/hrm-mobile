@@ -15,6 +15,7 @@ import { LoadingView, ErrorState, EmptyState } from '@/components/StateViews';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { getApiErrorMessage, toApiError } from '@/api/errors';
 import { isHttpUrl } from '@/utils/safeUrl';
+import { formatUzPhone, telUrl } from '@/utils/phone';
 import { confirm } from '@/lib/confirm';
 import { visitorDetailQuery } from '../api/queries';
 import { useDeleteVisitor } from '../api/mutations';
@@ -23,18 +24,19 @@ import { goBackOr } from '@/lib/goBack';
 import type { Visitor } from '@/types';
 import { useSensitiveScreen } from '@/lib/screenPrivacy';
 
-function Row({ icon, label, value, styles, colors }: {
-  icon: IconName; label: string; value?: string | null; styles: any; colors: ThemeColors;
+function Row({ icon, label, value, styles, colors, onPress }: {
+  icon: IconName; label: string; value?: string | null; styles: any; colors: ThemeColors; onPress?: () => void;
 }) {
   if (!value) return null;
+  const Wrap: any = onPress ? TouchableOpacity : View;
   return (
-    <View style={styles.row}>
+    <Wrap style={styles.row} {...(onPress ? { onPress, activeOpacity: 0.7, accessibilityRole: 'link' } : {})}>
       <View style={styles.rowIcon}><Icon name={icon} size={18} color={colors.textSecondary} /></View>
       <View style={{ flex: 1 }}>
         <Text style={styles.rowLabel}>{label}</Text>
         <Text style={styles.rowValue}>{value}</Text>
       </View>
-    </View>
+    </Wrap>
   );
 }
 
@@ -188,7 +190,7 @@ export function VisitorDetailView({ id, embedded = false }: { id: number; embedd
           )}
 
           <View style={styles.card}>
-            <Row icon="phone" label={t('visitors.fieldPhone')} value={v.phone_number} styles={styles} colors={colors} />
+            <Row icon="phone" label={t('visitors.fieldPhone')} value={formatUzPhone(v.phone_number)} onPress={telUrl(v.phone_number) ? () => { void Linking.openURL(telUrl(v.phone_number)).catch(() => {}); } : undefined} styles={styles} colors={colors} />
             <Row icon="mail" label={t('visitors.fieldTelegram')} value={v.telegram_username ? `@${v.telegram_username.replace(/^@/, '')}` : ''} styles={styles} colors={colors} />
             <Row icon="idcard" label={t('visitors.fieldPin')} value={v.personal_identification_number} styles={styles} colors={colors} />
           </View>

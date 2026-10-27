@@ -17,6 +17,7 @@ import { PickerModal } from '@/components/PickerModal';
 import { departmentOptionsQuery, jobPositionOptionsQuery } from '@/utils/employees';
 import { registrationStatusTone } from '@/utils/registrationStatus';
 import { isHttpUrl } from '@/utils/safeUrl';
+import { formatUzPhone } from '@/utils/phone';
 import { formatTashkentDate } from '@/utils/tashkentTime';
 import { Badge, Button, SelectField, Sheet, Text } from '@/ui';
 import { regBranchesQuery } from '../api/queries';
@@ -202,7 +203,7 @@ export function RegistrationSheet({ row, onClose }: { row: RegistrationRow; onCl
             </View>
             <KeyValue label={t('registrations.username')} value={row.username} />
             <KeyValue label={t('registrations.email')} value={row.email} />
-            <KeyValue label={t('registrations.phone')} value={row.phone_number} />
+            <KeyValue label={t('registrations.phone')} value={formatUzPhone(row.phone_number)} />
             <KeyValue label={t('registrations.birthDate')} value={day(row.birth_date)} testID="registration-birth" />
             <KeyValue label={t('registrations.gender')} value={gender ? t(`registrations.${gender}`) : null} />
             <KeyValue label={t('registrations.pinfl')} value={row.pinfl} />
