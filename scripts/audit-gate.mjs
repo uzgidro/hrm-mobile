@@ -40,11 +40,15 @@ const ALLOW = {
   // via `overrides: js-yaml@3 / js-yaml@4`. Same day: brace-expansion, compression,
   // source-map-js fixed by overrides and axios (runtime) bumped to ^1.20.0.
   //
-  // braces 3.0.3 via micromatch -> metro / jest-haste-map / @expo/cli. 3.0.3 is
-  // the newest release and is itself in the vulnerable range (<=3.0.3) — no fix
-  // exists. Glob matching on the developer's/CI machine only (bundler, test
-  // runner); never in the shipped bundle. Revisit when braces publishes a fix.
-  'GHSA-vfj7-8cjw-p6xm': 'braces (micromatch in metro/jest/@expo-cli, build-time only) — nested-pattern stack exhaustion; no fixed release (latest 3.0.3 is affected)',
+  // 2026-10-27: braces is no longer reported, so GHSA-vfj7-8cjw-p6xm is gone;
+  // follow-redirects (axios) bumped to 1.16.2 for GHSA-q3jh-wrc6-jgq8 /
+  // GHSA-8r9p-f939-6h3c.
+  //
+  // zod 3.25.76 via eslint-plugin-react-hooks (lint) and @expo/cli (build CLI).
+  // The fix is zod 4.6.6, but both consumers pin `zod@^3`; the app itself has no
+  // zod dependency and its bundle never imports it. Memory exhaustion needs a
+  // hostile schema input to our own lint/build run. Revisit when they move to 4.x.
+  'GHSA-mrhx-c7xc-m3w5': 'zod (eslint-plugin-react-hooks / @expo/cli, build-time only) — oversized constrained collections exhaust memory; fix is 4.6.6, consumers pin ^3',
   // node-forge 1.4.0 via @expo/code-signing-certificates (expo-updates `cli/` —
   // `generate-code-signing`/`configure-code-signing` commands) and @expo/cli
   // (dev-server HTTPS certs). Newest release, still affected (<=1.4.0). Node CLI
