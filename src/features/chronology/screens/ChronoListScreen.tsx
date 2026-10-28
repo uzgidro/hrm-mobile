@@ -1,6 +1,6 @@
 // Topshiriqlar xronologiyasi — web v2 `TaskChronologyPage` porti: holat
 // filtrlari (soni bilan), qidiruv, «Menga tegishli», ro'yxat va kalendar.
-// Har qatorda kechikish sababi (qaysi ish, kim) — topshiriqni ochmasdan ko'rinadi.
+// Each row names who is making the task late and by how much — seen without opening it.
 import React, { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import dayjs, { type Dayjs } from 'dayjs';
@@ -142,7 +142,7 @@ export default function ChronoListScreen() {
 function TaskRow({ row }: { row: ChronoTaskRow }) {
   const { t } = useTranslation();
   const due = useDueText()(row);
-  const cause = row.status !== 'done' ? row.causes[0] : undefined;
+  const late = row.status !== 'done' ? row.causes.filter((c) => c.own_late_days > 0) : [];
   const name = row.main_executor?.legal_name ?? '—';
   const turn = row.status !== 'done' ? turnText(t, row) : null;
   return (
@@ -169,24 +169,16 @@ function TaskRow({ row }: { row: ChronoTaskRow }) {
               {t('chrono.stepsDone', { done: row.steps_done, total: row.steps_total })}
             </Text>
           </View>
-          {cause ? (
-            <Text variant="caption" tone="danger" numberOfLines={1}>
-              {t('chrono.causeLine', {
-                title: cause.step_id == null ? t('chrono.mainJob') : cause.title,
-                name: cause.assignee?.legal_name ?? '—',
-                count: cause.own_late_days,
+          {late.length > 0 && (
+            // Only the late people (user 2026-10-28: review / request counts are read inside the requests).
+            <Text variant="caption" tone="danger" numberOfLines={2}>
+              {t('chrono.lateLine', {
+                names: late
+                  .map((c) => t('chrono.lateItem', { name: c.assignee?.legal_name ?? '—', count: c.own_late_days }))
+                  .join(', '),
               })}
             </Text>
-          ) : row.steps_review || row.pending_extensions ? (
-            <Text variant="caption" tone="brand" numberOfLines={1}>
-              {[
-                row.steps_review ? t('chrono.reviewN', { count: row.steps_review }) : null,
-                row.pending_extensions ? t('chrono.requestsN', { count: row.pending_extensions }) : null,
-              ]
-                .filter(Boolean)
-                .join(' · ')}
-            </Text>
-          ) : null}
+          )}
           {!!turn && (
             <Text variant="caption" tone="muted" numberOfLines={1}>
               {turn}
