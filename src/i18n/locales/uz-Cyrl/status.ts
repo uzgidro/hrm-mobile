@@ -30,6 +30,8 @@ export default {
   letterSignedStatus: 'Имзоланган',
   letterInChancellery: 'Девонхонада',
   letterInLeadership: 'Раҳбариятда',
+  letterChairReview: 'Раис қарорини кутмоқда',
+  letterChairApproved: 'Раис тасдиқлади',
   letterPending: 'Кутилмоқда',
   letterTripArrived: 'Ҳисобот кутилмоқда',
   letterTripOngoing: 'Сафар давом этмоқда',
