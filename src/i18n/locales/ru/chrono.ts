@@ -219,7 +219,7 @@ export default {
   turnControl: 'В отделе контроля',
   turnFinal: 'На окончательном утверждении',
   extStageAgreement: 'Согласование: отдел контроля и главный исполнитель',
-  extStageChair: 'Согласовано — ждёт решения председателя',
+  extStageChair: 'Ждёт решения председателя',
   voteRole_control: 'Отдел контроля',
   voteRole_responsible: 'Главный исполнитель',
   voteRole_chair: 'Решение председателя',

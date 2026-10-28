@@ -219,7 +219,7 @@ export default {
   turnControl: 'Nazorat bo‘limida',
   turnFinal: 'Yakuniy tasdiqda',
   extStageAgreement: 'Kelishuv: Nazorat bo‘limi va asosiy ijrochi',
-  extStageChair: 'Kelishildi — rais qarori kutilmoqda',
+  extStageChair: 'Rais qarori kutilmoqda',
   voteRole_control: 'Nazorat bo‘limi',
   voteRole_responsible: 'Asosiy ijrochi',
   voteRole_chair: 'Rais qarori',

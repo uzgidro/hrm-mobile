@@ -219,7 +219,7 @@ export default {
   turnControl: 'Назорат бўлимида',
   turnFinal: 'Якуний тасдиқда',
   extStageAgreement: 'Келишув: Назорат бўлими ва асосий ижрочи',
-  extStageChair: 'Келишилди — раис қарори кутилмоқда',
+  extStageChair: 'Раис қарори кутилмоқда',
   voteRole_control: 'Назорат бўлими',
   voteRole_responsible: 'Асосий ижрочи',
   voteRole_chair: 'Раис қарори',

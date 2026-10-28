@@ -219,7 +219,7 @@ export default {
   turnControl: 'With the control department',
   turnFinal: 'Awaiting final approval',
   extStageAgreement: 'Agreement: the control department and the main executor',
-  extStageChair: 'Agreed — waiting for the chairman',
+  extStageChair: 'Waiting for the chairman',
   voteRole_control: 'Control department',
   voteRole_responsible: 'Main executor',
   voteRole_chair: 'Chairman’s decision',
