@@ -30,6 +30,8 @@ export default {
   letterSignedStatus: 'Signed',
   letterInChancellery: 'In chancellery',
   letterInLeadership: 'With leadership',
+  letterChairReview: 'Waiting for the chairman',
+  letterChairApproved: 'Approved by the chairman',
   letterPending: 'Pending',
   letterTripArrived: 'Report pending',
   letterTripOngoing: 'Trip in progress',

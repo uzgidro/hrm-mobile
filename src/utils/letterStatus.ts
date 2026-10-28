@@ -452,6 +452,10 @@ export function letterStatusMeta(l: Letter): { label: string; kind: StatusKind }
     // автор редактирует и пере-отправляет (submit-trip/send_to_registry принимает
     // 'returned'). Web-parity helpers.js:741 → 'Qaytarilgan'.
     case 'returned': return { label: i18n.t('status.letterReturned'), kind: 'error' };
+    // A task-deadline extension bildirgi — the chairman's answer (2026-10-28).
+    case 'chair_review': return { label: i18n.t('status.letterChairReview'), kind: 'pending' };
+    case 'chair_approved': return { label: i18n.t('status.letterChairApproved'), kind: 'success' };
+    case 'chair_rejected': return { label: i18n.t('status.letterRejected'), kind: 'error' };
     case 'report_returned': return { label: i18n.t('status.letterReportReturned'), kind: 'error' };
     case 'report_management_review': return { label: i18n.t('status.letterReportReview'), kind: 'pending' };
     case 'report_approved': return { label: i18n.t('status.letterReportApproved'), kind: 'success' };
