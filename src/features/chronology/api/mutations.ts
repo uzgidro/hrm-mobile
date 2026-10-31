@@ -49,7 +49,8 @@ export const submitTask = async (taskId: number, text: string, files: UploadFile
   apiClient.post<ChronoTask>(`${TASK_CHRONOLOGY_ITEM(taskId)}/submit`, await buildForm(text, files), multipart).then(data);
 
 type Decision = 'approve' | 'reject' | 'reopen';
-export const decideStep = (stepId: number, action: Decision, note?: string) =>
+// `agree`: the control department / the next number's executor agrees a handed-in job is done.
+export const decideStep = (stepId: number, action: Decision | 'agree', note?: string) =>
   apiClient.post<ChronoTask>(`${CHRONO_STEP(stepId)}/${action}`, { note: note || null }).then(data);
 export const decideTask = (taskId: number, action: Decision, note?: string) =>
   apiClient.post<ChronoTask>(`${TASK_CHRONOLOGY_ITEM(taskId)}/${action}`, { note: note || null }).then(data);

@@ -82,6 +82,23 @@ export type ChronoStep = {
   /** A job before it is not accepted yet — a sequential task waits. */
   waiting_turn?: boolean;
   coexecutors?: { employee?: ChronoPerson | null; reason?: string | null }[];
+  /** Shares its number with the job before it — done at the same time. */
+  with_previous?: boolean;
+  /** A handed-in job: the control department and the next number's executors agree, then it is accepted. */
+  handoff?: ChronoHandoff | null;
+  can_agree?: boolean;
+  can_accept?: boolean;
+  can_return?: boolean;
+};
+
+export type ChronoHandoffSign = { person?: ChronoPerson | null; done: boolean; at?: string | null; note?: string | null };
+export type ChronoHandoff = {
+  control: ChronoHandoffSign;
+  next: ChronoHandoffSign[];
+  /** One of the next number's executors has agreed — that is enough. */
+  next_done?: boolean;
+  complete: boolean;
+  acceptor: 'final' | 'control';
 };
 
 /** Whose move it is now. */

@@ -36,7 +36,7 @@ import { Composer, DateReasonForm, ExtensionHistory, NoteForm, Timeline, runWrit
 
 const fmt = (d?: string | null) => (d ? dayjs(d).format('DD.MM.YYYY') : '—');
 
-type Mode = null | 'submit' | 'comment' | 'extension' | 'approve' | 'reject' | 'deadline' | 'reopen' | 'finalApprove' | 'finalReject';
+type Mode = null | 'submit' | 'comment' | 'extension' | 'approve' | 'reject' | 'agree' | 'deadline' | 'reopen' | 'finalApprove' | 'finalReject';
 
 function PersonLine({ p, note, size = 34 }: { p?: ChronoPerson | null; note?: string | null; size?: number }) {
   const { t } = useTranslation();
@@ -206,6 +206,28 @@ export function JobSheet({ task, step, onClose }: { task: ChronoTask; step: Chro
           </Text>
         )}
 
+        {step.handoff && (
+          <View style={[styles.request, { backgroundColor: colors.brandSoft }]}>
+            <Text variant="label">{t('chrono.handoffTitle')}</Text>
+            {[{ label: t('chrono.voteRole_control'), sign: step.handoff.control }, ...step.handoff.next.filter((sign) => !step.handoff?.next_done || sign.done).map((sign) => ({ label: t('chrono.handoffNext'), sign }))].map(
+              ({ label, sign }, i) => (
+                <Text key={i} variant="caption" tone={sign.done ? 'success' : 'muted'}>
+                  {sign.done ? '✓' : '…'} {label}
+                  {sign.person?.legal_name ? ` — ${sign.person.legal_name}` : ''}
+                  {sign.done ? '' : ` · ${t('chrono.handoffWaiting')}`}
+                  {sign.note ? ` · ${sign.note}` : ''}
+                </Text>
+              ),
+            )}
+            <Text variant="caption" tone="muted">
+              {step.handoff.complete
+                ? t('chrono.handoffReady')
+                : step.handoff.acceptor === 'final'
+                  ? t('chrono.handoffAcceptFinal')
+                  : t('chrono.handoffAcceptControl')}
+            </Text>
+          </View>
+        )}
         {pending && (
           <View style={[styles.request, { backgroundColor: colors.warningSoft }]}>
             <Text variant="label">{t('chrono.extPending')}</Text>
@@ -269,12 +291,12 @@ export function JobSheet({ task, step, onClose }: { task: ChronoTask; step: Chro
               onPress={() => toggle('submit')}
             />
           )}
-          {manage && step.status === 'submitted' && (
-            <>
-              <Button label={t('chrono.approve')} icon="check" onPress={() => toggle('approve')} />
-              <Button label={t('chrono.reject')} variant="dangerGhost" onPress={() => toggle('reject')} />
-            </>
+          {step.can_agree && <Button label={t('chrono.extAgree')} icon="check" onPress={() => toggle('agree')} />}
+          {step.can_accept && (
+            // A co-executor's job not handed in yet: its executor marks it done himself.
+            <Button label={step.status === 'submitted' ? t('chrono.approve') : t('chrono.markDone')} icon="check" onPress={() => toggle('approve')} />
           )}
+          {step.can_return && <Button label={t('chrono.reject')} variant="dangerGhost" onPress={() => toggle('reject')} />}
           {mine && step.status !== 'approved' && !pending && (
             <Button label={t('chrono.askExtension')} icon="clock" variant="soft" onPress={() => toggle('extension')} />
           )}
@@ -306,6 +328,14 @@ export function JobSheet({ task, step, onClose }: { task: ChronoTask; step: Chro
             onSubmit={(text, files, mentionIds) =>
               go(() => comment(task.id, { stepId: step.id, text, files, mentionIds }), 'chrono.commentSent')
             }
+          />
+        )}
+        {mode === 'agree' && (
+          <NoteForm
+            label={t('chrono.agreeNote')}
+            submitLabel={t('chrono.extAgree')}
+            busy={write.isPending}
+            onSubmit={(note) => go(() => decideStep(step.id, 'agree', note), 'chrono.extAgreed')}
           />
         )}
         {mode === 'approve' && (
