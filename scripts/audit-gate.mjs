@@ -49,11 +49,12 @@ const ALLOW = {
   // zod dependency and its bundle never imports it. Memory exhaustion needs a
   // hostile schema input to our own lint/build run. Revisit when they move to 4.x.
   'GHSA-mrhx-c7xc-m3w5': 'zod (eslint-plugin-react-hooks / @expo/cli, build-time only) — oversized constrained collections exhaust memory; fix is 4.6.6, consumers pin ^3',
-  // node-forge 1.4.0 via @expo/code-signing-certificates (expo-updates `cli/` —
-  // `generate-code-signing`/`configure-code-signing` commands) and @expo/cli
-  // (dev-server HTTPS certs). Newest release, still affected (<=1.4.0). Node CLI
-  // only — the app bundle never imports it (we don't use EAS code signing either).
-  'GHSA-86w9-cpqp-85rv': 'node-forge (expo-updates CLI / @expo/cli, build-time only) — PKCS#1 v1.5 DigestAlgorithm leniency; no fixed release (latest 1.4.0 is affected)',
+  //
+  // 2026-10-31: node-forge FIXED, not allowlisted any more — 1.4.2 closes
+  // GHSA-86w9-cpqp-85rv and the eleven later forge advisories, pinned via
+  // `overrides: node-forge ^1.4.2`. decode-uri-component (runtime, via
+  // expo-router → query-string@7) FIXED by vendoring the 0.5.1 code as CommonJS
+  // (vendor/decode-uri-component) — 0.5.1 itself is ESM-only.
 };
 
 const BLOCKING = new Set(['high', 'critical']);

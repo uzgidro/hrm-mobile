@@ -3,6 +3,7 @@
   "version": "2.0.3",
   "main": "index.ts",
   "dependencies": {
+    "decode-uri-component": "file:vendor/decode-uri-component",
     "@expo-google-fonts/inter": "^0.4.2",
     "@expo/metro-runtime": "~57.0.7",
     "@tanstack/react-query": "^5.101.0",
@@ -76,6 +77,8 @@
     "node": ">=20"
   },
   "overrides": {
+    "node-forge": "^1.4.2",
+    "decode-uri-component": "$decode-uri-component",
     "form-data": "^4.0.6",
     "shell-quote": "^1.11.0",
     "@react-native/jest-preset": "0.86.0",
