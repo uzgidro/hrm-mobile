@@ -227,6 +227,7 @@ export default {
   voteWaiting: 'Ожидается',
   agreeNote: 'Комментарий (необязательно)',
   extAgree: 'Согласен',
+  markDone: 'Отметить выполненной',
   handoffTitle: 'Согласование',
   handoffNext: 'Следующий исполнитель',
   handoffWaiting: 'ожидается',

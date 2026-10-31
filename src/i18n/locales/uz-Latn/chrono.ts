@@ -227,6 +227,7 @@ export default {
   voteWaiting: 'Kutilmoqda',
   agreeNote: 'Izoh (ixtiyoriy)',
   extAgree: 'Kelishdim',
+  markDone: 'Bajarildi deb belgilash',
   handoffTitle: 'Kelishuv',
   handoffNext: 'Navbatdagi ijrochi',
   handoffWaiting: 'kutilmoqda',

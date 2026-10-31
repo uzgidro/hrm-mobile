@@ -227,6 +227,7 @@ export default {
   voteWaiting: 'Waiting',
   agreeNote: 'Note (optional)',
   extAgree: 'I agree',
+  markDone: 'Mark as done',
   handoffTitle: 'Agreement',
   handoffNext: 'Next executor',
   handoffWaiting: 'waiting',

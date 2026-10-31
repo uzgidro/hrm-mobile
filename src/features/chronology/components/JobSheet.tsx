@@ -292,7 +292,10 @@ export function JobSheet({ task, step, onClose }: { task: ChronoTask; step: Chro
             />
           )}
           {step.can_agree && <Button label={t('chrono.extAgree')} icon="check" onPress={() => toggle('agree')} />}
-          {step.can_accept && <Button label={t('chrono.approve')} icon="check" onPress={() => toggle('approve')} />}
+          {step.can_accept && (
+            // A co-executor's job not handed in yet: its executor marks it done himself.
+            <Button label={step.status === 'submitted' ? t('chrono.approve') : t('chrono.markDone')} icon="check" onPress={() => toggle('approve')} />
+          )}
           {step.can_return && <Button label={t('chrono.reject')} variant="dangerGhost" onPress={() => toggle('reject')} />}
           {mine && step.status !== 'approved' && !pending && (
             <Button label={t('chrono.askExtension')} icon="clock" variant="soft" onPress={() => toggle('extension')} />

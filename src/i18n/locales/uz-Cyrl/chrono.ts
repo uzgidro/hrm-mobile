@@ -227,6 +227,7 @@ export default {
   voteWaiting: 'Кутилмоқда',
   agreeNote: 'Изоҳ (ихтиёрий)',
   extAgree: 'Келишдим',
+  markDone: 'Бажарилди деб белгилаш',
   handoffTitle: 'Келишув',
   handoffNext: 'Навбатдаги ижрочи',
   handoffWaiting: 'кутилмоқда',
