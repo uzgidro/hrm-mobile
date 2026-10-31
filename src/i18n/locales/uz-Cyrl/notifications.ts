@@ -142,5 +142,10 @@ export default {
   chronoExtChair: 'Муддат узайтириш бўйича қарор кутилмоқда',
   chronoOrderChanged: 'Навбат ўзгарди',
   chronoCoexecutorAdded: 'Ҳам-ижрочи этиб қўшилдингиз',
+  chronoHandoffAgree: 'Ишга келишинг',
+  chronoHandoffComplete: 'Иш келишилди — қабул қилинг',
+  chronoControlFeed: 'Топшириқда ўзгариш',
+  chronoDeadlineReminder: 'Иш муддати яқинлашмоқда',
+  chronoCoexecutorRejected: 'Ҳам-ижрочи рад этилди',
   chronoReuploaded: 'Топшириқ қайта юкланди',
 } as const;

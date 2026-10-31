@@ -159,5 +159,10 @@ export default {
   chronoExtChair: 'Muddat uzaytirish bo‘yicha qaror kutilmoqda',
   chronoOrderChanged: 'Navbat o‘zgardi',
   chronoCoexecutorAdded: 'Ham-ijrochi etib qo‘shildingiz',
+  chronoHandoffAgree: 'Ishga kelishing',
+  chronoHandoffComplete: 'Ish kelishildi — qabul qiling',
+  chronoControlFeed: 'Topshiriqda o‘zgarish',
+  chronoDeadlineReminder: 'Ish muddati yaqinlashmoqda',
+  chronoCoexecutorRejected: 'Ham-ijrochi rad etildi',
   chronoReuploaded: 'Topshiriq qayta yuklandi',
 } as const;

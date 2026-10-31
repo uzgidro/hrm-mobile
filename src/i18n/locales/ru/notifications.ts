@@ -142,5 +142,10 @@ export default {
   chronoExtChair: 'Ждёт решения о продлении срока',
   chronoOrderChanged: 'Очерёдность изменилась',
   chronoCoexecutorAdded: 'Вас добавили соисполнителем',
+  chronoHandoffAgree: 'Согласуйте работу',
+  chronoHandoffComplete: 'Работа согласована — примите',
+  chronoControlFeed: 'Изменение в поручении',
+  chronoDeadlineReminder: 'Приближается срок работы',
+  chronoCoexecutorRejected: 'Соисполнитель отклонён',
   chronoReuploaded: 'Поручение загружено повторно',
 } as const;

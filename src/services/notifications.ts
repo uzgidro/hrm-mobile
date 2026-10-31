@@ -507,6 +507,11 @@ const NOTIF_META: Record<string, { titleKey: string; icon: IconName }> = {
   chrono_order_changed: { titleKey: 'notifications.chronoOrderChanged', icon: 'refresh' },
   chrono_coexecutor_added: { titleKey: 'notifications.chronoCoexecutorAdded', icon: 'users' },
   chrono_reuploaded: { titleKey: 'notifications.chronoReuploaded', icon: 'refresh' },
+  chrono_handoff_agree: { titleKey: 'notifications.chronoHandoffAgree', icon: 'checklist' },
+  chrono_handoff_complete: { titleKey: 'notifications.chronoHandoffComplete', icon: 'checklist' },
+  chrono_control_feed: { titleKey: 'notifications.chronoControlFeed', icon: 'target' },
+  chrono_deadline_reminder: { titleKey: 'notifications.chronoDeadlineReminder', icon: 'clock' },
+  chrono_coexecutor_rejected: { titleKey: 'notifications.chronoCoexecutorRejected', icon: 'users' },
 };
 
 // Human-readable title + icon for an in-app notification, derived from its

@@ -142,5 +142,10 @@ export default {
   chronoExtChair: 'An extension awaits your decision',
   chronoOrderChanged: 'The order changed',
   chronoCoexecutorAdded: 'You were added as a co-executor',
+  chronoHandoffAgree: 'Agree to a job',
+  chronoHandoffComplete: 'Job agreed — accept it',
+  chronoControlFeed: 'A task changed',
+  chronoDeadlineReminder: 'A job deadline is near',
+  chronoCoexecutorRejected: 'Co-executor rejected',
   chronoReuploaded: 'The task was uploaded again',
 } as const;
