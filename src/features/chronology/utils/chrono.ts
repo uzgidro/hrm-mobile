@@ -95,6 +95,8 @@ export type ChronoHandoffSign = { person?: ChronoPerson | null; done: boolean; a
 export type ChronoHandoff = {
   control: ChronoHandoffSign;
   next: ChronoHandoffSign[];
+  /** One of the next number's executors has agreed — that is enough. */
+  next_done?: boolean;
   complete: boolean;
   acceptor: 'final' | 'control';
 };

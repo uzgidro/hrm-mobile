@@ -209,7 +209,7 @@ export function JobSheet({ task, step, onClose }: { task: ChronoTask; step: Chro
         {step.handoff && (
           <View style={[styles.request, { backgroundColor: colors.brandSoft }]}>
             <Text variant="label">{t('chrono.handoffTitle')}</Text>
-            {[{ label: t('chrono.voteRole_control'), sign: step.handoff.control }, ...step.handoff.next.map((sign) => ({ label: t('chrono.handoffNext'), sign }))].map(
+            {[{ label: t('chrono.voteRole_control'), sign: step.handoff.control }, ...step.handoff.next.filter((sign) => !step.handoff?.next_done || sign.done).map((sign) => ({ label: t('chrono.handoffNext'), sign }))].map(
               ({ label, sign }, i) => (
                 <Text key={i} variant="caption" tone={sign.done ? 'success' : 'muted'}>
                   {sign.done ? '✓' : '…'} {label}
