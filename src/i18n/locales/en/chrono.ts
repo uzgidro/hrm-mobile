@@ -116,7 +116,7 @@ export default {
   subJobsDone: 'Sub-jobs: {{done}}/{{total}} done',
   waitingHint: 'Handed in once every sub-job is accepted',
   ownLate: 'Own delay: {{count}} d',
-  inheritedLate: 'Delay from sub-jobs: {{count}} d',
+  inheritedLate: 'Earlier jobs are late — once they are done about {{count}} d will be added to your deadline',
   returnedReason: 'Why it was returned',
   submittedAt: 'Handed in',
   submit: 'Done',

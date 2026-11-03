@@ -116,7 +116,7 @@ export default {
   subJobsDone: 'Вложенные работы: выполнено {{done}}/{{total}}',
   waitingHint: 'Сдаётся после приёмки всех вложенных работ',
   ownLate: 'Собственная задержка: {{count}} дн.',
-  inheritedLate: 'Задержка от вложенных работ: {{count}} дн.',
+  inheritedLate: 'Предыдущие работы опаздывают — после них к вашему сроку добавится примерно {{count}} дн.',
   returnedReason: 'Причина возврата',
   submittedAt: 'Сдано',
   submit: 'Выполнено',

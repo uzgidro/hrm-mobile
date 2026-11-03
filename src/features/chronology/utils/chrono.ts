@@ -84,6 +84,9 @@ export type ChronoStep = {
   coexecutors?: { employee?: ChronoPerson | null; reason?: string | null }[];
   /** Shares its number with the job before it — done at the same time. */
   with_previous?: boolean;
+  /** A job with a smaller number on the same job is still open. */
+  awaiting_previous?: boolean;
+  in_turn?: boolean;
   /** A handed-in job: the control department and the next number's executors agree, then it is accepted. */
   handoff?: ChronoHandoff | null;
   can_agree?: boolean;
@@ -235,12 +238,13 @@ export type StepInput = {
 /** How a job reads at a glance — the same six tones as the web tree. */
 export type StepTone = 'done' | 'review' | 'returned' | 'late' | 'waiting' | 'active';
 
-export function stepTone(s: Pick<ChronoStep, 'status' | 'late_days' | 'blocked'>): StepTone {
+export function stepTone(s: Pick<ChronoStep, 'status' | 'late_days' | 'blocked' | 'awaiting_previous'>): StepTone {
   if (s.status === 'approved') return 'done';
   if (s.status === 'submitted') return 'review';
   if (s.status === 'returned') return s.late_days > 0 ? 'late' : 'returned';
   if (s.late_days > 0) return 'late';
-  if (s.blocked) return 'waiting';
+  // Waiting for its sub-jobs or a smaller number: never late before its turn (user 2026-11-03).
+  if (s.blocked || s.awaiting_previous) return 'waiting';
   return 'active';
 }
 
@@ -248,8 +252,8 @@ export function stepTone(s: Pick<ChronoStep, 'status' | 'late_days' | 'blocked'>
 export function rootTone(task: Pick<ChronoTask, 'completed_at' | 'submitted_at' | 'delay_days' | 'jobs_open'>): StepTone {
   if (task.completed_at) return 'done';
   if (task.submitted_at) return 'review';
-  if (task.delay_days > 0) return 'late';
   if (task.jobs_open > 0) return 'waiting';
+  if (task.delay_days > 0) return 'late';
   return 'active';
 }
 

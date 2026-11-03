@@ -116,7 +116,7 @@ export default {
   subJobsDone: 'Ички ишлар: {{done}}/{{total}} бажарилган',
   waitingHint: 'Остидаги барча ички ишлар қабул қилингач топширилади',
   ownLate: 'Ўз кечикиши: {{count}} кун',
-  inheritedLate: 'Ички ишлардан келган кечикиш: {{count}} кун',
+  inheritedLate: 'Олдинги ишлар кечикмоқда — улар тугагач муддатингизга тахминан {{count}} кун қўшилади',
   returnedReason: 'Қайтариш сабаби',
   submittedAt: 'Топширилган',
   submit: 'Бажардим',
