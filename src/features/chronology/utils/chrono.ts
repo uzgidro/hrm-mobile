@@ -361,7 +361,14 @@ export function mentionIds(text: string, picked: ChronoPerson[]): number[] {
 
 /* ─────────────────────────── files ─────────────────────────── */
 
-const VIEWABLE = new Set(['pdf', 'doc', 'docx', 'odt', 'rtf', 'txt', 'xls', 'xlsx', 'csv', 'ods', 'ppt', 'pptx', 'odp']);
+// Everything the document server can VIEW — the backend's OnlyOffice list
+// (2026-11-04); markup such as html is downloaded instead.
+const VIEWABLE = new Set([
+  'doc', 'docm', 'docx', 'dot', 'dotm', 'dotx', 'epub', 'fb2', 'fodt', 'hwp', 'hwpx', 'odt', 'ott', 'pages', 'rtf', 'stw', 'sxw', 'txt', 'wps', 'wpt',
+  'csv', 'et', 'ett', 'fods', 'numbers', 'ods', 'ots', 'sxc', 'xls', 'xlsb', 'xlsm', 'xlsx', 'xlt', 'xltm', 'xltx',
+  'dps', 'dpt', 'fodp', 'key', 'odg', 'odp', 'otp', 'pot', 'potm', 'potx', 'pps', 'ppsm', 'ppsx', 'ppt', 'pptm', 'pptx', 'sxi',
+  'djvu', 'docxf', 'oform', 'oxps', 'pdf', 'xps',
+]);
 export const fileExt = (name: string) => (name.includes('.') ? (name.split('.').pop() ?? '').toLowerCase() : '');
 /** PDF / Word / Excel / PowerPoint open in OnlyOffice (view only); anything else is downloaded. */
 export const opensInViewer = (name: string) => VIEWABLE.has(fileExt(name));
