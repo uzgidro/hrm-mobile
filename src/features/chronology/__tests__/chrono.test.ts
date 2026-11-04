@@ -47,9 +47,18 @@ describe('stepTone / rootTone', () => {
   it('reads the main job', () => {
     expect(rootTone({ completed_at: '2026-10-01', submitted_at: null, delay_days: 4, jobs_open: 0 })).toBe('done');
     expect(rootTone({ completed_at: null, submitted_at: 'x', delay_days: 0, jobs_open: 0 })).toBe('review');
-    expect(rootTone({ completed_at: null, submitted_at: null, delay_days: 2, jobs_open: 1 })).toBe('late');
+    // The main job is not late before its turn — while its jobs are open it waits (2026-11-03).
+    expect(rootTone({ completed_at: null, submitted_at: null, delay_days: 2, jobs_open: 1 })).toBe('waiting');
+    expect(rootTone({ completed_at: null, submitted_at: null, delay_days: 2, jobs_open: 0 })).toBe('late');
     expect(rootTone({ completed_at: null, submitted_at: null, delay_days: 0, jobs_open: 1 })).toBe('waiting');
     expect(rootTone({ completed_at: null, submitted_at: null, delay_days: 0, jobs_open: 0 })).toBe('active');
+  });
+});
+
+describe('stepTone and the turn', () => {
+  it('a job waiting for a smaller number is waiting, not late', () => {
+    expect(stepTone({ status: 'active', late_days: 0, blocked: false, awaiting_previous: true })).toBe('waiting');
+    expect(stepTone({ status: 'active', late_days: 3, blocked: false, awaiting_previous: false })).toBe('late');
   });
 });
 

@@ -116,7 +116,7 @@ export default {
   subJobsDone: 'Ichki ishlar: {{done}}/{{total}} bajarilgan',
   waitingHint: 'Ostidagi barcha ichki ishlar qabul qilingach topshiriladi',
   ownLate: 'O‘z kechikishi: {{count}} kun',
-  inheritedLate: 'Ichki ishlardan kelgan kechikish: {{count}} kun',
+  inheritedLate: 'Oldingi ishlar kechikmoqda — ular tugagach muddatingizga taxminan {{count}} kun qo‘shiladi',
   returnedReason: 'Qaytarish sababi',
   submittedAt: 'Topshirilgan',
   submit: 'Bajardim',

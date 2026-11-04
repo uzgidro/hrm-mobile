@@ -168,22 +168,21 @@ export function JobSheet({ task, step, onClose }: { task: ChronoTask; step: Chro
           <KV
             label={t('chrono.forecast')}
             value={fmt(step.approved_at ?? step.forecast_end)}
-            danger={step.late_days > 0 || step.inherited_days > 0}
+            danger={step.late_days > 0}
           />
           <KV label={t('chrono.submittedAt')} value={step.submitted_at ? dayjs(step.submitted_at).format('DD.MM.YY HH:mm') : '—'} />
         </View>
-        {(step.own_late_days > 0 || step.inherited_days > 0) && (
+        {step.own_late_days > 0 && (
           <View style={[styles.alert, { backgroundColor: colors.dangerSoft }]}>
-            {step.own_late_days > 0 && (
-              <Text variant="label" tone="danger">
-                {t('chrono.ownLate', { count: step.own_late_days })}
-              </Text>
-            )}
-            {step.inherited_days > 0 && (
-              <Text variant="caption" tone="danger">
-                {t('chrono.inheritedLate', { count: step.inherited_days })}
-              </Text>
-            )}
+            <Text variant="label" tone="danger">
+              {t('chrono.ownLate', { count: step.own_late_days })}
+            </Text>
+          </View>
+        )}
+        {/* Waiting for a late job: not late itself — its deadline will be moved by that many days. */}
+        {step.inherited_days > 0 && (
+          <View style={[styles.alert, { backgroundColor: colors.warningSoft }]}>
+            <Text variant="caption">{t('chrono.inheritedLate', { count: step.inherited_days })}</Text>
           </View>
         )}
         {step.children_total > 0 && (
