@@ -52,9 +52,15 @@ export async function pickFiles(): Promise<UploadFile[]> {
  */
 export function openChronoFile(f: Pick<ChronoAttachment, 'id' | 'original_filename' | 'url'>) {
   if (opensInViewer(f.original_filename)) {
-    router.push(`/topshiriq-fayl?id=${f.id}&name=${encodeURIComponent(f.original_filename)}`);
+    const url = f.url ? `&url=${encodeURIComponent(f.url)}` : '';
+    router.push(`/topshiriq-fayl?id=${f.id}&name=${encodeURIComponent(f.original_filename)}${url}`);
     return;
   }
+  downloadChronoFile(f);
+}
+
+/** The file itself, through the browser (it saves it under its own name). */
+export function downloadChronoFile(f: Pick<ChronoAttachment, 'url'>) {
   if (f.url) void Linking.openURL(f.url);
 }
 
@@ -75,6 +81,12 @@ export function FileChips({ files }: { files: ChronoAttachment[] }) {
           <Text variant="caption" tone="brand" numberOfLines={1} style={styles.shrink}>
             {f.original_filename}
           </Text>
+          {/* Opens in the viewer by default; the arrow downloads it instead (2026-11-04). */}
+          {opensInViewer(f.original_filename) && !!f.url && (
+            <Pressable accessibilityRole="button" accessibilityLabel={`${f.original_filename} ↓`} hitSlop={8} onPress={() => downloadChronoFile(f)}>
+              <Icon name="arrowDown" size={14} color={colors.brand} />
+            </Pressable>
+          )}
         </Pressable>
       ))}
     </View>
@@ -110,6 +122,9 @@ export function FileList({ files, onAdd, busy }: { files: ChronoFile[]; onAdd?: 
             <Text variant="caption" tone="brand">
               {opensInViewer(f.original_filename) ? t('chrono.fileOpen') : t('chrono.fileDownload')}
             </Text>
+            {opensInViewer(f.original_filename) && !!f.url && (
+              <IconButton icon="arrowDown" accessibilityLabel={t('chrono.fileDownload')} onPress={() => downloadChronoFile(f)} />
+            )}
           </Pressable>
         ))
       )}

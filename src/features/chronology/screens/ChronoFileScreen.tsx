@@ -1,6 +1,6 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-  View, Text, StyleSheet, ActivityIndicator, Platform, useWindowDimensions,
+  View, Text, StyleSheet, ActivityIndicator, Platform, useWindowDimensions, Linking,
 } from 'react-native';
 import { onlyOfficeDeviceParams } from '@/utils/onlyOffice';
 import { useQuery } from '@tanstack/react-query';
@@ -15,6 +15,7 @@ import { ff } from '@/theme/typography';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { ErrorState } from '@/components/StateViews';
 import { OnlyOfficeFrame } from '@/components/OnlyOfficeFrame';
+import { IconButton } from '@/ui';
 import { chronoKeys } from '../api/queries';
 
 // A file of a «Topshiriqlar xronologiyasi» task in OnlyOffice, VIEW only —
@@ -22,7 +23,7 @@ import { chronoKeys } from '../api/queries';
 // anything OnlyOffice cannot open (archives, pictures); those never reach this
 // screen, the list sends them to the browser to download instead.
 export default function ChronoFileScreen() {
-  const { id, name } = useLocalSearchParams<{ id: string; name?: string }>();
+  const { id, name, url } = useLocalSearchParams<{ id: string; name?: string; url?: string }>();
   const fileId = Number(id);
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -46,7 +47,11 @@ export default function ChronoFileScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-      <ScreenHeader title={name || t('documents.viewerTitle')} />
+      <ScreenHeader
+        title={name || t('documents.viewerTitle')}
+        // Viewed here; the arrow saves the file itself (2026-11-04).
+        right={url ? <IconButton icon="arrowDown" accessibilityLabel={t('chrono.fileDownload')} onPress={() => void Linking.openURL(url)} /> : undefined}
+      />
 
       {isLoading ? (
         <View style={styles.center}>
