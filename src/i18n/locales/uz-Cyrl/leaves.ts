@@ -36,7 +36,6 @@ export default {
   durationMinutes_other: '{{count}} дақиқа',
 
   typeSheetTitle: 'Сўров турини танланг',
-  typeCustomPlaceholder: 'Ёки ўзингиз ёзинг...',
 
   // Preset leave-type labels. Keys are the untranslated LEAVE_TYPES values.
   presetType: {

@@ -1,14 +1,13 @@
-// Leave-type bottom sheet for the create-leave form: pick a preset or type a
-// custom type. Extracted verbatim from the old create-leave.tsx.
-import { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Modal, ScrollView } from 'react-native';
+// Leave-type bottom sheet for the create-leave form: pick one of HR's
+// «leave_request_reasons» (the same list the web form offers). No free text —
+// the web has none, and a typed reason matched no filter or report.
+import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { leaveTypeLabel } from '@/utils/leaveStatus';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
 import { ff } from '@/theme/typography';
-import { NO_WEB_OUTLINE } from '@/theme/web';
 
 // Web-parity: these strings are BOTH the option list AND the value stored/POSTed
 // as the leave `type` (CreateLeaveScreen sends `type: leaveType` verbatim), so
@@ -16,7 +15,13 @@ import { NO_WEB_OUTLINE } from '@/theme/web';
 // label is localized, via t('leaves.presetType.<value>'); the raw value is the
 // i18n key (values contain no dots, so they are valid nested key paths) and also
 // the fallback for custom free-text types. See src/i18n/locales/*/leaves.ts.
-export const LEAVE_TYPES = ["Xizmat topshirig'i", 'Kasallik', "Ta'til", 'Shaxsiy sabab', 'Boshqa'];
+//
+// This is only the FALLBACK when the dictionary is empty or unreachable, and
+// it is byte-identical to the web's LEAVE_REASON_FALLBACK (v2
+// RequestPermissionPage) so both apps store the same value. Older requests may
+// still carry 'Kasallik' / "Ta'til" / 'Boshqa' — their labels stay in
+// leaves.presetType.
+export const LEAVE_TYPES = ["Xizmat topshirig'i", 'Shaxsiy sabab'];
 
 // Localized display label for a leave type; custom free-text falls back to itself.
 // Lives in `@/utils/leaveStatus` (shared with the attendance Team screen);
@@ -31,7 +36,6 @@ export function LeaveTypeSheet({ visible, selected, onSelect, onClose, options =
   const ts = useThemedStyles(makeTs);
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const [custom, setCustom] = useState('');
   return (
     <Modal visible={visible} transparent animationType="slide">
       <TouchableOpacity style={ts.overlay} activeOpacity={1} onPress={onClose} />
@@ -46,12 +50,6 @@ export function LeaveTypeSheet({ visible, selected, onSelect, onClose, options =
           </TouchableOpacity>
         ))}
         </ScrollView>
-        <View style={ts.customRow}>
-          <TextInput style={ts.customInput} placeholder={t('leaves.typeCustomPlaceholder')} placeholderTextColor={colors.textMuted} value={custom} onChangeText={setCustom} />
-          <TouchableOpacity style={[ts.customBtn, !custom.trim() && { opacity: 0.4 }]} disabled={!custom.trim()} onPress={() => { onSelect(custom.trim()); onClose(); }}>
-            <Text style={ts.customBtnText}>{t('common.ok')}</Text>
-          </TouchableOpacity>
-        </View>
       </View>
     </Modal>
   );
@@ -67,8 +65,4 @@ const makeTs = (c: ThemeColors) =>
     item: { flexDirection: 'row', alignItems: 'center', paddingVertical: 15, borderBottomWidth: 2, borderBottomColor: c.cardBorder },
     itemText: { flex: 1, fontSize: 15, color: c.text, ...ff('700') },
     itemTextActive: { color: c.primaryLight, ...ff('900') },
-    customRow: { flexDirection: 'row', gap: 10, marginTop: 14, alignItems: 'center' },
-    customInput: { flex: 1, backgroundColor: c.inputBg, borderRadius: 14, borderWidth: 2, borderColor: c.cardBorder, paddingHorizontal: 12, paddingVertical: 10, color: c.text, fontSize: 15, ...NO_WEB_OUTLINE, ...ff('700') },
-    customBtn: { backgroundColor: c.primary, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 11, borderBottomWidth: 4, borderBottomColor: c.primaryShadow },
-    customBtnText: { color: c.onPrimary, fontSize: 14, ...ff('900') },
   });
