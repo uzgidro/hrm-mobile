@@ -36,7 +36,6 @@ export default {
   durationMinutes_other: '{{count}} minutes',
 
   typeSheetTitle: 'Select request type',
-  typeCustomPlaceholder: 'Or type your own...',
 
   // Preset leave-type labels. Keys are the untranslated LEAVE_TYPES values.
   presetType: {

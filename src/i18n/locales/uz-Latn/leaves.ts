@@ -48,7 +48,6 @@ export default {
 
   // ── Leave-type sheet ────────────────────────────────────────────────────────
   typeSheetTitle: "So'rov turini tanlang",
-  typeCustomPlaceholder: "Yoki o'zingiz yozing...",
 
   // Preset leave-type labels. Web-parity: the KEYS here are the exact
   // LEAVE_TYPES *values* stored/POSTed as the leave `type` (never translated —
