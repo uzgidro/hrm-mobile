@@ -1,5 +1,5 @@
-// Face login camera sheet: front camera, one frame per server-chosen pose,
-// then one verify call. See ./api.ts for the protocol.
+// Face login camera sheet: front camera, a burst of frames during every
+// server-chosen pose, then one verify call with the whole clip. See ./api.ts for the protocol.
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Modal, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -15,15 +15,37 @@ import {
   faceErrorKey,
   startFaceChallenge,
   verifyFace,
+  type FaceFrame,
   type FaceStep,
   type FaceTokens,
 } from "./api";
 
-/**
- * Seconds to settle into each pose before the frame is taken, shown as a
- * countdown. 1.7 s without one was too fast in the first test (2026-11-06).
- */
-const STEP_SECONDS = 3;
+/** Seconds shown before filming starts, so the person can settle in front of the camera. */
+const LEAD_IN_SECONDS = 2;
+/** A step that collected too few frames is extended by at most this long, ms. */
+const MAX_STEP_EXTENSION_MS = 1500;
+/** The server needs at least this many frames per step. */
+const MIN_FRAMES_PER_STEP = 4;
+/** Server rule: frames must be at least this far apart, ms. */
+const MIN_FRAME_GAP_MS = 100;
+/** Server limit for one base64 image. */
+const MAX_IMAGE_CHARS = 700_000;
+/** Give up when the camera keeps failing to produce pictures. */
+const MAX_CAPTURE_FAILURES = 6;
+/** Smaller pictures capture faster on slow Android phones; the face still needs this width. */
+const MIN_PICTURE_WIDTH = 480;
+
+/** Smallest available picture size ("WxH") whose width is at least MIN_PICTURE_WIDTH. */
+export function pickPictureSize(sizes: string[]): string | undefined {
+  const parsed = sizes
+    .map((s) => {
+      const m = /^(\d+)\s*x\s*(\d+)$/i.exec(s.trim());
+      return m ? { s, w: Number(m[1]), h: Number(m[2]) } : null;
+    })
+    .filter((x): x is { s: string; w: number; h: number } => x !== null && x.w >= MIN_PICTURE_WIDTH);
+  parsed.sort((x, y) => x.w * x.h - y.w * y.h);
+  return parsed[0]?.s;
+}
 
 const STEP_KEY: Record<FaceStep, string> = {
   front: "auth.faceStepFront",
@@ -84,6 +106,7 @@ function FaceLoginBody({
   const cameraRef = useRef<CameraView>(null);
   const aliveRef = useRef(true);
   const [cameraReady, setCameraReady] = useState(false);
+  const [pictureSize, setPictureSize] = useState<string | undefined>(undefined);
   const [phase, setPhase] = useState<Phase>("ready");
   const [step, setStep] = useState<FaceStep | null>(null);
   const [countdown, setCountdown] = useState(0);
@@ -96,27 +119,85 @@ function FaceLoginBody({
     };
   }, []);
 
+  // Pick a small picture size once the camera is up; silently keep the default on any failure.
+  const onCameraReady = useCallback(() => {
+    setCameraReady(true);
+    const cam = cameraRef.current;
+    if (!cam?.getAvailablePictureSizesAsync) return;
+    cam
+      .getAvailablePictureSizesAsync()
+      .then((sizes) => {
+        const best = pickPictureSize(sizes);
+        if (best && aliveRef.current) setPictureSize(best);
+      })
+      .catch(() => undefined);
+  }, []);
+
   const run = useCallback(async () => {
     setError(null);
     try {
       const ch = await startFaceChallenge();
-      const frames: { step: FaceStep; image: string }[] = [];
-      for (const s of ch.steps) {
+      const frames: FaceFrame[] = [];
+      const interval = Math.max(ch.frame_interval_ms, MIN_FRAME_GAP_MS);
+      let quality = 0.4;
+      let failures = 0;
+
+      // Lead-in countdown on the first pose; nothing is filmed yet.
+      setStep(ch.steps[0] ?? null);
+      setPhase("step");
+      for (let sec = LEAD_IN_SECONDS; sec > 0; sec--) {
+        if (!aliveRef.current) return;
+        setCountdown(sec);
+        await sleep(1000);
+      }
+
+      const t0 = Date.now();
+      let lastT = -MIN_FRAME_GAP_MS;
+      let lastShot = 0;
+      for (let idx = 0; idx < ch.steps.length; idx++) {
+        const s = ch.steps[idx];
         if (!aliveRef.current) return;
         setStep(s);
-        setPhase("step");
-        for (let sec = STEP_SECONDS; sec > 0; sec--) {
+        const stepStart = Date.now();
+        const stepEnd = stepStart + ch.step_ms;
+        let count = 0;
+        // Shoot back-to-back for the whole step; if frames are scarce, extend a little.
+        for (;;) {
+          const now = Date.now();
+          const extended = count < MIN_FRAMES_PER_STEP && now < stepEnd + MAX_STEP_EXTENSION_MS;
+          if (now >= stepEnd && !extended) break;
+          if (frames.length >= ch.max_frames) break;
           if (!aliveRef.current) return;
-          setCountdown(sec);
-          await sleep(1000);
+          setCountdown(Math.max(1, Math.ceil((stepEnd - now) / 1000)));
+          const wait = lastShot + interval - now;
+          if (wait > 0) await sleep(wait);
+          lastShot = Date.now();
+          let pic;
+          try {
+            pic = await cameraRef.current?.takePictureAsync({
+              quality,
+              base64: true,
+              skipProcessing: true,
+              shutterSound: false,
+            });
+          } catch {
+            pic = undefined;
+          }
+          if (!pic?.base64) {
+            if (++failures >= MAX_CAPTURE_FAILURES) throw new Error("capture");
+            continue;
+          }
+          if (pic.base64.length > MAX_IMAGE_CHARS) {
+            // Too big for the server: drop this frame and shoot smaller from now on.
+            quality = Math.max(0.15, quality * 0.7);
+            continue;
+          }
+          const tMs = Math.round(Date.now() - t0);
+          if (tMs - lastT < MIN_FRAME_GAP_MS) continue;
+          lastT = tMs;
+          frames.push({ i: idx, t: tMs, image: pic.base64 });
+          count++;
         }
-        const pic = await cameraRef.current?.takePictureAsync({
-          quality: 0.5,
-          base64: true,
-          shutterSound: false,
-        });
-        if (!pic?.base64) throw new Error("capture");
-        frames.push({ step: s, image: pic.base64 });
       }
       if (!aliveRef.current) return;
       setStep(null);
@@ -144,7 +225,8 @@ function FaceLoginBody({
             ref={cameraRef}
             style={StyleSheet.absoluteFill}
             facing="front"
-            onCameraReady={() => setCameraReady(true)}
+            pictureSize={pictureSize}
+            onCameraReady={onCameraReady}
           />
         ) : (
           <View style={styles.permission}>
