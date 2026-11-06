@@ -19,8 +19,11 @@ import {
   type FaceTokens,
 } from "./api";
 
-/** Time to settle into each pose before the frame is taken. */
-const STEP_MS = 1700;
+/**
+ * Seconds to settle into each pose before the frame is taken, shown as a
+ * countdown. 1.7 s without one was too fast in the first test (2026-11-06).
+ */
+const STEP_SECONDS = 3;
 
 const STEP_KEY: Record<FaceStep, string> = {
   front: "auth.faceStepFront",
@@ -83,6 +86,7 @@ function FaceLoginBody({
   const [cameraReady, setCameraReady] = useState(false);
   const [phase, setPhase] = useState<Phase>("ready");
   const [step, setStep] = useState<FaceStep | null>(null);
+  const [countdown, setCountdown] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -101,7 +105,11 @@ function FaceLoginBody({
         if (!aliveRef.current) return;
         setStep(s);
         setPhase("step");
-        await sleep(STEP_MS);
+        for (let sec = STEP_SECONDS; sec > 0; sec--) {
+          if (!aliveRef.current) return;
+          setCountdown(sec);
+          await sleep(1000);
+        }
         const pic = await cameraRef.current?.takePictureAsync({
           quality: 0.5,
           base64: true,
@@ -167,6 +175,7 @@ function FaceLoginBody({
               {STEP_ARROW[step]}
               {t(STEP_KEY[step] as never)}
               {STEP_ARROW_AFTER[step]}
+              {`  ·  ${countdown}`}
             </Text>
           </View>
         )}
