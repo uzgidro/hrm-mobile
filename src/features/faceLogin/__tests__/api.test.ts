@@ -29,12 +29,16 @@ describe('faceLoginEnabled', () => {
 
 describe('face login requests', () => {
   it('starts a challenge', async () => {
-    mock.onPost(FACE_CHALLENGE).reply(200, { challenge_id: 'c1', steps: ['front', 'right', 'left'], expires_in: 90 });
-    await expect(startFaceChallenge()).resolves.toEqual({
+    const body = {
       challenge_id: 'c1',
-      steps: ['front', 'right', 'left'],
+      steps: ['front', 'left', 'right', 'left'],
       expires_in: 90,
-    });
+      step_ms: 2500,
+      frame_interval_ms: 250,
+      max_frames: 64,
+    };
+    mock.onPost(FACE_CHALLENGE).reply(200, body);
+    await expect(startFaceChallenge()).resolves.toEqual(body);
   });
 
   it('sends every frame in one request and loads the user with the new token', async () => {
@@ -43,9 +47,9 @@ describe('face login requests', () => {
       expect(body).toEqual({
         challenge_id: 'c1',
         frames: [
-          { step: 'front', image: 'A' },
-          { step: 'left', image: 'B' },
-          { step: 'right', image: 'C' },
+          { i: 0, t: 0, image: 'A' },
+          { i: 1, t: 300, image: 'B' },
+          { i: 1, t: 620, image: 'C' },
         ],
         mirrored: false,
       });
@@ -57,9 +61,9 @@ describe('face login requests', () => {
       return [200, { id: 7, username: 'x' }];
     });
     const out = await verifyFace('c1', [
-      { step: 'front', image: 'A' },
-      { step: 'left', image: 'B' },
-      { step: 'right', image: 'C' },
+      { i: 0, t: 0, image: 'A' },
+      { i: 1, t: 300, image: 'B' },
+      { i: 1, t: 620, image: 'C' },
     ]);
     expect(out.tokens.refresh_token).toBe('ref');
     expect(out.user).toEqual({ id: 7, username: 'x' });
@@ -68,11 +72,33 @@ describe('face login requests', () => {
 
 describe('faceErrorKey', () => {
   const err = (code?: string) => ({ response: { data: { code } } });
+  const nested = (code: string, params?: Record<string, unknown>) => ({
+    response: { data: { detail: { code, params } } },
+  });
 
   it('maps backend codes to messages', () => {
     expect(faceErrorKey(err('face_not_recognized'))).toBe('auth.faceNotRecognized');
-    expect(faceErrorKey(err('face_liveness_failed'))).toBe('auth.faceLiveness');
     expect(faceErrorKey(err('too_many_login_attempts'))).toBe('auth.tooManyAttempts');
+    expect(faceErrorKey(err('face_not_found'))).toBe('auth.faceNotFound');
+    expect(faceErrorKey(err('face_multiple'))).toBe('auth.faceMultiple');
+    expect(faceErrorKey(err('face_too_small'))).toBe('auth.faceTooSmall');
+    expect(faceErrorKey(err('face_challenge_expired'))).toBe('auth.faceExpired');
+    expect(faceErrorKey(err('face_login_unavailable'))).toBe('auth.faceUnavailable');
+  });
+
+  it('reads the code from an object-shaped detail', () => {
+    expect(faceErrorKey(nested('face_login_not_allowed'))).toBe('auth.faceNotAllowed');
+    expect(faceErrorKey(nested('face_frames_invalid'))).toBe('auth.faceFramesInvalid');
+  });
+
+  it('picks the liveness message by reason', () => {
+    expect(faceErrorKey(nested('face_liveness_failed', { reason: 'spoof' }))).toBe('auth.faceSpoof');
+    expect(faceErrorKey(nested('face_liveness_failed', { reason: 'too_fast' }))).toBe('auth.faceTooFast');
+    expect(faceErrorKey(nested('face_liveness_failed', { reason: 'identity' }))).toBe('auth.faceContinuity');
+    expect(faceErrorKey(nested('face_liveness_failed', { reason: 'continuity' }))).toBe('auth.faceContinuity');
+    expect(faceErrorKey(nested('face_liveness_failed', { reason: 'pose' }))).toBe('auth.faceLiveness');
+    expect(faceErrorKey(nested('face_liveness_failed'))).toBe('auth.faceLiveness');
+    expect(faceErrorKey(err('face_liveness_failed'))).toBe('auth.faceLiveness');
   });
 
   it('falls back to the generic message', () => {

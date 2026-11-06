@@ -32,7 +32,7 @@ export default {
   // Face login (2026-11-06): camera sign-in without username/password.
   faceButton: "Sign in with your face",
   faceTestBadge: "Test",
-  faceIntro: "Look at the camera and follow the prompts — it takes a few seconds.",
+  faceIntro: "Look at the camera and follow the arrows — it takes about 10 seconds.",
   faceStart: "Start",
   faceRetry: "Try again",
   faceClose: "Close",
@@ -51,5 +51,10 @@ export default {
   faceTooSmall: "Come closer to the camera",
   faceExpired: "The check expired — start again",
   faceUnavailable: "Face sign-in is unavailable right now — use your username and password",
+  faceSpoof: "A photo or screen was detected. Please look at the camera yourself.",
+  faceTooFast: "The check finished too quickly, please try again.",
+  faceContinuity: "Your face left the frame or changed during the check.",
+  faceNotAllowed: "Face sign-in is not available for this account — use your username and password",
+  faceFramesInvalid: "The video was not recorded completely — please try again",
   tomchiFace: "Look at the camera — I'll recognise you!",
 } as const;

@@ -35,7 +35,7 @@ export default {
   // Face login (2026-11-06): camera sign-in without username/password.
   faceButton: "Yuz orqali kirish",
   faceTestBadge: "Test",
-  faceIntro: "Kameraga qarang va ko'rsatmalarga amal qiling — tekshiruv bir necha soniya davom etadi.",
+  faceIntro: "Kameraga qarang va strelkalarga amal qiling — tekshiruv taxminan 10 soniya davom etadi.",
   faceStart: "Boshlash",
   faceRetry: "Qayta urinish",
   faceClose: "Yopish",
@@ -54,5 +54,10 @@ export default {
   faceTooSmall: "Kameraga yaqinroq keling",
   faceExpired: "Tekshiruv muddati tugadi — qaytadan boshlang",
   faceUnavailable: "Yuz orqali kirish hozircha ishlamayapti — login va parol bilan kiring",
+  faceSpoof: "Rasm yoki ekran aniqlandi. Kameraga o'zingiz qarang.",
+  faceTooFast: "Tekshiruv juda tez yakunlandi, qaytadan urinib ko'ring.",
+  faceContinuity: "Tekshiruv davomida yuz kadrdan chiqib ketdi yoki almashdi.",
+  faceNotAllowed: "Bu hisob bilan yuz orqali kirib bo'lmaydi — login va parol bilan kiring",
+  faceFramesInvalid: "Videoyozuv to'liq olinmadi — qaytadan urinib ko'ring",
   tomchiFace: "Kameraga qarang — sizni yuzingizdan taniyman!",
 } as const;
