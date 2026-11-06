@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
   StyleSheet, KeyboardAvoidingView, Platform, ScrollView,
@@ -26,6 +26,8 @@ import { Tomchi } from '../../src/ui/mascot/Tomchi';
 import { caretRatio, moodForLogin, type TomchiMood } from '../../src/ui/mascot/tomchiPose';
 import { LANGUAGES, LANGUAGE_FLAG, LANGUAGE_NATIVE_NAME } from '../../src/i18n/locales';
 import { User } from '../../src/types';
+import { FaceLoginModal } from '../../src/features/faceLogin/FaceLoginModal';
+import { faceLoginEnabled, type FaceTokens } from '../../src/features/faceLogin/api';
 
 // Tomchi's speech bubble line for each mood ('loading' never shows here).
 const BUBBLE_KEY: Record<TomchiMood, string> = {
@@ -60,6 +62,18 @@ export default function LoginScreen() {
   const [captchaAnswer, setCaptchaAnswer] = useState('');
   const [captchaBusy, setCaptchaBusy] = useState(false);
   const { login } = useAuthStore();
+  // Face login: offered only when the server reports it working (native only —
+  // the web SPA has its own flow).
+  const [faceAvailable, setFaceAvailable] = useState(false);
+  const [faceOpen, setFaceOpen] = useState(false);
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+    let alive = true;
+    void faceLoginEnabled().then((ok) => alive && setFaceAvailable(ok));
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const loadCaptcha = async () => {
     setCaptchaBusy(true);
@@ -166,6 +180,15 @@ export default function LoginScreen() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleFaceSuccess = async (tokens: FaceTokens, user: User) => {
+    setFaceOpen(false);
+    setResult('success');
+    // Same seam as the form login: login() flips isAuthenticated and the
+    // Stack.Protected guard navigates; then register the push token.
+    await login(tokens.access_token, tokens.refresh_token, user);
+    void setupPushNotifications();
   };
 
   const mood = moodForLogin({ focused, passwordVisible: showPass, result });
@@ -303,6 +326,19 @@ export default function LoginScreen() {
                 testID="login-oneid"
               />
             )}
+
+            {faceAvailable && (
+              <Button
+                label={t('auth.faceButton')}
+                onPress={() => setFaceOpen(true)}
+                disabled={loading}
+                variant="soft"
+                size="lg"
+                full
+                icon="camera"
+                testID="login-face"
+              />
+            )}
           </View>
 
           <View style={styles.footer}>
@@ -310,6 +346,8 @@ export default function LoginScreen() {
           </View>
         </ScrollView>
       </SafeAreaView>
+
+      <FaceLoginModal visible={faceOpen} onClose={() => setFaceOpen(false)} onSuccess={handleFaceSuccess} />
 
       <Modal visible={langOpen} transparent animationType="fade" onRequestClose={() => setLangOpen(false)}>
         <Pressable style={styles.langBackdrop} onPress={() => setLangOpen(false)}>

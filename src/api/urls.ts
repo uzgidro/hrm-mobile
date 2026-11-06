@@ -16,6 +16,12 @@ export const AUTH_ME_PASSWORD = 'auth/me/password';
 export const SSO_LOGIN = 'sso/login';
 export const SSO_EXCHANGE = 'sso/exchange';
 
+// Face login (backend api/v1/face_login.py) — pre-login; the camera recognises
+// the employee among everyone, no username/password.
+export const FACE_STATUS = 'auth/face/status';
+export const FACE_CHALLENGE = 'auth/face/challenge';
+export const FACE_VERIFY = 'auth/face/verify';
+
 // Employee
 export const EMPLOYEE_DETAIL = (id: number) => `employees/${id}`;
 

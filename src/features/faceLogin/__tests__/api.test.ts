@@ -1,0 +1,82 @@
+import MockAdapter from 'axios-mock-adapter';
+import { apiClient } from '@/api/client';
+import { __resetAccessTokenCache } from '@/api/authToken';
+import { FACE_CHALLENGE, FACE_STATUS, FACE_VERIFY, USER_INFO } from '@/api/urls';
+import { faceErrorKey, faceLoginEnabled, startFaceChallenge, verifyFace } from '../api';
+
+let mock: MockAdapter;
+
+beforeEach(() => {
+  mock = new MockAdapter(apiClient);
+  __resetAccessTokenCache();
+});
+
+afterEach(() => mock.restore());
+
+describe('faceLoginEnabled', () => {
+  it('follows the server flag', async () => {
+    mock.onGet(FACE_STATUS).reply(200, { enabled: true });
+    await expect(faceLoginEnabled()).resolves.toBe(true);
+  });
+
+  it('hides the button when the server is unreachable or says no', async () => {
+    mock.onGet(FACE_STATUS).reply(500);
+    await expect(faceLoginEnabled()).resolves.toBe(false);
+    mock.onGet(FACE_STATUS).reply(200, { enabled: false });
+    await expect(faceLoginEnabled()).resolves.toBe(false);
+  });
+});
+
+describe('face login requests', () => {
+  it('starts a challenge', async () => {
+    mock.onPost(FACE_CHALLENGE).reply(200, { challenge_id: 'c1', steps: ['front', 'right', 'left'], expires_in: 90 });
+    await expect(startFaceChallenge()).resolves.toEqual({
+      challenge_id: 'c1',
+      steps: ['front', 'right', 'left'],
+      expires_in: 90,
+    });
+  });
+
+  it('sends every frame in one request and loads the user with the new token', async () => {
+    mock.onPost(FACE_VERIFY).reply((config) => {
+      const body = JSON.parse(config.data);
+      expect(body).toEqual({
+        challenge_id: 'c1',
+        frames: [
+          { step: 'front', image: 'A' },
+          { step: 'left', image: 'B' },
+          { step: 'right', image: 'C' },
+        ],
+        mirrored: false,
+      });
+      expect(config.headers?.['device-type']).toBe('mobile');
+      return [200, { access_token: 'acc', refresh_token: 'ref', expires_in: 600 }];
+    });
+    mock.onGet(USER_INFO).reply((config) => {
+      expect(config.headers?.Authorization).toBe('Bearer acc');
+      return [200, { id: 7, username: 'x' }];
+    });
+    const out = await verifyFace('c1', [
+      { step: 'front', image: 'A' },
+      { step: 'left', image: 'B' },
+      { step: 'right', image: 'C' },
+    ]);
+    expect(out.tokens.refresh_token).toBe('ref');
+    expect(out.user).toEqual({ id: 7, username: 'x' });
+  });
+});
+
+describe('faceErrorKey', () => {
+  const err = (code?: string) => ({ response: { data: { code } } });
+
+  it('maps backend codes to messages', () => {
+    expect(faceErrorKey(err('face_not_recognized'))).toBe('auth.faceNotRecognized');
+    expect(faceErrorKey(err('face_liveness_failed'))).toBe('auth.faceLiveness');
+    expect(faceErrorKey(err('too_many_login_attempts'))).toBe('auth.tooManyAttempts');
+  });
+
+  it('falls back to the generic message', () => {
+    expect(faceErrorKey(err('something_else'))).toBe('auth.faceFailed');
+    expect(faceErrorKey(new Error('network'))).toBe('auth.faceFailed');
+  });
+});
