@@ -21,6 +21,7 @@ export const SSO_EXCHANGE = 'sso/exchange';
 export const FACE_STATUS = 'auth/face/status';
 export const FACE_CHALLENGE = 'auth/face/challenge';
 export const FACE_VERIFY = 'auth/face/verify';
+export const FACE_ME = 'auth/face/me';
 
 // Employee
 export const EMPLOYEE_DETAIL = (id: number) => `employees/${id}`;

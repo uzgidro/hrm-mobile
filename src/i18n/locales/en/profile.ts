@@ -28,6 +28,9 @@ export default {
   changePin: 'Change PIN code',
   biometrics: 'Biometric login',
   biometricsHint: 'Quick unlock with fingerprint or face',
+  faceLogin: "Face sign-in",
+  faceLoginHint: "Sign in with the camera, no username or password. If you turn it off, nobody can sign in to your account by face.",
+  faceLoginUnavailable: "Not available for your account (admins and employees with a role sign in with a password only).",
 
   logout: 'Log out',
   logoutConfirm: 'Do you want to log out?',

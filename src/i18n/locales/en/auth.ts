@@ -51,6 +51,7 @@ export default {
   faceTooSmall: "Come closer to the camera",
   faceExpired: "The check expired — start again",
   faceUnavailable: "Face sign-in is unavailable right now — use your username and password",
+  faceTurnedOff: "Face sign-in is turned off for this account. Use your username and password.",
   faceSpoof: "A photo or screen was detected. Please look at the camera yourself.",
   faceTooFast: "The check finished too quickly, please try again.",
   faceContinuity: "Your face left the frame or changed during the check.",

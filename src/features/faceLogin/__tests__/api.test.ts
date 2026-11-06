@@ -1,8 +1,8 @@
 import MockAdapter from 'axios-mock-adapter';
 import { apiClient } from '@/api/client';
 import { __resetAccessTokenCache } from '@/api/authToken';
-import { FACE_CHALLENGE, FACE_STATUS, FACE_VERIFY, USER_INFO } from '@/api/urls';
-import { faceErrorKey, faceLoginEnabled, startFaceChallenge, verifyFace } from '../api';
+import { FACE_CHALLENGE, FACE_ME, FACE_STATUS, FACE_VERIFY, USER_INFO } from '@/api/urls';
+import { faceErrorKey, faceLoginEnabled, getMyFaceLogin, setMyFaceLogin, startFaceChallenge, verifyFace } from '../api';
 
 let mock: MockAdapter;
 
@@ -105,5 +105,22 @@ describe('faceErrorKey', () => {
   it('falls back to the generic message', () => {
     expect(faceErrorKey(err('something_else'))).toBe('auth.faceFailed');
     expect(faceErrorKey(new Error('network'))).toBe('auth.faceFailed');
+  });
+});
+
+describe('my face login switch', () => {
+  it('reads the per-person state', async () => {
+    const body = { available: true, eligible: true, enabled: false };
+    mock.onGet(FACE_ME).reply(200, body);
+    await expect(getMyFaceLogin()).resolves.toEqual(body);
+  });
+
+  it('PUTs the new value and returns the server state', async () => {
+    mock.onPut(FACE_ME, { enabled: false }).reply(200, { available: true, eligible: true, enabled: false });
+    await expect(setMyFaceLogin(false)).resolves.toEqual({ available: true, eligible: true, enabled: false });
+  });
+
+  it('maps face_login_turned_off to its own message', () => {
+    expect(faceErrorKey({ response: { data: { code: 'face_login_turned_off' } } })).toBe('auth.faceTurnedOff');
   });
 });

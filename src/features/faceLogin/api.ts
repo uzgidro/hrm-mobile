@@ -6,7 +6,7 @@
 // Liveness + recognition among all employees happen on the server
 // (backend services/face_login.py). Frames are not stored anywhere.
 import { apiClient } from '@/api/client';
-import { FACE_CHALLENGE, FACE_STATUS, FACE_VERIFY, USER_INFO } from '@/api/urls';
+import { FACE_CHALLENGE, FACE_ME, FACE_STATUS, FACE_VERIFY, USER_INFO } from '@/api/urls';
 import type { User } from '@/types';
 
 export type FaceStep = 'front' | 'left' | 'right';
@@ -59,6 +59,19 @@ export async function faceLoginEnabled(): Promise<boolean> {
   }
 }
 
+/** Per-person face login state: server offers it / account may use it / not switched off. */
+export type MyFaceLogin = { available: boolean; eligible: boolean; enabled: boolean };
+
+export async function getMyFaceLogin(): Promise<MyFaceLogin> {
+  const { data } = await apiClient.get<MyFaceLogin>(FACE_ME);
+  return data;
+}
+
+export async function setMyFaceLogin(enabled: boolean): Promise<MyFaceLogin> {
+  const { data } = await apiClient.put<MyFaceLogin>(FACE_ME, { enabled });
+  return data;
+}
+
 export async function startFaceChallenge(): Promise<FaceChallenge> {
   const { data } = await apiClient.post<FaceChallenge>(FACE_CHALLENGE);
   return data;
@@ -93,6 +106,7 @@ const ERROR_KEY: Record<string, string> = {
   face_frames_invalid: 'auth.faceFramesInvalid',
   face_login_unavailable: 'auth.faceUnavailable',
   face_login_disabled: 'auth.faceUnavailable',
+  face_login_turned_off: 'auth.faceTurnedOff',
   too_many_login_attempts: 'auth.tooManyAttempts',
 };
 

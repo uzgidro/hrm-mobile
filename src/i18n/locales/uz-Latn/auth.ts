@@ -54,6 +54,7 @@ export default {
   faceTooSmall: "Kameraga yaqinroq keling",
   faceExpired: "Tekshiruv muddati tugadi — qaytadan boshlang",
   faceUnavailable: "Yuz orqali kirish hozircha ishlamayapti — login va parol bilan kiring",
+  faceTurnedOff: "Bu hisob uchun yuz orqali kirish o'chirilgan. Login va parol bilan kiring.",
   faceSpoof: "Rasm yoki ekran aniqlandi. Kameraga o'zingiz qarang.",
   faceTooFast: "Tekshiruv juda tez yakunlandi, qaytadan urinib ko'ring.",
   faceContinuity: "Tekshiruv davomida yuz kadrdan chiqib ketdi yoki almashdi.",
