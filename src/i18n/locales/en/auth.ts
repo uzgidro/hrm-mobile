@@ -56,5 +56,8 @@ export default {
   faceContinuity: "Your face left the frame or changed during the check.",
   faceNotAllowed: "Face sign-in is not available for this account — use your username and password",
   faceFramesInvalid: "The video was not recorded completely — please try again",
+  faceBrightnessHint: "Maximize the screen brightness — during the check the screen lights up in colour.",
+  faceFlashPrompt: "Look at the camera",
+  faceFlash: "The screen light was not visible on your face. Move closer to the screen and raise the brightness.",
   tomchiFace: "Look at the camera — I'll recognise you!",
 } as const;

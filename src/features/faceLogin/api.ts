@@ -11,12 +11,31 @@ import type { User } from '@/types';
 
 export type FaceStep = 'front' | 'left' | 'right';
 
+export type FlashColor = 'red' | 'green' | 'blue';
+
+/** Server-driven screen flash shown during one step (optional). */
+export type FaceFlash = {
+  /** Step index the flash belongs to (always 0). */
+  step: number;
+  colors: FlashColor[];
+  /** First slot starts this long after filming starts (t0), ms. */
+  start_ms: number;
+  /** Length of one colour slot, ms. */
+  slot_ms: number;
+  /** Minimum gap between two captured frames during the flash step, ms. */
+  frame_interval_ms: number;
+};
+
 export type FaceChallenge = {
   challenge_id: string;
   steps: FaceStep[];
   expires_in: number;
   /** Duration of one step, ms. */
   step_ms: number;
+  /** Duration of EACH step, ms; preferred over `step_ms` when present. */
+  step_durations_ms?: number[];
+  /** Screen flash settings; absent on older servers. */
+  flash?: FaceFlash;
   /** Minimum gap between two captured frames, ms. */
   frame_interval_ms: number;
   /** Hard cap on the total frames in one verify request. */
@@ -84,6 +103,7 @@ const LIVENESS_REASON_KEY: Record<string, string> = {
   identity: 'auth.faceContinuity',
   continuity: 'auth.faceContinuity',
   pose: 'auth.faceLiveness',
+  flash: 'auth.faceFlash',
 };
 
 type ErrBody = {

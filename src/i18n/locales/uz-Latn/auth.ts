@@ -59,5 +59,8 @@ export default {
   faceContinuity: "Tekshiruv davomida yuz kadrdan chiqib ketdi yoki almashdi.",
   faceNotAllowed: "Bu hisob bilan yuz orqali kirib bo'lmaydi — login va parol bilan kiring",
   faceFramesInvalid: "Videoyozuv to'liq olinmadi — qaytadan urinib ko'ring",
+  faceBrightnessHint: "Ekran yorqinligini maksimal qiling — tekshiruv vaqtida ekran rangli yonadi.",
+  faceFlashPrompt: "Kameraga qarang",
+  faceFlash: "Ekran nuri yuzda ko'rinmadi. Ekranga yaqinroq turing va yorqinlikni oshiring.",
   tomchiFace: "Kameraga qarang — sizni yuzingizdan taniyman!",
 } as const;

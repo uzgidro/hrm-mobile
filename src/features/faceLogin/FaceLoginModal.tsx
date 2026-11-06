@@ -15,6 +15,7 @@ import {
   faceErrorKey,
   startFaceChallenge,
   verifyFace,
+  type FaceFlash,
   type FaceFrame,
   type FaceStep,
   type FaceTokens,
@@ -64,6 +65,16 @@ const STEP_ARROW_AFTER: Record<FaceStep, string> = {
   right: "  →",
 };
 
+const FLASH_HEX = { red: "#FF0000", green: "#00FF00", blue: "#0000FF" } as const;
+
+/** Colour of the flash slot active `elapsed` ms after t0, or null outside every slot. */
+export function flashColorAt(flash: FaceFlash, elapsed: number): string | null {
+  if (elapsed < flash.start_ms) return null;
+  const k = Math.floor((elapsed - flash.start_ms) / flash.slot_ms);
+  const c = flash.colors[k];
+  return c ? FLASH_HEX[c] ?? null : null;
+}
+
 type Phase = "ready" | "step" | "verifying" | "error";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -111,11 +122,20 @@ function FaceLoginBody({
   const [step, setStep] = useState<FaceStep | null>(null);
   const [countdown, setCountdown] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [flashColor, setFlashColor] = useState<string | null>(null);
+  const flashTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const stopFlash = useCallback(() => {
+    if (flashTimerRef.current) clearInterval(flashTimerRef.current);
+    flashTimerRef.current = null;
+    setFlashColor(null);
+  }, []);
 
   useEffect(() => {
     aliveRef.current = true;
     return () => {
       aliveRef.current = false;
+      if (flashTimerRef.current) clearInterval(flashTimerRef.current);
     };
   }, []);
 
@@ -139,6 +159,15 @@ function FaceLoginBody({
       const ch = await startFaceChallenge();
       const frames: FaceFrame[] = [];
       const interval = Math.max(ch.frame_interval_ms, MIN_FRAME_GAP_MS);
+      const flash = ch.flash;
+      const flashInterval = flash ? Math.max(flash.frame_interval_ms, MIN_FRAME_GAP_MS) : interval;
+      // Cumulative step boundaries (ms from t0); falls back to equal `step_ms` steps.
+      const ends: number[] = [];
+      let acc = 0;
+      for (let k = 0; k < ch.steps.length; k++) {
+        acc += ch.step_durations_ms?.[k] ?? ch.step_ms;
+        ends.push(acc);
+      }
       let quality = 0.4;
       let failures = 0;
 
@@ -154,12 +183,23 @@ function FaceLoginBody({
       const t0 = Date.now();
       let lastT = -MIN_FRAME_GAP_MS;
       let lastShot = 0;
+      // The flash colour follows the wall clock on its own fast timer, independent of capture speed.
+      if (flash) {
+        let shown: string | null = null;
+        flashTimerRef.current = setInterval(() => {
+          const c = flashColorAt(flash, Date.now() - t0);
+          if (c !== shown) {
+            shown = c;
+            setFlashColor(c);
+          }
+        }, 16);
+      }
       for (let idx = 0; idx < ch.steps.length; idx++) {
         const s = ch.steps[idx];
         if (!aliveRef.current) return;
         setStep(s);
-        const stepStart = Date.now();
-        const stepEnd = stepStart + ch.step_ms;
+        const stepEnd = t0 + ends[idx];
+        const stepInterval = flash && idx === flash.step ? flashInterval : interval;
         let count = 0;
         // Shoot back-to-back for the whole step; if frames are scarce, extend a little.
         for (;;) {
@@ -169,7 +209,7 @@ function FaceLoginBody({
           if (frames.length >= ch.max_frames) break;
           if (!aliveRef.current) return;
           setCountdown(Math.max(1, Math.ceil((stepEnd - now) / 1000)));
-          const wait = lastShot + interval - now;
+          const wait = lastShot + stepInterval - now;
           if (wait > 0) await sleep(wait);
           lastShot = Date.now();
           let pic;
@@ -199,23 +239,26 @@ function FaceLoginBody({
           count++;
         }
       }
+      stopFlash();
       if (!aliveRef.current) return;
       setStep(null);
       setPhase("verifying");
       const { tokens, user } = await verifyFace(ch.challenge_id, frames, false);
       await onSuccess(tokens, user);
     } catch (e) {
+      stopFlash();
       if (!aliveRef.current) return;
       setStep(null);
       setPhase("error");
       setError(t(faceErrorKey(e) as never));
     }
-  }, [onSuccess, t]);
+  }, [onSuccess, stopFlash, t]);
 
   const busy = phase === "step" || phase === "verifying";
   useEffect(() => onBusy(busy), [busy, onBusy]);
 
   return (
+    <>
     <SafeAreaView style={styles.root} edges={["top", "bottom"]}>
       <Text style={styles.title}>{t("auth.faceButton")}</Text>
 
@@ -272,6 +315,9 @@ function FaceLoginBody({
       {phase === "ready" && (
         <Text style={styles.hint}>{t("auth.faceIntro")}</Text>
       )}
+      {phase === "ready" && (
+        <Text style={styles.hint}>{t("auth.faceBrightnessHint")}</Text>
+      )}
       {error && <Text style={styles.error}>{error}</Text>}
 
       <View style={styles.actions}>
@@ -300,6 +346,12 @@ function FaceLoginBody({
         <Text style={styles.privacy}>{t("auth.facePrivacy")}</Text>
       </View>
     </SafeAreaView>
+    {flashColor && (
+      <View pointerEvents="none" style={[FILL, styles.flash, { backgroundColor: flashColor }]}>
+        <Text style={styles.flashText}>{t("auth.faceFlashPrompt")}</Text>
+      </View>
+    )}
+    </>
   );
 }
 
@@ -352,6 +404,15 @@ const makeStyles = (c: ThemeColors) =>
       fontSize: 17,
       textAlign: "center",
       ...ff("700", "text"),
+    },
+    flash: { alignItems: "center", justifyContent: "center", zIndex: 100, elevation: 100 },
+    flashText: {
+      color: "white",
+      fontSize: 22,
+      textAlign: "center",
+      textShadowColor: "rgba(0,0,0,0.6)",
+      textShadowRadius: 4,
+      ...ff("800", "display"),
     },
     overlay: {
       ...FILL,

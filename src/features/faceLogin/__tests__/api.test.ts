@@ -97,6 +97,7 @@ describe('faceErrorKey', () => {
     expect(faceErrorKey(nested('face_liveness_failed', { reason: 'identity' }))).toBe('auth.faceContinuity');
     expect(faceErrorKey(nested('face_liveness_failed', { reason: 'continuity' }))).toBe('auth.faceContinuity');
     expect(faceErrorKey(nested('face_liveness_failed', { reason: 'pose' }))).toBe('auth.faceLiveness');
+    expect(faceErrorKey(nested('face_liveness_failed', { reason: 'flash' }))).toBe('auth.faceFlash');
     expect(faceErrorKey(nested('face_liveness_failed'))).toBe('auth.faceLiveness');
     expect(faceErrorKey(err('face_liveness_failed'))).toBe('auth.faceLiveness');
   });
