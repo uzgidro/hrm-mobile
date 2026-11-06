@@ -34,6 +34,7 @@ export default {
 
   // Face login (2026-11-06): camera sign-in without username/password.
   faceButton: "Yuz orqali kirish",
+  faceTestBadge: "Test",
   faceIntro: "Kameraga qarang va ko'rsatmalarga amal qiling — tekshiruv bir necha soniya davom etadi.",
   faceStart: "Boshlash",
   faceRetry: "Qayta urinish",

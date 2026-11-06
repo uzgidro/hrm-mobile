@@ -31,6 +31,7 @@ export default {
 
   // Face login (2026-11-06): camera sign-in without username/password.
   faceButton: "Sign in with your face",
+  faceTestBadge: "Test",
   faceIntro: "Look at the camera and follow the prompts — it takes a few seconds.",
   faceStart: "Start",
   faceRetry: "Try again",

@@ -20,6 +20,7 @@ import { NO_WEB_OUTLINE } from '../../src/theme/web';
 import { Icon } from '../../src/components/Icon';
 import { Flag } from '../../src/components/Flag';
 import { Button } from '../../src/ui/Button';
+import { Badge } from '../../src/ui/Badge';
 import { LinearGradient } from 'expo-linear-gradient';
 import { gradients, radii, shadow } from '../../src/theme/tokens';
 import { Tomchi } from '../../src/ui/mascot/Tomchi';
@@ -328,16 +329,22 @@ export default function LoginScreen() {
             )}
 
             {faceAvailable && (
-              <Button
-                label={t('auth.faceButton')}
-                onPress={() => setFaceOpen(true)}
-                disabled={loading}
-                variant="soft"
-                size="lg"
-                full
-                icon="camera"
-                testID="login-face"
-              />
+              <View>
+                <Button
+                  label={t('auth.faceButton')}
+                  onPress={() => setFaceOpen(true)}
+                  disabled={loading}
+                  variant="soft"
+                  size="lg"
+                  full
+                  icon="camera"
+                  testID="login-face"
+                />
+                {/* Face login is still on trial (2026-11-06). */}
+                <View style={styles.faceBadge} pointerEvents="none">
+                  <Badge label={t('auth.faceTestBadge')} tone="warning" testID="login-face-test-badge" />
+                </View>
+              </View>
             )}
           </View>
 
@@ -454,5 +461,6 @@ const makeStyles = (c: ThemeColors) =>
     loginBtn: { marginTop: 6 },
 
     footer: { marginTop: 'auto', paddingTop: 28, alignItems: 'center' },
+    faceBadge: { position: 'absolute', top: -8, right: 12, zIndex: 1, elevation: 2 },
     version: { color: c.fgSubtle, fontSize: 12, ...ff('500', 'text') },
   });
