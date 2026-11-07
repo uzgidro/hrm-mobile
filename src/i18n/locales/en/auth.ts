@@ -42,7 +42,7 @@ export default {
   faceVerifying: "Verifying…",
   facePermission: "Allow camera access to sign in with your face",
   facePermissionButton: "Allow",
-  facePrivacy: "Frames are not stored — they are used only for this check.",
+  facePrivacy: "For security, one picture of each attempt is kept for 90 days and only an administrator can see it.",
   faceFailed: "The check failed. Please try again.",
   faceNotRecognized: "Face not recognised. Try again in good light or sign in with your username and password",
   faceLiveness: "Prompt not followed — turn your head clearly to the side shown",
