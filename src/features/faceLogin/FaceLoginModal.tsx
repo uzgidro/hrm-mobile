@@ -343,7 +343,6 @@ function FaceLoginBody({
           full
           testID="face-close"
         />
-        <Text style={styles.privacy}>{t("auth.facePrivacy")}</Text>
       </View>
     </SafeAreaView>
     {flashColor && (
@@ -450,10 +449,4 @@ const makeStyles = (c: ThemeColors) =>
       ...ff("600", "text"),
     },
     actions: { marginTop: "auto", gap: space[2], paddingBottom: space[2] },
-    privacy: {
-      color: c.fgSubtle,
-      fontSize: 12,
-      textAlign: "center",
-      ...ff("400", "text"),
-    },
   });
