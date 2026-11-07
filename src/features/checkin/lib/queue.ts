@@ -30,6 +30,17 @@ export function isRetryable(error: unknown): boolean {
   return s === 408 || s === 429 || s >= 500;
 }
 
+/** Server codes meaning the PICTURE is unusable (no visible face / unreadable). Permanent: resending the same bytes cannot succeed. */
+export const PHOTO_REJECT_CODES = ['checkin_no_face', 'checkin_photo_invalid'] as const;
+
+/** True when the server refused the photo itself (422 `checkin_no_face` / 400 `checkin_photo_invalid`). */
+export function isPhotoRejected(error: unknown): boolean {
+  const data = (error as AxiosError | undefined)?.response?.data as { code?: unknown; detail?: unknown } | undefined;
+  const nested = data?.detail && typeof data.detail === 'object' ? (data.detail as { code?: unknown }).code : undefined;
+  const code = typeof data?.code === 'string' ? data.code : nested;
+  return PHOTO_REJECT_CODES.some((c) => c === code);
+}
+
 export async function readQueue(): Promise<QueuedCheckin[]> {
   const q = await loadDraft<QueuedCheckin[]>(QUEUE_KEY);
   return Array.isArray(q) ? q : [];

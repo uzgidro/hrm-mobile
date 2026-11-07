@@ -1,6 +1,5 @@
 // «Keldim» belgisi uchun surat va joylashuv. Ikkalasi ham FAQAT shu yerda olinadi —
 // ekran natijani ko'rsatadi, xatoni (ruxsat yo'q / GPS o'chiq) tushunarli kod bilan oladi.
-import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as Location from 'expo-location';
 
@@ -27,23 +26,13 @@ export function resizeAction(width: number, height: number, max = PHOTO_MAX_SIDE
 }
 
 /**
- * Faqat KAMERA — galereyadan yuklash YO'Q (foydalanuvchi qarori 2026-10-06): belgi — shu yerda, hozir olingan surat. Old kamera standart
- * (yuz + fon), xodim tizim kamerasida almashtira oladi. `null` — foydalanuvchi bekor qildi.
+ * Downsizes and re-encodes a picture taken by the in-app front camera
+ * (`CheckinCameraModal`) into the data URL the check-in body expects.
+ * There is no gallery and no system camera: the photo is taken right now, with the front lens only.
  */
-export async function takeCheckinPhoto(): Promise<CapturedPhoto | null> {
-  const perm = await ImagePicker.requestCameraPermissionsAsync();
-  if (!perm.granted) throw new CaptureError('camera_denied');
-  const res = await ImagePicker.launchCameraAsync({
-    mediaTypes: ['images'],
-    cameraType: ImagePicker.CameraType.front,
-    quality: 0.8,
-    allowsEditing: false,
-    exif: false,
-  });
-  if (res.canceled || !res.assets?.[0]) return null;
-  const asset = res.assets[0];
+export async function prepareCheckinPhoto(shot: { uri: string; width: number; height: number }): Promise<CapturedPhoto> {
   try {
-    const out = await ImageManipulator.manipulateAsync(asset.uri, resizeAction(asset.width, asset.height), {
+    const out = await ImageManipulator.manipulateAsync(shot.uri, resizeAction(shot.width, shot.height), {
       compress: PHOTO_QUALITY,
       format: ImageManipulator.SaveFormat.JPEG,
       base64: true,

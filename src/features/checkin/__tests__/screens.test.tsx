@@ -31,8 +31,20 @@ jest.mock('../lib/capture', () => {
   const actual = jest.requireActual('../lib/capture');
   return {
     ...actual,
-    takeCheckinPhoto: jest.fn(async () => ({ uri: 'file:///p.jpg', base64: 'data:image/jpeg;base64,QUJD', width: 960, height: 1280 })),
     getCheckinLocation: jest.fn(async () => ({ latitude: 41.3, longitude: 69.28, accuracy_m: 8, fromCache: false })),
+  };
+});
+
+// The real modal needs a native camera; the stub "captures" as soon as it is opened.
+jest.mock('../components/CheckinCameraModal', () => {
+  const { useEffect } = require('react');
+  return {
+    CheckinCameraModal: ({ visible, onCaptured }: { visible: boolean; onCaptured: (p: unknown) => void }) => {
+      useEffect(() => {
+        if (visible) onCaptured({ uri: 'file:///p.jpg', base64: 'data:image/jpeg;base64,QUJD', width: 960, height: 1280 });
+      }, [visible, onCaptured]);
+      return null;
+    },
   };
 });
 

@@ -37,13 +37,13 @@ import {
   formatDistance,
   getCheckinLocation,
   nearestDestination,
-  takeCheckinPhoto,
   type CapturedLocation,
   type CapturedPhoto,
 } from '../lib/capture';
-import { newClientUuid, submitCheckin } from '../lib/queue';
+import { isPhotoRejected, newClientUuid, submitCheckin } from '../lib/queue';
 import { reloadPending } from '../lib/useCheckinQueue';
 import { nextDirection } from '../components/TripCheckinCard';
+import { CheckinCameraModal } from '../components/CheckinCameraModal';
 import { CheckinDetailSheet } from '../components/CheckinDetailSheet';
 import { checkinPlace, type CheckinDirection, type MobileCheckin } from '../types';
 
@@ -80,6 +80,7 @@ export default function CheckinScreen() {
 
   const [photo, setPhoto] = useState<CapturedPhoto | null>(null);
   const [photoAt, setPhotoAt] = useState<string | null>(null);
+  const [cameraOpen, setCameraOpen] = useState(false);
   const [loc, setLoc] = useState<LocState>({ kind: 'locating' });
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState<Done | null>(null);
@@ -108,16 +109,11 @@ export default function CheckinScreen() {
     };
   }, [canCheckIn, resolveLocation]);
 
-  const shoot = async () => {
-    try {
-      const p = await takeCheckinPhoto();
-      if (p) {
-        setPhoto(p);
-        setPhotoAt(new Date().toISOString());
-      }
-    } catch (e) {
-      toast.error(t(CAPTURE_MESSAGE[e instanceof CaptureError ? e.code : 'photo_failed'] ?? 'checkin.photoFailed'));
-    }
+  const shoot = () => setCameraOpen(true);
+  const onCaptured = (p: CapturedPhoto) => {
+    setCameraOpen(false);
+    setPhoto(p);
+    setPhotoAt(new Date().toISOString());
   };
 
   const trip = status?.trip;
@@ -153,6 +149,11 @@ export default function CheckinScreen() {
       uuid.current = newClientUuid();
     } catch (e) {
       toast.error(getApiErrorMessage(e, t('checkin.sendFailed')));
+      // The server rejected the picture itself (no face / unreadable): the person must retake it.
+      if (isPhotoRejected(e)) {
+        setPhoto(null);
+        setPhotoAt(null);
+      }
       // Safar holati o'zgargan bo'lishi mumkin (kadr bekor qildi / kun almashdi).
       void qc.invalidateQueries({ queryKey: checkinKeys.status() });
     } finally {
@@ -201,12 +202,12 @@ export default function CheckinScreen() {
             {photo ? (
               <View style={styles.photoWrap}>
                 <Image source={{ uri: photo.uri }} style={styles.photo} contentFit="cover" testID="checkin-photo" />
-                <Button label={t('checkin.retakePhoto')} variant="soft" icon="camera" onPress={() => void shoot()} />
+                <Button label={t('checkin.retakePhoto')} variant="soft" icon="camera" onPress={shoot} />
               </View>
             ) : (
               <Pressable
                 testID="checkin-take-photo"
-                onPress={() => void shoot()}
+                onPress={shoot}
                 accessibilityRole="button"
                 accessibilityLabel={t('checkin.takePhoto')}
                 style={[styles.shoot, { backgroundColor: tint.wash, borderColor: tint.fg }]}
@@ -293,6 +294,7 @@ export default function CheckinScreen() {
       )}
 
       {hasEmployee && <History />}
+      <CheckinCameraModal visible={cameraOpen} onClose={() => setCameraOpen(false)} onCaptured={onCaptured} />
     </Screen>
   );
 }
