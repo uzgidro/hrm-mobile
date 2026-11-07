@@ -45,7 +45,6 @@ export default {
   faceVerifying: "Tekshirilmoqda…",
   facePermission: "Yuz orqali kirish uchun kameraga ruxsat bering",
   facePermissionButton: "Ruxsat berish",
-  facePrivacy: "Xavfsizlik uchun har bir urinishning bitta surati 90 kun saqlanadi va faqat administrator ko'ra oladi.",
   faceFailed: "Tekshiruv bajarilmadi. Qaytadan urinib ko'ring.",
   faceNotRecognized: "Yuz tanilmadi. Yorug' joyda qayta urining yoki login va parol bilan kiring",
   faceLiveness: "Ko'rsatma bajarilmadi — boshingizni aytilgan tomonga aniq burang",
