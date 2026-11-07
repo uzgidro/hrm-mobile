@@ -40,6 +40,9 @@ export default {
   changePin: "PIN kodni o'zgartirish",
   biometrics: 'Biometrik kirish',
   biometricsHint: 'Barmoq izi yoki yuz bilan tez ochish',
+  faceLogin: "Yuz orqali kirish",
+  faceLoginHint: "Login va parolsiz, kamera orqali kirish. O'chirsangiz, hisobingizga yuz orqali hech kim kira olmaydi.",
+  faceLoginUnavailable: "Hisobingiz uchun mavjud emas (adminlar va rolli xodimlar faqat parol bilan kiradi).",
 
   // Logout
   logout: 'Chiqish',

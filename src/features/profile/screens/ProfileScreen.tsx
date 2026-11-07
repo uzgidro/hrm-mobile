@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, Platform,
 } from 'react-native';
@@ -25,6 +25,9 @@ import { Flag } from '@/components/Flag';
 import { useLangStore } from '@/store/langStore';
 import { LANGUAGES, LANGUAGE_NATIVE_NAME, LANGUAGE_FLAG } from '@/i18n/locales';
 import { getRunningOtaInfo } from '@/services/otaUpdates';
+import { toast } from '@/lib/toast';
+import { getApiErrorMessage } from '@/api/errors';
+import { getMyFaceLogin, setMyFaceLogin, type MyFaceLogin } from '@/features/faceLogin/api';
 
 // `labelKey` is a profile.* catalog key; the label is resolved via t() at render
 // so it follows the active language. `key` stays the ThemeMode enum value.
@@ -90,6 +93,27 @@ export default function ProfileScreen() {
       await setBiometricsEnabled(false);
     }
   };
+
+  // Face login switch: null until loaded (row hidden); a failed load keeps it hidden.
+  const [faceState, setFaceState] = useState<MyFaceLogin | null>(null);
+  useEffect(() => {
+    let alive = true;
+    getMyFaceLogin().then((s) => alive && setFaceState(s)).catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
+  const handleFaceToggle = useCallback(async (next: boolean) => {
+    const prev = faceState;
+    if (!prev) return;
+    setFaceState({ ...prev, enabled: next }); // optimistic
+    try {
+      setFaceState(await setMyFaceLogin(next));
+    } catch (e) {
+      setFaceState(prev); // roll back
+      toast.error(getApiErrorMessage(e, t('errors.actionFailed')));
+    }
+  }, [faceState, t]);
 
   const handleLogout = async () => {
     const ok = await confirm({
@@ -294,7 +318,7 @@ export default function ProfileScreen() {
           )}
 
           {isNative && biometricsSupported && (
-            <View style={styles.menuItem}>
+            <View style={[styles.menuItem, faceState?.available && styles.menuItemBorder]}>
               <View style={styles.menuItemLeft}>
                 <View style={styles.menuIcon}><Icon name="fingerprint" size={18} color={colors.textSecondary} /></View>
                 <View style={{ flex: 1 }}>
@@ -306,6 +330,26 @@ export default function ProfileScreen() {
                 value={biometricsEnabled}
                 onValueChange={handleBiometricsToggle}
                 accessibilityLabel={t('profile.biometrics')}
+              />
+            </View>
+          )}
+
+          {faceState?.available && (
+            <View style={styles.menuItem} testID="profile-face-login">
+              <View style={styles.menuItemLeft}>
+                <View style={styles.menuIcon}><Icon name="camera" size={18} color={colors.textSecondary} /></View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.menuLabel}>{t('profile.faceLogin')}</Text>
+                  <Text style={styles.menuHint}>
+                    {faceState.eligible ? t('profile.faceLoginHint') : t('profile.faceLoginUnavailable')}
+                  </Text>
+                </View>
+              </View>
+              <Toggle
+                value={faceState.eligible && faceState.enabled}
+                onValueChange={handleFaceToggle}
+                disabled={!faceState.eligible}
+                accessibilityLabel={t('profile.faceLogin')}
               />
             </View>
           )}

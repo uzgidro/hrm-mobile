@@ -6,10 +6,25 @@
 // Liveness + recognition among all employees happen on the server
 // (backend services/face_login.py). Frames are not stored anywhere.
 import { apiClient } from '@/api/client';
-import { FACE_CHALLENGE, FACE_STATUS, FACE_VERIFY, USER_INFO } from '@/api/urls';
+import { FACE_CHALLENGE, FACE_ME, FACE_STATUS, FACE_VERIFY, USER_INFO } from '@/api/urls';
 import type { User } from '@/types';
 
 export type FaceStep = 'front' | 'left' | 'right';
+
+export type FlashColor = 'red' | 'green' | 'blue';
+
+/** Server-driven screen flash shown during one step (optional). */
+export type FaceFlash = {
+  /** Step index the flash belongs to (always 0). */
+  step: number;
+  colors: FlashColor[];
+  /** First slot starts this long after filming starts (t0), ms. */
+  start_ms: number;
+  /** Length of one colour slot, ms. */
+  slot_ms: number;
+  /** Minimum gap between two captured frames during the flash step, ms. */
+  frame_interval_ms: number;
+};
 
 export type FaceChallenge = {
   challenge_id: string;
@@ -17,6 +32,10 @@ export type FaceChallenge = {
   expires_in: number;
   /** Duration of one step, ms. */
   step_ms: number;
+  /** Duration of EACH step, ms; preferred over `step_ms` when present. */
+  step_durations_ms?: number[];
+  /** Screen flash settings; absent on older servers. */
+  flash?: FaceFlash;
   /** Minimum gap between two captured frames, ms. */
   frame_interval_ms: number;
   /** Hard cap on the total frames in one verify request. */
@@ -38,6 +57,19 @@ export async function faceLoginEnabled(): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+/** Per-person face login state: server offers it / account may use it / not switched off. */
+export type MyFaceLogin = { available: boolean; eligible: boolean; enabled: boolean };
+
+export async function getMyFaceLogin(): Promise<MyFaceLogin> {
+  const { data } = await apiClient.get<MyFaceLogin>(FACE_ME);
+  return data;
+}
+
+export async function setMyFaceLogin(enabled: boolean): Promise<MyFaceLogin> {
+  const { data } = await apiClient.put<MyFaceLogin>(FACE_ME, { enabled });
+  return data;
 }
 
 export async function startFaceChallenge(): Promise<FaceChallenge> {
@@ -74,6 +106,7 @@ const ERROR_KEY: Record<string, string> = {
   face_frames_invalid: 'auth.faceFramesInvalid',
   face_login_unavailable: 'auth.faceUnavailable',
   face_login_disabled: 'auth.faceUnavailable',
+  face_login_turned_off: 'auth.faceTurnedOff',
   too_many_login_attempts: 'auth.tooManyAttempts',
 };
 
@@ -84,6 +117,7 @@ const LIVENESS_REASON_KEY: Record<string, string> = {
   identity: 'auth.faceContinuity',
   continuity: 'auth.faceContinuity',
   pose: 'auth.faceLiveness',
+  flash: 'auth.faceFlash',
 };
 
 type ErrBody = {
