@@ -47,6 +47,7 @@ import sysHealth from './sysHealth';
 import vehicles from './vehicles';
 import reports from './reports';
 import medical from './medical';
+import medicalExam from './medicalExam';
 import zoom from './zoom';
 import health from './health';
 import inspections from './inspections';
@@ -114,6 +115,7 @@ export default {
   vehicles,
   reports,
   medical,
+  medicalExam,
   zoom,
   health,
   inspections,

@@ -51,6 +51,8 @@ export default {
     workPlan: 'Иш режаси',
     medical: 'Тиббий кўрик',
     health: 'Соғлиқ кўриги',
+    medicalExam: "Тиббий кўрик (менинг куним)",
+    doctorDesk: "Шифокор қабули",
     registrationStatus: 'Аризам ҳолати',
     orderTypes: 'Буйруқ турлари',
     tempOrders: 'Вақтинчалик буйруқлар',

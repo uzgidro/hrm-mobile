@@ -57,6 +57,8 @@ export default {
     workPlan: 'Ish rejasi',
     medical: "Tibbiy ko'rik",
     health: "Sog'liq ko'rigi",
+    medicalExam: "Tibbiy ko'rik (mening kunim)",
+    doctorDesk: "Shifokor qabuli",
     registrationStatus: 'Arizam holati',
     orderTypes: 'Buyruq turlari',
     tempOrders: 'Vaqtinchalik buyruqlar',

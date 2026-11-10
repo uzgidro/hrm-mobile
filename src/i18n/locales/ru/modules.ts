@@ -51,6 +51,8 @@ export default {
     workPlan: 'План работы',
     medical: 'Медосмотр',
     health: 'Осмотр здоровья',
+    medicalExam: "Медосмотр (мой день)",
+    doctorDesk: "Приём врача",
     registrationStatus: 'Статус заявки',
     orderTypes: 'Типы приказов',
     tempOrders: 'Временные приказы',

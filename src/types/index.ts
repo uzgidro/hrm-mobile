@@ -6,7 +6,7 @@ export interface User {
    * department, no position — could not be recognised and fell through every
    * check into the ordinary-employee menu.
    */
-  type: 'employee' | 'master-admin' | 'admin' | 'guest' | 'monitoring' | 'monitoring-operator' | 'kpp';
+  type: 'employee' | 'master-admin' | 'admin' | 'guest' | 'monitoring' | 'monitoring-operator' | 'kpp' | 'external-doctor';
   /** Xodim kartasi — `admin` / `master-admin` / kiosk / mehmon hisoblarida `null` keladi. */
   employee?: Employee | null;
   is_secretariat?: boolean;
@@ -76,6 +76,19 @@ export interface User {
   is_ijro_manager?: boolean;
   /** Filialda tibbiy ko'rik moduli yoqilgan (auth/me) — v2 needsMedical. */
   medical_enabled?: boolean;
+  /** May write medical records (auth/me): true for staff doctors AND invited (`external-doctor`) ones. */
+  is_doctor?: boolean;
+  /** Works the clinic's check-in and queue screens. Its mere PRESENCE (true or false) also tells
+   *  the app that the server supports the examination-day screens — see utils/roles.ts. */
+  medical_reception?: boolean;
+  /** Invited doctor's own profile (auth/me); `null` for everyone else. */
+  external_doctor?: {
+    id: number;
+    full_name?: string | null;
+    workplace?: string | null;
+    valid_until?: string | null;
+    can_work?: boolean;
+  } | null;
   /** Doktorning o'z turlari (auth/me) — bitta bo'lsa ko'rik formasida tanlash chiqmaydi (v2). */
   medical_specialties?: { id: number; name?: string | null }[];
   /** Hamshira sifatida biriktirilgan filiallar (auth/me) — v2 needsHealth. */

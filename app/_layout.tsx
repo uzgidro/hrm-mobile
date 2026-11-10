@@ -110,7 +110,11 @@ function ThemedNavigation() {
   // its sidebar on every page), not only inside (tabs) — pushed module screens
   // used to lose it. Phones keep the bottom TabBar inside (tabs) only.
   const { useRail } = useBreakpoint();
-  const showRail = useRail && isAuthenticated && navReady;
+  // An invited doctor (`external-doctor`) is not an employee and the server refuses nearly every
+  // route the shell calls (403 external_doctor_forbidden): no tabs, no NavRail — only the doctor's
+  // desk screens (see the second Stack.Protected block below).
+  const externalDoctor = useAuthStore((s) => s.user?.type === 'external-doctor');
+  const showRail = useRail && isAuthenticated && navReady && !externalDoctor;
 
   return (
     <>
@@ -143,7 +147,7 @@ function ThemedNavigation() {
                 <Stack.Screen name="(auth)" />
               </Stack.Protected>
 
-              <Stack.Protected guard={isAuthenticated}>
+              <Stack.Protected guard={isAuthenticated && !externalDoctor}>
                 <Stack.Screen name="(tabs)" />
                 <Stack.Screen name="profile-detail" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="profile-edit" options={{ animation: 'slide_from_right' }} />
@@ -216,6 +220,10 @@ function ThemedNavigation() {
                 <Stack.Screen name="sogliq-korigi" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="zoom" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="tibbiy-korik" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="medical-exam" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="medical-exam-qr" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="medical-exam-scan" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="medical-exam-results" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="hisobotlar" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="hisobot" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="avtopark" options={{ animation: 'slide_from_right' }} />
@@ -234,6 +242,15 @@ function ThemedNavigation() {
                 <Stack.Screen name="loyiha-form" options={{ animation: 'slide_from_bottom' }} />
                 <Stack.Screen name="change-pin" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="push-diagnostics" options={{ animation: 'slide_from_right' }} />
+              </Stack.Protected>
+
+              {/* Doctor's desk (staff doctors AND invited doctors). Declared AFTER the shell block:
+                  staff users keep (tabs) as their first screen, while an invited doctor — whose
+                  shell block is switched off above — lands on `doctor-desk`, the first screen here. */}
+              <Stack.Protected guard={isAuthenticated}>
+                <Stack.Screen name="doctor-desk" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="doctor-scan" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="doctor-patient" options={{ animation: 'slide_from_right' }} />
               </Stack.Protected>
             </Stack>
           </AuthResolvedGate>
