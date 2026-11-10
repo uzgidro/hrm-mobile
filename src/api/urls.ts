@@ -573,3 +573,13 @@ export const MOBILE_CHECKIN_DETAIL = (id: number) => `mobile-checkins/${id}`;
 export const MOBILE_CHECKIN_CANCEL = (id: number) => `mobile-checkins/${id}/cancel`;
 // Kadr: bir nechta xodimga bir xil sana oralig'ida xizmat safari (vaqtinchalik buyruq).
 export const WORK_LEAVES_HR_BULK_CREATE = 'work-leaves/hr-bulk-create';
+
+// Tibbiy ko'rik (davriy tibbiy ko'rik kuni) — xodimning o'z yo'llari (modul darvozasidan tashqari)
+// va shifokor ish joyi (`/medical/*`). Qarang: features/medicalExam.
+export const MEDICAL_ME_QR = 'employees/me/medical-qr';
+export const MEDICAL_ME_VISIT = 'employees/me/medical-visit';
+export const MEDICAL_ME_QUEUE_JOIN = 'employees/me/medical-queue/join';
+export const MEDICAL_ME_CHECKUPS = 'employees/me/medical-checkups';
+export const MEDICAL_QR_RESOLVE = 'medical/qr/resolve';
+export const MEDICAL_QUEUE = 'medical/queue';
+export const MEDICAL_STATION_STATUS = (stationId: number) => `medical/visit-stations/${stationId}/status`;

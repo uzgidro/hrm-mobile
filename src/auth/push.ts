@@ -12,8 +12,15 @@ import {
   registerTokenWithBackend,
   unregisterTokenWithBackend,
 } from '../services/notifications';
+import { useAuthStore } from '../store/authStore';
+
+// (authStore imports this file too: the store is only read inside functions, never at import time.)
+// An invited doctor (`external-doctor`) is not an employee: the server refuses the push-token
+// routes with 403 `external_doctor_forbidden`, so they are never called for that account.
+const isExternalDoctorSession = () => useAuthStore.getState().user?.type === 'external-doctor';
 
 export async function setupPushNotifications(): Promise<void> {
+  if (isExternalDoctorSession()) return;
   try {
     // Create the channel FIRST: on Android 8+ importance and sound come from
     // the channel, and the backend stamps `channelId: ANDROID_CHANNEL_ID` on every push.
@@ -30,6 +37,7 @@ export async function setupPushNotifications(): Promise<void> {
 /** Unbind this device before the session is torn down. Must run BEFORE tokens
  *  are cleared — the DELETE needs the still-valid bearer token. */
 export async function teardownPushNotifications(): Promise<void> {
+  if (isExternalDoctorSession()) return;
   try {
     await unregisterTokenWithBackend();
   } catch {
