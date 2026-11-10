@@ -78,6 +78,9 @@ export interface User {
   medical_enabled?: boolean;
   /** May write medical records (auth/me): true for staff doctors AND invited (`external-doctor`) ones. */
   is_doctor?: boolean;
+  /** Works the clinic's check-in and queue screens. Its mere PRESENCE (true or false) also tells
+   *  the app that the server supports the examination-day screens — see utils/roles.ts. */
+  medical_reception?: boolean;
   /** Invited doctor's own profile (auth/me); `null` for everyone else. */
   external_doctor?: {
     id: number;

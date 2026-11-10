@@ -524,8 +524,15 @@ const needsEmployee: ModuleGate = (u) => !!u?.employee?.id || isSiteMasterAdmin(
 const needsMedical: ModuleGate = (u) => u?.medical_enabled === true;
 // Tibbiy ko'rik kuni: xodimning O'Z sahifasi (klinika `medical_enabled` darvozasidan tashqari) va
 // shtatdagi shifokorning ish joyi. Taklif etilgan shifokor (`external-doctor`) xodim EMAS.
-const needsOwnExam: ModuleGate = (u) => !!u?.employee?.id && u.type !== 'external-doctor';
-const needsStaffDoctor: ModuleGate = (u) => u?.is_doctor === true && u.type !== 'external-doctor';
+//
+// SERVER SUPPORT: the app update reaches phones over the air, on its own schedule, while the
+// server is deployed separately. A server that knows the examination day sends
+// `medical_reception` (true or false) in /auth/me; an older one does not send the key at all,
+// and then these screens would have nothing to talk to — so they stay out of the menu until
+// the server is there.
+const serverHasExam = (u: Parameters<ModuleGate>[0]) => typeof u?.medical_reception === 'boolean';
+const needsOwnExam: ModuleGate = (u) => serverHasExam(u) && !!u?.employee?.id && u?.type !== 'external-doctor';
+const needsStaffDoctor: ModuleGate = (u) => serverHasExam(u) && u?.is_doctor === true && u?.type !== 'external-doctor';
 const needsHealth: ModuleGate = (u) => !!u?.nurse_branch_ids?.length || isSiteMasterAdmin(u);
 const needsFleet: ModuleGate = (u) =>
   isSiteMasterAdmin(u) || !!u?.transport_branch_ids?.length || !!u?.transport_approver_branch_ids?.length;

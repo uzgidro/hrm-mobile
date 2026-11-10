@@ -32,8 +32,9 @@ const external = {
   external_doctor: { id: 1, full_name: 'Dr Ext', workplace: 'Klinika №3', can_work: true },
   medical_specialties: [{ id: 2, name: 'LOR' }],
 } as unknown as User;
-const staff = { id: 1, type: 'employee', employee: { id: 5 }, is_doctor: true } as unknown as User;
-const plain = { id: 2, type: 'employee', employee: { id: 6 } } as unknown as User;
+// `medical_reception` present (even false) = the server supports the examination-day screens.
+const staff = { id: 1, type: 'employee', employee: { id: 5 }, is_doctor: true, medical_reception: true } as unknown as User;
+const plain = { id: 2, type: 'employee', employee: { id: 6 }, medical_reception: false } as unknown as User;
 
 let mock: MockAdapter;
 beforeEach(() => {
@@ -69,6 +70,14 @@ describe('module gates', () => {
     expect(canAccessPage(plain, 'doctorDesk')).toBe(false);
     expect(canAccessPage(staff, 'doctorDesk')).toBe(true);
     expect(canAccessPage(staff, 'medicalExam')).toBe(true);
+  });
+  it('a server that does not know the examination day yet hides both entries', () => {
+    // The update reaches phones over the air before (or after) the server is deployed.
+    const oldPlain = { id: 2, type: 'employee', employee: { id: 6 } } as unknown as User;
+    const oldDoctor = { id: 1, type: 'employee', employee: { id: 5 }, is_doctor: true } as unknown as User;
+    expect(canAccessPage(oldPlain, 'medicalExam')).toBe(false);
+    expect(canAccessPage(oldDoctor, 'medicalExam')).toBe(false);
+    expect(canAccessPage(oldDoctor, 'doctorDesk')).toBe(false);
   });
   it('an account with no employee card has no «my exam»', () => {
     expect(canAccessPage({ id: 3, type: 'admin' } as unknown as User, 'medicalExam')).toBe(false);
