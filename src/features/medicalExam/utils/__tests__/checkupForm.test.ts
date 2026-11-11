@@ -17,8 +17,9 @@ describe('validateDraft', () => {
     expect(validateDraft({ ...base, specialtyId: 3 }, true)).toBeNull();
   });
   it('points at the broken diagnosis row', () => {
-    const d = { ...base, diagnoses: [{ code: '', name: 'ok' }, { code: 'ZZ', name: 'x' }] };
-    expect(validateDraft(d, false)).toEqual({ diagnosis: 1, error: 'codeInvalid' });
+    // Any code is fine (free text); a code without a name is not.
+    const d = { ...base, diagnoses: [{ code: 'ZZ', name: 'ok' }, { code: 'I10', name: ' ' }] };
+    expect(validateDraft(d, false)).toEqual({ diagnosis: 1, error: 'nameRequired' });
   });
   it('refuses a completely empty record', () => {
     expect(validateDraft({ ...base, conclusion: '  ' }, false)).toBe('emptyRecord');
@@ -40,7 +41,7 @@ describe('request bodies (strict: only declared keys)', () => {
       checkup_date: '2026-11-10',
       conclusion: 'Sog‘lom',
       recommendation: null,
-      diagnoses: [{ code: 'I10', name: 'Gipertoniya' }],
+      diagnoses: [{ code: 'i10', name: 'Gipertoniya' }], // kept as typed
       fitness: 'fit_limited',
     });
     expect(Object.keys(body).sort()).toEqual(

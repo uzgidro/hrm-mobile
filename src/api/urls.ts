@@ -582,4 +582,6 @@ export const MEDICAL_ME_QUEUE_JOIN = 'employees/me/medical-queue/join';
 export const MEDICAL_ME_CHECKUPS = 'employees/me/medical-checkups';
 export const MEDICAL_QR_RESOLVE = 'medical/qr/resolve';
 export const MEDICAL_QUEUE = 'medical/queue';
+/** People the calling doctor has received (staff and invited doctors alike). */
+export const MEDICAL_MY_PATIENTS = 'medical/my-patients';
 export const MEDICAL_STATION_STATUS = (stationId: number) => `medical/visit-stations/${stationId}/status`;

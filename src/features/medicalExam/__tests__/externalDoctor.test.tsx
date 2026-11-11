@@ -3,7 +3,7 @@
 import React from 'react';
 import MockAdapter from 'axios-mock-adapter';
 import { apiClient } from '@/api/client';
-import { MEDICAL_QUEUE } from '@/api/urls';
+import { MEDICAL_MY_PATIENTS, MEDICAL_QUEUE } from '@/api/urls';
 import { setupPushNotifications, teardownPushNotifications } from '@/auth/push';
 import * as notifications from '@/services/notifications';
 import { useAuthStore } from '@/store/authStore';
@@ -99,7 +99,8 @@ describe('DoctorDeskScreen as the invited doctor’s home', () => {
     await renderWithProviders(<DoctorDeskScreen />);
     expect(await screen.findByText('Klinika №3')).toBeTruthy();
     expect(screen.getByTestId('desk-logout')).toBeTruthy();
-    expect(mock.history.get.map((g) => g.url)).toEqual([MEDICAL_QUEUE]);
+    // Only routes the server allows this account: the queue and whom it has received.
+    expect([...new Set(mock.history.get.map((g) => g.url))].sort()).toEqual([MEDICAL_MY_PATIENTS, MEDICAL_QUEUE].sort());
   });
 
   it('logout button signs out', async () => {

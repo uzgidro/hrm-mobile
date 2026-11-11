@@ -2,7 +2,7 @@ import React from 'react';
 import MockAdapter from 'axios-mock-adapter';
 import { router } from 'expo-router';
 import { apiClient } from '@/api/client';
-import { MEDICAL_CHECKUPS, MEDICAL_EMPLOYEE, MEDICAL_EMPLOYEES, MEDICAL_QR_RESOLVE, MEDICAL_QUEUE, MEDICAL_STATION_STATUS } from '@/api/urls';
+import { MEDICAL_CHECKUPS, MEDICAL_EMPLOYEE, MEDICAL_EMPLOYEES, MEDICAL_MY_PATIENTS, MEDICAL_QR_RESOLVE, MEDICAL_QUEUE, MEDICAL_STATION_STATUS } from '@/api/urls';
 import { useAuthStore } from '@/store/authStore';
 import { act, fireEvent, renderWithProviders, screen, waitFor } from '@/test/renderWithProviders';
 import DoctorDeskScreen from '../screens/DoctorDeskScreen';
@@ -119,7 +119,7 @@ describe('PatientCardScreen', () => {
       employee_id: 9,
       conclusion: 'Sog‘lom',
       recommendation: null,
-      diagnoses: [{ code: 'K29.7', name: 'Gastrit' }],
+      diagnoses: [{ code: 'k29.7', name: 'Gastrit' }], // kept as typed
       fitness: 'fit',
     });
     expect(sent.specialty_id).toBeUndefined(); // one specialty: the server fills it in
@@ -130,16 +130,19 @@ describe('PatientCardScreen', () => {
     expect(router.replace).toHaveBeenCalledWith('/doctor-scan');
   });
 
-  it('blocks a bad ICD-10 code client-side (no request)', async () => {
+  it('sends any diagnosis code as typed; only a missing name is refused', async () => {
     mock.onGet(MEDICAL_EMPLOYEE(9)).reply(200, card());
+    mock.onPost(MEDICAL_CHECKUPS).reply(200, { id: 52 });
     await renderWithProviders(<PatientCardScreen />);
     await fireEvent.press(await screen.findByTestId('add-record'));
     await fireEvent.press(await screen.findByTestId('diagnosis-add'));
     await fireEvent.changeText(screen.getByTestId('diagnosis-0-code'), 'ZZ');
-    await fireEvent.changeText(screen.getByTestId('diagnosis-0-name'), 'x');
     await fireEvent.press(screen.getByTestId('record-save'));
-    expect(await screen.findByText(/MKB-10 kodi noto'g'ri/)).toBeTruthy();
-    expect(mock.history.post).toHaveLength(0);
+    expect(mock.history.post).toHaveLength(0); // a code without a name
+    await fireEvent.changeText(screen.getByTestId('diagnosis-0-name'), 'Ichki belgi');
+    await fireEvent.press(screen.getByTestId('record-save'));
+    await waitFor(() => expect(mock.history.post).toHaveLength(1));
+    expect(JSON.parse(mock.history.post[0]!.data).diagnoses).toEqual([{ code: 'ZZ', name: 'Ichki belgi' }]);
   });
 
   it('with several specialties the choice is required and sent', async () => {
@@ -210,6 +213,36 @@ describe('DoctorScanScreen', () => {
 });
 
 describe('DoctorDeskScreen', () => {
+  it('«Mening bemorlarim» lists today\'s patients, switches to everyone, and a tap opens the card', async () => {
+    mock.onGet(MEDICAL_QUEUE).reply(200, { campaign: null, specialty_ids: [], items: [] });
+    mock.onGet(MEDICAL_MY_PATIENTS).reply((cfg) =>
+      cfg.params?.day
+        ? [200, { items: [{ id: 21, legal_name: 'Rahimova Aziza', last_checkup_date: '2026-11-11', record_count: 1 }], total: 1, today: 1 }]
+        : [200, { items: [
+            { id: 21, legal_name: 'Rahimova Aziza', last_checkup_date: '2026-11-11', record_count: 1 },
+            { id: 22, legal_name: 'Toshmatov Bahodir', last_checkup_date: '2026-10-02', record_count: 3 },
+          ], total: 2, today: 1 }],
+    );
+    await renderWithProviders(<DoctorDeskScreen />);
+    expect(await screen.findByTestId('my-patient-21')).toBeTruthy();
+    expect(screen.queryByTestId('my-patient-22')).toBeNull();
+    const first = mock.history.get.find((g) => g.url === MEDICAL_MY_PATIENTS)!;
+    expect(first.params).toEqual({ day: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/), size: 50 });
+    await fireEvent.press(screen.getByTestId('patients-all'));
+    expect(await screen.findByTestId('my-patient-22')).toHaveTextContent(/3/);
+    const all = mock.history.get.filter((g) => g.url === MEDICAL_MY_PATIENTS).pop()!;
+    expect(all.params).toEqual({ size: 50 });
+    await fireEvent.press(screen.getByText('Toshmatov Bahodir'));
+    expect(router.push).toHaveBeenCalledWith({ pathname: '/doctor-patient', params: { id: '22' } });
+  });
+
+  it('says so plainly when nobody was received today', async () => {
+    mock.onGet(MEDICAL_QUEUE).reply(200, { campaign: null, specialty_ids: [], items: [] });
+    mock.onGet(MEDICAL_MY_PATIENTS).reply(200, { items: [], total: 0, today: 0 });
+    await renderWithProviders(<DoctorDeskScreen />);
+    expect(await screen.findByTestId('patients-empty')).toBeTruthy();
+  });
+
   it('lists my queue with status actions, and a tap opens the card', async () => {
     mock.onGet(MEDICAL_QUEUE).reply(200, {
       campaign: { id: 1, name: 'K' },
