@@ -17,7 +17,7 @@ export type CheckupError =
   | 'specialtyRequired'
   | 'emptyRecord'
   | 'tooManyDiagnoses'
-  | { diagnosis: number; error: 'codeInvalid' | 'nameRequired' | 'nameTooLong' };
+  | { diagnosis: number; error: 'nameRequired' | 'nameTooLong' };
 
 export function initialDraft(c: ExamCheckup | null, today: string): CheckupDraft {
   return {

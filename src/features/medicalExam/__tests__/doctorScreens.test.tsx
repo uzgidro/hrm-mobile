@@ -119,7 +119,7 @@ describe('PatientCardScreen', () => {
       employee_id: 9,
       conclusion: 'Sog‘lom',
       recommendation: null,
-      diagnoses: [{ code: 'K29.7', name: 'Gastrit' }],
+      diagnoses: [{ code: 'k29.7', name: 'Gastrit' }], // kept as typed
       fitness: 'fit',
     });
     expect(sent.specialty_id).toBeUndefined(); // one specialty: the server fills it in
@@ -130,16 +130,19 @@ describe('PatientCardScreen', () => {
     expect(router.replace).toHaveBeenCalledWith('/doctor-scan');
   });
 
-  it('blocks a bad ICD-10 code client-side (no request)', async () => {
+  it('sends any diagnosis code as typed; only a missing name is refused', async () => {
     mock.onGet(MEDICAL_EMPLOYEE(9)).reply(200, card());
+    mock.onPost(MEDICAL_CHECKUPS).reply(200, { id: 52 });
     await renderWithProviders(<PatientCardScreen />);
     await fireEvent.press(await screen.findByTestId('add-record'));
     await fireEvent.press(await screen.findByTestId('diagnosis-add'));
     await fireEvent.changeText(screen.getByTestId('diagnosis-0-code'), 'ZZ');
-    await fireEvent.changeText(screen.getByTestId('diagnosis-0-name'), 'x');
     await fireEvent.press(screen.getByTestId('record-save'));
-    expect(await screen.findByText(/MKB-10 kodi noto'g'ri/)).toBeTruthy();
-    expect(mock.history.post).toHaveLength(0);
+    expect(mock.history.post).toHaveLength(0); // a code without a name
+    await fireEvent.changeText(screen.getByTestId('diagnosis-0-name'), 'Ichki belgi');
+    await fireEvent.press(screen.getByTestId('record-save'));
+    await waitFor(() => expect(mock.history.post).toHaveLength(1));
+    expect(JSON.parse(mock.history.post[0]!.data).diagnoses).toEqual([{ code: 'ZZ', name: 'Ichki belgi' }]);
   });
 
   it('with several specialties the choice is required and sent', async () => {

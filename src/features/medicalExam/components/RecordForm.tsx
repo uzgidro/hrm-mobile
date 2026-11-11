@@ -1,5 +1,5 @@
 // The doctor's record form (new or own-record edit): date, conclusion, recommendation,
-// repeatable diagnoses (optional ICD-10 code + required name), fitness and — only for a doctor
+// repeatable diagnoses (optional free-text code + required name), fitness and — only for a doctor
 // with several specialties — the specialty. File attachments are web-only.
 import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -20,7 +20,7 @@ import {
   type CheckupDraft,
   type CheckupError,
 } from '../utils/checkupForm';
-import { MAX_DIAGNOSES, normalizeIcdCode } from '../utils/icd';
+import { MAX_DIAGNOSES, MAX_DIAGNOSIS_CODE } from '../utils/icd';
 import { FITNESS_VALUES, fitnessTone, fmtDate, type ExamCheckup } from '../utils/medicalExam';
 
 export function RecordForm({
@@ -119,9 +119,8 @@ export function RecordForm({
               testID={`diagnosis-${i}-code`}
               label={t('medicalExam.record.icdCode')}
               value={d.code}
-              onChangeText={(v) => setDiagnosis(i, { code: normalizeIcdCode(v) })}
+              onChangeText={(v) => setDiagnosis(i, { code: v.slice(0, MAX_DIAGNOSIS_CODE) })}
               placeholder="K29.7"
-              error={diagError?.diagnosis === i && diagError.error === 'codeInvalid' ? t('medicalExam.record.error.codeInvalid') : undefined}
             />
             <FormInput
               testID={`diagnosis-${i}-name`}
@@ -129,7 +128,7 @@ export function RecordForm({
               value={d.name}
               onChangeText={(v) => setDiagnosis(i, { name: v })}
               error={
-                diagError?.diagnosis === i && diagError.error !== 'codeInvalid'
+                diagError?.diagnosis === i
                   ? t(`medicalExam.record.error.${diagError.error}`)
                   : undefined
               }
