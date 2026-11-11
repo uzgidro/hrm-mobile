@@ -9,9 +9,10 @@ import {
   MEDICAL_ME_CHECKUPS,
   MEDICAL_ME_QR,
   MEDICAL_ME_VISIT,
+  MEDICAL_MY_PATIENTS,
   MEDICAL_QUEUE,
 } from '@/api/urls';
-import type { MyCheckups, MedicalQr, PatientCard, PatientRow, QueueResponse, Visit } from '../utils/medicalExam';
+import type { MyCheckups, MedicalQr, MyPatients, PatientCard, PatientRow, QueueResponse, Visit } from '../utils/medicalExam';
 
 export const PATIENT_SEARCH_SIZE = 20;
 export const PATIENT_SEARCH_MIN = 2;
@@ -24,6 +25,7 @@ export const examKeys = {
   card: (id: number) => [...examKeys.all, 'card', id] as const,
   queue: () => [...examKeys.all, 'queue'] as const,
   search: (term: string) => [...examKeys.all, 'search', term] as const,
+  myPatients: (day: string | null) => [...examKeys.all, 'my-patients', day ?? 'all'] as const,
 };
 
 // ───────────────────────── Request functions ──────────────────────────────
@@ -45,6 +47,12 @@ export const fetchPatientCard = (id: number, via: 'manual' | 'qr' = 'manual') =>
 
 export const fetchQueue = () => apiClient.get<QueueResponse>(MEDICAL_QUEUE).then((r) => r.data);
 
+/** `day` (YYYY-MM-DD) narrows the list to one date; null = everyone, latest first. */
+export const fetchMyPatients = (day: string | null) =>
+  apiClient
+    .get<Partial<MyPatients>>(MEDICAL_MY_PATIENTS, { params: day ? { day, size: 50 } : { size: 50 } })
+    .then((r): MyPatients => ({ items: r.data?.items ?? [], total: r.data?.total ?? 0, today: r.data?.today ?? 0 }));
+
 export const searchPatients = (term: string) =>
   apiClient
     .get(MEDICAL_EMPLOYEES, { params: { search: term.trim(), size: PATIENT_SEARCH_SIZE } })
@@ -59,6 +67,8 @@ export const queueQuery = (enabled = true) =>
   queryOptions({ queryKey: examKeys.queue(), queryFn: fetchQueue, enabled });
 export const patientCardQuery = (id: number) =>
   queryOptions({ queryKey: examKeys.card(id), queryFn: () => fetchPatientCard(id, 'manual'), enabled: id > 0 });
+export const myPatientsQuery = (day: string | null, enabled = true) =>
+  queryOptions({ queryKey: examKeys.myPatients(day), queryFn: () => fetchMyPatients(day), enabled });
 export const patientSearchQuery = (term: string) =>
   queryOptions({
     queryKey: examKeys.search(term.trim()),

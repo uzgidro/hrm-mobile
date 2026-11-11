@@ -280,3 +280,24 @@ export function joinedSpecialty(prev: Visit | null | undefined, next: Visit): st
   const latest = [...pool].sort((a, b) => String(b.queued_at ?? '').localeCompare(String(a.queued_at ?? '')))[0];
   return latest?.specialty_name ?? null;
 }
+
+/** One person the doctor has received (`GET medical/my-patients`). */
+export interface MyPatient {
+  id: number;
+  legal_name?: string | null;
+  photo_thumb_path?: string | null;
+  branch_name?: string | null;
+  department_name?: string | null;
+  job_position_name?: string | null;
+  last_checkup_date?: string | null;
+  record_count?: number;
+}
+export interface MyPatients {
+  items: MyPatient[];
+  total: number;
+  /** Distinct people received today. */
+  today: number;
+}
+
+/** Today in Tashkent (UTC+5) as YYYY-MM-DD — the date the server stores on a record. */
+export const todayIso = (now: Date = new Date()) => new Date(now.getTime() + 5 * 3600e3).toISOString().slice(0, 10);

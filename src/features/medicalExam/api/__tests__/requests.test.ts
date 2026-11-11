@@ -115,3 +115,13 @@ describe('doctor requests', () => {
     expect(body(mock.history.patch[0]!)).not.toHaveProperty('employee_id');
   });
 });
+
+describe('todayIso', () => {
+  // Late evening UTC is already the next day in Tashkent (UTC+5): the record date the server stores.
+  it('gives the Tashkent date', () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { todayIso } = require('../../utils/medicalExam') as typeof import('../../utils/medicalExam');
+    expect(todayIso(new Date('2026-11-10T20:30:00Z'))).toBe('2026-11-11');
+    expect(todayIso(new Date('2026-11-10T10:00:00Z'))).toBe('2026-11-10');
+  });
+});

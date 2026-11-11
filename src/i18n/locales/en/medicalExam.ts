@@ -120,6 +120,13 @@ export default {
     noCampaign: 'There is no open exam campaign right now.',
     queueEmpty: 'The queue is empty',
     queueEmptyHint: 'Nobody is waiting.',
+    patientsTitle: 'My patients',
+    patientsToday: 'Today · {{count}}',
+    patientsAll: 'All',
+    patientsEmptyToday: 'You have not received anyone today yet.',
+    patientsEmptyAll: 'You have not written any examination record yet.',
+    patientRecords_one: '{{count}} record',
+    patientRecords_other: '{{count}} records',
   },
   scanPatient: {
     title: 'Scan a patient',

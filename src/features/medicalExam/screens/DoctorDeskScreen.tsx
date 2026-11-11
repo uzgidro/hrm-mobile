@@ -12,9 +12,9 @@ import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { useAuthStore } from '@/store/authStore';
 import { Avatar, Badge, Button, Card, EmptyState, ErrorState, ListRow, LoadingView, PageHeader, Screen, SearchField, Text } from '@/ui';
 import { useSetStationStatus } from '../api/mutations';
-import { PATIENT_SEARCH_MIN, patientSearchQuery, queueQuery } from '../api/queries';
+import { myPatientsQuery, PATIENT_SEARCH_MIN, patientSearchQuery, queueQuery } from '../api/queries';
 import { StatusActions } from '../components/StatusActions';
-import { isDoctor, isExternalDoctor, stationTone, type ManualStationStatus } from '../utils/medicalExam';
+import { fmtDate, isDoctor, isExternalDoctor, stationTone, todayIso, type ManualStationStatus } from '../utils/medicalExam';
 
 const isNative = Platform.OS !== 'web';
 
@@ -31,6 +31,9 @@ export default function DoctorDeskScreen() {
   const debounced = useDebouncedValue(term);
   const search = useQuery({ ...patientSearchQuery(debounced), enabled: allowed && debounced.trim().length >= PATIENT_SEARCH_MIN });
   const queue = useQuery(queueQuery(allowed));
+  // «Mening bemorlarim»: whom this doctor has received — today by default.
+  const [allPatients, setAllPatients] = useState(false);
+  const patients = useQuery(myPatientsQuery(allPatients ? null : todayIso(), allowed));
   const setStatus = useSetStationStatus();
 
   if (!allowed) return <AccessDenied title={t('medicalExam.desk.title')} />;
@@ -46,6 +49,7 @@ export default function DoctorDeskScreen() {
       refreshing={queue.isRefetching}
       onRefresh={() => {
         void queue.refetch();
+        void patients.refetch();
         if (searching) void search.refetch();
       }}
       testID="doctor-desk-screen"
@@ -138,6 +142,51 @@ export default function DoctorDeskScreen() {
             ))}
           </View>
         </Card>
+
+        <Card title={t('medicalExam.desk.patientsTitle')} icon="check" tint="drop">
+          <View style={styles.inner}>
+            <View style={styles.switchRow}>
+              <Button
+                testID="patients-today"
+                label={t('medicalExam.desk.patientsToday', { count: patients.data?.today ?? 0 })}
+                variant={allPatients ? 'ghost' : 'soft'}
+                size="sm"
+                onPress={() => setAllPatients(false)}
+              />
+              <Button
+                testID="patients-all"
+                label={t('medicalExam.desk.patientsAll')}
+                variant={allPatients ? 'soft' : 'ghost'}
+                size="sm"
+                onPress={() => setAllPatients(true)}
+              />
+            </View>
+            {patients.isPending && <LoadingView rows={2} />}
+            {patients.isError && <ErrorState onRetry={() => void patients.refetch()} />}
+            {patients.data && patients.data.items.length === 0 && (
+              <Text variant="body" tone="muted" testID="patients-empty">
+                {allPatients ? t('medicalExam.desk.patientsEmptyAll') : t('medicalExam.desk.patientsEmptyToday')}
+              </Text>
+            )}
+            {patients.data?.items.map((p) => (
+              <ListRow
+                key={p.id}
+                testID={`my-patient-${p.id}`}
+                title={p.legal_name || `#${p.id}`}
+                subtitle={[
+                  p.last_checkup_date ? fmtDate(p.last_checkup_date) : null,
+                  p.branch_name,
+                  t('medicalExam.desk.patientRecords', { count: p.record_count ?? 0 }),
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
+                left={<Avatar name={p.legal_name || '?'} thumb={p.photo_thumb_path} size={40} />}
+                chevron
+                onPress={() => openPatient(p.id)}
+              />
+            ))}
+          </View>
+        </Card>
       </View>
     </Screen>
   );
@@ -147,4 +196,5 @@ const styles = StyleSheet.create({
   stack: { gap: 12, paddingBottom: 24 },
   inner: { gap: 10 },
   queueItem: { gap: 8, paddingBottom: 8 },
+  switchRow: { flexDirection: 'row', gap: 8 },
 });

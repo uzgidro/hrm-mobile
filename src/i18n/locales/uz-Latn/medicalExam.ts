@@ -121,6 +121,13 @@ export default {
     noCampaign: "Hozir ochiq ko'rik kampaniyasi yo'q.",
     queueEmpty: "Navbat bo'sh",
     queueEmptyHint: "Kutayotgan bemor yo'q.",
+    patientsTitle: 'Mening bemorlarim',
+    patientsToday: 'Bugun · {{count}}',
+    patientsAll: 'Hammasi',
+    patientsEmptyToday: "Bugun hali hech kimni qabul qilmadingiz.",
+    patientsEmptyAll: "Siz hali hech kimga ko'rik yozuvi kiritmagansiz.",
+    patientRecords_one: '{{count}} ta yozuv',
+    patientRecords_other: '{{count}} ta yozuv',
   },
   scanPatient: {
     title: 'Bemorni skanerlash',

@@ -120,6 +120,13 @@ export default {
     noCampaign: 'Ҳозир очиқ кўрик кампанияси йўқ.',
     queueEmpty: 'Навбат бўш',
     queueEmptyHint: 'Кутаётган бемор йўқ.',
+    patientsTitle: 'Менинг беморларим',
+    patientsToday: 'Бугун · {{count}}',
+    patientsAll: 'Ҳаммаси',
+    patientsEmptyToday: 'Бугун ҳали ҳеч кимни қабул қилмадингиз.',
+    patientsEmptyAll: 'Сиз ҳали ҳеч кимга кўрик ёзуви киритмагансиз.',
+    patientRecords_one: '{{count}} та ёзув',
+    patientRecords_other: '{{count}} та ёзув',
   },
   scanPatient: {
     title: 'Беморни сканерлаш',
