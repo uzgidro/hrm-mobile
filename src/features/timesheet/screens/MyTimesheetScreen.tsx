@@ -73,6 +73,8 @@ export default function MyTimesheetScreen({ embedded = false }: { embedded?: boo
   const hrCodes = useTabelCodes();
   const selectedMeta = tabelCodeMeta(selectedCode, hrCodes);
   const selectedLate = lateMinutes[selectedDate] ?? 0;
+  // Why the day is green (or why a late day still had a permission later on).
+  const selectedLeaves = row?.attendance?.daily_leaves?.[selectedDate] ?? [];
   const hasData = Object.keys(calendar).length > 0;
   const time = (iso?: string) => (iso ? dayjs(iso).format('HH:mm') : '--:--');
 
@@ -134,6 +136,13 @@ export default function MyTimesheetScreen({ embedded = false }: { embedded?: boo
           </Text>
         )}
       </View>
+      {selectedLeaves.map((l, i) => (
+        <Text key={i} testID={`tabel-leave-${i}`} variant="caption" tone="muted" style={styles.leaveReason}>
+          {t('timesheet.leaveReason')}: {[l.start && l.end ? `${l.start}–${l.end}` : '', l.reason, l.note ? `(${l.note})` : '']
+            .filter(Boolean)
+            .join(' ')}
+        </Text>
+      ))}
       <View style={[styles.entryExit, { borderTopColor: colors.border }]}>
         <View style={styles.entryItem}>
           <Text variant="number">{time(dayDetail.firstEntry?.happen_time)}</Text>
@@ -264,6 +273,7 @@ const styles = StyleSheet.create({
   },
   dot: { width: 6, height: 6, borderRadius: 3, marginTop: 3 },
   dayRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  leaveReason: { marginTop: 8 },
   letter: {
     minWidth: 40,
     height: 40,

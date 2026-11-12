@@ -12,6 +12,8 @@ export default {
   hoursValue: '{{value}} ч',
   hoursLabel: 'Всего отработано',
 
+  leaveReason: 'Разрешение',
+
   dayTitle: 'Статус дня',
   lateByMinutes: 'Опоздание {{value}} мин',
 

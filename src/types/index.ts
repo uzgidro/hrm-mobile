@@ -940,6 +940,16 @@ export interface AttendanceSummary {
   work_duration_hours?: number | null;
   calendar?: Record<string, string> | null;
   daily_late_minutes?: Record<string, number> | null;
+  /** Approved permissions per day: the reason (request type), note and time range. */
+  daily_leaves?: Record<string, LeaveDayNote[]> | null;
+}
+
+export interface LeaveDayNote {
+  reason?: string | null;
+  note?: string | null;
+  /** "HH:MM"; null for a whole-day leave. */
+  start?: string | null;
+  end?: string | null;
 }
 
 // A row of `/dashboard/employees-by-category` (EmployeeDashboardRead — no PII).

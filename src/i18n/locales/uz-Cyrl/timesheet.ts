@@ -12,6 +12,8 @@ export default {
   hoursValue: '{{value}} соат',
   hoursLabel: 'Жами иш вақти',
 
+  leaveReason: 'Рухсат',
+
   dayTitle: 'Кун ҳолати',
   lateByMinutes: '{{value}} дақиқа кечиккан',
 
