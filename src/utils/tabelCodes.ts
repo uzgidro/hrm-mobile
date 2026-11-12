@@ -11,7 +11,7 @@ import type { ThemeColors } from '@/theme/palettes';
 
 // A color slot on the theme palette. We return a KEY, not a hex, so the mapping
 // stays theme-agnostic and pure; the screen resolves it against `colors`.
-type TimesheetColorKey = 'present' | 'warning' | 'error' | 'primaryLight' | 'textMuted';
+type TimesheetColorKey = 'present' | 'absent' | 'warningMark' | 'primaryLight' | 'textMuted';
 
 export interface TabelCodeMeta {
   /** dotted i18n key into the `timesheet` namespace */
@@ -28,19 +28,24 @@ export interface TabelCodeMeta {
 // esa HR'dagi «K» (xizmat safari) bilan adashardi. HR'da kodi soat yoki bo'sh bo'lgan holatlar
 // (kelgan, kech qolgan, kelmagan, dam olish) harfsiz belgi bilan ko'rsatiladi. Filial o'z kodini
 // bergan bo'lsa — `useTabelCodes()` (GET organization-branches/tabel-codes) ustun.
+//
+// Colours are a traffic light (2026-11-12, same as the web): present and an
+// approved permission GREEN, late / early leave YELLOW, absent RED, other
+// documented absences blue. The `*Mark` fills are used because `warning`
+// (#89540A) is tuned for text and reads brown as a dot.
 const CODE_META: Record<string, TabelCodeMeta> = {
   present: { labelKey: 'timesheet.codePresent', colorKey: 'present', letter: '✓' },
-  late: { labelKey: 'timesheet.codeLate', colorKey: 'warning', letter: '!' },
-  early_leave: { labelKey: 'timesheet.codeEarlyLeave', colorKey: 'warning', letter: '!' },
-  absent: { labelKey: 'timesheet.codeAbsent', colorKey: 'error', letter: '×' },
-  progul: { labelKey: 'timesheet.codeProgul', colorKey: 'error', letter: 'PR' },
+  late: { labelKey: 'timesheet.codeLate', colorKey: 'warningMark', letter: '!' },
+  early_leave: { labelKey: 'timesheet.codeEarlyLeave', colorKey: 'warningMark', letter: '!' },
+  absent: { labelKey: 'timesheet.codeAbsent', colorKey: 'absent', letter: '×' },
+  progul: { labelKey: 'timesheet.codeProgul', colorKey: 'absent', letter: 'PR' },
   day_off: { labelKey: 'timesheet.codeDayOff', colorKey: 'textMuted', letter: '–' },
   business_trip: { labelKey: 'timesheet.codeBusinessTrip', colorKey: 'primaryLight', letter: 'K' },
   annual_leave: { labelKey: 'timesheet.codeAnnualLeave', colorKey: 'primaryLight', letter: 'OT' },
   sick_leave: { labelKey: 'timesheet.codeSickLeave', colorKey: 'primaryLight', letter: 'B' },
   unpaid_leave: { labelKey: 'timesheet.codeUnpaidLeave', colorKey: 'primaryLight', letter: 'BS' },
   tolanmaydigan_tatil: { labelKey: 'timesheet.codeNonPaidLeave', colorKey: 'primaryLight', letter: 'TT' },
-  work_leave: { labelKey: 'timesheet.codeWorkLeave', colorKey: 'primaryLight', letter: '8' },
+  work_leave: { labelKey: 'timesheet.codeWorkLeave', colorKey: 'present', letter: '8' },
   dekret: { labelKey: 'timesheet.codeDekret', colorKey: 'primaryLight', letter: 'DT' },
   oquv_tatil: { labelKey: 'timesheet.codeStudyLeave', colorKey: 'primaryLight', letter: 'UT' },
   malaka_oshirish: { labelKey: 'timesheet.codeTraining', colorKey: 'primaryLight', letter: 'MO' },

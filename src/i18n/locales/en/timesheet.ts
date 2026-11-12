@@ -12,6 +12,8 @@ export default {
   hoursValue: '{{value}} h',
   hoursLabel: 'Total worked',
 
+  leaveReason: 'Permission',
+
   dayTitle: 'Day status',
   lateByMinutes: '{{value}} min late',
 

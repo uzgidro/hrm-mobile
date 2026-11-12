@@ -19,6 +19,7 @@ export default {
   hoursLabel: 'Jami ish vaqti',
 
   // ── Legend ───────────────────────────────────────────────────────────────
+  leaveReason: 'Ruxsat',
   dayTitle: 'Kun holati',
   lateByMinutes: '{{value}} daqiqa kechikkan',
 

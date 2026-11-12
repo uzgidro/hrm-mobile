@@ -9,8 +9,10 @@ import type { AttendanceSummary } from '@/types';
 describe('tabelCodeMeta', () => {
   it('maps known codes to a label key, color slot and tabel letter', () => {
     expect(tabelCodeMeta('present')).toEqual({ labelKey: 'timesheet.codePresent', colorKey: 'present', letter: '✓' });
-    expect(tabelCodeMeta('late').colorKey).toBe('warning');
-    expect(tabelCodeMeta('absent').colorKey).toBe('error');
+    expect(tabelCodeMeta('late').colorKey).toBe('warningMark');
+    expect(tabelCodeMeta('absent').colorKey).toBe('absent');
+    // An approved permission is green like a present day (2026-11-12).
+    expect(tabelCodeMeta('work_leave').colorKey).toBe('present');
     expect(tabelCodeMeta('annual_leave').letter).toBe('OT');
     expect(tabelCodeMeta('business_trip').colorKey).toBe('primaryLight');
   });
@@ -33,7 +35,7 @@ describe('tabelCodeMeta', () => {
     for (const [k, v] of Object.entries(hr)) expect(tabelCodeMeta(k).letter).toBe(v);
     // «kech qolgan» endi HR'dagi «K» (xizmat safari) bilan adashmaydi.
     expect(tabelCodeMeta('late').letter).not.toBe('K');
-    expect(tabelCodeMeta('progul').colorKey).toBe('error');
+    expect(tabelCodeMeta('progul').colorKey).toBe('absent');
   });
 
   it('filial kodi (GET tabel-codes) ustun; soat qolipi yoki bo\'sh kod harf emas', () => {
@@ -46,7 +48,7 @@ describe('tabelCodeMeta', () => {
 });
 
 describe('tabelCodeColor', () => {
-  const colors = { present: '#0f0', warning: '#ff0', error: '#f00', primaryLight: '#00f', textMuted: '#888' } as unknown as ThemeColors;
+  const colors = { present: '#0f0', warningMark: '#ff0', absent: '#f00', primaryLight: '#00f', textMuted: '#888' } as unknown as ThemeColors;
 
   it('resolves a code to a concrete hex off the theme palette', () => {
     expect(tabelCodeColor('present', colors)).toBe('#0f0');
