@@ -55,6 +55,8 @@ export default {
   fieldPassportIssuedBy: 'Кем выдан паспорт',
   fieldJshir: 'ЖШШИР',
   fieldPinfl: 'ПИНФЛ',
+  fieldCurrentPassword: 'Текущий пароль (нужен для смены ПИНФЛ)',
+  passwordRequired: 'Введите текущий пароль для смены ПИНФЛ',
   fieldInn: 'ИНН',
   fieldPensionAccount: 'Номер пенсионного счёта',
 

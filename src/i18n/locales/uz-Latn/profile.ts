@@ -69,6 +69,8 @@ export default {
   fieldPassportIssuedBy: 'Pasport berilgan joy',
   fieldJshir: 'JSHSHIR',
   fieldPinfl: 'PINFL',
+  fieldCurrentPassword: "Joriy parol (PINFLni o'zgartirish uchun)",
+  passwordRequired: "PINFLni o'zgartirish uchun joriy parolni kiriting",
   fieldInn: 'INN',
   fieldPensionAccount: 'Pensiya hisob raqami',
 

@@ -63,6 +63,8 @@ export default function ProfileEditScreen() {
   const [form, setForm] = useState<Form>(EMPTY);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  // Current password: asked only when the PINFL was changed (server rule F-21).
+  const [currentPassword, setCurrentPassword] = useState('');
 
   useEffect(() => {
     if (!employeeId) return; // kartasiz hisob — yuqorida EmptyState (yuklash holati kerak emas)
@@ -95,9 +97,18 @@ export default function ProfileEditScreen() {
 
   const set = (k: keyof Form) => (v: string) => setForm((p) => ({ ...p, [k]: v }));
 
+  const pinflChanged =
+    !!initialRef.current &&
+    form.personal_identification_number.trim() !== '' &&
+    form.personal_identification_number.trim() !== initialRef.current.personal_identification_number.trim();
+
   const handleSave = async () => {
     if (!form.legal_name.trim()) {
       toast.error(t('profile.nameRequired'));
+      return;
+    }
+    if (pinflChanged && !currentPassword.trim()) {
+      toast.error(t('profile.passwordRequired'));
       return;
     }
     setSaving(true);
@@ -132,6 +143,9 @@ export default function ProfileEditScreen() {
         return;
       }
 
+      // Changing the PINFL requires the current password (server returns 400 otherwise).
+      if (payload.personal_identification_number) payload.current_password = currentPassword.trim();
+
       // The mutation refreshes the cached user (via auth store) and invalidates
       // the employee-detail cache on success.
       await updateMut.mutateAsync(payload);
@@ -139,7 +153,11 @@ export default function ProfileEditScreen() {
       toast.success(t('profile.savedMessage'));
       router.back();
     } catch (e) {
-      toast.error(getApiErrorMessage(e, t('errors.saveFailed')));
+      const code = (e as { response?: { data?: { code?: string } } })?.response?.data?.code;
+      // Wrong password: keep the form and the typed values, just report it.
+      toast.error(code === 'invalid_current_password'
+        ? t('password.currentWrong')
+        : getApiErrorMessage(e, t('errors.saveFailed')));
     } finally {
       setSaving(false);
     }
@@ -220,6 +238,9 @@ export default function ProfileEditScreen() {
             <Field styles={styles} label={t('profile.fieldPassportIssuedBy')} value={form.pasport_issue_by} onChange={set('pasport_issue_by')} />
             <Field styles={styles} label={t('profile.fieldJshir')} value={form.pasport_individual_number} onChange={set('pasport_individual_number')} keyboardType="number-pad" />
             <Field styles={styles} label={t('profile.fieldPinfl')} value={form.personal_identification_number} onChange={set('personal_identification_number')} keyboardType="number-pad" />
+            {pinflChanged && (
+              <Field styles={styles} label={t('profile.fieldCurrentPassword')} value={currentPassword} onChange={setCurrentPassword} secureTextEntry autoCapitalize="none" />
+            )}
             <Field styles={styles} label={t('profile.fieldInn')} value={form.taxpayer_identification_number} onChange={set('taxpayer_identification_number')} keyboardType="number-pad" />
             <Field styles={styles} label={t('profile.fieldPensionAccount')} value={form.individual_accumulative_pension_account_number} onChange={set('individual_accumulative_pension_account_number')} keyboardType="number-pad" />
           </Card>
@@ -250,10 +271,10 @@ function Card({ styles, title, children }: { styles: any; title: string; childre
 }
 
 function Field({
-  styles, label, value, onChange, keyboardType, multiline, autoCapitalize,
+  styles, label, value, onChange, keyboardType, multiline, autoCapitalize, secureTextEntry,
 }: {
   styles: any; label: string; value: string; onChange: (v: string) => void;
-  keyboardType?: any; multiline?: boolean; autoCapitalize?: any;
+  keyboardType?: any; multiline?: boolean; autoCapitalize?: any; secureTextEntry?: boolean;
 }) {
   return (
     <View>
@@ -267,6 +288,7 @@ function Field({
         keyboardType={keyboardType}
         multiline={multiline}
         autoCapitalize={autoCapitalize}
+        secureTextEntry={secureTextEntry}
       />
     </View>
   );

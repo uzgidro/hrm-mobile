@@ -55,6 +55,8 @@ export default {
   fieldPassportIssuedBy: 'Паспорт берилган жой',
   fieldJshir: 'ЖШШИР',
   fieldPinfl: 'ПИНФЛ',
+  fieldCurrentPassword: 'Жорий парол (ПИНФЛни ўзгартириш учун)',
+  passwordRequired: 'ПИНФЛни ўзгартириш учун жорий паролни киритинг',
   fieldInn: 'ИНН',
   fieldPensionAccount: 'Пенсия ҳисоб рақами',
 

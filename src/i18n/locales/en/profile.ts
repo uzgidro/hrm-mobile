@@ -55,6 +55,8 @@ export default {
   fieldPassportIssuedBy: 'Passport issued by',
   fieldJshir: 'JSHSHIR',
   fieldPinfl: 'PINFL',
+  fieldCurrentPassword: 'Current password (required to change PINFL)',
+  passwordRequired: 'Enter your current password to change the PINFL',
   fieldInn: 'INN',
   fieldPensionAccount: 'Pension account number',
 
