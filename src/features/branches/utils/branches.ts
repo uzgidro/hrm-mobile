@@ -6,7 +6,7 @@
 // AKT xodimiga bu tugmalar chizilmaydi (v2 `canManageBranches`). Tahrir va manzillar AKT ga ham ochiq
 // (server o'z filialiga toraytiradi).
 import type { User } from '@/types';
-import { isBranchAdmin, isSiteMasterAdmin } from '@/utils/roles';
+import { isBranchAdmin, isHR, isSiteMasterAdmin } from '@/utils/roles';
 import { foldText } from '@/utils/searchFold';
 
 /** `GET /organization-branches` qatori (to'liq `OrganizationBranchReadFull`). */
@@ -37,9 +37,22 @@ export interface LocationRow {
   longitude?: number | null;
 }
 
-/** v2 `canManageBranches`: filial yaratish/o'chirish faqat sayt master-admini va admin hisobiga. */
+/**
+ * Branch TOPOLOGY authority (web v2 `canManageBranchTopology`): create/delete a branch and the
+ * head-office / medical-centre / terminal-group fields. The server allows it only for master-admin
+ * and for an admin with NO branch binding (`/auth/me` -> `admin.organization_branch_id` null).
+ */
 export function canManageBranches(user?: User | null): boolean {
-  return isSiteMasterAdmin(user) || isBranchAdmin(user);
+  if (isSiteMasterAdmin(user)) return true;
+  return isBranchAdmin(user) && !user?.admin?.organization_branch_id;
+}
+
+/**
+ * Hik turnstile sync button: the server allows HR / master-admin with scope over the branch, or the
+ * branch's system admin (admin / AKT). Hidden only for callers already known to be refused.
+ */
+export function canSyncBranchTurnstiles(user?: User | null): boolean {
+  return isSiteMasterAdmin(user) || isBranchAdmin(user) || isHR(user) || (user?.akt_branch_ids?.length ?? 0) > 0;
 }
 
 export const branchName = (b: Pick<BranchRow, 'id' | 'name'>) => b.name || `#${b.id}`;

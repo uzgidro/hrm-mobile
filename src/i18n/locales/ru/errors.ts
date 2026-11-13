@@ -219,4 +219,5 @@ export default {
   mobile_checkin_already_cancelled: "Отметка уже отменена",
   mobile_checkin_not_found: "Отметка не найдена",
   destination_only_for_trip: "Место назначения указывается только для командировки",
+  password_not_set: "Пароль не задан — сначала задайте пароль через «Забыли пароль» или внесите изменение через отдел кадров",
 } as const;

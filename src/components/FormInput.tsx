@@ -7,7 +7,7 @@ import { ff } from '../theme/typography';
 import { NO_WEB_OUTLINE } from '../theme/web';
 
 export function FormInput({
-  label, value, onChangeText, placeholder, required, multiline, keyboardType, error, testID, secureTextEntry, inputRef,
+  label, value, onChangeText, placeholder, required, multiline, keyboardType, error, testID, secureTextEntry, inputRef, editable = true,
 }: {
   label: string;
   value: string;
@@ -22,6 +22,8 @@ export function FormInput({
   secureTextEntry?: boolean;
   /** Ichki TextInput'ga ref — xato bo'lsa maydonga fokus berish uchun. */
   inputRef?: React.Ref<TextInput>;
+  /** False renders the field read-only and dimmed. */
+  editable?: boolean;
 }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -32,7 +34,7 @@ export function FormInput({
       </Text>
       <TextInput
         ref={inputRef}
-        style={[styles.input, multiline && styles.multiline, !!error && styles.inputError]}
+        style={[styles.input, multiline && styles.multiline, !!error && styles.inputError, !editable && { opacity: 0.55 }]}
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
@@ -42,6 +44,7 @@ export function FormInput({
         autoCapitalize="none"
         secureTextEntry={secureTextEntry}
         autoComplete={secureTextEntry ? 'off' : undefined}
+        editable={editable}
         testID={testID}
       />
       {!!error && <Text style={styles.errorText}>{error}</Text>}

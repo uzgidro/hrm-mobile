@@ -219,4 +219,5 @@ export default {
   mobile_checkin_already_cancelled: "Белги аллақачон бекор қилинган",
   mobile_checkin_not_found: "Белги топилмади",
   destination_only_for_trip: "Манзил фақат хизмат сафари учун кўрсатилади",
+  password_not_set: "Парол ўрнатилмаган — аввал «Паролни унутдим» орқали парол ўрнатинг ёки ўзгартиришни кадрлар бўлими орқали қилинг",
 } as const;

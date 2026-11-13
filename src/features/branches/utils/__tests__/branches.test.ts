@@ -34,6 +34,7 @@ describe('branches utils (v2 BranchesPage)', () => {
         }),
       ),
     ).toBe(false);
+    expect(canManageBranches(u({ id: 1, type: 'admin', admin: { organization_branch_id: 5 } }))).toBe(false);
     expect(canManageBranches(null)).toBe(false);
   });
 

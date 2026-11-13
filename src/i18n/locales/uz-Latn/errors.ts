@@ -231,4 +231,5 @@ export default {
   mobile_checkin_already_cancelled: "Belgi allaqachon bekor qilingan",
   mobile_checkin_not_found: "Belgi topilmadi",
   destination_only_for_trip: "Manzil faqat xizmat safari uchun ko'rsatiladi",
+  password_not_set: "Parol o'rnatilmagan — avval «Parolni unutdim» orqali parol o'rnating yoki o'zgartirishni kadrlar bo'limi orqali qiling",
 } as const;

@@ -219,4 +219,5 @@ export default {
   mobile_checkin_already_cancelled: "The check-in is already cancelled",
   mobile_checkin_not_found: "Check-in not found",
   destination_only_for_trip: "A destination can only be set for a business trip",
+  password_not_set: "No password is set — set one first via “Forgot password”, or make this change through HR",
 } as const;

@@ -16,6 +16,7 @@ import {
   branchRegions,
   branchSubtitle,
   canManageBranches,
+  canSyncBranchTurnstiles,
   filterBranches,
   isSyncQueued,
   type BranchRow,
@@ -36,6 +37,7 @@ export function BranchesTab({
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const canManage = canManageBranches(user);
+  const canSync = canSyncBranchTurnstiles(user);
   const list = useQuery(branchesQuery());
   const [search, setSearch] = useState('');
   const [open, setOpen] = useState<Open>(null);
@@ -90,6 +92,7 @@ export function BranchesTab({
           key={open.n}
           row={open.row}
           canManage={canManage}
+          canSync={canSync}
           // `n` — varaq ochilgan payt (render ichida Date.now() chaqirilmaydi).
           queued={isSyncQueued(queuedAt, open.row.id, open.n)}
           onQueued={() => onQueued(open.row.id)}
@@ -107,6 +110,7 @@ export function BranchesTab({
 function BranchSheet({
   row,
   canManage,
+  canSync,
   queued,
   onQueued,
   onEdit,
@@ -114,6 +118,7 @@ function BranchSheet({
 }: {
   row: BranchRow;
   canManage: boolean;
+  canSync: boolean;
   queued: boolean;
   onQueued: () => void;
   onEdit: () => void;
@@ -178,17 +183,19 @@ function BranchSheet({
         <KeyValue label={t('branches.employees')} value={String(row.employee_count ?? 0)} />
         <KeyValue label={t('branches.turnstiles')} value={String(row.turnstile_count ?? 0)} />
         <Button testID="branch-edit" label={t('common.edit')} icon="edit" onPress={onEdit} full />
-        <Button
-          testID="branch-sync"
-          label={t('branches.sync')}
-          icon="refresh"
-          variant="soft"
-          onPress={() => void runSync()}
-          loading={sync.isPending}
-          disabled={queued}
-          full
-        />
-        {queued && (
+        {canSync && (
+          <Button
+            testID="branch-sync"
+            label={t('branches.sync')}
+            icon="refresh"
+            variant="soft"
+            onPress={() => void runSync()}
+            loading={sync.isPending}
+            disabled={queued}
+            full
+          />
+        )}
+        {canSync && queued && (
           <Text variant="caption" tone="subtle" testID="branch-sync-queued">
             {t('branches.syncQueued')}
           </Text>

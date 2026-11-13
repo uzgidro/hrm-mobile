@@ -21,6 +21,7 @@ export default {
   latRange: 'Latitude must be between −90 and 90',
   lonRange: 'Longitude must be between −180 and 180',
   topologyTitle: "The branch's role in the system",
+  topologyGlobalOnly: "Only an administrator with global scope can change these settings",
   isHeadOffice: 'Head office (Executive office)',
   isHeadOfficeHint:
     "The secretariat, the executive office's HR, manual chancellery confirmation, KPI coverage and passage through every turnstile depend on this flag",

@@ -21,6 +21,7 @@ export default {
   latRange: "Kenglik −90 dan 90 gacha bo'lishi kerak",
   lonRange: "Uzunlik −180 dan 180 gacha bo'lishi kerak",
   topologyTitle: 'Filialning tizimdagi roli',
+  topologyGlobalOnly: "Bu sozlamalarni faqat umumiy doiradagi administrator o'zgartiradi",
   isHeadOffice: 'Bosh filial (Ijro apparati)',
   isHeadOfficeHint:
     "Kotibiyat, ijro apparati kadri, devonxona qo'lda tasdiqlashi, KPI qamrovi va barcha turniketlardan o'tish shu bayroqqa bog'liq",

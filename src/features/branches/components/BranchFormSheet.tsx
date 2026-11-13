@@ -7,10 +7,12 @@ import { useTranslation } from 'react-i18next';
 import { toast } from '@/lib/toast';
 import { FormInput } from '@/components/FormInput';
 import { Button, Card, Chip, Sheet, Text, Toggle } from '@/ui';
+import { useAuthStore } from '@/store/authStore';
 import { useSaveBranch } from '../api/mutations';
 import { branchActionError } from './BranchesBits';
 import {
   buildBranchBody,
+  canManageBranches,
   knownRegions,
   seedBranchForm,
   toggleRegion,
@@ -31,6 +33,8 @@ export function BranchFormSheet({
   const [form, setForm] = useState<BranchForm>(() => seedBranchForm(row));
   const [error, setError] = useState<string | null>(null);
   const save = useSaveBranch();
+  // Topology fields are read-only unless the account is a global admin (server 403 otherwise).
+  const canTopology = canManageBranches(useAuthStore((s) => s.user));
   // Tanlanganlar o'z tartibida (birinchisi — asosiy viloyat), qolganlari alifbo bo'yicha.
   const regions = [...form.regions, ...knownRegions(branches).filter((r) => !form.regions.includes(r))];
 
@@ -62,6 +66,7 @@ export function BranchFormSheet({
           testID={id}
           value={value}
           onValueChange={onChange}
+          disabled={!canTopology}
         />
       </View>
       <Text variant="caption" tone="subtle">
@@ -133,6 +138,11 @@ export function BranchFormSheet({
         </View>
         <Card title={t('branches.topologyTitle')} icon="building" tint="grey">
           <View style={styles.topology}>
+            {!canTopology && (
+              <Text variant="caption" tone="subtle">
+                {t('branches.topologyGlobalOnly')}
+              </Text>
+            )}
             {toggle(
               'branch-form-head-office',
               t('branches.isHeadOffice'),
@@ -152,6 +162,7 @@ export function BranchFormSheet({
               label={t('branches.terminalGroup')}
               value={form.terminalGroup}
               onChangeText={(v) => set({ terminalGroup: v })}
+              editable={canTopology}
               placeholder={t('branches.terminalGroupPlaceholder')}
             />
             <Text variant="caption" tone="subtle" style={styles.hint}>
