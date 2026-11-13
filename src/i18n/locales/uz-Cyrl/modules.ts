@@ -53,6 +53,7 @@ export default {
     health: 'Соғлиқ кўриги',
     medicalExam: "Тиббий кўрик (менинг куним)",
     doctorDesk: "Шифокор қабули",
+    sanatorium: "Сиҳатгоҳ",
     registrationStatus: 'Аризам ҳолати',
     orderTypes: 'Буйруқ турлари',
     tempOrders: 'Вақтинчалик буйруқлар',

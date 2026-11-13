@@ -48,6 +48,7 @@ export const CATALOG: CatalogEntry[] = [
   e('health', 'health', '/sogliq-korigi', 'check', 'pink', 'stats'),
   e('medicalExam', 'medicalExam', '/medical-exam', 'checklist', 'green', 'main'),
   e('doctorDesk', 'doctorDesk', '/doctor-desk', 'qr', 'drop', 'main'),
+  e('sanatorium', 'sanatorium', '/sanatorium', 'sun', 'cyan', 'main'),
   e('registrationStatus', 'registrationStatus', '/registratsiya-holati', 'idcard', 'drop', 'main'),
 
   e('orders', 'orders', '/documents?seg=orders', 'orders', 'orange', 'documents'),

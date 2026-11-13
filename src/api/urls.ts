@@ -585,3 +585,28 @@ export const MEDICAL_QUEUE = 'medical/queue';
 /** People the calling doctor has received (staff and invited doctors alike). */
 export const MEDICAL_MY_PATIENTS = 'medical/my-patients';
 export const MEDICAL_STATION_STATUS = (stationId: number) => `medical/visit-stations/${stationId}/status`;
+
+// ── Sanatorium («Energetiklar sihatgohi») staff API ──
+export const SANATORIUM_DASHBOARD = 'sanatorium/dashboard';
+export const SANATORIUM_AVAILABILITY = 'sanatorium/availability';
+export const SANATORIUM_STAYS = 'sanatorium/stays';
+export const SANATORIUM_STAY_CHECK_IN = (id: number) => `sanatorium/stays/${id}/check-in`;
+export const SANATORIUM_STAY_CHECK_OUT = (id: number) => `sanatorium/stays/${id}/check-out`;
+export const SANATORIUM_STAY_EARLY_LEAVE = (id: number) => `sanatorium/stays/${id}/early-leave`;
+export const SANATORIUM_GUESTS = 'sanatorium/guests';
+export const SANATORIUM_GUEST = (id: number) => `sanatorium/guests/${id}`;
+export const SANATORIUM_QR_RESOLVE = 'sanatorium/qr/resolve';
+export const SANATORIUM_REQUESTS = 'sanatorium/requests';
+export const SANATORIUM_REQUEST_ACCEPT = (id: number) => `sanatorium/requests/${id}/accept`;
+export const SANATORIUM_REQUEST_REJECT = (id: number) => `sanatorium/requests/${id}/reject`;
+export const SANATORIUM_APPOINTMENTS = 'sanatorium/appointments';
+export const SANATORIUM_APPOINTMENT_FINISH = (id: number) => `sanatorium/appointments/${id}/finish`;
+export const SANATORIUM_APPOINTMENT_REFER = (id: number) => `sanatorium/appointments/${id}/refer`;
+export const SANATORIUM_APPOINTMENT_NOTIFIED = (id: number) => `sanatorium/appointments/${id}/nurse-notified`;
+export const SANATORIUM_PROCEDURES = 'sanatorium/procedures';
+export const SANATORIUM_PROCEDURE = (id: number) => `sanatorium/procedures/${id}`;
+export const SANATORIUM_SPECIALTIES = 'sanatorium/specialties';
+export const SANATORIUM_STAFF = 'sanatorium/staff';
+export const SANATORIUM_MENU = 'sanatorium/menu';
+export const SANATORIUM_KITCHEN_COUNTS = 'sanatorium/kitchen/counts';
+export const SANATORIUM_KITCHEN_DAY = 'sanatorium/kitchen/day';

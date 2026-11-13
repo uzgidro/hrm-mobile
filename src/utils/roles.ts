@@ -429,7 +429,7 @@ export type PageKey =
   | 'notifications' | 'profile' | 'support' | 'chairman' | 'directory' | 'terminals'
   | 'duty' | 'holidays'
   // v3: web v2 katalogining qolgan modullari (ekranlari to'lqinlarda — `ready`).
-  | 'services' | 'zoom' | 'vehicles' | 'ijro' | 'chrono' | 'workPlan' | 'medical' | 'health' | 'medicalExam' | 'doctorDesk'
+  | 'services' | 'zoom' | 'vehicles' | 'ijro' | 'chrono' | 'workPlan' | 'medical' | 'health' | 'medicalExam' | 'doctorDesk' | 'sanatorium'
   | 'registrationStatus' | 'orderTypes' | 'tempOrders' | 'staffPositions' | 'structure'
   | 'responsibles' | 'hrQuality' | 'trainings' | 'learning' | 'inspections' | 'reports'
   | 'dictionaries' | 'tabelSettings' | 'monitoring' | 'kpp' | 'videoGuide' | 'users'
@@ -533,6 +533,7 @@ const needsMedical: ModuleGate = (u) => u?.medical_enabled === true;
 const serverHasExam = (u: Parameters<ModuleGate>[0]) => typeof u?.medical_reception === 'boolean';
 const needsOwnExam: ModuleGate = (u) => serverHasExam(u) && !!u?.employee?.id && u?.type !== 'external-doctor';
 const needsStaffDoctor: ModuleGate = (u) => serverHasExam(u) && u?.is_doctor === true && u?.type !== 'external-doctor';
+const needsSanatorium: ModuleGate = (u) => (u?.sanatorium_roles?.length ?? 0) > 0;
 const needsHealth: ModuleGate = (u) => !!u?.nurse_branch_ids?.length || isSiteMasterAdmin(u);
 const needsFleet: ModuleGate = (u) =>
   isSiteMasterAdmin(u) || !!u?.transport_branch_ids?.length || !!u?.transport_approver_branch_ids?.length;
@@ -596,6 +597,7 @@ const MODULE_FOR_PAGE: Partial<Record<PageKey, ModuleDef>> = {
   health: { key: 'health', defaultRoles: ALL, gates: [needsHealth] },
   medicalExam: { key: 'medicalExam', defaultRoles: ALL, gates: [needsOwnExam] },
   doctorDesk: { key: 'doctorDesk', defaultRoles: ALL, gates: [needsStaffDoctor] },
+  sanatorium: { key: 'sanatorium', defaultRoles: ALL, gates: [needsSanatorium] },
   registrationStatus: { key: 'registrationStatus', defaultRoles: ['guest'] },
   orderTypes: { key: 'orderTypes', defaultRoles: ADMIN_HR },
   tempOrders: { key: 'tempOrders', defaultRoles: ADMIN_HR },

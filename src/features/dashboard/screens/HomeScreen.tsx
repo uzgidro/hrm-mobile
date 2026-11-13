@@ -20,6 +20,7 @@ import { LeaderBoard } from '../components/LeaderBoard';
 // tugma bosh sahifada turishi kerak, mantiq esa o'z feature'ida.
 import { TripCheckinCard } from '@/features/checkin/components/TripCheckinCard';
 import { HomeLeavesCard } from '@/features/leaves/components/HomeLeavesCard';
+import { SanatoriumHomeCard } from '@/features/sanatorium/components/HomeCard';
 import { useActiveBranchId } from '@/lib/useActiveBranch';
 
 export default function HomeScreen() {
@@ -66,6 +67,8 @@ export default function HomeScreen() {
   return (
     <Screen refreshing={refreshing} onRefresh={onRefresh} testID="home-screen">
       <HomeHeader />
+      {/* Sanatorium staff: their own dashboard is the main thing on home (`sanatorium_home`). */}
+      {user?.sanatorium_home ? <SanatoriumHomeCard /> : null}
       <TripCheckinCard />
       {/* Qo'shimcha roli bor xodim (rahbar paneli): o'zi uchun ruxsat so'rash va tasdig'ini
           kutayotgan so'rovlar shu yerda (2026-10-07). Oddiy xodim panelida «So'rovlarim» bor. */}

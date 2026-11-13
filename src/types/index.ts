@@ -89,6 +89,10 @@ export interface User {
     valid_until?: string | null;
     can_work?: boolean;
   } | null;
+  /** Sanatorium («Energetiklar sihatgohi») staff roles from /auth/me; empty/missing = module hidden. */
+  sanatorium_roles?: string[];
+  /** Real sanatorium staff: the sanatorium dashboard goes to the top of home. */
+  sanatorium_home?: boolean;
   /** Doktorning o'z turlari (auth/me) — bitta bo'lsa ko'rik formasida tanlash chiqmaydi (v2). */
   medical_specialties?: { id: number; name?: string | null }[];
   /** Hamshira sifatida biriktirilgan filiallar (auth/me) — v2 needsHealth. */

@@ -59,6 +59,7 @@ export default {
     health: "Sog'liq ko'rigi",
     medicalExam: "Tibbiy ko'rik (mening kunim)",
     doctorDesk: "Shifokor qabuli",
+    sanatorium: "Sihatgoh",
     registrationStatus: 'Arizam holati',
     orderTypes: 'Buyruq turlari',
     tempOrders: 'Vaqtinchalik buyruqlar',
