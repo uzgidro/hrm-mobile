@@ -1,7 +1,7 @@
 import i18n from '@/i18n';
 import { canAccessPage } from '@/utils/roles';
 import type { User } from '@/types';
-import { hasSanRole, maskPassport, minFreeBeds, sanErrorInfo, sanErrorMessage, sanRoles } from '../sanatorium';
+import { fmtMoney, hasSanRole, maskPassport, parseDmy, minFreeBeds, sanErrorInfo, sanErrorMessage, sanRoles } from '../sanatorium';
 
 const err = (detail: unknown) => ({ response: { status: 409, data: { detail } } });
 
@@ -43,5 +43,19 @@ describe('helpers', () => {
   it('counts free beds over the busiest night', () => {
     expect(minFreeBeds(4, [1, 3, 2])).toBe(1);
     expect(minFreeBeds(2, [2, 3])).toBe(0);
+  });
+});
+
+describe('form helpers', () => {
+  it('parses a typed birth date', () => {
+    expect(parseDmy('14.03.1985')).toBe('1985-03-14');
+    expect(parseDmy('1/2/1990')).toBe('1990-02-01');
+    expect(parseDmy('31.02.1990')).toBeNull();
+    expect(parseDmy('14.03.2999')).toBeNull();
+    expect(parseDmy('garbage')).toBeNull();
+  });
+  it('formats money', () => {
+    expect(fmtMoney('1500000.00').replace(/\s/g, '')).toBe('1500000');
+    expect(fmtMoney(null)).toBe('—');
   });
 });

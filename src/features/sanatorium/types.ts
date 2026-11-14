@@ -182,3 +182,77 @@ export type Specialty = { id: number; name: string; kind: string; is_active: boo
 export type StaffRow = { id: number; full_name?: string | null; specialty_id?: number | null; specialty?: string | null };
 export type Credentials = { login_code: string; password: string; qr_code: string };
 export type QrResolveResult = { guest: GuestLite; active_stay: Stay | null };
+
+// ── Registrar-side shapes (settings, rooms, staff, families, bookings) ──
+export type SpecialtyKind = 'doctor' | 'lab' | 'procedure';
+export const SPECIALTY_KINDS: SpecialtyKind[] = ['doctor', 'lab', 'procedure'];
+export type PriceMode = 'per_bed' | 'per_room';
+export type PaymentStatus = 'unpaid' | 'partial' | 'paid';
+export const PAYMENT_STATUSES: PaymentStatus[] = ['unpaid', 'partial', 'paid'];
+export type FamilyRelation = 'head' | 'spouse' | 'child' | 'other';
+export const RELATIONS: FamilyRelation[] = ['head', 'spouse', 'child', 'other'];
+
+export type SanSettings = {
+  contacts: string | null;
+  addresses: string | null;
+  work_hours: string | null;
+  about: string | null;
+  child_discount_percent: number;
+  child_age_limit: number;
+};
+
+export type Room = {
+  id: number;
+  number: string;
+  building: string | null;
+  floor: number | null;
+  room_type: string | null;
+  capacity: number;
+  description: string | null;
+  out_of_service: boolean;
+  out_of_service_note: string | null;
+  is_active: boolean;
+  price_per_day?: string;
+  price_mode?: PriceMode;
+};
+
+export type StaffMember = {
+  id: number;
+  user_id: number;
+  full_name: string;
+  specialty_id: number | null;
+  specialty: string | null;
+  cabinet: string | null;
+  phone: string | null;
+  is_active: boolean;
+  is_registrar: boolean;
+  is_kitchen: boolean;
+  is_room_keeper: boolean;
+  is_doctor: boolean;
+  is_nurse: boolean;
+  is_external: boolean;
+};
+export type StaffCandidate = { user_id: number; full_name: string; kind: 'employee' | 'external'; already_staff: boolean };
+
+export type Family = {
+  id: number;
+  name: string;
+  note: string | null;
+  members: (GuestLite & { relation?: string | null })[];
+};
+
+/** Money / notes the server adds to a stay for the registrar only. */
+export type StayMoney = {
+  contract_note?: string | null;
+  early_leave_reason?: string | null;
+  child_discount?: boolean;
+  discount_percent?: number;
+  price_per_day?: string;
+  total_amount?: string;
+  paid_amount?: string;
+  debt?: string;
+  payment_status?: PaymentStatus;
+  note?: string | null;
+  family_id?: number | null;
+};
+export type StayFull = Stay & StayMoney & { diet_note: string | null };

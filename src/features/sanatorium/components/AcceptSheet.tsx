@@ -1,17 +1,17 @@
-// Accepting a request = booking: guest type, a room that has free beds for the whole period,
-// dates, meals and the child discount. The server then creates the guest and the credentials.
-import React, { useMemo, useState } from 'react';
+// Accepting a request = booking: the shared booking fields plus the family and the child
+// discount. The server then creates (or matches) the guest and, for a new one, the credentials.
+import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import dayjs from 'dayjs';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { DatePickerModal } from '@/components/DatePicker';
-import { PickerModal } from '@/components/PickerModal';
-import { Button, Chip, SelectField, Sheet, Text, Toggle } from '@/ui';
+import { Button, Sheet, Text } from '@/ui';
 import { useAcceptRequest } from '../api/mutations';
-import { availabilityQuery } from '../api/queries';
-import { GUEST_TYPES, type Credentials, type GuestType, type SanRequest } from '../types';
-import { fmtDate, minFreeBeds, sanErrorMessage, todayIso } from '../utils/sanatorium';
+import { familiesQuery } from '../api/queries';
+import type { Credentials, SanRequest } from '../types';
+import { sanErrorMessage, todayIso } from '../utils/sanatorium';
+import { BookingFields, newBookingDraft, type BookingDraft } from './BookingFields';
+import { ChoiceField, ErrorLine, opt, SwitchRow } from './forms';
 
 export type Accepted = {
   guestName: string;
@@ -41,40 +41,37 @@ export function AcceptSheet({
 function AcceptForm({ request, onAccepted }: { request: SanRequest; onAccepted: (a: Accepted) => void }) {
   const { t } = useTranslation();
   const accept = useAcceptRequest();
-  const initFrom = request.referral_from ?? todayIso();
-  const [type, setType] = useState<GuestType>(request.guest_type ?? 'treatment');
-  const [from, setFrom] = useState(initFrom);
-  const [to, setTo] = useState(request.referral_to ?? dayjs(initFrom).add(10, 'day').format('YYYY-MM-DD'));
-  const [roomId, setRoomId] = useState<number | null>(null);
-  const [meals, setMeals] = useState(true);
+  const families = useQuery(familiesQuery(''));
+  const from = request.referral_from ?? todayIso();
+  const [draft, setDraft] = useState<BookingDraft>(() =>
+    newBookingDraft({
+      type: request.guest_type ?? 'treatment',
+      from,
+      to: request.referral_to ?? dayjs(from).add(10, 'day').format('YYYY-MM-DD'),
+    }),
+  );
   const [child, setChild] = useState(false);
-  const [pick, setPick] = useState<'from' | 'to' | 'room' | null>(null);
+  const [familyId, setFamilyId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const valid = dayjs(to).isAfter(dayjs(from));
-  const nights = Math.min(62, Math.max(1, dayjs(to).diff(dayjs(from), 'day')));
-  const avail = useQuery(availabilityQuery(from, nights, valid));
-  const rooms = useMemo(
-    () =>
-      (avail.data?.rooms ?? [])
-        .filter((r) => !r.out_of_service)
-        .map((r) => ({ r, free: minFreeBeds(r.capacity, r.occupancy) }))
-        .filter((x) => x.free > 0)
-        .map(({ r, free }) => ({
-          value: r.id,
-          label: [r.number, r.building].filter(Boolean).join(' · '),
-          subLabel: `${t('sanatorium.freeBeds')}: ${free}/${r.capacity}`,
-        })),
-    [avail.data, t],
-  );
-  const roomLabel = rooms.find((x) => x.value === roomId)?.label;
-
   const submit = async () => {
-    if (!valid) return setError(t('sanatorium.errors.invalid_period'));
+    if (!dayjs(draft.to).isAfter(dayjs(draft.from))) return setError(t('sanatorium.errors.invalid_period'));
     try {
       const r = await accept.mutateAsync({
         id: request.id,
-        body: { guest_type: type, room_id: roomId, planned_from: from, planned_to: to, with_meals: meals, child_discount: child },
+        body: {
+          guest_type: draft.type,
+          room_id: draft.roomId,
+          planned_from: draft.from,
+          planned_to: draft.to,
+          with_meals: draft.meals,
+          child_discount: child,
+          ...(draft.doctorId ? { doctor_staff_id: draft.doctorId } : {}),
+          ...(draft.nurseId ? { nurse_staff_id: draft.nurseId } : {}),
+          ...(familyId ? { family_id: familyId } : {}),
+          ...(opt(draft.contract) ? { contract_note: opt(draft.contract) } : {}),
+          ...(opt(draft.note) ? { note: opt(draft.note) } : {}),
+        },
       });
       const out = { guestName: r.guest.full_name, credentials: r.credentials };
       accept.reset();
@@ -85,56 +82,23 @@ function AcceptForm({ request, onAccepted }: { request: SanRequest; onAccepted: 
   };
 
   return (
-    <>
-      <View style={styles.body} testID="accept-sheet">
-        <Text variant="body" weight="600">{request.full_name}</Text>
-        <Text variant="label" tone="muted">{t('sanatorium.guestTypeLabel')}</Text>
-        <View style={styles.chips}>
-          {GUEST_TYPES.map((g) => (
-            <Chip key={g} label={t(`sanatorium.guestType.${g}`)} selected={type === g} onPress={() => setType(g)} testID={`type-${g}`} />
-          ))}
-        </View>
-        <SelectField label={t('sanatorium.dateFrom')} value={fmtDate(from)} icon="calendar" onPress={() => setPick('from')} testID="accept-from" />
-        <SelectField label={t('sanatorium.dateTo')} value={fmtDate(to)} icon="calendar" onPress={() => setPick('to')} testID="accept-to" />
-        <SelectField
-          label={t('sanatorium.room')}
-          value={roomLabel}
-          placeholder={avail.isPending && valid ? t('sanatorium.loading') : t('sanatorium.choose')}
-          onPress={() => setPick('room')}
-          testID="accept-room"
-        />
-        <View style={styles.toggle}>
-          <Text variant="body">{t('sanatorium.withMeals')}</Text>
-          <Toggle value={meals} onValueChange={setMeals} accessibilityLabel={t('sanatorium.withMeals')} testID="accept-meals" />
-        </View>
-        <View style={styles.toggle}>
-          <Text variant="body">{t('sanatorium.childDiscount')}</Text>
-          <Toggle value={child} onValueChange={setChild} accessibilityLabel={t('sanatorium.childDiscount')} testID="accept-child" />
-        </View>
-        {!!error && <Text variant="label" tone="danger" testID="accept-error">{error}</Text>}
-        <Button testID="accept-save" label={t('sanatorium.accept')} full loading={accept.isPending} onPress={() => void submit()} />
-      </View>
-      <DatePickerModal visible={pick === 'from'} value={from} title={t('sanatorium.dateFrom')} onConfirm={(v) => { setFrom(v); setRoomId(null); }} onClose={() => setPick(null)} />
-      <DatePickerModal visible={pick === 'to'} value={to} title={t('sanatorium.dateTo')} onConfirm={(v) => { setTo(v); setRoomId(null); }} onClose={() => setPick(null)} />
-      <PickerModal
-        visible={pick === 'room'}
-        title={t('sanatorium.room')}
-        options={rooms}
-        loading={avail.isPending}
-        selected={roomId}
-        avatars={false}
-        onClose={() => setPick(null)}
-        onSelect={(v) => {
-          setRoomId(v);
-          setPick(null);
-        }}
+    <View style={styles.body} testID="accept-sheet">
+      <Text variant="body" weight="600">{request.full_name}</Text>
+      <BookingFields draft={draft} onChange={(p) => setDraft((d) => ({ ...d, ...p }))} showDiet={false} />
+      <ChoiceField
+        label={t('sanatorium.family')}
+        value={familyId}
+        noneLabel={t('sanatorium.none')}
+        options={(families.data ?? []).map((f) => ({ value: f.id, label: f.name }))}
+        onChange={setFamilyId}
+        loading={families.isPending}
+        testID="accept-family"
       />
-    </>
+      <SwitchRow label={t('sanatorium.childDiscount')} value={child} onChange={setChild} testID="accept-child" />
+      <ErrorLine message={error} testID="accept-error" />
+      <Button testID="accept-save" label={t('sanatorium.accept')} full loading={accept.isPending} onPress={() => void submit()} />
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  body: { gap: 8, paddingBottom: 8 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  toggle: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingVertical: 4 },
-});
+const styles = StyleSheet.create({ body: { gap: 4, paddingBottom: 8 } });

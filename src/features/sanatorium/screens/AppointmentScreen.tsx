@@ -10,10 +10,12 @@ import { FormInput } from '@/components/FormInput';
 import { toast } from '@/lib/toast';
 import { useAuthStore } from '@/store/authStore';
 import { Badge, Button, Card, EmptyState, PageHeader, Screen, SectionHeader, Text } from '@/ui';
-import { useFinishAppointment, useNurseNotified } from '../api/mutations';
+import { confirm } from '@/lib/confirm';
+import { useFinishAppointment, useNurseNotified, usePatchAppointment } from '../api/mutations';
 import { guestQuery } from '../api/queries';
 import { Denied, PhoneLink, QueryBlock, useSanAccess } from '../components/common';
 import { ProcedureSheet } from '../components/ProcedureSheet';
+import { RescheduleSheet } from '../components/RescheduleSheet';
 import { ReferSheet } from '../components/ReferSheet';
 import type { Appointment, GuestProfile } from '../types';
 import { apptTone, fmtDateTime, hasSanRole, sanErrorMessage } from '../utils/sanatorium';
@@ -47,6 +49,9 @@ function Detail({ appt, history }: { appt: Appointment; history: Appointment[] }
   const isNurse = hasSanRole(user, 'nurse');
   const finish = useFinishAppointment();
   const notified = useNurseNotified();
+  const patch = usePatchAppointment();
+  const registrar = hasSanRole(user, 'registrar');
+  const [resched, setResched] = useState<Appointment | null>(null);
   const [complaint, setComplaint] = useState(appt.complaint ?? '');
   const [diagnosis, setDiagnosis] = useState(appt.diagnosis ?? '');
   const [recommendation, setRecommendation] = useState(appt.recommendation ?? '');
@@ -64,6 +69,19 @@ function Detail({ appt, history }: { appt: Appointment; history: Appointment[] }
     }
   };
   const open = appt.status !== 'cancelled';
+  // Reschedule / cancel / missed are allowed only while the appointment is still scheduled.
+  const manage = (isDoctor || registrar) && appt.status === 'scheduled';
+  const setStatus = async (status: 'cancelled' | 'missed') => {
+    const ok = await confirm({
+      title: t(status === 'cancelled' ? 'sanatorium.cancelAppointment' : 'sanatorium.markMissed'),
+      message: appt.guest?.full_name,
+      confirmLabel: t('sanatorium.confirm'),
+      cancelLabel: t('common.cancel'),
+      destructive: status === 'cancelled',
+    });
+    if (!ok) return;
+    patch.mutate({ id: appt.id, body: { status } }, { onError: (e) => toast.error(sanErrorMessage(e, t('errors.generic'))) });
+  };
 
   return (
     <View style={styles.stack}>
@@ -93,6 +111,13 @@ function Detail({ appt, history }: { appt: Appointment; history: Appointment[] }
         {!!appt.nurse_notified_at && <Badge label={`${t('sanatorium.notifiedAt')} ${fmtDateTime(appt.nurse_notified_at)}`} tone="success" />}
       </Card>
 
+      {manage && (
+        <View style={styles.actions}>
+          <Button testID="appt-resched" label={t('sanatorium.reschedule')} variant="soft" size="sm" onPress={() => setResched(appt)} />
+          <Button testID="appt-missed" label={t('sanatorium.markMissed')} variant="soft" size="sm" loading={patch.isPending} onPress={() => void setStatus('missed')} />
+          <Button testID="appt-cancel" label={t('sanatorium.cancelAppointment')} variant="dangerGhost" size="sm" onPress={() => void setStatus('cancelled')} />
+        </View>
+      )}
       {isDoctor && open && (
         <>
           <SectionHeader title={t('sanatorium.conclusion')} />
@@ -131,6 +156,7 @@ function Detail({ appt, history }: { appt: Appointment; history: Appointment[] }
           </Card>
         </>
       )}
+      <RescheduleSheet appt={resched} onClose={() => setResched(null)} />
       <ReferSheet appt={refer} onClose={() => setRefer(null)} />
       <ProcedureSheet appt={proc} onClose={() => setProc(null)} />
     </View>

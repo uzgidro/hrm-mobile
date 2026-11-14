@@ -11,6 +11,8 @@ import { Badge, Button, Card, EmptyState, PageHeader, Screen, Segmented, Sheet, 
 import { useRejectRequest } from '../api/mutations';
 import { requestsQuery } from '../api/queries';
 import { AcceptSheet, type Accepted } from '../components/AcceptSheet';
+import { CredentialsSheet } from '../components/CredentialsSheet';
+import { WalkInSheet } from '../components/WalkInSheet';
 import { Denied, PhoneLink, QueryBlock, useSanAccess } from '../components/common';
 import type { RequestStatus, SanRequest } from '../types';
 import { fmtDate, fmtDateTime, maskPassport, requestTone, sanErrorMessage } from '../utils/sanatorium';
@@ -22,12 +24,13 @@ export default function RequestsScreen() {
   const q = useQuery(requestsQuery(status, allowed));
   const [accepting, setAccepting] = useState<SanRequest | null>(null);
   const [rejecting, setRejecting] = useState<SanRequest | null>(null);
+  const [walkIn, setWalkIn] = useState(false);
   const [creds, setCreds] = useState<Accepted | null>(null);
   if (!allowed) return <Denied />;
 
   return (
     <Screen refreshing={q.isRefetching} onRefresh={() => void q.refetch()} testID="sanatorium-requests-screen">
-      <PageHeader title={t('sanatorium.nav.requests')} />
+      <PageHeader title={t('sanatorium.nav.requests')} right={<Button testID="walkin-add" label={t('sanatorium.walkIn')} icon="plus" size="sm" onPress={() => setWalkIn(true)} />} />
       <Segmented
         testID="requests-seg"
         value={status}
@@ -90,28 +93,9 @@ export default function RequestsScreen() {
           setCreds(a);
         }}
       />
+      <WalkInSheet open={walkIn} onClose={() => setWalkIn(false)} />
       <RejectSheet request={rejecting} onClose={() => setRejecting(null)} />
-      <Sheet visible={!!creds} onClose={() => setCreds(null)} title={t('sanatorium.credentials')}>
-        <View style={styles.creds} testID="credentials-sheet">
-          <Text variant="body" weight="600">{creds?.guestName}</Text>
-          {creds?.credentials ? (
-            <>
-              <Text variant="label" tone="danger">{t('sanatorium.credentialsOnce')}</Text>
-              <View style={styles.credRow}>
-                <Text variant="caption" tone="muted">{t('sanatorium.loginCode')}</Text>
-                <Text variant="display" selectable testID="cred-login">{creds.credentials.login_code}</Text>
-              </View>
-              <View style={styles.credRow}>
-                <Text variant="caption" tone="muted">{t('sanatorium.password')}</Text>
-                <Text variant="display" selectable testID="cred-password">{creds.credentials.password}</Text>
-              </View>
-            </>
-          ) : (
-            <Text variant="body" testID="cred-none">{t('sanatorium.credentialsNone')}</Text>
-          )}
-          <Button label={t('sanatorium.credentialsDone')} full onPress={() => setCreds(null)} testID="cred-done" />
-        </View>
-      </Sheet>
+      <CredentialsSheet creds={creds} onClose={() => setCreds(null)} />
     </Screen>
   );
 }

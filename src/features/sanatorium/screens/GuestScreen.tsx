@@ -1,18 +1,27 @@
 // Guest profile. What it shows follows the role: everyone sees the name, phone and stays;
 // doctors / nurses / registrar add appointments and procedures; doctors / registrar the
 // chronology; the registrar the contact details (passport shown masked only).
-import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import React, { useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeProvider';
-import { Avatar, Badge, Card, EmptyState, ListRow, PageHeader, ProgressBar, Screen, SectionHeader, Text } from '@/ui';
+import { confirm } from '@/lib/confirm';
+import { toast } from '@/lib/toast';
+import { useAuthStore } from '@/store/authStore';
+import { Avatar, Button, Badge, Card, EmptyState, ListRow, PageHeader, ProgressBar, Screen, SectionHeader, Text } from '@/ui';
+import { useResetCredentials } from '../api/mutations';
 import { guestQuery } from '../api/queries';
+import { AppointmentSheet } from '../components/AppointmentSheet';
+import { BookingSheet } from '../components/BookingSheet';
+import { CredentialsSheet, type CredentialsShown } from '../components/CredentialsSheet';
+import { GuestSheet } from '../components/GuestSheet';
+import { ProcedureEditSheet } from '../components/ProcedureEditSheet';
 import { ApptRow } from '../components/ApptRow';
 import { Denied, PhoneLink, QueryBlock, useSanAccess } from '../components/common';
-import type { GuestEvent, GuestProfile } from '../types';
-import { fmtDate, fmtDateTime, maskPassport, procTone, stayTone } from '../utils/sanatorium';
+import type { GuestEvent, GuestProfile, Procedure } from '../types';
+import { fmtDate, fmtDateTime, hasSanRole, maskPassport, procTone, sanErrorMessage, stayTone } from '../utils/sanatorium';
 
 export default function GuestScreen() {
   const { t } = useTranslation();
@@ -31,7 +40,29 @@ export default function GuestScreen() {
 
 function Profile({ p }: { p: GuestProfile }) {
   const { t } = useTranslation();
+  const user = useAuthStore((s) => s.user);
+  const registrar = hasSanRole(user, 'registrar');
+  const canEditProc = hasSanRole(user, 'doctor', 'registrar');
+  const canBook = hasSanRole(user, 'registrar', 'doctor', 'nurse');
+  const reset = useResetCredentials();
+  const [editing, setEditing] = useState(false);
+  const [booking, setBooking] = useState(false);
+  const [apptStay, setApptStay] = useState<number | null>(null);
+  const [proc, setProc] = useState<Procedure | null>(null);
+  const [creds, setCreds] = useState<CredentialsShown | null>(null);
   const g = p.guest;
+  const liveStay = p.stays.find((s) => s.status === 'booked' || s.status === 'checked_in');
+  const resetLogin = async () => {
+    const ok = await confirm({ title: t('sanatorium.resetLogin'), message: t('sanatorium.resetLoginInfo'), confirmLabel: t('sanatorium.resetLogin'), cancelLabel: t('common.cancel'), destructive: true });
+    if (!ok) return;
+    try {
+      const c = await reset.mutateAsync(g.id);
+      setCreds({ guestName: g.full_name, credentials: c });
+      reset.reset();
+    } catch (e) {
+      toast.error(sanErrorMessage(e, t('errors.generic')));
+    }
+  };
   const facts = [
     g.age != null ? `${g.age} ${t('sanatorium.yearsOld')}` : null,
     g.gender ? t(`sanatorium.gender.${g.gender}`) : null,
@@ -58,6 +89,15 @@ function Profile({ p }: { p: GuestProfile }) {
         )}
       </Card>
 
+      {(registrar || (canBook && liveStay)) && (
+        <View style={styles.actions}>
+          {registrar && <Button testID="guest-edit" label={t('sanatorium.edit')} variant="soft" size="sm" icon="edit" onPress={() => setEditing(true)} />}
+          {registrar && <Button testID="guest-book" label={t('sanatorium.newBooking')} variant="soft" size="sm" icon="plus" onPress={() => setBooking(true)} />}
+          {registrar && <Button testID="guest-reset" label={t('sanatorium.resetLogin')} variant="dangerGhost" size="sm" loading={reset.isPending} onPress={() => void resetLogin()} />}
+          {canBook && liveStay && <Button testID="guest-appt" label={t('sanatorium.newAppointment')} variant="soft" size="sm" onPress={() => setApptStay(liveStay.id)} />}
+        </View>
+      )}
+
       <SectionHeader title={t('sanatorium.stays')} />
       <Card>
         {p.stays.length === 0 && <Text variant="body" tone="muted">{t('sanatorium.noStays')}</Text>}
@@ -67,6 +107,8 @@ function Profile({ p }: { p: GuestProfile }) {
             title={`${fmtDate(s.planned_from)} → ${fmtDate(s.planned_to)}`}
             subtitle={[t(`sanatorium.guestType.${s.guest_type}`), s.room ? `${t('sanatorium.room')} ${s.room.number}` : null].filter(Boolean).join(' · ')}
             right={<Badge label={t(`sanatorium.stayStatus.${s.status}`)} tone={stayTone(s.status)} />}
+            chevron={hasSanRole(user, 'registrar', 'room_keeper')}
+            onPress={hasSanRole(user, 'registrar', 'room_keeper') ? () => router.push({ pathname: '/sanatorium-stay', params: { id: String(s.id) } }) : undefined}
           />
         ))}
       </Card>
@@ -92,14 +134,14 @@ function Profile({ p }: { p: GuestProfile }) {
           <SectionHeader title={t('sanatorium.procedures')} />
           <Card>
             {p.procedures.map((pr) => (
-              <View key={pr.id} style={styles.proc}>
+              <Pressable key={pr.id} style={styles.proc} testID={`proc-row-${pr.id}`} disabled={!canEditProc} onPress={() => setProc(pr)}>
                 <View style={styles.row}>
                   <Text variant="body" weight="600" style={styles.flex}>{pr.name}</Text>
                   <Badge label={t(`sanatorium.procStatus.${pr.status}`)} tone={procTone(pr.status)} />
                 </View>
                 <ProgressBar value={pr.sessions_total ? pr.sessions_done / pr.sessions_total : 0} />
                 <Text variant="caption" tone="muted">{pr.sessions_done}/{pr.sessions_total} {t('sanatorium.sessions')}</Text>
-              </View>
+              </Pressable>
             ))}
           </Card>
         </>
@@ -132,6 +174,11 @@ function Profile({ p }: { p: GuestProfile }) {
         </>
       )}
       {!p.appointments && !p.events && <EmptyState title={t('sanatorium.limitedView')} />}
+      <GuestSheet guest={editing ? g : null} onClose={() => setEditing(false)} onSaved={() => {}} />
+      <BookingSheet open={booking ? { guests: [g] } : null} onClose={() => setBooking(false)} onDone={(ids) => ids[0] && router.push({ pathname: '/sanatorium-stay', params: { id: String(ids[0]) } })} />
+      <AppointmentSheet stayId={apptStay} onClose={() => setApptStay(null)} />
+      <ProcedureEditSheet proc={proc} onClose={() => setProc(null)} />
+      <CredentialsSheet creds={creds} onClose={() => setCreds(null)} />
     </View>
   );
 }
@@ -169,6 +216,7 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', gap: 12, alignItems: 'center' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   details: { marginTop: 12, gap: 6 },
+  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
   fact: { flexDirection: 'row', gap: 8 },
   factLabel: { width: 96 },
   proc: { paddingVertical: 8, gap: 6 },

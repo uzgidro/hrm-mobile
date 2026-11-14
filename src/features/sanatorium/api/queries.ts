@@ -6,6 +6,12 @@ import {
   SANATORIUM_APPOINTMENTS,
   SANATORIUM_AVAILABILITY,
   SANATORIUM_DASHBOARD,
+  SANATORIUM_FAMILIES,
+  SANATORIUM_ROOMS,
+  SANATORIUM_SETTINGS,
+  SANATORIUM_STAFF_CANDIDATES,
+  SANATORIUM_STAYS,
+  SANATORIUM_STAY,
   SANATORIUM_GUEST,
   SANATORIUM_GUESTS,
   SANATORIUM_KITCHEN_COUNTS,
@@ -22,10 +28,16 @@ import type {
   Dashboard,
   GuestLite,
   GuestProfile,
+  Family,
   KitchenCounts,
   KitchenPerson,
   MenuDay,
   Procedure,
+  Room,
+  SanSettings,
+  StaffCandidate,
+  StaffMember,
+  StayFull,
   RequestStatus,
   SanRequest,
   Specialty,
@@ -46,6 +58,13 @@ export const sanKeys = {
   kitchenDay: (day: string) => [...sanKeys.all, 'kitchen-day', day] as const,
   specialties: () => [...sanKeys.all, 'specialties'] as const,
   doctors: () => [...sanKeys.all, 'doctors'] as const,
+  settings: () => [...sanKeys.all, 'settings'] as const,
+  rooms: () => [...sanKeys.all, 'rooms'] as const,
+  staff: (role: string) => [...sanKeys.all, 'staff', role] as const,
+  candidates: (q: string) => [...sanKeys.all, 'candidates', q] as const,
+  families: (q: string) => [...sanKeys.all, 'families', q] as const,
+  stays: (f: string) => [...sanKeys.all, 'stays', f] as const,
+  stay: (id: number) => [...sanKeys.all, 'stay', id] as const,
 };
 
 export const fetchDashboard = () => apiClient.get<Dashboard>(SANATORIUM_DASHBOARD).then((r) => r.data);
@@ -58,7 +77,7 @@ export const fetchProcedures = () =>
   apiClient.get(SANATORIUM_PROCEDURES, { params: { active_only: true } }).then((r) => unwrapList<Procedure>(r.data));
 export const fetchGuest = (id: number) => apiClient.get<GuestProfile>(SANATORIUM_GUEST(id)).then((r) => r.data);
 export const fetchGuests = (q: string) =>
-  apiClient.get(SANATORIUM_GUESTS, { params: { q: q.trim(), size: 30 } }).then((r) => unwrapList<GuestLite & { active_stay?: unknown }>(r.data));
+  apiClient.get(SANATORIUM_GUESTS, { params: { ...(q.trim() ? { q: q.trim() } : {}), size: 30 } }).then((r) => unwrapList<GuestLite & { active_stay?: unknown }>(r.data));
 export const fetchRequests = (status: RequestStatus) =>
   apiClient.get(SANATORIUM_REQUESTS, { params: { status, size: 50 } }).then((r) => unwrapList<SanRequest>(r.data));
 export const fetchMenu = (start: string, days: number) =>
@@ -90,3 +109,38 @@ export const kitchenDayQuery = (day: string, enabled = true) =>
   queryOptions({ queryKey: sanKeys.kitchenDay(day), queryFn: () => fetchKitchenDay(day), enabled });
 export const specialtiesQuery = (enabled = true) => queryOptions({ queryKey: sanKeys.specialties(), queryFn: fetchSpecialties, enabled });
 export const doctorsQuery = (enabled = true) => queryOptions({ queryKey: sanKeys.doctors(), queryFn: fetchDoctors, enabled });
+
+// ── Registrar-side reads ──
+export type StayFilter = { status?: string; q?: string; left_early?: boolean; size?: number };
+export const fetchSettings = () => apiClient.get<SanSettings>(SANATORIUM_SETTINGS).then((r) => r.data);
+export const fetchRooms = () => apiClient.get(SANATORIUM_ROOMS, { params: { include_inactive: true } }).then((r) => unwrapList<Room>(r.data));
+export const fetchAllSpecialties = () =>
+  apiClient.get(SANATORIUM_SPECIALTIES, { params: { include_inactive: true } }).then((r) => unwrapList<Specialty>(r.data));
+export const fetchStaff = () => apiClient.get(SANATORIUM_STAFF).then((r) => unwrapList<StaffMember>(r.data));
+export const fetchCandidates = (q: string) =>
+  apiClient.get(SANATORIUM_STAFF_CANDIDATES, { params: { q: q.trim() } }).then((r) => unwrapList<StaffCandidate>(r.data));
+export const fetchFamilies = (q: string) =>
+  apiClient.get(SANATORIUM_FAMILIES, { params: q.trim() ? { q: q.trim() } : {} }).then((r) => unwrapList<Family>(r.data));
+export const fetchStays = (f: StayFilter) =>
+  apiClient.get(SANATORIUM_STAYS, { params: { size: 30, ...f } }).then((r) => unwrapList<StayFull>(r.data));
+export const fetchStay = (id: number) => apiClient.get<StayFull>(SANATORIUM_STAY(id)).then((r) => r.data);
+
+export const settingsQuery = (enabled = true) => queryOptions({ queryKey: sanKeys.settings(), queryFn: fetchSettings, enabled });
+export const roomsQuery = (enabled = true) => queryOptions({ queryKey: sanKeys.rooms(), queryFn: fetchRooms, enabled });
+export const allSpecialtiesQuery = (enabled = true) =>
+  queryOptions({ queryKey: [...sanKeys.specialties(), 'all'], queryFn: fetchAllSpecialties, enabled });
+export const staffQuery = (enabled = true) => queryOptions({ queryKey: sanKeys.staff('all'), queryFn: fetchStaff, enabled });
+export const candidatesQuery = (q: string) =>
+  queryOptions({ queryKey: sanKeys.candidates(q.trim()), queryFn: () => fetchCandidates(q), enabled: q.trim().length >= 2 });
+export const familiesQuery = (q: string, enabled = true) =>
+  queryOptions({ queryKey: sanKeys.families(q.trim()), queryFn: () => fetchFamilies(q), enabled });
+export const staysQuery = (f: StayFilter, enabled = true) =>
+  queryOptions({ queryKey: sanKeys.stays(JSON.stringify(f)), queryFn: () => fetchStays(f), enabled });
+export const stayQuery = (id: number, enabled = true) =>
+  queryOptions({ queryKey: sanKeys.stay(id), queryFn: () => fetchStay(id), enabled: enabled && id > 0 });
+
+/** Active staff holding one clinical role (doctors / nurses for pickers). */
+export const fetchStaffByRole = (role: string) =>
+  apiClient.get(SANATORIUM_STAFF, { params: { role, active_only: true } }).then((r) => unwrapList<StaffMember>(r.data));
+export const staffRoleQuery = (role: string, enabled = true) =>
+  queryOptions({ queryKey: sanKeys.staff(role), queryFn: () => fetchStaffByRole(role), enabled });

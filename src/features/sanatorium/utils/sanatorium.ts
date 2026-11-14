@@ -65,3 +65,20 @@ export const requestTone = (s: RequestStatus): Tone => ({ new: 'warning', accept
 export function minFreeBeds(capacity: number, occupancy: number[]): number {
   return Math.max(0, capacity - Math.max(0, ...occupancy));
 }
+
+/** `14.03.1985` (also with `/`, `-`, `,`) -> `1985-03-14`; null when it is not a real past date. */
+export function parseDmy(text: string): string | null {
+  const m = text.trim().match(/^(\d{1,2})[./,-](\d{1,2})[./,-](\d{4})$/);
+  if (!m) return null;
+  const iso = `${m[3]}-${m[2]!.padStart(2, '0')}-${m[1]!.padStart(2, '0')}`;
+  // Round-trip through Date so 31.02 is rejected (no strict-parse plugin needed).
+  const d = dayjs(iso);
+  return d.isValid() && d.format('YYYY-MM-DD') === iso && d.isBefore(dayjs().add(1, 'day')) && d.year() >= 1900 ? iso : null;
+}
+
+/** `"1500000.00"` -> `1 500 000`; empty / missing -> an em dash. */
+export function fmtMoney(v?: string | number | null): string {
+  if (v == null || v === '') return '—';
+  const n = Number(v);
+  return Number.isFinite(n) ? n.toLocaleString('ru-RU', { maximumFractionDigits: 0 }) : '—';
+}

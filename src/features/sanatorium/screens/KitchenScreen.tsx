@@ -1,6 +1,7 @@
 // Kitchen: seven-day headcounts, today's eating list and the menu (view + a simple day editor).
 import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { FormInput } from '@/components/FormInput';
@@ -89,6 +90,7 @@ export default function KitchenScreen() {
             }
           </QueryBlock>
         )}
+        {seg === 'menu' && <Button testID="menu-week" label={t('sanatorium.editWeek')} icon="edit" variant="soft" full onPress={() => router.push('/sanatorium-menu')} />}
         {seg === 'menu' && (
           <QueryBlock query={menu}>
             {(days) => (

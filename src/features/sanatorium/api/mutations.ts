@@ -4,7 +4,28 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
 import {
+  SANATORIUM_APPOINTMENT,
+  SANATORIUM_APPOINTMENTS,
   SANATORIUM_APPOINTMENT_FINISH,
+  SANATORIUM_FAMILIES,
+  SANATORIUM_FAMILY,
+  SANATORIUM_FAMILY_MEMBER,
+  SANATORIUM_FAMILY_MEMBERS,
+  SANATORIUM_GUESTS,
+  SANATORIUM_GUEST,
+  SANATORIUM_GUEST_CREDENTIALS,
+  SANATORIUM_REQUESTS,
+  SANATORIUM_ROOM,
+  SANATORIUM_ROOMS,
+  SANATORIUM_SETTINGS,
+  SANATORIUM_SPECIALTIES,
+  SANATORIUM_SPECIALTY,
+  SANATORIUM_STAFF,
+  SANATORIUM_STAFF_ONE,
+  SANATORIUM_STAYS,
+  SANATORIUM_STAY,
+  SANATORIUM_STAY_CANCEL,
+  SANATORIUM_STAY_PAYMENT,
   SANATORIUM_APPOINTMENT_NOTIFIED,
   SANATORIUM_APPOINTMENT_REFER,
   SANATORIUM_MENU,
@@ -61,7 +82,7 @@ export const referAppointment = ({ id, body }: { id: number; body: ReferBody }) 
   apiClient.post(SANATORIUM_APPOINTMENT_REFER(id), body).then((r) => r.data);
 export const markNurseNotified = (id: number) => apiClient.post(SANATORIUM_APPOINTMENT_NOTIFIED(id)).then((r) => r.data);
 export const createProcedure = (body: ProcedureBody) => apiClient.post<Procedure>(SANATORIUM_PROCEDURES, body).then((r) => r.data);
-export const updateProcedure = ({ id, body }: { id: number; body: { sessions_done?: number; status?: string } }) =>
+export const updateProcedure = ({ id, body }: { id: number; body: Record<string, unknown> }) =>
   apiClient.patch<Procedure>(SANATORIUM_PROCEDURE(id), body).then((r) => r.data);
 export const putMenu = (items: MenuItemBody[]) => apiClient.put(SANATORIUM_MENU, { items }).then((r) => r.data);
 export const acceptRequest = ({ id, body }: { id: number; body: AcceptBody }) =>
@@ -70,6 +91,37 @@ export const acceptRequest = ({ id, body }: { id: number; body: AcceptBody }) =>
     .then((r) => r.data);
 export const rejectRequest = ({ id, reason }: { id: number; reason: string }) =>
   apiClient.post(SANATORIUM_REQUEST_REJECT(id), { reason }).then((r) => r.data);
+
+// ── Registrar-side writes (bodies mirror the strict server schemas) ──
+export type Json = Record<string, unknown>;
+export const saveSettings = (body: Json) => apiClient.patch(SANATORIUM_SETTINGS, body).then((r) => r.data);
+export const saveSpecialty = ({ id, body }: { id?: number; body: Json }) =>
+  (id ? apiClient.put(SANATORIUM_SPECIALTY(id), body) : apiClient.post(SANATORIUM_SPECIALTIES, body)).then((r) => r.data);
+export const saveStaff = ({ id, body }: { id?: number; body: Json }) =>
+  (id ? apiClient.put(SANATORIUM_STAFF_ONE(id), body) : apiClient.post(SANATORIUM_STAFF, body)).then((r) => r.data);
+export const saveRoom = ({ id, body }: { id?: number; body: Json }) =>
+  (id ? apiClient.put(SANATORIUM_ROOM(id), body) : apiClient.post(SANATORIUM_ROOMS, body)).then((r) => r.data);
+/** Create returns `credentials` (password shown once); update does not. */
+export const saveGuest = ({ id, body }: { id?: number; body: Json }) =>
+  (id ? apiClient.put(SANATORIUM_GUEST(id), body) : apiClient.post(SANATORIUM_GUESTS, body)).then((r) => r.data);
+export const resetCredentials = (id: number) => apiClient.post<Credentials>(SANATORIUM_GUEST_CREDENTIALS(id)).then((r) => r.data);
+export const saveFamily = ({ id, body }: { id?: number; body: Json }) =>
+  (id ? apiClient.put(SANATORIUM_FAMILY(id), body) : apiClient.post(SANATORIUM_FAMILIES, body)).then((r) => r.data);
+export const addFamilyMember = ({ id, guest_id, relation }: { id: number; guest_id: number; relation: string }) =>
+  apiClient.post(SANATORIUM_FAMILY_MEMBERS(id), { guest_id, relation }).then((r) => r.data);
+export const removeFamilyMember = ({ id, guest_id }: { id: number; guest_id: number }) =>
+  apiClient.delete(SANATORIUM_FAMILY_MEMBER(id, guest_id)).then((r) => r.data);
+export const createWalkIn = (body: Json) => apiClient.post(SANATORIUM_REQUESTS, body).then((r) => r.data);
+export const createStays = (body: Json) => apiClient.post<Stay[]>(SANATORIUM_STAYS, body).then((r) => r.data);
+export const updateStay = ({ id, body }: { id: number; body: Json }) => apiClient.patch<Stay>(SANATORIUM_STAY(id), body).then((r) => r.data);
+export const updatePayment = ({ id, body }: { id: number; body: Json }) =>
+  apiClient.patch<Stay>(SANATORIUM_STAY_PAYMENT(id), body).then((r) => r.data);
+export const cancelStay = ({ id, reason }: { id: number; reason: string }) =>
+  apiClient.post(SANATORIUM_STAY_CANCEL(id), { reason }).then((r) => r.data);
+export const createAppointment = (body: Json) => apiClient.post(SANATORIUM_APPOINTMENTS, body).then((r) => r.data);
+/** Only while `scheduled`; never send `status: "done"` (the server answers `use_finish`). */
+export const patchAppointment = ({ id, body }: { id: number; body: Json }) =>
+  apiClient.patch(SANATORIUM_APPOINTMENT(id), body).then((r) => r.data);
 
 const meta = { skipErrorToast: true };
 
@@ -99,3 +151,20 @@ export const useRejectRequest = hook(rejectRequest);
 export function useResolveGuestQr() {
   return useMutation({ meta, mutationFn: resolveGuestQr });
 }
+
+export const useSaveSettings = hook(saveSettings);
+export const useSaveSpecialty = hook(saveSpecialty);
+export const useSaveStaff = hook(saveStaff);
+export const useSaveRoom = hook(saveRoom);
+export const useSaveGuest = hook(saveGuest);
+export const useResetCredentials = hook(resetCredentials);
+export const useSaveFamily = hook(saveFamily);
+export const useAddFamilyMember = hook(addFamilyMember);
+export const useRemoveFamilyMember = hook(removeFamilyMember);
+export const useCreateWalkIn = hook(createWalkIn);
+export const useCreateStays = hook(createStays);
+export const useUpdateStay = hook(updateStay);
+export const useUpdatePayment = hook(updatePayment);
+export const useCancelStay = hook(cancelStay);
+export const useCreateAppointment = hook(createAppointment);
+export const usePatchAppointment = hook(patchAppointment);
