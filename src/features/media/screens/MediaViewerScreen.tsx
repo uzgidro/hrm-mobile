@@ -11,13 +11,14 @@ import { ScreenHeader, HeaderAction } from '@/components/ScreenHeader';
 import { ErrorState } from '@/ui/StateViews';
 import { guardWebViewNavigation, isTrustedAppUrl } from '@/lib/trustedUrl';
 import { buildVideoHtml } from '../videoHtml';
+import { decodeMediaUrl } from '../mediaParam';
 
 export default function MediaViewerScreen() {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const params = useLocalSearchParams<{ kind?: string; url?: string; title?: string }>();
   const kind = params.kind === 'video' ? 'video' : 'page';
-  const url = typeof params.url === 'string' ? params.url : '';
+  const url = decodeMediaUrl(params.url);
   // Faqat o'z domenimiz — begona sayt ilova ichida ochilmaydi (src/lib/trustedUrl).
   const safe = isTrustedAppUrl(url);
   const [failed, setFailed] = useState(false);

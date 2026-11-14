@@ -16,6 +16,7 @@ import { Screen } from '@/components/Screen';
 import { PagedList } from '@/components/PagedList';
 import { Icon } from '@/components/Icon';
 import { newsImageUrl, newsLang, newsListQuery, type CompanyNews } from '../api/queries';
+import { encodeMediaUrl } from '@/features/media/mediaParam';
 
 type Styles = ReturnType<typeof makeStyles>;
 
@@ -26,7 +27,7 @@ const NewsCard = memo(function NewsCard({ item, styles, grid }: { item: CompanyN
   const [useSource, setUseSource] = useState(false);
   const img = useSource ? item.image_source : newsImageUrl(item);
   const open = () =>
-    router.push({ pathname: '/media', params: { kind: 'page', url: item.url, title: t('news.title') } });
+    router.push({ pathname: '/media', params: { kind: 'page', url: encodeMediaUrl(item.url), title: t('news.title') } });
   return (
     <Pressable
       onPress={open}
