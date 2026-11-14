@@ -7,6 +7,7 @@ import { VIDEO_GUIDES } from '@/api/urls';
 import { __resetToasts, getToasts } from '@/lib/toast';
 import VideoGuideScreen from '../screens/VideoGuideScreen';
 import { formatDuration, isSafeVideoUrl } from '../utils/format';
+import { encodeMediaUrl } from '@/features/media/mediaParam';
 
 const mockPush = jest.fn();
 jest.mock('expo-router', () => ({ router: { push: (...a: unknown[]) => mockPush(...a), back: jest.fn(), canGoBack: () => true } }));
@@ -76,7 +77,7 @@ describe('VideoGuideScreen (v2 VideoGuidePage)', () => {
     await renderWithProviders(<VideoGuideScreen />);
     await fireEvent.press(await screen.findByText('Davomatni yuritish'));
     await waitFor(() =>
-      expect(mockPush).toHaveBeenCalledWith({ pathname: '/media', params: { kind: 'video', url: 'https://cdn/x.mp4', title: 'Davomatni yuritish' } }),
+      expect(mockPush).toHaveBeenCalledWith({ pathname: '/media', params: { kind: 'video', url: encodeMediaUrl('https://cdn/x.mp4'), title: 'Davomatni yuritish' } }),
     );
     expect(mock.history.post).toHaveLength(1);
   });

@@ -15,6 +15,7 @@ import { Card, EmptyState, ErrorState, PageHeader, Screen, SearchField, Skeleton
 import { trackVideoView, videoGuidesQuery, type VideoGuide } from '../api/queries';
 import { formatDuration, isSafeVideoUrl } from '../utils/format';
 import { foldText } from '@/utils/searchFold';
+import { encodeMediaUrl } from '@/features/media/mediaParam';
 
 export default function VideoGuideScreen() {
   const { t } = useTranslation();
@@ -31,7 +32,7 @@ export default function VideoGuideScreen() {
     if (!v.video_url) return toast.error(t('videoGuide.noVideo'));
     if (!isSafeVideoUrl(v.video_url)) return toast.error(t('videoGuide.openFailed'));
     void trackVideoView(v.id);
-    router.push({ pathname: '/media', params: { kind: 'video', url: v.video_url, title: v.title ?? '' } });
+    router.push({ pathname: '/media', params: { kind: 'video', url: encodeMediaUrl(v.video_url), title: v.title ?? '' } });
   };
 
   return (
