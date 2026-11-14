@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { storage } from '../api/storage';
-import { setAccessToken, setRefreshToken, clearTokens } from '../api/authToken';
+import { setAccessToken, setRefreshToken, clearTokens, getAccessToken, getRefreshToken } from '../api/authToken';
 import { useLockStore } from './lockStore';
 import { teardownPushNotifications } from '../auth/push';
 import { revokeServerSession } from '../auth/session';
@@ -42,23 +42,27 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   logout: async () => {
-    // Unbind the push token FIRST — the DELETE call needs the bearer token that
-    // clearTokens() is about to wipe. Without this the row stayed bound to the
-    // employee who logged out, so the next notification for them woke up a
-    // phone that now belongs to someone else. Never blocks logout.
-    await teardownPushNotifications();
-    // Revoke the server session while the tokens still exist (web parity).
-    await revokeServerSession();
+    // Local wipe FIRST (F-38): the session must be gone from this device even
+    // if the app is killed mid-logout or the network stalls. Tokens are
+    // captured in memory so the best-effort server calls below can still
+    // authenticate after the wipe.
+    const access = await getAccessToken();
+    const refresh = await getRefreshToken();
     await clearTokens();
     await storage.deleteItem(USER_CACHE_KEY);
+    // Only now drop the PIN record - never the other way round, or a killed app
+    // would be left with a live session and no PIN (= open first-run setup).
+    await useLockStore.getState().reset();
+    // Best-effort server side (push unbind + session revoke), started before the
+    // user is cleared (the push teardown reads the account type synchronously);
+    // neither blocks nor can fail the logout.
+    void teardownPushNotifications(access);
+    void revokeServerSession(access, refresh);
+    set({ user: null, isAuthenticated: false });
     // Shu xodimning qoralamalari keyingi foydalanuvchiga qolmasin. Yuborilmagan
     // «Keldim» navbati esa saqlanadi — u egasiga bog'langan va faqat o'sha xodim
     // qayta kirganda yuboriladi.
     await clearOwnerDrafts(getDraftOwner(), [QUEUE_KEY]);
-    // Wipe the PIN/biometrics footprint so the next user can't inherit a lock.
-    // lockStore never imports authStore, so this one-way dependency is cycle-free.
-    await useLockStore.getState().reset();
-    set({ user: null, isAuthenticated: false });
   },
 
   setLoading: (v) => set({ isLoading: v }),

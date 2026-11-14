@@ -84,14 +84,12 @@ describe('UnlockScreen', () => {
     );
   });
 
-  it('shows the force-logout alert and runs reset + logout on OK', async () => {
-    const reset = jest.fn().mockResolvedValue(undefined);
+  it('logs out immediately on force-logout; the alert is informational only', async () => {
     const logout = jest.fn().mockResolvedValue(undefined);
     useLockStore.setState({
       unlockWithPin: jest
         .fn()
         .mockResolvedValue({ ok: false, remaining: 0, forceLogout: true }),
-      reset,
     });
     useAuthStore.setState({ user: USER, logout });
 
@@ -101,19 +99,12 @@ describe('UnlockScreen', () => {
     await enterPin(getByTestId, '1234');
 
     await waitFor(() => expect(alertSpy).toHaveBeenCalledTimes(1));
+    // The wipe already happened before the alert, with no OK press needed.
+    expect(logout).toHaveBeenCalledTimes(1);
     expect(alertSpy).toHaveBeenCalledWith(
       i18n.t('security.forceLogoutTitle'),
-      i18n.t('security.forceLogoutMessage'),
-      expect.arrayContaining([expect.objectContaining({ text: i18n.t('common.ok') })])
+      i18n.t('security.forceLogoutMessage')
     );
-
-    // Invoke the OK button's onPress and assert the wipe + logout run.
-    const buttons = alertSpy.mock.calls[0][2] as { text: string; onPress?: () => void }[];
-    const ok = buttons.find((b) => b.text === i18n.t('common.ok'))!;
-    await ok.onPress!();
-
-    expect(reset).toHaveBeenCalledTimes(1);
-    expect(logout).toHaveBeenCalledTimes(1);
 
     alertSpy.mockRestore();
   });

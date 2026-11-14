@@ -7,6 +7,11 @@
 //
 // Failed attempts are persisted so killing and relaunching the app never
 // grants a fresh budget — the MAX_ATTEMPTS force-logout survives cold starts.
+// The counter is written to SecureStore BEFORE a guess is evaluated (killing
+// the app mid-attempt cannot refund it) and is cleared only by a successful
+// unlock / biometric / fresh login. A persisted count >= MAX_ATTEMPTS is
+// terminal: attemptPin refuses to verify, and hydrate() finishes the logout
+// locally (tokens + cached user + PIN) before any PIN-accepting screen shows.
 // On the final failure unlockWithPin/verifyCurrentPin only REPORT
 // forceLogout: true; the CALLER performs the logout. This store must not
 // import authStore: authStore.logout calls reset() here, so importing it back
@@ -25,6 +30,11 @@ import {
 import { MAX_ATTEMPTS, PIN_LENGTH, attemptsRemaining } from '../auth/lockPolicy';
 import { isBiometricAvailable, authenticateBiometric } from '../auth/biometrics';
 import { dismissAllConfirms } from '../lib/confirm';
+import { getAccessToken, getRefreshToken, clearTokens } from '../api/authToken';
+import { revokeServerSession } from '../auth/session';
+
+// Same key authStore uses for the cached user (it cannot be imported here: cycle).
+const USER_CACHE_KEY = 'cached_user';
 
 type LockStatus = 'unknown' | 'setup-required' | 'locked' | 'unlocked';
 
@@ -67,6 +77,23 @@ function parseAttempts(raw: string | null): number {
   return Number.isFinite(n) ? n : 0;
 }
 
+// Local-only session wipe used by hydrate() when the lock state is terminal.
+// Tokens first, then the cached user; the server revoke runs in the background
+// with the tokens captured beforehand. Never throws.
+async function wipeLocalSession(): Promise<void> {
+  let access: string | null = null;
+  let refresh: string | null = null;
+  try {
+    access = await getAccessToken();
+    refresh = await getRefreshToken();
+  } catch {
+    // Unreadable tokens: nothing to revoke, still wipe below.
+  }
+  await clearTokens().catch(() => {});
+  await storage.deleteItem(USER_CACHE_KEY).catch(() => {});
+  if (access || refresh) void revokeServerSession(access, refresh);
+}
+
 export const useLockStore = create<LockState>((set, get) => {
   // Zero the counter in state and storage — shared by fresh setup and every
   // successful PIN / biometric verification.
@@ -79,12 +106,22 @@ export const useLockStore = create<LockState>((set, get) => {
   // attempt counter. The only difference is the mode — 'unlock' moves status,
   // 'verify' (change-PIN screen, app already unlocked) never touches it.
   const attemptPin = async (pin: string, mode: 'unlock' | 'verify'): Promise<UnlockResult> => {
+    // Spent budget is terminal: never verify another guess, the caller logs out.
+    if (get().failedAttempts >= MAX_ATTEMPTS) {
+      return { ok: false, remaining: 0, forceLogout: true };
+    }
     const record = await readPinRecord();
     if (!record) {
       // Missing/corrupt record: the only way forward is a fresh setup.
       if (mode === 'unlock') set({ status: 'setup-required' });
       return { ok: false, remaining: MAX_ATTEMPTS, forceLogout: false };
     }
+    // Record the attempt BEFORE evaluating it so a kill mid-check cannot refund
+    // it. Functional increment so two concurrent attempts (e.g. a double submit
+    // before the keypad disables) can't read the same count and lose one.
+    set((s) => ({ failedAttempts: s.failedAttempts + 1 }));
+    const failed = get().failedAttempts;
+    await storage.setItem(FAILED_ATTEMPTS_KEY, String(failed)).catch(() => {});
     if (await verifyPin(pin, record)) {
       await clearAttempts();
       if (mode === 'unlock') {
@@ -94,12 +131,6 @@ export const useLockStore = create<LockState>((set, get) => {
       }
       return { ok: true, remaining: MAX_ATTEMPTS, forceLogout: false };
     }
-    // Functional increment so two concurrent wrong attempts (e.g. a double
-    // submit before the keypad disables) can't read the same count and lose an
-    // increment — that would quietly widen the brute-force budget.
-    set((s) => ({ failedAttempts: s.failedAttempts + 1 }));
-    const failed = get().failedAttempts;
-    storage.setItem(FAILED_ATTEMPTS_KEY, String(failed)).catch(() => {});
     return { ok: false, remaining: attemptsRemaining(failed), forceLogout: failed >= MAX_ATTEMPTS };
   };
 
@@ -125,18 +156,41 @@ export const useLockStore = create<LockState>((set, get) => {
           storage.getItem(FAILED_ATTEMPTS_KEY),
           isBiometricAvailable(),
         ]);
+        const failed = parseAttempts(rawAttempts);
+        // Terminal states: a spent attempt budget (the forced logout was
+        // interrupted), or live tokens without a PIN record (first-run setup
+        // must only follow a fresh login, never a restored session). Finish
+        // the logout locally before anything that accepts a PIN is shown.
+        if (failed >= MAX_ATTEMPTS || (!record && (await getAccessToken()))) {
+          await wipeLocalSession();
+          await Promise.all([
+            clearPinRecord().catch(() => {}),
+            storage.deleteItem(BIOMETRICS_KEY).catch(() => {}),
+            deleteAttemptsKey(),
+          ]);
+          set({
+            status: 'setup-required',
+            failedAttempts: 0,
+            biometricsEnabled: false,
+            biometricsSupported: supported,
+            currentPinLength: PIN_LENGTH,
+            hydrated: true,
+          });
+          return;
+        }
         set({
           status: record ? 'locked' : 'setup-required',
           currentPinLength: record?.len ?? PIN_LENGTH,
-          failedAttempts: parseAttempts(rawAttempts),
+          failedAttempts: failed,
           biometricsSupported: supported,
           // The stored flag only counts while the hardware can still honor it.
           biometricsEnabled: flag === '1' && supported,
           hydrated: true,
         });
       } catch {
-        // Fail closed: the auth token still gates all content — worst case the
-        // user sets a fresh PIN.
+        // Fail closed: if the lock state cannot be read, do not offer PIN setup
+        // over a possibly live session — wipe it and send the user to login.
+        await wipeLocalSession();
         set({ status: 'setup-required', hydrated: true });
       }
     },
@@ -156,6 +210,8 @@ export const useLockStore = create<LockState>((set, get) => {
     // stray biometric success while status is 'setup-required'.
     unlockWithBiometrics: async () => {
       if (get().status !== 'locked') return false;
+      // Biometrics must not bypass a spent attempt budget.
+      if (get().failedAttempts >= MAX_ATTEMPTS) return false;
       if (!(await authenticateBiometric())) return false;
       await clearAttempts();
       // Biometrika eski PIN'ni yangilashni chetlab o'tmasin.

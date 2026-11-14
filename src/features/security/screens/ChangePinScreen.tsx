@@ -34,7 +34,6 @@ export default function ChangePinScreen() {
   const verifyCurrentPin = useLockStore((s) => s.verifyCurrentPin);
   const currentPinLength = useLockStore((s) => s.currentPinLength);
   const setupPin = useLockStore((s) => s.setupPin);
-  const reset = useLockStore((s) => s.reset);
   const logout = useAuthStore((s) => s.logout);
 
   const [step, setStep] = useState<Step>('current');
@@ -67,24 +66,12 @@ export default function ChangePinScreen() {
           // Intentional OS Alert: the app lock (and this screen — the Profile
           // link is `isNative`-gated) is native-only, so react-native-web's
           // no-op Alert never applies here.
-          Alert.alert(
-            t('security.forceLogoutTitle'),
-            t('security.forceLogoutMessage'),
-            [
-              {
-                text: t('common.ok'),
-                onPress: () => {
-                  // Wipe the lock footprint, then flip auth — the change-pin
-                  // route sits under the authenticated guard, so it unmounts
-                  // on logout (declarative nav, no router.replace here).
-                  void (async () => {
-                    await reset();
-                    await logout();
-                  })();
-                },
-              },
-            ]
-          );
+          // Wipe FIRST (logout is local-first and resets the lock footprint);
+          // the Alert is informational only, so killing the app while it is
+          // shown cannot keep the session. The change-pin route sits under the
+          // authenticated guard, so it unmounts on logout.
+          await logout();
+          Alert.alert(t('security.forceLogoutTitle'), t('security.forceLogoutMessage'));
           setValue('');
           return;
         }

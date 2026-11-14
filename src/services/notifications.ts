@@ -209,11 +209,16 @@ export async function registerTokenWithBackend(token: string): Promise<boolean> 
 
 /** Unbind this device from the current account. Called on logout so the next
  *  person to sign in on this phone never receives the previous user's pushes. */
-export async function unregisterTokenWithBackend(): Promise<void> {
+export async function unregisterTokenWithBackend(bearer?: string | null): Promise<void> {
   const token = registeredToken ?? (await getExpoPushToken());
   if (!token) return;
   try {
-    await apiClient.delete(PUSH_TOKENS, { data: { token, platform: Platform.OS } });
+    // `bearer` lets logout run this AFTER the local tokens are wiped: the request
+    // interceptor only overwrites Authorization when it still finds a cached token.
+    await apiClient.delete(PUSH_TOKENS, {
+      data: { token, platform: Platform.OS },
+      headers: bearer ? { Authorization: `Bearer ${bearer}` } : undefined,
+    });
   } catch (e) {
     pushWarn('unregister', e);
   } finally {

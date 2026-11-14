@@ -12,9 +12,16 @@ import { getAccessToken, getRefreshToken } from '../api/authToken';
 
 export const LOGOUT_TIMEOUT_MS = 5000;
 
-export async function revokeServerSession(): Promise<void> {
+export async function revokeServerSession(
+  accessOverride?: string | null,
+  refreshOverride?: string | null,
+): Promise<void> {
   try {
-    const [access, refresh] = await Promise.all([getAccessToken(), getRefreshToken()]);
+    // Callers that already wiped the local tokens pass the captured values.
+    const [access, refresh] =
+      accessOverride !== undefined || refreshOverride !== undefined
+        ? [accessOverride ?? null, refreshOverride ?? null]
+        : await Promise.all([getAccessToken(), getRefreshToken()]);
     if (!access && !refresh) return;
     await axios.post(
       `${API_BASE_URL}/${AUTH_LOGOUT}`,

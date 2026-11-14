@@ -8,6 +8,7 @@ import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { storage } from '../../api/storage';
+import { __resetAccessTokenCache } from '../../api/authToken';
 import {
   PIN_RECORD_KEY,
   BIOMETRICS_KEY,
@@ -396,5 +397,95 @@ describe('setBiometricsEnabled', () => {
     await useLockStore.getState().setBiometricsEnabled(false);
     expect(useLockStore.getState().biometricsEnabled).toBe(false);
     expect(await storage.getItem(BIOMETRICS_KEY)).toBeNull();
+  });
+});
+
+// F-38: the attempt budget is enforced by the store and survives relaunches.
+describe('attempt budget persistence (F-38)', () => {
+  const relaunch = async () => {
+    // A real relaunch starts with an empty in-memory token cache.
+    __resetAccessTokenCache();
+    useLockStore.setState({ status: 'unknown', failedAttempts: 0, hydrated: false });
+    await useLockStore.getState().hydrate();
+  };
+
+  it('persists the attempt BEFORE the guess is evaluated', async () => {
+    await writePinRecord('1234');
+    useLockStore.setState({ status: 'locked' });
+    // Kill-mid-check simulation: peek at storage the moment verification starts.
+    let seenDuringCheck: string | null = null;
+    const spy = jest.spyOn(require('../../auth/pin'), 'verifyPin');
+    spy.mockImplementationOnce(async () => {
+      seenDuringCheck = await storage.getItem(FAILED_ATTEMPTS_KEY);
+      return false;
+    });
+    await useLockStore.getState().unlockWithPin('0000');
+    spy.mockRestore();
+    expect(seenDuringCheck).toBe('1');
+  });
+
+  it('a relaunch after wrong guesses keeps the count (no refund)', async () => {
+    await writePinRecord('1234');
+    await relaunch();
+    await useLockStore.getState().unlockWithPin('0000');
+    await useLockStore.getState().unlockWithPin('1111');
+    await relaunch();
+    expect(useLockStore.getState().failedAttempts).toBe(2);
+    expect(useLockStore.getState().status).toBe('locked');
+  });
+
+  it('a successful unlock resets the persisted counter', async () => {
+    await writePinRecord('1234');
+    await relaunch();
+    await useLockStore.getState().unlockWithPin('0000');
+    await useLockStore.getState().unlockWithPin('1234');
+    expect(await storage.getItem(FAILED_ATTEMPTS_KEY)).toBeNull();
+    await relaunch();
+    expect(useLockStore.getState().failedAttempts).toBe(0);
+  });
+
+  it('refuses to verify once the budget is spent, even with the right PIN', async () => {
+    await writePinRecord('1234');
+    useLockStore.setState({ status: 'locked', failedAttempts: MAX_ATTEMPTS });
+    const r = await useLockStore.getState().unlockWithPin('1234');
+    expect(r).toEqual({ ok: false, remaining: 0, forceLogout: true });
+    expect(useLockStore.getState().status).toBe('locked');
+  });
+
+  it('limit reached then killed: relaunch finishes the logout before any PIN pad', async () => {
+    await writePinRecord('1234');
+    await storage.setItem('access_token', 'acc');
+    await storage.setItem('refresh_token', 'ref');
+    await storage.setItem('cached_user', '{"id":1}');
+    await relaunch();
+    for (let i = 0; i < MAX_ATTEMPTS; i++) await useLockStore.getState().unlockWithPin('0000');
+    // App killed here (before the caller's logout ran). Next launch:
+    await relaunch();
+    const s = useLockStore.getState();
+    expect(s.status).toBe('setup-required');
+    expect(s.hydrated).toBe(true);
+    expect(await storage.getItem('access_token')).toBeNull();
+    expect(await storage.getItem('refresh_token')).toBeNull();
+    expect(await storage.getItem('cached_user')).toBeNull();
+    expect(await readPinRecord()).toBeNull();
+    expect(await storage.getItem(FAILED_ATTEMPTS_KEY)).toBeNull();
+  });
+
+  it('live tokens without a PIN record never reach first-run setup (session wiped)', async () => {
+    await storage.setItem('access_token', 'acc');
+    await storage.setItem('cached_user', '{"id":1}');
+    await relaunch();
+    expect(await storage.getItem('access_token')).toBeNull();
+    expect(await storage.getItem('cached_user')).toBeNull();
+  });
+
+  it('biometrics cannot bypass a spent budget', async () => {
+    mockHasHardware.mockResolvedValue(true);
+    mockIsEnrolled.mockResolvedValue(true);
+    mockAuthenticate.mockResolvedValue({ success: true } as never);
+    await writePinRecord('1234');
+    useLockStore.setState({ status: 'locked', failedAttempts: MAX_ATTEMPTS });
+    expect(await useLockStore.getState().unlockWithBiometrics()).toBe(false);
+    expect(useLockStore.getState().status).toBe('locked');
   });
 });

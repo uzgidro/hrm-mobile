@@ -41,20 +41,12 @@ export default function UnlockScreen() {
   // Intentional OS Alert: the lock overlay is native-only (lockStore reports
   // `unlocked` on web), and the in-app confirm() is force-dismissed while the
   // lock is engaged — a native Alert is the one dialog that shows over it.
-  const forceLogout = () => {
-    Alert.alert(
-      t('security.forceLogoutTitle'),
-      t('security.forceLogoutMessage'),
-      [
-        {
-          text: t('common.ok'),
-          onPress: async () => {
-            await useLockStore.getState().reset();
-            await useAuthStore.getState().logout();
-          },
-        },
-      ]
-    );
+  const forceLogout = async () => {
+    // Wipe FIRST (authStore.logout is local-first and also resets the lock
+    // footprint); the Alert is informational only, so killing the app while it
+    // is shown cannot keep the session alive.
+    await useAuthStore.getState().logout();
+    Alert.alert(t('security.forceLogoutTitle'), t('security.forceLogoutMessage'));
   };
 
   const submit = async (pin: string) => {
@@ -62,7 +54,7 @@ export default function UnlockScreen() {
     try {
       const r = await unlockWithPin(pin);
       if (r.forceLogout) {
-        forceLogout();
+        await forceLogout();
       } else if (!r.ok) {
         setError(t('security.attemptsLeft', { count: r.remaining }));
       }

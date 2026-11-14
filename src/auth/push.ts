@@ -36,10 +36,10 @@ export async function setupPushNotifications(): Promise<void> {
 
 /** Unbind this device before the session is torn down. Must run BEFORE tokens
  *  are cleared — the DELETE needs the still-valid bearer token. */
-export async function teardownPushNotifications(): Promise<void> {
+export async function teardownPushNotifications(bearer?: string | null): Promise<void> {
   if (isExternalDoctorSession()) return;
   try {
-    await unregisterTokenWithBackend();
+    await unregisterTokenWithBackend(bearer);
   } catch {
     // Non-fatal: a failed unregister just leaves a stale row the backend prunes
     // on the next DeviceNotRegistered receipt.

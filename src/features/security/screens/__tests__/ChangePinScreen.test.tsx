@@ -108,7 +108,7 @@ describe('ChangePinScreen', () => {
     expect(setupPin).not.toHaveBeenCalled();
   });
 
-  it('alerts on force-logout and runs reset + logout when OK is pressed', async () => {
+  it('logs out immediately on force-logout and then alerts', async () => {
     verifyCurrentPin.mockResolvedValue({ ok: false, remaining: 0, forceLogout: true });
     const alertSpy = jest.spyOn(Alert, 'alert');
     const { getByTestId } = await renderWithProviders(<ChangePinScreen />);
@@ -116,16 +116,11 @@ describe('ChangePinScreen', () => {
     await enterPin(getByTestId, '0000');
 
     await waitFor(() => expect(alertSpy).toHaveBeenCalledTimes(1));
-    const [title, message, buttons] = alertSpy.mock.calls[0];
+    const [title, message] = alertSpy.mock.calls[0];
     expect(title).toBe(i18n.t('security.forceLogoutTitle'));
     expect(message).toBe(i18n.t('security.forceLogoutMessage'));
-
-    // Invoke the OK button's handler and assert the wipe-then-logout sequence.
-    const okButton = (buttons as { text: string; onPress?: () => void }[])[0];
-    okButton.onPress?.();
-
-    await waitFor(() => expect(reset).toHaveBeenCalledTimes(1));
-    await waitFor(() => expect(logout).toHaveBeenCalledTimes(1));
+    // Logout ran without any OK press.
+    expect(logout).toHaveBeenCalledTimes(1);
 
     alertSpy.mockRestore();
   });
