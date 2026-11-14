@@ -218,6 +218,21 @@ function ThemedNavigation() {
                 <Stack.Screen name="keldim" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="mobil-belgilar" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="sogliq-korigi" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="sanatorium" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="sanatorium-stays" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="sanatorium-doctor" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="sanatorium-scan" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="sanatorium-guest" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="sanatorium-appointment" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="sanatorium-nurse" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="sanatorium-kitchen" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="sanatorium-requests" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="sanatorium-guests" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="sanatorium-stay" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="sanatorium-bookings" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="sanatorium-rooms" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="sanatorium-settings" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="sanatorium-menu" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="zoom" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="tibbiy-korik" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="medical-exam" options={{ animation: 'slide_from_right' }} />

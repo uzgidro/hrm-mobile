@@ -53,6 +53,7 @@ export default {
     health: 'Осмотр здоровья',
     medicalExam: "Медосмотр (мой день)",
     doctorDesk: "Приём врача",
+    sanatorium: "Санаторий",
     registrationStatus: 'Статус заявки',
     orderTypes: 'Типы приказов',
     tempOrders: 'Временные приказы',

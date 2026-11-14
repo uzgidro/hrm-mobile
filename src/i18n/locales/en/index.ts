@@ -46,6 +46,7 @@ import vehicles from './vehicles';
 import reports from './reports';
 import medical from './medical';
 import medicalExam from './medicalExam';
+import sanatorium from './sanatorium';
 import zoom from './zoom';
 import health from './health';
 import inspections from './inspections';
@@ -114,6 +115,7 @@ export default {
   reports,
   medical,
   medicalExam,
+  sanatorium,
   zoom,
   health,
   inspections,

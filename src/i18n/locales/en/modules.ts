@@ -53,6 +53,7 @@ export default {
     health: 'Health check',
     medicalExam: "Medical exam (my day)",
     doctorDesk: "Doctor's desk",
+    sanatorium: "Sanatorium",
     registrationStatus: 'Application status',
     orderTypes: 'Order types',
     tempOrders: 'Temporary orders',
