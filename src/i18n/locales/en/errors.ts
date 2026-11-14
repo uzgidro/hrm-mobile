@@ -220,4 +220,8 @@ export default {
   mobile_checkin_not_found: "Check-in not found",
   destination_only_for_trip: "A destination can only be set for a business trip",
   password_not_set: "No password is set — set one first via “Forgot password”, or make this change through HR",
+  too_many_requests: "Too many requests — wait a moment and try again",
+  invalid_image: "The image could not be read or its format is not supported",
+  image_dimensions_too_large: "The image dimensions are too large — choose a smaller photo",
+  invalid_template: "The file is too large or too complex to be processed",
 } as const;

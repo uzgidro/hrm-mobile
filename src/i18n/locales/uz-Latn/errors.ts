@@ -232,4 +232,8 @@ export default {
   mobile_checkin_not_found: "Belgi topilmadi",
   destination_only_for_trip: "Manzil faqat xizmat safari uchun ko'rsatiladi",
   password_not_set: "Parol o'rnatilmagan — avval «Parolni unutdim» orqali parol o'rnating yoki o'zgartirishni kadrlar bo'limi orqali qiling",
+  too_many_requests: "Juda ko'p so'rov — biroz kutib, qayta urinib ko'ring",
+  invalid_image: "Rasmni o'qib bo'lmadi yoki formati qo'llab-quvvatlanmaydi",
+  image_dimensions_too_large: "Rasm o'lchamlari juda katta — kichikroq rasm tanlang",
+  invalid_template: "Fayl juda katta yoki murakkab, uni qayta ishlab bo'lmadi",
 } as const;

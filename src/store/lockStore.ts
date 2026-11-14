@@ -31,7 +31,7 @@ import { MAX_ATTEMPTS, PIN_LENGTH, attemptsRemaining } from '../auth/lockPolicy'
 import { isBiometricAvailable, authenticateBiometric } from '../auth/biometrics';
 import { dismissAllConfirms } from '../lib/confirm';
 import { getAccessToken, getRefreshToken, clearTokens } from '../api/authToken';
-import { revokeServerSession } from '../auth/session';
+import { endServerSession, silenceNotificationsLocally } from '../auth/sessionEnd';
 
 // Same key authStore uses for the cached user (it cannot be imported here: cycle).
 const USER_CACHE_KEY = 'cached_user';
@@ -91,7 +91,10 @@ async function wipeLocalSession(): Promise<void> {
   }
   await clearTokens().catch(() => {});
   await storage.deleteItem(USER_CACHE_KEY).catch(() => {});
-  if (access || refresh) void revokeServerSession(access, refresh);
+  // Same end-of-session path as logout: silence local notifications now, then
+  // unbind the push token and revoke in the background with the captured tokens.
+  silenceNotificationsLocally();
+  if (access || refresh) void endServerSession(access, refresh);
 }
 
 export const useLockStore = create<LockState>((set, get) => {

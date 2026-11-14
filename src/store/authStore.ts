@@ -2,8 +2,8 @@ import { create } from 'zustand';
 import { storage } from '../api/storage';
 import { setAccessToken, setRefreshToken, clearTokens, getAccessToken, getRefreshToken } from '../api/authToken';
 import { useLockStore } from './lockStore';
-import { teardownPushNotifications } from '../auth/push';
-import { revokeServerSession } from '../auth/session';
+import { endServerSession, silenceNotificationsLocally } from '../auth/sessionEnd';
+import { setNotificationPresentationSuppressed } from '../services/notifications';
 import { User } from '../types';
 import { clearOwnerDrafts, getDraftOwner, setDraftOwner } from '../lib/formDraft';
 import { QUEUE_KEY } from '../features/checkin/lib/queue';
@@ -20,7 +20,7 @@ interface AuthState {
   setLoading: (v: boolean) => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   isAuthenticated: false,
   isLoading: true,
@@ -38,6 +38,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     // Start every login from a clean lock: if a prior user was killed without
     // logging out, their PIN record must not carry over to whoever logs in now.
     await useLockStore.getState().reset();
+    // A new session may show notifications again (they were silenced at logout).
+    setNotificationPresentationSuppressed(false);
     set({ user, isAuthenticated: true, isLoading: false });
   },
 
@@ -53,11 +55,14 @@ export const useAuthStore = create<AuthState>((set) => ({
     // Only now drop the PIN record - never the other way round, or a killed app
     // would be left with a live session and no PIN (= open first-run setup).
     await useLockStore.getState().reset();
-    // Best-effort server side (push unbind + session revoke), started before the
-    // user is cleared (the push teardown reads the account type synchronously);
-    // neither blocks nor can fail the logout.
-    void teardownPushNotifications(access);
-    void revokeServerSession(access, refresh);
+    // Nothing from the old account may be shown from now on, even if the server
+    // still pushes for a while. The account type is read before the user is cleared.
+    const skipPush = get().user?.type === 'external-doctor';
+    silenceNotificationsLocally();
+    // Best-effort server side (push unbind -> one refresh if the access token
+    // expired -> session revoke) with the in-memory captured tokens; neither
+    // blocks nor can fail the logout.
+    void endServerSession(access, refresh, { skipPush });
     set({ user: null, isAuthenticated: false });
     // Shu xodimning qoralamalari keyingi foydalanuvchiga qolmasin. Yuborilmagan
     // «Keldim» navbati esa saqlanadi — u egasiga bog'langan va faqat o'sha xodim

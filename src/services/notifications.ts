@@ -1,10 +1,13 @@
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 import { Linking, Platform } from 'react-native';
+import axios from 'axios';
+import { API_BASE_URL } from '../constants';
 import { apiClient } from '../api/client';
 import { PUSH_TOKENS } from '../api/urls';
 import type { IconName } from '../components/Icon';
 import i18n from '@/i18n';
+import { storage } from '../api/storage';
 
 // expo-notifications is loaded lazily and defensively. Importing it at the top
 // level throws in Expo Go (SDK 53+ removed remote push there), which would crash
@@ -45,15 +48,42 @@ export function getLastPushError(): string | null {
 
 // Foreground notifications: show banner + play sound. Guarded — a missing/limited
 // native module must not throw at import.
+// While signed out (session ended, nobody logged in yet) the handler shows
+// nothing, so a push the server still sends for the previous account is dropped.
+let presentationSuppressed = false;
+
+/** Signed-out state: stop presenting notifications (true) / resume after login (false). */
+export function setNotificationPresentationSuppressed(value: boolean): void {
+  presentationSuppressed = value;
+}
+
+/** Remove every scheduled and already-delivered notification of the old account. */
+export async function clearPresentedNotifications(): Promise<void> {
+  const N = getNotifications();
+  if (!N) return;
+  try {
+    await N.cancelAllScheduledNotificationsAsync?.();
+  } catch {}
+  try {
+    await N.dismissAllNotificationsAsync?.();
+  } catch {}
+  try {
+    await N.setBadgeCountAsync?.(0);
+  } catch {}
+}
+
 try {
   getNotifications()?.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldShowAlert: true,
-      shouldPlaySound: true,
-      shouldSetBadge: false,
-      shouldShowBanner: true,
-      shouldShowList: true,
-    }),
+    handleNotification: async () => {
+      const show = !presentationSuppressed;
+      return {
+        shouldShowAlert: show,
+        shouldPlaySound: show,
+        shouldSetBadge: false,
+        shouldShowBanner: show,
+        shouldShowList: show,
+      };
+    },
   });
 } catch {}
 
@@ -197,6 +227,9 @@ export async function registerTokenWithBackend(token: string): Promise<boolean> 
   try {
     await apiClient.post(PUSH_TOKENS, { token, platform: Platform.OS });
     registeredToken = token;
+    // A fresh bind moves the token row to this account on the server, which also
+    // fulfils any unbind that was left pending while the phone was offline.
+    clearPendingUnbind().catch(() => {});
     lastPushError = null;
     return true;
   } catch (e) {
@@ -224,6 +257,58 @@ export async function unregisterTokenWithBackend(bearer?: string | null): Promis
   } finally {
     registeredToken = null;
   }
+}
+
+// ── Session-end unbind ───────────────────────────────────────────────────────
+// Offline marker: ONLY the push token (never a credential). The backend's POST
+// push-tokens re-attaches an existing token row to whoever binds it next, so the
+// next successful bind on this phone supersedes the old binding; the marker is
+// cleared at that point.
+export const PENDING_UNBIND_KEY = 'pending_push_unbind';
+
+export async function readPendingUnbind(): Promise<string | null> {
+  try {
+    return await storage.getItem(PENDING_UNBIND_KEY);
+  } catch {
+    return null;
+  }
+}
+
+async function clearPendingUnbind(): Promise<void> {
+  await storage.deleteItem(PENDING_UNBIND_KEY);
+}
+
+export type UnbindOutcome = 'ok' | 'unauthorized' | 'offline' | 'failed' | 'none';
+
+/** One DELETE of this device's token using the given bearer; reports how it went
+ *  so the session-end flow can refresh once (401) or leave a marker (offline). */
+export async function unbindPushTokenOnce(bearer: string): Promise<{ outcome: UnbindOutcome; token: string | null }> {
+  const token = registeredToken ?? (await getExpoPushToken());
+  if (!token) return { outcome: 'none', token: null };
+  try {
+    // Raw axios, not apiClient: the local tokens are already wiped, and the
+    // interceptors would either swap in a newer login's bearer or try (and fail)
+    // to refresh and clear tokens. The caller owns the one refresh attempt.
+    await axios.delete(`${API_BASE_URL}/${PUSH_TOKENS}`, {
+      data: { token, platform: Platform.OS },
+      headers: { Authorization: `Bearer ${bearer}` },
+      timeout: 8000,
+    });
+    registeredToken = null;
+    return { outcome: 'ok', token };
+  } catch (e: any) {
+    pushWarn('unbind', e);
+    const status = e?.response?.status;
+    if (status === 401) return { outcome: 'unauthorized', token };
+    if (!e?.response) return { outcome: 'offline', token };
+    return { outcome: 'failed', token };
+  }
+}
+
+export async function savePendingUnbind(token: string): Promise<void> {
+  try {
+    await storage.setItem(PENDING_UNBIND_KEY, token);
+  } catch {}
 }
 
 // Subscribe to foreground receipt + tap events. Returns an unsubscribe function.
