@@ -625,3 +625,4 @@ export const SANATORIUM_STAY = (id: number) => `sanatorium/stays/${id}`;
 export const SANATORIUM_STAY_CANCEL = (id: number) => `sanatorium/stays/${id}/cancel`;
 export const SANATORIUM_STAY_PAYMENT = (id: number) => `sanatorium/stays/${id}/payment`;
 export const SANATORIUM_APPOINTMENT = (id: number) => `sanatorium/appointments/${id}`;
+export const SANATORIUM_GUEST_QR = (id: number) => `sanatorium/guests/${id}/qr.png`;

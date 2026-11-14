@@ -386,4 +386,9 @@ export default {
     left_early: "Left early",
     cancelled: "Cancelled",
   },
+  idCard: "ID and QR card",
+  qrCode: "Guest QR code",
+  share: "Share",
+  onDate: "On date",
+  clearFilters: "Clear filters",
 };

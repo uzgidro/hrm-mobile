@@ -16,6 +16,7 @@ import { guestQuery } from '../api/queries';
 import { AppointmentSheet } from '../components/AppointmentSheet';
 import { BookingSheet } from '../components/BookingSheet';
 import { CredentialsSheet, type CredentialsShown } from '../components/CredentialsSheet';
+import { GuestCardSheet } from '../components/GuestCardSheet';
 import { GuestSheet } from '../components/GuestSheet';
 import { ProcedureEditSheet } from '../components/ProcedureEditSheet';
 import { ApptRow } from '../components/ApptRow';
@@ -50,6 +51,7 @@ function Profile({ p }: { p: GuestProfile }) {
   const [apptStay, setApptStay] = useState<number | null>(null);
   const [proc, setProc] = useState<Procedure | null>(null);
   const [creds, setCreds] = useState<CredentialsShown | null>(null);
+  const [card, setCard] = useState(false);
   const g = p.guest;
   const liveStay = p.stays.find((s) => s.status === 'booked' || s.status === 'checked_in');
   const resetLogin = async () => {
@@ -57,7 +59,7 @@ function Profile({ p }: { p: GuestProfile }) {
     if (!ok) return;
     try {
       const c = await reset.mutateAsync(g.id);
-      setCreds({ guestName: g.full_name, credentials: c });
+      setCreds({ guestName: g.full_name, credentials: c, guestId: g.id });
       reset.reset();
     } catch (e) {
       toast.error(sanErrorMessage(e, t('errors.generic')));
@@ -93,6 +95,7 @@ function Profile({ p }: { p: GuestProfile }) {
         <View style={styles.actions}>
           {registrar && <Button testID="guest-edit" label={t('sanatorium.edit')} variant="soft" size="sm" icon="edit" onPress={() => setEditing(true)} />}
           {registrar && <Button testID="guest-book" label={t('sanatorium.newBooking')} variant="soft" size="sm" icon="plus" onPress={() => setBooking(true)} />}
+          {registrar && <Button testID="guest-card" label={t('sanatorium.idCard')} variant="soft" size="sm" icon="qr" onPress={() => setCard(true)} />}
           {registrar && <Button testID="guest-reset" label={t('sanatorium.resetLogin')} variant="dangerGhost" size="sm" loading={reset.isPending} onPress={() => void resetLogin()} />}
           {canBook && liveStay && <Button testID="guest-appt" label={t('sanatorium.newAppointment')} variant="soft" size="sm" onPress={() => setApptStay(liveStay.id)} />}
         </View>
@@ -179,6 +182,7 @@ function Profile({ p }: { p: GuestProfile }) {
       <AppointmentSheet stayId={apptStay} onClose={() => setApptStay(null)} />
       <ProcedureEditSheet proc={proc} onClose={() => setProc(null)} />
       <CredentialsSheet creds={creds} onClose={() => setCreds(null)} />
+      <GuestCardSheet info={card ? { guestId: g.id, name: g.full_name, loginCode: g.login_code } : null} onClose={() => setCard(false)} />
     </View>
   );
 }

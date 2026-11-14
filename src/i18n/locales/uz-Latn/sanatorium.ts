@@ -386,4 +386,9 @@ export default {
     left_early: "Erta ketgan",
     cancelled: "Bekor",
   },
+  idCard: "ID va QR karta",
+  qrCode: "Mehmon QR kodi",
+  share: "Ulashish",
+  onDate: "Sana bo'yicha",
+  clearFilters: "Filtrlarni tozalash",
 };

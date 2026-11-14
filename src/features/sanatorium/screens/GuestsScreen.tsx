@@ -1,15 +1,15 @@
 // Registrar: guests (search, create) and families.
 import React, { useState } from 'react';
 import { router } from 'expo-router';
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { Avatar, Button, Card, EmptyState, ListRow, PageHeader, Screen, SearchField, Segmented } from '@/ui';
-import { guestsQuery } from '../api/queries';
+import { guestsInfinite } from '../api/queries';
 import { CredentialsSheet, type CredentialsShown } from '../components/CredentialsSheet';
 import { FamiliesPanel } from '../components/FamiliesPanel';
 import { GuestSheet } from '../components/GuestSheet';
-import { Denied, QueryBlock, useSanAccess } from '../components/common';
+import { Denied, PagedBlock, useSanAccess } from '../components/common';
 import type { GuestLite } from '../types';
 
 export default function GuestsScreen() {
@@ -19,7 +19,7 @@ export default function GuestsScreen() {
   const [term, setTerm] = useState('');
   const debounced = useDebouncedValue(term);
   // The registrar may list everyone; an empty search shows the latest guests.
-  const q = useQuery({ ...guestsQuery(debounced), enabled: allowed && seg === 'guests' && (debounced.trim().length === 0 || debounced.trim().length >= 2) });
+  const q = useInfiniteQuery(guestsInfinite(debounced, allowed && seg === 'guests' && (debounced.trim().length === 0 || debounced.trim().length >= 2)));
   const [edit, setEdit] = useState<GuestLite | 'new' | null>(null);
   const [creds, setCreds] = useState<CredentialsShown | null>(null);
   if (!allowed) return <Denied />;
@@ -38,7 +38,7 @@ export default function GuestsScreen() {
         <>
           <SearchField testID="guests-search" value={term} onChangeText={setTerm} placeholder={t('sanatorium.guestSearch')} />
           {debounced.trim().length === 1 ? null : (
-            <QueryBlock query={q}>
+            <PagedBlock query={q}>
               {(items) =>
                 items.length === 0 ? (
                   <EmptyState title={t('sanatorium.noGuests')} />
@@ -58,7 +58,7 @@ export default function GuestsScreen() {
                   </Card>
                 )
               }
-            </QueryBlock>
+            </PagedBlock>
           )}
         </>
       )}
@@ -66,7 +66,7 @@ export default function GuestsScreen() {
         guest={edit}
         onClose={() => setEdit(null)}
         onSaved={(i) => {
-          if (i.credentials) setCreds({ guestName: i.guestName, credentials: i.credentials });
+          if (i.credentials) setCreds({ guestName: i.guestName, credentials: i.credentials, guestId: i.id });
         }}
       />
       <CredentialsSheet creds={creds} onClose={() => setCreds(null)} />

@@ -30,7 +30,7 @@ const TILES: Tile[] = [
 const LINKS: { route: string; icon: IconName; labelKey: string; roles: SanRole[] }[] = [
   { route: '/sanatorium-requests', icon: 'inbox', labelKey: 'sanatorium.nav.requests', roles: ['registrar'] },
   { route: '/sanatorium-guests', icon: 'guest', labelKey: 'sanatorium.nav.guests', roles: ['registrar'] },
-  { route: '/sanatorium-bookings', icon: 'orders', labelKey: 'sanatorium.nav.bookings', roles: ['registrar'] },
+  { route: '/sanatorium-bookings', icon: 'orders', labelKey: 'sanatorium.nav.bookings', roles: ['registrar', 'room_keeper'] },
   { route: '/sanatorium-rooms', icon: 'building', labelKey: 'sanatorium.nav.rooms', roles: ['registrar'] },
   { route: '/sanatorium-settings', icon: 'settings', labelKey: 'sanatorium.nav.settings', roles: ['registrar'] },
   { route: '/sanatorium-stays', icon: 'building', labelKey: 'sanatorium.nav.stays', roles: ['registrar', 'room_keeper'] },

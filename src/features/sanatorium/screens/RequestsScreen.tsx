@@ -3,17 +3,17 @@
 import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { FormInput } from '@/components/FormInput';
 import { toast } from '@/lib/toast';
 import { Badge, Button, Card, EmptyState, PageHeader, Screen, Segmented, Sheet, Text } from '@/ui';
 import { useRejectRequest } from '../api/mutations';
-import { requestsQuery } from '../api/queries';
+import { requestsInfinite } from '../api/queries';
 import { AcceptSheet, type Accepted } from '../components/AcceptSheet';
 import { CredentialsSheet } from '../components/CredentialsSheet';
 import { WalkInSheet } from '../components/WalkInSheet';
-import { Denied, PhoneLink, QueryBlock, useSanAccess } from '../components/common';
+import { Denied, PagedBlock, PhoneLink, useSanAccess } from '../components/common';
 import type { RequestStatus, SanRequest } from '../types';
 import { fmtDate, fmtDateTime, maskPassport, requestTone, sanErrorMessage } from '../utils/sanatorium';
 
@@ -21,7 +21,7 @@ export default function RequestsScreen() {
   const { t } = useTranslation();
   const allowed = useSanAccess('registrar');
   const [status, setStatus] = useState<RequestStatus>('new');
-  const q = useQuery(requestsQuery(status, allowed));
+  const q = useInfiniteQuery(requestsInfinite(status, allowed));
   const [accepting, setAccepting] = useState<SanRequest | null>(null);
   const [rejecting, setRejecting] = useState<SanRequest | null>(null);
   const [walkIn, setWalkIn] = useState(false);
@@ -38,7 +38,7 @@ export default function RequestsScreen() {
         options={(['new', 'accepted', 'rejected'] as const).map((s) => ({ value: s, label: t(`sanatorium.requestStatus.${s}`) }))}
       />
       <View style={styles.body}>
-        <QueryBlock query={q}>
+        <PagedBlock query={q}>
           {(items) =>
             items.length === 0 ? (
               <EmptyState title={t('sanatorium.noRequests')} />
@@ -83,7 +83,7 @@ export default function RequestsScreen() {
               </View>
             )
           }
-        </QueryBlock>
+        </PagedBlock>
       </View>
       <AcceptSheet
         request={accepting}

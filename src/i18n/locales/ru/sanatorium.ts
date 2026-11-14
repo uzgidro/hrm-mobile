@@ -386,4 +386,9 @@ export default {
     left_early: "Досрочно",
     cancelled: "Отменены",
   },
+  idCard: "Карточка с ID и QR",
+  qrCode: "QR-код гостя",
+  share: "Поделиться",
+  onDate: "На дату",
+  clearFilters: "Сбросить фильтры",
 };

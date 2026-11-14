@@ -1,15 +1,17 @@
 // The guest's ID + password, shown ONCE. The caller keeps them only in transient state and
 // clears it on close; nothing here is stored, logged or cached.
-import React from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Button, Sheet, Text } from '@/ui';
+import { GuestCardSheet } from './GuestCardSheet';
 import type { Credentials } from '../types';
 
-export type CredentialsShown = { guestName: string; credentials: Credentials | null };
+export type CredentialsShown = { guestName: string; credentials: Credentials | null; guestId?: number };
 
 export function CredentialsSheet({ creds, onClose }: { creds: CredentialsShown | null; onClose: () => void }) {
   const { t } = useTranslation();
+  const [card, setCard] = useState(false);
   return (
     <Sheet visible={!!creds} onClose={onClose} title={t('sanatorium.credentials')}>
       <View style={styles.body} testID="credentials-sheet">
@@ -29,8 +31,13 @@ export function CredentialsSheet({ creds, onClose }: { creds: CredentialsShown |
         ) : (
           <Text variant="body" testID="cred-none">{t('sanatorium.credentialsNone')}</Text>
         )}
+        {!!creds?.guestId && !!creds.credentials && <Button testID="cred-card" label={t('sanatorium.idCard')} variant="soft" full onPress={() => setCard(true)} />}
         <Button label={t('sanatorium.credentialsDone')} full onPress={onClose} testID="cred-done" />
       </View>
+      <GuestCardSheet
+        info={card && creds?.guestId ? { guestId: creds.guestId, name: creds.guestName, loginCode: creds.credentials?.login_code, password: creds.credentials?.password } : null}
+        onClose={() => setCard(false)}
+      />
     </Sheet>
   );
 }

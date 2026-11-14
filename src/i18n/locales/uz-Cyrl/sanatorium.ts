@@ -386,4 +386,9 @@ export default {
     left_early: "Эрта кетган",
     cancelled: "Бекор",
   },
+  idCard: "ИД ва ҚР карта",
+  qrCode: "Меҳмон ҚР коди",
+  share: "Улашиш",
+  onDate: "Сана бўйича",
+  clearFilters: "Филтрларни тозалаш",
 };

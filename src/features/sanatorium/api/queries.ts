@@ -1,5 +1,5 @@
 // Read side of the sanatorium module. Request functions are pure; screens wrap them in useQuery.
-import { queryOptions } from '@tanstack/react-query';
+import { infiniteQueryOptions, queryOptions } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
 import { unwrapList } from '@/api/response';
 import {
@@ -13,6 +13,7 @@ import {
   SANATORIUM_STAYS,
   SANATORIUM_STAY,
   SANATORIUM_GUEST,
+  SANATORIUM_GUEST_QR,
   SANATORIUM_GUESTS,
   SANATORIUM_KITCHEN_COUNTS,
   SANATORIUM_KITCHEN_DAY,
@@ -22,6 +23,7 @@ import {
   SANATORIUM_SPECIALTIES,
   SANATORIUM_STAFF,
 } from '@/api/urls';
+import { bytesToBase64 } from '../utils/base64';
 import type {
   Appointment,
   Availability,
@@ -111,7 +113,7 @@ export const specialtiesQuery = (enabled = true) => queryOptions({ queryKey: san
 export const doctorsQuery = (enabled = true) => queryOptions({ queryKey: sanKeys.doctors(), queryFn: fetchDoctors, enabled });
 
 // ── Registrar-side reads ──
-export type StayFilter = { status?: string; q?: string; left_early?: boolean; size?: number };
+export type StayFilter = { status?: string; q?: string; left_early?: boolean; guest_type?: string; room_id?: number; on_date?: string };
 export const fetchSettings = () => apiClient.get<SanSettings>(SANATORIUM_SETTINGS).then((r) => r.data);
 export const fetchRooms = () => apiClient.get(SANATORIUM_ROOMS, { params: { include_inactive: true } }).then((r) => unwrapList<Room>(r.data));
 export const fetchAllSpecialties = () =>
@@ -121,8 +123,20 @@ export const fetchCandidates = (q: string) =>
   apiClient.get(SANATORIUM_STAFF_CANDIDATES, { params: { q: q.trim() } }).then((r) => unwrapList<StaffCandidate>(r.data));
 export const fetchFamilies = (q: string) =>
   apiClient.get(SANATORIUM_FAMILIES, { params: q.trim() ? { q: q.trim() } : {} }).then((r) => unwrapList<Family>(r.data));
-export const fetchStays = (f: StayFilter) =>
-  apiClient.get(SANATORIUM_STAYS, { params: { size: 30, ...f } }).then((r) => unwrapList<StayFull>(r.data));
+export const PAGE_SIZE = 30;
+export type Page<T> = { items: T[]; total: number; page: number };
+/** One page of a `{items, total, page, size}` list; `total` lets the screen stop loading more. */
+const toPage = <T,>(data: unknown, page: number): Page<T> => {
+  const d = data as { items?: T[]; total?: number } | T[];
+  const items = unwrapList<T>(d);
+  return { items, total: Array.isArray(d) ? items.length : (d?.total ?? items.length), page };
+};
+export const fetchStaysPage = (f: StayFilter, page: number) =>
+  apiClient.get(SANATORIUM_STAYS, { params: { ...f, page, size: PAGE_SIZE } }).then((r) => toPage<StayFull>(r.data, page));
+export const fetchGuestsPage = (q: string, page: number) =>
+  apiClient.get(SANATORIUM_GUESTS, { params: { ...(q.trim() ? { q: q.trim() } : {}), page, size: PAGE_SIZE } }).then((r) => toPage<GuestLite>(r.data, page));
+export const fetchRequestsPage = (status: RequestStatus, page: number) =>
+  apiClient.get(SANATORIUM_REQUESTS, { params: { status, page, size: PAGE_SIZE } }).then((r) => toPage<SanRequest>(r.data, page));
 export const fetchStay = (id: number) => apiClient.get<StayFull>(SANATORIUM_STAY(id)).then((r) => r.data);
 
 export const settingsQuery = (enabled = true) => queryOptions({ queryKey: sanKeys.settings(), queryFn: fetchSettings, enabled });
@@ -134,8 +148,31 @@ export const candidatesQuery = (q: string) =>
   queryOptions({ queryKey: sanKeys.candidates(q.trim()), queryFn: () => fetchCandidates(q), enabled: q.trim().length >= 2 });
 export const familiesQuery = (q: string, enabled = true) =>
   queryOptions({ queryKey: sanKeys.families(q.trim()), queryFn: () => fetchFamilies(q), enabled });
-export const staysQuery = (f: StayFilter, enabled = true) =>
-  queryOptions({ queryKey: sanKeys.stays(JSON.stringify(f)), queryFn: () => fetchStays(f), enabled });
+const nextPage = <T,>(last: Page<T>, all: Page<T>[]) => (all.reduce((n, p) => n + p.items.length, 0) < last.total && last.items.length > 0 ? last.page + 1 : undefined);
+export const staysInfinite = (f: StayFilter, enabled = true) =>
+  infiniteQueryOptions({
+    queryKey: sanKeys.stays(JSON.stringify(f)),
+    queryFn: ({ pageParam }) => fetchStaysPage(f, pageParam),
+    initialPageParam: 1,
+    getNextPageParam: nextPage,
+    enabled,
+  });
+export const guestsInfinite = (q: string, enabled = true) =>
+  infiniteQueryOptions({
+    queryKey: [...sanKeys.guests(q.trim()), 'inf'],
+    queryFn: ({ pageParam }) => fetchGuestsPage(q, pageParam),
+    initialPageParam: 1,
+    getNextPageParam: nextPage,
+    enabled,
+  });
+export const requestsInfinite = (status: RequestStatus, enabled = true) =>
+  infiniteQueryOptions({
+    queryKey: [...sanKeys.requests(status), 'inf'],
+    queryFn: ({ pageParam }) => fetchRequestsPage(status, pageParam),
+    initialPageParam: 1,
+    getNextPageParam: nextPage,
+    enabled,
+  });
 export const stayQuery = (id: number, enabled = true) =>
   queryOptions({ queryKey: sanKeys.stay(id), queryFn: () => fetchStay(id), enabled: enabled && id > 0 });
 
@@ -144,3 +181,11 @@ export const fetchStaffByRole = (role: string) =>
   apiClient.get(SANATORIUM_STAFF, { params: { role, active_only: true } }).then((r) => unwrapList<StaffMember>(r.data));
 export const staffRoleQuery = (role: string, enabled = true) =>
   queryOptions({ queryKey: sanKeys.staff(role), queryFn: () => fetchStaffByRole(role), enabled });
+
+/** The guest's QR as a data URI. Fetched with the auth header, held only by the open sheet (gcTime 0). */
+export const fetchGuestQr = async (id: number) => {
+  const r = await apiClient.get<ArrayBuffer>(SANATORIUM_GUEST_QR(id), { responseType: 'arraybuffer' });
+  return `data:image/png;base64,${bytesToBase64(new Uint8Array(r.data))}`;
+};
+export const guestQrQuery = (id: number, enabled: boolean) =>
+  queryOptions({ queryKey: [...sanKeys.all, 'qr', id], queryFn: () => fetchGuestQr(id), enabled, gcTime: 0, staleTime: 0 });
