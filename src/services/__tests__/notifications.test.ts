@@ -281,11 +281,14 @@ describe('routeForNotification — v2 pariteti: xizmat, kurs, vakansiya, o\'tkaz
   ])('%s → %s', (type, route) => {
     expect(routeForNotification({ type })).toBe(route);
   });
+  it('kurs pushi `course_id` bilan — kurs sahifasiga', () => {
+    expect(routeForNotification({ type: 'learning_course_assigned', course_id: 7 })).toBe('/kurs-detail?id=7');
+  });
   it("yangi yo'llar app/ da fayl sifatida bor", () => {
     const fs = require('fs') as typeof import('fs');
     const path = require('path') as typeof import('path');
     const root = path.join(__dirname, '../../..');
-    for (const r of ['/interaktiv-xizmatlar', '/oquv-markazi', '/shtat', '/vaqtinchalik-buyruqlar', '/employees-list']) {
+    for (const r of ['/interaktiv-xizmatlar', '/oquv-markazi', '/kurs-detail', '/shtat', '/vaqtinchalik-buyruqlar', '/employees-list']) {
       const clean = r.replace(/^\//, '');
       expect({ r, ok: fs.existsSync(path.join(root, `app/${clean}.tsx`)) }).toEqual({ r, ok: true });
     }

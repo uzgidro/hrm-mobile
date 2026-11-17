@@ -323,7 +323,9 @@ export function routeForNotification(data: any): string | null {
   // v2 notificationRoutes pariteti (2026-10-06): bu oilalar sarlavha olgan, lekin bosilganda
   // hech qayerga olib bormasdi — v3 da ekranlari bor. `service_request` TEST'da 168 qator.
   if (type.startsWith('service_request')) return '/interaktiv-xizmatlar';
-  if (type.startsWith('learning_')) return '/oquv-markazi';
+  // A learning push carries `course_id` (e.g. learning_course_assigned) — open the course page,
+  // whose call to action continues straight into the player; without it, the hub.
+  if (type.startsWith('learning_')) return data.course_id ? `/kurs-detail?id=${data.course_id}` : '/oquv-markazi';
   // Nomzodga o'z arizasi holati (nomzodlik arizasi interaktiv xizmatlarda); `vacancy` — kadrga.
   if (type === 'vacancy_application') return '/interaktiv-xizmatlar';
   if (type.startsWith('vacancy')) return '/shtat';
