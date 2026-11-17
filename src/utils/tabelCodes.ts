@@ -55,6 +55,8 @@ const CODE_META: Record<string, TabelCodeMeta> = {
   otgul: { labelKey: 'timesheet.codeOtgul', colorKey: 'primaryLight', letter: 'OG' },
   noaniq_sabab: { labelKey: 'timesheet.codeUnknownReason', colorKey: 'textMuted', letter: 'NS' },
   dismissed: { labelKey: 'timesheet.codeDismissed', colorKey: 'textMuted', letter: 'O' },
+  // A public holiday on the tabel's own code list (backend `tabel_template`: key `holiday`).
+  holiday: { labelKey: 'timesheet.codeHoliday', colorKey: 'textMuted', letter: 'B' },
 };
 
 const UNKNOWN_META: TabelCodeMeta = { labelKey: 'timesheet.codeUnknown', colorKey: 'textMuted', letter: '?' };

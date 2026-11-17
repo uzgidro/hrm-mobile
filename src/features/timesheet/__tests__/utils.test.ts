@@ -17,6 +17,14 @@ describe('tabelCodeMeta', () => {
     expect(tabelCodeMeta('business_trip').colorKey).toBe('primaryLight');
   });
 
+  it('dismissed (days after the contract ended) and holiday have their own label and letter, not the unknown fallback', () => {
+    expect(tabelCodeMeta('dismissed')).toEqual({ labelKey: 'timesheet.codeDismissed', colorKey: 'textMuted', letter: 'O' });
+    expect(tabelCodeMeta('holiday')).toEqual({ labelKey: 'timesheet.codeHoliday', colorKey: 'textMuted', letter: 'B' });
+    // A branch's own code list wins on the letter only.
+    expect(tabelCodeMeta('holiday', { holiday: 'BK' }).letter).toBe('BK');
+    expect(tabelCodeMeta('dismissed', { dismissed: 'X' }).labelKey).toBe('timesheet.codeDismissed');
+  });
+
   it('falls back to a neutral meta for empty, null or unknown codes', () => {
     const fallback = { labelKey: 'timesheet.codeUnknown', colorKey: 'textMuted', letter: '?' };
     expect(tabelCodeMeta(undefined)).toEqual(fallback);

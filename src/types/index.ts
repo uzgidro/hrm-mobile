@@ -936,7 +936,8 @@ export interface KpiBonus {
 // /turnstile-attendance-events/normalized. `calendar` is the month grid:
 // { "YYYY-MM-DD" -> status code } (present|late|absent|day_off|business_trip|
 // annual_leave|sick_leave|unpaid_leave|dekret|dismissed|work_leave|early_leave
-// and the label-mapped codes). This is the source for "Мой табель".
+// and the label-mapped codes; `dismissed` = days after the contract ended, the person stays in the
+// month's tabel; `holiday` is a tabel code key for a public holiday). This is the source for "Мой табель".
 export interface AttendanceSummary {
   present_days_count?: number | null;
   late_days_count?: number | null;
@@ -944,6 +945,8 @@ export interface AttendanceSummary {
   work_duration_hours?: number | null;
   calendar?: Record<string, string> | null;
   daily_late_minutes?: Record<string, number> | null;
+  /** Minutes badged in on rest days (turnstile figure behind the rest-day tabel). */
+  rest_day_minutes?: number | null;
   /** Approved permissions per day: the reason (request type), note and time range. */
   daily_leaves?: Record<string, LeaveDayNote[]> | null;
 }

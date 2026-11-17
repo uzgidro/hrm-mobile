@@ -66,6 +66,7 @@ export default {
   codePaidAbsence: "Paid leave",
   codeUnknownReason: "Unclear reason",
   codeDismissed: "Dismissed",
+  codeHoliday: "Holiday",
   codeOtgul: "Day off in lieu",
   codeNonPaidLeave: "Unpaid leave",
   codeUnknown: 'Unknown',

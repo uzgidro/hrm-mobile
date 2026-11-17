@@ -67,6 +67,7 @@ export default {
   codePaidAbsence: "Отпуск с сохранением зарплаты",
   codeUnknownReason: "Неясная причина",
   codeDismissed: "Уволен",
+  codeHoliday: "Праздничный день",
   codeOtgul: "Отгул",
   codeNonPaidLeave: "Неоплачиваемый отпуск",
   codeUnknown: 'Неизвестно',
