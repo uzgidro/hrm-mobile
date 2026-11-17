@@ -218,6 +218,7 @@ function ThemedNavigation() {
                 <Stack.Screen name="keldim" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="mobil-belgilar" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="sogliq-korigi" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="dam-olish-tabeli" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="sanatorium" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="sanatorium-stays" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="sanatorium-doctor" options={{ animation: 'slide_from_right' }} />

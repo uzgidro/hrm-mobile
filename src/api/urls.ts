@@ -519,6 +519,12 @@ export const ORGANIZATION_BRANCH_SYNC_HIK = (id: number) => `organization-branch
 export const ORGANIZATION_BRANCH_LEADER = (id: number, employeeId: number) =>
   `organization-branches/${id}/leaders/${employeeId}`;
 export const ORGANIZATION_BRANCH_TABEL_TEMPLATE = (id: number) => `organization-branches/${id}/tabel-template`;
+// Tabel blanki konstruktori (2026-11-17): ustunlar katalogi, xlsx namuna (saqlamaydi) va filial shabloni sifatida yaratish.
+// Eski server bu yo'llarni bilmaydi (`{pk}` marshruti 422 qaytaradi) — konstruktor faqat katalog o'qilsa ko'rinadi.
+export const ORGANIZATION_BRANCH_TABEL_TEMPLATE_COLUMNS = 'organization-branches/tabel-template-columns';
+export const ORGANIZATION_BRANCH_TABEL_TEMPLATE_SAMPLE = 'organization-branches/tabel-template-sample';
+export const ORGANIZATION_BRANCH_TABEL_TEMPLATE_BUILD = (id: number) =>
+  `organization-branches/${id}/tabel-template/build`;
 export const ORGANIZATION_BRANCH_LOGO = (id: number) => `organization-branches/${id}/logo`;
 export const ORGANIZATION_BRANCH_DOC_TEMPLATE = (id: number, docType: string) =>
   `organization-branches/${id}/document-template/${docType}`;
@@ -626,3 +632,11 @@ export const SANATORIUM_STAY_CANCEL = (id: number) => `sanatorium/stays/${id}/ca
 export const SANATORIUM_STAY_PAYMENT = (id: number) => `sanatorium/stays/${id}/payment`;
 export const SANATORIUM_APPOINTMENT = (id: number) => `sanatorium/appointments/${id}`;
 export const SANATORIUM_GUEST_QR = (id: number) => `sanatorium/guests/${id}/qr.png`;
+
+// ── «Dam olish kunlari tabeli» (rest-day work tabel) ──
+export const WEEKEND_TABEL = 'weekend-tabel';
+export const WEEKEND_TABEL_ENTRY = 'weekend-tabel/entry';
+export const WEEKEND_TABEL_ASSIGN = 'weekend-tabel/assign';
+export const WEEKEND_TABEL_ORDERS = 'weekend-tabel/orders';
+export const WEEKEND_TABEL_IMPORT = 'weekend-tabel/import';
+export const WEEKEND_TABEL_EXPORT = 'weekend-tabel/export';

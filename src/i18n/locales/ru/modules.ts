@@ -67,6 +67,7 @@ export default {
     reports: 'Отчёты',
     dictionaries: 'Справочники',
     tabelSettings: 'Настройки табеля',
+    weekendTabel: "Табель выходных дней",
     monitoring: 'Мониторинг',
     kpp: 'Пост КПП',
     videoGuide: 'Видеоинструкция',
