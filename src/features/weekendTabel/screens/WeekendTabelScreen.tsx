@@ -1,8 +1,8 @@
 // «Dam olish kunlari tabeli» (web v2 `WeekendTabelPage`): who worked which rest day / holiday and for how long.
 // Turnstile figures are the default; HR overrides a day by hand, designates work by an order, or imports the
 // branch's own Excel. Read-only for leadership viewers; HR and the master admin write.
-import React, { useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import React, { memo, useEffect, useMemo, useState } from 'react';
+import { Pressable, RefreshControl, SectionList, StyleSheet, View } from 'react-native';
 import dayjs from 'dayjs';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -93,8 +93,6 @@ export default function WeekendTabelScreen() {
   const groups = useMemo(() => groupRows(data?.rows ?? [], t('weekendTabel.noDepartment')), [data?.rows, t]);
   const monthDate = dayjs(`${ym.year}-${String(ym.month).padStart(2, '0')}-01`);
 
-  if (!allowed) return <AccessDenied title={t('weekendTabel.title')} />;
-
   const runExport = async (blank: boolean) => {
     setBusy(blank ? 'blank' : 'export');
     try {
@@ -120,7 +118,28 @@ export default function WeekendTabelScreen() {
     }
   };
 
-  const body = () => {
+  // Sections = departments; rows carry their running number. Thousands of rows are possible
+  // (org-wide, `include_all`), so the list is virtualized.
+  const sections = useMemo(() => {
+    if (unsupported) return [];
+    let no = 0;
+    return groups.map((g) => ({
+      name: g.name,
+      count: g.rows.length,
+      days: g.rows.reduce((n, r) => n + r.days, 0),
+      hours: g.rows.reduce((n, r) => n + r.hours, 0),
+      data: g.rows.map((row) => ({ row, no: ++no })),
+    }));
+  }, [groups, unsupported]);
+
+  // React Compiler keeps these callbacks stable, so the memoized rows do not re-render.
+  const onPick = (row: WeekendRow, date: string) => setEditing({ row, date, pick: false });
+  const onAdd = (row: WeekendRow) =>
+    setEditing({ row, date: days.find((x) => x.rest)?.date ?? days[0]?.date ?? '', pick: true });
+
+  if (!allowed) return <AccessDenied title={t('weekendTabel.title')} />;
+
+  const emptyState = () => {
     if (unsupported) {
       return (
         <EmptyState title={t('weekendTabel.unsupportedTitle')} message={t('weekendTabel.unsupportedHint')} pose="sad" />
@@ -128,57 +147,37 @@ export default function WeekendTabelScreen() {
     }
     if (grid.isPending) return <Skeleton height={240} />;
     if (grid.isError && !data) return <ErrorState title={t('weekendTabel.loadFail')} onRetry={() => void grid.refetch()} />;
-    if (!data || data.rows.length === 0) {
-      return <EmptyState title={t('weekendTabel.empty')} message={t('weekendTabel.emptyHint')} />;
-    }
-    let no = 0;
-    return (
-      <View style={styles.groups}>
-        {groups.map((g) => (
-          <View key={g.name} style={styles.group}>
-            <View style={styles.groupHead}>
-              <Text variant="label" weight="700" style={styles.flex}>
-                {g.name}
-              </Text>
-              <Badge label={String(g.rows.length)} />
-            </View>
-            {g.rows.map((r) => {
-              no += 1;
-              return (
-                <EmployeeCard
-                  key={r.employee_id}
-                  no={no}
-                  row={r}
-                  canEdit={canEdit}
-                  onPick={(date) => setEditing({ row: r, date, pick: false })}
-                  onAdd={() => setEditing({ row: r, date: days.find((d) => d.rest)?.date ?? days[0]!.date, pick: true })}
-                />
-              );
-            })}
-            {g.rows.length > 1 && (
-              <Text variant="caption" tone="muted" style={styles.subtotal}>
-                {t('weekendTabel.deptTotal', { name: g.name })}:{' '}
-                {t('weekendTabel.daysHours', {
-                  days: g.rows.reduce((n, r) => n + r.days, 0),
-                  hours: fmtHours(g.rows.reduce((n, r) => n + r.hours, 0)),
-                })}
-              </Text>
-            )}
-          </View>
-        ))}
-      </View>
-    );
+    return <EmptyState title={t('weekendTabel.empty')} message={t('weekendTabel.emptyHint')} />;
   };
 
   return (
     <Screen
-      refreshing={grid.isRefetching}
-      onRefresh={() => {
-        void grid.refetch();
-        void orders.refetch();
-      }}
+      scroll={false}
+      padded={false}
       testID="weekend-screen"
     >
+      <SectionList
+        style={styles.flex}
+        contentContainerStyle={styles.list}
+        sections={sections}
+        keyExtractor={(item) => String(item.row.employee_id)}
+        keyboardShouldPersistTaps="handled"
+        stickySectionHeadersEnabled={false}
+        initialNumToRender={12}
+        maxToRenderPerBatch={10}
+        windowSize={7}
+        removeClippedSubviews
+        refreshControl={
+          <RefreshControl
+            refreshing={grid.isRefetching}
+            onRefresh={() => {
+              void grid.refetch();
+              void orders.refetch();
+            }}
+          />
+        }
+        ListHeaderComponent={
+          <View>
       <PageHeader title={t('weekendTabel.title')} subtitle={t('weekendTabel.subtitle')} right={<BranchSwitcher />} />
       <View style={styles.content}>
         <MonthNavigator
@@ -289,10 +288,12 @@ export default function WeekendTabelScreen() {
             {(orders.data?.length ?? 0) > 0 && <OrdersPanel orders={orders.data ?? []} />}
           </>
         )}
-
-        {body()}
-
-        {!unsupported && !!data && (
+        </View>
+          </View>
+        }
+        ListEmptyComponent={emptyState()}
+        ListFooterComponent={
+          !unsupported && !!data ? (
           <Card testID="weekend-legend">
             <View style={styles.legend}>
               <Badge label={t('weekendTabel.legendWeekend')} tone="warning" />
@@ -309,8 +310,28 @@ export default function WeekendTabelScreen() {
               </Text>
             </View>
           </Card>
+          ) : null
+        }
+        renderSectionHeader={({ section }) => (
+          <View style={styles.groupHead}>
+            <Text variant="label" weight="700" style={styles.flex}>
+              {section.name}
+            </Text>
+            <Badge label={String(section.count)} />
+          </View>
         )}
-      </View>
+        renderSectionFooter={({ section }) =>
+          section.count > 1 ? (
+            <Text variant="caption" tone="muted" style={styles.subtotal}>
+              {t('weekendTabel.deptTotal', { name: section.name })}:{' '}
+              {t('weekendTabel.daysHours', { days: section.days, hours: fmtHours(section.hours) })}
+            </Text>
+          ) : null
+        }
+        renderItem={({ item }) => (
+          <EmployeeCard no={item.no} row={item.row} canEdit={canEdit} onPick={onPick} onAdd={onAdd} />
+        )}
+      />
 
       <PickerModal
         visible={pickDept}
@@ -352,7 +373,7 @@ export default function WeekendTabelScreen() {
   );
 }
 
-function EmployeeCard({
+const EmployeeCard = memo(function EmployeeCard({
   no,
   row,
   canEdit,
@@ -362,8 +383,8 @@ function EmployeeCard({
   no: number;
   row: WeekendRow;
   canEdit: boolean;
-  onPick: (date: string) => void;
-  onAdd: () => void;
+  onPick: (row: WeekendRow, date: string) => void;
+  onAdd: (row: WeekendRow) => void;
 }) {
   const { t } = useTranslation();
   const { colors: c } = useTheme();
@@ -394,7 +415,7 @@ function EmployeeCard({
             <Pressable
               key={date}
               disabled={!canEdit}
-              onPress={() => onPick(date)}
+              onPress={() => onPick(row, date)}
               accessibilityRole={canEdit ? 'button' : undefined}
               accessibilityLabel={fmtDate(date)}
               hitSlop={6}
@@ -415,7 +436,7 @@ function EmployeeCard({
             icon="plus"
             variant="link"
             size="sm"
-            onPress={onAdd}
+            onPress={() => onAdd(row)}
           />
         )}
       </View>
@@ -426,10 +447,11 @@ function EmployeeCard({
       )}
     </Card>
   );
-}
+});
 
 const styles = StyleSheet.create({
   content: { gap: 12 },
+  list: { paddingHorizontal: 16, paddingBottom: 24, gap: 8 },
   flex: { flex: 1 },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   switchRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
