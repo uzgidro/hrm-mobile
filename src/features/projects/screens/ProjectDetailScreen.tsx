@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, ActivityIndicator,
-  TouchableOpacity, Modal, TextInput, } from 'react-native';
+  TouchableOpacity, TextInput, } from 'react-native';
+import { LockAwareModal as Modal } from '@/components/LockAwareModal';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useQuery, useQueries } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';

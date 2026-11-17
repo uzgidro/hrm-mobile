@@ -1,8 +1,9 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, Modal, TextInput, FlatList,
+  View, Text, StyleSheet, TextInput, FlatList,
   TouchableOpacity, ActivityIndicator, type ImageStyle,
 } from 'react-native';
+import { LockAwareModal as Modal } from '@/components/LockAwareModal';
 import { Image } from 'expo-image';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

@@ -1,7 +1,8 @@
 // Leave-type bottom sheet for the create-leave form: pick one of HR's
 // «leave_request_reasons» (the same list the web form offers). No free text —
 // the web has none, and a typed reason matched no filter or report.
-import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { LockAwareModal as Modal } from '@/components/LockAwareModal';
 import { useTranslation } from 'react-i18next';
 import { leaveTypeLabel } from '@/utils/leaveStatus';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
@@ -37,7 +38,7 @@ export function LeaveTypeSheet({ visible, selected, onSelect, onClose, options =
   const { colors } = useTheme();
   const { t } = useTranslation();
   return (
-    <Modal visible={visible} transparent animationType="slide">
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <TouchableOpacity style={ts.overlay} activeOpacity={1} onPress={onClose} />
       <View style={ts.sheet}>
         <View style={ts.handle} />

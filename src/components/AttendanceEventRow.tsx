@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, Modal, Platform, Linking, ScrollView,
+  View, Text, StyleSheet, TouchableOpacity, Platform, Linking, ScrollView,
 } from 'react-native';
+import { LockAwareModal as Modal } from '@/components/LockAwareModal';
 import { Image } from 'expo-image';
 import { WebView } from 'react-native-webview';
 import dayjs from 'dayjs';

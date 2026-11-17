@@ -21,6 +21,7 @@ import { RootErrorBoundary } from '../src/components/RootErrorBoundary';
 import { ToastHost } from '../src/components/ToastHost';
 import { ConfirmHost } from '../src/components/ConfirmHost';
 import UpdatingOverlay from '../src/components/UpdatingOverlay';
+import { LockGuard } from '../src/features/security/components/LockGuard';
 import LockOverlay from '../src/features/security/components/LockOverlay';
 import PasswordGateOverlay from '../src/features/security/components/PasswordGateOverlay';
 import { useOtaGateStore } from '../src/store/otaGateStore';
@@ -119,7 +120,9 @@ function ThemedNavigation() {
   return (
     <>
       <StatusBar style={isDark ? 'light' : 'dark'} />
-      <View style={{ flex: 1, flexDirection: 'row', backgroundColor: colors.bg }}>
+      {/* While the PIN gate is up, the whole app (rail included) is hidden from
+          TalkBack / VoiceOver and untouchable (see LockGuard). */}
+      <LockGuard locked={lockVisible} style={{ flex: 1, flexDirection: 'row', backgroundColor: colors.bg }}>
         {showRail && <NavRail />}
         <View style={{ flex: 1 }}>
           {/* Deep links: the Stack must not mount before the session is known.
@@ -270,7 +273,7 @@ function ThemedNavigation() {
             </Stack>
           </AuthResolvedGate>
         </View>
-      </View>
+      </LockGuard>
       <ToastHost />
       {/* Global confirm dialogs (logout, delete, reject, update) rendered once
           here so imperative confirm() works from hooks and services too. */}

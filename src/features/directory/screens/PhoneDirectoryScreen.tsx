@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, Linking, Modal,
+  View, Text, StyleSheet, TouchableOpacity, Linking,
 } from 'react-native';
+import { LockAwareModal as Modal } from '@/components/LockAwareModal';
 import { ChipScroll } from '@/components/ChipScroll';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';

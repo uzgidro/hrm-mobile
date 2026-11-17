@@ -1,8 +1,9 @@
 import { useState, useCallback } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
-  TouchableOpacity, ActivityIndicator, TextInput, Modal,
+  TouchableOpacity, ActivityIndicator, TextInput,
 } from 'react-native';
+import { LockAwareModal as Modal } from '@/components/LockAwareModal';
 import { useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
 import dayjs from 'dayjs';
@@ -48,7 +49,7 @@ function ReasonModal({ visible, title, hint, placeholder, confirmLabel, minLengt
   const [reason, setReason] = useState('');
   const ready = reason.trim().length >= minLength;
   return (
-    <Modal visible={visible} transparent animationType="slide">
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={onClose} />
       <View style={styles.sheet}>
         <View style={styles.handle} />

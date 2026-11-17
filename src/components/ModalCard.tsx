@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { LockAwareModal as Modal } from '@/components/LockAwareModal';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 import { KeyboardAvoider } from './KeyboardAvoider';

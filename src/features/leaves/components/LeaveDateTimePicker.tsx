@@ -2,7 +2,8 @@
 // verbatim from the old create-leave.tsx (a leave-specific calendar/time modal;
 // distinct from the shared DatePicker components).
 import { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { LockAwareModal as Modal } from '@/components/LockAwareModal';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
@@ -34,7 +35,7 @@ export function LeaveDateTimePicker({ value, visible, title, minDate, onConfirm,
   const changeMinute = (d: number) => setSelected((s) => s.minute(stepMinute(s.minute(), d)));
 
   return (
-    <Modal visible={visible} transparent animationType="slide">
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={dp.overlay}>
         <View style={dp.sheet}>
           <View style={dp.header}>
