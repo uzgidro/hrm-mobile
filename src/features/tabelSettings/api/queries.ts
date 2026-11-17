@@ -1,14 +1,21 @@
 import { queryOptions } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
 import { unwrapList } from '@/api/response';
-import { LETTER_NEXT_REG_NUMBER, ORGANIZATION_BRANCHES, ORGANIZATION_BRANCH_LEADERS } from '@/api/urls';
+import {
+  LETTER_NEXT_REG_NUMBER,
+  ORGANIZATION_BRANCHES,
+  ORGANIZATION_BRANCH_LEADERS,
+  ORGANIZATION_BRANCH_TABEL_TEMPLATE_COLUMNS,
+} from '@/api/urls';
 import type { BranchLeader } from '../utils/leaders';
 import type { NextRegNumber, TabelBranch } from '../utils/tabelConfig';
+import { isColumnsCatalog, type TabelTemplateColumns } from '../utils/tabelTemplate';
 
 export const tabelSettingsKeys = {
   all: ['tabel-settings'] as const,
   branches: () => [...tabelSettingsKeys.all, 'branches'] as const,
   leaders: (branchId: number) => [...tabelSettingsKeys.all, 'leaders', branchId] as const,
+  columns: () => [...tabelSettingsKeys.all, 'template-columns'] as const,
   nextNumber: (branchId: number) => [...tabelSettingsKeys.all, 'next-number', branchId] as const,
 };
 
@@ -44,3 +51,22 @@ export function nextRegNumberQuery(branchId: number, enabled: boolean) {
   });
 }
 
+
+/**
+ * Constructor catalogue. An old server has no such route (`/{pk}` answers 422 or 404), so a failed or
+ * differently-shaped answer means «no constructor» — the query throws and the UI hides the feature.
+ */
+export function tabelTemplateColumnsQuery(enabled: boolean) {
+  return queryOptions({
+    queryKey: tabelSettingsKeys.columns(),
+    queryFn: async (): Promise<TabelTemplateColumns> => {
+      const data = await apiClient.get(ORGANIZATION_BRANCH_TABEL_TEMPLATE_COLUMNS).then((r) => r.data);
+      if (!isColumnsCatalog(data)) throw new Error('tabel-template-columns: unexpected shape');
+      return data;
+    },
+    enabled,
+    retry: false,
+    staleTime: 10 * 60_000,
+    meta: { skipErrorToast: true },
+  });
+}

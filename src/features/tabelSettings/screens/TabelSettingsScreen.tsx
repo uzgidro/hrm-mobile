@@ -29,6 +29,7 @@ import { tabelBranchesQuery, tabelSettingsKeys } from '../api/queries';
 import { BlankSheet } from '../components/BlankSheet';
 import { ConfigSheet } from '../components/ConfigSheet';
 import { LeadersSheet } from '../components/LeadersSheet';
+import { TemplateBlock } from '../components/TemplateBlock';
 import { KeyValue } from '../components/TabelBits';
 import {
   approverOf,
@@ -151,6 +152,7 @@ export default function TabelSettingsScreen() {
           </View>
           {summary(b)}
           <View style={styles.soleActions}>{actions(b, true)}</View>
+          <TemplateBlock branch={b} canEdit={rights(b).edit} />
         </Card>
       );
     }
@@ -220,6 +222,7 @@ export default function TabelSettingsScreen() {
           <ScrollView style={styles.scroll} contentContainerStyle={styles.sheetBody}>
             {summary(target)}
             {actions(target, true)}
+            <TemplateBlock branch={target} canEdit={rights(target).edit} />
           </ScrollView>
         </Sheet>
       )}
