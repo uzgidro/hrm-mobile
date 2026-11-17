@@ -130,6 +130,10 @@ export const DETAIL_OWNER: Readonly<Record<string, PageKey>> = {
   '/create-leave': 'requests',
   '/team-leaves': 'requests',
   '/employee-calendar': 'employees',
+  '/kurs-detail': 'learning',
+  '/kurs-player': 'learning',
+  '/kurs-tahrir': 'learning',
+  '/kurs-dars': 'learning',
 };
 
 function barePath(route: string): string {
