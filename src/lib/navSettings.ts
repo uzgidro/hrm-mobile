@@ -7,7 +7,8 @@ import { queryOptions, useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
 import { SYSTEM_SETTINGS } from '@/api/urls';
 import { useAuthStore } from '@/store/authStore';
-import { setNavOverrides, type NavModuleOverrides } from '@/utils/roles';
+import { probeWeekendTabel } from '@/lib/serverCaps';
+import { getRoleKey, setNavOverrides, type NavModuleOverrides } from '@/utils/roles';
 
 type SystemSettings = { values?: Record<string, unknown> };
 
@@ -33,6 +34,10 @@ export function navSettingsQuery() {
       const { data } = await apiClient.get<SystemSettings>(SYSTEM_SETTINGS);
       // Stored before the query settles, so every subscriber re-renders with it.
       setNavOverrides(readNavOverrides(data));
+      // Capability probe rides on the same fetch so the menu re-renders once, with both answers.
+      // Only the audience of the rest-day tabel asks (the rest would just get a 403).
+      const user = useAuthStore.getState().user;
+      if (['masterAdmin', 'hr', 'ministr', 'deputy'].includes(getRoleKey(user))) await probeWeekendTabel();
       return data;
     },
     staleTime: (q) => (q.state.data === GUEST_SETTINGS ? 0 : 10 * 60_000),

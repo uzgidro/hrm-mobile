@@ -73,6 +73,7 @@ export default {
     reports: 'Hisobotlar',
     dictionaries: "Ma'lumotnomalar",
     tabelSettings: 'Tabel sozlamalari',
+    weekendTabel: "Dam olish kunlari tabeli",
     monitoring: 'Monitoring',
     kpp: 'KPP posti',
     videoGuide: "Video qo'llanma",

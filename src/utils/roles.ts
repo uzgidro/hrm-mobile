@@ -1,6 +1,7 @@
 import i18n from '../i18n';
 import type { User, Employee } from '../types';
 import { resolveEmployeeBranchId } from './branch';
+import { weekendTabelSupported } from '@/lib/serverCaps';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Role resolution — mirrors the web's shared/utils/roleHelpers.js 1:1 so the
@@ -429,7 +430,7 @@ export type PageKey =
   | 'notifications' | 'profile' | 'support' | 'chairman' | 'directory' | 'terminals'
   | 'duty' | 'holidays'
   // v3: web v2 katalogining qolgan modullari (ekranlari to'lqinlarda — `ready`).
-  | 'services' | 'zoom' | 'vehicles' | 'ijro' | 'chrono' | 'workPlan' | 'medical' | 'health' | 'medicalExam' | 'doctorDesk' | 'sanatorium'
+  | 'services' | 'zoom' | 'vehicles' | 'ijro' | 'chrono' | 'workPlan' | 'medical' | 'health' | 'medicalExam' | 'doctorDesk' | 'sanatorium' | 'weekendTabel'
   | 'registrationStatus' | 'orderTypes' | 'tempOrders' | 'staffPositions' | 'structure'
   | 'responsibles' | 'hrQuality' | 'trainings' | 'learning' | 'inspections' | 'reports'
   | 'dictionaries' | 'tabelSettings' | 'monitoring' | 'kpp' | 'videoGuide' | 'users'
@@ -534,6 +535,9 @@ const serverHasExam = (u: Parameters<ModuleGate>[0]) => typeof u?.medical_recept
 const needsOwnExam: ModuleGate = (u) => serverHasExam(u) && !!u?.employee?.id && u?.type !== 'external-doctor';
 const needsStaffDoctor: ModuleGate = (u) => serverHasExam(u) && u?.is_doctor === true && u?.type !== 'external-doctor';
 const needsSanatorium: ModuleGate = (u) => (u?.sanatorium_roles?.length ?? 0) > 0;
+// Rest-day tabel: the server may not have `/weekend-tabel` yet (OTA ships before the backend) —
+// hidden until the probe in `lib/serverCaps.ts` has seen the route.
+const needsWeekendServer: ModuleGate = () => weekendTabelSupported() === true;
 const needsHealth: ModuleGate = (u) => !!u?.nurse_branch_ids?.length || isSiteMasterAdmin(u);
 const needsFleet: ModuleGate = (u) =>
   isSiteMasterAdmin(u) || !!u?.transport_branch_ids?.length || !!u?.transport_approver_branch_ids?.length;
@@ -617,6 +621,7 @@ const MODULE_FOR_PAGE: Partial<Record<PageKey, ModuleDef>> = {
   },
   dictionaries: { key: 'dictionaries', defaultRoles: ALL },
   tabelSettings: { key: 'tabelSettings', defaultRoles: ADMIN_HR },
+  weekendTabel: { key: 'weekendTabel', defaultRoles: ADMIN_HR_LEAD, gates: [needsWeekendServer] },
   monitoring: { key: 'monitoring', defaultRoles: ['masterAdmin', 'monitoring'] },
   kpp: { key: 'kpp', defaultRoles: ['kpp', 'masterAdmin'] },
   videoGuide: { key: 'videoGuide', defaultRoles: ALL },

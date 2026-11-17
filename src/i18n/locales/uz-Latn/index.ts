@@ -35,6 +35,7 @@ import tabs from './tabs';
 import kpp from './kpp';
 import monitoring from './monitoring';
 import tabelSettings from './tabelSettings';
+import weekendTabel from './weekendTabel';
 import dictionaries from './dictionaries';
 import customFields from './customFields';
 import turnstiles from './turnstiles';
@@ -104,6 +105,7 @@ export default {
   kpp,
   monitoring,
   tabelSettings,
+  weekendTabel,
   dictionaries,
   customFields,
   turnstiles,

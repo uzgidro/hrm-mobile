@@ -412,6 +412,27 @@ export const LEARNING_META = 'learning/meta';
 export const LEARNING_MY = 'learning/my';
 export const LEARNING_COURSES = 'learning/courses';
 export const LEARNING_ENROLLMENT = (id: number) => `learning/enrollments/${id}`;
+// Learning center builder + player (backend 2026-11-17). Sections, curriculum,
+// cover, view and quiz exist only on the new API — callers degrade on 404/405.
+export const LEARNING_COURSE = (id: number) => `learning/courses/${id}`;
+export const LEARNING_COURSE_ENROLL = (id: number) => `learning/courses/${id}/enroll`;
+export const LEARNING_COURSE_ASSIGN = (id: number) => `learning/courses/${id}/assign`;
+export const LEARNING_COURSE_ENROLLMENTS = (id: number) => `learning/courses/${id}/enrollments`;
+export const LEARNING_COURSE_COVER = (id: number) => `learning/courses/${id}/cover`;
+export const LEARNING_COURSE_SECTIONS = (id: number) => `learning/courses/${id}/sections`;
+export const LEARNING_COURSE_CURRICULUM = (id: number) => `learning/courses/${id}/curriculum`;
+export const LEARNING_COURSE_LESSONS = (id: number) => `learning/courses/${id}/lessons`;
+export const LEARNING_COURSE_QUESTIONS = (id: number) => `learning/courses/${id}/questions`;
+export const LEARNING_SECTION = (id: number) => `learning/sections/${id}`;
+export const LEARNING_LESSON = (id: number) => `learning/lessons/${id}`;
+export const LEARNING_QUESTION = (id: number) => `learning/questions/${id}`;
+export const LEARNING_LESSON_VIEW = (enrollmentId: number, lessonId: number) =>
+  `learning/enrollments/${enrollmentId}/lessons/${lessonId}/view`;
+export const LEARNING_LESSON_COMPLETE = (enrollmentId: number, lessonId: number) =>
+  `learning/enrollments/${enrollmentId}/lessons/${lessonId}/complete`;
+export const LEARNING_LESSON_QUIZ = (enrollmentId: number, lessonId: number) =>
+  `learning/enrollments/${enrollmentId}/lessons/${lessonId}/quiz`;
+export const LEARNING_TEST = (enrollmentId: number) => `learning/enrollments/${enrollmentId}/test`;
 export const INSPECTIONS = 'inspections';
 export const INSPECTION = (id: number) => `inspections/${id}`;
 // Sog'liq ko'rigi (hamshira, smena oldidan). `access` — can_check + nurse_branch_ids.
@@ -519,6 +540,12 @@ export const ORGANIZATION_BRANCH_SYNC_HIK = (id: number) => `organization-branch
 export const ORGANIZATION_BRANCH_LEADER = (id: number, employeeId: number) =>
   `organization-branches/${id}/leaders/${employeeId}`;
 export const ORGANIZATION_BRANCH_TABEL_TEMPLATE = (id: number) => `organization-branches/${id}/tabel-template`;
+// Tabel blanki konstruktori (2026-11-17): ustunlar katalogi, xlsx namuna (saqlamaydi) va filial shabloni sifatida yaratish.
+// Eski server bu yo'llarni bilmaydi (`{pk}` marshruti 422 qaytaradi) — konstruktor faqat katalog o'qilsa ko'rinadi.
+export const ORGANIZATION_BRANCH_TABEL_TEMPLATE_COLUMNS = 'organization-branches/tabel-template-columns';
+export const ORGANIZATION_BRANCH_TABEL_TEMPLATE_SAMPLE = 'organization-branches/tabel-template-sample';
+export const ORGANIZATION_BRANCH_TABEL_TEMPLATE_BUILD = (id: number) =>
+  `organization-branches/${id}/tabel-template/build`;
 export const ORGANIZATION_BRANCH_LOGO = (id: number) => `organization-branches/${id}/logo`;
 export const ORGANIZATION_BRANCH_DOC_TEMPLATE = (id: number, docType: string) =>
   `organization-branches/${id}/document-template/${docType}`;
@@ -626,3 +653,11 @@ export const SANATORIUM_STAY_CANCEL = (id: number) => `sanatorium/stays/${id}/ca
 export const SANATORIUM_STAY_PAYMENT = (id: number) => `sanatorium/stays/${id}/payment`;
 export const SANATORIUM_APPOINTMENT = (id: number) => `sanatorium/appointments/${id}`;
 export const SANATORIUM_GUEST_QR = (id: number) => `sanatorium/guests/${id}/qr.png`;
+
+// ── «Dam olish kunlari tabeli» (rest-day work tabel) ──
+export const WEEKEND_TABEL = 'weekend-tabel';
+export const WEEKEND_TABEL_ENTRY = 'weekend-tabel/entry';
+export const WEEKEND_TABEL_ASSIGN = 'weekend-tabel/assign';
+export const WEEKEND_TABEL_ORDERS = 'weekend-tabel/orders';
+export const WEEKEND_TABEL_IMPORT = 'weekend-tabel/import';
+export const WEEKEND_TABEL_EXPORT = 'weekend-tabel/export';

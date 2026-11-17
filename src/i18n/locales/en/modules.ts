@@ -67,6 +67,7 @@ export default {
     reports: 'Reports',
     dictionaries: 'Reference data',
     tabelSettings: 'Timesheet settings',
+    weekendTabel: "Rest-day timesheet",
     monitoring: 'Monitoring',
     kpp: 'Checkpoint post',
     videoGuide: 'Video guide',

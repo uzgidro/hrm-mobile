@@ -67,6 +67,7 @@ export default {
     reports: 'Ҳисоботлар',
     dictionaries: 'Маълумотномалар',
     tabelSettings: 'Табел созламалари',
+    weekendTabel: "Дам олиш кунлари табели",
     monitoring: 'Мониторинг',
     kpp: 'КПП пости',
     videoGuide: 'Видео қўлланма',

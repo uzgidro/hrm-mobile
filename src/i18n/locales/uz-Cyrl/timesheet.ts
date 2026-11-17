@@ -66,6 +66,7 @@ export default {
   codePaidAbsence: "Иш ҳақи сақланган таътил",
   codeUnknownReason: "Ноаниқ сабаб",
   codeDismissed: "Ишдан озод",
+  codeHoliday: "Байрам куни",
   codeOtgul: "Отгул",
   codeNonPaidLeave: "Тўланмайдиган таътил",
   codeUnknown: 'Номаълум',

@@ -60,6 +60,7 @@ export const CATALOG: CatalogEntry[] = [
   e('employees', 'employees', '/employees-list', 'idcard', 'violet', 'stats'),
   e('attendance', 'attendance', '/attendance-detail', 'clock', 'green', 'stats'),
   e('timesheet', 'myAttendance', '/tabel', 'calendar', 'green', 'stats'),
+  e('weekendTabel', 'weekendTabel', '/dam-olish-tabeli', 'calendar', 'amber', 'stats'),
   e('guests', 'guests', '/(tabs)/mehmonlar', 'guest', 'amber', 'stats'),
   e('directory', 'phone', '/phone-directory', 'phone', 'cyan', 'stats'),
   e('duty', 'duty', '/navbatchilik', 'clock', 'amber', 'stats'),
@@ -129,6 +130,10 @@ export const DETAIL_OWNER: Readonly<Record<string, PageKey>> = {
   '/create-leave': 'requests',
   '/team-leaves': 'requests',
   '/employee-calendar': 'employees',
+  '/kurs-detail': 'learning',
+  '/kurs-player': 'learning',
+  '/kurs-tahrir': 'learning',
+  '/kurs-dars': 'learning',
 };
 
 function barePath(route: string): string {

@@ -214,10 +214,15 @@ function ThemedNavigation() {
                 <Stack.Screen name="ish-rejasi" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="malaka-oshirish" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="oquv-markazi" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="kurs-detail" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="kurs-player" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="kurs-tahrir" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="kurs-dars" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="auditlar" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="keldim" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="mobil-belgilar" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="sogliq-korigi" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="dam-olish-tabeli" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="sanatorium" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="sanatorium-stays" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="sanatorium-doctor" options={{ animation: 'slide_from_right' }} />

@@ -73,6 +73,7 @@ export default {
   codePaidAbsence: "Ish haqi saqlangan taʼtil",
   codeUnknownReason: "Noaniq sabab",
   codeDismissed: "Ishdan ozod",
+  codeHoliday: "Bayram kuni",
   codeOtgul: "Otgul",
   codeNonPaidLeave: "Toʻlanmaydigan taʼtil",
   codeUnknown: 'Nomaʼlum',
