@@ -107,8 +107,9 @@ describe('WeekendTabelScreen (v2 WeekendTabelPage)', () => {
     expect(screen.getByTestId('weekend-cell-11-2026-11-07')).toHaveTextContent('07.11 · 0');
     expect(screen.getByTestId('weekend-cell-13-2026-11-07')).toHaveTextContent('07.11 · 3.5');
     expect(screen.getByTestId('weekend-total-11')).toHaveTextContent('2 kun · 14 soat');
-    expect(screen.getByTestId('weekend-orders')).toBeTruthy();
-    expect(screen.getByTestId('weekend-order-77')).toBeTruthy();
+    // The orders panel comes from its own request: wait for it (slow CI runners).
+    expect(await screen.findByTestId('weekend-orders')).toBeTruthy();
+    expect(await screen.findByTestId('weekend-order-77')).toBeTruthy();
     // The grid query carries the active branch and the month.
     const req = mock.history.get.find((r) => r.url === WEEKEND_TABEL)!;
     expect(req.params).toMatchObject({ organization_branch_id: 5 });
