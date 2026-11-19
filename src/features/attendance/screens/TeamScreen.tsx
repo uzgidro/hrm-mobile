@@ -22,7 +22,6 @@ import { useAuthStore } from '@/store/authStore';
 import { usePrefsStore } from '@/store/prefsStore';
 import { useTheme } from '@/theme/ThemeProvider';
 import { radii } from '@/theme/tokens';
-import { resolveEmployeeBranchId } from '@/utils/branch';
 import { useBreakpoint } from '@/utils/responsive';
 import { buildRosterFromMyTeam, type RosterRow } from '@/utils/attendanceRoster';
 import { leaveStatusGroup, leaveRangeText, leaveTypeLabel } from '@/utils/leaveStatus';
@@ -44,6 +43,7 @@ import {
   type Tone,
 } from '@/ui';
 import { myTeamQuery, teamLeavesQuery } from '../api/queries';
+import { useActiveBranchId } from '@/lib/useActiveBranch';
 
 const birthdaysListKey = (orgBranchId?: number) => ['birthdays', 'list', orgBranchId ?? null] as const;
 const STATUS_TONE: Record<'pending' | 'approved' | 'rejected', Tone> = {
@@ -61,12 +61,13 @@ const ROW_TONE: Record<RosterRow['status'], Tone> = {
 export default function TeamScreen() {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
+  const activeBranchId = useActiveBranchId();
   const onlySubordinates = usePrefsStore((s) => s.onlySubordinates);
   const { colors } = useTheme();
   const { sizeClass } = useBreakpoint();
   const wide = sizeClass !== 'compact';
   const myId = user?.employee?.id;
-  const orgBranchId = resolveEmployeeBranchId(user?.employee);
+  const orgBranchId = activeBranchId;
   const today = dayjs().format('YYYY-MM-DD');
   const [day, setDay] = useState(today);
   const sel = dayjs(day);
@@ -207,7 +208,7 @@ export default function TeamScreen() {
               // The raw `type` is an untranslated preset value — show its label.
               title={leave.type ? leaveTypeLabel(t, leave.type) : t('attendance.requestFallback')}
               subtitle={`${leaveRangeText(leave.start_date, leave.end_date)} · ${leave.employee?.legal_name ?? '—'}`}
-              left={<Avatar name={leave.employee?.legal_name ?? '?'} uri={leave.employee?.photo_path} size={40} />}
+              left={<Avatar name={leave.employee?.legal_name ?? '?'} uri={leave.employee?.photo_path} thumb={leave.employee?.photo_thumb_path} size={40} />}
               right={<Badge label={t(`attendance.status.${group}`)} tone={STATUS_TONE[group]} />}
               onPress={() => router.push({ pathname: '/leave-detail', params: { id: leave.id } })}
             />
@@ -279,7 +280,7 @@ export default function TeamScreen() {
             key={emp.id}
             title={emp.legal_name}
             subtitle={emp.job_position?.name ?? '—'}
-            left={<Avatar name={emp.legal_name} uri={emp.photo_path} size={40} />}
+            left={<Avatar name={emp.legal_name} uri={emp.photo_path} thumb={emp.photo_thumb_path} size={40} />}
             right={
               <View style={styles.bday}>
                 <Text variant="caption" tone="muted">

@@ -30,6 +30,8 @@ export default {
   letterSignedStatus: 'Подписано',
   letterInChancellery: 'В канцелярии',
   letterInLeadership: 'У руководства',
+  letterChairReview: 'Ждёт решения председателя',
+  letterChairApproved: 'Утверждено председателем',
   letterPending: 'Ожидается',
   letterTripArrived: 'Ожидается отчёт',
   letterTripOngoing: 'Командировка продолжается',

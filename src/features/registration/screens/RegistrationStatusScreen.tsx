@@ -23,11 +23,14 @@ import {
 } from '@/ui';
 import { registrationStatusTone } from '@/utils/registrationStatus';
 import { myRegistrationQuery, type Registration } from '../api/queries';
+import { useSensitiveScreen } from '@/lib/screenPrivacy';
 
 const ICON: Record<string, IconName> = { pending: 'clock', approved: 'check', rejected: 'close' };
 const fmt = (d?: string | null) => (d ? dayjs(d).format('DD.MM.YYYY') : null);
 
 export default function RegistrationStatusScreen() {
+  // JShShIR / pasport / manzil — skrinshot va ilovalar almashtirgichida yopiq.
+  useSensitiveScreen();
   const { t } = useTranslation();
   const q = useQuery(myRegistrationQuery());
 

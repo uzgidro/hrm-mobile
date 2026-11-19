@@ -114,7 +114,7 @@ export function OrderDetailView({ id, embedded = false }: { id: number; embedded
         value: e.id,
         label: e.legal_name || t('status.unknown'),
         subLabel: employeeSubLabel(e),
-        photo: e.photo_path ?? null,
+        photo: e.photo_path ?? null, photoThumb: e.photo_thumb_path,
       })),
     [empData, t],
   );

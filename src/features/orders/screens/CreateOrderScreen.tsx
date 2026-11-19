@@ -36,12 +36,12 @@ import {
   type OrderFormError, type OrderFormValues,
 } from '../utils/orderForm';
 import { KeyboardAvoider } from '@/components/KeyboardAvoider';
-import { resolveEmployeeBranchId } from '@/utils/branch';
 import { toast } from '@/lib/toast';
+import { useActiveBranchId } from '@/lib/useActiveBranch';
 
 export default function CreateOrderScreen() {
   const { user } = useAuthStore();
-  const employee = user?.employee;
+  const activeBranchId = useActiveBranchId();
   // TAHRIR rejimi: `id` berilsa mavjud buyruq yuklanadi va POST o'rniga PATCH
   // yuboriladi (web AddOrderDrawer `editId` bilan bir xil).
   const { id: editIdParam } = useLocalSearchParams<{ id?: string }>();
@@ -49,7 +49,7 @@ export default function CreateOrderScreen() {
   const { data: editing } = useQuery({ ...orderDetailQuery(editId ?? 0), enabled: !!editId });
   const branchId =
     editing?.organization_branch_id ??
-    resolveEmployeeBranchId(employee);
+    activeBranchId;
   const hr = isHR(user);
   const creatorRole = hr ? 'hr' : 'employee';
 
@@ -167,7 +167,7 @@ export default function CreateOrderScreen() {
   // Stable per language so the memoised option lists below re-map on a
   // language switch (the fallback label is translated) and on nothing else.
   const empOption = useCallback((e: Employee): PickerOption => ({
-    value: e.id, label: e.legal_name || t('status.unknown'), subLabel: employeeSubLabel(e), photo: e.photo_path ?? null,
+    value: e.id, label: e.legal_name || t('status.unknown'), subLabel: employeeSubLabel(e), photo: e.photo_path ?? null, photoThumb: e.photo_thumb_path,
   }), [t]);
   const employeeOptions = useMemo(() => (empData?.items ?? []).map(empOption), [empData, empOption]);
   const leadershipOptions = useMemo(() => leadership.map(empOption), [leadership, empOption]);

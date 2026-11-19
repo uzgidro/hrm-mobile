@@ -219,6 +219,7 @@ export function EntriesView({ type, manage, onBack }: { type: DictionaryType; ma
 
       {pickingParent && (
         <PickerModal
+          avatars={false}
           visible
           title={t('dictionaries.colParent')}
           options={[

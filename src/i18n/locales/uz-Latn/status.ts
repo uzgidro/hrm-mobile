@@ -37,6 +37,8 @@ export default {
   letterSignedStatus: 'Imzolangan',
   letterInChancellery: 'Devonxonada',
   letterInLeadership: 'Rahbariyatda',
+  letterChairReview: 'Rais qarorini kutmoqda',
+  letterChairApproved: 'Rais tasdiqladi',
   letterPending: 'Kutilmoqda',
   letterTripArrived: 'Hisobot kutilmoqda',
   letterTripOngoing: 'Safar davom etmoqda',

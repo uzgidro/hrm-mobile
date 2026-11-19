@@ -6,11 +6,11 @@
 // Saqlash `formDraft` bilan bir xil (native — expo-file-system, web — localStorage).
 import * as Crypto from 'expo-crypto';
 import type { AxiosError } from 'axios';
-import { clearDraft, loadDraft, saveDraft } from '@/lib/formDraft';
+import { clearDraft, getDraftOwner, loadDraft, saveDraft } from '@/lib/formDraft';
 import { createCheckin } from '../api/mutations';
 import type { CheckinCreateBody, MobileCheckin } from '../types';
 
-const QUEUE_KEY = 'mobile-checkin-queue';
+export const QUEUE_KEY = 'mobile-checkin-queue';
 /** Server 48 soatdan eski belgini rad etadi — undan eskisini yubormaymiz. */
 export const QUEUE_MAX_AGE_MS = 47 * 60 * 60 * 1000;
 
@@ -28,6 +28,17 @@ export function isRetryable(error: unknown): boolean {
   if (!e?.response) return true;
   const s = e.response.status;
   return s === 408 || s === 429 || s >= 500;
+}
+
+/** Server codes meaning the PICTURE is unusable (no visible face / unreadable). Permanent: resending the same bytes cannot succeed. */
+export const PHOTO_REJECT_CODES = ['checkin_no_face', 'checkin_photo_invalid'] as const;
+
+/** True when the server refused the photo itself (422 `checkin_no_face` / 400 `checkin_photo_invalid`). */
+export function isPhotoRejected(error: unknown): boolean {
+  const data = (error as AxiosError | undefined)?.response?.data as { code?: unknown; detail?: unknown } | undefined;
+  const nested = data?.detail && typeof data.detail === 'object' ? (data.detail as { code?: unknown }).code : undefined;
+  const code = typeof data?.code === 'string' ? data.code : nested;
+  return PHOTO_REJECT_CODES.some((c) => c === code);
 }
 
 export async function readQueue(): Promise<QueuedCheckin[]> {
@@ -72,11 +83,17 @@ let flushing: Promise<FlushResult> | null = null;
 export function flushQueue(now: Date = new Date()): Promise<FlushResult> {
   if (flushing) return flushing;
   flushing = (async () => {
+    // Navbat egasiga bog'langan (formDraft): yuborish davomida sessiya
+    // almashsa (chiqish / boshqa xodim kirdi) — qolganini YUBORMAYMIZ va
+    // faylga tegmaymiz; ega qayta kirganda davom etadi (server `client_uuid`
+    // bo'yicha takrorni yangi belgi qilmaydi).
+    const owner = getDraftOwner();
     const q = await readQueue();
     const keep: QueuedCheckin[] = [];
     const sent: MobileCheckin[] = [];
     const failed: FlushResult['failed'] = [];
     for (const item of q) {
+      if (getDraftOwner() !== owner) return { sent, failed, pending: q.length - sent.length - failed.length };
       const captured = Date.parse(item.body.captured_at ?? item.queuedAt);
       if (Number.isFinite(captured) && now.getTime() - captured > QUEUE_MAX_AGE_MS) {
         failed.push({ item, error: new Error('too_old') });
@@ -89,6 +106,7 @@ export function flushQueue(now: Date = new Date()): Promise<FlushResult> {
         else failed.push({ item, error: e });
       }
     }
+    if (getDraftOwner() !== owner) return { sent, failed, pending: keep.length };
     await writeQueue(keep);
     return { sent, failed, pending: keep.length };
   })().finally(() => {

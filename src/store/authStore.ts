@@ -5,6 +5,8 @@ import { useLockStore } from './lockStore';
 import { teardownPushNotifications } from '../auth/push';
 import { revokeServerSession } from '../auth/session';
 import { User } from '../types';
+import { clearOwnerDrafts, getDraftOwner, setDraftOwner } from '../lib/formDraft';
+import { QUEUE_KEY } from '../features/checkin/lib/queue';
 
 const USER_CACHE_KEY = 'cached_user';
 
@@ -49,6 +51,10 @@ export const useAuthStore = create<AuthState>((set) => ({
     await revokeServerSession();
     await clearTokens();
     await storage.deleteItem(USER_CACHE_KEY);
+    // Shu xodimning qoralamalari keyingi foydalanuvchiga qolmasin. Yuborilmagan
+    // «Keldim» navbati esa saqlanadi — u egasiga bog'langan va faqat o'sha xodim
+    // qayta kirganda yuboriladi.
+    await clearOwnerDrafts(getDraftOwner(), [QUEUE_KEY]);
     // Wipe the PIN/biometrics footprint so the next user can't inherit a lock.
     // lockStore never imports authStore, so this one-way dependency is cycle-free.
     await useLockStore.getState().reset();
@@ -59,3 +65,8 @@ export const useAuthStore = create<AuthState>((set) => ({
 }));
 
 export { USER_CACHE_KEY };
+
+// Qoralama/navbat egasi har doim joriy sessiyaga teng: login, setUser va
+// bootstrap (keshdagi foydalanuvchi) — hammasi shu store orqali o'tadi.
+setDraftOwner(useAuthStore.getState().user?.id);
+useAuthStore.subscribe((s) => setDraftOwner(s.user?.id));

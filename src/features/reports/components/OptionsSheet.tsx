@@ -7,9 +7,10 @@ import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeProvider';
 import { Icon } from '@/components/Icon';
-import { Button, SearchField, Sheet, Text } from '@/ui';
+import { Avatar, Button, SearchField, Sheet, Text } from '@/ui';
 import { divisionTree, toggleMany, toggleOne } from '../utils/params';
 import type { ReportOption } from '../utils/types';
+import { foldText } from '@/utils/searchFold';
 
 type Value = string | number;
 type Item =
@@ -62,11 +63,11 @@ export function OptionsSheet({
       }
       return out;
     }
-    const term = q.trim().toLowerCase();
+    const term = foldText(q.trim());
     const list =
       onSearchChange || !term
         ? options
-        : options.filter((o) => o.label.toLowerCase().includes(term) || (o.sub ?? '').toLowerCase().includes(term));
+        : options.filter((o) => foldText(o.label).includes(term) || foldText((o.sub ?? '')).includes(term));
     return list.map((o) => ({ type: 'option', option: o, indent: false }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options, q, tree, selected, onSearchChange]);
@@ -116,6 +117,10 @@ export function OptionsSheet({
                   on && { backgroundColor: c.brandSoft },
                 ]}
               >
+                {/* Xodim varianti (backend: photo = kichik nusxa, photo_fallback = to'liq) — avatar. */}
+                {it.type === 'option' && (it.option.photo || it.option.photo_fallback) ? (
+                  <Avatar name={it.option.label} thumb={it.option.photo} uri={it.option.photo_fallback} size={36} />
+                ) : null}
                 <View style={styles.text}>
                   <Text variant={it.type === 'branch' ? 'heading' : 'body'} numberOfLines={2}>
                     {it.type === 'branch' && it.ids.length

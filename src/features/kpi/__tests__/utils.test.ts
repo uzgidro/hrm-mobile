@@ -195,6 +195,22 @@ describe('canSetStatus', () => {
   });
 });
 
+describe('server task rights (Verifix) win over the legacy flags', () => {
+  it('grade follows task_grade_access, status follows task_status_access', () => {
+    // NNNY stakeholder: approves tasks but may not change grades (Verifix 031).
+    const approver = access({ task_approve_access: true, task_grade_access: false, task_status_access: true });
+    expect(canGradeTask(approver)).toBe(false);
+    expect(canSetStatus(approver)).toBe(true);
+    // NNYN: changes the KPI status, but a task status needs task_approve/edit (019).
+    const statusOnly = access({ status_change_access: true, task_status_access: false });
+    expect(canSetStatus(statusOnly)).toBe(false);
+    // NYNN: enters facts, so may grade and add tasks.
+    const factOnly = access({ fact_insert_access: true, task_grade_access: true, task_add_access: true });
+    expect(canGradeTask(factOnly)).toBe(true);
+    expect(canAddTaskV2(factOnly, { status: 'I', indicator: { id: 1, has_tasks: true } } as never)).toBe(true);
+  });
+});
+
 describe('canAddTaskV2', () => {
   const hasTasks = { id: 1, has_tasks: true } as const;
   it('needs edit_access AND a has_tasks indicator AND an unlocked entry', () => {

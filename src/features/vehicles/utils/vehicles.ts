@@ -6,6 +6,7 @@ import dayjs from 'dayjs';
 import type { Tone } from '@/ui';
 import type { User } from '@/types';
 import { isSiteMasterAdmin } from '@/utils/roles';
+import { foldText } from '@/utils/searchFold';
 
 // ── Turlar (server sxemalari: schemas/vehicle.py) ──────────────────────────
 
@@ -641,9 +642,9 @@ export function isFuelApproved(f: FuelType): boolean {
 export type FuelFilter = '' | 'approved' | 'pending' | 'rejected';
 
 export function filterFuel(all: FuelType[], search: string, only: FuelFilter): FuelType[] {
-  const q = search.trim().toLowerCase();
+  const q = foldText(search.trim());
   return all.filter((f) => {
-    if (q && !(f.name ?? '').toLowerCase().includes(q)) return false;
+    if (q && !foldText((f.name ?? '')).includes(q)) return false;
     if (only === 'approved' && !isFuelApproved(f)) return false;
     if (only === 'pending' && (isFuelApproved(f) || f.approval_status === 'rejected')) return false;
     if (only === 'rejected' && f.approval_status !== 'rejected') return false;

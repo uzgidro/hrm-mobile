@@ -1,4 +1,5 @@
 import type { DocumentFolder, DocumentScope, HrmFile } from '@/types';
+import { foldText } from '@/utils/searchFold';
 
 // ── File naming ──────────────────────────────────────────────────────────────
 // The web shows original_filename, falling back to file_filename.
@@ -55,16 +56,16 @@ export function filterFolders(
   query: string
 ): DocumentFolder[] {
   const list = folders ?? [];
-  const q = query.trim().toLowerCase();
+  const q = foldText(query.trim());
   if (!q) return list;
-  return list.filter((f) => (f.name ?? '').toLowerCase().includes(q));
+  return list.filter((f) => foldText((f.name ?? '')).includes(q));
 }
 
 // Web parity: file search matches on original_filename only (DocumentsPage.jsx),
 // not the file_filename fallback used for display.
 export function filterFiles(files: HrmFile[] | undefined, query: string): HrmFile[] {
   const list = files ?? [];
-  const q = query.trim().toLowerCase();
+  const q = foldText(query.trim());
   if (!q) return list;
-  return list.filter((f) => (f.original_filename ?? '').toLowerCase().includes(q));
+  return list.filter((f) => foldText((f.original_filename ?? '')).includes(q));
 }

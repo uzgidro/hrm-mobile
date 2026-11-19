@@ -5,8 +5,6 @@ import { StyleSheet, View } from 'react-native';
 import dayjs from 'dayjs';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { useAuthStore } from '@/store/authStore';
-import { resolveEmployeeBranchId } from '@/utils/branch';
 import {
   Avatar,
   Badge,
@@ -22,13 +20,14 @@ import {
 } from '@/ui';
 import { holidaysQuery, offDayDutyQuery } from '../api/queries';
 import { dateRangeLabel, sortByDateFrom, isOngoing } from '../holidays';
+import { useActiveBranchId } from '@/lib/useActiveBranch';
 
 type Tab = 'holidays' | 'offduty';
 
 export default function HolidaysScreen() {
   const { t } = useTranslation();
-  const user = useAuthStore((s) => s.user);
-  const orgBranchId = resolveEmployeeBranchId(user?.employee);
+  const activeBranchId = useActiveBranchId();
+  const orgBranchId = activeBranchId;
   const [tab, setTab] = useState<Tab>('holidays');
   const today = dayjs().format('YYYY-MM-DD');
 
@@ -93,7 +92,7 @@ export default function HolidaysScreen() {
                 <ListRow
                   key={emp.id}
                   title={emp.legal_name ?? '—'}
-                  left={<Avatar name={emp.legal_name ?? '?'} uri={emp.photo_thumb_path ?? emp.photo_path} size={36} />}
+                  left={<Avatar name={emp.legal_name ?? '?'} uri={emp.photo_path} thumb={emp.photo_thumb_path} size={36} />}
                 />
               ))}
             </Card>

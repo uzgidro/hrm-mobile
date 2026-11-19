@@ -14,8 +14,10 @@ import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { EmptyState, LoadingView } from '@/components/StateViews';
 import { getApiErrorMessage } from '@/api/errors';
+import { uzPhoneFromInput, uzPhoneInputValue, isUzPhoneEmpty } from '@/utils/phone';
 import { getMyProfile, useUpdateMyProfile } from '../api/mutations';
 import { toast } from '@/lib/toast';
+import { useSensitiveScreen } from '@/lib/screenPrivacy';
 
 // `key` is the API `maritial_status` enum code (never translated); `labelKey`
 // is a profile.maritalStatus.* catalog key resolved via t() at render time.
@@ -49,6 +51,8 @@ const EMPTY: Form = {
 };
 
 export default function ProfileEditScreen() {
+  // JShShIR / pasport / manzil — skrinshot va ilovalar almashtirgichida yopiq.
+  useSensitiveScreen();
   const { t } = useTranslation();
   const { user } = useAuthStore();
   const employeeId = user?.employee?.id;
@@ -67,7 +71,7 @@ export default function ProfileEditScreen() {
         const e = await getMyProfile(employeeId);
         const loaded = {
           legal_name: e.legal_name ?? '',
-          phone_number: e.phone_number ?? '',
+          phone_number: uzPhoneInputValue(e.phone_number),
           internal_phone_number: e.internal_phone_number ?? '',
           address: e.address ?? '',
           maritial_status: e.maritial_status ?? '',
@@ -117,6 +121,8 @@ export default function ProfileEditScreen() {
       (Object.keys(form) as (keyof Form)[]).forEach((k) => {
         const val = form[k]?.trim?.() ?? form[k];
         if (!val) return;
+        // Prefix-only phone input means "no phone".
+        if (k === 'phone_number' && isUzPhoneEmpty(val)) return;
         if (initial && val === (initial[k]?.trim?.() ?? initial[k])) return;
         payload[k] = val;
       });
@@ -198,7 +204,7 @@ export default function ProfileEditScreen() {
           </Card>
 
           <Card styles={styles} title={t('profile.sectionContact')}>
-            <Field styles={styles} label={t('profile.fieldPhone')} value={form.phone_number} onChange={set('phone_number')} keyboardType="phone-pad" />
+            <Field styles={styles} label={t('profile.fieldPhone')} value={form.phone_number} onChange={(v) => set('phone_number')(uzPhoneFromInput(v))} keyboardType="phone-pad" />
             <Field styles={styles} label={t('profile.fieldInternalPhone')} value={form.internal_phone_number} onChange={set('internal_phone_number')} keyboardType="phone-pad" />
           </Card>
 

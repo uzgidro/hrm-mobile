@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
   TouchableOpacity, TextInput, ActivityIndicator,
@@ -56,6 +56,12 @@ export default function CreateLeaveScreen() {
   const { data: reasonRows } = useQuery(leaveReasonsQuery());
 
   const reasons = useMemo(() => leaveReasonOptions(reasonRows, LEAVE_TYPES), [reasonRows]);
+  // The default is the dictionary's FIRST reason — the same rule as the web
+  // form. It used to stay on LEAVE_TYPES[0], which is not in the dictionary,
+  // so an untouched form stored a value the web never offers.
+  useEffect(() => {
+    setLeaveType((cur) => (reasons.includes(cur) ? cur : reasons[0] ?? cur));
+  }, [reasons]);
   const notice = approverNotice(approversQ.data);
   const earliest = earliestLeaveStart(rules);
   const maxBack = earliest ? rules!.max_days_back : null;

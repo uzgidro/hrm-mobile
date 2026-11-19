@@ -33,6 +33,7 @@ import tabs from './tabs';
 import kpp from './kpp';
 import monitoring from './monitoring';
 import tabelSettings from './tabelSettings';
+import weekendTabel from './weekendTabel';
 import dictionaries from './dictionaries';
 import customFields from './customFields';
 import turnstiles from './turnstiles';
@@ -45,6 +46,10 @@ import sysHealth from './sysHealth';
 import vehicles from './vehicles';
 import reports from './reports';
 import medical from './medical';
+import medicalExam from './medicalExam';
+import sanatorium0 from './sanatorium';
+import sanatorium2 from './sanatorium2';
+import san1 from './san1';
 import zoom from './zoom';
 import health from './health';
 import inspections from './inspections';
@@ -60,6 +65,7 @@ import hrQuality from './hrQuality';
 import responsibles from './responsibles';
 import regStatus from './regStatus';
 import ijro from './ijro';
+import chrono from './chrono';
 import orderTypes from './orderTypes';
 import tempOrders from './tempOrders';
 
@@ -99,6 +105,7 @@ export default {
   kpp,
   monitoring,
   tabelSettings,
+  weekendTabel,
   dictionaries,
   customFields,
   turnstiles,
@@ -111,6 +118,9 @@ export default {
   vehicles,
   reports,
   medical,
+  medicalExam,
+  sanatorium: { ...sanatorium0, s2: sanatorium2.s2, errors: { ...sanatorium0.errors, ...sanatorium2.errors } },
+  san1,
   zoom,
   health,
   inspections,
@@ -126,6 +136,7 @@ export default {
   responsibles,
   regStatus,
   ijro,
+  chrono,
   orderTypes,
   tempOrders,
 } as const;

@@ -148,6 +148,7 @@ export function IsapiRegisterSheet({ onClose }: { onClose: () => void }) {
       </ScrollView>
       {picking === 'branch' && (
         <PickerModal
+          avatars={false}
           visible
           title={t('turnstiles.fieldBranch')}
           options={(branches.data ?? []).map((b) => ({ value: b.id, label: b.name || `#${b.id}` }))}

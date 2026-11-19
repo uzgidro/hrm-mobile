@@ -14,6 +14,10 @@ export type BoardEvent = {
   check_in_out_type?: number;
   is_granted?: boolean;
   photo_thumb_path?: string | null;
+  /** O'tish surati (turniket kamerasi) — to'liq; `photo_thumb_path` uning 160px nusxasi. */
+  photo_path?: string | null;
+  visitor_id?: number | null;
+  visitor?: { id?: number; legal_name?: string | null; photo_path?: string | null; organization_name?: string | null } | null;
   turnstile?: { acs_dev_name?: string; name?: string } | null;
   turnstile_name?: string;
   turnstile_id?: number | null;

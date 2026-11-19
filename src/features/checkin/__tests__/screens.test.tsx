@@ -20,6 +20,9 @@ jest.mock('expo-linear-gradient', () => {
   return { LinearGradient: (p: object) => require('react').createElement(View, p) };
 });
 jest.mock('@/lib/formDraft', () => ({
+  getDraftOwner: () => 'u1',
+  setDraftOwner: jest.fn(),
+  clearOwnerDrafts: jest.fn(async () => undefined),
   loadDraft: jest.fn(async () => null),
   saveDraft: jest.fn(async () => undefined),
   clearDraft: jest.fn(async () => undefined),
@@ -28,8 +31,20 @@ jest.mock('../lib/capture', () => {
   const actual = jest.requireActual('../lib/capture');
   return {
     ...actual,
-    takeCheckinPhoto: jest.fn(async () => ({ uri: 'file:///p.jpg', base64: 'data:image/jpeg;base64,QUJD', width: 960, height: 1280 })),
     getCheckinLocation: jest.fn(async () => ({ latitude: 41.3, longitude: 69.28, accuracy_m: 8, fromCache: false })),
+  };
+});
+
+// The real modal needs a native camera; the stub "captures" as soon as it is opened.
+jest.mock('../components/CheckinCameraModal', () => {
+  const { useEffect } = require('react');
+  return {
+    CheckinCameraModal: ({ visible, onCaptured }: { visible: boolean; onCaptured: (p: unknown) => void }) => {
+      useEffect(() => {
+        if (visible) onCaptured({ uri: 'file:///p.jpg', base64: 'data:image/jpeg;base64,QUJD', width: 960, height: 1280 });
+      }, [visible, onCaptured]);
+      return null;
+    },
   };
 });
 
@@ -133,6 +148,30 @@ describe('mobil «Keldim»', () => {
     expect(await screen.findByText("Bugun xizmat safari yo'q")).toBeTruthy();
     expect(screen.queryByTestId('checkin-submit')).toBeNull();
     expect(await screen.findByText(/Noto'g'ri joy/)).toBeTruthy();
+  });
+
+  // 2026-10-06: «kadr tasdiqlamasa sababi kesilib tashlanmoqda … bosib ko'ra olsin».
+  it('xodim tarixi: qator bosilsa to\'liq sabab, kim bekor qilgani, joy va xarita; bekor qilish tugmasi YO\'Q', async () => {
+    setUser(emp);
+    const long = "Belgi Chorvoq GES hududidan emas, uydan qo'yilgan — ertaga kadrlar bo'limiga tushuntirish xati bilan keling";
+    const row = ck(31, {
+      status: 'cancelled',
+      cancel_reason: long,
+      cancelled_by: { id: 6, legal_name: 'Kadr Hodimova' },
+      nearest_location: { id: 1, name: 'Chorvoq GES', organization_branch: { id: 9, name: 'Chorvoq filiali' } },
+      accuracy_m: 12,
+    });
+    mock.onGet(MOBILE_CHECKINS_ME_STATUS).reply(200, status({ can_check_in: false, trip: null }));
+    mock.onGet(MOBILE_CHECKINS_ME).reply(200, { items: [row], total: 1, pages: 1 });
+    mock.onGet(`${MOBILE_CHECKINS}/31`).reply(200, row);
+    await renderWithProviders(<CheckinScreen />);
+    await fireEvent.press(await screen.findByTestId('checkin-row-31'));
+    const sheet = await screen.findByTestId('hr-checkin-detail');
+    expect(screen.getByText(long)).toBeTruthy();
+    expect(sheet).toHaveTextContent(/Kadr Hodimova/);
+    expect(sheet).toHaveTextContent(/Chorvoq GES · Chorvoq filiali/);
+    expect(sheet).toHaveTextContent(/±12 m/);
+    expect(screen.queryByTestId('hr-checkin-cancel')).toBeNull();
   });
 
   it('kadr: ro\'yxat filtrlari serverga, tafsilotdan sabab bilan bekor qilish', async () => {

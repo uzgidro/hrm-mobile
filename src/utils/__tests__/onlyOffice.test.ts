@@ -110,3 +110,15 @@ describe('onlyOffice', () => {
     });
   });
 });
+
+// 2026-10-06: telefonda «бесплатную версию Community … только на просмотр» ogohlantirishi —
+// server device=mobile da ko'rish rejimini imzolaydi.
+describe('onlyOfficeDeviceParams', () => {
+  it('telefon/WebView va tor veb — device=mobile; keng veb (desktop muharrir) — parametrsiz', () => {
+    const { onlyOfficeDeviceParams } = jest.requireActual('../onlyOffice') as typeof import('../onlyOffice');
+    expect(onlyOfficeDeviceParams('android', 390)).toEqual({ device: 'mobile' });
+    expect(onlyOfficeDeviceParams('ios', 1024)).toEqual({ device: 'mobile' });
+    expect(onlyOfficeDeviceParams('web', 390)).toEqual({ device: 'mobile' });
+    expect(onlyOfficeDeviceParams('web', 1280)).toEqual({});
+  });
+});

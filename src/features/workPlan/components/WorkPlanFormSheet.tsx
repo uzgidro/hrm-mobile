@@ -4,10 +4,9 @@ import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import dayjs from 'dayjs';
 import { useQuery } from '@tanstack/react-query';
+import { useEmployeeListPicker } from '@/lib/useInfinitePicker';
 import { useTranslation } from 'react-i18next';
-import { apiClient } from '@/api/client';
-import { unwrapList } from '@/api/response';
-import { EMPLOYEES_LIST } from '@/api/urls';
+
 import { getApiErrorMessage } from '@/api/errors';
 import { toast } from '@/lib/toast';
 import { departmentOptionsQuery } from '@/utils/employees';
@@ -15,7 +14,7 @@ import { DatePickerModal } from '@/components/DatePicker';
 import { FormInput } from '@/components/FormInput';
 import { PickerModal } from '@/components/PickerModal';
 import { Button, Chip, SelectField, Sheet, Text } from '@/ui';
-import type { Employee } from '@/types';
+
 import type { WorkPlan } from '../api/queries';
 import { useSaveWorkPlan } from '../api/mutations';
 import { PERIOD_TYPES, PLAN_STATUSES, buildWorkPlanBody, validateWorkPlan, type WorkPlanForm } from '../utils/workPlan';
@@ -51,12 +50,10 @@ export function WorkPlanFormSheet({
   const [empSearch, setEmpSearch] = useState('');
   const save = useSaveWorkPlan();
   const departments = useQuery({ ...departmentOptionsQuery(branchId), enabled: picker === 'dept' });
-  const employees = useQuery({
-    queryKey: ['work-plans', 'employee-picker', empSearch],
-    queryFn: () =>
-      apiClient
-        .get(EMPLOYEES_LIST, { params: { size: 30, ...(empSearch ? { search: empSearch } : {}) } })
-        .then((r) => unwrapList<Employee>(r.data)),
+  // Sahifalab: ro'yxat oxiriga yetganda keyingi sahifa (ilgari faqat birinchi 30 xodim edi).
+  const employees = useEmployeeListPicker({
+    key: 'work-plans',
+    search: empSearch,
     enabled: picker === 'employee',
   });
 
@@ -179,12 +176,16 @@ export function WorkPlanFormSheet({
       </View>
 
       <PickerModal
+        onEndReached={employees.onEndReached}
+        loadingMore={employees.loadingMore}
         visible={picker === 'employee'}
         title={t('workPlan.colEmployee')}
         options={(employees.data ?? []).map((e) => ({
           value: e.id,
           label: e.legal_name,
           subLabel: e.job_position?.name,
+          photo: e.photo_path,
+          photoThumb: e.photo_thumb_path,
         }))}
         loading={employees.isFetching}
         selected={form.employeeId}
@@ -197,6 +198,7 @@ export function WorkPlanFormSheet({
         }}
       />
       <PickerModal
+        avatars={false}
         visible={picker === 'dept'}
         title={t('workPlan.colDepartment')}
         options={(departments.data ?? []).map((d) => ({ value: d.id, label: d.name || `#${d.id}` }))}

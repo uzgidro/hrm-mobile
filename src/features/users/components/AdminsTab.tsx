@@ -37,7 +37,7 @@ export function AdminsTab() {
       <ListRow
         key={r.id}
         testID={`admin-row-${r.id}`}
-        left={<Avatar name={r.email || '?'} uri={r.photo_thumb_path || r.photo_path} size={36} />}
+        left={<Avatar name={r.email || '?'} uri={r.photo_path} thumb={r.photo_thumb_path} size={36} />}
         title={r.email || '—'}
         subtitle={branchLabel(r.organization_branch_id)}
         onPress={() => setOpen({ kind: 'view', row: r, n: Date.now() })}
@@ -128,7 +128,7 @@ function AdminSheet({
     <Sheet visible onClose={onClose} title={email}>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.body}>
         <View style={styles.head}>
-          <Avatar name={email} uri={row.photo_thumb_path || row.photo_path} size={48} />
+          <Avatar name={email} uri={row.photo_path} thumb={row.photo_thumb_path} size={48} />
         </View>
         <KeyValue label={t('users.colAdmin')} value={row.email} />
         <KeyValue label={t('users.colBranch')} value={branch} />

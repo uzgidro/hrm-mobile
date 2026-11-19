@@ -13,6 +13,7 @@ export default {
   setupTitle: "PIN kod o'rnating",
   setupConfirmTitle: 'PIN kodni tasdiqlang',
   setupSubtitle: 'Ilovani himoyalash uchun 4 xonali PIN kod kiriting',
+  pinUpgradeSubtitle: 'Xavfsizlik uchun PIN endi 6 xonali. Yangi PIN kod o\'rnating',
   setupConfirmSubtitle: 'PIN kodni qaytadan kiriting',
 
   // ── Change screen ───────────────────────────────────────────────────────────

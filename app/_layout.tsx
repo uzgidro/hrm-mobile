@@ -10,6 +10,7 @@ import { useAuthStore } from '../src/store/authStore';
 import { useLockStore } from '../src/store/lockStore';
 import { createAppQueryClient } from '../src/lib/queryClient';
 import { wireQueryFocusToAppState } from '../src/lib/queryFocus';
+import { wireSessionCleanup } from '../src/lib/sessionCleanup';
 import { ThemeProvider, useTheme } from '../src/theme/ThemeProvider';
 // Importing the service also installs the foreground notification handler (side effect).
 import { addNotificationListeners } from '../src/services/notifications';
@@ -54,6 +55,10 @@ function ThemedNavigation() {
   // while the app sits in the background. Wire it to AppState so polling pauses
   // when the app is backgrounded (battery + mobile data for field staff).
   useEffect(() => wireQueryFocusToAppState(), []);
+
+  // Chiqish / boshqa foydalanuvchi kirishi: oldingi sessiyaning so'rov va rasm
+  // keshi keyingi foydalanuvchiga ko'rinmasin (src/lib/sessionCleanup).
+  useEffect(() => wireSessionCleanup(queryClient), [queryClient]);
 
   // The mandatory PIN gate. Native-only (SecureStore + the lock store report
   // 'unlocked' on web), rendered as a full-screen sibling of the navigator so
@@ -105,7 +110,11 @@ function ThemedNavigation() {
   // its sidebar on every page), not only inside (tabs) — pushed module screens
   // used to lose it. Phones keep the bottom TabBar inside (tabs) only.
   const { useRail } = useBreakpoint();
-  const showRail = useRail && isAuthenticated && navReady;
+  // An invited doctor (`external-doctor`) is not an employee and the server refuses nearly every
+  // route the shell calls (403 external_doctor_forbidden): no tabs, no NavRail — only the doctor's
+  // desk screens (see the second Stack.Protected block below).
+  const externalDoctor = useAuthStore((s) => s.user?.type === 'external-doctor');
+  const showRail = useRail && isAuthenticated && navReady && !externalDoctor;
 
   return (
     <>
@@ -138,7 +147,7 @@ function ThemedNavigation() {
                 <Stack.Screen name="(auth)" />
               </Stack.Protected>
 
-              <Stack.Protected guard={isAuthenticated}>
+              <Stack.Protected guard={isAuthenticated && !externalDoctor}>
                 <Stack.Screen name="(tabs)" />
                 <Stack.Screen name="profile-detail" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="profile-edit" options={{ animation: 'slide_from_right' }} />
@@ -155,7 +164,6 @@ function ThemedNavigation() {
                 <Stack.Screen name="leave-detail" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="order-detail" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="create-order" options={{ animation: 'slide_from_bottom' }} />
-                <Stack.Screen name="create-news" options={{ animation: 'slide_from_bottom' }} />
                 {/* QR orqali web'ga kirishni tasdiqlash (kamera) — faqat kirgan foydalanuvchi. */}
                 <Stack.Screen name="qr-scan" options={{ animation: 'slide_from_bottom' }} />
                 <Stack.Screen name="order-document" options={{ animation: 'slide_from_bottom' }} />
@@ -165,6 +173,8 @@ function ThemedNavigation() {
                 <Stack.Screen name="submit-report" options={{ animation: 'slide_from_bottom' }} />
                 <Stack.Screen name="notifications" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="news" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="media" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="jonli-tashrif" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="mehmon-detail" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="mehmon-form" options={{ animation: 'slide_from_bottom' }} />
                 <Stack.Screen name="texnik-yordam" options={{ animation: 'slide_from_right' }} />
@@ -190,6 +200,10 @@ function ThemedNavigation() {
                 <Stack.Screen name="vaqtinchalik-buyruqlar" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="buyruq-turlari" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="ijro" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="topshiriqlar-xronologiyasi" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="topshiriq" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="topshiriq-form" options={{ animation: 'slide_from_bottom' }} />
+                <Stack.Screen name="topshiriq-fayl" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="registratsiya-holati" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="masullar" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="kadr-nazorati" options={{ animation: 'slide_from_right' }} />
@@ -200,12 +214,44 @@ function ThemedNavigation() {
                 <Stack.Screen name="ish-rejasi" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="malaka-oshirish" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="oquv-markazi" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="kurs-detail" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="kurs-player" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="kurs-tahrir" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="kurs-dars" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="auditlar" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="keldim" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="mobil-belgilar" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="sogliq-korigi" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="dam-olish-tabeli" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="sanatorium" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="sanatorium-stays" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="sanatorium-doctor" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="sanatorium-scan" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="sanatorium-guest" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="sanatorium-appointment" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="sanatorium-nurse" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="sanatorium-kitchen" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="sanatorium-requests" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="sanatorium-guests" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="sanatorium-stay" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="sanatorium-bookings" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="sanatorium-rooms" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="sanatorium-settings" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="sanatorium-menu" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="sanatorium-journey" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="sanatorium-location" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="sanatorium-territory" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="sanatorium-info" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="sanatorium-broadcasts" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="sanatorium-waitlist" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="sanatorium-housekeeping" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="sanatorium-transfers" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="zoom" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="tibbiy-korik" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="medical-exam" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="medical-exam-qr" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="medical-exam-scan" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="medical-exam-results" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="hisobotlar" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="hisobot" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="avtopark" options={{ animation: 'slide_from_right' }} />
@@ -224,6 +270,15 @@ function ThemedNavigation() {
                 <Stack.Screen name="loyiha-form" options={{ animation: 'slide_from_bottom' }} />
                 <Stack.Screen name="change-pin" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="push-diagnostics" options={{ animation: 'slide_from_right' }} />
+              </Stack.Protected>
+
+              {/* Doctor's desk (staff doctors AND invited doctors). Declared AFTER the shell block:
+                  staff users keep (tabs) as their first screen, while an invited doctor — whose
+                  shell block is switched off above — lands on `doctor-desk`, the first screen here. */}
+              <Stack.Protected guard={isAuthenticated}>
+                <Stack.Screen name="doctor-desk" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="doctor-scan" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="doctor-patient" options={{ animation: 'slide_from_right' }} />
               </Stack.Protected>
             </Stack>
           </AuthResolvedGate>

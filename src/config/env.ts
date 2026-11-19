@@ -9,8 +9,12 @@
 function readUrl(value: string | undefined, fallback: string): string {
   const raw = (value ?? '').trim() || fallback;
   // Fail loudly on a misconfigured override rather than shipping `undefined/api`.
-  if (!/^https?:\/\/.+/.test(raw)) {
-    throw new Error(`[env] Invalid URL: "${raw}" (expected http(s)://…)`);
+  // Reliz build faqat `https` (xavfsizlik auditi 2026-10-09): token va PII ochiq
+  // kanaldan ketmasin. `http://` faqat dev'da (mahalliy backend).
+  const dev = typeof __DEV__ !== 'undefined' && __DEV__;
+  const pattern = dev ? /^https?:\/\/.+/ : /^https:\/\/.+/;
+  if (!pattern.test(raw)) {
+    throw new Error(`[env] Invalid URL: "${raw}" (expected ${dev ? 'http(s)' : 'https'}://…)`);
   }
   return raw.replace(/\/+$/, '');
 }

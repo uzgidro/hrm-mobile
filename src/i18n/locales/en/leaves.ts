@@ -36,7 +36,6 @@ export default {
   durationMinutes_other: '{{count}} minutes',
 
   typeSheetTitle: 'Select request type',
-  typeCustomPlaceholder: 'Or type your own...',
 
   // Preset leave-type labels. Keys are the untranslated LEAVE_TYPES values.
   presetType: {
@@ -63,6 +62,11 @@ export default {
   deleteConfirmTitle: 'Delete request',
   deleteConfirmMessage: 'Delete this request? This action cannot be undone.',
   actionNeeded: 'Approval needed',
+  homeTitle: "Leave requests",
+  homeAll: "All",
+  homeAwaiting: "Awaiting your approval: {{count}}",
+  homeNoneAwaiting: "Nothing awaiting your approval",
+  homeCreate: "Request leave",
   rejectReasonTitle: 'Rejection reason',
   rejectReasonPlaceholder: 'Enter a reason...',
 

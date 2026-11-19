@@ -94,7 +94,7 @@ export default function IjroScreen() {
                   title={`${task.task_index || '—'} · ${name}`}
                   subtitle={task.description || undefined}
                   left={
-                    <Avatar name={name} uri={task.employee?.photo_thumb_path ?? task.employee?.photo_path} size={36} />
+                    <Avatar name={name} uri={task.employee?.photo_path} thumb={task.employee?.photo_thumb_path} size={36} />
                   }
                   right={
                     <View style={styles.right}>

@@ -127,7 +127,8 @@ export function TripCheckinCard() {
 }
 
 const styles = StyleSheet.create({
-  card: { borderRadius: radii.xl, padding: 16, gap: 12, overflow: 'hidden' },
+  // marginBottom: bosh sahifada keyingi karta bilan yopishib qolardi (2026-10-06 skrinshot); kartalar orasi 12.
+  card: { borderRadius: radii.xl, padding: 16, gap: 12, overflow: 'hidden', marginBottom: 12 },
   top: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   pin: {
     width: 46,

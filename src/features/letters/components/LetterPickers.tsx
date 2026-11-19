@@ -82,7 +82,7 @@ export function LetterPickers(props: {
 
   return (
     <>
-      <PickerModal visible={picker === 'type'} title={t('letters.pickerType')} options={typeOptions} selected={selectedTypeValue}
+      <PickerModal avatars={false} visible={picker === 'type'} title={t('letters.pickerType')} options={typeOptions} selected={selectedTypeValue}
         onClose={onClosePicker} onSelect={onSelectType} />
 
       <PickerModal visible={picker === 'main'} title={t('letters.pickerMainSigner')} options={signerOptions} loading={signersLoading} selected={mainSignerId}
@@ -110,10 +110,10 @@ export function LetterPickers(props: {
       <PickerModal visible={picker === 'submitter'} title={t('letters.pickerSubmitter')} options={submitterOptions} loading={submittersLoading} selected={submitterId}
         onClose={onClosePicker} onSelect={onSelectSubmitter} />
 
-      <PickerModal visible={picker === 'regions'} title={t('letters.pickerRegions')} options={regionOptions} loading={branchesLoading} multiple selected={selectedRegionValues}
+      <PickerModal avatars={false} visible={picker === 'regions'} title={t('letters.pickerRegions')} options={regionOptions} loading={branchesLoading} multiple selected={selectedRegionValues}
         onClose={onClosePicker} onSelect={() => {}} onToggle={onToggleRegion} />
 
-      <PickerModal visible={picker === 'destinations'} title={t('letters.pickerDestinations')} options={destinationOptions} loading={branchesLoading} multiple selected={destinationIds}
+      <PickerModal avatars={false} visible={picker === 'destinations'} title={t('letters.pickerDestinations')} options={destinationOptions} loading={branchesLoading} multiple selected={destinationIds}
         onClose={onClosePicker} onSelect={() => {}} onToggle={onToggleDestination} />
 
       <DatePickerModal visible={datePicker === 'departure'} value={departureDate} title={t('letters.fieldDepartureDate')} onClose={onCloseDatePicker} onConfirm={onConfirmDepartureDate} />

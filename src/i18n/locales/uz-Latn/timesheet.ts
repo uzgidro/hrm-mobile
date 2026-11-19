@@ -19,9 +19,9 @@ export default {
   hoursLabel: 'Jami ish vaqti',
 
   // ── Legend ───────────────────────────────────────────────────────────────
+  leaveReason: 'Ruxsat',
   dayTitle: 'Kun holati',
   lateByMinutes: '{{value}} daqiqa kechikkan',
-  legendTitle: 'Belgilar',
 
   // ── Duty roster (navbatchilik, Wave 2) ────────────────────────────────────
   dutyTitle: 'Navbatchilik',
@@ -55,24 +55,27 @@ export default {
 
   // ── Calendar status code labels (codes stay untranslated) ────────────────
   codePresent: 'Kelgan',
-  codeLate: 'Kechikkan',
+  codeLate: "Kech qolgan",
   codeEarlyLeave: 'Erta ketgan',
-  codeAbsent: 'Kelmagan',
+  codeAbsent: "Kelmagan (sababsiz)",
   codeProgul: 'Progul',
   codeDayOff: 'Dam olish kuni',
   codeBusinessTrip: 'Xizmat safari',
   codeAnnualLeave: 'Mehnat taʼtili',
-  codeSickLeave: 'Kasallik',
-  codeUnpaidLeave: 'Toʻlanmaydigan taʼtil',
-  codeWorkLeave: 'Ruxsat',
-  codeDekret: 'Homiladorlik taʼtili',
+  codeSickLeave: "Kasallik varaqasi",
+  codeUnpaidLeave: "Haqsiz taʼtil",
+  codeWorkLeave: "Maʼmuriyat ruxsati bilan",
+  codeDekret: "Tugʻruq / bola parvarish taʼtili",
   codeStudyLeave: 'Oʻquv taʼtili',
   codeTraining: 'Malaka oshirish',
   codeMilitary: 'Harbiy xizmat',
   codeReference: 'Maʼlumotnoma',
-  codePaidAbsence: 'Ish haqi saqlangan',
-  codeUnknownReason: 'Nomaʼlum sabab',
-  codeDismissed: 'Ishdan boʻshatilgan',
+  codePaidAbsence: "Ish haqi saqlangan taʼtil",
+  codeUnknownReason: "Noaniq sabab",
+  codeDismissed: "Ishdan ozod",
+  codeHoliday: "Bayram kuni",
+  codeOtgul: "Otgul",
+  codeNonPaidLeave: "Toʻlanmaydigan taʼtil",
   codeUnknown: 'Nomaʼlum',
   // Day detail (Вход/Выход + График + Журнал) — raw turnstile events.
   entry: 'kirish',

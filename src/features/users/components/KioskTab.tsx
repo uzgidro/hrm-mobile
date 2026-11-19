@@ -15,11 +15,14 @@ import { useDeleteKiosk, useSendKioskPassword } from '../api/mutations';
 import { isForbidden, kioskRoleKey, type KioskUser } from '../utils/users';
 import { KioskFormSheet } from './KioskFormSheet';
 import { Denied, KeyValue, useBranchName } from './UsersBits';
+import { useSensitiveScreen } from '@/lib/screenPrivacy';
 
 type Kiosk = KioskUser & { id: number };
 type Open = { kind: 'view'; row: Kiosk; n: number } | { kind: 'form'; row: Kiosk | null; n: number } | null;
 
 export function KioskTab({ branchId }: { branchId: number | null }) {
+  // KioskFormSheet'da JShShIR kiritiladi — sheet FLAG_SECURE ni shu ekrandan oladi.
+  useSensitiveScreen();
   const { t } = useTranslation();
   const compact = useBreakpoint().sizeClass === 'compact';
   const list = useQuery(kioskUsersQuery(branchId));
@@ -44,7 +47,7 @@ export function KioskTab({ branchId }: { branchId: number | null }) {
       <ListRow
         key={r.id}
         testID={`kiosk-row-${r.id}`}
-        left={<Avatar name={r.legal_name || r.username || '?'} uri={r.photo_thumb_path || r.photo_path} size={36} />}
+        left={<Avatar name={r.legal_name || r.username || '?'} uri={r.photo_path} thumb={r.photo_thumb_path} size={36} />}
         title={r.legal_name || r.username || '—'}
         subtitle={[r.username, branchesLabel(r)].filter(Boolean).join(' · ')}
         below={compact ? <View style={styles.below}>{roleBadge(r)}</View> : undefined}

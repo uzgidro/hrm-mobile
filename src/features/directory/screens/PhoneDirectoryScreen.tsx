@@ -6,12 +6,11 @@ import { ChipScroll } from '@/components/ChipScroll';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { ff } from '@/theme/typography';
 import { useBreakpoint } from '@/utils/responsive';
-import { findExecutiveBranchId, resolveEmployeeBranchId } from '@/utils/branch';
+import { findExecutiveBranchId } from '@/utils/branch';
 import { Icon } from '@/components/Icon';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
@@ -20,7 +19,9 @@ import { PagedList } from '@/components/PagedList';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { SearchBox } from '@/components/SearchBox';
 import type { PhoneDirectoryEntry } from '@/types';
+import { formatUzPhone, telUrl } from '@/utils/phone';
 import { phoneDirectoryQuery, directoryBranchesQuery } from '../api/queries';
+import { useActiveBranchId } from '@/lib/useActiveBranch';
 
 type Scope = 'exec' | 'system';
 
@@ -32,7 +33,7 @@ export default function PhoneDirectoryScreen() {
   const styles = useThemedStyles(makeStyles);
   const bp = useBreakpoint();
   const cols = bp.isTablet ? (bp.isLandscape ? 3 : 2) : 1;
-  const { user } = useAuthStore();
+  const activeBranchId = useActiveBranchId();
   const [search, setSearch] = useState('');
 
   const { data: branches = [] } = useQuery(directoryBranchesQuery());
@@ -48,7 +49,7 @@ export default function PhoneDirectoryScreen() {
   // Scope defaults to the user's own world: a filial employee opens on "Tizim
   // tashkilotlari" with their own branch pre-selected; everyone else on "Ijro
   // apparati" (web TabelPage autoScope parity).
-  const ownBranchId = resolveEmployeeBranchId(user?.employee) ?? null;
+  const ownBranchId = activeBranchId ?? null;
   const autoScope: Scope = ownBranchId != null && ownBranchId !== executiveBranchId ? 'system' : 'exec';
   const [scopeChoice, setScopeChoice] = useState<Scope | null>(null);
   const [branchChoice, setBranchChoice] = useState<number | null | undefined>(undefined);
@@ -84,7 +85,10 @@ export default function PhoneDirectoryScreen() {
     enabled: isSearching || scopeReady,
   });
 
-  const dial = (phone: string) => Linking.openURL(`tel:${phone.replace(/\s+/g, '')}`);
+  const dial = (phone: string) => {
+    const url = telUrl(phone);
+    if (url) Linking.openURL(url).catch(() => {});
+  };
   const branchName = (id?: number | null) => branches.find((b) => b.id === id)?.name ?? null;
   // Branch named in headers only when the list spans several branches
   // ("all system branches"); a single-branch scope already says which one.
@@ -195,7 +199,7 @@ export function groupLabel(
 function phoneNumbers(e: PhoneDirectoryEntry): { key: 'internal' | 'personal'; value: string }[] {
   const out: { key: 'internal' | 'personal'; value: string }[] = [];
   if (e.internal_phone_number) out.push({ key: 'internal', value: e.internal_phone_number });
-  if (e.phone_number) out.push({ key: 'personal', value: e.phone_number });
+  if (e.phone_number) out.push({ key: 'personal', value: formatUzPhone(e.phone_number) });
   return out;
 }
 

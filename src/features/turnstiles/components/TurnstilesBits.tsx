@@ -51,6 +51,7 @@ export function LocationsPicker({
   const { locations } = useLocationNames(branchId);
   return (
     <PickerModal
+      avatars={false}
       visible
       multiple
       title={t('turnstiles.fieldLocations')}

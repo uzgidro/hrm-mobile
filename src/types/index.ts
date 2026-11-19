@@ -6,7 +6,7 @@ export interface User {
    * department, no position — could not be recognised and fell through every
    * check into the ordinary-employee menu.
    */
-  type: 'employee' | 'master-admin' | 'admin' | 'guest' | 'monitoring' | 'monitoring-operator' | 'kpp';
+  type: 'employee' | 'master-admin' | 'admin' | 'guest' | 'monitoring' | 'monitoring-operator' | 'kpp' | 'external-doctor';
   /** Xodim kartasi — `admin` / `master-admin` / kiosk / mehmon hisoblarida `null` keladi. */
   employee?: Employee | null;
   is_secretariat?: boolean;
@@ -76,6 +76,23 @@ export interface User {
   is_ijro_manager?: boolean;
   /** Filialda tibbiy ko'rik moduli yoqilgan (auth/me) — v2 needsMedical. */
   medical_enabled?: boolean;
+  /** May write medical records (auth/me): true for staff doctors AND invited (`external-doctor`) ones. */
+  is_doctor?: boolean;
+  /** Works the clinic's check-in and queue screens. Its mere PRESENCE (true or false) also tells
+   *  the app that the server supports the examination-day screens — see utils/roles.ts. */
+  medical_reception?: boolean;
+  /** Invited doctor's own profile (auth/me); `null` for everyone else. */
+  external_doctor?: {
+    id: number;
+    full_name?: string | null;
+    workplace?: string | null;
+    valid_until?: string | null;
+    can_work?: boolean;
+  } | null;
+  /** Sanatorium («Energetiklar sihatgohi») staff roles from /auth/me; empty/missing = module hidden. */
+  sanatorium_roles?: string[];
+  /** Real sanatorium staff: the sanatorium dashboard goes to the top of home. */
+  sanatorium_home?: boolean;
   /** Doktorning o'z turlari (auth/me) — bitta bo'lsa ko'rik formasida tanlash chiqmaydi (v2). */
   medical_specialties?: { id: number; name?: string | null }[];
   /** Hamshira sifatida biriktirilgan filiallar (auth/me) — v2 needsHealth. */
@@ -100,6 +117,8 @@ export interface Employee {
   id: number;
   legal_name: string;
   photo_path?: string;
+  /** 160×160 nusxa — ro'yxat avatarlari uchun (Avatar `thumb`). */
+  photo_thumb_path?: string | null;
   birth_date?: string;
   email?: string;
   phone_number?: string;
@@ -617,6 +636,7 @@ export interface EmployeeBirthday {
   legal_name: string;
   birth_date?: string;
   photo_path?: string;
+  photo_thumb_path?: string | null;
   days_left: number;
   job_position?: { id: number; name: string };
 }
@@ -625,6 +645,7 @@ export interface EmployeeBirthday {
 export interface Visitor {
   id: number;
   legal_name?: string;
+  photo_thumb_path?: string | null;
   personal_identification_number?: string;
   organization_name?: string;
   job_position?: string;
@@ -821,6 +842,11 @@ export interface KpiEntryAccess {
   status_change_access: boolean;
   task_approve_access: boolean;
   manage_access: boolean;
+  // Verifix task rules, computed by the server (absent on an older backend):
+  // add — fact_insert/edit; status — task_approve/edit; grade — fact_insert/edit.
+  task_add_access?: boolean;
+  task_status_access?: boolean;
+  task_grade_access?: boolean;
 }
 
 // One employee × indicator × period plan/fact row. Status carries BOTH legacy
@@ -910,7 +936,8 @@ export interface KpiBonus {
 // /turnstile-attendance-events/normalized. `calendar` is the month grid:
 // { "YYYY-MM-DD" -> status code } (present|late|absent|day_off|business_trip|
 // annual_leave|sick_leave|unpaid_leave|dekret|dismissed|work_leave|early_leave
-// and the label-mapped codes). This is the source for "Мой табель".
+// and the label-mapped codes; `dismissed` = days after the contract ended, the person stays in the
+// month's tabel; `holiday` is a tabel code key for a public holiday). This is the source for "Мой табель".
 export interface AttendanceSummary {
   present_days_count?: number | null;
   late_days_count?: number | null;
@@ -918,6 +945,18 @@ export interface AttendanceSummary {
   work_duration_hours?: number | null;
   calendar?: Record<string, string> | null;
   daily_late_minutes?: Record<string, number> | null;
+  /** Minutes badged in on rest days (turnstile figure behind the rest-day tabel). */
+  rest_day_minutes?: number | null;
+  /** Approved permissions per day: the reason (request type), note and time range. */
+  daily_leaves?: Record<string, LeaveDayNote[]> | null;
+}
+
+export interface LeaveDayNote {
+  reason?: string | null;
+  note?: string | null;
+  /** "HH:MM"; null for a whole-day leave. */
+  start?: string | null;
+  end?: string | null;
 }
 
 // A row of `/dashboard/employees-by-category` (EmployeeDashboardRead — no PII).

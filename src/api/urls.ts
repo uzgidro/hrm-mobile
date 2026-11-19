@@ -16,6 +16,13 @@ export const AUTH_ME_PASSWORD = 'auth/me/password';
 export const SSO_LOGIN = 'sso/login';
 export const SSO_EXCHANGE = 'sso/exchange';
 
+// Face login (backend api/v1/face_login.py) — pre-login; the camera recognises
+// the employee among everyone, no username/password.
+export const FACE_STATUS = 'auth/face/status';
+export const FACE_CHALLENGE = 'auth/face/challenge';
+export const FACE_VERIFY = 'auth/face/verify';
+export const FACE_ME = 'auth/face/me';
+
 // Employee
 export const EMPLOYEE_DETAIL = (id: number) => `employees/${id}`;
 
@@ -77,10 +84,12 @@ export const DICTIONARY_OPTIONS = (code: string) => `dictionaries/${code}/option
 /** System settings (`{ values, schema }`); `values['nav.modules']` is the web v2 module matrix. */
 export const SYSTEM_SETTINGS = 'system-settings';
 
+// Davomat (tabel) kodlari — HR manbasi + filial shabloni «Kodlar» varag'i (backend 3de99d9).
+export const TABEL_CODES = 'organization-branches/tabel-codes';
+
 // News
-export const NEWS_POSTS = 'news-posts';
-// Yangilikni tahrirlash / o'chirish (web NewsPage pariteti, 2026-09-13).
-export const NEWS_POST_DETAIL = (id: number) => `news-posts/${id}`;
+// Kompaniya yangiliklari — uzgidro.uz saytidan (web v2 bilan bitta manba, 2026-09-24 qarori).
+export const COMPANY_NEWS_PAGE = 'dashboard/company-news/page';
 
 // Chairman tasks (Raisning kun tartibi — agenda). Calendar-style entries: no
 // detail endpoint (the list carries everything). Manage = secretariat / admin.
@@ -360,6 +369,12 @@ export const WORK_LEAVES_HR_LIST = 'work-leaves/hr-list';
 export const WORK_LEAVES_HR_CREATE = 'work-leaves/hr-create';
 // Ijro intizomi — topshiriqlar va muddatlar (web v2 IjroPage).
 export const TASKS_OVERDUE = 'tasks-overdue';
+// Topshiriqlar xronologiyasi — a main job with a tree of jobs (web v2 /topshiriqlar-xronologiyasi).
+export const TASK_CHRONOLOGY = 'task-chronology';
+export const TASK_CHRONOLOGY_ITEM = (id: number) => `task-chronology/${id}`;
+export const CHRONO_STEP = (id: number) => `task-chronology/steps/${id}`;
+export const CHRONO_EXTENSION = (id: number) => `task-chronology/extension-requests/${id}`;
+export const CHRONO_FILE_VIEWER_CONFIG = (id: number) => `task-chronology/attachments/${id}/viewer-config`;
 
 // ── W4 Xodimlar ──────────────────────────────────────────────────────────────
 export const REGISTRATION_ME = 'registrations/me';
@@ -397,6 +412,27 @@ export const LEARNING_META = 'learning/meta';
 export const LEARNING_MY = 'learning/my';
 export const LEARNING_COURSES = 'learning/courses';
 export const LEARNING_ENROLLMENT = (id: number) => `learning/enrollments/${id}`;
+// Learning center builder + player (backend 2026-11-17). Sections, curriculum,
+// cover, view and quiz exist only on the new API — callers degrade on 404/405.
+export const LEARNING_COURSE = (id: number) => `learning/courses/${id}`;
+export const LEARNING_COURSE_ENROLL = (id: number) => `learning/courses/${id}/enroll`;
+export const LEARNING_COURSE_ASSIGN = (id: number) => `learning/courses/${id}/assign`;
+export const LEARNING_COURSE_ENROLLMENTS = (id: number) => `learning/courses/${id}/enrollments`;
+export const LEARNING_COURSE_COVER = (id: number) => `learning/courses/${id}/cover`;
+export const LEARNING_COURSE_SECTIONS = (id: number) => `learning/courses/${id}/sections`;
+export const LEARNING_COURSE_CURRICULUM = (id: number) => `learning/courses/${id}/curriculum`;
+export const LEARNING_COURSE_LESSONS = (id: number) => `learning/courses/${id}/lessons`;
+export const LEARNING_COURSE_QUESTIONS = (id: number) => `learning/courses/${id}/questions`;
+export const LEARNING_SECTION = (id: number) => `learning/sections/${id}`;
+export const LEARNING_LESSON = (id: number) => `learning/lessons/${id}`;
+export const LEARNING_QUESTION = (id: number) => `learning/questions/${id}`;
+export const LEARNING_LESSON_VIEW = (enrollmentId: number, lessonId: number) =>
+  `learning/enrollments/${enrollmentId}/lessons/${lessonId}/view`;
+export const LEARNING_LESSON_COMPLETE = (enrollmentId: number, lessonId: number) =>
+  `learning/enrollments/${enrollmentId}/lessons/${lessonId}/complete`;
+export const LEARNING_LESSON_QUIZ = (enrollmentId: number, lessonId: number) =>
+  `learning/enrollments/${enrollmentId}/lessons/${lessonId}/quiz`;
+export const LEARNING_TEST = (enrollmentId: number) => `learning/enrollments/${enrollmentId}/test`;
 export const INSPECTIONS = 'inspections';
 export const INSPECTION = (id: number) => `inspections/${id}`;
 // Sog'liq ko'rigi (hamshira, smena oldidan). `access` — can_check + nurse_branch_ids.
@@ -504,6 +540,12 @@ export const ORGANIZATION_BRANCH_SYNC_HIK = (id: number) => `organization-branch
 export const ORGANIZATION_BRANCH_LEADER = (id: number, employeeId: number) =>
   `organization-branches/${id}/leaders/${employeeId}`;
 export const ORGANIZATION_BRANCH_TABEL_TEMPLATE = (id: number) => `organization-branches/${id}/tabel-template`;
+// Tabel blanki konstruktori (2026-11-17): ustunlar katalogi, xlsx namuna (saqlamaydi) va filial shabloni sifatida yaratish.
+// Eski server bu yo'llarni bilmaydi (`{pk}` marshruti 422 qaytaradi) — konstruktor faqat katalog o'qilsa ko'rinadi.
+export const ORGANIZATION_BRANCH_TABEL_TEMPLATE_COLUMNS = 'organization-branches/tabel-template-columns';
+export const ORGANIZATION_BRANCH_TABEL_TEMPLATE_SAMPLE = 'organization-branches/tabel-template-sample';
+export const ORGANIZATION_BRANCH_TABEL_TEMPLATE_BUILD = (id: number) =>
+  `organization-branches/${id}/tabel-template/build`;
 export const ORGANIZATION_BRANCH_LOGO = (id: number) => `organization-branches/${id}/logo`;
 export const ORGANIZATION_BRANCH_DOC_TEMPLATE = (id: number, docType: string) =>
   `organization-branches/${id}/document-template/${docType}`;
@@ -558,3 +600,151 @@ export const MOBILE_CHECKIN_DETAIL = (id: number) => `mobile-checkins/${id}`;
 export const MOBILE_CHECKIN_CANCEL = (id: number) => `mobile-checkins/${id}/cancel`;
 // Kadr: bir nechta xodimga bir xil sana oralig'ida xizmat safari (vaqtinchalik buyruq).
 export const WORK_LEAVES_HR_BULK_CREATE = 'work-leaves/hr-bulk-create';
+
+// Tibbiy ko'rik (davriy tibbiy ko'rik kuni) — xodimning o'z yo'llari (modul darvozasidan tashqari)
+// va shifokor ish joyi (`/medical/*`). Qarang: features/medicalExam.
+export const MEDICAL_ME_QR = 'employees/me/medical-qr';
+export const MEDICAL_ME_VISIT = 'employees/me/medical-visit';
+export const MEDICAL_ME_QUEUE_JOIN = 'employees/me/medical-queue/join';
+export const MEDICAL_ME_CHECKUPS = 'employees/me/medical-checkups';
+export const MEDICAL_QR_RESOLVE = 'medical/qr/resolve';
+export const MEDICAL_QUEUE = 'medical/queue';
+/** People the calling doctor has received (staff and invited doctors alike). */
+export const MEDICAL_MY_PATIENTS = 'medical/my-patients';
+export const MEDICAL_STATION_STATUS = (stationId: number) => `medical/visit-stations/${stationId}/status`;
+
+// ── Sanatorium («Energetiklar sihatgohi») staff API ──
+export const SANATORIUM_DASHBOARD = 'sanatorium/dashboard';
+export const SANATORIUM_AVAILABILITY = 'sanatorium/availability';
+export const SANATORIUM_STAYS = 'sanatorium/stays';
+export const SANATORIUM_STAY_CHECK_IN = (id: number) => `sanatorium/stays/${id}/check-in`;
+export const SANATORIUM_STAY_CHECK_OUT = (id: number) => `sanatorium/stays/${id}/check-out`;
+export const SANATORIUM_STAY_EARLY_LEAVE = (id: number) => `sanatorium/stays/${id}/early-leave`;
+export const SANATORIUM_GUESTS = 'sanatorium/guests';
+export const SANATORIUM_GUEST = (id: number) => `sanatorium/guests/${id}`;
+export const SANATORIUM_QR_RESOLVE = 'sanatorium/qr/resolve';
+export const SANATORIUM_REQUESTS = 'sanatorium/requests';
+export const SANATORIUM_REQUEST_ACCEPT = (id: number) => `sanatorium/requests/${id}/accept`;
+export const SANATORIUM_REQUEST_REJECT = (id: number) => `sanatorium/requests/${id}/reject`;
+export const SANATORIUM_APPOINTMENTS = 'sanatorium/appointments';
+export const SANATORIUM_APPOINTMENT_FINISH = (id: number) => `sanatorium/appointments/${id}/finish`;
+export const SANATORIUM_APPOINTMENT_REFER = (id: number) => `sanatorium/appointments/${id}/refer`;
+export const SANATORIUM_APPOINTMENT_NOTIFIED = (id: number) => `sanatorium/appointments/${id}/nurse-notified`;
+export const SANATORIUM_PROCEDURES = 'sanatorium/procedures';
+export const SANATORIUM_PROCEDURE = (id: number) => `sanatorium/procedures/${id}`;
+export const SANATORIUM_SPECIALTIES = 'sanatorium/specialties';
+export const SANATORIUM_STAFF = 'sanatorium/staff';
+export const SANATORIUM_MENU = 'sanatorium/menu';
+export const SANATORIUM_KITCHEN_COUNTS = 'sanatorium/kitchen/counts';
+export const SANATORIUM_KITCHEN_DAY = 'sanatorium/kitchen/day';
+export const SANATORIUM_SETTINGS = 'sanatorium/settings';
+export const SANATORIUM_SPECIALTY = (id: number) => `sanatorium/specialties/${id}`;
+export const SANATORIUM_STAFF_ONE = (id: number) => `sanatorium/staff/${id}`;
+export const SANATORIUM_STAFF_CANDIDATES = 'sanatorium/staff/candidates';
+export const SANATORIUM_ROOMS = 'sanatorium/rooms';
+export const SANATORIUM_ROOM = (id: number) => `sanatorium/rooms/${id}`;
+export const SANATORIUM_GUEST_CREDENTIALS = (id: number) => `sanatorium/guests/${id}/credentials`;
+export const SANATORIUM_FAMILIES = 'sanatorium/families';
+export const SANATORIUM_FAMILY = (id: number) => `sanatorium/families/${id}`;
+export const SANATORIUM_FAMILY_MEMBERS = (id: number) => `sanatorium/families/${id}/members`;
+export const SANATORIUM_FAMILY_MEMBER = (id: number, guestId: number) => `sanatorium/families/${id}/members/${guestId}`;
+export const SANATORIUM_STAY = (id: number) => `sanatorium/stays/${id}`;
+export const SANATORIUM_STAY_CANCEL = (id: number) => `sanatorium/stays/${id}/cancel`;
+export const SANATORIUM_STAY_PAYMENT = (id: number) => `sanatorium/stays/${id}/payment`;
+export const SANATORIUM_APPOINTMENT = (id: number) => `sanatorium/appointments/${id}`;
+export const SANATORIUM_GUEST_QR = (id: number) => `sanatorium/guests/${id}/qr.png`;
+
+// ── «Dam olish kunlari tabeli» (rest-day work tabel) ──
+export const WEEKEND_TABEL = 'weekend-tabel';
+export const WEEKEND_TABEL_ENTRY = 'weekend-tabel/entry';
+export const WEEKEND_TABEL_ASSIGN = 'weekend-tabel/assign';
+export const WEEKEND_TABEL_ORDERS = 'weekend-tabel/orders';
+export const WEEKEND_TABEL_IMPORT = 'weekend-tabel/import';
+export const WEEKEND_TABEL_EXPORT = 'weekend-tabel/export';
+export const SANATORIUM_ROOM_PHOTOS = (id: number) => `sanatorium/rooms/${id}/photos`;
+export const SANATORIUM_ROOM_PHOTO = (id: number, photoId: number) => `sanatorium/rooms/${id}/photos/${photoId}`;
+export const SANATORIUM_ROOM_PHOTO_ORDER = (id: number) => `sanatorium/rooms/${id}/photos/order`;
+export const SANATORIUM_PUBLIC_ROOMS = 'sanatorium/public/rooms';
+
+// ── Sanatorium sections, part 1 (switches, journey, location, territory, info, broadcasts,
+// waitlist, housekeeping, transfers) ──
+export const SANATORIUM_FEATURES = 'sanatorium/features';
+export const SANATORIUM_JOURNEY_STAGES = 'sanatorium/journey/stages';
+export const SANATORIUM_JOURNEY_STAGE = (id: number) => `sanatorium/journey/stages/${id}`;
+export const SANATORIUM_JOURNEY_STAGES_ORDER = 'sanatorium/journey/stages/order';
+export const SANATORIUM_JOURNEY_SETTINGS = 'sanatorium/journey/settings';
+export const SANATORIUM_JOURNEY_BOARD = 'sanatorium/journey/board';
+export const SANATORIUM_JOURNEY_STAY = (stayId: number) => `sanatorium/journey/stays/${stayId}`;
+export const SANATORIUM_JOURNEY_STAY_STAGE = (stayId: number) => `sanatorium/journey/stays/${stayId}/stage`;
+export const SANATORIUM_LOCATION = 'sanatorium/location';
+export const SANATORIUM_TERRITORY = 'sanatorium/territory';
+export const SANATORIUM_TERRITORY_PLAN = 'sanatorium/territory/plan';
+export const SANATORIUM_TERRITORY_POIS = 'sanatorium/territory/pois';
+export const SANATORIUM_TERRITORY_POI = (id: number) => `sanatorium/territory/pois/${id}`;
+export const SANATORIUM_TERRITORY_POIS_ORDER = 'sanatorium/territory/pois/order';
+export const SANATORIUM_INFO_SECTIONS = 'sanatorium/sections';
+export const SANATORIUM_INFO_SECTION = (id: number) => `sanatorium/sections/${id}`;
+export const SANATORIUM_INFO_SECTIONS_ORDER = 'sanatorium/sections/order';
+export const SANATORIUM_INFO_SECTION_PHOTO = (id: number) => `sanatorium/sections/${id}/photo`;
+export const SANATORIUM_BROADCASTS = 'sanatorium/broadcasts';
+export const SANATORIUM_BROADCAST_AUDIENCES = 'sanatorium/broadcasts/audiences';
+export const SANATORIUM_BROADCAST_PHOTO = 'sanatorium/broadcasts/photo';
+export const SANATORIUM_BROADCAST = (id: number) => `sanatorium/broadcasts/${id}`;
+export const SANATORIUM_WAITLIST = 'sanatorium/waitlist';
+export const SANATORIUM_WAITLIST_ITEM = (id: number) => `sanatorium/waitlist/${id}`;
+export const SANATORIUM_WAITLIST_CONVERT = (id: number) => `sanatorium/waitlist/${id}/convert`;
+export const SANATORIUM_WAITLIST_CANCEL = (id: number) => `sanatorium/waitlist/${id}/cancel`;
+export const SANATORIUM_HK_BOARD = 'sanatorium/housekeeping/board';
+export const SANATORIUM_HK_MY_TASKS = 'sanatorium/housekeeping/my-tasks';
+export const SANATORIUM_HK_TASKS = 'sanatorium/housekeeping/tasks';
+export const SANATORIUM_HK_TASK = (id: number) => `sanatorium/housekeeping/tasks/${id}`;
+export const SANATORIUM_HK_TASK_START = (id: number) => `sanatorium/housekeeping/tasks/${id}/start`;
+export const SANATORIUM_HK_TASK_DONE = (id: number) => `sanatorium/housekeeping/tasks/${id}/done`;
+export const SANATORIUM_HK_SETTINGS = 'sanatorium/housekeeping/settings';
+export const SANATORIUM_ROOM_HK_STATUS = (id: number) => `sanatorium/rooms/${id}/hk-status`;
+export const SANATORIUM_TRANSFERS = 'sanatorium/transfers';
+export const SANATORIUM_TRANSFER_VEHICLES = 'sanatorium/transfers/vehicles';
+export const SANATORIUM_TRANSFER = (id: number) => `sanatorium/transfers/${id}`;
+
+// ── Sanatorium sections: packages, seasons, quote, paid services, organizations, documents,
+// procedure schedule, diet, feedback, analytics ──
+export const SANATORIUM_PACKAGES = 'sanatorium/packages';
+export const SANATORIUM_PACKAGE = (id: number) => `sanatorium/packages/${id}`;
+export const SANATORIUM_PACKAGES_REORDER = 'sanatorium/packages/reorder';
+export const SANATORIUM_PACKAGE_PHOTO = (id: number) => `sanatorium/packages/${id}/photo`;
+export const SANATORIUM_SEASONS = 'sanatorium/seasons';
+export const SANATORIUM_SEASON = (id: number) => `sanatorium/seasons/${id}`;
+export const SANATORIUM_QUOTE = 'sanatorium/quote';
+export const SANATORIUM_SERVICES = 'sanatorium/services';
+export const SANATORIUM_SERVICE = (id: number) => `sanatorium/services/${id}`;
+export const SANATORIUM_SERVICES_REORDER = 'sanatorium/services/reorder';
+export const SANATORIUM_SERVICE_PHOTO = (id: number) => `sanatorium/services/${id}/photo`;
+export const SANATORIUM_SERVICE_SLOTS = (id: number) => `sanatorium/services/${id}/slots`;
+export const SANATORIUM_SERVICE_ORDERS = 'sanatorium/service-orders';
+export const SANATORIUM_SERVICE_ORDER = (id: number) => `sanatorium/service-orders/${id}`;
+export const SANATORIUM_ORGANIZATIONS = 'sanatorium/organizations';
+export const SANATORIUM_ORGANIZATION = (id: number) => `sanatorium/organizations/${id}`;
+export const SANATORIUM_ORG_INVOICE = (id: number) => `sanatorium/organizations/${id}/invoice`;
+export const SANATORIUM_ORG_INVOICE_FILE = (id: number) => `sanatorium/organizations/${id}/invoice/file`;
+export const SANATORIUM_DOC_TEMPLATES = 'sanatorium/documents/templates';
+export const SANATORIUM_DOC_TEMPLATE = (kind: string) => `sanatorium/documents/templates/${kind}`;
+export const SANATORIUM_DOC_TEMPLATE_DOWNLOAD = (kind: string) => `sanatorium/documents/templates/${kind}/download`;
+export const SANATORIUM_STAY_DOCUMENT = (id: number, kind: string) => `sanatorium/stays/${id}/documents/${kind}`;
+export const SANATORIUM_PROCEDURE_ROOMS = 'sanatorium/procedure-rooms';
+export const SANATORIUM_PROCEDURE_ROOM = (id: number) => `sanatorium/procedure-rooms/${id}`;
+export const SANATORIUM_PROCEDURE_SCHEDULE = (procedureId: number) => `sanatorium/procedures/${procedureId}/schedule`;
+export const SANATORIUM_SESSION_BOARD = 'sanatorium/procedure-sessions/board';
+export const SANATORIUM_PROCEDURE_SESSION = (id: number) => `sanatorium/procedure-sessions/${id}`;
+export const SANATORIUM_SESSION_CANCEL = (id: number) => `sanatorium/procedure-sessions/${id}/cancel`;
+export const SANATORIUM_SESSION_MARK = (id: number) => `sanatorium/procedure-sessions/${id}/mark`;
+export const SANATORIUM_DIETS = 'sanatorium/diets';
+export const SANATORIUM_DIET = (id: number) => `sanatorium/diets/${id}`;
+export const SANATORIUM_STAY_DIET = (id: number) => `sanatorium/stays/${id}/diet`;
+export const SANATORIUM_KITCHEN_DIET_DAY = 'sanatorium/kitchen/diet-day';
+export const SANATORIUM_KITCHEN_DIET_COUNTS = 'sanatorium/kitchen/diet-counts';
+export const SANATORIUM_FEEDBACK = 'sanatorium/feedback';
+export const SANATORIUM_FEEDBACK_SUMMARY = 'sanatorium/feedback/summary';
+export const SANATORIUM_FEEDBACK_MINE = 'sanatorium/feedback/mine';
+export const SANATORIUM_ANALYTICS = 'sanatorium/analytics';
+export const SANATORIUM_ANALYTICS_EXPORT = 'sanatorium/analytics/export';
+export const SANATORIUM_ME = 'sanatorium/me';

@@ -36,4 +36,10 @@ export default {
   filters: "Filtrlar",
   filtersApply: "Natijani ko'rsatish",
   filtersCount: "Filtrlar ({{count}})",
+  showAllCount: "Barchasini ko'rsatish ({{count}})",
+  loadMoreCount: "Yana yuklash ({{shown}} / {{total}})",
+  openInBrowser: "Brauzerda ochish",
+  branch: "Filial",
+  allBranches: "Barcha filiallar",
+  mediaLoadFailed: "Yuklab bo'lmadi. Internetni tekshirib, qayta urinib ko'ring.",
 } as const;

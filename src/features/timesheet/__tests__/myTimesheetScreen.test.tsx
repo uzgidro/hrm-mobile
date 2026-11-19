@@ -59,6 +59,27 @@ describe('MyTimesheetScreen', () => {
     expect(await screen.findByText(i18n.t('timesheet.lateByMinutes', { value: 12 }))).toBeTruthy();
   });
 
+  it('ruxsatli kunda sabab va vaqt oralig\'i chiqadi', async () => {
+    mock.onGet(TURNSTILE_ATTENDANCE_NORMALIZED).reply(200, {
+      items: [
+        {
+          attendance: {
+            calendar: { [d2]: 'late' },
+            daily_late_minutes: { [d2]: 29 },
+            daily_leaves: {
+              [d2]: [{ reason: 'Ish uchrashuvi', note: 'Ички ишлар вазирлиги', start: '10:00', end: '17:00' }],
+            },
+          },
+        },
+      ],
+    });
+    await renderWithProviders(<MyTimesheetScreen />);
+    await fireEvent.press(await screen.findByTestId(`tabel-day-${d2}`));
+    expect(
+      await screen.findByText('Ruxsat: 10:00–17:00 Ish uchrashuvi (Ички ишлар вазирлиги)'),
+    ).toBeTruthy();
+  });
+
   it("ma'lumot yo'q — bo'sh holat", async () => {
     mock.onGet(TURNSTILE_ATTENDANCE_NORMALIZED).reply(200, { items: [] });
     await renderWithProviders(<MyTimesheetScreen />);

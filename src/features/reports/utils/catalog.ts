@@ -3,6 +3,7 @@
 // rol bo'yicha hech narsa filtrlamaydi.
 import type { IconName } from '@/components/Icon';
 import type { ReportCatalogItem, ReportCategory } from './types';
+import { foldText } from '@/utils/searchFold';
 
 export const CATALOG_GROUPS: { key: ReportCategory; labelKey: string; icon: IconName }[] = [
   { key: 'attendance', labelKey: 'reports.groupAttendance', icon: 'calendar' },
@@ -12,9 +13,9 @@ export const CATALOG_GROUPS: { key: ReportCategory; labelKey: string; icon: Icon
 
 /** v2: nom, izoh yoki kod bo'yicha (kichik harf). */
 export function catalogMatch(item: ReportCatalogItem, term: string, title: string, desc: string): boolean {
-  const q = term.trim().toLowerCase();
+  const q = foldText(term.trim());
   if (!q) return true;
-  return title.toLowerCase().includes(q) || desc.toLowerCase().includes(q) || item.code.includes(q);
+  return foldText(title).includes(q) || foldText(desc).includes(q) || foldText(item.code).includes(q);
 }
 
 /** Toifalar tartibi: davomat → kadrlar → KPI; bo'sh guruh chiqmaydi; `hidden` (faqat drill) — yo'q. */

@@ -310,7 +310,7 @@ export default function MedicalScreen() {
                   testID={`medical-row-${r.id}`}
                   title={r.legal_name || '—'}
                   subtitle={rowSubtitle(r) || undefined}
-                  left={<Avatar name={r.legal_name || '?'} uri={r.photo_thumb_path || r.photo_path} size={36} />}
+                  left={<Avatar name={r.legal_name || '?'} uri={r.photo_path} thumb={r.photo_thumb_path} size={36} />}
                   // Telefonda nishonlar va sana ism ostida — o'ng ustun ismni «Aliyeva Umida …» gacha qisardi.
                   below={compact ? <View style={styles.below}>{marks}</View> : undefined}
                   right={compact ? undefined : <View style={styles.right}>{marks}</View>}

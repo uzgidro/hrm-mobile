@@ -1,4 +1,3 @@
-import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as Location from 'expo-location';
 import {
@@ -8,15 +7,9 @@ import {
   getCheckinLocation,
   nearestDestination,
   resizeAction,
-  takeCheckinPhoto,
+  prepareCheckinPhoto,
 } from '../lib/capture';
 
-jest.mock('expo-image-picker', () => ({
-  requestCameraPermissionsAsync: jest.fn(),
-  launchCameraAsync: jest.fn(),
-  launchImageLibraryAsync: jest.fn(),
-  CameraType: { front: 'front', back: 'back' },
-}));
 jest.mock('expo-image-manipulator', () => ({
   manipulateAsync: jest.fn(),
   SaveFormat: { JPEG: 'jpeg' },
@@ -28,40 +21,25 @@ jest.mock('expo-location', () => ({
   Accuracy: { High: 4 },
 }));
 
-const picker = ImagePicker as jest.Mocked<typeof ImagePicker>;
 const manip = ImageManipulator as jest.Mocked<typeof ImageManipulator>;
 const loc = Location as jest.Mocked<typeof Location>;
 
 const pos = (extra: Record<string, unknown> = {}) =>
   ({ coords: { latitude: 41.31, longitude: 69.28, accuracy: 12.4 }, timestamp: 0, ...extra }) as never;
 
-describe('takeCheckinPhoto — faqat kamera', () => {
+describe('prepareCheckinPhoto — in-app front camera result', () => {
   beforeEach(() => jest.clearAllMocks());
 
-  it('ruxsat yo\'q — camera_denied, kamera ochilmaydi', async () => {
-    picker.requestCameraPermissionsAsync.mockResolvedValue({ granted: false } as never);
-    await expect(takeCheckinPhoto()).rejects.toMatchObject({ code: 'camera_denied' });
-    expect(picker.launchCameraAsync).not.toHaveBeenCalled();
-  });
-
-  it('kamera (old) ochiladi, galereya HECH QACHON; 1280px gacha kichraytirib JPEG base64', async () => {
-    picker.requestCameraPermissionsAsync.mockResolvedValue({ granted: true } as never);
-    picker.launchCameraAsync.mockResolvedValue({
-      canceled: false,
-      assets: [{ uri: 'file:///a.jpg', width: 3000, height: 4000 }],
-    } as never);
+  it('downsizes to 1280px and returns a JPEG base64 data URL', async () => {
     manip.manipulateAsync.mockResolvedValue({ uri: 'file:///b.jpg', width: 960, height: 1280, base64: 'QUJD' });
-    const p = await takeCheckinPhoto();
-    expect(picker.launchCameraAsync).toHaveBeenCalledWith(expect.objectContaining({ cameraType: 'front', allowsEditing: false }));
-    expect(picker.launchImageLibraryAsync).not.toHaveBeenCalled();
+    const p = await prepareCheckinPhoto({ uri: 'file:///a.jpg', width: 3000, height: 4000 });
     expect(manip.manipulateAsync).toHaveBeenCalledWith('file:///a.jpg', [{ resize: { height: 1280 } }], expect.objectContaining({ base64: true, format: 'jpeg' }));
-    expect(p?.base64).toBe('data:image/jpeg;base64,QUJD');
+    expect(p.base64).toBe('data:image/jpeg;base64,QUJD');
   });
 
-  it('bekor qilinsa — null', async () => {
-    picker.requestCameraPermissionsAsync.mockResolvedValue({ granted: true } as never);
-    picker.launchCameraAsync.mockResolvedValue({ canceled: true, assets: null } as never);
-    await expect(takeCheckinPhoto()).resolves.toBeNull();
+  it('manipulator failure — photo_failed', async () => {
+    manip.manipulateAsync.mockRejectedValue(new Error('boom'));
+    await expect(prepareCheckinPhoto({ uri: 'file:///a.jpg', width: 10, height: 10 })).rejects.toMatchObject({ code: 'photo_failed' });
   });
 });
 

@@ -286,7 +286,7 @@ function VehicleRow({
             <>
               <Avatar
                 name={v.driver.legal_name ?? '?'}
-                uri={v.driver.photo_thumb_path || v.driver.photo_path}
+                uri={v.driver.photo_path} thumb={v.driver.photo_thumb_path}
                 size={24}
               />
               <View style={styles.flex}>

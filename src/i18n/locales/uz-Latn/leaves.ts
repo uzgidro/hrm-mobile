@@ -48,7 +48,6 @@ export default {
 
   // ── Leave-type sheet ────────────────────────────────────────────────────────
   typeSheetTitle: "So'rov turini tanlang",
-  typeCustomPlaceholder: "Yoki o'zingiz yozing...",
 
   // Preset leave-type labels. Web-parity: the KEYS here are the exact
   // LEAVE_TYPES *values* stored/POSTed as the leave `type` (never translated —
@@ -80,6 +79,11 @@ export default {
   reject: 'Rad etish',
   delete: "O'chirish",
   actionNeeded: 'Tasdiqlash kerak',
+  homeTitle: "Ruxsat so'rovlari",
+  homeAll: "Barchasi",
+  homeAwaiting: "Tasdig'ingizni kutmoqda: {{count}}",
+  homeNoneAwaiting: "Tasdig'ingizni kutayotgan so'rov yo'q",
+  homeCreate: "Ruxsat so'rash",
   rejectReasonTitle: 'Rad etish sababi',
   rejectReasonPlaceholder: 'Sababni yozing...',
   deleteConfirmTitle: "So'rovni o'chirish",

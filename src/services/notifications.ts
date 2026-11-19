@@ -1,6 +1,6 @@
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
-import { Platform } from 'react-native';
+import { Linking, Platform } from 'react-native';
 import { apiClient } from '../api/client';
 import { PUSH_TOKENS } from '../api/urls';
 import type { IconName } from '../components/Icon';
@@ -57,11 +57,18 @@ try {
   });
 } catch {}
 
-// The channel id the backend stamps on every Expo message (`channelId: 'default'`
-// in worker/tasks.send_expo_push). Android 8+ takes importance/sound from the
-// CHANNEL, not the message: with no channel of our own, pushes landed in an
-// implicit low-importance one — tray-only, no heads-up banner, no sound.
-export const ANDROID_CHANNEL_ID = 'default';
+// The channel id the backend stamps on every Expo message (`EXPO_ANDROID_CHANNEL_ID`
+// in worker/tasks.py). Android 8+ takes importance/sound from the CHANNEL, not
+// the message: with no channel of our own, pushes landed in an implicit
+// low-importance one — tray-only, no heads-up banner, no sound.
+//
+// 2026-10-09 (xavfsizlik auditi): `default` kanali `lockscreenVisibility: PUBLIC`
+// edi — bloklangan ekranda buyruq/xat matni, xodim ismi ko'rinardi. Kanal
+// sozlamalarini yaratilgandan keyin O'ZGARTIRIB BO'LMAYDI, shuning uchun yangi id
+// bilan PRIVATE kanal ochiladi (bloklangan ekranda faqat «HRM Uzgidro — yangi
+// bildirishnoma»), eskisi o'chiriladi. Backend ham shu id'ni yuboradi.
+export const ANDROID_CHANNEL_ID = 'hrm_private_v1';
+const LEGACY_ANDROID_CHANNEL_IDS = ['default'];
 
 export async function ensureAndroidChannel(): Promise<void> {
   if (Platform.OS !== 'android') return;
@@ -73,10 +80,57 @@ export async function ensureAndroidChannel(): Promise<void> {
       importance: N.AndroidImportance.MAX,
       sound: 'default',
       vibrationPattern: [0, 250, 250, 250],
-      lockscreenVisibility: N.AndroidNotificationVisibility.PUBLIC,
+      lockscreenVisibility: N.AndroidNotificationVisibility.PRIVATE,
     });
+    for (const id of LEGACY_ANDROID_CHANNEL_IDS) {
+      await N.deleteNotificationChannelAsync(id).catch(() => {});
+    }
   } catch (e) {
     pushWarn('android channel', e);
+  }
+}
+
+/**
+ * Tepada (heads-up) chiqadimi? Android 8+ da buni KANAL muhimligi belgilaydi va kanal yaratilgach
+ * ilova uni ko'tara olmaydi — foydalanuvchi yoki telefon (MIUI/EMUI tejamkor rejimi) pasaytirgan
+ * bo'lsa push faqat pastki ro'yxatga tushadi (2026-10-06: «telegramga o'xshab top panelda chiqmayapti»).
+ * `heads_up` = HIGH/MAX, `silent` = DEFAULT va past, `off` = NONE, `unavailable` = iOS/web/modul yo'q.
+ */
+export type ChannelAlert = 'heads_up' | 'silent' | 'off' | 'unavailable';
+
+export async function getAndroidChannelAlert(): Promise<ChannelAlert> {
+  if (Platform.OS !== 'android') return 'unavailable';
+  const N = getNotifications();
+  if (!N) return 'unavailable';
+  try {
+    let ch = await N.getNotificationChannelAsync(ANDROID_CHANNEL_ID);
+    if (!ch) {
+      await ensureAndroidChannel();
+      ch = await N.getNotificationChannelAsync(ANDROID_CHANNEL_ID);
+    }
+    if (!ch) return 'unavailable';
+    if (ch.importance <= N.AndroidImportance.NONE && ch.importance !== N.AndroidImportance.UNKNOWN) return 'off';
+    return ch.importance >= N.AndroidImportance.HIGH ? 'heads_up' : 'silent';
+  } catch (e) {
+    pushWarn('android channel read', e);
+    return 'unavailable';
+  }
+}
+
+/** Shu kanalning tizim sozlamalari («Qalqib chiquvchi», ovoz); bo'lmasa ilova bildirishnomalari. */
+export async function openChannelSettings(packageName: string): Promise<void> {
+  const pkg = { key: 'android.provider.extra.APP_PACKAGE', value: packageName };
+  try {
+    await Linking.sendIntent('android.settings.CHANNEL_NOTIFICATION_SETTINGS', [
+      pkg,
+      { key: 'android.provider.extra.CHANNEL_ID', value: ANDROID_CHANNEL_ID },
+    ]);
+  } catch {
+    try {
+      await Linking.sendIntent('android.settings.APP_NOTIFICATION_SETTINGS', [pkg]);
+    } catch {
+      await Linking.openSettings();
+    }
   }
 }
 
@@ -207,10 +261,17 @@ export function routeForNotification(data: any): string | null {
   const cardId = data.card_id; // loyiha vazifasi
   const workspaceId = data.workspace_id; // loyiha
   const visitorId = data.visitor_id; // mehmon keldi (push payload)
+  const chronoTaskId = data.chrono_task_id; // topshiriqlar xronologiyasi (push payload)
 
   if (orderId) return `/order-detail?id=${orderId}`;
+  // The push carries the task; the in-app row (no id column) opens the list.
+  if (type.startsWith('chrono_')) return chronoTaskId ? `/topshiriq?id=${chronoTaskId}` : '/topshiriqlar-xronologiyasi';
   if (letterId) return `/letter-detail?id=${letterId}`;
   if (kpiEntryId) return `/kpi-entry?id=${kpiEntryId}`;
+  // Doimiy o'tkazish buyrug'i: push `work_leave_id` bilan keladi, lekin qabul
+  // qiluvchi filial kadri bu buyruqning egasi/imzolovchisi emas — tafsilot unga
+  // «Topilmadi» beradi. Qaror navbatiga ochamiz (in-app qator bilan bir xil).
+  if (type.startsWith('employee_transfer_order')) return '/vaqtinchalik-buyruqlar';
   if (workLeaveId) return `/leave-detail?id=${workLeaveId}`;
   if (ticketId) return `/texnik-yordam-detail?id=${ticketId}`;
   // Loyiha ekranlari mobilда BOR (loyihalar / loyiha-detail / karta tafsiloti) —
@@ -243,7 +304,11 @@ export function routeForNotification(data: any): string | null {
   if (type.startsWith('card') || type.startsWith('workspace')) return '/loyihalar';
   // Both screens exist on mobile; these used to return null (tap did nothing).
   if (type.startsWith('navbatchilik')) return '/navbatchilik';
-  if (type.startsWith('employee_assignment')) return '/profile-detail';
+  // Kadrga «xodimingiz boshqa filialda o'rindosh» — push o'sha xodimning id'si bilan
+  // keladi; id'siz (in-app) qatorda — o'z profili (xodimning o'ziga kelgan xabar).
+  if (type.startsWith('employee_assignment')) {
+    return data.employee_id ? `/profile-detail?id=${data.employee_id}` : '/profile-detail';
+  }
   // Zoom yig'ilishlari (zoom_decision, zoom_organizer_changed) — umumiy jadval.
   if (type.startsWith('zoom')) return '/zoom';
   // Tibbiy ko'rik (v2 notificationRoutes): xodimning O'Z xabarlari (muddat / natija) v2 da
@@ -258,7 +323,9 @@ export function routeForNotification(data: any): string | null {
   // v2 notificationRoutes pariteti (2026-10-06): bu oilalar sarlavha olgan, lekin bosilganda
   // hech qayerga olib bormasdi — v3 da ekranlari bor. `service_request` TEST'da 168 qator.
   if (type.startsWith('service_request')) return '/interaktiv-xizmatlar';
-  if (type.startsWith('learning_')) return '/oquv-markazi';
+  // A learning push carries `course_id` (e.g. learning_course_assigned) — open the course page,
+  // whose call to action continues straight into the player; without it, the hub.
+  if (type.startsWith('learning_')) return data.course_id ? `/kurs-detail?id=${data.course_id}` : '/oquv-markazi';
   // Nomzodga o'z arizasi holati (nomzodlik arizasi interaktiv xizmatlarda); `vacancy` — kadrga.
   if (type === 'vacancy_application') return '/interaktiv-xizmatlar';
   if (type.startsWith('vacancy')) return '/shtat';
@@ -418,6 +485,35 @@ const NOTIF_META: Record<string, { titleKey: string; icon: IconName }> = {
   learning_course_assigned: { titleKey: 'notifications.learningCourseAssigned', icon: 'checklist' },
   mobile_checkin_cancelled: { titleKey: 'notifications.mobileCheckinCancelled', icon: 'close' },
   mobile_checkin_far: { titleKey: 'notifications.mobileCheckinFar', icon: 'mapPin' },
+  // Topshiriqlar xronologiyasi (2026-10-26)
+  chrono_assigned_main: { titleKey: 'notifications.chronoAssignedMain', icon: 'target' },
+  chrono_assigned: { titleKey: 'notifications.chronoAssigned', icon: 'target' },
+  chrono_member_added: { titleKey: 'notifications.chronoMemberAdded', icon: 'users' },
+  chrono_comment: { titleKey: 'notifications.chronoComment', icon: 'mail' },
+  chrono_mention: { titleKey: 'notifications.chronoMention', icon: 'mail' },
+  chrono_submitted: { titleKey: 'notifications.chronoSubmitted', icon: 'checklist' },
+  chrono_task_submitted: { titleKey: 'notifications.chronoTaskSubmitted', icon: 'checklist' },
+  chrono_approved: { titleKey: 'notifications.chronoApproved', icon: 'check' },
+  chrono_returned: { titleKey: 'notifications.chronoReturned', icon: 'close' },
+  chrono_task_returned: { titleKey: 'notifications.chronoTaskReturned', icon: 'close' },
+  chrono_reopened: { titleKey: 'notifications.chronoReopened', icon: 'refresh' },
+  chrono_completed: { titleKey: 'notifications.chronoCompleted', icon: 'checkDouble' },
+  chrono_children_done: { titleKey: 'notifications.chronoChildrenDone', icon: 'checkDouble' },
+  chrono_extension_requested: { titleKey: 'notifications.chronoExtRequested', icon: 'clock' },
+  chrono_extension_approved: { titleKey: 'notifications.chronoExtApproved', icon: 'calendar' },
+  chrono_extension_rejected: { titleKey: 'notifications.chronoExtRejected', icon: 'close' },
+  chrono_deadline_changed: { titleKey: 'notifications.chronoDeadlineChanged', icon: 'calendar' },
+  chrono_final_review: { titleKey: 'notifications.chronoFinalReview', icon: 'checkDouble' },
+  chrono_extension_agreement: { titleKey: 'notifications.chronoExtAgreement', icon: 'clock' },
+  chrono_extension_chair: { titleKey: 'notifications.chronoExtChair', icon: 'clock' },
+  chrono_order_changed: { titleKey: 'notifications.chronoOrderChanged', icon: 'refresh' },
+  chrono_coexecutor_added: { titleKey: 'notifications.chronoCoexecutorAdded', icon: 'users' },
+  chrono_reuploaded: { titleKey: 'notifications.chronoReuploaded', icon: 'refresh' },
+  chrono_handoff_agree: { titleKey: 'notifications.chronoHandoffAgree', icon: 'checklist' },
+  chrono_handoff_complete: { titleKey: 'notifications.chronoHandoffComplete', icon: 'checklist' },
+  chrono_control_feed: { titleKey: 'notifications.chronoControlFeed', icon: 'target' },
+  chrono_deadline_reminder: { titleKey: 'notifications.chronoDeadlineReminder', icon: 'clock' },
+  chrono_coexecutor_rejected: { titleKey: 'notifications.chronoCoexecutorRejected', icon: 'users' },
 };
 
 // Human-readable title + icon for an in-app notification, derived from its

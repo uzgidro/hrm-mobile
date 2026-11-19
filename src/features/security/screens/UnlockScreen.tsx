@@ -13,7 +13,6 @@ import { useTranslation } from 'react-i18next';
 import { PinPad } from '@/features/security/components/PinPad';
 import { useLockStore } from '@/store/lockStore';
 import { useAuthStore } from '@/store/authStore';
-import { PIN_LENGTH } from '@/auth/lockPolicy';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { Icon } from '@/components/Icon';
@@ -24,6 +23,8 @@ export default function UnlockScreen() {
   const { colors } = useTheme();
 
   const unlockWithPin = useLockStore((s) => s.unlockWithPin);
+  // Saqlangan PIN uzunligi: eski 4 raqamli PIN ham ochiladi (keyin yangisi so'raladi).
+  const pinLength = useLockStore((s) => s.currentPinLength);
   const unlockWithBiometrics = useLockStore((s) => s.unlockWithBiometrics);
   const biometricsEnabled = useLockStore((s) => s.biometricsEnabled);
   const biometricsSupported = useLockStore((s) => s.biometricsSupported);
@@ -92,7 +93,7 @@ export default function UnlockScreen() {
   const onChange = (next: string) => {
     if (error) setError(null);
     setValue(next);
-    if (next.length === PIN_LENGTH) void submit(next);
+    if (next.length === pinLength) void submit(next);
   };
 
   return (
@@ -107,6 +108,7 @@ export default function UnlockScreen() {
           <PinPad
             value={value}
             onChange={onChange}
+            maxLength={pinLength}
             title={t('security.unlockTitle')}
             error={error}
             disabled={busy}

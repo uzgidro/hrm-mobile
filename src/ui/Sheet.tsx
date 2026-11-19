@@ -50,14 +50,14 @@ export function Sheet({
           ]}
         >
           {!centered && <View style={[styles.grabber, { backgroundColor: c.borderStrong }]} />}
-          {title && (
+          {title ? (
             <View style={styles.header}>
               <Text variant="title" numberOfLines={2} style={[styles.title, WEB_BREAK]}>
                 {title}
               </Text>
               <IconButton icon="close" onPress={onClose} accessibilityLabel={t('common.close')} />
             </View>
-          )}
+          ) : null}
           {scroll ? (
             <ScrollView style={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
               {children}

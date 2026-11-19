@@ -19,12 +19,14 @@ import { AttendanceEventRow } from '@/components/AttendanceEventRow';
 import { MonthNavigator } from '@/components/MonthNavigator';
 import { Card, EmptyState, ErrorState, PageHeader, Screen, Skeleton, StatTile, Text } from '@/ui';
 import { myTimesheetQuery, myTimesheetEventsQuery } from '../api/queries';
-import { tabelCodeMeta, tabelCodeColor, legendCodesFor, tabelSummary, dayAttendanceDetail } from '../utils';
+import { useTabelCodes } from '@/lib/useTabelCodes';
+import { tabelCodeMeta, tabelCodeColor, tabelSummary, dayAttendanceDetail } from '../utils';
 
 // Hafta sarlavhasi dushanbadan (dayjs: yakshanba = 0).
 const WEEKDAY_INDICES = [1, 2, 3, 4, 5, 6, 0];
 
-export default function MyTimesheetScreen() {
+/** `embedded` — Davomat tabining «Mening tabelim» segmenti ichida (sarlavha va yuqori safe-area tabda). */
+export default function MyTimesheetScreen({ embedded = false }: { embedded?: boolean } = {}) {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const employeeId = user?.employee?.id;
@@ -53,7 +55,6 @@ export default function MyTimesheetScreen() {
   const calendar = useMemo(() => row?.attendance?.calendar ?? {}, [row?.attendance?.calendar]);
   const lateMinutes = row?.attendance?.daily_late_minutes ?? {};
   const summary = useMemo(() => tabelSummary(row?.attendance), [row?.attendance]);
-  const legendCodes = useMemo(() => legendCodesFor(calendar), [calendar]);
 
   const daysInMonth = currentMonth.daysInMonth();
   const firstDayOfWeek = (currentMonth.day() + 6) % 7;
@@ -69,8 +70,11 @@ export default function MyTimesheetScreen() {
   }, [currentMonth, firstDayOfWeek, daysInMonth, calendar]);
 
   const selectedCode = calendar[selectedDate];
-  const selectedMeta = tabelCodeMeta(selectedCode);
+  const hrCodes = useTabelCodes();
+  const selectedMeta = tabelCodeMeta(selectedCode, hrCodes);
   const selectedLate = lateMinutes[selectedDate] ?? 0;
+  // Why the day is green (or why a late day still had a permission later on).
+  const selectedLeaves = row?.attendance?.daily_leaves?.[selectedDate] ?? [];
   const hasData = Object.keys(calendar).length > 0;
   const time = (iso?: string) => (iso ? dayjs(iso).format('HH:mm') : '--:--');
 
@@ -132,6 +136,13 @@ export default function MyTimesheetScreen() {
           </Text>
         )}
       </View>
+      {selectedLeaves.map((l, i) => (
+        <Text key={i} testID={`tabel-leave-${i}`} variant="caption" tone="muted" style={styles.leaveReason}>
+          {t('timesheet.leaveReason')}: {[l.start && l.end ? `${l.start}–${l.end}` : '', l.reason, l.note ? `(${l.note})` : '']
+            .filter(Boolean)
+            .join(' ')}
+        </Text>
+      ))}
       <View style={[styles.entryExit, { borderTopColor: colors.border }]}>
         <View style={styles.entryItem}>
           <Text variant="number">{time(dayDetail.firstEntry?.happen_time)}</Text>
@@ -212,30 +223,16 @@ export default function MyTimesheetScreen() {
           ))
         )}
       </Card>
-      {legendCodes.length > 0 && (
-        <Card title={t('timesheet.legendTitle')}>
-          {legendCodes.map((code) => {
-            const meta = tabelCodeMeta(code);
-            return (
-              <View key={code} style={styles.legendRow}>
-                <View style={[styles.legendDot, { backgroundColor: tabelCodeColor(code, colors) }]} />
-                <Text variant="label" style={styles.legendLetter}>
-                  {meta.letter}
-                </Text>
-                <Text variant="body" tone="muted" style={styles.flex}>
-                  {t(meta.labelKey)}
-                </Text>
-              </View>
-            );
-          })}
-        </Card>
-      )}
     </>
   );
 
   return (
-    <Screen refreshing={isRefetching} onRefresh={() => void Promise.all([refetch(), refetchEvents()])}>
-      <PageHeader title={t('timesheet.myTitle')} subtitle={t('timesheet.mySubtitle')} />
+    <Screen
+      refreshing={isRefetching}
+      onRefresh={() => void Promise.all([refetch(), refetchEvents()])}
+      edges={embedded ? [] : ['top']}
+    >
+      {!embedded && <PageHeader title={t('timesheet.myTitle')} subtitle={t('timesheet.mySubtitle')} />}
       {isError ? (
         <ErrorState title={t('timesheet.loadError')} onRetry={() => refetch()} />
       ) : isLoading ? (
@@ -276,6 +273,7 @@ const styles = StyleSheet.create({
   },
   dot: { width: 6, height: 6, borderRadius: 3, marginTop: 3 },
   dayRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  leaveReason: { marginTop: 8 },
   letter: {
     minWidth: 40,
     height: 40,
@@ -296,7 +294,4 @@ const styles = StyleSheet.create({
   tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   tile: { flexBasis: '47%', flexGrow: 1 },
   schedule: { flexDirection: 'row', gap: 20 },
-  legendRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 5 },
-  legendDot: { width: 10, height: 10, borderRadius: 5 },
-  legendLetter: { width: 28 },
 });

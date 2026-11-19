@@ -50,11 +50,11 @@ describe('PhoneDirectoryScreen — ikki raqam', () => {
     fireEvent.press(await screen.findByText('573'));
 
     // Ikkala raqam ham oynada — SHAXSIY raqam endi ko'rinadi.
-    const personal = await screen.findByText('998901234567');
+    const personal = await screen.findByText('+998901234567');
     expect(personal).toBeTruthy();
 
     fireEvent.press(personal);
-    await waitFor(() => expect(Linking.openURL).toHaveBeenCalledWith('tel:998901234567'));
+    await waitFor(() => expect(Linking.openURL).toHaveBeenCalledWith('tel:+998901234567'));
   });
 
   it('bitta raqam bo\'lsa darhol teriladi (tanlov chiqmaydi)', async () => {
@@ -65,7 +65,7 @@ describe('PhoneDirectoryScreen — ikki raqam', () => {
 
   it('faqat shaxsiy raqamli xodim ham teriladi', async () => {
     const screen = await renderWithProviders(<PhoneDirectoryScreen />);
-    fireEvent.press(await screen.findByText('998907654321'));
-    await waitFor(() => expect(Linking.openURL).toHaveBeenCalledWith('tel:998907654321'));
+    fireEvent.press(await screen.findByText('+998907654321'));
+    await waitFor(() => expect(Linking.openURL).toHaveBeenCalledWith('tel:+998907654321'));
   });
 });

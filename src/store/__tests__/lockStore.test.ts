@@ -14,6 +14,7 @@ import {
   FAILED_ATTEMPTS_KEY,
   readPinRecord,
   writePinRecord,
+  hashPin,
 } from '../../auth/pin';
 import { MAX_ATTEMPTS } from '../../auth/lockPolicy';
 import { confirm, getConfirm, __resetConfirm } from '../../lib/confirm';
@@ -129,6 +130,44 @@ describe('setupPin', () => {
     expect(useLockStore.getState().failedAttempts).toBe(0);
     expect(await readPinRecord()).not.toBeNull();
     expect(await storage.getItem(FAILED_ATTEMPTS_KEY)).toBeNull();
+  });
+});
+
+describe("PIN uzunligi: 4 raqam, 10-09 OTA'dagi 6 raqamli PIN ham ishlaydi", () => {
+  // `len` maydonisiz yozuv — 2026-10-09 gacha bo'lgan format (4 raqam).
+  async function writeLegacyRecord(pin: string) {
+    const salt = 'legacysalt';
+    const hash = await hashPin(pin, salt);
+    await storage.setItem(PIN_RECORD_KEY, JSON.stringify({ salt, hash }));
+  }
+
+  it('eski (len\'siz) 4 raqamli PIN: 4 nuqta, ochiladi, yangilash SO\'RALMAYDI', async () => {
+    await writeLegacyRecord('1234');
+    await useLockStore.getState().hydrate();
+    expect(useLockStore.getState().status).toBe('locked');
+    expect(useLockStore.getState().currentPinLength).toBe(4);
+    const r = await useLockStore.getState().unlockWithPin('1234');
+    expect(r.ok).toBe(true);
+    expect(useLockStore.getState().status).toBe('unlocked');
+    expect(useLockStore.getState().pinUpgrade).toBe(false);
+  });
+
+  it('10-09 OTA\'da qo\'yilgan 6 raqamli PIN: 6 nuqta bilan ochiladi, majburiy almashtirish yo\'q', async () => {
+    await writePinRecord('123456');
+    await useLockStore.getState().hydrate();
+    expect(useLockStore.getState().currentPinLength).toBe(6);
+    const r = await useLockStore.getState().unlockWithPin('123456');
+    expect(r.ok).toBe(true);
+    expect(useLockStore.getState().status).toBe('unlocked');
+    expect(useLockStore.getState().pinUpgrade).toBe(false);
+  });
+
+  it('PIN almashtirilsa — yangisi 4 raqam, ochish ekrani ham 4 ga qaytadi', async () => {
+    await writePinRecord('123456');
+    await useLockStore.getState().hydrate();
+    await useLockStore.getState().setupPin('1234');
+    expect(useLockStore.getState().currentPinLength).toBe(4);
+    expect((await readPinRecord())?.len).toBe(4);
   });
 });
 

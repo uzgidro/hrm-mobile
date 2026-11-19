@@ -42,9 +42,13 @@ export const CATALOG: CatalogEntry[] = [
   e('projects', 'projects', '/loyihalar', 'board', 'violet', 'main'),
   e('news', 'news', '/news', 'news', 'orange', 'main'),
   e('ijro', 'ijro', '/ijro', 'checklist', 'pink', 'main'),
+  e('chrono', 'chrono', '/topshiriqlar-xronologiyasi', 'target', 'cyan', 'main'),
   e('workPlan', 'workPlan', '/ish-rejasi', 'calendar', 'green', 'main'),
   e('medical', 'medical', '/tibbiy-korik', 'check', 'green', 'stats'),
   e('health', 'health', '/sogliq-korigi', 'check', 'pink', 'stats'),
+  e('medicalExam', 'medicalExam', '/medical-exam', 'checklist', 'green', 'main'),
+  e('doctorDesk', 'doctorDesk', '/doctor-desk', 'qr', 'drop', 'main'),
+  e('sanatorium', 'sanatorium', '/sanatorium', 'sun', 'cyan', 'main'),
   e('registrationStatus', 'registrationStatus', '/registratsiya-holati', 'idcard', 'drop', 'main'),
 
   e('orders', 'orders', '/documents?seg=orders', 'orders', 'orange', 'documents'),
@@ -56,6 +60,7 @@ export const CATALOG: CatalogEntry[] = [
   e('employees', 'employees', '/employees-list', 'idcard', 'violet', 'stats'),
   e('attendance', 'attendance', '/attendance-detail', 'clock', 'green', 'stats'),
   e('timesheet', 'myAttendance', '/tabel', 'calendar', 'green', 'stats'),
+  e('weekendTabel', 'weekendTabel', '/dam-olish-tabeli', 'calendar', 'amber', 'stats'),
   e('guests', 'guests', '/(tabs)/mehmonlar', 'guest', 'amber', 'stats'),
   e('directory', 'phone', '/phone-directory', 'phone', 'cyan', 'stats'),
   e('duty', 'duty', '/navbatchilik', 'clock', 'amber', 'stats'),
@@ -124,8 +129,11 @@ export const DETAIL_OWNER: Readonly<Record<string, PageKey>> = {
   '/leave-detail': 'requests',
   '/create-leave': 'requests',
   '/team-leaves': 'requests',
-  '/create-news': 'news',
   '/employee-calendar': 'employees',
+  '/kurs-detail': 'learning',
+  '/kurs-player': 'learning',
+  '/kurs-tahrir': 'learning',
+  '/kurs-dars': 'learning',
 };
 
 function barePath(route: string): string {

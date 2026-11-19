@@ -14,6 +14,7 @@ import type {
   ReportParams,
   RunBody,
 } from './types';
+import { foldText } from '@/utils/searchFold';
 
 /** Mobil forma chiza oladigan turlar. Server yangi tur qo'shsa — u «Web versiyada». */
 export const SUPPORTED_KINDS: readonly ParamKind[] = [
@@ -192,14 +193,14 @@ export function divisionTree(options: ReportOption[], term: string): TreeNode[] 
     const p = String(o.parent ?? '');
     (byParent[p] ??= []).push(o);
   }
-  const q = term.trim().toLowerCase();
+  const q = foldText(term.trim());
   return options
     .filter((o) => o.is_branch)
     .map((b) => ({
       branch: b,
-      depts: (byParent[String(b.value)] ?? []).filter((d) => !q || d.label.toLowerCase().includes(q)),
+      depts: (byParent[String(b.value)] ?? []).filter((d) => !q || foldText(d.label).includes(q)),
     }))
-    .filter((n) => !q || n.depts.length > 0 || n.branch.label.toLowerCase().includes(q));
+    .filter((n) => !q || n.depts.length > 0 || foldText(n.branch.label).includes(q));
 }
 
 /** Filial tugunini belgilash = barcha bo'limlari (faqat bo'lim id'lari saqlanadi). */

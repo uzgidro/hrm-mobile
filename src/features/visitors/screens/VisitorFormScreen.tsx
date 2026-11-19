@@ -6,7 +6,6 @@ import { router, useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
-import { useAuthStore } from '@/store/authStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { ff } from '@/theme/typography';
@@ -19,7 +18,6 @@ import { DateTimePickerModal } from '@/components/DateTimePicker';
 import { useBreakpoint } from '@/utils/responsive';
 import { getApiErrorMessage } from '@/api/errors';
 import { getVisitor } from '../api/queries';
-import { resolveEmployeeBranchId } from '@/utils/branch';
 import {
   useCreateVisitor,
   useUpdateVisitor,
@@ -27,16 +25,18 @@ import {
   type VisitorPayload,
 } from '../api/mutations';
 import { PickerModal } from '@/components/PickerModal';
-import { employeeOptionsSearchQuery, type EmployeeOptionRow } from '@/utils/employees';
-import { useQuery } from '@tanstack/react-query';
+import type { EmployeeOptionRow } from '@/utils/employees';
+import { useEmployeeOptionsPicker } from '@/lib/useInfinitePicker';
 import { toast } from '@/lib/toast';
+import { useActiveBranchId } from '@/lib/useActiveBranch';
+import { ensureMediaLibraryAccess } from '@/lib/mediaLibraryAccess';
 
 export default function MehmonFormScreen() {
   const { t } = useTranslation();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const isEdit = !!id;
   const visitorId = Number(id);
-  const { user } = useAuthStore();
+  const activeBranchId = useActiveBranchId();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const createMut = useCreateVisitor();
@@ -64,10 +64,9 @@ export default function MehmonFormScreen() {
   const [sourceEmployee, setSourceEmployee] = useState<EmployeeOptionRow | null>(null);
   const [empPickerOpen, setEmpPickerOpen] = useState(false);
   const [empSearch, setEmpSearch] = useState('');
-  const { data: empOptions = [], isFetching: empLoading } = useQuery({
-    ...employeeOptionsSearchQuery(empSearch),
-    enabled: !isEdit && mode === 'employee',
-  });
+  // Butun tashkilot bo'yicha, sahifalab (ilgari faqat birinchi 100 ta ko'rinardi).
+  const empPicker = useEmployeeOptionsPicker(empSearch, { enabled: !isEdit && mode === 'employee' });
+  const empOptions = empPicker.rows;
   const pickSourceEmployee = (id: number) => {
     const emp = empOptions.find((e) => e.id === id);
     setEmpPickerOpen(false);
@@ -108,8 +107,7 @@ export default function MehmonFormScreen() {
   }, [isEdit, visitorId]);
 
   const pickPhoto = async () => {
-    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) { toast.error(t('visitors.photoPermMessage')); return; }
+    if (!(await ensureMediaLibraryAccess())) { toast.error(t('visitors.photoPermMessage')); return; }
     const res = await ImagePicker.launchImageLibraryAsync({ allowsEditing: true, aspect: [1, 1], quality: 0.6, base64: true });
     if (res.canceled || !res.assets?.[0]?.base64) return;
     const asset = res.assets[0];
@@ -141,7 +139,7 @@ export default function MehmonFormScreen() {
     }
     setLoading(true);
     const orgBranchId =
-      resolveEmployeeBranchId(user?.employee);
+      activeBranchId;
     const payload: VisitorPayload = {
       legal_name: legalName.trim(),
       organization_name: orgName.trim(),
@@ -297,7 +295,9 @@ export default function MehmonFormScreen() {
           subLabel: [e.job_position_name, e.organization_name].filter(Boolean).join(' · '),
           photo: e.photo_path,
         }))}
-        loading={empLoading}
+        loading={empPicker.loading}
+        loadingMore={empPicker.loadingMore}
+        onEndReached={empPicker.onEndReached}
         onSearchChange={setEmpSearch}
         selected={sourceEmployee?.id ?? null}
         onSelect={pickSourceEmployee}

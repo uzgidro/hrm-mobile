@@ -24,7 +24,7 @@ export type MainStats = {
 
 export type LateEmployeeRow = {
   employee_id: number;
-  employee?: { legal_name?: string | null; photo_path?: string | null; job_position?: { name?: string } | null; department?: { name?: string } | null } | null;
+  employee?: { legal_name?: string | null; photo_path?: string | null; photo_thumb_path?: string | null; job_position?: { name?: string } | null; department?: { name?: string } | null } | null;
   happen_time: string;
   late_minutes: number;
 };
@@ -35,6 +35,7 @@ export type FrequentLate = {
   job_position_name?: string | null;
   department_name?: string | null;
   photo_path?: string | null;
+  photo_thumb_path?: string | null;
   late_count?: number;
 };
 
@@ -43,7 +44,7 @@ export type VisitorPassRow = {
   event_id?: number | string;
   happen_time?: string;
   direction_type?: string;
-  visitor?: { legal_name?: string | null; photo_path?: string | null } | null;
+  visitor?: { legal_name?: string | null; photo_path?: string | null; photo_thumb_path?: string | null } | null;
   turnstile?: { display_name?: string | null; acs_dev_name?: string | null } | null;
 };
 

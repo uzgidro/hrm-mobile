@@ -27,6 +27,8 @@ export default {
   actionFailed: 'Failed to perform the action',
   timeout: 'The server did not respond (timed out). The action may still have gone through — refresh the list.',
   network: 'No internet connection. Check your network.',
+  checkin_no_face: "No face was visible in the photo. Point the front camera at your face and try again.",
+  checkin_photo_invalid: "The photo could not be read, please retake it.",
   // Zoom (web v2 errors.zoom_*) — server `code` bo'yicha.
   zoom_api_error: 'The Zoom request failed',
   zoom_auth_failed: 'Zoom credentials were not accepted',

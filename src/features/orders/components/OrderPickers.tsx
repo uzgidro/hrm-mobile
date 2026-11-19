@@ -35,6 +35,7 @@ export function OrderPickers({
   return (
     <>
       <PickerModal
+        avatars={false}
         visible={picker === 'category'} title={t('orders.pickCategory')} options={categoryOptions}
         loading={catsLoading} selected={categoryId}
         onClose={onClosePicker}
@@ -53,6 +54,7 @@ export function OrderPickers({
         onSelect={onSelectSubmitter}
       />
       <PickerModal
+        avatars={false}
         visible={picker === 'familiarizers'} title={t('orders.pickFamiliarizerDepts')} options={departmentOptions}
         loading={deptsLoading} multiple selected={familiarizerDeptIds}
         onClose={onClosePicker}

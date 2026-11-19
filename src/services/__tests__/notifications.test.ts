@@ -281,11 +281,14 @@ describe('routeForNotification — v2 pariteti: xizmat, kurs, vakansiya, o\'tkaz
   ])('%s → %s', (type, route) => {
     expect(routeForNotification({ type })).toBe(route);
   });
+  it('kurs pushi `course_id` bilan — kurs sahifasiga', () => {
+    expect(routeForNotification({ type: 'learning_course_assigned', course_id: 7 })).toBe('/kurs-detail?id=7');
+  });
   it("yangi yo'llar app/ da fayl sifatida bor", () => {
     const fs = require('fs') as typeof import('fs');
     const path = require('path') as typeof import('path');
     const root = path.join(__dirname, '../../..');
-    for (const r of ['/interaktiv-xizmatlar', '/oquv-markazi', '/shtat', '/vaqtinchalik-buyruqlar', '/employees-list']) {
+    for (const r of ['/interaktiv-xizmatlar', '/oquv-markazi', '/kurs-detail', '/shtat', '/vaqtinchalik-buyruqlar', '/employees-list']) {
       const clean = r.replace(/^\//, '');
       expect({ r, ok: fs.existsSync(path.join(root, `app/${clean}.tsx`)) }).toEqual({ r, ok: true });
     }
@@ -314,5 +317,17 @@ describe('routeForNotification — telefon belgisi (mobile_checkin_*)', () => {
   });
   it('sarlavhasi bor (umumiy «Bildirishnoma» emas)', () => {
     expect(notificationMeta('mobile_checkin_far').title).not.toBe(notificationMeta('zzz_unknown').title);
+  });
+});
+
+describe('push payloadidagi id bilan yo\'nalish (2026-10-09 yangi push oqimlari)', () => {
+  it('doimiy o\'tkazish buyrug\'i push\'i — work_leave_id bo\'lsa ham qaror navbatiga', () => {
+    expect(routeForNotification({ type: 'employee_transfer_order_pending', work_leave_id: 7 })).toBe('/vaqtinchalik-buyruqlar');
+    // Oddiy ruxsat/ta'til push'i esa avvalgidek tafsilotga.
+    expect(routeForNotification({ type: 'work_leave_signed', work_leave_id: 7 })).toBe('/leave-detail?id=7');
+  });
+  it('o\'rindoshlik push\'i — kadrga o\'sha xodim kartochkasi', () => {
+    expect(routeForNotification({ type: 'employee_assignment_added', employee_id: 42, employee_assignment_id: 3 })).toBe('/profile-detail?id=42');
+    expect(routeForNotification({ notification_type: 'employee_assignment_added' })).toBe('/profile-detail');
   });
 });

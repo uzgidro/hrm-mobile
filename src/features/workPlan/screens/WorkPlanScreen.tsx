@@ -8,7 +8,6 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { canWriteWorkPlan } from '@/utils/roles';
-import { resolveEmployeeBranchId } from '@/utils/branch';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import {
   Badge,
@@ -28,10 +27,12 @@ import { workPlanSummaryQuery, workPlansQuery, type WorkPlan } from '../api/quer
 import { STATUS_TONE, WorkPlanDetailSheet } from '../components/WorkPlanDetailSheet';
 import { WorkPlanFormSheet } from '../components/WorkPlanFormSheet';
 import { FILTER_STATUSES, isPlanOverdue } from '../utils/workPlan';
+import { useActiveBranchId } from '@/lib/useActiveBranch';
 
 export default function WorkPlanScreen() {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
+  const activeBranchId = useActiveBranchId();
   const canWrite = canWriteWorkPlan(user);
   const [search, setSearch] = useState('');
   const debounced = useDebouncedValue(search);
@@ -136,7 +137,7 @@ export default function WorkPlanScreen() {
         <WorkPlanFormSheet
           key={editing.n}
           plan={editing.plan}
-          branchId={resolveEmployeeBranchId(user?.employee)}
+          branchId={activeBranchId}
           onClose={() => setEditing(null)}
         />
       )}

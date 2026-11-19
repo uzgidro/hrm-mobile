@@ -55,6 +55,14 @@ jobs:
         # dies with "syntax error near unexpected token" before eas even runs.
         # In an env var the value is literal. We also take only the SUBJECT
         # (first line) of the commit so a long body can't derail the command.
+        #
+        # Updates are NOT code-signed: EAS Update code signing needs a paid
+        # (Production/Enterprise) plan and the uzbekgidroenergos-team account is
+        # on Free (2026-10-14). To re-enable later: subscribe, restore
+        # `updates.codeSigningCertificate`/`codeSigningMetadata` in app.json
+        # (cert kept in certs/, key in the EXPO_UPDATES_PRIVATE_KEY secret), pass
+        # `--private-key-path`, and ship it in a STORE release — the certificate
+        # is embedded in the binary.
         env:
           RAW_MESSAGE: ${{ github.event.head_commit.message || github.event.inputs.message }}
         run: |

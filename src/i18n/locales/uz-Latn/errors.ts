@@ -33,6 +33,8 @@ export default {
   actionFailed: "Amalni bajarib bo'lmadi",
   timeout: "Server javob bermadi (vaqt tugadi). Amal bajarilgan bo'lishi ham mumkin — ro'yxatni yangilang.",
   network: "Internet aloqasi yo'q. Ulanishni tekshiring.",
+  checkin_no_face: "Rasmda yuz ko‘rinmadi. Old kamerani yuzingizga qarating va qaytadan urinib ko‘ring.",
+  checkin_photo_invalid: "Rasm o‘qilmadi, qaytadan oling.",
   // Zoom (web v2 errors.zoom_*) — server `code` bo'yicha.
   zoom_api_error: "Zoom so'rovi bajarilmadi",
   zoom_auth_failed: 'Zoom kredensiallari qabul qilinmadi',

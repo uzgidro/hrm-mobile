@@ -104,6 +104,7 @@ export function StaffFormSheet({
         </Text>
       </View>
       <PickerModal
+        avatars={false}
         visible={picker != null}
         title={picker === 'dept' ? t('staff.department') : t('staff.position')}
         options={(pickList.data ?? []).map((o) => ({ value: o.id, label: o.name || `#${o.id}` }))}

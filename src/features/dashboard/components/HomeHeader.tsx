@@ -14,10 +14,12 @@ import { monthName, weekdayName } from '@/i18n/dates';
 import { visibleCatalog } from '@/utils/moduleCatalog';
 import { moduleTint } from '@/theme/tokens';
 import { Icon } from '@/components/Icon';
+import { BranchSwitcher } from '@/components/BranchSwitcher';
 import { IconButton, ListRow, SearchField, Sheet, Text } from '@/ui';
 import { userDisplayName } from '@/utils/roles';
 import type { User } from '@/types';
 import { givenName } from '../utils/shiftProgress';
+import { foldText } from '@/utils/searchFold';
 
 export function greetingKey(hour: number): string {
   if (hour < 12) return 'dashboard.home.greetingMorning';
@@ -52,9 +54,9 @@ export function HomeHeader() {
   const dept = user?.employee?.department?.name;
 
   const results = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = foldText(query.trim());
     const all = visibleCatalog(user).filter((m) => m.page !== 'home');
-    return q ? all.filter((m) => t(m.labelKey).toLowerCase().includes(q)) : all.slice(0, 8);
+    return q ? all.filter((m) => foldText(t(m.labelKey)).includes(q)) : all.slice(0, 8);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, user, t, navOverrides]);
 
@@ -67,6 +69,8 @@ export function HomeHeader() {
         <Text variant="caption" tone="subtle" numberOfLines={1}>
           {dept ? `${dateLine} · ${dept}` : dateLine}
         </Text>
+        {/* Global / ko'p filialli hisob — faol filialni tanlash (boshqalarda chizilmaydi). */}
+        <BranchSwitcher />
       </View>
       <IconButton icon="search" accessibilityLabel={t('dashboard.home.searchTitle')} onPress={() => setSearchOpen(true)} />
       <IconButton

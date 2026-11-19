@@ -1,6 +1,7 @@
 import i18n from '../i18n';
 import type { User, Employee } from '../types';
 import { resolveEmployeeBranchId } from './branch';
+import { weekendTabelSupported } from '@/lib/serverCaps';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Role resolution — mirrors the web's shared/utils/roleHelpers.js 1:1 so the
@@ -421,18 +422,6 @@ export function canManageChairmanTasks(user?: User | null): boolean {
   return isSecretariat(user) || isSiteMasterAdmin(user);
 }
 
-// May create/edit news posts. `/me` carries the resolved `is_news_manager` flag
-// (backend can_manage_news = master-admin | admin | HR | department news-manager);
-// we OR in the coarse roles so the gate holds even if the flag is absent.
-export function isNewsManager(user?: User | null): boolean {
-  return (
-    !!user?.is_news_manager ||
-    isMasterAdmin(user) ||
-    isHR(user) ||
-    user?.type === 'admin'
-  );
-}
-
 // ── Page visibility — web v2 module catalogue (navConfig.ts MODULES) ─────────
 export type PageKey =
   | 'home' | 'orders' | 'letters' | 'guests' | 'projects'
@@ -441,7 +430,7 @@ export type PageKey =
   | 'notifications' | 'profile' | 'support' | 'chairman' | 'directory' | 'terminals'
   | 'duty' | 'holidays'
   // v3: web v2 katalogining qolgan modullari (ekranlari to'lqinlarda — `ready`).
-  | 'services' | 'zoom' | 'vehicles' | 'ijro' | 'workPlan' | 'medical' | 'health'
+  | 'services' | 'zoom' | 'vehicles' | 'ijro' | 'chrono' | 'workPlan' | 'medical' | 'health' | 'medicalExam' | 'doctorDesk' | 'sanatorium' | 'weekendTabel'
   | 'registrationStatus' | 'orderTypes' | 'tempOrders' | 'staffPositions' | 'structure'
   | 'responsibles' | 'hrQuality' | 'trainings' | 'learning' | 'inspections' | 'reports'
   | 'dictionaries' | 'tabelSettings' | 'monitoring' | 'kpp' | 'videoGuide' | 'users'
@@ -534,6 +523,21 @@ type ModuleDef = {
 const needsEmployee: ModuleGate = (u) => !!u?.employee?.id || isSiteMasterAdmin(u);
 // v2 navConfig darvozalari (needsMedical / needsHealth / needsReports / needsFleet).
 const needsMedical: ModuleGate = (u) => u?.medical_enabled === true;
+// Tibbiy ko'rik kuni: xodimning O'Z sahifasi (klinika `medical_enabled` darvozasidan tashqari) va
+// shtatdagi shifokorning ish joyi. Taklif etilgan shifokor (`external-doctor`) xodim EMAS.
+//
+// SERVER SUPPORT: the app update reaches phones over the air, on its own schedule, while the
+// server is deployed separately. A server that knows the examination day sends
+// `medical_reception` (true or false) in /auth/me; an older one does not send the key at all,
+// and then these screens would have nothing to talk to — so they stay out of the menu until
+// the server is there.
+const serverHasExam = (u: Parameters<ModuleGate>[0]) => typeof u?.medical_reception === 'boolean';
+const needsOwnExam: ModuleGate = (u) => serverHasExam(u) && !!u?.employee?.id && u?.type !== 'external-doctor';
+const needsStaffDoctor: ModuleGate = (u) => serverHasExam(u) && u?.is_doctor === true && u?.type !== 'external-doctor';
+const needsSanatorium: ModuleGate = (u) => (u?.sanatorium_roles?.length ?? 0) > 0;
+// Rest-day tabel: the server may not have `/weekend-tabel` yet (OTA ships before the backend) —
+// hidden until the probe in `lib/serverCaps.ts` has seen the route.
+const needsWeekendServer: ModuleGate = () => weekendTabelSupported() === true;
 const needsHealth: ModuleGate = (u) => !!u?.nurse_branch_ids?.length || isSiteMasterAdmin(u);
 const needsFleet: ModuleGate = (u) =>
   isSiteMasterAdmin(u) || !!u?.transport_branch_ids?.length || !!u?.transport_approver_branch_ids?.length;
@@ -589,9 +593,15 @@ const MODULE_FOR_PAGE: Partial<Record<PageKey, ModuleDef>> = {
   zoom: { key: 'zoom', defaultRoles: ALL },
   vehicles: { key: 'vehicles', defaultRoles: ALL, gates: [needsFleet] },
   ijro: { key: 'ijro', defaultRoles: ALL },
+  // Topshiriqlar xronologiyasi (v2 2026-10-26): executors come from any branch;
+  // the server shows each person only the tasks they take part in.
+  chrono: { key: 'chrono', defaultRoles: ALL },
   workPlan: { key: 'workPlan', defaultRoles: ADMIN_HR_LEAD },
   medical: { key: 'medical', defaultRoles: ALL, gates: [needsMedical] },
   health: { key: 'health', defaultRoles: ALL, gates: [needsHealth] },
+  medicalExam: { key: 'medicalExam', defaultRoles: ALL, gates: [needsOwnExam] },
+  doctorDesk: { key: 'doctorDesk', defaultRoles: ALL, gates: [needsStaffDoctor] },
+  sanatorium: { key: 'sanatorium', defaultRoles: ALL, gates: [needsSanatorium] },
   registrationStatus: { key: 'registrationStatus', defaultRoles: ['guest'] },
   orderTypes: { key: 'orderTypes', defaultRoles: ADMIN_HR },
   tempOrders: { key: 'tempOrders', defaultRoles: ADMIN_HR },
@@ -611,6 +621,7 @@ const MODULE_FOR_PAGE: Partial<Record<PageKey, ModuleDef>> = {
   },
   dictionaries: { key: 'dictionaries', defaultRoles: ALL },
   tabelSettings: { key: 'tabelSettings', defaultRoles: ADMIN_HR },
+  weekendTabel: { key: 'weekendTabel', defaultRoles: ADMIN_HR_LEAD, gates: [needsWeekendServer] },
   monitoring: { key: 'monitoring', defaultRoles: ['masterAdmin', 'monitoring'] },
   kpp: { key: 'kpp', defaultRoles: ['kpp', 'masterAdmin'] },
   videoGuide: { key: 'videoGuide', defaultRoles: ALL },

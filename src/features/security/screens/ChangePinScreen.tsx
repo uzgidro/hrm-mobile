@@ -32,6 +32,7 @@ export default function ChangePinScreen() {
   };
 
   const verifyCurrentPin = useLockStore((s) => s.verifyCurrentPin);
+  const currentPinLength = useLockStore((s) => s.currentPinLength);
   const setupPin = useLockStore((s) => s.setupPin);
   const reset = useLockStore((s) => s.reset);
   const logout = useAuthStore((s) => s.logout);
@@ -43,12 +44,14 @@ export default function ChangePinScreen() {
   // Guards the async verify: while a submit is in flight we ignore new input so
   // a fast double-entry can't fire two verifies (and burn two attempts).
   const [busy, setBusy] = useState(false);
+  const stepLength = step === 'current' ? currentPinLength : PIN_LENGTH;
 
   const handleChange = (next: string) => {
     // Any edit clears a stale error so the dots aren't stuck red mid-retry.
     if (error) setError(null);
     setValue(next);
-    if (next.length === PIN_LENGTH) {
+    // Joriy PIN — saqlangan uzunlikda (eski 4 raqamli bo'lishi mumkin); yangisi har doim PIN_LENGTH.
+    if (next.length === stepLength) {
       void submit(next);
     }
   };
@@ -133,6 +136,7 @@ export default function ChangePinScreen() {
           <PinPad
             value={value}
             onChange={handleChange}
+            maxLength={stepLength}
             title={STEP_TITLE[step]}
             error={error}
             disabled={busy}

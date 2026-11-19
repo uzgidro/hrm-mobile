@@ -1,8 +1,9 @@
-import { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, Modal, TextInput, FlatList,
-  TouchableOpacity, Image, ActivityIndicator,
+  TouchableOpacity, ActivityIndicator, type ImageStyle,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
@@ -12,12 +13,25 @@ import { Icon } from './Icon';
 import { useBreakpoint } from '../utils/responsive';
 import { KeyboardAvoider } from './KeyboardAvoider';
 import { useDebouncedValue } from '../lib/useDebouncedValue';
+import { useThumbFallback } from '../lib/useThumbFallback';
+import { foldText } from '@/utils/searchFold';
 
 export interface PickerOption {
   value: number;
   label: string;
   subLabel?: string;
   photo?: string | null;
+  /** Kichik nusxa (`photo_thumb_path`) — bo'lsa shu yuklanadi, xatoda `photo` ga qaytadi. */
+  photoThumb?: string | null;
+}
+
+// expo-image (xotira+disk keshi) + kichik nusxa: 50 qatorlik sahifa ~1.35 MB → ~80 KB.
+// Ikkala surat ham ochilmasa — bosh harf (bo'sh kulrang doira emas).
+function PickerPhoto({ thumb, full, style, fallback }: {
+  thumb?: string | null; full?: string | null; style: ImageStyle; fallback: React.ReactElement;
+}) {
+  const { uri, key, onError } = useThumbFallback(thumb, full);
+  return uri ? <Image key={key} testID="picker-photo" source={{ uri }} onError={onError} style={style} cachePolicy="memory-disk" /> : fallback;
 }
 
 interface Props {
@@ -40,6 +54,11 @@ interface Props {
    *  the API with it. Used for organisation-wide employee pickers, which used
    *  to download every page (15 × 100 rows) just to filter in JS. */
   onSearchChange?: (query: string) => void;
+  /** Server sahifalash: ro'yxat oxiriga yetganda keyingi sahifa (ilgari faqat 1-sahifa —
+   *  30/100 ta — ko'rinib, qolgani «kesilib» qolardi; 2026-10-06). `useInfinitePicker` beradi. */
+  onEndReached?: () => void;
+  /** Keyingi sahifa yuklanmoqda — ro'yxat ostida spinner. */
+  loadingMore?: boolean;
   /** Bosh harfli avatar (odamlar ro'yxati). Soat / daqiqa / holat kabi ro'yxatlarda
    *  `false` — aks holda har qatorda ma'nosiz «0», «1» doirasi chiziladi. */
   avatars?: boolean;
@@ -47,7 +66,7 @@ interface Props {
 
 export function PickerModal({
   visible, title, options, loading, multiple, selected, onClose, onSelect, onToggle,
-  disabledValues, onSearchChange, avatars = true,
+  disabledValues, onSearchChange, avatars = true, onEndReached, loadingMore,
 }: Props) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -63,10 +82,10 @@ export function PickerModal({
 
   const filtered = useMemo(() => {
     if (onSearchChange) return options; // server already filtered
-    const q = search.trim().toLowerCase();
+    const q = foldText(search.trim());
     if (!q) return options;
     return options.filter(
-      (o) => o.label.toLowerCase().includes(q) || (o.subLabel ?? '').toLowerCase().includes(q)
+      (o) => foldText(o.label).includes(q) || foldText((o.subLabel ?? '')).includes(q)
     );
   }, [options, search, onSearchChange]);
 
@@ -112,6 +131,12 @@ export function PickerModal({
               data={filtered}
               keyExtractor={(o) => String(o.value)}
               keyboardShouldPersistTaps="handled"
+              testID="picker-list"
+              onEndReached={onEndReached}
+              onEndReachedThreshold={0.5}
+              ListFooterComponent={loadingMore ? <ActivityIndicator style={{ marginVertical: 16 }} color={colors.primaryLight} /> : null}
+              initialNumToRender={20}
+              windowSize={9}
               renderItem={({ item }) => {
                 const sel = isSelected(item.value);
                 const locked = !!disabledValues?.includes(item.value);
@@ -127,12 +152,17 @@ export function PickerModal({
                       else onSelect(item.value);
                     }}
                   >
-                    {!avatars ? null : item.photo ? (
-                      <Image source={{ uri: item.photo }} style={styles.photo} />
-                    ) : (
-                      <View style={styles.photoPlaceholder}>
-                        <Text style={styles.photoInitial}>{item.label.charAt(0).toUpperCase()}</Text>
-                      </View>
+                    {!avatars ? null : (
+                      <PickerPhoto
+                        thumb={item.photoThumb}
+                        full={item.photo}
+                        style={styles.photo}
+                        fallback={
+                          <View style={styles.photoPlaceholder}>
+                            <Text style={styles.photoInitial}>{item.label.charAt(0).toUpperCase()}</Text>
+                          </View>
+                        }
+                      />
                     )}
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.label, sel && styles.labelActive]} numberOfLines={1}>{item.label}</Text>

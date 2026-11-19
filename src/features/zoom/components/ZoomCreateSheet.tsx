@@ -385,6 +385,7 @@ export function ZoomCreateSheet({
       )}
       {picker === 'hours' && (
         <PickerModal
+          avatars={false}
           visible
           title={t('zoom.durationHours')}
           options={DUR_HOURS.map((h) => ({ value: h, label: String(h) }))}
@@ -398,6 +399,7 @@ export function ZoomCreateSheet({
       )}
       {picker === 'minutes' && (
         <PickerModal
+          avatars={false}
           visible
           title={t('zoom.durationMinutes')}
           options={DUR_MINUTES.map((mm) => ({ value: mm, label: String(mm) }))}

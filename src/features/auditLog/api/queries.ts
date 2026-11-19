@@ -6,7 +6,6 @@ import {
   AUDIT_LOGS_ONLINE,
   AUDIT_LOGS_ONLINE_HISTORY,
   AUDIT_LOGS_STATS,
-  EMPLOYEES_LIST,
   ORGANIZATION_BRANCHES,
 } from '@/api/urls';
 import type { AuditPage, AuditStats, OnlineDay, OnlineUser } from '../utils/auditLog';
@@ -80,29 +79,6 @@ export function onlineHistoryQuery(enabled = true) {
         .then((r) => unwrapList<OnlineDay>(r.data)),
     enabled,
     retry: false,
-  });
-}
-
-/**
- * Foydalanuvchi tanlagichi: `/employees` qidiruvi, jurnal kaliti — xodim ortidagi LOGIN (`user_id`).
- * Logini yo'q xodim jurnalda bo'lmaydi, shuning uchun tashlanadi (v2).
- */
-export function auditUserSearchQuery(q: string, enabled: boolean) {
-  return queryOptions({
-    queryKey: auditKeys.users(q),
-    queryFn: () =>
-      apiClient.get(EMPLOYEES_LIST, { params: { page: 1, size: 20, ...(q ? { search: q } : {}) } }).then((r) =>
-        unwrapList<{
-          id: number;
-          user_id?: number | null;
-          legal_name?: string | null;
-          photo_path?: string | null;
-          job_position?: { name?: string | null } | null;
-        }>(r.data).filter((e) => e.user_id != null),
-      ),
-    enabled,
-    staleTime: 60_000,
-    placeholderData: keepPreviousData,
   });
 }
 

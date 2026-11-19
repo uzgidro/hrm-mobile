@@ -31,6 +31,11 @@ export default {
     onLeaveTeam: 'boshqa sabab',
   },
   clearFilter: 'tozalash uchun bosing',
+  searchPlaceholder: "Xodim, lavozim yoki bo'lim…",
+  scopeBranch: "Butun filial",
+  scopeDepartment: "Mening bo'limim",
+  tabMine: "Mening tabelim",
+  tabTeam: "Jamoa",
   showAll: "Barchasini ko'rsatish",
   allEmployees: 'Barcha xodimlar',
 

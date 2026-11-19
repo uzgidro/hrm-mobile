@@ -132,6 +132,7 @@ export function EntryFormSheet({
       </ScrollView>
       {picking && (
         <PickerModal
+          avatars={false}
           visible
           title={t('dictionaries.colParent')}
           options={[

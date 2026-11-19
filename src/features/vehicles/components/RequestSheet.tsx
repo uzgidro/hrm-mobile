@@ -46,7 +46,7 @@ export function RequestSheet({ req: r, onClose }: { req: VehicleRequest; onClose
     <Sheet visible onClose={onClose} title={r.employee_name || '—'}>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
         <View style={styles.head}>
-          <Avatar name={r.employee_name || '?'} uri={r.employee_photo_thumb_path || r.employee_photo_path} size={40} />
+          <Avatar name={r.employee_name || '?'} uri={r.employee_photo_path} thumb={r.employee_photo_thumb_path} size={40} />
           <View style={styles.flex}>
             {!!who && (
               <Text variant="caption" tone="muted">

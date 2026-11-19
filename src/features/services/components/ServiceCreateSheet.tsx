@@ -146,6 +146,7 @@ export function ServiceCreateSheet({
         />
       </View>
       <PickerModal
+        avatars={false}
         visible={pickBranch}
         title={t('services.branch')}
         options={(branches.data ?? []).map((b) => ({ value: b.id, label: b.name ?? `#${b.id}` }))}

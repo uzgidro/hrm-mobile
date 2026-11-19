@@ -32,7 +32,7 @@ export function BirthdaysCard({ branchId, limit = 5 }: { branchId: number | unde
             key={b.id}
             title={b.legal_name}
             subtitle={b.job_position?.name}
-            left={<Avatar name={b.legal_name} uri={b.photo_path} size={36} />}
+            left={<Avatar name={b.legal_name} uri={b.photo_path} thumb={b.photo_thumb_path} size={36} />}
             right={
               <Badge
                 label={b.days_left === 0 ? t('dashboard.home.birthdayToday') : t('dashboard.home.daysLeft', { count: b.days_left })}

@@ -25,8 +25,8 @@ import { leaveStatusGroup, leaveStatusKind } from '@/utils/leaveStatus';
 import { statusColor } from '@/utils/orderStatus';
 import { leavesListQuery } from '../api/queries';
 import { leaveTypeLabel } from '../components/LeaveTypeSheet';
-import { resolveEmployeeBranchId } from '@/utils/branch';
 import { canManageLeave } from '@/utils/workLeaveScope';
+import { useActiveBranchId } from '@/lib/useActiveBranch';
 
 function statusMeta(status: string, c: ThemeColors, t: TFunction) {
   const group = leaveStatusGroup(status);
@@ -46,11 +46,12 @@ const STATUS_CHIPS: { key: StatusGroup; labelKey: string }[] = [
 
 export default function TeamLeavesScreen() {
   const { user } = useAuthStore();
+  const activeBranchId = useActiveBranchId();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { t } = useTranslation();
   const orgBranchId =
-    resolveEmployeeBranchId(user?.employee);
+    activeBranchId;
   const now = dayjs();
   const [selectedMonth, setSelectedMonth] = useState(now.month());
   const [selectedYear] = useState(now.year());

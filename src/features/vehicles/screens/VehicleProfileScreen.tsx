@@ -23,6 +23,7 @@ import {
   Text,
 } from '@/ui';
 import { fleetAccessQuery, vehicleDetailQuery, vehicleLiveQuery, vehicleTripsQuery } from '../api/queries';
+import { formatUzPhone } from '@/utils/phone';
 import { PlateChip } from '../components/FleetBits';
 import { canSeeGps, dateRangeText, fmtConsumption, fmtDate, fmtMoney, liveStatus, type VehicleTrip } from '../utils/vehicles';
 
@@ -160,7 +161,7 @@ export default function VehicleProfileScreen() {
           >
             <Avatar
               name={v.driver.legal_name ?? '?'}
-              uri={v.driver.photo_thumb_path || v.driver.photo_path}
+              uri={v.driver.photo_path} thumb={v.driver.photo_thumb_path}
               size={38}
             />
             <View style={styles.flex}>
@@ -168,7 +169,7 @@ export default function VehicleProfileScreen() {
                 {v.driver.legal_name}
               </Text>
               <Text variant="caption" tone="subtle" selectable numberOfLines={1}>
-                {[v.driver_position, v.driver_phone].filter(Boolean).join(' · ') || t('vehicles.driver')}
+                {[v.driver_position, formatUzPhone(v.driver_phone)].filter(Boolean).join(' · ') || t('vehicles.driver')}
               </Text>
             </View>
             {!!health?.label && (

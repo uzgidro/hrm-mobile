@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
+import { appendFile, type UploadFile } from '@/api/formFile';
 import {
   ORGANIZATION_BRANCH,
   ORGANIZATION_BRANCH_DOC_TEMPLATE,
@@ -7,11 +8,14 @@ import {
   ORGANIZATION_BRANCH_LEADERS,
   ORGANIZATION_BRANCH_LOGO,
   ORGANIZATION_BRANCH_TABEL_TEMPLATE,
+  ORGANIZATION_BRANCH_TABEL_TEMPLATE_BUILD,
+  ORGANIZATION_BRANCH_TABEL_TEMPLATE_SAMPLE,
   USER_INFO,
 } from '@/api/urls';
 import { useAuthStore } from '@/store/authStore';
 import type { User } from '@/types';
 import type { BlankDocType } from '../utils/blank';
+import type { TabelTemplateOptions } from '../utils/tabelTemplate';
 import { leadersDiff, type BranchLeader, type PendingLeader } from '../utils/leaders';
 import { tabelSettingsKeys } from './queries';
 
@@ -22,6 +26,24 @@ export const patchBranch = ({ id, body }: Patch) => apiClient.patch(ORGANIZATION
 /** Filialning Excel tabel shablonini olib tashlaydi — eksport standart shaklga qaytadi. */
 export const removeTabelTemplate = (id: number) =>
   apiClient.delete(ORGANIZATION_BRANCH_TABEL_TEMPLATE(id)).then((r) => r.data);
+/** Constructor: builds the form from the options and stores it as the branch's tabel template. */
+export const buildTabelTemplate = ({ id, options }: { id: number; options: TabelTemplateOptions }) =>
+  apiClient.post(ORGANIZATION_BRANCH_TABEL_TEMPLATE_BUILD(id), options).then((r) => r.data);
+/** Uploads the branch's own .xlsx tabel form; a filled tabel is recognised and turned into a template. */
+export async function uploadTabelTemplate({ id, file }: { id: number; file: UploadFile }) {
+  const fd = new FormData();
+  await appendFile(fd, 'file', file);
+  return apiClient
+    .post(ORGANIZATION_BRANCH_TABEL_TEMPLATE(id), fd, { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 120_000 })
+    .then((r) => r.data);
+}
+/** Request config of the constructor's sample .xlsx (nothing is saved). */
+export const tabelSampleRequest = (id: number, options: TabelTemplateOptions) => ({
+  url: ORGANIZATION_BRANCH_TABEL_TEMPLATE_SAMPLE,
+  method: 'post' as const,
+  params: { organization_branch_id: id },
+  data: options,
+});
 /** Yuklangan tayyor .docx blankni olib tashlaydi — formadagi sozlama saqlanadi. */
 export const removeBlankFile = ({ id, doc }: { id: number; doc: BlankDocType }) =>
   apiClient.delete(ORGANIZATION_BRANCH_DOC_TEMPLATE(id, doc)).then((r) => r.data);
@@ -102,6 +124,14 @@ export function useSaveTabelConfig() {
 export function useRemoveTabelTemplate() {
   const onSuccess = useInvalidate([]);
   return useMutation({ meta, mutationFn: removeTabelTemplate, onSuccess });
+}
+export function useBuildTabelTemplate() {
+  const onSuccess = useInvalidate([]);
+  return useMutation({ meta, mutationFn: buildTabelTemplate, onSuccess });
+}
+export function useUploadTabelTemplate() {
+  const onSuccess = useInvalidate([]);
+  return useMutation({ meta, mutationFn: uploadTabelTemplate, onSuccess });
 }
 export function useSaveBlank() {
   const onSuccess = useInvalidate([]);

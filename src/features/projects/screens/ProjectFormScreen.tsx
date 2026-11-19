@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
@@ -14,7 +14,8 @@ import { Screen } from '@/components/Screen';
 import { LoadingView } from '@/components/StateViews';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { PickerModal } from '@/components/PickerModal';
-import { employeeOptionsSearchQuery, type EmployeeOptionRow } from '@/utils/employees';
+import type { EmployeeOptionRow } from '@/utils/employees';
+import { useEmployeeOptionsPicker } from '@/lib/useInfinitePicker';
 import { getApiErrorMessage } from '@/api/errors';
 
 import { getWorkspace, projectKeys } from '../api/queries';
@@ -51,7 +52,8 @@ export default function LoyihaFormScreen() {
   // the whole organisation. Everything ever shown is remembered in `known`
   // so a selected member keeps their name when the search moves on.
   const [memberSearch, setMemberSearch] = useState('');
-  const { data: employees = [], isFetching: employeesLoading } = useQuery(employeeOptionsSearchQuery(memberSearch));
+  const memberPicker = useEmployeeOptionsPicker(memberSearch);
+  const employees = memberPicker.rows;
   const [known, setKnown] = useState<Map<number, EmployeeOptionRow>>(() => new Map());
   useEffect(() => {
     if (!employees.length) return;
@@ -184,7 +186,9 @@ export default function LoyihaFormScreen() {
         visible={pickerOpen}
         title={t('projects.membersLabel')}
         multiple
-        loading={employeesLoading}
+        loading={memberPicker.loading}
+        loadingMore={memberPicker.loadingMore}
+        onEndReached={memberPicker.onEndReached}
         onSearchChange={setMemberSearch}
         selected={memberIds}
         options={employees.map((e) => ({

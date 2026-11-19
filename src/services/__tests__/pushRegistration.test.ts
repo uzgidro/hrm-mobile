@@ -21,15 +21,17 @@ import {
 // requires the native module at import time), so it must be read LAZILY —
 // `setNotificationChannelAsync: mockSetChannel` would capture `undefined`.
 const mockSetChannel = jest.fn(async () => {});
+const mockDeleteChannel = jest.fn(async () => {});
 
 jest.mock('expo-notifications', () => ({
   setNotificationHandler: jest.fn(),
   setNotificationChannelAsync: (...args: unknown[]) => mockSetChannel(...(args as [])),
+  deleteNotificationChannelAsync: (...args: unknown[]) => mockDeleteChannel(...(args as [])),
   getPermissionsAsync: jest.fn(async () => ({ status: 'granted' })),
   requestPermissionsAsync: jest.fn(async () => ({ status: 'granted' })),
   getExpoPushTokenAsync: jest.fn(async () => ({ data: 'ExponentPushToken[unit]' })),
   AndroidImportance: { MAX: 5 },
-  AndroidNotificationVisibility: { PUBLIC: 1 },
+  AndroidNotificationVisibility: { PUBLIC: 1, PRIVATE: 0 },
 }));
 
 jest.mock('expo-device', () => ({ isDevice: true }));
@@ -37,21 +39,26 @@ jest.mock('expo-device', () => ({ isDevice: true }));
 describe('ensureAndroidChannel', () => {
   afterEach(() => {
     mockSetChannel.mockClear();
+    mockDeleteChannel.mockClear();
   });
 
-  it('creates the "default" channel at MAX importance on Android', async () => {
+  it('creates the private "hrm_private_v1" channel at MAX importance on Android', async () => {
     Platform.OS = 'android';
 
     await ensureAndroidChannel();
 
     expect(mockSetChannel).toHaveBeenCalledTimes(1);
     const [id, config] = mockSetChannel.mock.calls[0] as unknown as [string, any];
-    // The id is a contract with the backend: worker/tasks.send_expo_push stamps
-    // `channelId: 'default'` on every message. A rename here silently drops the
+    // The id is a contract with the backend: worker/tasks.EXPO_ANDROID_CHANNEL_ID
+    // is stamped on every message. A rename here silently drops the
     // notification into an implicit low-importance channel — tray only.
-    expect(id).toBe('default');
-    expect(ANDROID_CHANNEL_ID).toBe('default');
+    expect(id).toBe('hrm_private_v1');
+    expect(ANDROID_CHANNEL_ID).toBe('hrm_private_v1');
     expect(config.importance).toBe(5);
+    // Bloklangan ekranda matn ko'rinmasin (xavfsizlik auditi 2026-10-09).
+    expect(config.lockscreenVisibility).toBe(0);
+    // Eski PUBLIC kanal o'chiriladi (kanal sozlamasini o'zgartirib bo'lmaydi).
+    expect(mockDeleteChannel).toHaveBeenCalledWith('default');
     expect(config.sound).toBe('default');
     expect(typeof config.name).toBe('string');
     expect(config.name.length).toBeGreaterThan(0);
