@@ -45,6 +45,7 @@ export default {
   holidaysEmpty: 'No holidays found',
   offDutyEmpty: 'No off-day duty assigned',
   repeatableBadge: 'Yearly',
+  workdayBadge: 'Working day',
   ongoingBadge: 'Now',
 
   codePresent: 'Present',

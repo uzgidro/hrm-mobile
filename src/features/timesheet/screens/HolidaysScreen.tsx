@@ -70,6 +70,7 @@ export default function HolidaysScreen() {
                   <View style={styles.badges}>
                     {isOngoing(h, today) && <Badge label={t('timesheet.ongoingBadge')} tone="success" />}
                     {!!h.is_repeatable && <Badge label={t('timesheet.repeatableBadge')} tone="brand" />}
+                    {h.kind === 'workday' && <Badge label={t('timesheet.workdayBadge')} tone="warning" />}
                   </View>
                 }
               />

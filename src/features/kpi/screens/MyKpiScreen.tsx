@@ -148,7 +148,7 @@ export default function MyKpiScreen() {
             </View>
 
             <View style={styles.gaugeWrap}>
-              <KpiGauge value={data?.result_percent != null ? Number(data.result_percent) : null} size={230} />
+              <KpiGauge value={data?.result_percent != null ? Number(data.result_percent) : null} penalty={data?.penalty_points} size={230} />
             </View>
 
             {periods.length > 0 && (

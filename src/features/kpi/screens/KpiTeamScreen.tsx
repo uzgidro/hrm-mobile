@@ -17,7 +17,8 @@ import { LoadingView, EmptyState, ErrorState } from '@/components/StateViews';
 import { EmployeeAvatar } from '@/components/EmployeeAvatar';
 import { SearchBox } from '@/components/SearchBox';
 import { myTeamQuery } from '../api/queries';
-import { resultColorKey, filterTeamMembers } from '../utils';
+import { kpiOutcome, filterTeamMembers } from '../utils';
+import type { KpiTeamMember } from '@/types';
 
 // «Xodimlarim samaradorligi» — the supervisor's direct reports with per-member
 // aggregates (web KpiPage team tab). Tapping a member opens their scorecard
@@ -46,9 +47,11 @@ export default function KpiTeamScreen() {
     { key: 'done', labelKey: 'kpi.teamFilterDone' },
   ];
 
-  const resultColor = (v: number | null | undefined) => {
-    const key = resultColorKey(v);
-    return key === 'good' ? colors.success : key === 'mid' ? colors.warning : key === 'bad' ? colors.error : colors.textMuted;
+  // Bonus green, penalty red, a normal month (0, no penalty) neutral.
+  const resultColor = (m: KpiTeamMember) => {
+    if (m.result_percent == null) return colors.textMuted;
+    const o = kpiOutcome(m.result_percent, m.penalty_points);
+    return o === 'bonus' ? colors.success : o === 'penalty' ? colors.error : colors.textMuted;
   };
 
   return (
@@ -136,7 +139,7 @@ export default function KpiTeamScreen() {
                 </View>
 
                 <View style={styles.right}>
-                  <Text style={[styles.result, { color: resultColor(m.result_percent) }]}>
+                  <Text style={[styles.result, { color: resultColor(m) }]}>
                     {m.result_percent != null ? `${Number(m.result_percent).toFixed(0)}%` : '—'}
                   </Text>
                   <Icon name="chevronRight" size={18} color={colors.textMuted} />

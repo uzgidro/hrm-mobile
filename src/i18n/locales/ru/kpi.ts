@@ -13,11 +13,10 @@ export default {
   schedule: 'График работы',
   periodPicker: 'Период оценки',
 
-  bandBad: 'ПЛОХО',
-  bandUnsatisfactory: 'НЕУДОВЛ.',
-  bandSatisfactory: 'УДОВЛ.',
-  bandGood: 'ХОРОШО',
-  bandExcellent: 'ОТЛИЧНО',
+  // ── Month outcome (bonus − penalty points; 0/0 = normal) ─────────────────
+  outcomeNormal: "В норме",
+  outcomeBonus: "Поощрение",
+  outcomePenalty: "Штраф",
 
   entriesTitle: 'Показатели KPI',
   emptyPeriod: 'В этом периоде нет показателей KPI',
