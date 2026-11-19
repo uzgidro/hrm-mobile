@@ -140,7 +140,10 @@ export type Dashboard = {
   kitchen_week?: KitchenDay[];
 };
 
+export type RoomPhoto = { id: number; url: string; thumb_url: string; width: number; height: number; sort_order: number };
+
 export type AvailabilityRoom = {
+  photos?: RoomPhoto[];
   id: number;
   number: string;
   building?: string | null;
@@ -170,6 +173,9 @@ export type SanRequest = {
   note: string | null;
   reject_reason: string | null;
   guest_id: number | null;
+  /** How many people the guest declared, and the room they picked (a soft hold on its beds). */
+  party_size?: number | null;
+  preferred_room?: { id: number; number: string; room_type: string | null; capacity: number } | null;
   existing_guest_id?: number | null;
   /** false = the passport is registered under a different name / birth date. */
   existing_guest_matches?: boolean | null;
@@ -202,6 +208,7 @@ export type SanSettings = {
 };
 
 export type Room = {
+  photos?: RoomPhoto[];
   id: number;
   number: string;
   building: string | null;
@@ -256,3 +263,18 @@ export type StayMoney = {
   family_id?: number | null;
 };
 export type StayFull = Stay & StayMoney & { diet_note: string | null };
+
+/** A free room offered to a guest / walk-in (`GET /sanatorium/public/rooms`). */
+export type PublicRoom = {
+  id: number;
+  number: string;
+  building: string | null;
+  floor: number | null;
+  room_type: string | null;
+  capacity: number;
+  free_beds: number;
+  price_per_day: string;
+  price_mode: PriceMode;
+  description: string | null;
+  photos: RoomPhoto[];
+};

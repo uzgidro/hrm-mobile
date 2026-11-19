@@ -7,6 +7,7 @@ import {
   SANATORIUM_AVAILABILITY,
   SANATORIUM_DASHBOARD,
   SANATORIUM_FAMILIES,
+  SANATORIUM_PUBLIC_ROOMS,
   SANATORIUM_ROOMS,
   SANATORIUM_SETTINGS,
   SANATORIUM_STAFF_CANDIDATES,
@@ -35,6 +36,7 @@ import type {
   KitchenPerson,
   MenuDay,
   Procedure,
+  PublicRoom,
   Room,
   SanSettings,
   StaffCandidate,
@@ -189,3 +191,9 @@ export const fetchGuestQr = async (id: number) => {
 };
 export const guestQrQuery = (id: number, enabled: boolean) =>
   queryOptions({ queryKey: [...sanKeys.all, 'qr', id], queryFn: () => fetchGuestQr(id), enabled, gcTime: 0, staleTime: 0 });
+
+/** Rooms with enough free beds for the party over the whole period (also open to guests). */
+export const fetchPublicRooms = (start: string, end: string, people: number) =>
+  apiClient.get(SANATORIUM_PUBLIC_ROOMS, { params: { start, end, people } }).then((r) => unwrapList<PublicRoom>(r.data));
+export const publicRoomsQuery = (start: string, end: string, people: number, enabled = true) =>
+  queryOptions({ queryKey: [...sanKeys.all, 'public-rooms', start, end, people], queryFn: () => fetchPublicRooms(start, end, people), enabled });

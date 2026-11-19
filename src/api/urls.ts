@@ -661,3 +661,7 @@ export const WEEKEND_TABEL_ASSIGN = 'weekend-tabel/assign';
 export const WEEKEND_TABEL_ORDERS = 'weekend-tabel/orders';
 export const WEEKEND_TABEL_IMPORT = 'weekend-tabel/import';
 export const WEEKEND_TABEL_EXPORT = 'weekend-tabel/export';
+export const SANATORIUM_ROOM_PHOTOS = (id: number) => `sanatorium/rooms/${id}/photos`;
+export const SANATORIUM_ROOM_PHOTO = (id: number, photoId: number) => `sanatorium/rooms/${id}/photos/${photoId}`;
+export const SANATORIUM_ROOM_PHOTO_ORDER = (id: number) => `sanatorium/rooms/${id}/photos/order`;
+export const SANATORIUM_PUBLIC_ROOMS = 'sanatorium/public/rooms';

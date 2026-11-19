@@ -48,6 +48,8 @@ function AcceptForm({ request, onAccepted }: { request: SanRequest; onAccepted: 
       type: request.guest_type ?? 'treatment',
       from,
       to: request.referral_to ?? dayjs(from).add(10, 'day').format('YYYY-MM-DD'),
+      // The room the guest picked is prefilled; the registrar may change it.
+      roomId: request.preferred_room?.id ?? null,
     }),
   );
   const [child, setChild] = useState(false);
@@ -84,7 +86,13 @@ function AcceptForm({ request, onAccepted }: { request: SanRequest; onAccepted: 
   return (
     <View style={styles.body} testID="accept-sheet">
       <Text variant="body" weight="600">{request.full_name}</Text>
-      <BookingFields draft={draft} onChange={(p) => setDraft((d) => ({ ...d, ...p }))} showDiet={false} />
+      {!!request.party_size && <Text variant="label" tone="muted" testID="accept-party">{t('sanatorium.partySize')}: {request.party_size}{request.party_size > 1 ? ` · ${t('sanatorium.partyHint')}` : ''}</Text>}
+      <BookingFields
+        draft={draft}
+        onChange={(p) => setDraft((d) => ({ ...d, ...p }))}
+        showDiet={false}
+        keepRoom={request.preferred_room ? { id: request.preferred_room.id, label: request.preferred_room.number } : null}
+      />
       <ChoiceField
         label={t('sanatorium.family')}
         value={familyId}

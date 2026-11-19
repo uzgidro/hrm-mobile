@@ -16,6 +16,9 @@ import {
   SANATORIUM_GUEST_CREDENTIALS,
   SANATORIUM_REQUESTS,
   SANATORIUM_ROOM,
+  SANATORIUM_ROOM_PHOTO,
+  SANATORIUM_ROOM_PHOTOS,
+  SANATORIUM_ROOM_PHOTO_ORDER,
   SANATORIUM_ROOMS,
   SANATORIUM_SETTINGS,
   SANATORIUM_SPECIALTIES,
@@ -38,7 +41,8 @@ import {
   SANATORIUM_STAY_CHECK_OUT,
   SANATORIUM_STAY_EARLY_LEAVE,
 } from '@/api/urls';
-import type { Credentials, GuestType, Meal, Procedure, QrResolveResult, Stay } from '../types';
+import { appendFile } from '@/api/formFile';
+import type { Credentials, GuestType, Meal, Procedure, QrResolveResult, RoomPhoto, Stay } from '../types';
 import { sanKeys } from './queries';
 
 export type AcceptBody = {
@@ -123,6 +127,18 @@ export const createAppointment = (body: Json) => apiClient.post(SANATORIUM_APPOI
 export const patchAppointment = ({ id, body }: { id: number; body: Json }) =>
   apiClient.patch(SANATORIUM_APPOINTMENT(id), body).then((r) => r.data);
 
+/** One image per request (multipart `file`); the caller uploads several one after another. */
+export async function uploadRoomPhoto({ roomId, uri, name, mimeType }: { roomId: number; uri: string; name: string; mimeType: string }): Promise<RoomPhoto> {
+  const fd = new FormData();
+  await appendFile(fd, 'file', { uri, name, mimeType });
+  return apiClient.post<RoomPhoto>(SANATORIUM_ROOM_PHOTOS(roomId), fd, { headers: { 'Content-Type': 'multipart/form-data' } }).then((r) => r.data);
+}
+export const deleteRoomPhoto = ({ roomId, photoId }: { roomId: number; photoId: number }) =>
+  apiClient.delete(SANATORIUM_ROOM_PHOTO(roomId, photoId)).then((r) => r.data);
+/** `ids` = every photo id of the room in the new order; the first one is the cover. */
+export const reorderRoomPhotos = ({ roomId, ids }: { roomId: number; ids: number[] }) =>
+  apiClient.put<RoomPhoto[]>(SANATORIUM_ROOM_PHOTO_ORDER(roomId), { ids }).then((r) => r.data);
+
 const meta = { skipErrorToast: true };
 
 /** Every sanatorium list/card goes stale after any write — one broad invalidation keeps it simple. */
@@ -168,3 +184,6 @@ export const useUpdatePayment = hook(updatePayment);
 export const useCancelStay = hook(cancelStay);
 export const useCreateAppointment = hook(createAppointment);
 export const usePatchAppointment = hook(patchAppointment);
+export const useUploadRoomPhoto = hook(uploadRoomPhoto);
+export const useDeleteRoomPhoto = hook(deleteRoomPhoto);
+export const useReorderRoomPhotos = hook(reorderRoomPhotos);

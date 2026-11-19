@@ -12,6 +12,7 @@ import { availabilityQuery, staffRoleQuery } from '../api/queries';
 import { GUEST_TYPES, type GuestType } from '../types';
 import { minFreeBeds, todayIso } from '../utils/sanatorium';
 import { ChoiceField, DateField, SwitchRow } from './forms';
+import { RoomPickerField, type RoomOption } from './RoomPickerField';
 
 export type BookingDraft = {
   type: GuestType;
@@ -58,17 +59,18 @@ export function BookingFields({
   const avail = useQuery(availabilityQuery(draft.from, nights, valid));
   const doctors = useQuery(staffRoleQuery('doctor'));
   const nurses = useQuery(staffRoleQuery('nurse'));
-  const rooms = useMemo(() => {
-    const list = (avail.data?.rooms ?? [])
+  const rooms = useMemo<RoomOption[]>(() => {
+    const list: RoomOption[] = (avail.data?.rooms ?? [])
       .filter((r) => !r.out_of_service)
       .map((r) => ({ r, free: minFreeBeds(r.capacity, r.occupancy) }))
       .filter((x) => x.free > 0 || x.r.id === keepRoom?.id)
       .map(({ r, free }) => ({
-        value: r.id,
-        label: [r.number, r.building].filter(Boolean).join(' · '),
+        id: r.id,
+        title: [r.number, r.building].filter(Boolean).join(' · '),
         sub: `${t('sanatorium.freeBeds')}: ${free}/${r.capacity}`,
+        photos: r.photos,
       }));
-    if (keepRoom && !list.some((x) => x.value === keepRoom.id)) list.unshift({ value: keepRoom.id, label: keepRoom.label, sub: '' });
+    if (keepRoom && !list.some((x) => x.id === keepRoom.id)) list.unshift({ id: keepRoom.id, title: keepRoom.label });
     return list;
   }, [avail.data, keepRoom, t]);
 
@@ -84,7 +86,7 @@ export function BookingFields({
       <DateField label={t('sanatorium.dateFrom')} value={draft.from} onChange={(v) => onChange({ from: v, roomId: null })} testID="bk-from" />
       <DateField label={t('sanatorium.dateTo')} value={draft.to} onChange={(v) => onChange({ to: v, roomId: null })} testID="bk-to" />
       {!valid && <Text variant="label" tone="danger">{t('sanatorium.errors.invalid_period')}</Text>}
-      <ChoiceField
+      <RoomPickerField
         label={t('sanatorium.room')}
         value={draft.roomId}
         noneLabel={t('sanatorium.noRoom')}

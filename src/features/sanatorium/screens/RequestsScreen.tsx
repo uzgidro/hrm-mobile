@@ -63,6 +63,11 @@ export default function RequestsScreen() {
                     {(r.referral_from || r.referral_to) && (
                       <Text variant="body">{t('sanatorium.referralPeriod')}: {fmtDate(r.referral_from)} → {fmtDate(r.referral_to)}</Text>
                     )}
+                    {(!!r.party_size || !!r.preferred_room) && (
+                      <Text variant="body" testID={`request-party-${r.id}`}>
+                        {[r.party_size ? `${t('sanatorium.partySize')}: ${r.party_size}` : null, r.preferred_room ? `${t('sanatorium.chosenRoom')}: ${r.preferred_room.number}${r.preferred_room.room_type ? ` (${r.preferred_room.room_type})` : ''}` : null].filter(Boolean).join(' · ')}
+                      </Text>
+                    )}
                     {!!r.note && <Text variant="caption" tone="muted">{r.note}</Text>}
                     <Text variant="caption" tone="subtle">{t(`sanatorium.source.${r.source}`, { defaultValue: r.source })} · {fmtDateTime(r.created_at)}</Text>
                     {r.status === 'rejected' && !!r.reject_reason && <Text variant="caption" tone="danger">{r.reject_reason}</Text>}

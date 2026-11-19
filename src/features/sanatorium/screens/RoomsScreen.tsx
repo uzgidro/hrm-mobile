@@ -12,6 +12,9 @@ import { useSaveRoom } from '../api/mutations';
 import { availabilityQuery, roomsQuery } from '../api/queries';
 import { ChoiceField, ErrorLine, opt, optNull, SwitchRow } from '../components/forms';
 import { Denied, QueryBlock, useSanAccess } from '../components/common';
+import { RoomCover } from '../components/RoomCover';
+import { RoomGallery, type GalleryState } from '../components/RoomGallery';
+import { RoomPhotoManager } from '../components/RoomPhotoManager';
 import type { AvailabilityRoom, PriceMode, Room } from '../types';
 import { addDays, sanErrorMessage, todayIso } from '../utils/sanatorium';
 
@@ -24,6 +27,7 @@ export default function RoomsScreen() {
   const rooms = useQuery(roomsQuery(allowed));
   const avail = useQuery(availabilityQuery(start, DAYS, allowed));
   const [edit, setEdit] = useState<Room | 'new' | null>(null);
+  const [gallery, setGallery] = useState<GalleryState>(null);
   if (!allowed) return <Denied />;
   const byId = new Map((avail.data?.rooms ?? []).map((r) => [r.id, r]));
   return (
@@ -43,24 +47,26 @@ export default function RoomsScreen() {
           ) : (
             <View style={styles.stack}>
               {items.map((r) => (
-                <RoomCard key={r.id} room={r} occ={byId.get(r.id)} start={start} onEdit={() => setEdit(r)} />
+                <RoomCard key={r.id} room={r} occ={byId.get(r.id)} start={start} onEdit={() => setEdit(r)} onGallery={() => setGallery({ title: `${t('sanatorium.room')} ${r.number}`, photos: r.photos ?? [], index: 0 })} />
               ))}
             </View>
           )
         }
       </QueryBlock>
-      <RoomSheet room={edit} onClose={() => setEdit(null)} />
+      <RoomSheet room={edit} onClose={() => setEdit(null)} onCreated={(r) => setEdit(r)} />
+      <RoomGallery state={gallery} onClose={() => setGallery(null)} />
     </Screen>
   );
 }
 
-function RoomCard({ room, occ, start, onEdit }: { room: Room; occ?: AvailabilityRoom; start: string; onEdit: () => void }) {
+function RoomCard({ room, occ, start, onEdit, onGallery }: { room: Room; occ?: AvailabilityRoom; start: string; onEdit: () => void; onGallery: () => void }) {
   const { t } = useTranslation();
   const { colors: c } = useTheme();
   const price = room.price_per_day ? `${Number(room.price_per_day).toLocaleString('ru-RU')} / ${t(room.price_mode === 'per_room' ? 'sanatorium.perRoom' : 'sanatorium.perBed')}` : null;
   return (
     <Card testID={`room-${room.id}`}>
       <View style={styles.head}>
+        <RoomCover photos={room.photos} onOpen={onGallery} testID={`cover-${room.id}`} />
         <View style={styles.flex}>
           <Text variant="heading">{t('sanatorium.room')} {room.number}</Text>
           <Text variant="caption" tone="muted">
@@ -89,16 +95,16 @@ function RoomCard({ room, occ, start, onEdit }: { room: Room; occ?: Availability
   );
 }
 
-function RoomSheet({ room, onClose }: { room: Room | 'new' | null; onClose: () => void }) {
+function RoomSheet({ room, onClose, onCreated }: { room: Room | 'new' | null; onClose: () => void; onCreated: (r: Room) => void }) {
   const { t } = useTranslation();
   return (
     <Sheet visible={!!room} onClose={onClose} title={room === 'new' ? t('sanatorium.addRoom') : t('sanatorium.editRoom')} scroll>
-      {room && <RoomForm key={room === 'new' ? 'new' : room.id} room={room === 'new' ? null : room} onClose={onClose} />}
+      {room && <RoomForm key={room === 'new' ? 'new' : room.id} room={room === 'new' ? null : room} onClose={onClose} onCreated={onCreated} />}
     </Sheet>
   );
 }
 
-function RoomForm({ room, onClose }: { room: Room | null; onClose: () => void }) {
+function RoomForm({ room, onClose, onCreated }: { room: Room | null; onClose: () => void; onCreated: (r: Room) => void }) {
   const { t } = useTranslation();
   const save = useSaveRoom();
   const [number, setNumber] = useState(room?.number ?? '');
@@ -122,7 +128,7 @@ function RoomForm({ room, onClose }: { room: Room | null; onClose: () => void })
     if (!Number.isFinite(cap) || cap < 1 || cap > 50) return setError(t('sanatorium.capacityRange'));
     if (!Number.isFinite(pr) || pr < 0) return setError(t('sanatorium.priceInvalid'));
     try {
-      await save.mutateAsync({
+      const saved = (await save.mutateAsync({
         id: room?.id,
         body: {
           number: number.trim(),
@@ -137,15 +143,18 @@ function RoomForm({ room, onClose }: { room: Room | null; onClose: () => void })
           out_of_service_note: oos ? opt(oosNote) ?? null : null,
           is_active: active,
         },
-      });
+      })) as Room;
       toast.success(t('sanatorium.saved'));
-      onClose();
+      // A new room reopens in edit mode so photos can be added right away (they need the room id).
+      if (room) onClose();
+      else onCreated(saved);
     } catch (e) {
       setError(sanErrorMessage(e, t('errors.generic')));
     }
   };
   return (
     <View style={styles.form} testID="room-sheet">
+      {room ? <RoomPhotoManager roomId={room.id} title={`${t('sanatorium.room')} ${room.number}`} /> : <Text variant="caption" tone="muted">{t('sanatorium.photosAfterSave')}</Text>}
       <FormInput label={t('sanatorium.roomNumber')} value={number} onChangeText={setNumber} required testID="room-number" />
       <FormInput label={t('sanatorium.building')} value={building} onChangeText={setBuilding} />
       <FormInput label={t('sanatorium.floorLabel')} value={floor} onChangeText={setFloor} keyboardType="number-pad" />

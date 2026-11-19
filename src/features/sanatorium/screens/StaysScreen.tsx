@@ -10,6 +10,8 @@ import { Badge, Card, EmptyState, PageHeader, Screen, Segmented, Text } from '@/
 import { availabilityQuery, dashboardQuery } from '../api/queries';
 import { useCheckIn, useCheckOut } from '../api/mutations';
 import { Denied, PhoneLink, QueryBlock, useSanAccess } from '../components/common';
+import { RoomCover } from '../components/RoomCover';
+import { RoomGallery, type GalleryState } from '../components/RoomGallery';
 import { EarlyLeaveSheet } from '../components/EarlyLeaveSheet';
 import { StayCard } from '../components/StayCard';
 import type { AvailabilityRoom, Stay } from '../types';
@@ -22,6 +24,7 @@ export default function StaysScreen() {
   const allowed = useSanAccess('room_keeper', 'registrar');
   const [seg, setSeg] = useState<Seg>('arrivals');
   const [early, setEarly] = useState<Stay | null>(null);
+  const [gallery, setGallery] = useState<GalleryState>(null);
   const dash = useQuery(dashboardQuery(allowed));
   const rooms = useQuery(availabilityQuery(todayIso(), 1, allowed && seg === 'rooms'));
   const checkIn = useCheckIn();
@@ -94,23 +97,25 @@ export default function StaysScreen() {
           <QueryBlock query={rooms}>
             {(a) =>
               a.rooms.length === 0 ? <EmptyState title={t('sanatorium.noRooms')} /> : (
-                <View style={styles.stack}>{a.rooms.map((r) => <RoomCard key={r.id} room={r} />)}</View>
+                <View style={styles.stack}>{a.rooms.map((r) => <RoomCard key={r.id} room={r} onGallery={() => setGallery({ title: `${t('sanatorium.room')} ${r.number}`, photos: r.photos ?? [], index: 0 })} />)}</View>
               )
             }
           </QueryBlock>
         )}
       </View>
       <EarlyLeaveSheet stay={early} onClose={() => setEarly(null)} />
+      <RoomGallery state={gallery} onClose={() => setGallery(null)} />
     </Screen>
   );
 }
 
-function RoomCard({ room }: { room: AvailabilityRoom }) {
+function RoomCard({ room, onGallery }: { room: AvailabilityRoom; onGallery: () => void }) {
   const { t } = useTranslation();
   const free = room.out_of_service ? 0 : room.free_today;
   return (
     <Card testID={`room-${room.id}`}>
       <View style={styles.roomHead}>
+        <RoomCover photos={room.photos} size={56} onOpen={onGallery} testID={`cover-${room.id}`} />
         <View style={styles.flex}>
           <Text variant="heading">{t('sanatorium.room')} {room.number}</Text>
           <Text variant="caption" tone="muted">
