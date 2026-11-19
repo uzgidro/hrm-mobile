@@ -135,9 +135,9 @@ describe('home links', () => {
     expect(off).not.toContain('/sanatorium-packages');
     expect(off).toContain('/sanatorium-quote');
   });
-  it('gives a doctor the schedule and own ratings only', () => {
+  it('gives a doctor the schedule and own ratings, a nurse the schedule only', () => {
     expect(visibleSections2Links(has('doctor') as never, () => true).map((l) => l.labelKey)).toEqual(['sanatorium.s2.schedule', 'sanatorium.s2.myRatings']);
-    expect(visibleSections2Links(has('nurse') as never, () => true)).toEqual([]);
+    expect(visibleSections2Links(has('nurse') as never, () => true).map((l) => l.labelKey)).toEqual(['sanatorium.s2.schedule']);
   });
 });
 

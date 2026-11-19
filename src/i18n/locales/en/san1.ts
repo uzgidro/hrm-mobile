@@ -33,6 +33,7 @@ export default {
     noStages: "No stages",
     emptyStage: "No guests at this stage",
     tapToMove: "Tap a guest to move them to another stage",
+    openStay: "Open stay",
     inferred: "Inferred",
     auto: "Automatic",
     noHistory: "No moves yet",

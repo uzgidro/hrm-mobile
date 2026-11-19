@@ -20,7 +20,7 @@ export const SECTIONS2_LINKS: Link[] = [
   { route: '/sanatorium-services', icon: 'orders', labelKey: 'sanatorium.s2.services', roles: ['registrar'], feature: 'paid_services' },
   { route: '/sanatorium-orgs', icon: 'briefcase', labelKey: 'sanatorium.s2.organizations', roles: ['registrar'], feature: 'documents' },
   { route: '/sanatorium-doc-templates', icon: 'doc', labelKey: 'sanatorium.s2.docTemplates', roles: ['registrar'], feature: 'documents' },
-  { route: '/sanatorium-schedule', icon: 'board', labelKey: 'sanatorium.s2.schedule', roles: ['registrar', 'doctor'], feature: 'procedure_schedule' },
+  { route: '/sanatorium-schedule', icon: 'board', labelKey: 'sanatorium.s2.schedule', roles: ['registrar', 'doctor', 'nurse'], feature: 'procedure_schedule' },
   { route: '/sanatorium-diets', icon: 'checklist', labelKey: 'sanatorium.s2.diets', roles: ['registrar'], feature: 'diet' },
   { route: '/sanatorium-feedback', icon: 'news', labelKey: 'sanatorium.s2.feedback', roles: ['registrar'], feature: 'feedback' },
   { route: '/sanatorium-feedback', icon: 'news', labelKey: 'sanatorium.s2.myRatings', roles: ['doctor'], feature: 'feedback' },

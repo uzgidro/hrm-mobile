@@ -283,10 +283,11 @@ export const reorderPackages = (ids: number[]) => apiClient.post<SanPackage[]>(S
 export const reorderServices = (ids: number[]) => apiClient.post<SanService[]>(SANATORIUM_SERVICES_REORDER, { ids }).then((r) => r.data);
 
 export type PickedFile = { uri: string; name: string; mimeType: string };
-async function upload<T>(url: string, f: PickedFile): Promise<T> {
+async function upload<T>(url: string, f: PickedFile, method: 'post' | 'put' = 'post'): Promise<T> {
   const fd = new FormData();
   await appendFile(fd, 'file', f);
-  return apiClient.post<T>(url, fd, { headers: { 'Content-Type': 'multipart/form-data' } }).then((r) => r.data);
+  const config = { headers: { 'Content-Type': 'multipart/form-data' } };
+  return (method === 'put' ? apiClient.put<T>(url, fd, config) : apiClient.post<T>(url, fd, config)).then((r) => r.data);
 }
 export const uploadPackagePhoto = ({ id, file }: { id: number; file: PickedFile }) => upload<SanPackage>(SANATORIUM_PACKAGE_PHOTO(id), file);
 export const deletePackagePhoto = (id: number) => apiClient.delete<SanPackage>(SANATORIUM_PACKAGE_PHOTO(id)).then((r) => r.data);
@@ -297,7 +298,7 @@ export const createServiceOrder = (body: Json) => apiClient.post<ServiceOrder>(S
 export const patchServiceOrder = ({ id, body }: { id: number; body: Json }) => apiClient.patch<ServiceOrder>(SANATORIUM_SERVICE_ORDER(id), body).then((r) => r.data);
 
 /** DOCX template upload (multipart `file`, max 5 MB); the server test-renders it first. */
-export const uploadTemplate = ({ kind, file }: { kind: DocKind; file: PickedFile }) => upload<DocTemplate>(SANATORIUM_DOC_TEMPLATE(kind), file);
+export const uploadTemplate = ({ kind, file }: { kind: DocKind; file: PickedFile }) => upload<DocTemplate>(SANATORIUM_DOC_TEMPLATE(kind), file, 'put');
 export const resetTemplate = (kind: DocKind) => apiClient.delete(SANATORIUM_DOC_TEMPLATE(kind)).then((r) => r.data);
 
 export const scheduleProcedure = ({ procedureId, body }: { procedureId: number; body: Json }) =>

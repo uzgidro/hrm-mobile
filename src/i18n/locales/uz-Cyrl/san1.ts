@@ -33,6 +33,7 @@ export default {
     noStages: "Босқичлар ёъқ",
     emptyStage: "Бу босқичда меҳмон ёъқ",
     tapToMove: "Меҳмонни бошқа босқичга ўтказиш учун босинг",
+    openStay: "Яшашни очиш",
     inferred: "Тахминий",
     auto: "Автоматик",
     noHistory: "Ҳали ўтишлар ёъқ",

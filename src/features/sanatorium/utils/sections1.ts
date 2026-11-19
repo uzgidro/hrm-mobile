@@ -66,7 +66,7 @@ const clampPct = (v: number) => Math.min(100, Math.max(0, Math.round(v * 100) / 
 
 /** A tap at (x, y) inside a w × h image box → percent coordinates (what the server stores). */
 export function planPoint(x: number, y: number, w: number, h: number): { x_pct: number; y_pct: number } | null {
-  if (!(w > 0) || !(h > 0)) return null;
+  if (!(w > 0) || !(h > 0) || !Number.isFinite(x) || !Number.isFinite(y)) return null;
   return { x_pct: clampPct((x / w) * 100), y_pct: clampPct((y / h) * 100) };
 }
 

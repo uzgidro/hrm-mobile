@@ -1,7 +1,7 @@
 // The territory plan image with POI pins at x_pct / y_pct. With `onTap` a tap places / moves the
 // draft pin (registrar editor); without it the plan is read-only.
-import React, { useState } from 'react';
-import { Pressable, StyleSheet, View, type GestureResponderEvent, type LayoutChangeEvent } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { Platform, Pressable, StyleSheet, View, type GestureResponderEvent, type LayoutChangeEvent } from 'react-native';
 import { Image } from 'expo-image';
 import { useTranslation } from 'react-i18next';
 import { Icon } from '@/components/Icon';
@@ -29,16 +29,29 @@ export function PlanView({
   const { t } = useTranslation();
   const { colors: c } = useTheme();
   const [w, setW] = useState(0);
+  const boxRef = useRef<View>(null);
   const ratio = plan.width > 0 && plan.height > 0 ? plan.width / plan.height : 4 / 3;
   const onLayout = (e: LayoutChangeEvent) => setW(e.nativeEvent.layout.width);
   const tap = (e: GestureResponderEvent) => {
     if (!onTap || w <= 0) return;
-    const p = planPoint(e.nativeEvent.locationX, e.nativeEvent.locationY, w, w / ratio);
+    const ne = e.nativeEvent as unknown as Record<string, number | undefined>;
+    let x = ne.locationX;
+    let y = ne.locationY;
+    if (!Number.isFinite(x) || !Number.isFinite(y)) {
+      // react-native-web press events carry no locationX/Y: derive them from the box rectangle.
+      const rect = Platform.OS === 'web' ? (boxRef.current as unknown as HTMLElement | null)?.getBoundingClientRect?.() : undefined;
+      const cx = ne.clientX ?? ne.pageX;
+      const cy = ne.clientY ?? ne.pageY;
+      if (!rect || cx == null || cy == null) return;
+      x = cx - rect.left;
+      y = cy - rect.top;
+    }
+    const p = planPoint(x as number, y as number, w, w / ratio);
     if (p) onTap(p);
   };
   return (
     <View style={styles.wrap} testID="plan-view">
-      <Pressable onPress={tap} disabled={!onTap} onLayout={onLayout} style={[styles.box, { aspectRatio: ratio, borderColor: c.border, backgroundColor: c.surface2 }]} accessibilityLabel={t('san1.territory.plan')}>
+      <Pressable ref={boxRef} onPress={tap} disabled={!onTap} onLayout={onLayout} style={[styles.box, { aspectRatio: ratio, borderColor: c.border, backgroundColor: c.surface2 }]} accessibilityLabel={t('san1.territory.plan')}>
         <Image source={{ uri: plan.url }} style={StyleSheet.absoluteFill} contentFit="fill" pointerEvents="none" />
         {pois.map((p) => (
           <Pin key={p.id} x={p.x_pct} y={p.y_pct} color={p.id === activeId ? c.warning : c.drop} onPress={onPoi ? () => onPoi(p) : undefined} label={String(p.id)} />

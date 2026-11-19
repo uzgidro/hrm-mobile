@@ -33,6 +33,7 @@ export default {
     noStages: "Bosqichlar yo'q",
     emptyStage: "Bu bosqichda mehmon yo'q",
     tapToMove: "Mehmonni boshqa bosqichga o'tkazish uchun bosing",
+    openStay: "Yashashni ochish",
     inferred: "Taxminiy",
     auto: "Avtomatik",
     noHistory: "Hali o'tishlar yo'q",

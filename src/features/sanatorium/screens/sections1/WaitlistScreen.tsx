@@ -14,7 +14,7 @@ import { PagedBlock, PhoneLink } from '../../components/common';
 import { ChoiceField, DateField, ErrorLine, opt } from '../../components/forms';
 import { SectionGate } from '../../components/sections1/shared';
 import { WAITLIST_STATUSES, type WaitlistItem, type WaitlistStatus } from '../../types1';
-import { fmtDate, maskPassport, parseDmy, sanErrorMessage } from '../../utils/sanatorium';
+import { addDays, fmtDate, maskPassport, parseDmy, sanErrorMessage } from '../../utils/sanatorium';
 
 type Tab = 'all' | WaitlistStatus;
 const tone = (s: WaitlistStatus) => ({ waiting: 'warning', offered: 'info', converted: 'success', cancelled: 'neutral' } as const)[s];
@@ -107,7 +107,7 @@ function EntryForm({ item, onClose }: { item: WaitlistItem | null; onClose: () =
     const n = Number.parseInt(size, 10);
     if (name.trim().length < 5) return setError(t('san1.waitlist.nameShort'));
     if (!phone.trim()) return setError(t('sanatorium.phoneRequired'));
-    if (!pFrom || !pTo || pTo < pFrom) return setError(t('san1.waitlist.periodInvalid'));
+    if (!pFrom || !pTo || pTo <= pFrom) return setError(t('san1.waitlist.periodInvalid'));
     if (!Number.isFinite(n) || n < 1 || n > 20) return setError(t('san1.waitlist.sizeRange'));
     const birthIso = birth.trim() ? parseDmy(birth) : null;
     if (birth.trim() && !birthIso) return setError(t('san1.waitlist.birthInvalid'));
@@ -163,7 +163,7 @@ function EntryForm({ item, onClose }: { item: WaitlistItem | null; onClose: () =
       {item?.passport && <Text variant="caption" tone="muted">{maskPassport(item.passport)}</Text>}
       <FormInput label={t('san1.waitlist.fullName')} value={name} onChangeText={setName} required testID="wl-name" />
       <FormInput label={t('sanatorium.phone')} value={phone} onChangeText={setPhone} keyboardType="phone-pad" required testID="wl-phone" />
-      <DateField label={t('san1.waitlist.from')} value={pFrom} onChange={(v) => { setPFrom(v); if (!pTo || pTo < v) setPTo(v); }} testID="wl-pfrom" />
+      <DateField label={t('san1.waitlist.from')} value={pFrom} onChange={(v) => { setPFrom(v); if (!pTo || pTo <= v) setPTo(addDays(v, 1)); }} testID="wl-pfrom" />
       <DateField label={t('san1.waitlist.to')} value={pTo} onChange={setPTo} testID="wl-pto" />
       <FormInput label={t('san1.waitlist.partySize')} value={size} onChangeText={setSize} keyboardType="number-pad" testID="wl-size" />
       <FormInput label={t('san1.waitlist.roomType')} value={roomType} onChangeText={setRoomType} testID="wl-roomtype" />

@@ -45,6 +45,8 @@ describe('plan and map coordinates', () => {
     expect(planPoint(50, 25, 200, 100)).toEqual({ x_pct: 25, y_pct: 25 });
     expect(planPoint(-5, 500, 200, 100)).toEqual({ x_pct: 0, y_pct: 100 });
     expect(planPoint(1, 1, 0, 0)).toBeNull();
+    expect(planPoint(NaN, 1, 200, 100)).toBeNull();
+    expect(planPoint(1, undefined as unknown as number, 200, 100)).toBeNull();
   });
   it('parses the viewer hash', () => {
     expect(parseMapHash('#16/41.3111/69.2797')).toEqual({ zoom: 16, lat: 41.3111, lng: 69.2797 });

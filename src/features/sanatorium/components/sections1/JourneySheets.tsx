@@ -2,6 +2,7 @@
 // catalog (registrar).
 import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { FormInput } from '@/components/FormInput';
@@ -53,6 +54,16 @@ function MoveForm({ stayId, currentId, onClose }: { stayId: number; currentId: n
       <Text variant="caption" tone="muted">{t('san1.journey.moveHint')}</Text>
       <ErrorLine message={error} testID="move-error" />
       <Button testID="move-save" label={t('san1.journey.move')} full loading={move.isPending} onPress={() => void submit()} />
+      <Button
+        testID="move-open-stay"
+        label={t('san1.journey.openStay')}
+        variant="ghost"
+        full
+        onPress={() => {
+          onClose();
+          router.push({ pathname: '/sanatorium-stay', params: { id: String(stayId) } });
+        }}
+      />
     </View>
   );
 }
