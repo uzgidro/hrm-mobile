@@ -8,6 +8,7 @@ import { toast } from '@/lib/toast';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { Button, ListRow, SearchField, Sheet, Text } from '@/ui';
 import { useCreateStays } from '../api/mutations';
+import { applyDietToStays } from '../api/sections2';
 import { familiesQuery, guestsQuery } from '../api/queries';
 import type { Family, GuestLite } from '../types';
 import { sanErrorMessage } from '../utils/sanatorium';
@@ -64,7 +65,10 @@ function BookingForm({ initial, onClose, onDone }: { initial: GuestLite[]; onClo
         ...(opt(draft.contract) ? { contract_note: opt(draft.contract) } : {}),
         ...(opt(draft.note) ? { note: opt(draft.note) } : {}),
         ...(familyId ? { family_id: familyId } : {}),
+        ...(draft.packageId ? { package_id: draft.packageId } : {}),
+        ...(draft.organizationId ? { organization_id: draft.organizationId } : {}),
       });
+      if (await applyDietToStays(res.map((s) => s.id), draft.dietId)) toast.error(t('sanatorium.s2.dietNotSaved'));
       toast.success(t('sanatorium.bookingCreated'));
       onDone?.(res.map((s) => s.id));
       onClose();

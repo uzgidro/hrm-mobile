@@ -49,7 +49,8 @@ import vehicles from './vehicles';
 import reports from './reports';
 import medical from './medical';
 import medicalExam from './medicalExam';
-import sanatorium from './sanatorium';
+import sanatorium0 from './sanatorium';
+import sanatorium2 from './sanatorium2';
 import zoom from './zoom';
 import health from './health';
 import inspections from './inspections';
@@ -119,7 +120,7 @@ export default {
   reports,
   medical,
   medicalExam,
-  sanatorium,
+  sanatorium: { ...sanatorium0, s2: sanatorium2.s2, errors: { ...sanatorium0.errors, ...sanatorium2.errors } },
   zoom,
   health,
   inspections,

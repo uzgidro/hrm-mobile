@@ -6,7 +6,9 @@ import dayjs from 'dayjs';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Button, Sheet, Text } from '@/ui';
+import { toast } from '@/lib/toast';
 import { useAcceptRequest } from '../api/mutations';
+import { applyDietToStays } from '../api/sections2';
 import { familiesQuery } from '../api/queries';
 import type { Credentials, SanRequest } from '../types';
 import { sanErrorMessage, todayIso } from '../utils/sanatorium';
@@ -50,6 +52,7 @@ function AcceptForm({ request, onAccepted }: { request: SanRequest; onAccepted: 
       to: request.referral_to ?? dayjs(from).add(10, 'day').format('YYYY-MM-DD'),
       // The room the guest picked is prefilled; the registrar may change it.
       roomId: request.preferred_room?.id ?? null,
+      packageId: request.package_id ?? null,
     }),
   );
   const [child, setChild] = useState(false);
@@ -73,8 +76,11 @@ function AcceptForm({ request, onAccepted }: { request: SanRequest; onAccepted: 
           ...(familyId ? { family_id: familyId } : {}),
           ...(opt(draft.contract) ? { contract_note: opt(draft.contract) } : {}),
           ...(opt(draft.note) ? { note: opt(draft.note) } : {}),
+          ...(draft.packageId ? { package_id: draft.packageId } : {}),
+          ...(draft.organizationId ? { organization_id: draft.organizationId } : {}),
         },
       });
+      if (await applyDietToStays([r.stay.id], draft.dietId)) toast.error(t('sanatorium.s2.dietNotSaved'));
       const out = { guestName: r.guest.full_name, credentials: r.credentials };
       accept.reset();
       onAccepted(out);

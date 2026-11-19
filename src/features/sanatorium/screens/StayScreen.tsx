@@ -13,6 +13,9 @@ import { stayQuery } from '../api/queries';
 import { AppointmentSheet } from '../components/AppointmentSheet';
 import { Denied, PhoneLink, QueryBlock, useSanAccess } from '../components/common';
 import { EarlyLeaveSheet } from '../components/EarlyLeaveSheet';
+import { StayDietSheet } from '../components/sections2/DietParts';
+import { StayDocumentsCard, StayServicesCard } from '../components/sections2/StayDocuments';
+import { useSanFeatures } from '../utils/features';
 import { StaySheets, type StaySheetKind } from '../components/StaySheets';
 import type { StayFull } from '../types';
 import { fmtDate, fmtDateTime, fmtMoney, hasSanRole, sanErrorInfo, sanErrorMessage, stayTone } from '../utils/sanatorium';
@@ -50,6 +53,8 @@ function Detail({ stay }: { stay: StayFull }) {
   const [sheet, setSheet] = useState<StaySheetKind | null>(null);
   const [early, setEarly] = useState(false);
   const [appt, setAppt] = useState(false);
+  const [dietOpen, setDietOpen] = useState(false);
+  const features = useSanFeatures();
   const live = stay.status === 'booked' || stay.status === 'checked_in';
 
   const run = async (kind: 'in' | 'out') => {
@@ -101,7 +106,11 @@ function Detail({ stay }: { stay: StayFull }) {
         </Card>
       )}
 
+      <StayServicesCard stay={stay} />
+      <StayDocumentsCard stay={stay} />
+
       <View style={styles.actions}>
+        {live && registrar && features.on('diet') && <Button testID="stay-diet" label={t('sanatorium.s2.dietAndAllergies')} variant="soft" onPress={() => setDietOpen(true)} />}
         {stay.status === 'booked' && <Button testID="stay-checkin" label={t('sanatorium.checkIn')} icon="check" loading={checkIn.isPending} onPress={() => void run('in')} />}
         {stay.status === 'checked_in' && (
           <>
@@ -117,6 +126,7 @@ function Detail({ stay }: { stay: StayFull }) {
       <StaySheets stay={stay} kind={sheet} onClose={() => setSheet(null)} />
       <EarlyLeaveSheet stay={early ? stay : null} onClose={() => setEarly(false)} />
       <AppointmentSheet stayId={appt ? stay.id : null} onClose={() => setAppt(false)} />
+      <StayDietSheet stay={dietOpen ? stay : null} onClose={() => setDietOpen(false)} />
     </View>
   );
 }

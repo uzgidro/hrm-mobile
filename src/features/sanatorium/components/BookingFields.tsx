@@ -13,6 +13,7 @@ import { GUEST_TYPES, type GuestType } from '../types';
 import { minFreeBeds, todayIso } from '../utils/sanatorium';
 import { ChoiceField, DateField, SwitchRow } from './forms';
 import { RoomPickerField, type RoomOption } from './RoomPickerField';
+import { BookingSectionFields } from './sections2/BookingSectionFields';
 
 export type BookingDraft = {
   type: GuestType;
@@ -25,6 +26,10 @@ export type BookingDraft = {
   nurseId: number | null;
   contract: string;
   note: string;
+  /** Sections: optional package / billed organization / diet (hidden when the section is off). */
+  packageId: number | null;
+  organizationId: number | null;
+  dietId: number | null;
 };
 
 export const newBookingDraft = (over: Partial<BookingDraft> = {}): BookingDraft => ({
@@ -38,6 +43,9 @@ export const newBookingDraft = (over: Partial<BookingDraft> = {}): BookingDraft 
   nurseId: null,
   contract: '',
   note: '',
+  packageId: null,
+  organizationId: null,
+  dietId: null,
   ...over,
 });
 
@@ -115,6 +123,7 @@ export function BookingFields({
         loading={nurses.isPending}
         testID="bk-nurse"
       />
+      <BookingSectionFields draft={draft} onChange={onChange} />
       <FormInput label={t('sanatorium.contractNote')} value={draft.contract} onChangeText={(v) => onChange({ contract: v })} testID="bk-contract" />
       <FormInput label={t('sanatorium.notes')} value={draft.note} onChangeText={(v) => onChange({ note: v })} multiline testID="bk-note" />
     </View>
