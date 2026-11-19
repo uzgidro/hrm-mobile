@@ -1,7 +1,7 @@
 // Shapes of the sanatorium staff API (see backend `schemas/sanatorium.py`). Everything the
 // server may omit for a role (phone, passport, money, medical text) is optional.
 
-export type SanRole = 'registrar' | 'kitchen' | 'room_keeper' | 'doctor' | 'nurse';
+export type SanRole = 'registrar' | 'kitchen' | 'room_keeper' | 'doctor' | 'nurse' | 'housekeeper';
 export type GuestType = 'hotel' | 'rest' | 'treatment' | 'contract';
 export type StayStatus = 'booked' | 'checked_in' | 'checked_out' | 'early_left' | 'cancelled';
 export type RequestStatus = 'new' | 'accepted' | 'rejected';
@@ -184,7 +184,7 @@ export type SanRequest = {
   created_at: string | null;
 };
 
-export type Specialty = { id: number; name: string; kind: string; is_active: boolean };
+export type Specialty = { id: number; name: string; kind: string; is_active: boolean; poi_id?: number | null };
 export type StaffRow = { id: number; full_name?: string | null; specialty_id?: number | null; specialty?: string | null };
 export type Credentials = { login_code: string; password: string; qr_code: string };
 export type QrResolveResult = { guest: GuestLite; active_stay: Stay | null };
@@ -219,6 +219,7 @@ export type Room = {
   out_of_service: boolean;
   out_of_service_note: string | null;
   is_active: boolean;
+  poi_id?: number | null;
   price_per_day?: string;
   price_mode?: PriceMode;
 };
@@ -237,6 +238,8 @@ export type StaffMember = {
   is_room_keeper: boolean;
   is_doctor: boolean;
   is_nurse: boolean;
+  is_housekeeper?: boolean;
+  poi_id?: number | null;
   is_external: boolean;
 };
 export type StaffCandidate = { user_id: number; full_name: string; kind: 'employee' | 'external'; already_staff: boolean };

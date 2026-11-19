@@ -395,6 +395,7 @@ export default {
     kitchen: "Kitchen",
     doctor: "Doctor",
     nurse: "Nurse",
+    housekeeper: "Housekeeper",
   },
   kind: {
     doctor: "Doctor",

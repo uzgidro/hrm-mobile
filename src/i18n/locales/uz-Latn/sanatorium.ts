@@ -395,6 +395,7 @@ export default {
     kitchen: "Oshxona",
     doctor: "Shifokor",
     nurse: "Hamshira",
+    housekeeper: "Xona tozalovchi",
   },
   kind: {
     doctor: "Shifokor",

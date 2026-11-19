@@ -12,6 +12,7 @@ import { candidatesQuery, specialtiesQuery } from '../api/queries';
 import type { SanRole, StaffMember } from '../types';
 import { sanErrorMessage } from '../utils/sanatorium';
 import { ChoiceField, ErrorLine, opt, SwitchRow } from './forms';
+import { PoiField, usePoiOn } from './sections1/PoiField';
 
 const ROLE_FLAGS = [
   ['is_registrar', 'registrar'],
@@ -19,6 +20,7 @@ const ROLE_FLAGS = [
   ['is_kitchen', 'kitchen'],
   ['is_doctor', 'doctor'],
   ['is_nurse', 'nurse'],
+  ['is_housekeeper', 'housekeeper'],
 ] as const satisfies readonly (readonly [string, SanRole])[];
 type Flags = Record<(typeof ROLE_FLAGS)[number][0], boolean>;
 
@@ -48,7 +50,10 @@ function StaffForm({ staff, onClose }: { staff: StaffMember | null; onClose: () 
     is_kitchen: staff?.is_kitchen ?? false,
     is_doctor: staff?.is_doctor ?? false,
     is_nurse: staff?.is_nurse ?? false,
+    is_housekeeper: staff?.is_housekeeper ?? false,
   });
+  const poiOn = usePoiOn();
+  const [poiId, setPoiId] = useState<number | null>(staff?.poi_id ?? null);
   const [specialtyId, setSpecialtyId] = useState<number | null>(staff?.specialty_id ?? null);
   const [cabinet, setCabinet] = useState(staff?.cabinet ?? '');
   const [phone, setPhone] = useState(staff?.phone ?? '');
@@ -65,6 +70,7 @@ function StaffForm({ staff, onClose }: { staff: StaffMember | null; onClose: () 
           ...flags,
           specialty_id: specialtyId,
           cabinet: opt(cabinet) ?? null,
+          ...(poiOn ? { poi_id: poiId } : {}),
           phone: opt(phone) ?? null,
           is_active: active,
         },
@@ -128,6 +134,7 @@ function StaffForm({ staff, onClose }: { staff: StaffMember | null; onClose: () 
             testID="staff-specialty"
           />
           <FormInput label={t('sanatorium.cabinet')} value={cabinet} onChangeText={setCabinet} testID="staff-cabinet" />
+          <PoiField value={poiId} onChange={setPoiId} testID="staff-poi" />
           <FormInput label={t('sanatorium.phone')} value={phone} onChangeText={setPhone} keyboardType="phone-pad" testID="staff-phone" />
           <SwitchRow label={t('sanatorium.active')} value={active} onChange={setActive} />
           <ErrorLine message={error} testID="staff-error" />

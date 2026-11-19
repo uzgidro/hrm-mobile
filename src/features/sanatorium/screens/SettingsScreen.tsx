@@ -11,10 +11,12 @@ import { allSpecialtiesQuery, settingsQuery, staffQuery } from '../api/queries';
 import { ChoiceField, ErrorLine, optNull, SwitchRow } from '../components/forms';
 import { Denied, QueryBlock, useSanAccess } from '../components/common';
 import { StaffSheet } from '../components/StaffSheet';
+import { FeaturesPanel } from './sections1/FeaturesPanel';
+import { PoiField, usePoiOn } from '../components/sections1/PoiField';
 import { SPECIALTY_KINDS, type SanSettings, type Specialty, type SpecialtyKind, type StaffMember } from '../types';
 import { sanErrorMessage } from '../utils/sanatorium';
 
-type Seg = 'staff' | 'specialties' | 'texts';
+type Seg = 'staff' | 'specialties' | 'texts' | 'sections';
 
 export default function SettingsScreen() {
   const { t } = useTranslation();
@@ -48,6 +50,7 @@ export default function SettingsScreen() {
           { value: 'staff', label: t('sanatorium.staff') },
           { value: 'specialties', label: t('sanatorium.specialties') },
           { value: 'texts', label: t('sanatorium.texts') },
+          { value: 'sections', label: t('san1.sections') },
         ]}
       />
       <View style={styles.body}>
@@ -65,7 +68,7 @@ export default function SettingsScreen() {
                       testID={`staff-${m.id}`}
                       title={m.full_name}
                       subtitle={[
-                        ...(['registrar', 'room_keeper', 'kitchen', 'doctor', 'nurse'] as const)
+                        ...(['registrar', 'room_keeper', 'kitchen', 'doctor', 'nurse', 'housekeeper'] as const)
                           .filter((r) => m[`is_${r}` as keyof StaffMember])
                           .map((r) => t(`sanatorium.role.${r}`)),
                         m.specialty,
@@ -102,6 +105,7 @@ export default function SettingsScreen() {
             )}
           </QueryBlock>
         )}
+        {seg === 'sections' && <FeaturesPanel />}
         {seg === 'texts' && <QueryBlock query={settings}>{(s) => <TextsForm key={JSON.stringify(s)} s={s} />}</QueryBlock>}
       </View>
       <StaffSheet staff={editStaff} onClose={() => setEditStaff(null)} />
@@ -125,11 +129,13 @@ function SpecialtyForm({ spec, onClose }: { spec: Specialty | null; onClose: () 
   const [name, setName] = useState(spec?.name ?? '');
   const [kind, setKind] = useState<SpecialtyKind>((spec?.kind as SpecialtyKind) ?? 'doctor');
   const [active, setActive] = useState(spec?.is_active ?? true);
+  const poiOn = usePoiOn();
+  const [poiId, setPoiId] = useState<number | null>(spec?.poi_id ?? null);
   const [error, setError] = useState<string | null>(null);
   const submit = async () => {
     if (name.trim().length < 2) return setError(t('sanatorium.nameShort'));
     try {
-      await save.mutateAsync({ id: spec?.id, body: { name: name.trim(), kind, is_active: active } });
+      await save.mutateAsync({ id: spec?.id, body: { name: name.trim(), kind, is_active: active, ...(poiOn ? { poi_id: poiId } : {}) } });
       toast.success(t('sanatorium.saved'));
       onClose();
     } catch (e) {
@@ -140,6 +146,7 @@ function SpecialtyForm({ spec, onClose }: { spec: Specialty | null; onClose: () 
     <View style={styles.form} testID="specialty-sheet">
       <FormInput label={t('sanatorium.name')} value={name} onChangeText={setName} required testID="spec-name" />
       <ChoiceField label={t('sanatorium.kindLabel')} value={kind} options={SPECIALTY_KINDS.map((k) => ({ value: k, label: t(`sanatorium.kind.${k}`) }))} onChange={(v) => v && setKind(v)} testID="spec-kind" />
+      <PoiField value={poiId} onChange={setPoiId} testID="spec-poi" />
       <SwitchRow label={t('sanatorium.active')} value={active} onChange={setActive} />
       <ErrorLine message={error} />
       <Button testID="spec-save" label={t('common.save')} full loading={save.isPending} onPress={() => void submit()} />

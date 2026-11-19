@@ -11,6 +11,8 @@ import { usePutMenu } from '../api/mutations';
 import { menuQuery } from '../api/queries';
 import { ErrorLine } from '../components/forms';
 import { Denied, QueryBlock, useSanAccess } from '../components/common';
+import { FeatureOff } from '../components/sections1/shared';
+import { useSanFeatures } from '../utils/features';
 import { MEALS, type Meal, type MenuDay } from '../types';
 import { addDays, fmtDate, sanErrorMessage, todayIso } from '../utils/sanatorium';
 
@@ -19,9 +21,11 @@ const DAYS = 7;
 export default function MenuWeekScreen() {
   const { t } = useTranslation();
   const allowed = useSanAccess('kitchen');
+  const { on, loaded } = useSanFeatures();
   const [start, setStart] = useState(todayIso());
   const q = useQuery(menuQuery(start, DAYS, allowed));
   if (!allowed) return <Denied />;
+  if (loaded && !on('kitchen_menu')) return <FeatureOff />;
   return (
     <Screen refreshing={q.isRefetching} onRefresh={() => void q.refetch()} testID="sanatorium-menu-screen">
       <PageHeader title={t('sanatorium.weekMenu')} subtitle={`${fmtDate(start)} – ${fmtDate(addDays(start, DAYS - 1))}`} />

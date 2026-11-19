@@ -50,6 +50,7 @@ import reports from './reports';
 import medical from './medical';
 import medicalExam from './medicalExam';
 import sanatorium from './sanatorium';
+import san1 from './san1';
 import zoom from './zoom';
 import health from './health';
 import inspections from './inspections';
@@ -120,6 +121,7 @@ export default {
   medical,
   medicalExam,
   sanatorium,
+  san1,
   zoom,
   health,
   inspections,

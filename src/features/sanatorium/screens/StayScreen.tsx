@@ -9,10 +9,12 @@ import { toast } from '@/lib/toast';
 import { useAuthStore } from '@/store/authStore';
 import { Badge, Button, Card, PageHeader, Screen, Text } from '@/ui';
 import { useCheckIn, useCheckOut } from '../api/mutations';
+import { roomNotReady } from '../utils/sections1';
 import { stayQuery } from '../api/queries';
 import { AppointmentSheet } from '../components/AppointmentSheet';
 import { Denied, PhoneLink, QueryBlock, useSanAccess } from '../components/common';
 import { EarlyLeaveSheet } from '../components/EarlyLeaveSheet';
+import { JourneyCard } from '../components/sections1/JourneyCard';
 import { StaySheets, type StaySheetKind } from '../components/StaySheets';
 import type { StayFull } from '../types';
 import { fmtDate, fmtDateTime, fmtMoney, hasSanRole, sanErrorInfo, sanErrorMessage, stayTone } from '../utils/sanatorium';
@@ -54,8 +56,10 @@ function Detail({ stay }: { stay: StayFull }) {
 
   const run = async (kind: 'in' | 'out') => {
     try {
-      await (kind === 'in' ? checkIn : checkOut).mutateAsync(stay.id);
+      const res = await (kind === 'in' ? checkIn : checkOut).mutateAsync(stay.id);
       toast.success(t(kind === 'in' ? 'sanatorium.checkedIn' : 'sanatorium.checkedOut'));
+      const warn = roomNotReady(res);
+      if (kind === 'in' && warn) toast.info(t('san1.hk.roomNotReady', { room: warn.room_number ?? '', status: t(`san1.hk.status.${warn.hk_status ?? 'dirty'}`) }), 8000);
     } catch (e) {
       if (kind === 'out' && sanErrorInfo(e).code === 'use_early_leave') setEarly(true);
       else toast.error(sanErrorMessage(e, t('errors.generic')));
@@ -100,6 +104,8 @@ function Detail({ stay }: { stay: StayFull }) {
           <Button testID="stay-pay" label={t('sanatorium.payment')} variant="soft" size="sm" onPress={() => setSheet('payment')} />
         </Card>
       )}
+
+      <JourneyCard stayId={stay.id} />
 
       <View style={styles.actions}>
         {stay.status === 'booked' && <Button testID="stay-checkin" label={t('sanatorium.checkIn')} icon="check" loading={checkIn.isPending} onPress={() => void run('in')} />}

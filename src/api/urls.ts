@@ -665,3 +665,43 @@ export const SANATORIUM_ROOM_PHOTOS = (id: number) => `sanatorium/rooms/${id}/ph
 export const SANATORIUM_ROOM_PHOTO = (id: number, photoId: number) => `sanatorium/rooms/${id}/photos/${photoId}`;
 export const SANATORIUM_ROOM_PHOTO_ORDER = (id: number) => `sanatorium/rooms/${id}/photos/order`;
 export const SANATORIUM_PUBLIC_ROOMS = 'sanatorium/public/rooms';
+
+// ── Sanatorium sections, part 1 (switches, journey, location, territory, info, broadcasts,
+// waitlist, housekeeping, transfers) ──
+export const SANATORIUM_FEATURES = 'sanatorium/features';
+export const SANATORIUM_JOURNEY_STAGES = 'sanatorium/journey/stages';
+export const SANATORIUM_JOURNEY_STAGE = (id: number) => `sanatorium/journey/stages/${id}`;
+export const SANATORIUM_JOURNEY_STAGES_ORDER = 'sanatorium/journey/stages/order';
+export const SANATORIUM_JOURNEY_SETTINGS = 'sanatorium/journey/settings';
+export const SANATORIUM_JOURNEY_BOARD = 'sanatorium/journey/board';
+export const SANATORIUM_JOURNEY_STAY = (stayId: number) => `sanatorium/journey/stays/${stayId}`;
+export const SANATORIUM_JOURNEY_STAY_STAGE = (stayId: number) => `sanatorium/journey/stays/${stayId}/stage`;
+export const SANATORIUM_LOCATION = 'sanatorium/location';
+export const SANATORIUM_TERRITORY = 'sanatorium/territory';
+export const SANATORIUM_TERRITORY_PLAN = 'sanatorium/territory/plan';
+export const SANATORIUM_TERRITORY_POIS = 'sanatorium/territory/pois';
+export const SANATORIUM_TERRITORY_POI = (id: number) => `sanatorium/territory/pois/${id}`;
+export const SANATORIUM_TERRITORY_POIS_ORDER = 'sanatorium/territory/pois/order';
+export const SANATORIUM_INFO_SECTIONS = 'sanatorium/sections';
+export const SANATORIUM_INFO_SECTION = (id: number) => `sanatorium/sections/${id}`;
+export const SANATORIUM_INFO_SECTIONS_ORDER = 'sanatorium/sections/order';
+export const SANATORIUM_INFO_SECTION_PHOTO = (id: number) => `sanatorium/sections/${id}/photo`;
+export const SANATORIUM_BROADCASTS = 'sanatorium/broadcasts';
+export const SANATORIUM_BROADCAST_AUDIENCES = 'sanatorium/broadcasts/audiences';
+export const SANATORIUM_BROADCAST_PHOTO = 'sanatorium/broadcasts/photo';
+export const SANATORIUM_BROADCAST = (id: number) => `sanatorium/broadcasts/${id}`;
+export const SANATORIUM_WAITLIST = 'sanatorium/waitlist';
+export const SANATORIUM_WAITLIST_ITEM = (id: number) => `sanatorium/waitlist/${id}`;
+export const SANATORIUM_WAITLIST_CONVERT = (id: number) => `sanatorium/waitlist/${id}/convert`;
+export const SANATORIUM_WAITLIST_CANCEL = (id: number) => `sanatorium/waitlist/${id}/cancel`;
+export const SANATORIUM_HK_BOARD = 'sanatorium/housekeeping/board';
+export const SANATORIUM_HK_MY_TASKS = 'sanatorium/housekeeping/my-tasks';
+export const SANATORIUM_HK_TASKS = 'sanatorium/housekeeping/tasks';
+export const SANATORIUM_HK_TASK = (id: number) => `sanatorium/housekeeping/tasks/${id}`;
+export const SANATORIUM_HK_TASK_START = (id: number) => `sanatorium/housekeeping/tasks/${id}/start`;
+export const SANATORIUM_HK_TASK_DONE = (id: number) => `sanatorium/housekeeping/tasks/${id}/done`;
+export const SANATORIUM_HK_SETTINGS = 'sanatorium/housekeeping/settings';
+export const SANATORIUM_ROOM_HK_STATUS = (id: number) => `sanatorium/rooms/${id}/hk-status`;
+export const SANATORIUM_TRANSFERS = 'sanatorium/transfers';
+export const SANATORIUM_TRANSFER_VEHICLES = 'sanatorium/transfers/vehicles';
+export const SANATORIUM_TRANSFER = (id: number) => `sanatorium/transfers/${id}`;

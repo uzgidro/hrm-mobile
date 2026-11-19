@@ -9,6 +9,7 @@ import { toast } from '@/lib/toast';
 import { Badge, Card, EmptyState, PageHeader, Screen, Segmented, Text } from '@/ui';
 import { availabilityQuery, dashboardQuery } from '../api/queries';
 import { useCheckIn, useCheckOut } from '../api/mutations';
+import { roomNotReady } from '../utils/sections1';
 import { Denied, PhoneLink, QueryBlock, useSanAccess } from '../components/common';
 import { RoomCover } from '../components/RoomCover';
 import { RoomGallery, type GalleryState } from '../components/RoomGallery';
@@ -34,8 +35,10 @@ export default function StaysScreen() {
   const run = async (stay: Stay, kind: 'in' | 'out') => {
     setBusyId(stay.id);
     try {
-      await (kind === 'in' ? checkIn : checkOut).mutateAsync(stay.id);
+      const res = await (kind === 'in' ? checkIn : checkOut).mutateAsync(stay.id);
       toast.success(t(kind === 'in' ? 'sanatorium.checkedIn' : 'sanatorium.checkedOut'));
+      const warn = roomNotReady(res);
+      if (kind === 'in' && warn) toast.info(t('san1.hk.roomNotReady', { room: warn.room_number ?? '', status: t(`san1.hk.status.${warn.hk_status ?? 'dirty'}`) }), 8000);
     } catch (e) {
       // Leaving before the planned date is not a plain check-out: the server asks for the reason.
       if (kind === 'out' && sanErrorInfo(e).code === 'use_early_leave') setEarly(stay);
