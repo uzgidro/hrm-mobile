@@ -13,11 +13,10 @@ export default {
   schedule: 'Иш жадвали',
   periodPicker: 'Баҳолаш даври',
 
-  bandBad: 'ЁМОН',
-  bandUnsatisfactory: 'ҚОНИҚАРСИЗ',
-  bandSatisfactory: 'ҚОНИҚАРЛИ',
-  bandGood: 'ЯХШИ',
-  bandExcellent: 'АЪЛО',
+  // ── Month outcome (bonus − penalty points; 0/0 = normal) ─────────────────
+  outcomeNormal: "Меъёрида",
+  outcomeBonus: "Рағбат",
+  outcomePenalty: "Жарима",
 
   entriesTitle: 'KPI кўрсаткичлари',
   emptyPeriod: 'Бу даврда KPI кўрсаткичи йўқ',

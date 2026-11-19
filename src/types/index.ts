@@ -889,6 +889,9 @@ export interface KpiScorecardProfile {
 export interface KpiScorecard {
   employee_id?: number | null;
   result_percent?: number | null;
+  // The two parts of result_percent; both 0 = a normal month (no bonus, no penalty).
+  bonus_points?: number | null;
+  penalty_points?: number | null;
   profile?: KpiScorecardProfile | null;
   period?: string | null; // 'YYYY-MM'
   available_periods?: string[] | null;
@@ -904,6 +907,8 @@ export interface KpiTeamMember {
   job_position_name?: string | null;
   department_name?: string | null;
   result_percent?: number | null;
+  bonus_points?: number | null;
+  penalty_points?: number | null;
   entries_count?: number | null;
   pending_tasks?: number | null; // tasks awaiting the supervisor's review
   all_done?: boolean | null; // every entry finalized (locked/D)
@@ -1041,6 +1046,8 @@ export interface Holiday {
   date_to: string;
   is_repeatable?: boolean | null;
   organization_branch_id?: number | null;
+  // 'workday' = a transferred working day (worked even on a weekend).
+  kind?: 'holiday' | 'workday' | null;
 }
 
 // A duty-day range with the employees who work through those off-days

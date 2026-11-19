@@ -46,6 +46,7 @@ export default {
   holidaysEmpty: 'Праздники не найдены',
   offDutyEmpty: 'Дежурные в выходные не назначены',
   repeatableBadge: 'Ежегодно',
+  workdayBadge: 'Рабочий день',
   ongoingBadge: 'Сейчас',
 
   codePresent: 'Присутствовал',

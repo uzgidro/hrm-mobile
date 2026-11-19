@@ -45,6 +45,7 @@ export default {
   holidaysEmpty: 'Байрамлар топилмади',
   offDutyEmpty: 'Дам олиш кунларида ишловчилар белгиланмаган',
   repeatableBadge: 'Ҳар йили',
+  workdayBadge: 'Иш куни',
   ongoingBadge: 'Ҳозир',
 
   codePresent: 'Келган',

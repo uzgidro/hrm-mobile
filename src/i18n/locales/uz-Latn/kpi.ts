@@ -18,12 +18,10 @@ export default {
   schedule: 'Ish jadvali',
   periodPicker: 'Baholash davri',
 
-  // ── Gauge bands (Verifix, 100-scale) ──────────────────────────────────────
-  bandBad: 'YOMON',
-  bandUnsatisfactory: 'QONIQARSIZ',
-  bandSatisfactory: 'QONIQARLI',
-  bandGood: 'YAXSHI',
-  bandExcellent: "A'LO",
+  // ── Month outcome (bonus − penalty points; 0/0 = normal) ─────────────────
+  outcomeNormal: "Me'yorda",
+  outcomeBonus: "Rag'bat",
+  outcomePenalty: "Jarima",
 
   // ── Entries table ─────────────────────────────────────────────────────────
   entriesTitle: "KPI ko'rsatkichlari",

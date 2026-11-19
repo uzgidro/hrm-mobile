@@ -51,6 +51,7 @@ export default {
   holidaysEmpty: 'Bayramlar topilmadi',
   offDutyEmpty: 'Dam olish kunlarida ishlovchilar belgilanmagan',
   repeatableBadge: 'Har yili',
+  workdayBadge: 'Ish kuni',
   ongoingBadge: 'Hozir',
 
   // ── Calendar status code labels (codes stay untranslated) ────────────────

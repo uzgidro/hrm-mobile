@@ -2,8 +2,8 @@ import type { KpiEntry, KpiTask, KpiEntryAccess, KpiTeamMember } from '@/types';
 import {
   isNotAnEmployeeError,
   hasOwnScorecard,
-  bandFor,
-  KPI_BANDS,
+  kpiOutcome,
+  OUTCOME_LABEL_KEY,
   entryStatusKey,
   isPenaltyEntry,
   scorecardTotals,
@@ -32,35 +32,24 @@ const access = (o: Partial<KpiEntryAccess> = {}): KpiEntryAccess => ({
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// bandFor — web KpiGauge.jsx parity: [0,20) [20,40) [40,60) [60,80) [80,100),
-// value ≥ 100 → the top band; null → treated as 0 (bottom band).
+// kpiOutcome — result = Σ bonus − Σ penalty; 0 with no penalty is a normal
+// month (85–100% of Uzgidro people each month), not a failing score.
 // ─────────────────────────────────────────────────────────────────────────────
-describe('bandFor', () => {
-  it('maps each range to its band (half-open [from, to))', () => {
-    expect(bandFor(0).labelKey).toBe('kpi.bandBad');
-    expect(bandFor(19.9).labelKey).toBe('kpi.bandBad');
-    expect(bandFor(20).labelKey).toBe('kpi.bandUnsatisfactory');
-    expect(bandFor(40).labelKey).toBe('kpi.bandSatisfactory');
-    expect(bandFor(60).labelKey).toBe('kpi.bandGood');
-    expect(bandFor(80).labelKey).toBe('kpi.bandExcellent');
-    expect(bandFor(99.9).labelKey).toBe('kpi.bandExcellent');
+describe('kpiOutcome', () => {
+  it('positive result is a bonus, even when some penalty was netted off', () => {
+    expect(kpiOutcome(25)).toBe('bonus');
+    expect(kpiOutcome(10, 15)).toBe('bonus');
   });
 
-  it('100 and above saturate to the top band (center still shows the real value)', () => {
-    expect(bandFor(100)).toBe(KPI_BANDS[KPI_BANDS.length - 1]);
-    expect(bandFor(150)).toBe(KPI_BANDS[KPI_BANDS.length - 1]);
+  it('zero result with a penalty is a penalty month', () => {
+    expect(kpiOutcome(0, 30)).toBe('penalty');
   });
 
-  it('null/undefined fall to the bottom band (web: bandFor(v ?? 0))', () => {
-    expect(bandFor(null)).toBe(KPI_BANDS[0]);
-    expect(bandFor(undefined)).toBe(KPI_BANDS[0]);
-  });
-
-  it('has exactly the 5 Verifix bands with the web colors', () => {
-    expect(KPI_BANDS).toHaveLength(5);
-    expect(KPI_BANDS.map((b) => b.color)).toEqual([
-      '#F0506F', '#F6846B', '#FCD166', '#71D487', '#11D59D',
-    ]);
+  it('zero with no penalty (or nothing known) is normal', () => {
+    expect(kpiOutcome(0, 0)).toBe('normal');
+    expect(kpiOutcome(0)).toBe('normal');
+    expect(kpiOutcome(null)).toBe('normal');
+    expect(OUTCOME_LABEL_KEY.normal).toBe('kpi.outcomeNormal');
   });
 });
 
@@ -142,13 +131,14 @@ describe('entryResultDisplay', () => {
 });
 
 describe('resultColorKey', () => {
-  it('≥75 good, ≥50 mid, <50 bad, null muted (web thresholds)', () => {
+  it('≥75 good, ≥50 mid, <50 bad; 0 and null muted', () => {
     expect(resultColorKey(75)).toBe('good');
     expect(resultColorKey(90)).toBe('good');
     expect(resultColorKey(50)).toBe('mid');
     expect(resultColorKey(74.9)).toBe('mid');
     expect(resultColorKey(49.9)).toBe('bad');
-    expect(resultColorKey(0)).toBe('bad');
+    expect(resultColorKey(0)).toBe('muted');
+    expect(resultColorKey(10)).toBe('bad');
     expect(resultColorKey(null)).toBe('muted');
     expect(resultColorKey(undefined)).toBe('muted');
   });

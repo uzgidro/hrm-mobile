@@ -13,11 +13,10 @@ export default {
   schedule: 'Work schedule',
   periodPicker: 'Evaluation period',
 
-  bandBad: 'BAD',
-  bandUnsatisfactory: 'UNSATISFACTORY',
-  bandSatisfactory: 'SATISFACTORY',
-  bandGood: 'GOOD',
-  bandExcellent: 'EXCELLENT',
+  // ── Month outcome (bonus − penalty points; 0/0 = normal) ─────────────────
+  outcomeNormal: "Normal",
+  outcomeBonus: "Bonus",
+  outcomePenalty: "Penalty",
 
   entriesTitle: 'KPI indicators',
   emptyPeriod: 'No KPI indicators for this period',

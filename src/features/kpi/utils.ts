@@ -9,32 +9,24 @@ import { foldText } from '@/utils/searchFold';
 // identifiers (web parity) — only display labels localize, via the i18n keys.
 // ─────────────────────────────────────────────────────────────────────────────
 
-// ── Gauge bands (Verifix 5-band, 100-scale) ──────────────────────────────────
-interface KpiBand {
-  from: number;
-  to: number;
-  color: string;
-  labelKey: string;
+// ── Month outcome (web features/kpi/outcome.ts parity) ───────────────────────
+// Uzgidro's KPI is a list of exceptions: the result is Σ bonus − Σ penalty
+// points and in the Verifix months 85–100% of people have both at 0. The old
+// Verifix 5-band dial labelled that 0 «YOMON» for almost everyone; a 0 with no
+// penalty is simply a normal month.
+export type KpiOutcome = 'bonus' | 'penalty' | 'normal';
+
+export function kpiOutcome(result: number | null | undefined, penalty?: number | null): KpiOutcome {
+  if (Number(result ?? 0) > 0) return 'bonus';
+  if (Number(penalty ?? 0) > 0) return 'penalty';
+  return 'normal';
 }
 
-export const KPI_BANDS: KpiBand[] = [
-  { from: 0, to: 20, color: '#F0506F', labelKey: 'kpi.bandBad' },
-  { from: 20, to: 40, color: '#F6846B', labelKey: 'kpi.bandUnsatisfactory' },
-  { from: 40, to: 60, color: '#FCD166', labelKey: 'kpi.bandSatisfactory' },
-  { from: 60, to: 80, color: '#71D487', labelKey: 'kpi.bandGood' },
-  { from: 80, to: 100, color: '#11D59D', labelKey: 'kpi.bandExcellent' },
-];
-
-// Band on the 100-scale: ≥100 saturates to the top band; the gauge center still
-// shows the real value (up to ~170%) — only the band/needle are clamped.
-export function bandFor(value: number | null | undefined): KpiBand {
-  const v = value == null ? 0 : Number(value);
-  if (v >= 100) return KPI_BANDS[KPI_BANDS.length - 1];
-  for (const b of KPI_BANDS) {
-    if (v >= b.from && v < b.to) return b;
-  }
-  return KPI_BANDS[0];
-}
+export const OUTCOME_LABEL_KEY: Record<KpiOutcome, string> = {
+  bonus: 'kpi.outcomeBonus',
+  penalty: 'kpi.outcomePenalty',
+  normal: 'kpi.outcomeNormal',
+};
 
 // ── Entry / task statuses ────────────────────────────────────────────────────
 // Entry status duality: legacy 'locked' ≡ new 'D' (final), legacy 'draft' ≡ 'N'.
@@ -92,11 +84,12 @@ export function entryResultDisplay(entry: KpiEntry): string {
   return `${Number(entry.result_percent).toFixed(0)}%`;
 }
 
-// Verifix result color thresholds: ≥75 green, ≥50 yellow, <50 red.
+// Row result colour: ≥75 green, ≥50 yellow, below that red — but 0 (no bonus
+// on that row) is neutral, not a failure (see kpiOutcome).
 type ResultColorKey = 'good' | 'mid' | 'bad' | 'muted';
 
 export function resultColorKey(value: number | null | undefined): ResultColorKey {
-  if (value == null) return 'muted';
+  if (value == null || Number(value) === 0) return 'muted';
   if (value >= 75) return 'good';
   if (value >= 50) return 'mid';
   return 'bad';
