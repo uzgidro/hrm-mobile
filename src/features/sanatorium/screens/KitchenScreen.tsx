@@ -11,11 +11,12 @@ import { usePutMenu } from '../api/mutations';
 import { countsQuery, kitchenDayQuery, menuQuery } from '../api/queries';
 import { Denied, QueryBlock, useSanAccess } from '../components/common';
 import { FeatureOff } from '../components/sections1/shared';
+import { KitchenDietView } from '../components/sections2/DietParts';
 import { useSanFeatures } from '../utils/features';
 import { MEALS, type Meal, type MenuDay, type MenuMeal } from '../types';
 import { fmtDate, sanErrorMessage, todayIso } from '../utils/sanatorium';
 
-type Seg = 'counts' | 'today' | 'menu';
+type Seg = 'counts' | 'today' | 'menu' | 'diets';
 
 export default function KitchenScreen() {
   const { t } = useTranslation();
@@ -27,9 +28,11 @@ export default function KitchenScreen() {
   const list = useQuery(kitchenDayQuery(today, allowed && seg === 'today'));
   const menu = useQuery(menuQuery(today, 7, allowed && seg === 'menu'));
   const [editing, setEditing] = useState<MenuDay | null>(null);
+  const dietOn = useSanFeatures().on('diet');
   if (!allowed) return <Denied />;
   if (loaded && !on('kitchen_menu')) return <FeatureOff />;
   const cur = seg === 'counts' ? counts : seg === 'today' ? list : menu;
+  const dietSeg = seg === 'diets';
 
   return (
     <Screen refreshing={cur.isRefetching} onRefresh={() => void cur.refetch()} testID="sanatorium-kitchen-screen">
@@ -42,9 +45,11 @@ export default function KitchenScreen() {
           { value: 'counts', label: t('sanatorium.counts') },
           { value: 'today', label: t('sanatorium.eatingToday') },
           { value: 'menu', label: t('sanatorium.menu') },
+          ...(dietOn ? [{ value: 'diets' as const, label: t('sanatorium.s2.diets') }] : []),
         ]}
       />
       <View style={styles.body}>
+        {dietSeg && <KitchenDietView />}
         {seg === 'counts' && (
           <QueryBlock query={counts}>
             {(c) => (

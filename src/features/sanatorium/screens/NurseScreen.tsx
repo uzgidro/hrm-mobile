@@ -10,18 +10,22 @@ import { Badge, Button, Card, EmptyState, PageHeader, ProgressBar, Screen, Segme
 import { useNurseNotified, useUpdateProcedure } from '../api/mutations';
 import { appointmentsQuery, proceduresQuery } from '../api/queries';
 import { DayBar, Denied, PhoneLink, QueryBlock, useSanAccess } from '../components/common';
+import { ScheduleBoard, ScheduleProcedureSheet } from '../components/sections2/Schedule';
+import { useSanFeatures } from '../utils/features';
 import type { Appointment, Procedure } from '../types';
 import { apptTone, fmtDate, fmtDateTime, fmtTime, sanErrorMessage, todayIso } from '../utils/sanatorium';
 
 export default function NurseScreen() {
   const { t } = useTranslation();
   const allowed = useSanAccess('nurse');
-  const [seg, setSeg] = useState<'appointments' | 'procedures'>('appointments');
+  const [seg, setSeg] = useState<'appointments' | 'procedures' | 'schedule'>('appointments');
+  const features = useSanFeatures();
+  const scheduleOn = features.on('procedure_schedule');
   const [day, setDay] = useState(todayIso());
   const appts = useQuery(appointmentsQuery(day, false, allowed && seg === 'appointments'));
   const procs = useQuery(proceduresQuery(allowed && seg === 'procedures'));
   if (!allowed) return <Denied />;
-  const cur = seg === 'appointments' ? appts : procs;
+  const cur = seg === 'procedures' ? procs : appts;
   return (
     <Screen refreshing={cur.isRefetching} onRefresh={() => void cur.refetch()} testID="sanatorium-nurse-screen">
       <PageHeader title={t('sanatorium.nav.nurse')} />
@@ -32,10 +36,13 @@ export default function NurseScreen() {
         options={[
           { value: 'appointments', label: t('sanatorium.appointments') },
           { value: 'procedures', label: t('sanatorium.procedures') },
+          ...(scheduleOn ? [{ value: 'schedule' as const, label: t('sanatorium.s2.board') }] : []),
         ]}
       />
       <View style={styles.body}>
-        {seg === 'appointments' ? (
+        {seg === 'schedule' ? (
+          <ScheduleBoard canAct />
+        ) : seg === 'appointments' ? (
           <>
             <DayBar value={day} onChange={setDay} />
             <QueryBlock query={appts}>
@@ -109,6 +116,8 @@ function NurseAppt({ a }: { a: Appointment }) {
 function ProcCard({ p }: { p: Procedure }) {
   const { t } = useTranslation();
   const update = useUpdateProcedure();
+  const scheduleOn = useSanFeatures().on('procedure_schedule');
+  const [scheduling, setScheduling] = useState(false);
   const left = p.sessions_total - p.sessions_done;
   const tick = () => {
     const next = p.sessions_done + 1;
@@ -131,7 +140,9 @@ function ProcCard({ p }: { p: Procedure }) {
         <ProgressBar value={p.sessions_total ? p.sessions_done / p.sessions_total : 0} />
         <Text variant="caption" tone="muted">{p.sessions_done}/{p.sessions_total} {t('sanatorium.sessions')}</Text>
       </View>
+      {scheduleOn && left > 0 && <Button testID="proc-schedule" label={t('sanatorium.s2.schedule')} icon="calendar" size="sm" variant="soft" onPress={() => setScheduling(true)} />}
       {left > 0 && <Button testID="proc-tick" label={t('sanatorium.plusSession')} icon="plus" size="sm" loading={update.isPending} onPress={tick} />}
+      <ScheduleProcedureSheet procedure={scheduling ? p : null} onClose={() => setScheduling(false)} />
     </Card>
   );
 }

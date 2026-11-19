@@ -12,6 +12,7 @@ import { Badge, Card, EmptyState, ListRow, PageHeader, Screen, SectionHeader, St
 import { dashboardQuery } from '../api/queries';
 import { ApptRow } from '../components/ApptRow';
 import { Denied, QueryBlock, useSanAccess } from '../components/common';
+import { Sections2Links } from '../components/sections2/Sections2Links';
 import type { Dashboard, SanRole, Stay } from '../types';
 import { useSanFeatures, type SanFeatureKey } from '../utils/features';
 import { fmtDate, hasSanRole } from '../utils/sanatorium';
@@ -96,6 +97,7 @@ export default function SanatoriumHomeScreen() {
                 />
               ))}
             </View>
+            <Sections2Links />
             <RoleSections d={d} kitchenOn={on('kitchen_menu')} />
           </View>
         )}

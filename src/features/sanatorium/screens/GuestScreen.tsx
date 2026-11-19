@@ -19,6 +19,9 @@ import { CredentialsSheet, type CredentialsShown } from '../components/Credentia
 import { GuestCardSheet } from '../components/GuestCardSheet';
 import { GuestSheet } from '../components/GuestSheet';
 import { ProcedureEditSheet } from '../components/ProcedureEditSheet';
+import { ScheduleProcedureSheet } from '../components/sections2/Schedule';
+import { StayDocumentsCard } from '../components/sections2/StayDocuments';
+import { useSanFeatures } from '../utils/features';
 import { ApptRow } from '../components/ApptRow';
 import { Denied, PhoneLink, QueryBlock, useSanAccess } from '../components/common';
 import type { GuestEvent, GuestProfile, Procedure } from '../types';
@@ -50,6 +53,8 @@ function Profile({ p }: { p: GuestProfile }) {
   const [booking, setBooking] = useState(false);
   const [apptStay, setApptStay] = useState<number | null>(null);
   const [proc, setProc] = useState<Procedure | null>(null);
+  const [schedProc, setSchedProc] = useState<Procedure | null>(null);
+  const scheduleOn = useSanFeatures().on('procedure_schedule');
   const [creds, setCreds] = useState<CredentialsShown | null>(null);
   const [card, setCard] = useState(false);
   const g = p.guest;
@@ -116,6 +121,8 @@ function Profile({ p }: { p: GuestProfile }) {
         ))}
       </Card>
 
+      {hasSanRole(user, 'doctor') && !registrar && p.stays.map((s) => <StayDocumentsCard key={`doc-${s.id}`} stay={s} />)}
+
       {p.appointments && (
         <>
           <SectionHeader title={t('sanatorium.appointments')} />
@@ -144,6 +151,7 @@ function Profile({ p }: { p: GuestProfile }) {
                 </View>
                 <ProgressBar value={pr.sessions_total ? pr.sessions_done / pr.sessions_total : 0} />
                 <Text variant="caption" tone="muted">{pr.sessions_done}/{pr.sessions_total} {t('sanatorium.sessions')}</Text>
+                {scheduleOn && canEditProc && pr.status === 'active' && <Button testID={`proc-schedule-${pr.id}`} label={t('sanatorium.s2.schedule')} icon="calendar" size="sm" variant="soft" onPress={() => setSchedProc(pr)} />}
               </Pressable>
             ))}
           </Card>
@@ -181,6 +189,7 @@ function Profile({ p }: { p: GuestProfile }) {
       <BookingSheet open={booking ? { guests: [g] } : null} onClose={() => setBooking(false)} onDone={(ids) => ids[0] && router.push({ pathname: '/sanatorium-stay', params: { id: String(ids[0]) } })} />
       <AppointmentSheet stayId={apptStay} onClose={() => setApptStay(null)} />
       <ProcedureEditSheet proc={proc} onClose={() => setProc(null)} />
+      <ScheduleProcedureSheet procedure={schedProc} onClose={() => setSchedProc(null)} />
       <CredentialsSheet creds={creds} onClose={() => setCreds(null)} />
       <GuestCardSheet info={card ? { guestId: g.id, name: g.full_name, loginCode: g.login_code } : null} onClose={() => setCard(false)} />
     </View>

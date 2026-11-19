@@ -7,6 +7,7 @@ import { FormInput } from '@/components/FormInput';
 import { toast } from '@/lib/toast';
 import { Button, Sheet, Text } from '@/ui';
 import { useCancelStay, useUpdatePayment, useUpdateStay } from '../api/mutations';
+import { applyDietToStays } from '../api/sections2';
 import { PAYMENT_STATUSES, type PaymentStatus, type StayFull } from '../types';
 import { fmtMoney, sanErrorMessage } from '../utils/sanatorium';
 import { BookingFields, newBookingDraft, type BookingDraft } from './BookingFields';
@@ -41,6 +42,9 @@ function EditForm({ stay, onClose }: { stay: StayFull; onClose: () => void }) {
       nurseId: stay.nurse?.id ?? null,
       contract: stay.contract_note ?? '',
       note: stay.note ?? '',
+      packageId: stay.package_id ?? null,
+      organizationId: stay.organization_id ?? null,
+      dietId: stay.diet_id ?? null,
     }),
   );
   const [child, setChild] = useState(!!stay.child_discount);
@@ -62,8 +66,11 @@ function EditForm({ stay, onClose }: { stay: StayFull; onClose: () => void }) {
           nurse_staff_id: draft.nurseId,
           contract_note: optNull(draft.contract),
           note: optNull(draft.note),
+          package_id: draft.packageId,
+          organization_id: draft.organizationId,
         },
       });
+      if (draft.dietId !== (stay.diet_id ?? null) && (await applyDietToStays([stay.id], draft.dietId))) toast.error(t('sanatorium.s2.dietNotSaved'));
       toast.success(t('sanatorium.saved'));
       onClose();
     } catch (e) {

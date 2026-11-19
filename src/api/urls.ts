@@ -705,3 +705,46 @@ export const SANATORIUM_ROOM_HK_STATUS = (id: number) => `sanatorium/rooms/${id}
 export const SANATORIUM_TRANSFERS = 'sanatorium/transfers';
 export const SANATORIUM_TRANSFER_VEHICLES = 'sanatorium/transfers/vehicles';
 export const SANATORIUM_TRANSFER = (id: number) => `sanatorium/transfers/${id}`;
+
+// ── Sanatorium sections: packages, seasons, quote, paid services, organizations, documents,
+// procedure schedule, diet, feedback, analytics ──
+export const SANATORIUM_PACKAGES = 'sanatorium/packages';
+export const SANATORIUM_PACKAGE = (id: number) => `sanatorium/packages/${id}`;
+export const SANATORIUM_PACKAGES_REORDER = 'sanatorium/packages/reorder';
+export const SANATORIUM_PACKAGE_PHOTO = (id: number) => `sanatorium/packages/${id}/photo`;
+export const SANATORIUM_SEASONS = 'sanatorium/seasons';
+export const SANATORIUM_SEASON = (id: number) => `sanatorium/seasons/${id}`;
+export const SANATORIUM_QUOTE = 'sanatorium/quote';
+export const SANATORIUM_SERVICES = 'sanatorium/services';
+export const SANATORIUM_SERVICE = (id: number) => `sanatorium/services/${id}`;
+export const SANATORIUM_SERVICES_REORDER = 'sanatorium/services/reorder';
+export const SANATORIUM_SERVICE_PHOTO = (id: number) => `sanatorium/services/${id}/photo`;
+export const SANATORIUM_SERVICE_SLOTS = (id: number) => `sanatorium/services/${id}/slots`;
+export const SANATORIUM_SERVICE_ORDERS = 'sanatorium/service-orders';
+export const SANATORIUM_SERVICE_ORDER = (id: number) => `sanatorium/service-orders/${id}`;
+export const SANATORIUM_ORGANIZATIONS = 'sanatorium/organizations';
+export const SANATORIUM_ORGANIZATION = (id: number) => `sanatorium/organizations/${id}`;
+export const SANATORIUM_ORG_INVOICE = (id: number) => `sanatorium/organizations/${id}/invoice`;
+export const SANATORIUM_ORG_INVOICE_FILE = (id: number) => `sanatorium/organizations/${id}/invoice/file`;
+export const SANATORIUM_DOC_TEMPLATES = 'sanatorium/documents/templates';
+export const SANATORIUM_DOC_TEMPLATE = (kind: string) => `sanatorium/documents/templates/${kind}`;
+export const SANATORIUM_DOC_TEMPLATE_DOWNLOAD = (kind: string) => `sanatorium/documents/templates/${kind}/download`;
+export const SANATORIUM_STAY_DOCUMENT = (id: number, kind: string) => `sanatorium/stays/${id}/documents/${kind}`;
+export const SANATORIUM_PROCEDURE_ROOMS = 'sanatorium/procedure-rooms';
+export const SANATORIUM_PROCEDURE_ROOM = (id: number) => `sanatorium/procedure-rooms/${id}`;
+export const SANATORIUM_PROCEDURE_SCHEDULE = (procedureId: number) => `sanatorium/procedures/${procedureId}/schedule`;
+export const SANATORIUM_SESSION_BOARD = 'sanatorium/procedure-sessions/board';
+export const SANATORIUM_PROCEDURE_SESSION = (id: number) => `sanatorium/procedure-sessions/${id}`;
+export const SANATORIUM_SESSION_CANCEL = (id: number) => `sanatorium/procedure-sessions/${id}/cancel`;
+export const SANATORIUM_SESSION_MARK = (id: number) => `sanatorium/procedure-sessions/${id}/mark`;
+export const SANATORIUM_DIETS = 'sanatorium/diets';
+export const SANATORIUM_DIET = (id: number) => `sanatorium/diets/${id}`;
+export const SANATORIUM_STAY_DIET = (id: number) => `sanatorium/stays/${id}/diet`;
+export const SANATORIUM_KITCHEN_DIET_DAY = 'sanatorium/kitchen/diet-day';
+export const SANATORIUM_KITCHEN_DIET_COUNTS = 'sanatorium/kitchen/diet-counts';
+export const SANATORIUM_FEEDBACK = 'sanatorium/feedback';
+export const SANATORIUM_FEEDBACK_SUMMARY = 'sanatorium/feedback/summary';
+export const SANATORIUM_FEEDBACK_MINE = 'sanatorium/feedback/mine';
+export const SANATORIUM_ANALYTICS = 'sanatorium/analytics';
+export const SANATORIUM_ANALYTICS_EXPORT = 'sanatorium/analytics/export';
+export const SANATORIUM_ME = 'sanatorium/me';

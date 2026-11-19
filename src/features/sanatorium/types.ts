@@ -175,6 +175,7 @@ export type SanRequest = {
   guest_id: number | null;
   /** How many people the guest declared, and the room they picked (a soft hold on its beds). */
   party_size?: number | null;
+  package_id?: number | null;
   preferred_room?: { id: number; number: string; room_type: string | null; capacity: number } | null;
   existing_guest_id?: number | null;
   /** false = the passport is registered under a different name / birth date. */
@@ -264,6 +265,12 @@ export type StayMoney = {
   payment_status?: PaymentStatus;
   note?: string | null;
   family_id?: number | null;
+  /** Sections: package, billed organization, paid services and the grand total. */
+  package_id?: number | null;
+  organization_id?: number | null;
+  services_total?: string;
+  grand_total?: string;
+  diet_id?: number | null;
 };
 export type StayFull = Stay & StayMoney & { diet_note: string | null };
 
