@@ -238,6 +238,14 @@ function ThemedNavigation() {
                 <Stack.Screen name="sanatorium-rooms" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="sanatorium-settings" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="sanatorium-menu" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="sanatorium-journey" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="sanatorium-location" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="sanatorium-territory" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="sanatorium-info" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="sanatorium-broadcasts" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="sanatorium-waitlist" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="sanatorium-housekeeping" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="sanatorium-transfers" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="zoom" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="tibbiy-korik" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="medical-exam" options={{ animation: 'slide_from_right' }} />

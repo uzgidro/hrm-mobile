@@ -6,7 +6,7 @@ import type { User } from '@/types';
 import type { Tone } from '@/ui/Chip';
 import type { ApptStatus, ProcStatus, RequestStatus, SanRole, StayStatus } from '../types';
 
-const ALL_ROLES: SanRole[] = ['registrar', 'kitchen', 'room_keeper', 'doctor', 'nurse'];
+const ALL_ROLES: SanRole[] = ['registrar', 'kitchen', 'room_keeper', 'doctor', 'nurse', 'housekeeper'];
 
 export function sanRoles(user: User | null | undefined): SanRole[] {
   return (user?.sanatorium_roles ?? []).filter((r): r is SanRole => (ALL_ROLES as string[]).includes(r));
@@ -50,6 +50,10 @@ export function sanErrorMessage(e: unknown, fallback?: string): string {
     const key = `sanatorium.errors.${code}`;
     const text = i18n.t(key, params as Record<string, string>);
     if (text && text !== key) return text;
+    // Error codes of the sections round live in their own catalog (san1.errors).
+    const key1 = `san1.errors.${code}`;
+    const text1 = i18n.t(key1, params as Record<string, string>);
+    if (text1 && text1 !== key1) return text1;
   }
   return getApiErrorMessage(e, fallback);
 }

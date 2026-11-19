@@ -13,9 +13,10 @@ import { dashboardQuery } from '../api/queries';
 import { ApptRow } from '../components/ApptRow';
 import { Denied, QueryBlock, useSanAccess } from '../components/common';
 import type { Dashboard, SanRole, Stay } from '../types';
+import { useSanFeatures, type SanFeatureKey } from '../utils/features';
 import { fmtDate, hasSanRole } from '../utils/sanatorium';
 
-type Tile = { key: string; icon: IconName; tint: ModuleTintKey; roles?: SanRole[]; route?: string };
+type Tile = { key: string; icon: IconName; tint: ModuleTintKey; roles?: SanRole[]; route?: string; feature?: SanFeatureKey };
 // Order = importance; `roles` limits a tile to the roles the server fills the number for.
 const TILES: Tile[] = [
   { key: 'in_house', icon: 'users', tint: 'green' },
@@ -24,10 +25,10 @@ const TILES: Tile[] = [
   { key: 'departures_today', icon: 'arrowUp', tint: 'amber', roles: ['registrar', 'room_keeper'], route: '/sanatorium-stays' },
   { key: 'new_requests', icon: 'inbox', tint: 'pink', roles: ['registrar'], route: '/sanatorium-requests' },
   { key: 'appointments_today', icon: 'checklist', tint: 'violet', roles: ['doctor', 'nurse'] },
-  { key: 'meals_today', icon: 'gift', tint: 'orange', roles: ['kitchen', 'registrar'], route: '/sanatorium-kitchen' },
+  { key: 'meals_today', icon: 'gift', tint: 'orange', roles: ['kitchen', 'registrar'], route: '/sanatorium-kitchen', feature: 'kitchen_menu' },
 ];
 
-const LINKS: { route: string; icon: IconName; labelKey: string; roles: SanRole[] }[] = [
+const LINKS: { route: string; icon: IconName; labelKey: string; roles: SanRole[]; feature?: SanFeatureKey }[] = [
   { route: '/sanatorium-requests', icon: 'inbox', labelKey: 'sanatorium.nav.requests', roles: ['registrar'] },
   { route: '/sanatorium-guests', icon: 'guest', labelKey: 'sanatorium.nav.guests', roles: ['registrar'] },
   { route: '/sanatorium-bookings', icon: 'orders', labelKey: 'sanatorium.nav.bookings', roles: ['registrar', 'room_keeper'] },
@@ -36,7 +37,16 @@ const LINKS: { route: string; icon: IconName; labelKey: string; roles: SanRole[]
   { route: '/sanatorium-stays', icon: 'building', labelKey: 'sanatorium.nav.stays', roles: ['registrar', 'room_keeper'] },
   { route: '/sanatorium-doctor', icon: 'checklist', labelKey: 'sanatorium.nav.doctor', roles: ['doctor'] },
   { route: '/sanatorium-nurse', icon: 'bell', labelKey: 'sanatorium.nav.nurse', roles: ['nurse'] },
-  { route: '/sanatorium-kitchen', icon: 'gift', labelKey: 'sanatorium.nav.kitchen', roles: ['kitchen'] },
+  { route: '/sanatorium-kitchen', icon: 'gift', labelKey: 'sanatorium.nav.kitchen', roles: ['kitchen'], feature: 'kitchen_menu' },
+  // Sections round: each one hides when the registrar switches its section off.
+  { route: '/sanatorium-journey', icon: 'target', labelKey: 'san1.nav.journey', roles: ['registrar', 'room_keeper', 'doctor', 'nurse', 'kitchen'], feature: 'journey' },
+  { route: '/sanatorium-waitlist', icon: 'clock', labelKey: 'san1.nav.waitlist', roles: ['registrar'], feature: 'waitlist' },
+  { route: '/sanatorium-transfers', icon: 'arrowDown', labelKey: 'san1.nav.transfers', roles: ['registrar'], feature: 'transfer' },
+  { route: '/sanatorium-housekeeping', icon: 'checklist', labelKey: 'san1.nav.housekeeping', roles: ['registrar', 'room_keeper', 'housekeeper'], feature: 'housekeeping' },
+  { route: '/sanatorium-info', icon: 'news', labelKey: 'san1.nav.info', roles: ['registrar'], feature: 'info_sections' },
+  { route: '/sanatorium-broadcasts', icon: 'mail', labelKey: 'san1.nav.broadcasts', roles: ['registrar'], feature: 'broadcasts' },
+  { route: '/sanatorium-location', icon: 'mapPin', labelKey: 'san1.nav.location', roles: ['registrar'], feature: 'location_map' },
+  { route: '/sanatorium-territory', icon: 'board', labelKey: 'san1.nav.territory', roles: ['registrar'], feature: 'territory_map' },
 ];
 
 export default function SanatoriumHomeScreen() {
@@ -44,11 +54,12 @@ export default function SanatoriumHomeScreen() {
   const user = useAuthStore((s) => s.user);
   const allowed = useSanAccess();
   const q = useQuery(dashboardQuery(allowed));
+  const { on } = useSanFeatures();
   if (!allowed) return <Denied />;
 
   const stats = q.data?.stats ?? {};
   const value = (key: string) => (key === 'free_beds' ? stats.free_beds : stats[key]);
-  const tiles = TILES.filter((x) => (!x.roles || hasSanRole(user, ...x.roles)) && value(x.key) !== undefined);
+  const tiles = TILES.filter((x) => (!x.roles || hasSanRole(user, ...x.roles)) && (!x.feature || on(x.feature)) && value(x.key) !== undefined);
 
   return (
     <Screen refreshing={q.isRefetching} onRefresh={() => void q.refetch()} testID="sanatorium-screen">
@@ -73,7 +84,7 @@ export default function SanatoriumHomeScreen() {
               ))}
             </View>
             <View style={styles.links}>
-              {LINKS.filter((l) => hasSanRole(user, ...l.roles)).map((l) => (
+              {LINKS.filter((l) => hasSanRole(user, ...l.roles) && (!l.feature || on(l.feature))).map((l) => (
                 <ListRow
                   key={l.route}
                   pressable
@@ -85,7 +96,7 @@ export default function SanatoriumHomeScreen() {
                 />
               ))}
             </View>
-            <RoleSections d={d} />
+            <RoleSections d={d} kitchenOn={on('kitchen_menu')} />
           </View>
         )}
       </QueryBlock>
@@ -106,7 +117,7 @@ function StayLine({ s }: { s: Stay }) {
   );
 }
 
-function RoleSections({ d }: { d: Dashboard }) {
+function RoleSections({ d, kitchenOn }: { d: Dashboard; kitchenOn: boolean }) {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const showStays = hasSanRole(user, 'registrar', 'room_keeper');
@@ -142,7 +153,7 @@ function RoleSections({ d }: { d: Dashboard }) {
           </Card>
         </>
       )}
-      {(d.menu_today ?? []).length > 0 && (
+      {kitchenOn && (d.menu_today ?? []).length > 0 && (
         <>
           <SectionHeader title={t('sanatorium.menuToday')} />
           <Card>
@@ -156,7 +167,7 @@ function RoleSections({ d }: { d: Dashboard }) {
           </Card>
         </>
       )}
-      {hasSanRole(user, 'kitchen') && (d.kitchen_week ?? []).length > 0 && (
+      {kitchenOn && hasSanRole(user, 'kitchen') && (d.kitchen_week ?? []).length > 0 && (
         <>
           <SectionHeader title={t('sanatorium.kitchenWeek')} actionLabel={t('common.all')} onAction={() => router.push('/sanatorium-kitchen')} />
           <Card>

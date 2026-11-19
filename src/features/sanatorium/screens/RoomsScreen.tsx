@@ -12,6 +12,7 @@ import { useSaveRoom } from '../api/mutations';
 import { availabilityQuery, roomsQuery } from '../api/queries';
 import { ChoiceField, ErrorLine, opt, optNull, SwitchRow } from '../components/forms';
 import { Denied, QueryBlock, useSanAccess } from '../components/common';
+import { PoiField, usePoiOn } from '../components/sections1/PoiField';
 import { RoomCover } from '../components/RoomCover';
 import { RoomGallery, type GalleryState } from '../components/RoomGallery';
 import { RoomPhotoManager } from '../components/RoomPhotoManager';
@@ -118,6 +119,8 @@ function RoomForm({ room, onClose, onCreated }: { room: Room | null; onClose: ()
   const [oos, setOos] = useState(room?.out_of_service ?? false);
   const [oosNote, setOosNote] = useState(room?.out_of_service_note ?? '');
   const [active, setActive] = useState(room?.is_active ?? true);
+  const poiOn = usePoiOn();
+  const [poiId, setPoiId] = useState<number | null>(room?.poi_id ?? null);
   const [error, setError] = useState<string | null>(null);
 
   const submit = async () => {
@@ -142,6 +145,7 @@ function RoomForm({ room, onClose, onCreated }: { room: Room | null; onClose: ()
           out_of_service: oos,
           out_of_service_note: oos ? opt(oosNote) ?? null : null,
           is_active: active,
+          ...(poiOn ? { poi_id: poiId } : {}),
         },
       })) as Room;
       toast.success(t('sanatorium.saved'));
@@ -168,6 +172,7 @@ function RoomForm({ room, onClose, onCreated }: { room: Room | null; onClose: ()
         onChange={(v) => v && setMode(v)}
       />
       <FormInput label={t('sanatorium.description')} value={desc} onChangeText={setDesc} multiline />
+      <PoiField value={poiId} onChange={setPoiId} testID="room-poi" />
       <SwitchRow label={t('sanatorium.outOfService')} value={oos} onChange={setOos} testID="room-oos" />
       {oos && <FormInput label={t('sanatorium.outOfServiceNote')} value={oosNote} onChangeText={setOosNote} />}
       <SwitchRow label={t('sanatorium.active')} value={active} onChange={setActive} />

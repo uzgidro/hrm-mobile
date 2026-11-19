@@ -10,6 +10,8 @@ import { Badge, Button, Card, EmptyState, ListRow, PageHeader, Screen, Segmented
 import { usePutMenu } from '../api/mutations';
 import { countsQuery, kitchenDayQuery, menuQuery } from '../api/queries';
 import { Denied, QueryBlock, useSanAccess } from '../components/common';
+import { FeatureOff } from '../components/sections1/shared';
+import { useSanFeatures } from '../utils/features';
 import { MEALS, type Meal, type MenuDay, type MenuMeal } from '../types';
 import { fmtDate, sanErrorMessage, todayIso } from '../utils/sanatorium';
 
@@ -18,6 +20,7 @@ type Seg = 'counts' | 'today' | 'menu';
 export default function KitchenScreen() {
   const { t } = useTranslation();
   const allowed = useSanAccess('kitchen');
+  const { on, loaded } = useSanFeatures();
   const [seg, setSeg] = useState<Seg>('counts');
   const today = todayIso();
   const counts = useQuery(countsQuery(today, 7, allowed && seg === 'counts'));
@@ -25,6 +28,7 @@ export default function KitchenScreen() {
   const menu = useQuery(menuQuery(today, 7, allowed && seg === 'menu'));
   const [editing, setEditing] = useState<MenuDay | null>(null);
   if (!allowed) return <Denied />;
+  if (loaded && !on('kitchen_menu')) return <FeatureOff />;
   const cur = seg === 'counts' ? counts : seg === 'today' ? list : menu;
 
   return (
