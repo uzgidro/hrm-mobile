@@ -290,6 +290,7 @@ export default {
     invalid_order_status: "This status change is not allowed",
     order_closed: "The order is closed and cannot be changed",
     order_too_late: "Too late to cancel the order",
+    order_limit: "Too many open requests (up to 10). Wait for the earlier ones",
     no_active_stay: "No active stay",
     invalid_doc_kind: "Invalid document type",
     template_invalid: "The template is invalid",

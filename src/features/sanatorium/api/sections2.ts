@@ -157,7 +157,7 @@ export type FeedbackSummary = {
   distribution: Record<string, number>; doctors: { ref_id: number; name: string; count: number; average: number }[];
   services: { name: string; count: number; average: number }[]; prompted: number;
 };
-export type FeedbackMine = { count: number; average: number | null; distribution: Record<string, number>; comments: { rating: number; comment: string | null; date: string }[] };
+export type FeedbackMine = { count: number; average: number | null; distribution: Record<string, number>; comments: { rating: number; comment: string | null; month: string }[] };
 
 export type Analytics = {
   occupancy: { beds: number; daily: { date: string; occupied: number; beds: number; percent: number }[]; average_percent: number; peak_percent: number };

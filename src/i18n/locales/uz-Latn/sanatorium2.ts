@@ -290,6 +290,7 @@ export default {
     invalid_order_status: "Holatni bunday o'zgartirib bo'lmaydi",
     order_closed: "Buyurtma yopilgan, o'zgartirib bo'lmaydi",
     order_too_late: "Buyurtmani bekor qilish uchun kech",
+    order_limit: "Ochiq so‘rovlar juda ko‘p (10 tagacha). Avvalgilarini kuting",
     no_active_stay: "Faol turarjoy yo'q",
     invalid_doc_kind: "Hujjat turi noto'g'ri",
     template_invalid: "Shablon yaroqsiz",

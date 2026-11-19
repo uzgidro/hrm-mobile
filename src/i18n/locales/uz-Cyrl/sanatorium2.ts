@@ -290,6 +290,7 @@ export default {
     invalid_order_status: "Ҳолатни бундай ўзгартириб бўлмайди",
     order_closed: "Буюртма ёпилган, ўзгартириб бўлмайди",
     order_too_late: "Буюртмани бекор қилиш учун кеч",
+    order_limit: "Очиқ сўровлар жуда кўп (10 тагача). Аввалгиларини кутинг",
     no_active_stay: "Фаол тураржой ёъқ",
     invalid_doc_kind: "Ҳужжат тури нотўғри",
     template_invalid: "Шаблон яроқсиз",

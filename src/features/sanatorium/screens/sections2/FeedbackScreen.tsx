@@ -125,7 +125,7 @@ function DoctorView({ from, to }: { from: string; to: string }) {
           <Card title={t('sanatorium.s2.comments')} icon="news" tint="pink">
             {m.comments.length === 0 && <Text variant="body" tone="muted">{t('sanatorium.s2.noFeedback')}</Text>}
             {m.comments.map((c, i) => (
-              <ListRow key={i} title={c.comment ?? '—'} subtitle={fmtDate(c.date)} right={<Badge label={`${c.rating}/5`} tone={c.rating <= 2 ? 'danger' : 'success'} />} />
+              <ListRow key={i} title={c.comment ?? '—'} subtitle={c.month} right={<Badge label={`${c.rating}/5`} tone={c.rating <= 2 ? 'danger' : 'success'} />} />
             ))}
           </Card>
         </View>
