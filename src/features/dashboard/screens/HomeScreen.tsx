@@ -21,6 +21,8 @@ import { LeaderBoard } from '../components/LeaderBoard';
 import { TripCheckinCard } from '@/features/checkin/components/TripCheckinCard';
 import { HomeLeavesCard } from '@/features/leaves/components/HomeLeavesCard';
 import { SanatoriumHomeCard } from '@/features/sanatorium/components/HomeCard';
+// Nurse: today's pre-shift health check progress, one tap into the queue.
+import { HealthHomeCard } from '@/features/health/components/HealthHomeCard';
 import { useActiveBranchId } from '@/lib/useActiveBranch';
 
 export default function HomeScreen() {
@@ -69,6 +71,7 @@ export default function HomeScreen() {
       <HomeHeader />
       {/* Sanatorium staff: their own dashboard is the main thing on home (`sanatorium_home`). */}
       {user?.sanatorium_home ? <SanatoriumHomeCard /> : null}
+      <HealthHomeCard />
       <TripCheckinCard />
       {/* Qo'shimcha roli bor xodim (rahbar paneli): o'zi uchun ruxsat so'rash va tasdig'ini
           kutayotgan so'rovlar shu yerda (2026-10-07). Oddiy xodim panelida «So'rovlarim» bor. */}

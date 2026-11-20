@@ -73,16 +73,20 @@ describe('HealthChecksScreen (v2 HealthChecksPage)', () => {
   it("hamshira: o'z filiali ro'yxati (branch_id aniq), holat yorlig'i, hisoblagichlar; can_check shu filial uchun", async () => {
     setUser(nurse);
     await renderWithProviders(<HealthChecksScreen />);
-    expect(await screen.findByText('Aliyev Vali')).toBeTruthy();
+    // A nurse opens on the queue: only the two not yet checked.
+    expect(await screen.findByText('Rustamov Bek')).toBeTruthy();
+    expect(screen.queryByText('Aliyev Vali')).toBeNull();
     expect(rosterCalls(mock)[0]!.params).toEqual({ branch_id: 7, day: DAY });
     // auth/me da filial bor — identitet so'rovi kerak emas; can_check filial bilan so'raladi.
     expect(accessCalls(mock).map((r) => r.params)).toEqual([{ organization_branch_id: 7 }]);
-    // Plitka yorlig'i + qator badge'i.
-    expect(screen.getAllByText("Sog'lom")).toHaveLength(2);
+    expect(screen.getByText("2 / 4 ko'rildi")).toBeTruthy();
+    expect(screen.getByText('2 ta kutmoqda')).toBeTruthy();
+    // «Hammasi»: every row with its badge.
+    await fireEvent.press(screen.getByText('Hammasi'));
+    expect(await screen.findByText('Aliyev Vali')).toBeTruthy();
     expect(screen.getByText(`Kasal · ${dayjs(NEXT).format('DD.MM')}`)).toBeTruthy();
     expect(screen.getAllByText("Ko'rikdan o'tmagan")).toHaveLength(2);
     expect(screen.getByText(/Izoh: Isitma/)).toBeTruthy();
-    expect(screen.getByText('2/4')).toBeTruthy();
     // Bitta filial — tanlagich yo'q.
     expect(screen.queryByTestId('health-branch')).toBeNull();
   });
@@ -90,7 +94,7 @@ describe('HealthChecksScreen (v2 HealthChecksPage)', () => {
   it('qidiruv serverga yuboriladi', async () => {
     setUser(nurse);
     await renderWithProviders(<HealthChecksScreen />);
-    await screen.findByText('Aliyev Vali');
+    await screen.findByText('Rustamov Bek');
     await fireEvent.changeText(screen.getByPlaceholderText(i18n.t('health.searchPlaceholder')), 'Karim');
     await waitFor(() => expect(rosterCalls(mock).some((r) => r.params?.search === 'Karim')).toBe(true));
   });
@@ -101,7 +105,7 @@ describe('HealthChecksScreen (v2 HealthChecksPage)', () => {
       .onPost(HEALTH_CHECKS_BULK)
       .reply(200, { ok: [3], failed: [{ id: 5, error: "Sog'liq ko'rigi faqat haydovchilar uchun" }] });
     await renderWithProviders(<HealthChecksScreen />);
-    await screen.findByText('Aliyev Vali');
+    await screen.findByText('Rustamov Bek');
     await fireEvent.press(screen.getByTestId('health-bulk'));
     await waitFor(() => expect(mock.history.post).toHaveLength(1));
     expect(confirm).toHaveBeenCalledTimes(1);
@@ -120,7 +124,7 @@ describe('HealthChecksScreen (v2 HealthChecksPage)', () => {
     setUser(nurse);
     (confirm as jest.Mock).mockResolvedValueOnce(false);
     await renderWithProviders(<HealthChecksScreen />);
-    await screen.findByText('Aliyev Vali');
+    await screen.findByText('Rustamov Bek');
     await fireEvent.press(screen.getByTestId('health-bulk'));
     await waitFor(() => expect(confirm).toHaveBeenCalledTimes(1));
     expect(mock.history.post).toHaveLength(0);
@@ -151,6 +155,7 @@ describe('HealthChecksScreen (v2 HealthChecksPage)', () => {
   it("mavjud bahoni o'chirish → tasdiq → DELETE health-checks/{check_id}", async () => {
     setUser(nurse);
     await renderWithProviders(<HealthChecksScreen />);
+    await fireEvent.press(await screen.findByText("Ko'rilgan"));
     await fireEvent.press(await screen.findByText('Aliyev Vali'));
     await fireEvent.press(await screen.findByTestId('health-remove'));
     await waitFor(() => expect(mock.history.delete).toHaveLength(1));
@@ -165,6 +170,8 @@ describe('HealthChecksScreen (v2 HealthChecksPage)', () => {
     await screen.findByText('Aliyev Vali');
     await waitFor(() => expect(accessCalls(mock)).toHaveLength(1));
     expect(screen.queryByTestId('health-bulk')).toBeNull();
+    // No grading right: the whole list, and no one-tap buttons.
+    expect(screen.queryByTestId('health-quick-good-3')).toBeNull();
     await fireEvent.press(screen.getByText('Rustamov Bek'));
     expect(screen.queryByTestId('health-save')).toBeNull();
   });
@@ -177,14 +184,14 @@ describe('HealthChecksScreen (v2 HealthChecksPage)', () => {
     expect(rosterCalls(mock)).toHaveLength(0);
     await fireEvent.press(screen.getByTestId('health-branch'));
     await fireEvent.press(await screen.findByText("Farg'ona filiali"));
-    expect(await screen.findByText('Aliyev Vali')).toBeTruthy();
+    expect(await screen.findByText('Rustamov Bek')).toBeTruthy();
     expect(rosterCalls(mock)[0]!.params).toEqual({ branch_id: 9, day: DAY });
   });
 
   it('bir nechta hamshira filiali — tanlagich, birinchisi ochiladi', async () => {
     setUser({ ...nurse, nurse_branch_ids: [7, 9] });
     await renderWithProviders(<HealthChecksScreen />);
-    await screen.findByText('Aliyev Vali');
+    await screen.findByText('Rustamov Bek');
     expect(rosterCalls(mock)[0]!.params).toEqual({ branch_id: 7, day: DAY });
     expect(await screen.findByText('Chorvoq GES')).toBeTruthy();
   });
@@ -195,4 +202,60 @@ describe('HealthChecksScreen (v2 HealthChecksPage)', () => {
     await renderWithProviders(<HealthChecksScreen />);
     expect(await screen.findByText(i18n.t('errors.generic'))).toBeTruthy();
   });
+  it("bir bosish: «Sog'lom» darhol POST (shu kun, izohsiz) va qator navbatdan chiqadi", async () => {
+    setUser(nurse);
+    // The refetch after the grade must not bring the row back.
+    let graded = false;
+    mock.onGet(HEALTH_CHECKS_ROSTER).reply(() => [
+      200,
+      graded ? ROWS.map((r) => (r.employee_id === 3 ? { ...r, check_id: 13, status: 'good', date_from: DAY, date_to: DAY } : r)) : ROWS,
+    ]);
+    mock.onPost(HEALTH_CHECKS).reply(() => {
+      graded = true;
+      return [200, {}];
+    });
+    await renderWithProviders(<HealthChecksScreen />);
+    await screen.findByText('Rustamov Bek');
+    await fireEvent.press(screen.getByTestId('health-quick-good-3'));
+    await waitFor(() => expect(mock.history.post).toHaveLength(1));
+    expect(JSON.parse(mock.history.post[0]!.data)).toEqual({
+      employee_id: 3,
+      status: 'good',
+      date_from: DAY,
+      date_to: DAY,
+      note: null,
+    });
+    await waitFor(() => expect(screen.queryByText('Rustamov Bek')).toBeNull());
+    expect(screen.getByText('Usmonov Jasur')).toBeTruthy();
+    expect(screen.getByText("3 / 4 ko'rildi")).toBeTruthy();
+  });
+
+  it("bir bosish: «Kasal» — oyna o'sha holat bilan ochiladi, muddat tugmasi → POST", async () => {
+    setUser(nurse);
+    await renderWithProviders(<HealthChecksScreen />);
+    await screen.findByText('Rustamov Bek');
+    await fireEvent.press(screen.getByTestId('health-quick-unfit-3'));
+    // No request yet — «Kasal» needs a confirming save.
+    expect(mock.history.post).toHaveLength(0);
+    await fireEvent.press(await screen.findByTestId('health-hint-hint_fever'));
+    await fireEvent.press(screen.getByTestId('health-period-2'));
+    await fireEvent.press(screen.getByTestId('health-save'));
+    await waitFor(() => expect(mock.history.post).toHaveLength(1));
+    expect(JSON.parse(mock.history.post[0]!.data)).toEqual({
+      employee_id: 3,
+      status: 'unfit',
+      date_from: DAY,
+      date_to: dayjs(DAY).add(2, 'day').format('YYYY-MM-DD'),
+      note: 'Isitma',
+    });
+  });
+
+  it("navbat bo'sh — «Hammasi ko'rikdan o'tdi», ommaviy tugma yo'q", async () => {
+    setUser(nurse);
+    mock.onGet(HEALTH_CHECKS_ROSTER).reply(200, ROWS.slice(0, 2));
+    await renderWithProviders(<HealthChecksScreen />);
+    expect(await screen.findByText(i18n.t('health.allDone'))).toBeTruthy();
+    expect(screen.queryByTestId('health-bulk')).toBeNull();
+  });
 });
+

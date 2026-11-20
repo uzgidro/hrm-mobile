@@ -1,4 +1,9 @@
 import {
+  applyGrade,
+  filterByView,
+  gradeCoversDay,
+  presetEnd,
+  shouldAutoOpenHealth,
   BULK_MAX,
   branchCandidates,
   buildBulkBodies,
@@ -111,5 +116,63 @@ describe('health utils (v2 HealthChecksPage)', () => {
     expect(resolveHealthBranch(null, [7, 8])).toBe(7);
     expect(resolveHealthBranch(8, [7, 8])).toBe(8);
     expect(resolveHealthBranch(null, [])).toBeNull();
+  });
+});
+
+describe('2026-11-20 simplified flow helpers', () => {
+  const rows = [
+    { employee_id: 1, status: 'good' },
+    { employee_id: 2, status: null },
+    { employee_id: 3, status: 'unfit' },
+  ];
+
+  it('filterByView: queue / graded / all', () => {
+    expect(filterByView(rows, 'todo').map((r) => r.employee_id)).toEqual([2]);
+    expect(filterByView(rows, 'done').map((r) => r.employee_id)).toEqual([1, 3]);
+    expect(filterByView(rows, 'all')).toHaveLength(3);
+  });
+
+  it('gradeCoversDay: inclusive period', () => {
+    const body = { employee_id: 2, status: 'unfit', date_from: '2026-11-20', date_to: '2026-11-22' };
+    expect(gradeCoversDay(body, '2026-11-20')).toBe(true);
+    expect(gradeCoversDay(body, '2026-11-22')).toBe(true);
+    expect(gradeCoversDay(body, '2026-11-23')).toBe(false);
+    expect(gradeCoversDay(body, '2026-11-19')).toBe(false);
+  });
+
+  it('applyGrade: only the graded row changes', () => {
+    const out = applyGrade(rows, {
+      employee_id: 2,
+      status: 'limited',
+      date_from: '2026-11-20',
+      date_to: '2026-11-20',
+      note: 'Bosim',
+    });
+    expect(out[1]).toMatchObject({ employee_id: 2, status: 'limited', note: 'Bosim', date_to: '2026-11-20' });
+    expect(out[0]).toBe(rows[0]);
+  });
+
+  it("presetEnd: 0 = this day only (''), otherwise the inclusive last day", () => {
+    expect(presetEnd('2026-11-20', 0)).toBe('');
+    expect(presetEnd('2026-11-20', 2)).toBe('2026-11-22');
+    expect(presetEnd('2026-11-28', 6)).toBe('2026-12-04');
+  });
+
+  it('initialGradeForm: the tapped quick button wins over the current grade', () => {
+    expect(initialGradeForm({ employee_id: 1, status: 'good' }, '2026-11-20', 'unfit').status).toBe('unfit');
+    expect(initialGradeForm({ employee_id: 1, status: 'good' }, '2026-11-20').status).toBe('good');
+  });
+
+  it('shouldAutoOpenHealth: nurse, module on, start tab, once per user', () => {
+    const base = { userId: 5, nurseBranches: 1, moduleOn: true, onStartTab: true, alreadyOpenedFor: null };
+    expect(shouldAutoOpenHealth(base)).toBe(true);
+    expect(shouldAutoOpenHealth({ ...base, alreadyOpenedFor: 5 })).toBe(false);
+    // Another user signed in on the same phone — opens again.
+    expect(shouldAutoOpenHealth({ ...base, alreadyOpenedFor: 9 })).toBe(true);
+    expect(shouldAutoOpenHealth({ ...base, nurseBranches: 0 })).toBe(false);
+    expect(shouldAutoOpenHealth({ ...base, moduleOn: false })).toBe(false);
+    // A deep link / notification opened another screen — never covered.
+    expect(shouldAutoOpenHealth({ ...base, onStartTab: false })).toBe(false);
+    expect(shouldAutoOpenHealth({ ...base, userId: null })).toBe(false);
   });
 });
