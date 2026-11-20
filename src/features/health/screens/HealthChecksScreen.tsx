@@ -13,6 +13,7 @@ import dayjs from 'dayjs';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useBreakpoint } from '@/utils/responsive';
+import { useAuthStore } from '@/store/authStore';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { getApiErrorMessage } from '@/api/errors';
 import { toast } from '@/lib/toast';
@@ -58,6 +59,7 @@ const LIST_MAX_WIDTH = 960;
 
 export default function HealthChecksScreen() {
   const { t } = useTranslation();
+  const user = useAuthStore((s) => s.user);
   const { sizeClass } = useBreakpoint();
   const today = dayjs().format('YYYY-MM-DD');
   const [day, setDay] = useState(today);
@@ -84,8 +86,11 @@ export default function HealthChecksScreen() {
   const allRows = full.data ?? [];
   const counts = rosterCounts(allRows);
   const ungraded = ungradedIds(allRows);
-  // A nurse starts on the queue; a viewer (no grading right) sees everyone.
-  const view: HealthView = viewPick ?? (canCheck ? 'todo' : 'all');
+  // A nurse starts on the queue; a viewer (no grading right) sees everyone. While the
+  // access answer is still loading a nurse is assumed to grade, so the list does not
+  // flash «everyone» first and then jump to the queue.
+  const nurse = !!user?.nurse_branch_ids?.length;
+  const view: HealthView = viewPick ?? (canCheck || (nurse && access.isPending) ? 'todo' : 'all');
   const rows = filterByView(list.data ?? [], view);
   const grade = useGradeHealth();
   const bulk = useBulkGradeHealth();
