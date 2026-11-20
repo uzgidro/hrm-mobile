@@ -1,18 +1,19 @@
 // v3 Sog'liq ko'rigi — web v2 `HealthChecksPage` porti: hamshiraning smena oldidan
 // kunlik bahosi (Sog'lom / E'tiborga muhtoj / Kasal). «Kasal» xodim o'sha kunlarda
 // haydovchi qilib biriktirilmaydi. Ro'yxat doirasi serverda («Haydovchi doirasi»).
-// Huquq serverdan: `health-checks/access` `can_check` — ko'rsatilgan filial uchun;
-// yo'q bo'lsa faqat ko'rish. Filial — hamshira filiali (`nurse_branch_ids`); mobil'da
-// global filial tanlagichi yo'q, shuning uchun bir nechta bo'lsa (yoki hamshira
-// bo'lmagan bosh admin bo'lsa) ekranning o'zida tanlanadi.
-import React, { useState } from 'react';
+//
+// Simplified for the phone (2026-11-20): the nurse opens on the QUEUE of people not
+// yet checked, grades each with one tap on the row («Sog'lom» saves at once,
+// «E'tibor» / «Kasal» open the sheet with that status chosen), and the graded row
+// leaves the queue. One progress card replaces the four stat tiles; the full edit
+// (note, period, delete) is a tap on the row itself.
+import React, { useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import dayjs from 'dayjs';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { useAuthStore } from '@/store/authStore';
-import { isSiteMasterAdmin } from '@/utils/roles';
 import { useBreakpoint } from '@/utils/responsive';
+import { useAuthStore } from '@/store/authStore';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { getApiErrorMessage } from '@/api/errors';
 import { toast } from '@/lib/toast';
@@ -30,24 +31,29 @@ import {
   PageHeader,
   Screen,
   SearchField,
+  Segmented,
   SelectField,
   Skeleton,
-  StatTile,
 } from '@/ui';
-import { healthAccessQuery, healthBranchesQuery, healthRosterQuery } from '../api/queries';
-import { useBulkGradeHealth } from '../api/mutations';
+import { healthExpiringQuery, healthRosterQuery } from '../api/queries';
+import { useBulkGradeHealth, useGradeHealth } from '../api/mutations';
+import { useHealthBranch } from '../hooks/useHealthBranch';
 import { BulkFailedSheet } from '../components/BulkFailedSheet';
+import { ExpiringSheet } from '../components/ExpiringSheet';
 import { HealthGradeSheet } from '../components/HealthGradeSheet';
+import { HealthProgress } from '../components/HealthProgress';
+import { QuickGrade } from '../components/QuickGrade';
 import {
   STATUS_TONE,
-  branchCandidates,
   buildBulkBodies,
   describeFailed,
-  resolveHealthBranch,
+  filterByView,
   rosterCounts,
   ungradedIds,
   untilSuffix,
   type HealthRosterRow,
+  type HealthStatus,
+  type HealthView,
 } from '../utils/health';
 
 const LIST_MAX_WIDTH = 960;
@@ -56,40 +62,64 @@ export default function HealthChecksScreen() {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const { sizeClass } = useBreakpoint();
-  const [day, setDay] = useState(() => dayjs().format('YYYY-MM-DD'));
-  const [picked, setPicked] = useState<number | null>(null);
+  const today = dayjs().format('YYYY-MM-DD');
+  const [day, setDay] = useState(today);
   const [picker, setPicker] = useState<null | 'day' | 'branch'>(null);
   const [search, setSearch] = useState('');
   const debounced = useDebouncedValue(search);
-  const [editing, setEditing] = useState<{ row: HealthRosterRow; n: number } | null>(null);
+  const [viewPick, setView] = useState<HealthView | null>(null);
+  const [editing, setEditing] = useState<{ row: HealthRosterRow; preset?: HealthStatus; n: number } | null>(null);
   const [failed, setFailed] = useState<ReturnType<typeof describeFailed> | null>(null);
+  const [busyIds, setBusyIds] = useState<number[]>([]);
+  // Remount key for the grade sheet: every open starts from the row's current data.
+  const opens = useRef(0);
+  const openSheet = (row: HealthRosterRow, preset?: HealthStatus) => {
+    opens.current += 1;
+    setEditing({ row, preset, n: opens.current });
+  };
 
-  // Hamshira filiali birinchi: auth/me dagi `nurse_branch_ids`, bo'lmasa `access` javobi.
-  const userNurse = user?.nurse_branch_ids;
-  const identity = useQuery(healthAccessQuery(null, !userNurse?.length));
-  const candidates = branchCandidates(userNurse, identity.data?.nurse_branch_ids);
-  // Hamshira bo'lmagan bosh admin: v2 sarlavhadagi global filialni oladi — bu yerda ekrandagi tanlagich.
-  const anyBranch = !candidates.length && isSiteMasterAdmin(user);
-  const branchId = resolveHealthBranch(picked, candidates);
-  const showPicker = candidates.length > 1 || anyBranch;
-  const branches = useQuery(healthBranchesQuery(showPicker));
-  const branchName = (id: number) => branches.data?.find((b) => b.id === id)?.name || `#${id}`;
+  const { branchId, setPicked, identity, access, canCheck, showPicker, branchName, options, branchesLoading } =
+    useHealthBranch();
 
-  // `can_check` AYNAN ko'rsatilayotgan filial uchun so'raladi (server shuni toraytiradi).
-  const access = useQuery(healthAccessQuery(branchId, branchId != null));
-  const canCheck = branchId != null && !!access.data?.can_check;
-
-  // Hisoblagichlar to'liq ro'yxatdan, ro'yxat — qidirilganidan (v2).
+  // Counts come from the full roster, the list from the searched one (v2).
   const full = useQuery(healthRosterQuery(branchId, day));
   const list = useQuery(healthRosterQuery(branchId, day, debounced));
   const allRows = full.data ?? [];
-  const rows = list.data ?? [];
   const counts = rosterCounts(allRows);
   const ungraded = ungradedIds(allRows);
+  // A nurse starts on the queue; a viewer (no grading right) sees everyone. While the
+  // access answer is still loading a nurse is assumed to grade, so the list does not
+  // flash «everyone» first and then jump to the queue.
+  const nurse = !!user?.nurse_branch_ids?.length;
+  const view: HealthView = viewPick ?? (canCheck || (nurse && access.isPending) ? 'todo' : 'all');
+  const rows = filterByView(list.data ?? [], view);
+  const grade = useGradeHealth();
   const bulk = useBulkGradeHealth();
+  // «Muddati tugayapti» (v2 parity): only someone who can grade may renew.
+  const expiring = useQuery(healthExpiringQuery(branchId, canCheck));
+  const [expiringOpen, setExpiringOpen] = useState(false);
 
   const refresh = () =>
     void (branchId == null ? identity.refetch() : Promise.all([full.refetch(), list.refetch(), access.refetch()]));
+
+  const quickGood = async (r: HealthRosterRow) => {
+    setBusyIds((ids) => [...ids, r.employee_id]);
+    try {
+      await grade.mutateAsync({ employee_id: r.employee_id, status: 'good', date_from: day, date_to: day, note: null });
+      toast.success(t('health.quickSaved', { name: r.legal_name || '—', status: t('health.status_good') }));
+    } catch (e) {
+      toast.error(getApiErrorMessage(e, t('errors.generic')));
+    } finally {
+      setBusyIds((ids) => ids.filter((id) => id !== r.employee_id));
+    }
+  };
+
+  // «Sog'lom» on a row that is not yet «Sog'lom» saves at once; everything else (the other
+  // two grades, or re-tapping the current one) opens the sheet with that status chosen.
+  const onPick = (r: HealthRosterRow, s: HealthStatus) => {
+    if (s === 'good' && r.status !== 'good') return void quickGood(r);
+    openSheet(r, s);
+  };
 
   const bulkGood = async () => {
     if (!ungraded.length) return;
@@ -103,7 +133,7 @@ export default function HealthChecksScreen() {
     try {
       const res = await bulk.mutateAsync(buildBulkBodies(ungraded, day));
       if (res.ok.length) toast.success(t('health.bulkDone', { count: res.ok.length }));
-      // Server yoza olmaganlari — ism va sababi bilan ko'rsatiladi.
+      // What the server could not write — by name and reason.
       if (res.failed.length) setFailed(describeFailed(res.failed, allRows));
     } catch (e) {
       toast.error(getApiErrorMessage(e, t('errors.generic')));
@@ -111,29 +141,11 @@ export default function HealthChecksScreen() {
   };
 
   const compact = sizeClass === 'compact';
-  const basis = compact ? '47%' : '23%';
-  const tiles = [
-    {
-      id: 'checked',
-      label: t('health.statChecked'),
-      value: `${counts.checked}/${counts.total}`,
-      icon: 'users',
-      tint: 'drop',
-    },
-    { id: 'good', label: t('health.status_good'), value: counts.good, icon: 'check', tint: 'green' },
-    { id: 'limited', label: t('health.status_limited'), value: counts.limited, icon: 'bell', tint: 'amber' },
-    {
-      id: 'unfit',
-      label: t('health.status_unfit'),
-      value: counts.unfit,
-      icon: 'close',
-      tint: counts.unfit ? 'pink' : 'grey',
-    },
-  ] as const;
+  const dayLabel = `${day === today ? `${t('health.today')}, ` : ''}${dayjs(day).format('DD.MM.YYYY')}`;
 
   const renderBody = () => {
     if (branchId == null) {
-      // Identitet so'rovi yiqilsa — bu «filial yo'q» emas, xato.
+      // A failed identity request is an error, not «no branch».
       if (identity.isError && !identity.data) return <ErrorState onRetry={() => identity.refetch()} />;
       return identity.isLoading ? (
         <Skeleton height={220} />
@@ -144,38 +156,73 @@ export default function HealthChecksScreen() {
     if (list.isError && !list.data) return <ErrorState onRetry={() => list.refetch()} />;
     if (list.isPending) return <Skeleton height={220} />;
     if (!rows.length) {
-      return debounced.trim() ? (
-        <EmptyState title={t('common.noMatch')} message={t('common.noMatchHint')} />
-      ) : (
-        <EmptyState title={t('health.empty')} message={t('health.emptyHint')} />
-      );
+      if (debounced.trim()) return <EmptyState title={t('common.noMatch')} message={t('common.noMatchHint')} />;
+      if (view === 'todo' && counts.total > 0) {
+        return (
+          <EmptyState
+            pose="happy"
+            title={t('health.allDone')}
+            message={t('health.allDoneHint')}
+            actionLabel={t('health.view_done')}
+            onAction={() => setView('done')}
+          />
+        );
+      }
+      if (view === 'done' && counts.total > 0) return <EmptyState title={t('health.noneDone')} />;
+      return <EmptyState title={t('health.empty')} message={t('health.emptyHint')} />;
     }
     return rows.map((r) => {
       const st = r.status ?? '';
+      const name = r.legal_name || '—';
       const subtitle = [r.position, r.note ? `${t('health.note')}: ${r.note}` : null].filter(Boolean).join(' · ');
-      const badge = (
-        <Badge
-          testID={`health-badge-${r.employee_id}`}
-          label={
-            st
-              ? `${t(`health.status_${st}`, { defaultValue: r.label ?? st })}${untilSuffix(r, day)}`
-              : t('health.notChecked')
-          }
-          tone={st ? (STATUS_TONE[st] ?? 'neutral') : 'neutral'}
+      // In the queue every row is ungraded — the «not checked» badge would only repeat the tab.
+      const badge =
+        view === 'todo' ? null : (
+          <Badge
+            testID={`health-badge-${r.employee_id}`}
+            label={
+              st
+                ? `${t(`health.status_${st}`, { defaultValue: r.label ?? st })}${untilSuffix(r, day)}`
+                : t('health.notChecked')
+            }
+            tone={st ? (STATUS_TONE[st] ?? 'neutral') : 'neutral'}
+          />
+        );
+      const quick = canCheck ? (
+        <QuickGrade
+          employeeId={r.employee_id}
+          name={name}
+          current={st}
+          busy={busyIds.includes(r.employee_id)}
+          stretch={compact}
+          onPick={(s) => onPick(r, s)}
         />
-      );
+      ) : null;
       return (
         <ListRow
           key={r.employee_id}
           testID={`health-row-${r.employee_id}`}
           left={<Avatar name={r.legal_name || '?'} uri={r.photo_path} thumb={r.photo_thumb_path} size={40} />}
-          title={r.legal_name || '—'}
+          title={name}
           subtitle={subtitle || undefined}
-          // Telefonda nishon ism ostida — o'ng ustunda ismni «Amirsaidov B…» gacha qisardi.
-          below={compact ? <View style={styles.below}>{badge}</View> : undefined}
-          // O'ram: Badge o'zi `alignSelf: flex-start` — qatorda tepaga yopishmasin, markazda tursin.
-          right={compact ? undefined : <View>{badge}</View>}
-          onPress={canCheck ? () => setEditing({ row: r, n: Date.now() }) : undefined}
+          // Phone: badge and the three buttons go under the name, so the name is never cut short.
+          below={
+            compact && (badge || quick) ? (
+              <View style={styles.below}>
+                {badge}
+                {quick}
+              </View>
+            ) : undefined
+          }
+          right={
+            compact ? undefined : (
+              <View style={styles.right}>
+                {badge}
+                {quick}
+              </View>
+            )
+          }
+          onPress={canCheck ? () => openSheet(r) : undefined}
         />
       );
     });
@@ -183,9 +230,8 @@ export default function HealthChecksScreen() {
 
   return (
     <View style={styles.root}>
-      {/* Kunlik ro'yxat — keng ekranda 1250px'ga cho'zilmasin (formalar 600–640, ro'yxat 960). */}
       <Screen refreshing={full.isRefetching} onRefresh={refresh} maxWidth={LIST_MAX_WIDTH}>
-        <PageHeader title={t('health.title')} subtitle={t('health.subtitle')} />
+        <PageHeader title={t('health.title')} subtitle={t('health.subtitleShort')} />
         <View style={styles.selectors}>
           {showPicker && (
             <View style={styles.flex}>
@@ -203,35 +249,52 @@ export default function HealthChecksScreen() {
             <SelectField
               testID="health-day"
               label={t('health.day')}
-              value={dayjs(day).format('DD.MM.YYYY')}
+              value={dayLabel}
               icon="calendar"
               onPress={() => setPicker('day')}
             />
           </View>
         </View>
+        {branchId != null && full.data && <HealthProgress counts={counts} />}
         {branchId != null && (
-          <View style={styles.tiles}>
-            {tiles.map((x) => (
-              <View key={x.id} style={{ flexBasis: basis, flexGrow: 1 }}>
-                <StatTile testID={`health-stat-${x.id}`} label={x.label} value={x.value} icon={x.icon} tint={x.tint} />
-              </View>
-            ))}
+          <View style={styles.filters}>
+            <Segmented<HealthView>
+              testID="health-view"
+              value={view}
+              onChange={setView}
+              options={[
+                { value: 'todo', label: t('health.view_todo'), count: counts.unchecked },
+                { value: 'done', label: t('health.view_done'), count: counts.checked },
+                { value: 'all', label: t('health.view_all') },
+              ]}
+            />
+            <SearchField value={search} onChangeText={setSearch} placeholder={t('health.searchPlaceholder')} />
+            {canCheck && (expiring.data?.length ?? 0) > 0 && (
+              <Button
+                testID="health-expiring"
+                label={t('health.expiringBtn', { count: expiring.data?.length ?? 0 })}
+                icon="clock"
+                variant="neutral"
+                onPress={() => setExpiringOpen(true)}
+              />
+            )}
           </View>
         )}
-        <View style={styles.filters}>
-          <SearchField value={search} onChangeText={setSearch} placeholder={t('health.searchPlaceholder')} />
-          {canCheck && ungraded.length > 0 && (
+        <Card>{renderBody()}</Card>
+        {/* The end of the queue: the rest are usually healthy — one confirmed tap for all of them. */}
+        {canCheck && view !== 'done' && ungraded.length > 0 && (
+          <View style={styles.bulk}>
             <Button
               testID="health-bulk"
               label={t('health.bulkGood', { count: ungraded.length })}
               icon="check"
               variant="soft"
+              full
               loading={bulk.isPending}
               onPress={() => void bulkGood()}
             />
-          )}
-        </View>
-        <Card>{renderBody()}</Card>
+          </View>
+        )}
       </Screen>
       {picker === 'day' && (
         <DatePickerModal
@@ -247,11 +310,8 @@ export default function HealthChecksScreen() {
           avatars={false}
           visible
           title={t('health.branch')}
-          options={(anyBranch ? (branches.data ?? []).map((b) => b.id) : candidates).map((id) => ({
-            value: id,
-            label: branchName(id),
-          }))}
-          loading={branches.isFetching}
+          options={options}
+          loading={branchesLoading}
           selected={branchId}
           onClose={() => setPicker(null)}
           onSelect={(id) => {
@@ -261,9 +321,18 @@ export default function HealthChecksScreen() {
         />
       )}
       {canCheck && editing && (
-        <HealthGradeSheet key={editing.n} row={editing.row} day={day} onClose={() => setEditing(null)} />
+        <HealthGradeSheet
+          key={editing.n}
+          row={editing.row}
+          preset={editing.preset}
+          day={day}
+          onClose={() => setEditing(null)}
+        />
       )}
       {failed && <BulkFailedSheet items={failed} onClose={() => setFailed(null)} />}
+      {expiringOpen && branchId != null && (
+        <ExpiringSheet branchId={branchId} onClose={() => setExpiringOpen(false)} />
+      )}
     </View>
   );
 }
@@ -272,7 +341,8 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
   selectors: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 12 },
   flex: { flexGrow: 1, flexBasis: 160 },
-  tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 12 },
   filters: { gap: 10, marginBottom: 12 },
-  below: { marginTop: 4 },
+  below: { marginTop: 4, gap: 2, alignItems: 'stretch' },
+  right: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  bulk: { marginTop: 12 },
 });

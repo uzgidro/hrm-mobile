@@ -89,8 +89,10 @@ export interface GradeForm {
 }
 
 /** v2 `openForm`: tugash sanasi faqat tanlangan kundan farq qilsa ko'rsatiladi. */
-export function initialGradeForm(row: HealthRosterRow, day: string): GradeForm {
-  const status = HEALTH_STATUSES.includes(row.status as HealthStatus) ? (row.status as HealthStatus) : '';
+export function initialGradeForm(row: HealthRosterRow, day: string, preset?: HealthStatus): GradeForm {
+  // `preset` — the quick button the nurse tapped on the row (E'tibor / Kasal open the sheet with it chosen).
+  const current = HEALTH_STATUSES.includes(row.status as HealthStatus) ? (row.status as HealthStatus) : '';
+  const status = preset ?? current;
   return {
     employeeId: row.employee_id,
     checkId: row.check_id ?? null,
@@ -135,4 +137,104 @@ export function branchCandidates(userIds?: number[] | null, accessIds?: number[]
 
 export function resolveHealthBranch(picked: number | null, candidates: number[]): number | null {
   return picked ?? candidates[0] ?? null;
+}
+
+/** Nurse's queue view: who is still waiting, who is already graded, or everyone. */
+export type HealthView = 'todo' | 'done' | 'all';
+
+export function filterByView(rows: HealthRosterRow[], view: HealthView): HealthRosterRow[] {
+  if (view === 'todo') return rows.filter((r) => !r.status);
+  if (view === 'done') return rows.filter((r) => !!r.status);
+  return rows;
+}
+
+/**
+ * Where the screen opens: a nurse lands on the queue of people still waiting; when
+ * nobody is waiting (or the viewer cannot grade) the whole list is more useful.
+ */
+export function defaultView(canCheck: boolean, ungradedCount: number): HealthView {
+  return canCheck && ungradedCount > 0 ? 'todo' : 'all';
+}
+
+export interface GradeBody {
+  employee_id: number;
+  status: string;
+  date_from: string;
+  date_to: string;
+  note?: string | null;
+}
+
+/** True when a grade written for `body`'s period covers the roster `day`. ISO dates compare as strings. */
+export function gradeCoversDay(body: GradeBody, day: string): boolean {
+  return body.date_from <= day && day <= body.date_to;
+}
+
+/**
+ * Optimistic roster: the graded row shows its new status right away (the server's
+ * answer replaces it on the next refetch, including the new `check_id`).
+ */
+export function applyGrade(rows: HealthRosterRow[], body: GradeBody): HealthRosterRow[] {
+  return rows.map((r) =>
+    r.employee_id === body.employee_id
+      ? {
+          ...r,
+          status: body.status,
+          label: null,
+          note: body.note ?? null,
+          date_from: body.date_from,
+          date_to: body.date_to,
+        }
+      : r,
+  );
+}
+
+/** Quick period presets in the grade sheet: '' = this day only, otherwise the last day (inclusive). */
+export const PERIOD_PRESETS = [0, 2, 6] as const;
+
+export function presetEnd(day: string, extraDays: number): string {
+  return extraDays ? dayjs(day).add(extraDays, 'day').format('YYYY-MM-DD') : '';
+}
+
+/**
+ * Opening the health screen right after sign-in (2026-11-20): only for a nurse
+ * (a branch to grade in, the module switched on), only once per signed-in user per
+ * app session, and only while the user sits on the start tab — a deep link or a
+ * notification tap that opened another screen is never covered.
+ */
+export function shouldAutoOpenHealth(p: {
+  nurseBranches: number;
+  moduleOn: boolean;
+  onStartTab: boolean;
+  alreadyOpenedFor: number | null;
+  userId: number | null | undefined;
+}): boolean {
+  if (p.userId == null || !p.nurseBranches || !p.moduleOn || !p.onStartTab) return false;
+  return p.alreadyOpenedFor !== p.userId;
+}
+
+/** «Muddati tugayapti» row (v2 `ExpiringRow`): a period ending soon with nothing newer after it. */
+export interface ExpiringRow {
+  check_id: number;
+  employee_id: number;
+  legal_name?: string | null;
+  status: string;
+  label?: string | null;
+  date_from: string;
+  date_to: string;
+  days_left: number;
+}
+
+/** `health-checks/renew` answer; `apply=false` is a preview (only `items`/`skipped`). */
+export interface RenewResult {
+  items: { check_id: number; employee_id: number; status: string; date_from: string; date_to: string }[];
+  skipped: { check_id: number; reason: string }[];
+  created: number[];
+  failed: { check_id: number; error: string }[];
+}
+
+/** v2 shows the expiring list for the next 14 days. */
+export const EXPIRING_DAYS = 14;
+
+export function normalizeRenew(d: Partial<RenewResult> | null | undefined): RenewResult {
+  return { items: d?.items ?? [], skipped: d?.skipped ?? [], created: d?.created ?? [], failed: d?.failed ?? [] };
 }

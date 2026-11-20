@@ -1,6 +1,8 @@
 // Bitta xodimni baholash (v2 qator ichidagi forma): holat, izoh, «qaysi kungacha».
 // Qayta saqlash eski bahoni almashtiradi; o'chirish — bahoni butunlay olib tashlash
 // (tasdiq bilan). Ota `key` bilan faqat ochiqda mount qiladi.
+// 2026-11-20: typical notes and periods are one-tap chips (typing on a phone is the
+// slow part); the date picker stays behind «Boshqa sana» for anything longer.
 import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import dayjs from 'dayjs';
@@ -14,19 +16,34 @@ import { Button, Chip, IconButton, SelectField, Sheet, Text } from '@/ui';
 import { useGradeHealth, useRemoveHealthCheck } from '../api/mutations';
 import {
   HEALTH_STATUSES,
+  PERIOD_PRESETS,
+  presetEnd,
   STATUS_TONE,
   buildGradeBody,
   initialGradeForm,
   validateGrade,
   type GradeForm,
   type HealthRosterRow,
+  type HealthStatus,
 } from '../utils/health';
+
+const NOTE_HINTS = ['hint_pressure', 'hint_fever', 'hint_headache', 'hint_tired'] as const;
 
 const fmt = (d: string) => (d ? dayjs(d).format('DD.MM.YYYY') : '');
 
-export function HealthGradeSheet({ row, day, onClose }: { row: HealthRosterRow; day: string; onClose: () => void }) {
+export function HealthGradeSheet({
+  row,
+  day,
+  preset,
+  onClose,
+}: {
+  row: HealthRosterRow;
+  day: string;
+  preset?: HealthStatus;
+  onClose: () => void;
+}) {
   const { t } = useTranslation();
-  const [form, setForm] = useState<GradeForm>(() => initialGradeForm(row, day));
+  const [form, setForm] = useState<GradeForm>(() => initialGradeForm(row, day, preset));
   const [error, setError] = useState<string | null>(null);
   const [dateOpen, setDateOpen] = useState(false);
   const grade = useGradeHealth();
@@ -99,6 +116,37 @@ export function HealthGradeSheet({ row, day, onClose }: { row: HealthRosterRow; 
           onChangeText={(v) => set({ note: v })}
           placeholder={t('health.notePlaceholder')}
         />
+        <View style={styles.chips}>
+          {NOTE_HINTS.map((k) => {
+            const text = t(`health.${k}`);
+            return (
+              <Chip
+                key={k}
+                testID={`health-hint-${k}`}
+                label={text}
+                selected={form.note.trim() === text}
+                onPress={() => set({ note: form.note.trim() === text ? '' : text })}
+              />
+            );
+          })}
+        </View>
+        <Text variant="label" tone="muted">
+          {t('health.period')}
+        </Text>
+        <View style={styles.chips}>
+          {PERIOD_PRESETS.map((n) => {
+            const end = presetEnd(day, n);
+            return (
+              <Chip
+                key={n}
+                testID={`health-period-${n}`}
+                label={t(`health.period_${n}`)}
+                selected={form.dateTo === end}
+                onPress={() => set({ dateTo: end })}
+              />
+            );
+          })}
+        </View>
         {/* «Qachon bo'ldi» emas, «qachongacha amal qiladi» — shuning uchun yorliq bilan (v2). */}
         <View style={styles.row}>
           <View style={styles.flex}>

@@ -14,6 +14,7 @@ import { useNavSettings } from '@/lib/navSettings';
 import { visibleTabs, ALL_TABS, tabRedirect, startRoute, startTab } from '@/utils/tabs';
 import { canAccessPage } from '@/utils/roles';
 import { TabBar } from '@/features/shell/components/TabBar';
+import { useHealthAutoOpen } from '@/features/health/hooks/useHealthAutoOpen';
 
 export default function TabsLayout() {
   const { colors } = useTheme();
@@ -39,6 +40,8 @@ export default function TabsLayout() {
   useEffect(() => {
     if (redirectRoute) router.replace(redirectRoute as Href);
   }, [redirectRoute]);
+  // Nurse: the health check opens over the start tab right after sign-in / app start.
+  useHealthAutoOpen(!redirectTo && active != null && active === start);
 
   return (
     <Tabs

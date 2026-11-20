@@ -440,6 +440,8 @@ export const HEALTH_CHECKS = 'health-checks';
 export const HEALTH_CHECKS_ACCESS = 'health-checks/access';
 export const HEALTH_CHECKS_ROSTER = 'health-checks/roster';
 export const HEALTH_CHECKS_BULK = 'health-checks/bulk-grade';
+export const HEALTH_CHECKS_EXPIRING = 'health-checks/expiring';
+export const HEALTH_CHECKS_RENEW = 'health-checks/renew';
 export const HEALTH_CHECK = (id: number) => `health-checks/${id}`;
 // Zoom — kompaniyaning umumiy litsenziyasi jadvali. `start` / `start-url` / `host-key`
 // faqat mutatsiya bilan so'raladi va hech qachon keshlanmaydi (parolsiz host havolasi).
