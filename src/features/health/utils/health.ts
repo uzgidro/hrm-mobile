@@ -211,3 +211,30 @@ export function shouldAutoOpenHealth(p: {
   if (p.userId == null || !p.nurseBranches || !p.moduleOn || !p.onStartTab) return false;
   return p.alreadyOpenedFor !== p.userId;
 }
+
+/** «Muddati tugayapti» row (v2 `ExpiringRow`): a period ending soon with nothing newer after it. */
+export interface ExpiringRow {
+  check_id: number;
+  employee_id: number;
+  legal_name?: string | null;
+  status: string;
+  label?: string | null;
+  date_from: string;
+  date_to: string;
+  days_left: number;
+}
+
+/** `health-checks/renew` answer; `apply=false` is a preview (only `items`/`skipped`). */
+export interface RenewResult {
+  items: { check_id: number; employee_id: number; status: string; date_from: string; date_to: string }[];
+  skipped: { check_id: number; reason: string }[];
+  created: number[];
+  failed: { check_id: number; error: string }[];
+}
+
+/** v2 shows the expiring list for the next 14 days. */
+export const EXPIRING_DAYS = 14;
+
+export function normalizeRenew(d: Partial<RenewResult> | null | undefined): RenewResult {
+  return { items: d?.items ?? [], skipped: d?.skipped ?? [], created: d?.created ?? [], failed: d?.failed ?? [] };
+}

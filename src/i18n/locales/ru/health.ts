@@ -64,4 +64,13 @@ export default {
   period_0: 'Только этот день',
   period_2: '3 дня',
   period_6: '1 неделя',
+  expiringBtn: 'Срок истекает ({{count}})',
+  expiringTitle: 'Срок истекает',
+  expiringHint: 'Оценки, период которых заканчивается в ближайшие {{count}} дн. и после которых нет новой записи',
+  expiringNone: 'Нет оценок с истекающим сроком',
+  daysLeft: 'Осталось дней: {{count}}',
+  renew: 'Продлить',
+  renewApply: 'Подтвердить ({{count}})',
+  renewed: 'Продлено оценок: {{count}}',
+  renewSkipped: 'Будет пропущено записей: {{count}} (есть следующий период или нет прав)',
 } as const;

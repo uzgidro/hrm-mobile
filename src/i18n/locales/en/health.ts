@@ -64,4 +64,13 @@ export default {
   period_0: 'This day only',
   period_2: '3 days',
   period_6: '1 week',
+  expiringBtn: 'Expiring soon ({{count}})',
+  expiringTitle: 'Expiring soon',
+  expiringHint: 'Grades whose period ends within {{count}} days with no newer record after them',
+  expiringNone: 'No grades are expiring',
+  daysLeft: '{{count}} days left',
+  renew: 'Continue',
+  renewApply: 'Confirm ({{count}})',
+  renewed: '{{count}} grades continued',
+  renewSkipped: '{{count}} records will be skipped (a next period exists or no permission)',
 } as const;

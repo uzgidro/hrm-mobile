@@ -35,10 +35,11 @@ import {
   SelectField,
   Skeleton,
 } from '@/ui';
-import { healthRosterQuery } from '../api/queries';
+import { healthExpiringQuery, healthRosterQuery } from '../api/queries';
 import { useBulkGradeHealth, useGradeHealth } from '../api/mutations';
 import { useHealthBranch } from '../hooks/useHealthBranch';
 import { BulkFailedSheet } from '../components/BulkFailedSheet';
+import { ExpiringSheet } from '../components/ExpiringSheet';
 import { HealthGradeSheet } from '../components/HealthGradeSheet';
 import { HealthProgress } from '../components/HealthProgress';
 import { QuickGrade } from '../components/QuickGrade';
@@ -94,6 +95,9 @@ export default function HealthChecksScreen() {
   const rows = filterByView(list.data ?? [], view);
   const grade = useGradeHealth();
   const bulk = useBulkGradeHealth();
+  // «Muddati tugayapti» (v2 parity): only someone who can grade may renew.
+  const expiring = useQuery(healthExpiringQuery(branchId, canCheck));
+  const [expiringOpen, setExpiringOpen] = useState(false);
 
   const refresh = () =>
     void (branchId == null ? identity.refetch() : Promise.all([full.refetch(), list.refetch(), access.refetch()]));
@@ -265,6 +269,15 @@ export default function HealthChecksScreen() {
               ]}
             />
             <SearchField value={search} onChangeText={setSearch} placeholder={t('health.searchPlaceholder')} />
+            {canCheck && (expiring.data?.length ?? 0) > 0 && (
+              <Button
+                testID="health-expiring"
+                label={t('health.expiringBtn', { count: expiring.data?.length ?? 0 })}
+                icon="clock"
+                variant="neutral"
+                onPress={() => setExpiringOpen(true)}
+              />
+            )}
           </View>
         )}
         <Card>{renderBody()}</Card>
@@ -317,6 +330,9 @@ export default function HealthChecksScreen() {
         />
       )}
       {failed && <BulkFailedSheet items={failed} onClose={() => setFailed(null)} />}
+      {expiringOpen && branchId != null && (
+        <ExpiringSheet branchId={branchId} onClose={() => setExpiringOpen(false)} />
+      )}
     </View>
   );
 }

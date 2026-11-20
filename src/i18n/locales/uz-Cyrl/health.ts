@@ -64,4 +64,13 @@ export default {
   period_0: 'Фақат шу кун',
   period_2: '3 кун',
   period_6: '1 ҳафта',
+  expiringBtn: 'Муддати тугаяпти ({{count}})',
+  expiringTitle: 'Муддати тугаяпти',
+  expiringHint: 'Даври {{count}} кун ичида тугайдиган ва ундан кейинги ёзуви йўқ баҳолар',
+  expiringNone: 'Муддати тугаётган баҳо йўқ',
+  daysLeft: '{{count}} кун қолди',
+  renew: 'Давом эттириш',
+  renewApply: 'Тасдиқлаш ({{count}})',
+  renewed: '{{count}} та баҳо давом эттирилди',
+  renewSkipped: '{{count}} та ёзув ўтказиб юборилади (кейинги давр бор ёки рухсат йўқ)',
 } as const;

@@ -1,14 +1,27 @@
 import { keepPreviousData, queryOptions } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
 import { unwrapList } from '@/api/response';
-import { HEALTH_CHECKS_ACCESS, HEALTH_CHECKS_ROSTER, ORGANIZATION_BRANCHES } from '@/api/urls';
-import type { HealthAccess, HealthRosterRow } from '../utils/health';
+import { HEALTH_CHECKS_ACCESS, HEALTH_CHECKS_EXPIRING, HEALTH_CHECKS_ROSTER, ORGANIZATION_BRANCHES } from '@/api/urls';
+import { EXPIRING_DAYS, type ExpiringRow, type HealthAccess, type HealthRosterRow } from '../utils/health';
 
 export const healthKeys = {
   all: ['health-checks'] as const,
   access: (branchId: number | null) => [...healthKeys.all, 'access', branchId] as const,
   roster: (p: object) => [...healthKeys.all, 'roster', p] as const,
+  expiring: (branchId: number | null) => [...healthKeys.all, 'expiring', branchId] as const,
 };
+
+/** v2 `useHealthExpiring`: periods ending within 14 days that nothing newer replaces (nurse only). */
+export function healthExpiringQuery(branchId: number | null, enabled: boolean) {
+  return queryOptions({
+    queryKey: healthKeys.expiring(branchId),
+    queryFn: () =>
+      apiClient
+        .get(HEALTH_CHECKS_EXPIRING, { params: { branch_id: branchId ?? 0, days: EXPIRING_DAYS } })
+        .then((r) => unwrapList<ExpiringRow>(r.data)),
+    enabled: enabled && branchId != null,
+  });
+}
 
 /**
  * v2 `useHealthAccess`. `organization_branch_id` berilsa `can_check` SHU filial

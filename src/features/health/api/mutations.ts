@@ -1,11 +1,13 @@
 import { useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
-import { HEALTH_CHECK, HEALTH_CHECKS, HEALTH_CHECKS_BULK } from '@/api/urls';
+import { HEALTH_CHECK, HEALTH_CHECKS, HEALTH_CHECKS_BULK, HEALTH_CHECKS_RENEW } from '@/api/urls';
 import {
   applyGrade,
   gradeCoversDay,
   mergeBulkResults,
+  normalizeRenew,
   type BulkResult,
+  type RenewResult,
   type GradeBody,
   type HealthRosterRow,
 } from '../utils/health';
@@ -83,4 +85,21 @@ export function useBulkGradeHealth() {
 export function useRemoveHealthCheck() {
   const onSuccess = useInvalidate();
   return useMutation({ meta, mutationFn: removeHealthCheck, onSuccess });
+}
+
+/** «Davom ettirish»: `apply=false` previews the next periods, `apply=true` writes them. */
+export const renewHealthChecks = ({ ids, apply }: { ids: number[]; apply: boolean }) =>
+  apiClient
+    .post<Partial<RenewResult>>(HEALTH_CHECKS_RENEW, { check_ids: ids, apply })
+    .then((r) => normalizeRenew(r.data));
+
+export function useRenewHealthChecks() {
+  const qc = useQueryClient();
+  return useMutation({
+    meta,
+    mutationFn: renewHealthChecks,
+    onSuccess: (_d, v) => {
+      if (v.apply) void qc.invalidateQueries({ queryKey: healthKeys.all });
+    },
+  });
 }

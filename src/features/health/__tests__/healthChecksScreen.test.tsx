@@ -11,6 +11,8 @@ import {
   HEALTH_CHECKS,
   HEALTH_CHECKS_ACCESS,
   HEALTH_CHECKS_BULK,
+  HEALTH_CHECKS_EXPIRING,
+  HEALTH_CHECKS_RENEW,
   HEALTH_CHECKS_ROSTER,
   ORGANIZATION_BRANCHES,
 } from '@/api/urls';
@@ -61,6 +63,7 @@ describe('HealthChecksScreen (v2 HealthChecksPage)', () => {
     (confirm as jest.Mock).mockClear();
     mock.onGet(HEALTH_CHECKS_ACCESS).reply(200, { can_check: true, nurse_branch_ids: [7] });
     mock.onGet(HEALTH_CHECKS_ROSTER).reply(200, ROWS);
+    mock.onGet(HEALTH_CHECKS_EXPIRING).reply(200, []);
     mock.onGet(ORGANIZATION_BRANCHES).reply(200, [
       { id: 7, name: 'Chorvoq GES' },
       { id: 9, name: "Farg'ona filiali" },
@@ -257,5 +260,46 @@ describe('HealthChecksScreen (v2 HealthChecksPage)', () => {
     expect(await screen.findByText(i18n.t('health.allDone'))).toBeTruthy();
     expect(screen.queryByTestId('health-bulk')).toBeNull();
   });
+  it("muddati tugayapti: ro'yxat → oldindan ko'rish (apply=false) → tasdiq (apply=true)", async () => {
+    setUser(nurse);
+    mock.onGet(HEALTH_CHECKS_EXPIRING).reply(200, [
+      { check_id: 12, employee_id: 2, legal_name: 'Karimov Ali', status: 'unfit', date_from: DAY, date_to: NEXT, days_left: 4 },
+      { check_id: 21, employee_id: 7, legal_name: 'Sobirov Dilshod', status: 'limited', date_from: DAY, date_to: NEXT, days_left: 4 },
+    ]);
+    const nextFrom = dayjs(NEXT).add(1, 'day').format('YYYY-MM-DD');
+    mock.onPost(HEALTH_CHECKS_RENEW).reply((cfg) => {
+      const body = JSON.parse(cfg.data);
+      return [
+        200,
+        body.apply
+          ? { items: [], skipped: [], created: [99], failed: [] }
+          : { items: [{ check_id: 12, employee_id: 2, status: 'unfit', date_from: nextFrom, date_to: nextFrom }], skipped: [] },
+      ];
+    });
+    await renderWithProviders(<HealthChecksScreen />);
+    await fireEvent.press(await screen.findByTestId('health-expiring'));
+    expect(screen.getByText('Muddati tugayapti (2)')).toBeTruthy();
+    const call = mock.history.get.find((r) => r.url === HEALTH_CHECKS_EXPIRING)!;
+    expect(call.params).toEqual({ branch_id: 7, days: 14 });
+    // Untick the second row, then preview: only the first id goes, nothing is written.
+    await fireEvent.press(await screen.findByTestId('health-expiring-21'));
+    await fireEvent.press(screen.getByTestId('health-renew-preview'));
+    await waitFor(() => expect(mock.history.post).toHaveLength(1));
+    expect(JSON.parse(mock.history.post[0]!.data)).toEqual({ check_ids: [12], apply: false });
+    expect(await screen.findByTestId('health-renew-next-12')).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('health-renew-apply'));
+    await waitFor(() => expect(mock.history.post).toHaveLength(2));
+    expect(JSON.parse(mock.history.post[1]!.data)).toEqual({ check_ids: [12], apply: true });
+  });
+
+  it("muddati tugayapti: ko'rish huquqisiz — so'rov ham, tugma ham yo'q", async () => {
+    setUser(nurse);
+    mock.onGet(HEALTH_CHECKS_ACCESS).reply(200, { can_check: false, nurse_branch_ids: [7] });
+    await renderWithProviders(<HealthChecksScreen />);
+    await screen.findByText('Aliyev Vali');
+    expect(screen.queryByTestId('health-expiring')).toBeNull();
+    expect(mock.history.get.some((r) => r.url === HEALTH_CHECKS_EXPIRING)).toBe(false);
+  });
 });
+
 

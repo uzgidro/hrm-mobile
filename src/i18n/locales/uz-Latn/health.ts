@@ -65,4 +65,13 @@ export default {
   period_0: 'Faqat shu kun',
   period_2: '3 kun',
   period_6: '1 hafta',
+  expiringBtn: 'Muddati tugayapti ({{count}})',
+  expiringTitle: 'Muddati tugayapti',
+  expiringHint: "Davri {{count}} kun ichida tugaydigan va undan keyingi yozuvi yo'q baholar",
+  expiringNone: "Muddati tugayotgan baho yo'q",
+  daysLeft: '{{count}} kun qoldi',
+  renew: 'Davom ettirish',
+  renewApply: 'Tasdiqlash ({{count}})',
+  renewed: '{{count}} ta baho davom ettirildi',
+  renewSkipped: "{{count}} ta yozuv o'tkazib yuboriladi (keyingi davr bor yoki ruxsat yo'q)",
 } as const;
