@@ -218,7 +218,8 @@ export function meetingActions(m: ZoomMeeting) {
     approve: pending,
     reject: pending,
     start: managedApproved,
-    hostKey: managedApproved,
+    // Host key: the server refuses organizers (403); approver only.
+    hostKey: !!m.can_approve && m.status === 'approved',
     cancel: !!m.can_manage && open,
     cancelSeries: managedApproved && !!m.series_id,
   };

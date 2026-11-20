@@ -118,6 +118,7 @@ const LIVENESS_REASON_KEY: Record<string, string> = {
   continuity: 'auth.faceContinuity',
   pose: 'auth.faceLiveness',
   flash: 'auth.faceFlash',
+  static: 'auth.faceStatic',
 };
 
 type ErrBody = {

@@ -62,5 +62,6 @@ export default {
   faceBrightnessHint: "Ekran yorqinligini maksimal qiling — tekshiruv vaqtida ekran rangli yonadi.",
   faceFlashPrompt: "Kameraga qarang",
   faceFlash: "Ekran nuri yuzda ko'rinmadi. Ekranga yaqinroq turing va yorqinlikni oshiring.",
+  faceStatic: "Kamera tasviri qotib qoldi yoki jonli emas. Kamerani tekshirib, qaytadan urinib ko'ring.",
   tomchiFace: "Kameraga qarang — sizni yuzingizdan taniyman!",
 } as const;

@@ -59,5 +59,6 @@ export default {
   faceBrightnessHint: "Maximize the screen brightness — during the check the screen lights up in colour.",
   faceFlashPrompt: "Look at the camera",
   faceFlash: "The screen light was not visible on your face. Move closer to the screen and raise the brightness.",
+  faceStatic: "The camera feed is frozen or not live. Check the camera and try again.",
   tomchiFace: "Look at the camera — I'll recognise you!",
 } as const;

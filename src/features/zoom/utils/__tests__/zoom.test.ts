@@ -163,7 +163,10 @@ describe('holat va amallar', () => {
     expect(approver.approve && approver.reject && approver.cancel).toBe(true);
     expect(approver.start).toBe(false);
     const owner = meetingActions(meeting({ can_manage: true, series_id: 4 }));
-    expect(owner.start && owner.hostKey && owner.cancel && owner.cancelSeries).toBe(true);
+    expect(owner.start && owner.cancel && owner.cancelSeries).toBe(true);
+    // Host key is the approver's: an organizer alone gets a 403 from the server.
+    expect(owner.hostKey).toBe(false);
+    expect(meetingActions(meeting({ can_manage: true, can_approve: true })).hostKey).toBe(true);
     // Yopilgan yig'ilishda qo'shilish/bekor yo'q (v2: arxivda «Qo'shilish» chiqmasin).
     const closed = meetingActions(meeting({ status: 'ended', can_manage: true, join_url: 'https://z' }));
     expect(closed.join || closed.cancel || closed.start).toBe(false);

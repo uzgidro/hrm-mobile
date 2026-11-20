@@ -51,6 +51,7 @@ const ROWS = [
     live_since: at('10:02'),
     participant_count: 5,
     can_manage: true,
+    can_approve: true,
     requested_by: { id: 3, legal_name: 'Aliyev Vali' },
   },
   {
