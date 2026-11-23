@@ -14,6 +14,7 @@ import {
 // ketardi. Natijada so'rov JAVOBSIZ uzilardi va ilova sababsiz "Xatolik"
 // ko'rsatardi, server esa amalni BAJARIB bo'lgan bo'lardi.
 export const REQUEST_TIMEOUT_MS = 30000;
+export const REFRESH_TIMEOUT_MS = 20000;
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -37,33 +38,48 @@ apiClient.interceptors.request.use(async (config) => {
 // every refresh would mint a new access token and rotate the server session,
 // invalidating the others mid-flight and kicking the user out. So we serialize:
 // the first 401 starts the refresh, everyone else awaits that same promise.
-let refreshPromise: Promise<string | null> | null = null;
+//
+// The outcome matters as much as the token: only a REFUSAL by the server may
+// sign the person out. A dropped connection, a timeout or the 502 of an API
+// restart says nothing about the session. Treating those as "expired" wiped
+// tokens that were still good, so people had to sign in again every day or two.
+type RefreshOutcome =
+  | { kind: 'ok'; token: string }
+  | { kind: 'refused' }
+  | { kind: 'failed'; error: unknown };
 
-async function refreshAccessToken(): Promise<string | null> {
-  const refreshToken = await getRefreshToken();
-  if (!refreshToken) return null;
+const REFUSED = [400, 401, 403];
+
+let refreshPromise: Promise<RefreshOutcome> | null = null;
+
+async function refreshAccessToken(): Promise<RefreshOutcome> {
   try {
-    // JSON body, not a query param: a URL lands in proxy/access logs, so the
-    // backend reads cookie → body → query, in that order (audit F16/H10).
+    const refreshToken = await getRefreshToken();
+    if (!refreshToken) return { kind: 'refused' };
+    // JSON body, not a query param: a URL lands in proxy/access logs (audit
+    // F16/H10). No cookies: the native cookie jar is written to disk late, and
+    // an older refresh cookie must never compete with the stored token.
     const { data } = await axios.post(
       `${API_BASE_URL}/auth/refresh`,
       { refresh_token: refreshToken },
-      { timeout: 20000 }
+      { timeout: REFRESH_TIMEOUT_MS, withCredentials: false }
     );
-    if (data?.access_token) {
-      await setAccessToken(data.access_token);
-      if (data.refresh_token) {
-        await setRefreshToken(data.refresh_token);
-      }
-      return data.access_token as string;
+    if (!data?.access_token) return { kind: 'failed', error: new Error('refresh: no access token') };
+    // The refresh token first: if the app is closed between the two writes, the
+    // next start still holds the token the server expects.
+    if (data.refresh_token) {
+      await setRefreshToken(data.refresh_token);
     }
-    return null;
-  } catch {
-    return null;
+    await setAccessToken(data.access_token);
+    return { kind: 'ok', token: data.access_token as string };
+  } catch (error) {
+    const status = (error as { response?: { status?: number } })?.response?.status;
+    if (status !== undefined && REFUSED.includes(status)) return { kind: 'refused' };
+    return { kind: 'failed', error };
   }
 }
 
-function getFreshToken(): Promise<string | null> {
+function getFreshToken(): Promise<RefreshOutcome> {
   // Reuse an in-flight refresh if one is already running.
   if (!refreshPromise) {
     refreshPromise = refreshAccessToken().finally(() => {
@@ -79,13 +95,16 @@ apiClient.interceptors.response.use(
     const original = error.config;
     if (error.response?.status === 401 && original && !original._retry) {
       original._retry = true;
-      const newToken = await getFreshToken();
-      if (newToken) {
+      const outcome = await getFreshToken();
+      if (outcome.kind === 'ok') {
         original.headers = original.headers ?? {};
-        original.headers.Authorization = `Bearer ${newToken}`;
+        original.headers.Authorization = `Bearer ${outcome.token}`;
         return apiClient(original);
       }
-      // Refresh failed → tokens are no longer usable.
+      // Could not reach the server: the tokens stay, and the caller gets the
+      // real reason instead of a 401 (bootstrap signs out on a 401).
+      if (outcome.kind === 'failed') return Promise.reject(outcome.error);
+      // The server refused the refresh token → it is no longer usable.
       await clearTokens();
     }
     // Password rotation (2026-09-15): the server refuses EVERY route with this
