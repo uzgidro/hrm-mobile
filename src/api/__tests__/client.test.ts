@@ -106,4 +106,54 @@ describe('apiClient interceptors', () => {
     expect(await storage.getItem('access_token')).toBeNull();
     expect(await storage.getItem('refresh_token')).toBeNull();
   });
+
+  it.each([
+    ['a dropped connection', (m: MockAdapter) => m.onPost(/\/auth\/refresh/).networkError()],
+    ['a timeout', (m: MockAdapter) => m.onPost(/\/auth\/refresh/).timeout()],
+    ['an API restart (502)', (m: MockAdapter) => m.onPost(/\/auth\/refresh/).reply(502)],
+    ['a rate limit (429)', (m: MockAdapter) => m.onPost(/\/auth\/refresh/).reply(429)],
+  ])('keeps the session after %s during refresh', async (_name, fail) => {
+    fail(refreshMock);
+    appMock.onGet('protected').reply(401);
+
+    const err = await apiClient.get('protected').catch((e) => e);
+    // Not a 401: bootstrap would read that as "signed out".
+    expect(err.response?.status).not.toBe(401);
+    expect(await storage.getItem('access_token')).toBe('old-access');
+    expect(await storage.getItem('refresh_token')).toBe('refresh-1');
+  });
+
+  it('carries on by itself once the server is back', async () => {
+    refreshMock.onPost(/\/auth\/refresh/).networkErrorOnce();
+    refreshMock.onPost(/\/auth\/refresh/).reply(200, { access_token: 'new-access', refresh_token: 'refresh-2' });
+    appMock.onGet('protected').reply((config) =>
+      config.headers?.Authorization === 'Bearer old-access' ? [401] : [200, { ok: true }]);
+
+    await expect(apiClient.get('protected')).rejects.toBeDefined();
+    expect((await apiClient.get('protected')).data.ok).toBe(true);
+    expect(await storage.getItem('refresh_token')).toBe('refresh-2');
+  });
+
+  it.each([400, 401, 403])('signs out when the server refuses the refresh (%s)', async (status) => {
+    refreshMock.onPost(/\/auth\/refresh/).reply(status);
+    appMock.onGet('protected').reply(401);
+    await expect(apiClient.get('protected')).rejects.toBeDefined();
+    expect(await storage.getItem('refresh_token')).toBeNull();
+  });
+
+  it('stores the refresh token before the access token and sends no cookies', async () => {
+    const order: string[] = [];
+    const spy = jest.spyOn(storage, 'setItem').mockImplementation(async (k: string) => { order.push(k); });
+    let credentials: unknown;
+    refreshMock.onPost(/\/auth\/refresh/).reply((config) => {
+      credentials = config.withCredentials;
+      return [200, { access_token: 'new-access', refresh_token: 'refresh-2' }];
+    });
+    appMock.onGet('protected').reply((config) =>
+      config.headers?.Authorization === 'Bearer old-access' ? [401] : [200, {}]);
+    await apiClient.get('protected');
+    spy.mockRestore();
+    expect(order).toEqual(['refresh_token', 'access_token']);
+    expect(credentials).toBe(false);
+  });
 });
