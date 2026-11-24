@@ -159,6 +159,7 @@ function ThemedNavigation() {
                 <Stack.Screen name="team-leaves" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="employees-list" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="phone-directory" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="home-customise" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="birthdays" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="salary" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="leave-detail" options={{ animation: 'slide_from_right' }} />

@@ -15,7 +15,8 @@ import {
   DASHBOARD_OVERDUE_TASKS,
   EMPLOYEES_BIRTHDAYS,
 } from '@/api/urls';
-import { LeaderBoard } from '../components/LeaderBoard';
+import { HomeBlocks } from '../components/HomeBlocks';
+import { builtinHome, visibleHome } from '../board/homeBlocks';
 
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 
@@ -40,6 +41,8 @@ const DAY_BOARD = {
   employees: [emp(1, 'Abdiev Ali'), emp(2, 'Karimov Vali')],
   turnstiles: [],
 };
+
+const LeaderBoard = () => <HomeBlocks board="leader" blocks={visibleHome(builtinHome('leader'), useAuthStore.getState().user, 'leader')} />;
 
 describe('LeaderBoard', () => {
   const mock = new MockAdapter(apiClient);

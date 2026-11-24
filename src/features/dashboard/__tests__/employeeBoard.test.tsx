@@ -12,11 +12,14 @@ import {
   MENU_BADGES,
   EMPLOYEES_BIRTHDAYS,
 } from '@/api/urls';
-import { EmployeeBoard } from '../components/EmployeeBoard';
+import { HomeBlocks } from '../components/HomeBlocks';
+import { builtinHome, visibleHome } from '../board/homeBlocks';
 
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 
 const today = dayjs().format('YYYY-MM-DD');
+
+const EmployeeBoard = () => <HomeBlocks board="employee" blocks={visibleHome(builtinHome('employee'), useAuthStore.getState().user, 'employee')} />;
 
 describe('EmployeeBoard', () => {
   const mock = new MockAdapter(apiClient);

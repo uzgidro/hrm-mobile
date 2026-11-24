@@ -6,10 +6,11 @@ import { useQuery } from '@tanstack/react-query';
 import { boardCategoriesQuery, boardDayQuery } from '../../api/queries';
 import { buildAttendanceRows, countByStatus, hydrateDayBoard } from '../../utils/attendanceBoard';
 
-export function useBoardDay(branchId: number | undefined) {
+/** `enabled: false` — none of the blocks drawn from it is on the home screen, so nothing is requested. */
+export function useBoardDay(branchId: number | undefined, enabled = true) {
   const day = dayjs().format('YYYY-MM-DD');
-  const board = useQuery(boardDayQuery(branchId, day));
-  const categories = useQuery(boardCategoriesQuery(branchId));
+  const board = useQuery({ ...boardDayQuery(branchId, day), enabled });
+  const categories = useQuery({ ...boardCategoriesQuery(branchId), enabled });
   const hydrated = useMemo(() => hydrateDayBoard(board.data), [board.data]);
   const rows = useMemo(() => buildAttendanceRows(hydrated.personEvents, categories.data), [hydrated, categories.data]);
   const counts = useMemo(() => countByStatus(rows), [rows]);

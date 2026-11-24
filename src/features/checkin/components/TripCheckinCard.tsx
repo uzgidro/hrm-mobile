@@ -15,7 +15,7 @@ import { gradients, radii } from '@/theme/tokens';
 import { Icon } from '@/components/Icon';
 import { Button, Text } from '@/ui';
 import { checkinStatusQuery } from '../api/queries';
-import { useCheckinQueue } from '../lib/useCheckinQueue';
+import { useCheckinQueue, useQueueStore } from '../lib/useCheckinQueue';
 import { formatDistance } from '../lib/capture';
 import { checkinPlace, type CheckinDirection, type MobileCheckin } from '../types';
 
@@ -24,6 +24,25 @@ export function nextDirection(today: MobileCheckin[]): CheckinDirection {
   const active = today.filter((c) => c.status === 'active');
   const last = active.sort((a, b) => a.happen_time.localeCompare(b.happen_time)).at(-1);
   return last?.direction_type === 'entrance' ? 'exit' : 'entrance';
+}
+
+/** Is there anything for the card to say today? Asks nothing when `enabled` is false. */
+export function useTripCardShown(enabled: boolean): boolean {
+  const hasEmployee = useAuthStore((s) => !!s.user?.employee?.id);
+  const on = enabled && hasEmployee;
+  const status = useQuery(checkinStatusQuery(on)).data;
+  const pending = useQueueStore((s) => s.pending);
+  return on && !!status && (status.can_check_in || (status.today ?? []).length > 0 || pending.length > 0);
+}
+
+/**
+ * Sends the marks that wait offline while the card is not on the screen (no trip today, or
+ * the person took the card off the home screen). Draws nothing; a removed card must not
+ * strand attendance that is already on the phone.
+ */
+export function CheckinQueueFlusher() {
+  useCheckinQueue(useAuthStore((s) => !!s.user?.employee?.id));
+  return null;
 }
 
 export function TripCheckinCard() {
