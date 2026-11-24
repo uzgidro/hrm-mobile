@@ -3,6 +3,7 @@ import {
   HOME_BLOCK_KEYS,
   builtinHome,
   moveBlock,
+  reorderBlocks,
   normaliseHome,
   standardHome,
   visibleHome,
@@ -85,6 +86,26 @@ describe('moveBlock', () => {
   it('the edges stay', () => {
     expect(moveBlock(['tiles', 'live'], ['tiles', 'live'], 'tiles', -1)).toEqual(['tiles', 'live']);
     expect(moveBlock(['tiles', 'live'], ['tiles', 'live'], 'live', 1)).toEqual(['tiles', 'live']);
+  });
+});
+
+describe('reorderBlocks', () => {
+  const seen: HomeBlockKey[] = ['tiles', 'live', 'status'];
+  const all: HomeBlockKey[] = ['sanatorium', 'tiles', 'health', 'live', 'status'];
+  it.each<[number, number, HomeBlockKey[]]>([
+    [0, 2, ['sanatorium', 'live', 'health', 'status', 'tiles']],
+    [2, 0, ['sanatorium', 'status', 'health', 'tiles', 'live']],
+    [1, 2, ['sanatorium', 'tiles', 'health', 'status', 'live']],
+  ])('%i → %i: unseen blocks keep their places', (from, to, want) => {
+    expect(reorderBlocks(all, seen, from, to)).toEqual(want);
+  });
+  it.each([[1, 1], [-1, 0], [0, 3], [3, 0], [0.5, 1], [NaN, 0]])('%p → %p changes nothing', (from, to) => {
+    expect(reorderBlocks(all, seen, from, to)).toEqual(all);
+  });
+  it('never mutates its input', () => {
+    const copy = [...all];
+    reorderBlocks(all, seen, 0, 2);
+    expect(all).toEqual(copy);
   });
 });
 

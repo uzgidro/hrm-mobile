@@ -54,6 +54,7 @@ const SCREENS: [string, () => any][] = [
   ['birthdays/BirthdaysScreen', () => require('@/features/birthdays/screens/BirthdaysScreen')],
   ['chairmanTasks/ChairmanTaskFormScreen', () => require('@/features/chairmanTasks/screens/ChairmanTaskFormScreen')],
   ['chairmanTasks/ChairmanTasksScreen', () => require('@/features/chairmanTasks/screens/ChairmanTasksScreen')],
+  ['dashboard/HomeCustomiseScreen', () => require('@/features/dashboard/screens/HomeCustomiseScreen')],
   ['dashboard/HomeScreen', () => require('@/features/dashboard/screens/HomeScreen')],
   ['directory/PhoneDirectoryScreen', () => require('@/features/directory/screens/PhoneDirectoryScreen')],
   ['documents/DocumentViewerScreen', () => require('@/features/documents/screens/DocumentViewerScreen')],

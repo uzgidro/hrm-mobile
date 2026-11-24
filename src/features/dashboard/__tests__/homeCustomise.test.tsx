@@ -1,4 +1,5 @@
 import React from 'react';
+import { AccessibilityInfo } from 'react-native';
 import MockAdapter from 'axios-mock-adapter';
 import { router } from 'expo-router';
 import { apiClient } from '@/api/client';
@@ -238,6 +239,47 @@ describe('own home screen', () => {
         blocks: ['sanatorium', 'health', 'trip', 'hero', 'timeline', 'birthdays', 'week', 'leaves'],
       });
       await waitFor(() => expect(mockFiles.get('u1/home-board')).toMatchObject({ custom: true }));
+    });
+
+    const drag = (fromIndex: number, toIndex: number) =>
+      fireEvent(screen.getByTestId('sortable-grid'), 'dragEnd', { fromIndex, toIndex });
+
+    it('drag by the handle, save; unseen blocks keep their places', async () => {
+      await open();
+      expect(screen.getByTestId('drag-hero', { includeHiddenElements: true })).toBeTruthy();
+      await drag(5, 0);
+      expect(rows('customise-on')).toEqual(['birthdays', 'trip', 'hero', 'timeline', 'stats', 'week']);
+      await drag(2, 4);
+      expect(rows('customise-on')).toEqual(['birthdays', 'trip', 'timeline', 'stats', 'hero', 'week']);
+      await fireEvent.press(screen.getByTestId('customise-save'));
+      await waitFor(() => expect(router.back).toHaveBeenCalled());
+      expect(saved).toEqual({
+        board: 'employee',
+        blocks: ['sanatorium', 'health', 'birthdays', 'trip', 'timeline', 'stats', 'hero', 'week'],
+      });
+    });
+
+    it('dropped where it was — nothing to save; dragging waits for a save in flight', async () => {
+      let answer = () => {};
+      mock.onPut(SETTING).reply(() => new Promise((ok) => { answer = () => ok([200, {}]); }));
+      await open();
+      await drag(1, 1);
+      expect(disabled('customise-save')).toBe(true);
+      expect(disabled('sortable-grid')).toBe(false);
+      await drag(1, 0);
+      await fireEvent.press(screen.getByTestId('customise-save'));
+      await waitFor(() => expect(disabled('sortable-grid')).toBe(true));
+      await act(async () => answer());
+      await waitFor(() => expect(router.back).toHaveBeenCalled());
+    });
+
+    it('a drag is spoken like an arrow move', async () => {
+      const say = jest.spyOn(AccessibilityInfo, 'announceForAccessibility');
+      await open();
+      await drag(1, 0);
+      expect(say).toHaveBeenCalledWith(
+        i18n.t('dashboard.customise.moved', { name: i18n.t('dashboard.home.myDay'), n: 1, total: 6 }),
+      );
     });
 
     it('undoing the change by hand switches Save off again', async () => {

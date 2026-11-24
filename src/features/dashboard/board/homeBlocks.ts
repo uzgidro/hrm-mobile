@@ -133,20 +133,30 @@ export const visibleHome = (blocks: readonly HomeBlockKey[], user: User | null |
 export const sameHome = (a: readonly HomeBlockKey[], b: readonly HomeBlockKey[]) => a.join() === b.join();
 
 /**
- * Moves a block past its visible neighbour. The full list may hold blocks the account
- * cannot see right now; they keep their places.
+ * Moves the visible block at `from` to the visible position `to`. The full list may hold
+ * blocks the account cannot see right now; they keep their places.
  */
-export function moveBlock(
+export function reorderBlocks(
+  blocks: readonly HomeBlockKey[],
+  visible: readonly HomeBlockKey[],
+  from: number,
+  to: number,
+): HomeBlockKey[] {
+  const inside = (i: number) => Number.isInteger(i) && i >= 0 && i < visible.length;
+  if (from === to || !inside(from) || !inside(to)) return [...blocks];
+  const order = [...visible];
+  order.splice(to, 0, ...order.splice(from, 1));
+  let next = 0;
+  return blocks.map((k) => (visible.includes(k) ? order[next++]! : k));
+}
+
+/** One step up (−1) or down (1) among the visible blocks. */
+export const moveBlock = (
   blocks: readonly HomeBlockKey[],
   visible: readonly HomeBlockKey[],
   key: HomeBlockKey,
   dir: -1 | 1,
-): HomeBlockKey[] {
-  const next = [...blocks];
-  const neighbour = visible[visible.indexOf(key) + dir];
-  const i = next.indexOf(key);
-  const j = neighbour ? next.indexOf(neighbour) : -1;
-  if (i < 0 || j < 0) return next;
-  [next[i], next[j]] = [next[j]!, next[i]!];
-  return next;
-}
+) => {
+  const at = visible.indexOf(key);
+  return reorderBlocks(blocks, visible, at, at + dir);
+};

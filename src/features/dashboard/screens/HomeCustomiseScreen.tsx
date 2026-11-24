@@ -1,14 +1,14 @@
 // «Bosh sahifani sozlash» (2026-11-24): which blocks stand on this person's home screen
-// and in what order. Arrows, not drag handles: the app ships no drag-list library and an
-// OTA cannot add one. Counterpart of web v2 `BoardEditor`.
+// and in what order: dragged by the handle, or moved with the arrows (which also serve a
+// screen reader, a switch, a keyboard). Counterpart of web v2 `BoardEditor`.
 import React, { useState } from 'react';
-import { AccessibilityInfo, ScrollView, StyleSheet, View } from 'react-native';
+import { AccessibilityInfo, StyleSheet, View } from 'react-native';
 import { Redirect, type Href } from 'expo-router';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import Animated, { useAnimatedRef } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeProvider';
-import { moduleTint, radii } from '@/theme/tokens';
-import { Icon } from '@/components/Icon';
 import { confirm } from '@/lib/confirm';
 import { goBackOr } from '@/lib/goBack';
 import { toast } from '@/lib/toast';
@@ -21,12 +21,14 @@ import {
   HOME_BLOCK_KEYS,
   isHomeBlockAvailable,
   moveBlock,
+  reorderBlocks,
   sameHome,
   visibleHome,
   type HomeBlockKey,
   type HomeBoardKind,
 } from '../board/homeBlocks';
 import { useHomeBoard } from '../board/useHomeBoard';
+import { BlockRow, SortableBlocks } from '../components/SortableBlocks';
 
 const HOME = '/' as Href;
 
@@ -43,6 +45,7 @@ function HomeEditor({ board }: { board: HomeBoardKind }) {
   const { sizeClass } = useBreakpoint();
   const user = useAuthStore((s) => s.user);
   const home = useHomeBoard(board);
+  const scrollRef = useAnimatedRef<Animated.ScrollView>();
   // `null` — untouched: the screen follows the saved arrangement.
   const [draft, setDraft] = useState<HomeBlockKey[] | null>(null);
 
@@ -54,11 +57,15 @@ function HomeEditor({ board }: { board: HomeBoardKind }) {
   const name = (k: HomeBlockKey) => t(HOME_BLOCKS[k].titleKey);
   const say = (message: string) => AccessibilityInfo.announceForAccessibility(message);
 
-  const move = (k: HomeBlockKey, dir: -1 | 1) => {
-    const next = moveBlock(value, shown, k, dir);
+  const place = (next: HomeBlockKey[], k: HomeBlockKey) => {
     setDraft(next);
     const n = visibleHome(next, user, board).indexOf(k) + 1;
     say(t('dashboard.customise.moved', { name: name(k), n, total: shown.length }));
+  };
+  const move = (k: HomeBlockKey, dir: -1 | 1) => place(moveBlock(value, shown, k, dir), k);
+  const drop = (from: number, to: number) => {
+    const k = shown[from];
+    if (k && from !== to) place(reorderBlocks(value, shown, from, to), k);
   };
   const remove = (k: HomeBlockKey) => {
     setDraft(value.filter((x) => x !== k));
@@ -104,36 +111,55 @@ function HomeEditor({ board }: { board: HomeBoardKind }) {
       {!home.ready ? (
         <LoadingView />
       ) : (
-        <>
-          <ScrollView style={styles.flex} contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
+        <GestureHandlerRootView style={styles.flex}>
+          <Animated.ScrollView
+            ref={scrollRef}
+            style={styles.flex}
+            contentContainerStyle={styles.body}
+            showsVerticalScrollIndicator={false}
+          >
             <Bento columns={wide ? 2 : 1}>
               <Bento.Item>
                 <Card title={t('dashboard.customise.onHome')} icon="home" tint="violet" testID="customise-on">
                   {shown.length === 0 ? <Note text={t('dashboard.customise.noneOnHome')} /> : null}
-                  {shown.map((k, i) => (
-                    <BlockRow key={k} block={k} first={i === 0}>
-                      <IconButton
-                        icon="arrowUp"
-                        testID={`up-${k}`}
-                        accessibilityLabel={t('dashboard.customise.up', { name: name(k) })}
-                        disabled={busy || i === 0}
-                        onPress={() => move(k, -1)}
-                      />
-                      <IconButton
-                        icon="arrowDown"
-                        testID={`down-${k}`}
-                        accessibilityLabel={t('dashboard.customise.down', { name: name(k) })}
-                        disabled={busy || i === shown.length - 1}
-                        onPress={() => move(k, 1)}
-                      />
-                      <IconButton
-                        icon="close"
-                        testID={`remove-${k}`}
-                        accessibilityLabel={t('dashboard.customise.remove', { name: name(k) })}
-                        disabled={busy}
-                        onPress={() => remove(k)}
-                      />
-                    </BlockRow>
+                  <SortableBlocks
+                    blocks={shown}
+                    disabled={busy}
+                    scrollRef={scrollRef}
+                    onReorder={drop}
+                    actions={(k) => {
+                      const i = shown.indexOf(k);
+                      return (
+                        <>
+                          <IconButton
+                            icon="arrowUp"
+                            testID={`up-${k}`}
+                            accessibilityLabel={t('dashboard.customise.up', { name: name(k) })}
+                            disabled={busy || i === 0}
+                            onPress={() => move(k, -1)}
+                          />
+                          <IconButton
+                            icon="arrowDown"
+                            testID={`down-${k}`}
+                            accessibilityLabel={t('dashboard.customise.down', { name: name(k) })}
+                            disabled={busy || i === shown.length - 1}
+                            onPress={() => move(k, 1)}
+                          />
+                          <IconButton
+                            icon="close"
+                            testID={`remove-${k}`}
+                            accessibilityLabel={t('dashboard.customise.remove', { name: name(k) })}
+                            disabled={busy}
+                            onPress={() => remove(k)}
+                          />
+                        </>
+                      );
+                    }}
+                  />
+                  {shown.filter((k) => HOME_BLOCKS[k].hintKey).map((k) => (
+                    <Text key={k} variant="caption" tone="subtle" style={styles.note}>
+                      {`${name(k)} — ${t(HOME_BLOCKS[k].hintKey!)}`}
+                    </Text>
                   ))}
                 </Card>
               </Bento.Item>
@@ -141,8 +167,8 @@ function HomeEditor({ board }: { board: HomeBoardKind }) {
                 <View style={styles.side}>
                   <Card title={t('dashboard.customise.more')} icon="plus" tint="green" testID="customise-off">
                     {hidden.length === 0 ? <Note text={t('dashboard.customise.noneMore')} /> : null}
-                    {hidden.map((k, i) => (
-                      <BlockRow key={k} block={k} first={i === 0}>
+                    {hidden.map((k) => (
+                      <BlockRow key={k} block={k} hint>
                         <IconButton
                           icon="plus"
                           testID={`add-${k}`}
@@ -165,7 +191,7 @@ function HomeEditor({ board }: { board: HomeBoardKind }) {
                 </View>
               </Bento.Item>
             </Bento>
-          </ScrollView>
+          </Animated.ScrollView>
           <View style={[styles.footer, !compact && styles.footerRow, { borderTopColor: c.border, paddingBottom: 12 + insets.bottom }]}>
             {dirty ? (
               <Text variant="caption" tone="subtle" style={compact && styles.unsaved} testID="customise-unsaved">
@@ -182,7 +208,7 @@ function HomeEditor({ board }: { board: HomeBoardKind }) {
               onPress={save}
             />
           </View>
-        </>
+        </GestureHandlerRootView>
       )}
     </Screen>
   );
@@ -196,46 +222,11 @@ function Note({ text }: { text: string }) {
   );
 }
 
-function BlockRow({ block, first, children }: { block: HomeBlockKey; first: boolean; children: React.ReactNode }) {
-  const { t } = useTranslation();
-  const { colors: c } = useTheme();
-  const def = HOME_BLOCKS[block];
-  const tint = moduleTint(c, def.tint);
-  return (
-    <View
-      testID={`row-${block}`}
-      style={[styles.row, !first && { borderTopColor: c.border, borderTopWidth: StyleSheet.hairlineWidth }]}
-    >
-      <View style={[styles.icon, { backgroundColor: tint.wash }]}>
-        <Icon name={def.icon} size={16} color={tint.fg} />
-      </View>
-      <View style={styles.text}>
-        <Text variant="heading" numberOfLines={2} style={styles.title}>
-          {t(def.titleKey)}
-        </Text>
-        {def.hintKey ? (
-          <Text variant="caption" tone="subtle" numberOfLines={2}>
-            {t(def.hintKey)}
-          </Text>
-        ) : null}
-      </View>
-      <View style={styles.actions}>{children}</View>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   body: { paddingBottom: 16 },
   side: { gap: 12 },
   note: { paddingVertical: 8 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 56, paddingVertical: 4 },
-  // Small enough for the longest word of a title («Исполнительская») next to three 44pt targets at 360dp.
-  icon: { width: 30, height: 30, borderRadius: radii.sm, alignItems: 'center', justifyContent: 'center' },
-  text: { flex: 1, minWidth: 0 },
-  title: { fontSize: 14, lineHeight: 19 },
-  // The glyphs line up with the card's edge, the 44pt targets reach into its padding.
-  actions: { flexDirection: 'row', marginRight: -10 },
   footer: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 12 },
   footerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 16 },
   save: { minWidth: 220 },
