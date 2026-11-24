@@ -89,6 +89,31 @@ function getFreshToken(): Promise<RefreshOutcome> {
   return refreshPromise;
 }
 
+/** Seconds-since-epoch expiry inside a JWT; null when it cannot be read. */
+function expiryOf(token: string): number | null {
+  try {
+    const part = token.split('.')[1]!.replace(/-/g, '+').replace(/_/g, '/');
+    const exp = (JSON.parse(atob(part)) as { exp?: unknown }).exp;
+    return typeof exp === 'number' ? exp : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * A token that will pass a handshake, refreshed when it is about to expire — for a connection
+ * that cannot be retried on a 401 the way a request is (the live socket). Shares the
+ * single-flight refresh with every request.
+ */
+export async function ensureFreshToken(): Promise<string | null> {
+  const token = await getAccessToken();
+  if (!token) return null;
+  const exp = expiryOf(token);
+  if (exp === null || exp - Date.now() / 1000 > 30) return token;
+  const outcome = await getFreshToken();
+  return outcome.kind === 'ok' ? outcome.token : null;
+}
+
 apiClient.interceptors.response.use(
   (res) => res,
   async (error) => {

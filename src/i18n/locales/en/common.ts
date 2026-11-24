@@ -8,6 +8,8 @@ export default {
   create: 'Create',
   send: 'Send',
   search: 'Search...',
+  live: 'Live',
+  reconnecting: 'Reconnecting…',
   done: 'Done',
   yes: 'Yes',
   no: 'No',

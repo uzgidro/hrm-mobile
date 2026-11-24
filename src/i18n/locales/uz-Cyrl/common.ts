@@ -8,6 +8,8 @@ export default {
   create: 'Яратиш',
   send: 'Юбориш',
   search: 'Қидириш...',
+  live: 'Жонли',
+  reconnecting: 'Уланмоқда…',
   done: 'Тайёр',
   yes: 'Ҳа',
   no: 'Йўқ',
