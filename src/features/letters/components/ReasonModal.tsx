@@ -1,4 +1,5 @@
-import { StyleSheet, Text, TextInput } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { Text, TextInput } from '@/ui/scaled';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';

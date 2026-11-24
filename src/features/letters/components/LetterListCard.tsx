@@ -1,4 +1,5 @@
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { Text } from '@/ui/scaled';
 import { router } from 'expo-router';
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';

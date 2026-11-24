@@ -1,7 +1,8 @@
 // Topshiriq sahifasining bo'laklari: izoh yozish («@» bilan belgilash, fayl),
 // sabab/izoh formalari, fayllar ro'yxati va xronologiya (web v2 TaskDetail).
 import React, { useMemo, useRef, useState } from 'react';
-import { Linking, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Linking, Pressable, StyleSheet, View } from 'react-native';
+import { TextInput } from '@/ui/scaled';
 import * as DocumentPicker from 'expo-document-picker';
 import dayjs from 'dayjs';
 import { router } from 'expo-router';

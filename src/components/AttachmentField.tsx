@@ -1,6 +1,7 @@
 // Presentational attachment list + "add file" button for the create forms.
 // The picking (expo-document-picker) and upload live in the screens.
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { Text } from '@/ui/scaled';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 import type { ThemeColors } from '../theme/palettes';

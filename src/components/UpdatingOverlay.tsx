@@ -5,7 +5,8 @@
 // pattern as LockOverlay) and it self-selects visibility from otaGateStore's
 // phase — 'idle' renders nothing, any other phase covers the screen with the
 // app logo/name and a phase-appropriate message.
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, ActivityIndicator } from 'react-native';
+import { Text } from '@/ui/scaled';
 import { useTranslation } from 'react-i18next';
 import { useOtaGateStore } from '@/store/otaGateStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';

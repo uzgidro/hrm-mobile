@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
-import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Image,
-} from 'react-native';
+import { View, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Image } from 'react-native';
+import { Text } from '@/ui/scaled';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { useTranslation } from 'react-i18next';

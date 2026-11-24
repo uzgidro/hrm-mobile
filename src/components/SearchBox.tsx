@@ -6,7 +6,8 @@
 // Presentational only — each screen keeps its own filter predicate, since the
 // searched fields differ per domain.
 import React from 'react';
-import { View, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { TextInput } from '@/ui/scaled';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 import type { ThemeColors } from '../theme/palettes';
 import { ff } from '../theme/typography';

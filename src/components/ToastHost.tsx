@@ -3,7 +3,8 @@
 // cards near the top of the screen. Uses RN's built-in Animated (no Reanimated)
 // for a lightweight fade/slide-in.
 import { useSyncExternalStore, useEffect, useMemo, useState } from 'react';
-import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Pressable, StyleSheet, View } from 'react-native';
+import { Text } from '@/ui/scaled';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 import type { ThemeColors } from '../theme/palettes';

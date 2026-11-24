@@ -1,7 +1,8 @@
 // Face login camera sheet: front camera, a burst of frames during every
 // server-chosen pose, then one verify call with the whole clip. See ./api.ts for the protocol.
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Modal, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Modal, StyleSheet, View } from "react-native";
+import { Text } from "@/ui/scaled";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useTranslation } from "react-i18next";

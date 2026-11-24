@@ -4,7 +4,8 @@
 // ko'rib ham, o'chirib ham bo'lmasdi (backendда `DELETE /order-acts/{id}/
 // documents/{docId}` bor). Asosiy buyruq hujjati (`decree_*`) ro'yxatdan
 // CHIQARILADI — u alohida OnlyOffice ekranida ochiladi va o'chirilmaydi.
-import { View, Text, StyleSheet, TouchableOpacity, Linking, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Linking, ActivityIndicator } from 'react-native';
+import { Text } from '@/ui/scaled';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';

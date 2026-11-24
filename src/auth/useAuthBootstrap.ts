@@ -20,6 +20,7 @@ import { useBranchStore } from '@/store/branchStore';
 import { usePrefsStore } from '../store/prefsStore';
 import { useLockStore } from '../store/lockStore';
 import { useLangStore } from '../store/langStore';
+import { useTextSizeStore } from '../store/textSizeStore';
 import { resolveBootstrap, readCachedUser } from './bootstrap';
 import { setupPushNotifications } from './push';
 import { applyPendingUpdateOnLaunch } from '../services/otaUpdates';
@@ -63,6 +64,7 @@ export function useAuthBootstrap() {
       // as the lock: the first visible frame must already be in the right
       // language. hydrate() never throws (falls back to the default language).
       await useLangStore.getState().hydrate();
+      await useTextSizeStore.getState().hydrate();
 
       // Resolve the lock state BEFORE any hideSplash() below — the invariant is
       // that the first visible frame already carries the PIN gate, so a

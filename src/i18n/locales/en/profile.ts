@@ -19,6 +19,8 @@ export default {
   sectionLanguage: 'Language',
   sectionSettings: 'Settings',
 
+  textSize: 'Text size',
+  textSizeStep: 'Text size: {{percent}} percent',
   themeSystem: 'System',
   themeLight: 'Light',
   themeDark: 'Dark',

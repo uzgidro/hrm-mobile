@@ -30,6 +30,8 @@ export default {
   sectionSettings: 'Sozlamalar',
 
   // Appearance (theme) options
+  textSize: 'Shrift kattaligi',
+  textSizeStep: 'Shrift kattaligi: {{percent}} foiz',
   themeSystem: 'Tizim',
   themeLight: "Yorug'",
   themeDark: 'Tungi',

@@ -2,7 +2,8 @@
 // verbatim from the old create-leave.tsx (a leave-specific calendar/time modal;
 // distinct from the shared DatePicker components).
 import { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Modal } from 'react-native';
+import { Text } from '@/ui/scaled';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';

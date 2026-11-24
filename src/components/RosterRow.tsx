@@ -4,7 +4,8 @@
 // attendance content block) — lives here, not inside either feature, so
 // neither has to cross-import the other (see `src/features/README.md`).
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { Text } from '@/ui/scaled';
 import dayjs from 'dayjs';
 import { router } from 'expo-router';
 import type { ThemeColors } from '@/theme/palettes';

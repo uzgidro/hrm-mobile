@@ -16,6 +16,7 @@ import { Icon, type IconName } from '@/components/Icon';
 import { canAccessPage, type PageKey } from '@/utils/roles';
 import { catalogBySection, visibleCatalog } from '@/utils/moduleCatalog';
 import { useBreakpoint } from '@/utils/responsive';
+import { useTextScale } from '@/store/textSizeStore';
 import { fitLabelFontSize } from '../utils/fitLabel';
 import { EmptyState, Screen, SearchField, Text } from '@/ui';
 
@@ -135,9 +136,10 @@ const TILE_PAD_X = 8;
 function ModuleTile({ tile, width }: { tile: Tile; width: number }) {
   const { colors: c } = useTheme();
   const tint = moduleTint(c, tile.tint);
+  const textScale = useTextScale();
   // Uzun so'z («Интерактивные», «Техподдержка») qatorga butun sig'sin — so'z
   // o'rtasidan bo'linmasin; 2 qatorgacha so'zlar bo'yicha o'raladi.
-  const fontSize = fitLabelFontSize(tile.label, width - 2 * TILE_PAD_X - 3, { base: TILE_LABEL_SIZE, min: 9 });
+  const fontSize = fitLabelFontSize(tile.label, (width - 2 * TILE_PAD_X - 3) / textScale, { base: TILE_LABEL_SIZE, min: 9 });
   return (
     <Pressable
       testID={`module-${tile.key}`}

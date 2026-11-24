@@ -1,9 +1,17 @@
 import { useEffect, useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity,
-  StyleSheet, KeyboardAvoidingView, Platform, ScrollView,
-  ActivityIndicator, Modal, Pressable, Image,
+  View,
+  TouchableOpacity,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  ActivityIndicator,
+  Modal,
+  Pressable,
+  Image,
 } from 'react-native';
+import { Text, TextInput } from '@/ui/scaled';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Constants from 'expo-constants';
 import { useTranslation } from 'react-i18next';

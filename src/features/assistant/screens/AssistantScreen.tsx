@@ -1,8 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList,
-  KeyboardAvoidingView, ActivityIndicator, ScrollView,
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  FlatList,
+  KeyboardAvoidingView,
+  ActivityIndicator,
+  ScrollView,
 } from 'react-native';
+import { Text, TextInput } from '@/ui/scaled';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';

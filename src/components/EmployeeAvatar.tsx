@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import { Text } from '@/ui/scaled';
 import { Image } from 'expo-image';
 import { useTheme } from '../theme/ThemeProvider';
 import { useThumbFallback } from '../lib/useThumbFallback';

@@ -4,7 +4,8 @@
 // QueryCache/MutationCache onError. Mounted just under the theme provider in the
 // root layout so it can read colors.
 import { Component, type ReactNode } from 'react';
-import { StyleSheet, Text, View, Pressable } from 'react-native';
+import { StyleSheet, View, Pressable } from 'react-native';
+import { Text } from '@/ui/scaled';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';

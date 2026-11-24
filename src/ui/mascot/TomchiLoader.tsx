@@ -2,7 +2,8 @@
 // joylashadi (markazda, bo'sh joyni egallaydi), shuning uchun kerakli ekranda
 // <LoadingView/> o'rniga to'g'ridan-to'g'ri qo'yish mumkin. Matn (label)
 // chaqiruvchi tomonidan tarjima qilingan holda beriladi.
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Text } from '@/ui/scaled';
 import { useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { ff } from '@/theme/typography';

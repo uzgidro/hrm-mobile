@@ -2,7 +2,8 @@
 // (holat, birinchi kirish / oxirgi chiqish, soat) va xulosa chiplari. Faqat
 // o'qish; ma'lumot serverdan tayyor keladi (`/letters/{id}/trip-attendance`).
 import { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { Text } from '@/ui/scaled';
 import { useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';

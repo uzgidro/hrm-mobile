@@ -4,7 +4,8 @@
 // Born from a support call (2026-09-14: "texnik yordam yaratilsa kelmayapti")
 // where nothing on the device could say which link of the chain was broken.
 import { useCallback, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Linking, Platform, ScrollView } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Linking, Platform, ScrollView } from 'react-native';
+import { Text } from '@/ui/scaled';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';

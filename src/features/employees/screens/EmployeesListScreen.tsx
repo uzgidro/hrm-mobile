@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
-import {
-  View, Text, StyleSheet, TouchableOpacity, } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { Text } from '@/ui/scaled';
 import { ChipScroll } from '@/components/ChipScroll';
 import { useTranslation } from 'react-i18next';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';

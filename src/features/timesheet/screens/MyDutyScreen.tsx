@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
-import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl,
-} from 'react-native';
+import { View, ScrollView, TouchableOpacity, StyleSheet, RefreshControl } from 'react-native';
+import { Text } from '@/ui/scaled';
 import dayjs from 'dayjs';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';

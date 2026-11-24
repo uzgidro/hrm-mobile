@@ -1,8 +1,6 @@
 import { memo, useState, useCallback, useMemo } from 'react';
-import {
-  View, Text, ScrollView, TouchableOpacity,
-  StyleSheet, RefreshControl,
-} from 'react-native';
+import { View, ScrollView, TouchableOpacity, StyleSheet, RefreshControl } from 'react-native';
+import { Text } from '@/ui/scaled';
 import { timeRange } from '@/utils/timeText';
 import Svg, { Circle } from 'react-native-svg';
 import dayjs from 'dayjs';

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, Platform,
-} from 'react-native';
+import { View, ScrollView, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { TextSizePicker } from '@/components/TextSizePicker';
+import { Text } from '@/ui/scaled';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Toggle } from '@/ui';
@@ -217,6 +217,8 @@ export default function ProfileScreen() {
               );
             })}
           </View>
+          <Text style={styles.textSizeLabel}>{t('profile.textSize')}</Text>
+          <TextSizePicker />
         </View>
 
         {/* Language */}
@@ -415,6 +417,7 @@ const makeStyles = (c: ThemeColors) =>
     orgName: { fontSize: 15, ...ff('800'), color: c.text },
     orgBranch: { fontSize: 12, color: c.textMuted, marginTop: 2, ...ff('700') },
 
+    textSizeLabel: { fontSize: 13, ...ff('700'), color: c.text, marginTop: 14, marginBottom: 8 },
     segmentRow: { flexDirection: 'row', gap: 8 },
     segment: {
       flex: 1, alignItems: 'center', gap: 6, paddingVertical: 12, borderRadius: 12,

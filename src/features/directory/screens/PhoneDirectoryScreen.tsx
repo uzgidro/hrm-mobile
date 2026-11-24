@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
-import {
-  View, Text, StyleSheet, TouchableOpacity, Linking, Modal,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Linking, Modal } from 'react-native';
+import { Text } from '@/ui/scaled';
 import { ChipScroll } from '@/components/ChipScroll';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';

@@ -2,7 +2,8 @@
 // precise moment (e.g. visitor valid_from / valid_until — matches the web's
 // datetime-local input). Returns an ISO string via onConfirm.
 import { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Modal, TouchableOpacity } from 'react-native';
+import { Text } from '@/ui/scaled';
 import dayjs, { Dayjs } from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';

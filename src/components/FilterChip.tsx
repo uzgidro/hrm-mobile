@@ -5,7 +5,8 @@
 // required keys are chip, chipActive, chipText, chipTextActive and the four
 // chipSubtle* variants.
 import React from 'react';
-import { TouchableOpacity, Text, type TextStyle, type ViewStyle } from 'react-native';
+import { TouchableOpacity, type TextStyle, type ViewStyle } from 'react-native';
+import { Text } from '@/ui/scaled';
 
 interface ChipStyles {
   chip: ViewStyle;

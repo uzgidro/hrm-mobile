@@ -6,7 +6,8 @@
 // biriktirilmaydi; hujjat MATNIGA tegmaydi, shu bois safar yuborilgandan
 // keyin ham ishlaydi (BFD rad etsa xodim qayta so'ray oladi).
 import { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { Text, TextInput } from '@/ui/scaled';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';

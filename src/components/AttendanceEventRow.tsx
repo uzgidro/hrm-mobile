@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import {
-  View, Text, StyleSheet, TouchableOpacity, Modal, Platform, Linking, ScrollView,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Modal, Platform, Linking, ScrollView } from 'react-native';
+import { Text } from '@/ui/scaled';
 import { Image } from 'expo-image';
 import { WebView } from 'react-native-webview';
 import dayjs from 'dayjs';

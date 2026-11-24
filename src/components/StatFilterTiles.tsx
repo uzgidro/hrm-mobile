@@ -2,7 +2,8 @@
 // design-I chrome: 2px outline + 4px lip, a coloured icon box, a big number.
 // Tapping a tile selects its filter; tapping the active one clears it.
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Text } from '@/ui/scaled';
 import { useThemedStyles } from '../theme/ThemeProvider';
 import type { ThemeColors } from '../theme/palettes';
 import { ff } from '../theme/typography';

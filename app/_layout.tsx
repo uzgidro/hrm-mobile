@@ -16,6 +16,7 @@ import { ThemeProvider, useTheme } from '../src/theme/ThemeProvider';
 import { addNotificationListeners } from '../src/services/notifications';
 import { useAuthBootstrap } from '../src/auth/useAuthBootstrap';
 import { useAppLock } from '../src/auth/useAppLock';
+import { useTextSizeSync } from '../src/lib/textSizeSync';
 import { checkAppUpdateOnLaunch } from '../src/services/appUpdates';
 import { RootErrorBoundary } from '../src/components/RootErrorBoundary';
 import { ToastHost } from '../src/components/ToastHost';
@@ -49,6 +50,7 @@ function ThemedNavigation() {
   // Re-lock the app after it has spent RELOCK_AFTER_MS in the background.
   // The hook self-guards (web / non-'unlocked'), so it needs no conditions here.
   useAppLock();
+  useTextSizeSync();
 
   // React Query's "focus" notion is wired to visibilitychange on the web and to
   // NOTHING in React Native — so every refetchInterval keeps hitting the network

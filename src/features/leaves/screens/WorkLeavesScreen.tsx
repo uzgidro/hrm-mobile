@@ -1,8 +1,6 @@
 import { useState } from 'react';
-import {
-  View, Text, StyleSheet,
-  TouchableOpacity,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { Text } from '@/ui/scaled';
 import { ChipScroll } from '@/components/ChipScroll';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';

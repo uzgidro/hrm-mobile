@@ -1,8 +1,6 @@
 import { useState, useCallback } from 'react';
-import {
-  View, Text, ScrollView, StyleSheet,
-  TouchableOpacity, ActivityIndicator, TextInput, Modal,
-} from 'react-native';
+import { View, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Modal } from 'react-native';
+import { Text, TextInput } from '@/ui/scaled';
 import { useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
 import dayjs from 'dayjs';

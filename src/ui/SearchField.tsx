@@ -1,6 +1,7 @@
 // Qidiruv maydoni: surface2 fon, pill, 44dp, chapda lupa, o'ngda tozalash.
 import React from 'react';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { TextInput } from '@/ui/scaled';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeProvider';
 import { ff } from '@/theme/typography';

@@ -1,7 +1,6 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
-import {
-  View, Text, StyleSheet, ActivityIndicator, Platform, useWindowDimensions, Linking,
-} from 'react-native';
+import { View, StyleSheet, ActivityIndicator, Platform, useWindowDimensions, Linking } from 'react-native';
+import { Text } from '@/ui/scaled';
 import { onlyOfficeDeviceParams } from '@/utils/onlyOffice';
 import { useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';

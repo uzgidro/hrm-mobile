@@ -1,6 +1,5 @@
-import {
-  View, Text, StyleSheet, TouchableOpacity, RefreshControl, FlatList,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, RefreshControl, FlatList } from 'react-native';
+import { Text } from '@/ui/scaled';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';

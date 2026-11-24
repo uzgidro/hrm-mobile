@@ -1,4 +1,5 @@
-import { TextInput, StyleSheet, View, Text, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, TouchableOpacity } from 'react-native';
+import { Text, TextInput } from '@/ui/scaled';
 import { useTranslation } from 'react-i18next';
 import { parseDdMmYyyy } from '@/lib/dateText';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';

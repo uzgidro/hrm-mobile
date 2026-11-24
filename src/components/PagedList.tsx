@@ -6,7 +6,8 @@
 // Screens keep their own header/tabs/search above it; pass those through
 // `header` when they should scroll with the rows.
 import { useMemo, type ReactElement, type ReactNode } from 'react';
-import { ActivityIndicator, FlatList, type FlatListProps, RefreshControl, StyleSheet, type StyleProp, Text, type TextStyle, View } from 'react-native';
+import { ActivityIndicator, FlatList, type FlatListProps, RefreshControl, StyleSheet, type StyleProp, type TextStyle, View } from 'react-native';
+import { Text } from '@/ui/scaled';
 import type { UseInfiniteQueryResult, InfiniteData } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';

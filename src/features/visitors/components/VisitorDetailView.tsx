@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
-import {
-  View, Text, ScrollView, StyleSheet, Image, TouchableOpacity, Linking, Share,
-} from 'react-native';
+import { View, ScrollView, StyleSheet, Image, TouchableOpacity, Linking, Share } from 'react-native';
+import { Text } from '@/ui/scaled';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';

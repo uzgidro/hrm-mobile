@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Text, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
+import { StyleSheet, TouchableOpacity } from 'react-native';
+import { Text, TextInput } from '@/ui/scaled';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
