@@ -511,8 +511,11 @@ const ALL: RoleKey[] = [
 ];
 const ADMIN_ONLY: RoleKey[] = ['masterAdmin'];
 const ADMIN_HR_LEAD: RoleKey[] = ['masterAdmin', 'hr', 'ministr', 'deputy'];
-// The chairman sees every business module (web v2 ADMIN_HR_CHAIR) — view-only where the server gives
-// the role no write; the technical consoles stay out. `deputy` is NOT part of it.
+const ADMIN_HR: RoleKey[] = ['masterAdmin', 'hr'];
+// The chairman sees the business modules (web v2 ADMIN_HR_CHAIR) — view-only where the server gives
+// the role no write. The working desks of others stay out (order types, temporary orders, module
+// responsibles, holidays, tabel settings, monitoring, KPP), like the technical consoles; the master
+// admin can give any of them back through `nav.modules`. `deputy` is NOT part of it.
 const ADMIN_HR_CHAIR: RoleKey[] = ['masterAdmin', 'hr', 'ministr'];
 
 type ModuleGate = (user: User | null | undefined) => boolean;
@@ -598,7 +601,7 @@ const MODULE_FOR_PAGE: Partial<Record<PageKey, ModuleDef>> = {
   directory: { key: 'phone', defaultRoles: ALL },
   duty: { key: 'duty', defaultRoles: ALL, gates: [canSeeDuty] },
   requests: { key: 'requestPermission', defaultRoles: ALL },
-  holidays: { key: 'holidays', defaultRoles: ADMIN_HR_CHAIR },
+  holidays: { key: 'holidays', defaultRoles: ADMIN_HR },
   terminals: { key: 'hik', defaultRoles: ADMIN_ONLY, systemAdmin: true },
 
   // ── v3: qolgan v2 modullari (W2–W6). `ready: false` — ekran hali yo'q; W6 dan keyin bunday modul yo'q. ──
@@ -616,11 +619,11 @@ const MODULE_FOR_PAGE: Partial<Record<PageKey, ModuleDef>> = {
   doctorDesk: { key: 'doctorDesk', defaultRoles: ALL, gates: [needsStaffDoctor] },
   sanatorium: { key: 'sanatorium', defaultRoles: ALL, gates: [needsSanatorium] },
   registrationStatus: { key: 'registrationStatus', defaultRoles: ['guest'] },
-  orderTypes: { key: 'orderTypes', defaultRoles: ADMIN_HR_CHAIR },
-  tempOrders: { key: 'tempOrders', defaultRoles: ADMIN_HR_CHAIR },
+  orderTypes: { key: 'orderTypes', defaultRoles: ADMIN_HR },
+  tempOrders: { key: 'tempOrders', defaultRoles: ADMIN_HR },
   staffPositions: { key: 'staffPositions', defaultRoles: ADMIN_HR_LEAD },
   structure: { key: 'structure', defaultRoles: ALL },
-  responsibles: { key: 'responsibles', defaultRoles: ADMIN_HR_CHAIR },
+  responsibles: { key: 'responsibles', defaultRoles: ADMIN_HR },
   hrQuality: { key: 'hrQuality', defaultRoles: ADMIN_HR_CHAIR },
   trainings: { key: 'trainings', defaultRoles: ALL },
   learning: { key: 'learning', defaultRoles: ALL },
@@ -633,10 +636,10 @@ const MODULE_FOR_PAGE: Partial<Record<PageKey, ModuleDef>> = {
     gates: [reportsGate],
   },
   dictionaries: { key: 'dictionaries', defaultRoles: ALL },
-  tabelSettings: { key: 'tabelSettings', defaultRoles: ADMIN_HR_CHAIR },
+  tabelSettings: { key: 'tabelSettings', defaultRoles: ADMIN_HR },
   weekendTabel: { key: 'weekendTabel', defaultRoles: ADMIN_HR_LEAD, gates: [needsWeekendServer] },
-  monitoring: { key: 'monitoring', defaultRoles: ['masterAdmin', 'monitoring', 'ministr'] },
-  kpp: { key: 'kpp', defaultRoles: ['kpp', 'masterAdmin', 'ministr'] },
+  monitoring: { key: 'monitoring', defaultRoles: ['masterAdmin', 'monitoring'] },
+  kpp: { key: 'kpp', defaultRoles: ['kpp', 'masterAdmin'] },
   videoGuide: { key: 'videoGuide', defaultRoles: ALL },
   users: { key: 'users', defaultRoles: ADMIN_ONLY },
   registrations: { key: 'registrations', defaultRoles: ADMIN_ONLY, systemAdmin: true },

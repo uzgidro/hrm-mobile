@@ -617,7 +617,7 @@ describe('canAccessPage (web v2 defaults)', () => {
     kanselariya: { user: kanselariyaUser, row: row({ timesheet: true }) },
     ministr: {
       user: ministrUser,
-      row: row({ employees: true, attendance: true, timesheet: true, assistant: true, chairman: true, duty: true, holidays: true }),
+      row: row({ employees: true, attendance: true, timesheet: true, assistant: true, chairman: true, duty: true }),
     },
     deputy: { user: deputyUser, row: row({ employees: true, attendance: true, timesheet: true, assistant: true }) },
     accounting: { user: accountingUser, row: row({ attendance: true, timesheet: true }) },

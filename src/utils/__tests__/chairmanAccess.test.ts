@@ -13,10 +13,7 @@ const master = u({ id: 2, type: 'master-admin', employee: { id: 11 } });
 afterEach(() => setNavOverrides(undefined));
 
 describe('chairman: business modules open', () => {
-  const OPEN: PageKey[] = [
-    'orderTypes', 'tempOrders', 'mobileCheckins', 'responsibles', 'hrQuality', 'holidays',
-    'tabelSettings', 'monitoring', 'kpp',
-  ];
+  const OPEN: PageKey[] = ['mobileCheckins', 'hrQuality'];
   it.each(OPEN)('%s is open to the chairman', (k) => {
     expect(canAccessPage(chair(), k)).toBe(true);
   });
@@ -38,6 +35,18 @@ describe('chairman: technical consoles stay closed', () => {
   const CLOSED: PageKey[] = ['users', 'auditLog', 'branches', 'turnstiles', 'terminals', 'customFields', 'sysHealth', 'lms'];
   it.each(CLOSED)('%s is closed to the chairman', (k) => {
     expect(canAccessPage(chair(), k)).toBe(false);
+  });
+});
+
+describe("chairman: other people's working desks", () => {
+  const DESKS: PageKey[] = ['orderTypes', 'tempOrders', 'responsibles', 'holidays', 'tabelSettings', 'monitoring', 'kpp'];
+  it.each(DESKS)('%s is not in his menu by default', (k) => {
+    expect(canAccessPage(chair(), k)).toBe(false);
+  });
+  it('the master admin can give one back', () => {
+    setNavOverrides({ holidays: { roles: ['masterAdmin', 'hr', 'ministr'] } });
+    expect(canAccessPage(chair(), 'holidays')).toBe(true);
+    expect(canAccessPage(chair(), 'tempOrders')).toBe(false);
   });
 });
 
