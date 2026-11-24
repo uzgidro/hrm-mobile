@@ -9,7 +9,7 @@ import { Badge, Button, Card, Text } from '@/ui';
 import { journeyStayQuery } from '../../api/sections1';
 import { useSanFeatures } from '../../utils/features';
 import { pickLang } from '../../utils/sections1';
-import { fmtDateTime, hasSanRole } from '../../utils/sanatorium';
+import { canSanWrite, fmtDateTime } from '../../utils/sanatorium';
 import { MoveStageSheet } from './JourneySheets';
 
 export function JourneyCard({ stayId }: { stayId: number }) {
@@ -38,7 +38,7 @@ export function JourneyCard({ stayId }: { stayId: number }) {
           </Text>
         </View>
       ))}
-      {hasSanRole(user, 'registrar', 'room_keeper') && (
+      {canSanWrite(user, 'registrar', 'room_keeper') && (
         <Button testID="stay-journey-move" label={t('san1.journey.move')} variant="soft" size="sm" onPress={() => setMove(true)} />
       )}
       <MoveStageSheet stayId={move ? stayId : null} currentId={d.current?.id} onClose={() => setMove(false)} />

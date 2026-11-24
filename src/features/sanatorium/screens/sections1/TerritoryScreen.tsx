@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { toast } from '@/lib/toast';
 import { Badge, Button, Card, EmptyState, ListRow, PageHeader, Screen, Text } from '@/ui';
 import { territoryQuery, useDeletePlan, useReorderPois, useUploadPlan } from '../../api/sections1';
-import { QueryBlock } from '../../components/common';
+import { QueryBlock, useSanReadOnly } from '../../components/common';
 import { PlanView } from '../../components/sections1/PlanView';
 import { PoiSheet } from '../../components/sections1/PoiSheet';
 import { askDelete, MoveButtons, SectionGate } from '../../components/sections1/shared';
@@ -20,15 +20,16 @@ export default function TerritoryScreen() {
   const { t } = useTranslation();
   const q = useQuery(territoryQuery());
   const [poi, setPoi] = useState<Poi | 'new' | null>(null);
+  const readOnly = useSanReadOnly();
   return (
     <SectionGate feature="territory_map" roles={['registrar']}>
       <Screen refreshing={q.isRefetching} onRefresh={() => void q.refetch()} testID="sanatorium-territory-screen">
-        <PageHeader title={t('san1.territory.title')} right={q.data?.plan ? <Button testID="poi-add" label={t('sanatorium.add')} icon="plus" size="sm" onPress={() => setPoi('new')} /> : undefined} />
+        <PageHeader title={t('san1.territory.title')} right={q.data?.plan && !readOnly ? <Button testID="poi-add" label={t('sanatorium.add')} icon="plus" size="sm" onPress={() => setPoi('new')} /> : undefined} />
         <QueryBlock query={q}>
           {(d) => (
             <View style={styles.stack}>
-              <PlanCard data={d} onPoi={setPoi} />
-              <PoiList data={d} onEdit={setPoi} />
+              <PlanCard data={d} onPoi={readOnly ? undefined : setPoi} readOnly={readOnly} />
+              <PoiList data={d} onEdit={readOnly ? undefined : setPoi} />
               <PoiSheet poi={poi} plan={d.plan} others={d.pois} onClose={() => setPoi(null)} />
             </View>
           )}
@@ -38,7 +39,7 @@ export default function TerritoryScreen() {
   );
 }
 
-function PlanCard({ data, onPoi }: { data: Territory; onPoi: (p: Poi) => void }) {
+function PlanCard({ data, onPoi, readOnly }: { data: Territory; onPoi?: (p: Poi) => void; readOnly: boolean }) {
   const { t } = useTranslation();
   const upload = useUploadPlan();
   const del = useDeletePlan();
@@ -64,15 +65,15 @@ function PlanCard({ data, onPoi }: { data: Territory; onPoi: (p: Poi) => void })
   return (
     <Card title={t('san1.territory.plan')} icon="board" tint="green" testID="territory-plan">
       {data.plan ? <PlanView plan={data.plan} pois={data.pois} onPoi={onPoi} /> : <Text variant="body" tone="muted">{t('san1.territory.noPlan')}</Text>}
-      <View style={styles.actions}>
+      {!readOnly && <View style={styles.actions}>
         <Button testID="plan-upload" label={data.plan ? t('san1.territory.replacePlan') : t('san1.territory.uploadPlan')} icon="camera" variant="soft" size="sm" loading={busy} onPress={() => void pick()} />
         {data.plan && <Button testID="plan-delete" label={t('sanatorium.remove')} variant="dangerGhost" size="sm" onPress={() => void remove()} />}
-      </View>
+      </View>}
     </Card>
   );
 }
 
-function PoiList({ data, onEdit }: { data: Territory; onEdit: (p: Poi) => void }) {
+function PoiList({ data, onEdit }: { data: Territory; onEdit?: (p: Poi) => void }) {
   const { t, i18n } = useTranslation();
   const reorder = useReorderPois();
   const ids = data.pois.map((p) => p.id);
@@ -84,17 +85,17 @@ function PoiList({ data, onEdit }: { data: Territory; onEdit: (p: Poi) => void }
       {data.pois.map((p, i) => (
         <ListRow
           key={p.id}
-          pressable
+          pressable={!!onEdit}
           testID={`poi-${p.id}`}
           title={pickLang(i18n.language, { uz: p.name_uz, ru: p.name_ru, en: p.name_en })}
           subtitle={[t(`san1.poi.kind.${p.kind}`), p.floor != null && p.floor !== '' ? `${t('san1.poi.floor')}: ${p.floor}` : null].filter(Boolean).join(' · ')}
           right={
             <View style={styles.actions}>
               {p.is_active === false && <Badge label={t('sanatorium.inactive')} tone="neutral" />}
-              <MoveButtons first={i === 0} last={i === data.pois.length - 1} testID={`poi-${p.id}`} onUp={() => move(p.id, -1)} onDown={() => move(p.id, 1)} />
+              {onEdit && <MoveButtons first={i === 0} last={i === data.pois.length - 1} testID={`poi-${p.id}`} onUp={() => move(p.id, -1)} onDown={() => move(p.id, 1)} />}
             </View>
           }
-          onPress={() => onEdit(p)}
+          onPress={onEdit ? () => onEdit(p) : undefined}
         />
       ))}
     </View>

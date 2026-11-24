@@ -25,7 +25,7 @@ import { useSanFeatures } from '../utils/features';
 import { ApptRow } from '../components/ApptRow';
 import { Denied, PhoneLink, QueryBlock, useSanAccess } from '../components/common';
 import type { GuestEvent, GuestProfile, Procedure } from '../types';
-import { fmtDate, fmtDateTime, hasSanRole, maskPassport, procTone, sanErrorMessage, stayTone } from '../utils/sanatorium';
+import { fmtDate, canSanWrite, fmtDateTime, hasSanRole, maskPassport, procTone, sanErrorMessage, stayTone } from '../utils/sanatorium';
 
 export default function GuestScreen() {
   const { t } = useTranslation();
@@ -45,9 +45,10 @@ export default function GuestScreen() {
 function Profile({ p }: { p: GuestProfile }) {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
-  const registrar = hasSanRole(user, 'registrar');
-  const canEditProc = hasSanRole(user, 'doctor', 'registrar');
-  const canBook = hasSanRole(user, 'registrar', 'doctor', 'nurse');
+  // Write gates: false for the view-only chairman, so no edit / booking / procedure control is drawn.
+  const registrar = canSanWrite(user, 'registrar');
+  const canEditProc = canSanWrite(user, 'doctor', 'registrar');
+  const canBook = canSanWrite(user, 'registrar', 'doctor', 'nurse');
   const reset = useResetCredentials();
   const [editing, setEditing] = useState(false);
   const [booking, setBooking] = useState(false);

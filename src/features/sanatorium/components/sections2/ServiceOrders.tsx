@@ -14,7 +14,7 @@ import {
   type OrderFilter, type SanService, type ServiceOrder,
 } from '../../api/sections2';
 import { staysInfinite } from '../../api/queries';
-import { PagedBlock } from '../common';
+import { PagedBlock, useSanReadOnly } from '../common';
 import { ChoiceField, DateField, ErrorLine } from '../forms';
 import { canDeleteOrder, nextOrderStatuses, pickText, type OrderStatus } from '../../utils/sections2';
 import { fmtDate, fmtDateTime, fmtMoney, fmtTime, sanErrorMessage, todayIso } from '../../utils/sanatorium';
@@ -114,6 +114,7 @@ export function OrderCard({ o, showGuest = true }: { o: ServiceOrder; showGuest?
   const lang = useContentLang();
   const patch = usePatchServiceOrder();
   const del = useDeleteServiceOrder();
+  const readOnly = useSanReadOnly();
   const [resched, setResched] = useState(false);
   const act = (status: OrderStatus) => {
     const run = async () => {
@@ -137,13 +138,13 @@ export function OrderCard({ o, showGuest = true }: { o: ServiceOrder; showGuest?
         {[o.scheduled_at ? fmtDateTime(o.scheduled_at) : null, `${o.quantity} × ${fmtMoney(o.unit_price)} = ${fmtMoney(o.total)}`, o.source === 'guest' ? t('sanatorium.s2.fromGuest') : null].filter(Boolean).join(' · ')}
       </Text>
       {!!o.note && <Text variant="caption" tone="subtle">{o.note}</Text>}
-      <View style={styles.actions}>
+      {!readOnly && <View style={styles.actions}>
         {nextOrderStatuses(o.status).map((s) => (
           <Button key={s} testID={`order-${o.id}-${s}`} label={t(`sanatorium.s2.orderAction.${s}`)} size="sm" variant={s === 'cancelled' ? 'dangerGhost' : 'soft'} loading={patch.isPending} onPress={() => act(s)} />
         ))}
         {o.service.needs_booking && (o.status === 'requested' || o.status === 'confirmed') && <Button label={t('sanatorium.s2.reschedule')} size="sm" variant="soft" onPress={() => setResched(true)} />}
         {canDeleteOrder(o.status) && <Button testID={`order-${o.id}-del`} label={t('sanatorium.remove')} size="sm" variant="dangerGhost" onPress={() => void remove()} />}
-      </View>
+      </View>}
       <Sheet visible={resched} onClose={() => setResched(false)} title={t('sanatorium.s2.reschedule')} scroll>
         {resched && <RescheduleForm o={o} onClose={() => setResched(false)} />}
       </Sheet>

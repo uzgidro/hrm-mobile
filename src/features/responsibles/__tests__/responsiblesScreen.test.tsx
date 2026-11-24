@@ -53,6 +53,14 @@ describe("ResponsiblesScreen (v2 ResponsiblesPage — Ijro mas'ullari)", () => {
     expect(mock.history.get.find((r) => r.url === MODULE_RESPONSIBLES)?.params).toEqual({ module: 'ijro' });
   });
 
+  it("ministr (rais): ro'yxatni ko'radi, qo'shish/o'chirish tugmalari yo'q", async () => {
+    setUser({ id: 3, type: 'employee', employee: { id: 3, is_multi_org_user: true, multi_org_employee_role: 'ministr' } });
+    await renderWithProviders(<ResponsiblesScreen />);
+    expect(await screen.findByText("Kadrlar bo'limi")).toBeTruthy();
+    expect(screen.queryByTestId('responsible-add')).toBeNull();
+    expect(screen.queryByTestId('responsible-remove-9')).toBeNull();
+  });
+
   it("bo'lim qo'shish: tanlash → tasdiq → POST {module, scope_type, scope_id}", async () => {
     setUser(hr);
     await renderWithProviders(<ResponsiblesScreen />);

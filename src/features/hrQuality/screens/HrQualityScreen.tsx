@@ -13,7 +13,7 @@ import { useTheme } from '@/theme/ThemeProvider';
 import { radii } from '@/theme/tokens';
 import { useAuthStore } from '@/store/authStore';
 import { useNavSettings } from '@/lib/navSettings';
-import { canAccessPage, isHR, isSiteMasterAdmin } from '@/utils/roles';
+import { canAccessPage, isHR, isMinister, isSiteMasterAdmin } from '@/utils/roles';
 import { departmentOptionsQuery } from '@/utils/employees';
 import { useBreakpoint } from '@/utils/responsive';
 import { PickerModal } from '@/components/PickerModal';
@@ -43,7 +43,7 @@ export default function HrQualityScreen() {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const activeBranchId = useActiveBranchId();
-  const allowed = isHR(user) || isSiteMasterAdmin(user);
+  const allowed = isHR(user) || isSiteMasterAdmin(user) || isMinister(user);
   useNavSettings(allowed);
   const { sizeClass } = useBreakpoint();
   const [severity, setSeverity] = useState<Severity>('');

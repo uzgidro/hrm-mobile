@@ -11,12 +11,22 @@ import { useAuthStore } from '@/store/authStore';
 import { formatUzPhone, telUrl } from '@/utils/phone';
 import { Button, ErrorState, IconButton, LoadingView, Text } from '@/ui';
 import type { SanRole } from '../types';
-import { addDays, fmtDate, hasSanRole, todayIso } from '../utils/sanatorium';
+import { addDays, canSanWrite, fmtDate, hasSanRole, isSanReadOnly, todayIso } from '../utils/sanatorium';
 
 /** True when the signed-in user holds one of `roles` (any sanatorium role when none are given). */
 export function useSanAccess(...roles: SanRole[]): boolean {
   const user = useAuthStore((s) => s.user);
   return roles.length ? hasSanRole(user, ...roles) : (user?.sanatorium_roles?.length ?? 0) > 0;
+}
+
+/** True for the view-only account (the chairman): hide create / edit / delete / move / send controls. */
+export function useSanReadOnly(): boolean {
+  return isSanReadOnly(useAuthStore((s) => s.user));
+}
+
+/** Like useSanAccess, but false for the view-only account — gate every write control with this. */
+export function useSanWrite(...roles: SanRole[]): boolean {
+  return canSanWrite(useAuthStore((s) => s.user), ...roles);
 }
 
 export function Denied() {

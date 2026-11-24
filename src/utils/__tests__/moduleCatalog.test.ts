@@ -253,13 +253,14 @@ describe('modul katalogi — v2 paritet', () => {
     expect(CATALOG.find((e) => e.page === 'dictionaries')?.route).toBe('/malumotnomalar');
   });
 
-  it("tabel sozlamalari — v2 ADMIN_HR: bosh admin va kadr; ministr, o'rinbosar, oddiy xodim, filial direktori, admin hisobi va post yo'q; route /tabel-sozlamalari", () => {
+  it("tabel sozlamalari — v2 ADMIN_HR_CHAIR: bosh admin, kadr va ministr (faqat ko'rish); o'rinbosar, oddiy xodim, filial direktori, admin hisobi va post yo'q; route /tabel-sozlamalari", () => {
     const ministr = emp({ employee: { id: 10, is_multi_org_user: true, multi_org_employee_role: 'ministr' } });
     const deputy = emp({ employee: { id: 10, is_multi_org_user: true, multi_org_employee_role: 'deputy' } });
     expect(isModuleReady('tabelSettings')).toBe(true);
     expect(canAccessPage(master, 'tabelSettings')).toBe(true);
     expect(canAccessPage(hr, 'tabelSettings')).toBe(true);
-    for (const x of [ministr, deputy, emp(), emp({ director_branch_ids: [1] }), emp({ akt_branch_ids: [1] })]) {
+    expect(canAccessPage(ministr, 'tabelSettings')).toBe(true);
+    for (const x of [deputy, emp(), emp({ director_branch_ids: [1] }), emp({ akt_branch_ids: [1] })]) {
       expect(canAccessPage(x, 'tabelSettings')).toBe(false);
     }
     expect(canAccessPage(u({ id: 5, type: 'admin' }), 'tabelSettings')).toBe(false);

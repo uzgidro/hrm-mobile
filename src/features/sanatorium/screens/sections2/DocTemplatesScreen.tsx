@@ -10,7 +10,7 @@ import { confirm } from '@/lib/confirm';
 import { toast } from '@/lib/toast';
 import { Badge, Button, Card, EmptyState, Text } from '@/ui';
 import { templatesQuery, useResetTemplate, useUploadTemplate, type DocTemplate } from '../../api/sections2';
-import { QueryBlock } from '../../components/common';
+import { QueryBlock, useSanReadOnly } from '../../components/common';
 import { DownloadButton, SectionScreen } from '../../components/sections2/kit';
 import { fmtDateTime, sanErrorMessage } from '../../utils/sanatorium';
 
@@ -33,6 +33,7 @@ function TemplateCard({ tpl }: { tpl: DocTemplate }) {
   const { t } = useTranslation();
   const upload = useUploadTemplate();
   const reset = useResetTemplate();
+  const readOnly = useSanReadOnly();
   const [open, setOpen] = useState(false);
   const pick = async () => {
     const res = await DocumentPicker.getDocumentAsync({ type: DOCX_TYPES, multiple: false, copyToCacheDirectory: true });
@@ -64,8 +65,8 @@ function TemplateCard({ tpl }: { tpl: DocTemplate }) {
       {!tpl.is_default && <Text variant="caption" tone="muted">{[tpl.filename, tpl.updated_at ? fmtDateTime(tpl.updated_at) : null].filter(Boolean).join(' · ')}</Text>}
       <View style={styles.actions}>
         <DownloadButton testID={`tpl-dl-${tpl.kind}`} label={t('sanatorium.s2.downloadTemplate')} format="docx" url={SANATORIUM_DOC_TEMPLATE_DOWNLOAD(tpl.kind)} filename={`${tpl.kind}-template.docx`} />
-        <Button testID={`tpl-up-${tpl.kind}`} label={t('sanatorium.s2.uploadTemplate')} size="sm" variant="soft" loading={upload.isPending} onPress={() => void pick()} />
-        {!tpl.is_default && <Button testID={`tpl-reset-${tpl.kind}`} label={t('sanatorium.s2.resetTemplate')} size="sm" variant="dangerGhost" loading={reset.isPending} onPress={() => void doReset()} />}
+        {!readOnly && <Button testID={`tpl-up-${tpl.kind}`} label={t('sanatorium.s2.uploadTemplate')} size="sm" variant="soft" loading={upload.isPending} onPress={() => void pick()} />}
+        {!readOnly && !tpl.is_default && <Button testID={`tpl-reset-${tpl.kind}`} label={t('sanatorium.s2.resetTemplate')} size="sm" variant="dangerGhost" loading={reset.isPending} onPress={() => void doReset()} />}
         <Button label={open ? t('sanatorium.s2.hidePlaceholders') : t('sanatorium.s2.showPlaceholders')} size="sm" variant="ghost" onPress={() => setOpen((v) => !v)} />
       </View>
       {open && (

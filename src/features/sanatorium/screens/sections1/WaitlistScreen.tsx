@@ -10,7 +10,7 @@ import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { Badge, Button, Card, EmptyState, ListRow, PageHeader, Screen, SearchField, Segmented, Sheet, Text } from '@/ui';
 import { roomsQuery } from '../../api/queries';
 import { useCancelWaitlist, useConvertWaitlist, useCreateWaitlist, usePatchWaitlist, waitlistInfinite } from '../../api/sections1';
-import { PagedBlock, PhoneLink } from '../../components/common';
+import { PagedBlock, PhoneLink, useSanReadOnly } from '../../components/common';
 import { ChoiceField, DateField, ErrorLine, opt } from '../../components/forms';
 import { SectionGate } from '../../components/sections1/shared';
 import { WAITLIST_STATUSES, type WaitlistItem, type WaitlistStatus } from '../../types1';
@@ -28,13 +28,14 @@ export default function WaitlistScreen() {
   const [from, setFrom] = useState<string | null>(null);
   const [to, setTo] = useState<string | null>(null);
   const [edit, setEdit] = useState<WaitlistItem | 'new' | null>(null);
+  const readOnly = useSanReadOnly();
   const query = useInfiniteQuery(waitlistInfinite({ status: tab, q, from, to }));
   const counts = query.data?.pages[0]?.counts ?? {};
   const total = (Object.values(counts) as number[]).reduce((a, b) => a + b, 0);
   return (
     <SectionGate feature="waitlist" roles={['registrar']}>
       <Screen refreshing={query.isRefetching} onRefresh={() => void query.refetch()} testID="sanatorium-waitlist-screen">
-        <PageHeader title={t('san1.waitlist.title')} right={<Button testID="wl-add" label={t('sanatorium.add')} icon="plus" size="sm" onPress={() => setEdit('new')} />} />
+        <PageHeader title={t('san1.waitlist.title')} right={readOnly ? undefined : <Button testID="wl-add" label={t('sanatorium.add')} icon="plus" size="sm" onPress={() => setEdit('new')} />} />
         <Segmented
           testID="wl-tabs"
           value={tab}
@@ -61,13 +62,13 @@ export default function WaitlistScreen() {
                 {items.map((w) => (
                   <ListRow
                     key={w.id}
-                    pressable
+                    pressable={!readOnly}
                     testID={`wl-${w.id}`}
                     title={w.full_name}
                     subtitle={[`${fmtDate(w.period_from)} → ${fmtDate(w.period_to)}`, `${w.party_size} ${t('san1.waitlist.people')}`, w.room_type].filter(Boolean).join(' · ')}
                     right={<Badge label={t(`san1.waitlist.status.${w.status}`)} tone={tone(w.status)} />}
-                    chevron
-                    onPress={() => setEdit(w)}
+                    chevron={!readOnly}
+                    onPress={readOnly ? undefined : () => setEdit(w)}
                   />
                 ))}
               </View>

@@ -13,13 +13,14 @@ import { requestsInfinite } from '../api/queries';
 import { AcceptSheet, type Accepted } from '../components/AcceptSheet';
 import { CredentialsSheet } from '../components/CredentialsSheet';
 import { WalkInSheet } from '../components/WalkInSheet';
-import { Denied, PagedBlock, PhoneLink, useSanAccess } from '../components/common';
+import { Denied, PagedBlock, PhoneLink, useSanAccess, useSanReadOnly } from '../components/common';
 import type { RequestStatus, SanRequest } from '../types';
 import { fmtDate, fmtDateTime, maskPassport, requestTone, sanErrorMessage } from '../utils/sanatorium';
 
 export default function RequestsScreen() {
   const { t } = useTranslation();
   const allowed = useSanAccess('registrar');
+  const readOnly = useSanReadOnly();
   const [status, setStatus] = useState<RequestStatus>('new');
   const q = useInfiniteQuery(requestsInfinite(status, allowed));
   const [accepting, setAccepting] = useState<SanRequest | null>(null);
@@ -30,7 +31,7 @@ export default function RequestsScreen() {
 
   return (
     <Screen refreshing={q.isRefetching} onRefresh={() => void q.refetch()} testID="sanatorium-requests-screen">
-      <PageHeader title={t('sanatorium.nav.requests')} right={<Button testID="walkin-add" label={t('sanatorium.walkIn')} icon="plus" size="sm" onPress={() => setWalkIn(true)} />} />
+      <PageHeader title={t('sanatorium.nav.requests')} right={readOnly ? undefined : <Button testID="walkin-add" label={t('sanatorium.walkIn')} icon="plus" size="sm" onPress={() => setWalkIn(true)} />} />
       <Segmented
         testID="requests-seg"
         value={status}
@@ -73,8 +74,8 @@ export default function RequestsScreen() {
                     {r.status === 'rejected' && !!r.reject_reason && <Text variant="caption" tone="danger">{r.reject_reason}</Text>}
                     {r.status === 'new' && (
                       <View style={styles.actions}>
-                        <Button testID="request-accept" label={t('sanatorium.accept')} icon="check" size="sm" onPress={() => setAccepting(r)} />
-                        <Button testID="request-reject" label={t('sanatorium.reject')} variant="dangerGhost" size="sm" onPress={() => setRejecting(r)} />
+                        {!readOnly && <Button testID="request-accept" label={t('sanatorium.accept')} icon="check" size="sm" onPress={() => setAccepting(r)} />}
+                        {!readOnly && <Button testID="request-reject" label={t('sanatorium.reject')} variant="dangerGhost" size="sm" onPress={() => setRejecting(r)} />}
                         {!!r.existing_guest_id && (
                           <Button label={t('sanatorium.existingGuest')} variant="link" size="sm" onPress={() => router.push({ pathname: '/sanatorium-guest', params: { id: String(r.existing_guest_id) } })} />
                         )}

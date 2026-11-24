@@ -13,7 +13,7 @@ import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { Badge, Button, EmptyState, ListRow, PageHeader, Screen, SearchField, Segmented, SelectField, Sheet, Text } from '@/ui';
 import { guestsQuery } from '../../api/queries';
 import { useCreateTransfer, usePatchTransfer, transfersInfinite, vehiclesQuery } from '../../api/sections1';
-import { PagedBlock, PhoneLink } from '../../components/common';
+import { PagedBlock, PhoneLink, useSanReadOnly } from '../../components/common';
 import { ChoiceField, DateField, ErrorLine, opt, optNull } from '../../components/forms';
 import { SectionGate } from '../../components/sections1/shared';
 import { TRANSFER_STATUSES, type Transfer, type TransferDirection, type TransferStatus } from '../../types1';
@@ -32,13 +32,14 @@ export default function TransfersScreen() {
   const [from, setFrom] = useState<string | null>(null);
   const [to, setTo] = useState<string | null>(null);
   const [edit, setEdit] = useState<Transfer | 'new' | null>(null);
+  const readOnly = useSanReadOnly();
   const query = useInfiniteQuery(transfersInfinite({ status: tab, direction: dir, q, from, to }));
   const counts = query.data?.pages[0]?.counts ?? {};
   const total = (Object.values(counts) as number[]).reduce((a, b) => a + b, 0);
   return (
     <SectionGate feature="transfer" roles={['registrar']}>
       <Screen refreshing={query.isRefetching} onRefresh={() => void query.refetch()} testID="sanatorium-transfers-screen">
-        <PageHeader title={t('san1.transfer.title')} right={<Button testID="tr-add" label={t('sanatorium.add')} icon="plus" size="sm" onPress={() => setEdit('new')} />} />
+        <PageHeader title={t('san1.transfer.title')} right={readOnly ? undefined : <Button testID="tr-add" label={t('sanatorium.add')} icon="plus" size="sm" onPress={() => setEdit('new')} />} />
         <Segmented
           testID="tr-tabs"
           value={tab}
@@ -75,13 +76,13 @@ export default function TransfersScreen() {
                 {items.map((x) => (
                   <ListRow
                     key={x.id}
-                    pressable
+                    pressable={!readOnly}
                     testID={`tr-${x.id}`}
                     title={x.guest?.full_name ?? `#${x.guest_id}`}
                     subtitle={[t(`san1.transfer.direction.${x.direction}`), fmtDateTime(x.scheduled_at), x.pickup_point, `${x.people} ${t('san1.waitlist.people')}`].join(' · ')}
                     right={<Badge label={t(`san1.transfer.status.${x.status}`)} tone={tone(x.status)} />}
-                    chevron
-                    onPress={() => setEdit(x)}
+                    chevron={!readOnly}
+                    onPress={readOnly ? undefined : () => setEdit(x)}
                   />
                 ))}
               </View>

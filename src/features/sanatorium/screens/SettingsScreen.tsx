@@ -9,7 +9,7 @@ import { Badge, Button, Card, EmptyState, ListRow, PageHeader, Screen, Segmented
 import { useSaveSettings, useSaveSpecialty } from '../api/mutations';
 import { allSpecialtiesQuery, settingsQuery, staffQuery } from '../api/queries';
 import { ChoiceField, ErrorLine, optNull, SwitchRow } from '../components/forms';
-import { Denied, QueryBlock, useSanAccess } from '../components/common';
+import { Denied, QueryBlock, useSanAccess, useSanReadOnly } from '../components/common';
 import { StaffSheet } from '../components/StaffSheet';
 import { FeaturesPanel } from './sections1/FeaturesPanel';
 import { PoiField, usePoiOn } from '../components/sections1/PoiField';
@@ -21,6 +21,8 @@ type Seg = 'staff' | 'specialties' | 'texts' | 'sections';
 export default function SettingsScreen() {
   const { t } = useTranslation();
   const allowed = useSanAccess('registrar');
+  // The view-only chairman reads staff, specialties and texts; add / edit / save are not drawn.
+  const readOnly = useSanReadOnly();
   const [seg, setSeg] = useState<Seg>('staff');
   const staff = useQuery(staffQuery(allowed && seg === 'staff'));
   const specs = useQuery(allSpecialtiesQuery(allowed && seg === 'specialties'));
@@ -35,7 +37,7 @@ export default function SettingsScreen() {
       <PageHeader
         title={t('sanatorium.nav.settings')}
         right={
-          seg === 'staff' ? (
+          readOnly ? undefined : seg === 'staff' ? (
             <Button testID="staff-add" label={t('sanatorium.add')} icon="plus" size="sm" onPress={() => setEditStaff('new')} />
           ) : seg === 'specialties' ? (
             <Button testID="spec-add" label={t('sanatorium.add')} icon="plus" size="sm" onPress={() => setEditSpec('new')} />
@@ -76,8 +78,8 @@ export default function SettingsScreen() {
                         .filter(Boolean)
                         .join(' · ')}
                       right={!m.is_active ? <Badge label={t('sanatorium.inactive')} tone="neutral" /> : m.is_external ? <Badge label={t('sanatorium.external')} tone="info" /> : undefined}
-                      chevron
-                      onPress={() => setEditStaff(m)}
+                      chevron={!readOnly}
+                      onPress={readOnly ? undefined : () => setEditStaff(m)}
                     />
                   ))}
                 </View>
@@ -97,8 +99,8 @@ export default function SettingsScreen() {
                     title={s.name}
                     subtitle={t(`sanatorium.kind.${s.kind}`)}
                     right={!s.is_active ? <Badge label={t('sanatorium.inactive')} tone="neutral" /> : undefined}
-                    chevron
-                    onPress={() => setEditSpec(s)}
+                    chevron={!readOnly}
+                    onPress={readOnly ? undefined : () => setEditSpec(s)}
                   />
                 ))}
               </View>
@@ -157,6 +159,7 @@ function SpecialtyForm({ spec, onClose }: { spec: Specialty | null; onClose: () 
 function TextsForm({ s }: { s: SanSettings }) {
   const { t } = useTranslation();
   const save = useSaveSettings();
+  const readOnly = useSanReadOnly();
   const [contacts, setContacts] = useState(s.contacts ?? '');
   const [addresses, setAddresses] = useState(s.addresses ?? '');
   const [hours, setHours] = useState(s.work_hours ?? '');
@@ -186,14 +189,14 @@ function TextsForm({ s }: { s: SanSettings }) {
   };
   return (
     <Card testID="settings-texts">
-      <FormInput label={t('sanatorium.contacts')} value={contacts} onChangeText={setContacts} multiline testID="set-contacts" />
-      <FormInput label={t('sanatorium.addresses')} value={addresses} onChangeText={setAddresses} multiline />
-      <FormInput label={t('sanatorium.workHours')} value={hours} onChangeText={setHours} />
-      <FormInput label={t('sanatorium.about')} value={about} onChangeText={setAbout} multiline />
-      <FormInput label={t('sanatorium.childDiscountPercent')} value={percent} onChangeText={setPercent} keyboardType="number-pad" testID="set-percent" />
-      <FormInput label={t('sanatorium.childAgeLimit')} value={age} onChangeText={setAge} keyboardType="number-pad" />
+      <FormInput label={t('sanatorium.contacts')} value={contacts} onChangeText={readOnly ? () => {} : setContacts} multiline testID="set-contacts" />
+      <FormInput label={t('sanatorium.addresses')} value={addresses} onChangeText={readOnly ? () => {} : setAddresses} multiline />
+      <FormInput label={t('sanatorium.workHours')} value={hours} onChangeText={readOnly ? () => {} : setHours} />
+      <FormInput label={t('sanatorium.about')} value={about} onChangeText={readOnly ? () => {} : setAbout} multiline />
+      <FormInput label={t('sanatorium.childDiscountPercent')} value={percent} onChangeText={readOnly ? () => {} : setPercent} keyboardType="number-pad" testID="set-percent" />
+      <FormInput label={t('sanatorium.childAgeLimit')} value={age} onChangeText={readOnly ? () => {} : setAge} keyboardType="number-pad" />
       <ErrorLine message={error} />
-      <Button testID="settings-save" label={t('common.save')} full loading={save.isPending} onPress={() => void submit()} />
+      {!readOnly && <Button testID="settings-save" label={t('common.save')} full loading={save.isPending} onPress={() => void submit()} />}
       <Text variant="caption" tone="muted" style={styles.hint}>{t('sanatorium.textsHint')}</Text>
     </Card>
   );
