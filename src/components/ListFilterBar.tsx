@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   btn: {
     width: 44,
-    height: 44,
+    minHeight: 44,
     borderRadius: radii.md,
     borderWidth: 1,
     alignItems: "center",

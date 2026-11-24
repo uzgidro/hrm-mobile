@@ -8,11 +8,11 @@ import { useAuthStore } from '@/store/authStore';
 import { getRoleKey } from '@/utils/roles';
 import {
   builtinHome,
-  normaliseHome,
-  standardHome,
+  normaliseSetup,
+  standardSetup,
   visibleHome,
-  type HomeBlockKey,
   type HomeBoardKind,
+  type HomeSetup,
 } from './homeBlocks';
 
 /** Separate from the web's `dashboard:board_hr|employee` — the blocks differ. */
@@ -24,7 +24,7 @@ export const HOME_LOCAL_KEY = 'home-board';
 /** How long a device without a local copy waits for the answer before the standard is drawn. */
 export const HOME_WAIT_MS = 2500;
 
-export type HomeConfig = { board: HomeBoardKind; blocks: HomeBlockKey[] };
+export type HomeConfig = HomeSetup & { board: HomeBoardKind };
 /** `custom: false` — the standard that was in force, so the next start need not wait for it. */
 export type HomeLocalCopy = HomeConfig & { uid: number | string; custom: boolean };
 
@@ -55,9 +55,12 @@ export function homeConfigQuery(uid: number | string | undefined) {
 export function readLocalCopy(raw: unknown, uid: number | string | undefined, board: HomeBoardKind) {
   const c = raw as Partial<HomeLocalCopy> | null | undefined;
   if (!c || uid == null || c.uid !== uid) return null;
-  const blocks = normaliseHome(c, board);
-  return blocks && { blocks, custom: c.custom === true };
+  const setup = normaliseSetup(c, board);
+  return setup && { ...setup, custom: c.custom === true };
 }
+
+/** The setup alone, as it is saved and compared. */
+const bare = ({ custom: _custom, ...setup }: HomeSetup & { custom: boolean }): HomeSetup => setup;
 
 /**
  * The signed-in person's home screen: their own arrangement, else the role's standard.
@@ -87,15 +90,15 @@ export function useHomeBoard(board: HomeBoardKind | null) {
   const defaults = settings.data?.values?.[BOARD_DEFAULTS_SETTING];
   const answered = settings.data !== undefined;
   const standard = useMemo(() => {
-    if (answered) return standardHome(defaults, kind, role);
-    return local && !local.custom ? local.blocks : builtinHome(kind);
+    if (answered) return standardSetup(defaults, kind, role);
+    return local && !local.custom ? bare(local) : { blocks: builtinHome(kind) };
   }, [answered, defaults, kind, role, local]);
 
   // `undefined` — not answered (or the store is unreachable): the local copy stands in.
   // `null` — answered, nothing saved: the standard applies.
   const mine = useMemo(() => {
-    if (server.data !== undefined) return normaliseHome(server.data, kind);
-    return local?.custom ? local.blocks : null;
+    if (server.data !== undefined) return normaliseSetup(server.data, kind);
+    return local?.custom ? bare(local) : null;
   }, [server.data, kind, local]);
   const config = mine ?? standard;
   const isCustom = mine != null;
@@ -103,13 +106,13 @@ export function useHomeBoard(board: HomeBoardKind | null) {
   // Keep the local copy equal to what the server last said. Guarded by the CURRENT account:
   // an answer that outlives a sign-out must not be filed under the next person.
   const known = enabled && server.data !== undefined && (isCustom || answered);
-  const blocksKey = config.join();
+  const configKey = JSON.stringify(config);
   useEffect(() => {
     if (!known || uid == null || useAuthStore.getState().user?.id !== uid) return;
-    const copy: HomeLocalCopy = { uid, board: kind, custom: isCustom, blocks: config };
+    const copy: HomeLocalCopy = { uid, board: kind, custom: isCustom, ...config };
     void saveDraft(HOME_LOCAL_KEY, copy);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- `blocksKey` stands for `config`
-  }, [known, uid, kind, isCustom, blocksKey]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `configKey` stands for `config`
+  }, [known, uid, kind, isCustom, configKey]);
 
   // A device with no local copy waits for the answer: drawing the standard first would ask
   // for every block the person has removed and then swap the screen under their eyes.
@@ -125,10 +128,10 @@ export function useHomeBoard(board: HomeBoardKind | null) {
 
   const queryKey = homeKeys.mine(uid);
   const save = useMutation({
-    mutationFn: (blocks: HomeBlockKey[]) => saveHomeConfig({ board: kind, blocks }),
+    mutationFn: (setup: HomeSetup) => saveHomeConfig({ board: kind, ...setup }),
     // A read already in flight would put the old arrangement back.
     onMutate: () => qc.cancelQueries({ queryKey }),
-    onSuccess: (_r, blocks) => qc.setQueryData(queryKey, { board: kind, blocks }),
+    onSuccess: (_r, setup) => qc.setQueryData(queryKey, { board: kind, ...setup }),
   });
   const reset = useMutation({
     mutationFn: resetHomeConfig,
@@ -138,7 +141,7 @@ export function useHomeBoard(board: HomeBoardKind | null) {
 
   // `canAccessPage` reads the module matrix that arrives with the settings.
   const visible = useMemo(
-    () => visibleHome(config, user, kind),
+    () => visibleHome(config.blocks, user, kind),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [config, user, kind, settings.data],
   );

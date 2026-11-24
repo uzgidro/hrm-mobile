@@ -2,7 +2,8 @@
 // design-I chrome: 2px outline + 4px lip, a coloured icon box, a big number.
 // Tapping a tile selects its filter; tapping the active one clears it.
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Text } from '@/ui/scaled';
 import { useThemedStyles } from '../theme/ThemeProvider';
 import type { ThemeColors } from '../theme/palettes';
 import { ff } from '../theme/typography';
@@ -49,7 +50,7 @@ export function StatFilterTiles<K extends string>({
               <Icon name={tile.icon} size={18} color="#FFFFFF" strokeWidth={2.3} />
             </View>
             <View style={styles.texts}>
-              <Text style={styles.label} numberOfLines={1}>{tile.label}</Text>
+              <Text style={styles.label} numberOfLines={1} grow>{tile.label}</Text>
               <Text style={styles.value}>{tile.value ?? '—'}</Text>
             </View>
           </TouchableOpacity>

@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
-import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl,
-} from 'react-native';
+import { View, ScrollView, TouchableOpacity, StyleSheet, RefreshControl } from 'react-native';
+import { Text } from '@/ui/scaled';
 import dayjs from 'dayjs';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -142,7 +141,7 @@ export default function MyDutyScreen({ embedded = false }: { embedded?: boolean 
                   style={[styles.tab, i === selectedGroupIdx && styles.tabActive]}
                   onPress={() => setSelectedGroupIdx(i)}
                 >
-                  <Text style={[styles.tabText, i === selectedGroupIdx && styles.tabTextActive]} numberOfLines={1}>
+                  <Text style={[styles.tabText, i === selectedGroupIdx && styles.tabTextActive]} numberOfLines={1} grow>
                     {g.name ?? `#${g.id}`}
                   </Text>
                 </TouchableOpacity>
@@ -196,7 +195,7 @@ export default function MyDutyScreen({ embedded = false }: { embedded?: boolean 
                       <View style={styles.memberRow}>
                         <EmployeeAvatar emp={emp} size={40} />
                         <View style={styles.memberInfo}>
-                          <Text style={styles.memberName} numberOfLines={1}>{emp.legal_name}</Text>
+                          <Text style={styles.memberName} numberOfLines={1} grow>{emp.legal_name}</Text>
                           <Text style={styles.memberSub} numberOfLines={1}>{employeeSubLabel(emp)}</Text>
                         </View>
                       </View>

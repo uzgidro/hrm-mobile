@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Modal, TouchableOpacity } from 'react-native';
+import { Text } from '@/ui/scaled';
 import dayjs, { Dayjs } from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { useThemedStyles } from '../theme/ThemeProvider';
 import type { ThemeColors } from '../theme/palettes';
 import { ff } from '@/theme/typography';
 import { monthName, weekdayNameShort } from '@/i18n/dates';
+import { useTightLabel } from '@/store/textSizeStore';
 import { useBreakpoint } from '../utils/responsive';
 import { buildMonthCells, WEEK_DAY_INDEXES } from '../utils/calendarGrid';
 
@@ -13,6 +15,7 @@ export function DatePickerModal({
   visible, value, title, onConfirm, onClose,
 }: { visible: boolean; value?: string | null; title: string; onConfirm: (iso: string) => void; onClose: () => void }) {
   const dp = useThemedStyles(makeDp);
+  const weekDay = useTightLabel();
   const { t } = useTranslation();
   const bp = useBreakpoint();
   const init = value ? dayjs(value) : dayjs();
@@ -37,7 +40,7 @@ export function DatePickerModal({
             <Text style={dp.monthLabel}>{monthName(month.month())} {month.year()}</Text>
             <TouchableOpacity onPress={() => setMonth(month.add(1, 'month'))} style={dp.navBtn}><Text style={dp.navText}>{'>'}</Text></TouchableOpacity>
           </View>
-          <View style={dp.weekRow}>{WEEK_DAY_INDEXES.map((d) => <Text key={d} style={dp.weekDay}>{weekdayNameShort(d)}</Text>)}</View>
+          <View style={dp.weekRow}>{WEEK_DAY_INDEXES.map((d) => <Text key={d} numberOfLines={1} style={[dp.weekDay, { fontSize: 11 * weekDay }]}>{weekdayNameShort(d)}</Text>)}</View>
           <View style={dp.grid}>
             {cells.map((day, i) => {
               if (!day) return <View key={`e-${i}`} style={dp.cell} />;

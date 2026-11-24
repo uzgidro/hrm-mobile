@@ -4,7 +4,8 @@
 // attendance content block) — lives here, not inside either feature, so
 // neither has to cross-import the other (see `src/features/README.md`).
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { Text } from '@/ui/scaled';
 import dayjs from 'dayjs';
 import { router } from 'expo-router';
 import type { ThemeColors } from '@/theme/palettes';
@@ -29,8 +30,8 @@ export const RosterRow = React.memo(function RosterRow({ row, colors: c, showBor
       <View style={[styles.statusStripe, { backgroundColor: sectionColor(row.status, c) }]} />
       <EmployeeAvatar emp={row.employee} size={48} />
       <View style={styles.empInfo}>
-        <Text style={[styles.empName, { color: c.text }]} numberOfLines={1}>{row.employee.legal_name}</Text>
-        <Text style={[styles.empPosition, { color: c.textMuted }]} numberOfLines={1}>
+        <Text style={[styles.empName, { color: c.text }]} numberOfLines={1} grow>{row.employee.legal_name}</Text>
+        <Text style={[styles.empPosition, { color: c.textMuted }]} numberOfLines={1} grow>
           {row.employee.job_position?.name ?? row.employee.department?.name ?? '—'}
         </Text>
       </View>

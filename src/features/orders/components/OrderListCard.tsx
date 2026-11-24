@@ -1,4 +1,5 @@
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { Text } from '@/ui/scaled';
 import { router } from 'expo-router';
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
@@ -40,7 +41,7 @@ export function OrderListCard({
     >
       <View style={styles.cardTop}>
         {unseen && !action && <View style={styles.unseenDot} testID="order-unseen-dot" />}
-        <Text style={styles.cardCategory} numberOfLines={1}>
+        <Text style={styles.cardCategory} numberOfLines={1} grow>
           {order.category_rel?.name || t('orders.fallbackTitle')}
           {order.act_number ? `  №${order.act_number}` : ''}
         </Text>

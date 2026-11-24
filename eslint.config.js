@@ -37,6 +37,21 @@ module.exports = [
       'react-hooks/set-state-in-effect': 'warn',
     },
   },
+  // Text that ignores the person's text size stays small on an enlarged screen.
+  {
+    files: ['src/**/*.tsx', 'app/**/*.tsx'],
+    ignores: ['src/ui/scaled.tsx', '**/__tests__/**', 'src/test/**'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            { name: 'react-native', importNames: ['Text', 'TextInput'], message: "Import Text / TextInput from '@/ui/scaled'." },
+          ],
+        },
+      ],
+    },
+  },
   {
     files: ['src/ui/**/*.{ts,tsx}'],
     ignores: ['src/ui/mascot/**'],
@@ -46,11 +61,17 @@ module.exports = [
   },
   {
     files: ['src/features/**/*.{ts,tsx}', 'app/**/*.{ts,tsx}'],
+    ignores: ['**/__tests__/**'],
     rules: {
       'no-restricted-syntax': ['warn', { selector: HEX_SELECTOR, message: HEX_MESSAGE }],
       'no-restricted-imports': [
-        'warn',
-        { paths: [{ name: '@/constants', importNames: ['COLORS'], message: 'COLORS eskirgan — useTheme().' }] },
+        'error',
+        {
+          paths: [
+            { name: 'react-native', importNames: ['Text', 'TextInput'], message: "Import Text / TextInput from '@/ui/scaled'." },
+            { name: '@/constants', importNames: ['COLORS'], message: 'COLORS eskirgan — useTheme().' },
+          ],
+        },
       ],
     },
   },

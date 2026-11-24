@@ -3,7 +3,8 @@
 // (debounce bilan); limit to'lgani ANIQ bo'lsa yuborish tugmasi o'chiq. Takrorlash Zoom'ning
 // «Recurring meeting» tanlovlari bilan bir xil. Ota `key` bilan faqat ochiqda mount qiladi.
 import React, { useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { TextInput } from '@/ui/scaled';
 import dayjs from 'dayjs';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';

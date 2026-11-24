@@ -54,7 +54,7 @@ export function OnlineNowCard() {
           ) : (
             users.map((u) => (
               <View key={u.user_id} style={[styles.user, { backgroundColor: c.surface2 }]}>
-                <Text variant="label" numberOfLines={1}>
+                <Text variant="label" numberOfLines={1} grow>
                   {u.name ?? '—'}
                 </Text>
                 <Text variant="caption" tone="subtle" numberOfLines={1}>

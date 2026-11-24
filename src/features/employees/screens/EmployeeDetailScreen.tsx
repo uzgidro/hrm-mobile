@@ -1,7 +1,5 @@
-import {
-  View, Text, ScrollView, StyleSheet,
-  TouchableOpacity, Linking,
-} from 'react-native';
+import { View, ScrollView, StyleSheet, TouchableOpacity, Linking } from 'react-native';
+import { Text } from '@/ui/scaled';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';

@@ -1,8 +1,6 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
-import {
-  View, Text, ScrollView, StyleSheet,
-  TouchableOpacity, TextInput, ActivityIndicator,
-} from 'react-native';
+import { View, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { Text, TextInput } from '@/ui/scaled';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';

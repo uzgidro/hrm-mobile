@@ -70,6 +70,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 
+/** The same theme with another palette below this point (the home screen's accent). */
+export function ThemeColorsOverride({ colors, children }: { colors: ThemeColors; children: React.ReactNode }) {
+  const theme = useTheme();
+  const value = useMemo(() => ({ ...theme, colors }), [theme, colors]);
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+}
+
 export function useTheme(): ThemeContextValue {
   const ctx = useContext(ThemeContext);
   if (!ctx) {

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Modal, ActivityIndicator } from 'react-native';
+import { Text } from '@/ui/scaled';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 import { KeyboardAvoider } from './KeyboardAvoider';

@@ -2,7 +2,8 @@
 // precise moment (e.g. visitor valid_from / valid_until — matches the web's
 // datetime-local input). Returns an ISO string via onConfirm.
 import { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Modal, TouchableOpacity } from 'react-native';
+import { Text } from '@/ui/scaled';
 import dayjs, { Dayjs } from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
@@ -10,6 +11,7 @@ import type { ThemeColors } from '../theme/palettes';
 import { ff } from '@/theme/typography';
 import { Icon } from './Icon';
 import { monthName, weekdayNameShort } from '@/i18n/dates';
+import { useTightLabel } from '@/store/textSizeStore';
 import { useBreakpoint } from '../utils/responsive';
 import { buildMonthCells, stepHour, stepMinute, WEEK_DAY_INDEXES } from '../utils/calendarGrid';
 
@@ -17,6 +19,7 @@ export function DateTimePickerModal({
   visible, value, title, onConfirm, onClose,
 }: { visible: boolean; value?: string | null; title: string; onConfirm: (iso: string) => void; onClose: () => void }) {
   const dp = useThemedStyles(makeDp);
+  const weekDay = useTightLabel();
   const { colors } = useTheme();
   const { t } = useTranslation();
   const bp = useBreakpoint();
@@ -70,7 +73,7 @@ export function DateTimePickerModal({
                 <Text style={dp.monthLabel}>{monthName(month.month())} {month.year()}</Text>
                 <TouchableOpacity onPress={() => setMonth(month.add(1, 'month'))} style={dp.navBtn}><Icon name="chevronRight" size={20} color={colors.text} /></TouchableOpacity>
               </View>
-              <View style={dp.weekRow}>{WEEK_DAY_INDEXES.map((d) => <Text key={d} style={dp.weekDay}>{weekdayNameShort(d)}</Text>)}</View>
+              <View style={dp.weekRow}>{WEEK_DAY_INDEXES.map((d) => <Text key={d} numberOfLines={1} style={[dp.weekDay, { fontSize: 11 * weekDay }]}>{weekdayNameShort(d)}</Text>)}</View>
               <View style={dp.grid}>
                 {cells.map((day, i) => {
                   if (!day) return <View key={`e-${i}`} style={dp.cell} />;

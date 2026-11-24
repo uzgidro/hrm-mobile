@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
-import {
-  View, Text, StyleSheet, TextInput, TouchableOpacity,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { Text, TextInput } from '@/ui/scaled';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';
@@ -153,9 +152,9 @@ export default function MehmonlarScreen() {
             >
               <EmployeeAvatar emp={item} size={48} />
               <View style={{ flex: 1 }}>
-                <Text style={styles.name} numberOfLines={1}>{item.legal_name || t('visitors.nameFallback')}</Text>
+                <Text style={styles.name} numberOfLines={1} grow>{item.legal_name || t('visitors.nameFallback')}</Text>
                 {!!(item.organization_name || item.job_position) && (
-                  <Text style={styles.sub} numberOfLines={1}>
+                  <Text style={styles.sub} numberOfLines={1} grow>
                     {[item.organization_name, item.job_position].filter(Boolean).join(' · ')}
                   </Text>
                 )}

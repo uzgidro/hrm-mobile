@@ -6,7 +6,8 @@
 // Presentational only — each screen keeps its own filter predicate, since the
 // searched fields differ per domain.
 import React from 'react';
-import { View, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { TextInput } from '@/ui/scaled';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 import type { ThemeColors } from '../theme/palettes';
 import { ff } from '../theme/typography';
@@ -61,7 +62,7 @@ const makeStyles = (c: ThemeColors) =>
       borderWidth: 2,
       borderColor: c.cardBorder,
       paddingHorizontal: 12,
-      height: 46,
+      minHeight: 46,
     },
-    searchInput: { flex: 1, color: c.text, fontSize: 15, ...NO_WEB_OUTLINE, ...ff('700') },
+    searchInput: { flex: 1, minWidth: 0, color: c.text, fontSize: 15, ...NO_WEB_OUTLINE, ...ff('700') },
   });

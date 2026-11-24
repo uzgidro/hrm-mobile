@@ -3,7 +3,8 @@
 // the save accepts; "weak" always names the missing rule. Nothing is drawn
 // until the person starts typing.
 import { useMemo } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import { Text } from '@/ui/scaled';
 import { useTranslation } from 'react-i18next';
 import { checkPassword } from '@/lib/passwordStrength';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';

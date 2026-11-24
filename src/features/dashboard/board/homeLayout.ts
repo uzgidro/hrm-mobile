@@ -5,7 +5,7 @@
 // order is their own, the blocks simply flow in that order: cards share bento rows, the
 // wide ones take a row of their own.
 import type { SizeClass } from '@/utils/responsive';
-import { DAY_BLOCKS, builtinHome, type HomeBlockKey, type HomeBoardKind } from './homeBlocks';
+import { DAY_BLOCKS, builtinHome, customOf, type BuiltinKey, type HomeBlockKey, type HomeBoardKind } from './homeBlocks';
 
 export interface HomeCell {
   /** More than one key — the cards are stacked in one cell. */
@@ -16,6 +16,8 @@ export interface HomeSection {
   cells: HomeCell[];
   /** One full-width block, outside any bento row. */
   wide?: boolean;
+  /** Page buttons, several in a row. */
+  grid?: boolean;
   /** The leader's day data failed: draw one error state before this section. */
   dayError?: boolean;
 }
@@ -31,7 +33,7 @@ export function followsDesign(keys: readonly HomeBlockKey[], board: HomeBoardKin
   let at = -1;
   const design = builtinHome(board);
   return keys.every((k) => {
-    const i = design.indexOf(k);
+    const i = design.indexOf(k as BuiltinKey);
     if (i <= at) return false;
     at = i;
     return true;
@@ -64,9 +66,13 @@ function designed(board: HomeBoardKind, sizeClass: SizeClass, bentoColumns: numb
 function flowing(sizeClass: SizeClass, keys: readonly HomeBlockKey[]): HomeSection[] {
   const out: HomeSection[] = [];
   for (const k of keys) {
+    const button = customOf(k)?.kind === 'page';
     const wide = WIDE.includes(k) || (k === 'tiles' && sizeClass !== 'expanded');
     const last = out[out.length - 1];
-    if (wide || !last || last.wide) out.push({ ...(wide && { wide }), cells: [cell([k])] });
+    if (button) {
+      if (last?.grid) last.cells.push(cell([k]));
+      else out.push({ grid: true, cells: [cell([k])] });
+    } else if (wide || !last || last.wide || last.grid) out.push({ ...(wide && { wide }), cells: [cell([k])] });
     else last.cells.push(cell([k]));
   }
   return out;
@@ -87,7 +93,14 @@ export function homeLayout({
   dayError?: boolean;
 }): HomeSection[] {
   const has = (k: HomeBlockKey) => keys.includes(k);
-  const raw = followsDesign(keys, board) ? designed(board, sizeClass, bentoColumns, has) : flowing(sizeClass, keys);
+  // What a person added below the designed blocks does not take the composition apart.
+  const added = keys.findIndex((k) => customOf(k));
+  const head = added < 0 ? keys : keys.slice(0, added);
+  const tail = added < 0 ? [] : keys.slice(added);
+  const raw =
+    followsDesign(head, board) && tail.every((k) => customOf(k))
+      ? [...designed(board, sizeClass, bentoColumns, has), ...flowing(sizeClass, tail)]
+      : flowing(sizeClass, keys);
   const drop = (s: HomeSection, gone: (k: HomeBlockKey) => boolean): HomeSection => ({
     ...s,
     cells: s.cells.map((c) => ({ ...c, keys: c.keys.filter((k) => !gone(k)) })).filter((c) => c.keys.length > 0),

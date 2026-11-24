@@ -8,7 +8,8 @@
 // for irreversible actions (logout, delete). `icon` defaults to a question mark
 // glyph when omitted.
 import { useEffect, useMemo, useState } from 'react';
-import { Animated, Modal, Pressable, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Animated, Modal, Pressable, View, TouchableOpacity, StyleSheet } from 'react-native';
+import { Text } from '@/ui/scaled';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';
 import { ff } from '@/theme/typography';

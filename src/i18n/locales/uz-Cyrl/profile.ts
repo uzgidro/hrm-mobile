@@ -19,6 +19,8 @@ export default {
   sectionLanguage: 'Тил',
   sectionSettings: 'Созламалар',
 
+  textSize: 'Шрифт катталиги',
+  textSizeStep: 'Шрифт катталиги: {{percent}} фоиз',
   themeSystem: 'Тизим',
   themeLight: 'Ёруғ',
   themeDark: 'Тунги',

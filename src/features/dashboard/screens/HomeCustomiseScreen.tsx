@@ -9,6 +9,7 @@ import Animated, { useAnimatedRef } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeProvider';
+import { groundTop } from '@/theme/accents';
 import { confirm } from '@/lib/confirm';
 import { goBackOr } from '@/lib/goBack';
 import { toast } from '@/lib/toast';
@@ -17,17 +18,27 @@ import { homeBoardFor } from '@/utils/homeBoard';
 import { useBreakpoint } from '@/utils/responsive';
 import { Bento, Button, Card, IconButton, LoadingView, PageHeader, Screen, Text } from '@/ui';
 import {
-  HOME_BLOCKS,
+  CUSTOM_MAX,
   HOME_BLOCK_KEYS,
+  blockDef,
+  customOf,
   isHomeBlockAvailable,
   moveBlock,
   reorderBlocks,
-  sameHome,
+  sameSetup,
+  setupOf,
   visibleHome,
   type HomeBlockKey,
   type HomeBoardKind,
+  type HomeSetup,
 } from '../board/homeBlocks';
+import type { BlockLook, HomeLook } from '../board/homeLook';
 import { useHomeBoard } from '../board/useHomeBoard';
+import { AddSheet } from '../components/custom/AddSheet';
+import { BlockSheet } from '../components/custom/BlockSheet';
+import { DesignCard } from '../components/custom/DesignCard';
+import { useBlockName } from '../components/custom/customBlocks';
+import { HomeDesign } from '../components/HomeBlocks';
 import { BlockRow, SortableBlocks } from '../components/SortableBlocks';
 
 const HOME = '/' as Href;
@@ -47,18 +58,26 @@ function HomeEditor({ board }: { board: HomeBoardKind }) {
   const home = useHomeBoard(board);
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
   // `null` — untouched: the screen follows the saved arrangement.
-  const [draft, setDraft] = useState<HomeBlockKey[] | null>(null);
+  const [draft, setDraft] = useState<HomeSetup | null>(null);
+  const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState<HomeBlockKey | null>(null);
 
-  const value = draft ?? home.config;
+  const setup = draft ?? home.config;
+  const value = setup.blocks;
+  const setBlocks = (blocks: HomeBlockKey[]) => setDraft(setupOf(blocks, setup.look, setup.items));
+  const setLook = (look: HomeLook | undefined) => setDraft(setupOf(value, look, setup.items));
+  const setItem = (k: HomeBlockKey, item: BlockLook) => setDraft(setupOf(value, setup.look, { ...setup.items, [k]: item }));
   const shown = visibleHome(value, user, board);
   const hidden = HOME_BLOCK_KEYS.filter((k) => !value.includes(k) && isHomeBlockAvailable(k, user, board));
-  const dirty = !sameHome(value, home.config);
+  const dirty = !sameSetup(setup, home.config);
   const busy = home.save.isPending || home.reset.isPending;
-  const name = (k: HomeBlockKey) => t(HOME_BLOCKS[k].titleKey);
+  const blockName = useBlockName();
+  const name = (k: HomeBlockKey) => blockName(k, setup.items?.[k]);
+  const notes = value.filter((k) => customOf(k)?.kind === 'note').length;
   const say = (message: string) => AccessibilityInfo.announceForAccessibility(message);
 
   const place = (next: HomeBlockKey[], k: HomeBlockKey) => {
-    setDraft(next);
+    setBlocks(next);
     const n = visibleHome(next, user, board).indexOf(k) + 1;
     say(t('dashboard.customise.moved', { name: name(k), n, total: shown.length }));
   };
@@ -68,17 +87,23 @@ function HomeEditor({ board }: { board: HomeBoardKind }) {
     if (k && from !== to) place(reorderBlocks(value, shown, from, to), k);
   };
   const remove = (k: HomeBlockKey) => {
-    setDraft(value.filter((x) => x !== k));
+    setBlocks(value.filter((x) => x !== k));
     say(t('dashboard.customise.removed', { name: name(k) }));
   };
   const add = (k: HomeBlockKey) => {
-    setDraft([...value, k]);
+    setBlocks([...value, k]);
     say(t('dashboard.customise.added', { name: name(k) }));
+  };
+  const toggle = (k: HomeBlockKey) => (value.includes(k) ? remove(k) : add(k));
+  const addNote = () => {
+    const k: HomeBlockKey = `note:${Date.now().toString(36)}`;
+    add(k);
+    setEditing(k);
   };
 
   // A failed request shows the app's usual error toast (MutationCache); the draft stays.
   const save = () =>
-    home.save.mutate(value, {
+    home.save.mutate(setup, {
       onSuccess: () => {
         toast.success(t('dashboard.customise.saved'));
         goBackOr(HOME);
@@ -106,7 +131,7 @@ function HomeEditor({ board }: { board: HomeBoardKind }) {
   const wide = sizeClass === 'expanded';
   const compact = sizeClass === 'compact';
   return (
-    <Screen scroll={false} maxWidth={wide ? 1040 : 720} testID="home-customise-screen">
+    <Screen scroll={false} maxWidth={wide ? 1040 : 720} groundTop={groundTop(setup.look?.bg, c)} testID="home-customise-screen">
       <PageHeader title={t('dashboard.customise.title')} subtitle={t('dashboard.customise.hint')} />
       {!home.ready ? (
         <LoadingView />
@@ -118,6 +143,7 @@ function HomeEditor({ board }: { board: HomeBoardKind }) {
             contentContainerStyle={styles.body}
             showsVerticalScrollIndicator={false}
           >
+            <HomeDesign look={setup.look}>
             <Bento columns={wide ? 2 : 1}>
               <Bento.Item>
                 <Card title={t('dashboard.customise.onHome')} icon="home" tint="violet" testID="customise-on">
@@ -127,6 +153,8 @@ function HomeEditor({ board }: { board: HomeBoardKind }) {
                     disabled={busy}
                     scrollRef={scrollRef}
                     onReorder={drop}
+                    onEdit={setEditing}
+                    items={setup.items}
                     actions={(k) => {
                       const i = shown.indexOf(k);
                       return (
@@ -156,9 +184,9 @@ function HomeEditor({ board }: { board: HomeBoardKind }) {
                       );
                     }}
                   />
-                  {shown.filter((k) => HOME_BLOCKS[k].hintKey).map((k) => (
+                  {shown.filter((k) => blockDef(k)?.hintKey).map((k) => (
                     <Text key={k} variant="caption" tone="subtle" style={styles.note}>
-                      {`${name(k)} — ${t(HOME_BLOCKS[k].hintKey!)}`}
+                      {`${name(k)} — ${t(blockDef(k)!.hintKey!)}`}
                     </Text>
                   ))}
                 </Card>
@@ -178,7 +206,26 @@ function HomeEditor({ board }: { board: HomeBoardKind }) {
                         />
                       </BlockRow>
                     ))}
+                    <View style={styles.adders}>
+                      <Button
+                        testID="add-page"
+                        label={t('dashboard.customise.addPage')}
+                        icon="plus"
+                        variant="neutral"
+                        disabled={busy}
+                        onPress={() => setAdding(true)}
+                      />
+                      <Button
+                        testID="add-note"
+                        label={t('dashboard.customise.addNote')}
+                        icon="edit"
+                        variant="neutral"
+                        disabled={busy || notes >= CUSTOM_MAX.note}
+                        onPress={addNote}
+                      />
+                    </View>
                   </Card>
+                  <DesignCard value={setup.look} onChange={setLook} />
                   <Button
                     testID="customise-reset"
                     label={t('dashboard.customise.reset')}
@@ -191,6 +238,7 @@ function HomeEditor({ board }: { board: HomeBoardKind }) {
                 </View>
               </Bento.Item>
             </Bento>
+            </HomeDesign>
           </Animated.ScrollView>
           <View style={[styles.footer, !compact && styles.footerRow, { borderTopColor: c.border, paddingBottom: 12 + insets.bottom }]}>
             {dirty ? (
@@ -210,6 +258,13 @@ function HomeEditor({ board }: { board: HomeBoardKind }) {
           </View>
         </GestureHandlerRootView>
       )}
+      <AddSheet board={board} blocks={value} visible={adding} onClose={() => setAdding(false)} onToggle={toggle} />
+      <BlockSheet
+        block={editing}
+        value={editing ? setup.items?.[editing] : undefined}
+        onChange={(item) => editing && setItem(editing, item)}
+        onClose={() => setEditing(null)}
+      />
     </Screen>
   );
 }
@@ -226,6 +281,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   body: { paddingBottom: 16 },
   side: { gap: 12 },
+  adders: { gap: 8, marginTop: 12 },
   note: { paddingVertical: 8 },
   footer: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 12 },
   footerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 16 },

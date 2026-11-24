@@ -88,7 +88,7 @@ export function ExpiringSheet({ branchId, onClose }: { branchId: number; onClose
                     {on ? <Icon name="check" size={14} color={c.fgOnBrand} strokeWidth={3} /> : null}
                   </View>
                   <View style={styles.flex}>
-                    <Text variant="heading" numberOfLines={1}>
+                    <Text variant="heading" numberOfLines={1} grow>
                       {r.legal_name || '—'}
                     </Text>
                     <Text variant="caption" tone="muted">

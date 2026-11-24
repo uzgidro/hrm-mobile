@@ -1,4 +1,5 @@
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { Text } from '@/ui/scaled';
 import { router } from 'expo-router';
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
@@ -57,7 +58,7 @@ export function LetterListCard({
       {!!letter.description && <Text style={styles.cardDesc} numberOfLines={2}>{letter.description}</Text>}
 
       <View style={styles.cardMeta}>
-        <Text style={styles.cardMetaText} numberOfLines={1}>
+        <Text style={styles.cardMetaText} numberOfLines={1} grow>
           {letter.creator_employee?.legal_name || letter.submitter?.legal_name || ''}
         </Text>
         {/* Web letters/helpers.js:88 parity: the REGISTRATION date once the

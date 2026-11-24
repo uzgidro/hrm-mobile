@@ -1,7 +1,8 @@
 // Leave-type bottom sheet for the create-leave form: pick one of HR's
 // «leave_request_reasons» (the same list the web form offers). No free text —
 // the web has none, and a typed reason matched no filter or report.
-import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'react-native';
+import { Text } from '@/ui/scaled';
 import { useTranslation } from 'react-i18next';
 import { leaveTypeLabel } from '@/utils/leaveStatus';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';

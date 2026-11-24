@@ -1,7 +1,8 @@
 // Topshiriq sahifasining bo'laklari: izoh yozish («@» bilan belgilash, fayl),
 // sabab/izoh formalari, fayllar ro'yxati va xronologiya (web v2 TaskDetail).
 import React, { useMemo, useRef, useState } from 'react';
-import { Linking, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Linking, Pressable, StyleSheet, View } from 'react-native';
+import { TextInput } from '@/ui/scaled';
 import * as DocumentPicker from 'expo-document-picker';
 import dayjs from 'dayjs';
 import { router } from 'expo-router';
@@ -223,7 +224,7 @@ export function Composer({
             <Pressable key={p.id} accessibilityRole="button" onPress={() => choose(p)} style={styles.mentionRow}>
               <Avatar name={p.legal_name ?? '?'} uri={p.photo_path} thumb={p.photo_thumb_path} size={26} />
               <View style={styles.shrink}>
-                <Text variant="label" numberOfLines={1}>
+                <Text variant="label" numberOfLines={1} grow>
                   {p.legal_name}
                 </Text>
                 {!!(p.position_name || p.branch_name) && (

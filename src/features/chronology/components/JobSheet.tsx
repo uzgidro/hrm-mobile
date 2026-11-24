@@ -46,7 +46,7 @@ function PersonLine({ p, note, size = 34 }: { p?: ChronoPerson | null; note?: st
     <View style={styles.person}>
       <Avatar name={p.legal_name ?? '?'} uri={p.photo_path} thumb={p.photo_thumb_path} size={size} />
       <View style={styles.flex}>
-        <Text variant="label" numberOfLines={1}>
+        <Text variant="label" numberOfLines={1} grow>
           {p.legal_name}
         </Text>
         {!!sub && (

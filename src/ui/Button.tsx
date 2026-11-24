@@ -66,7 +66,7 @@ export function Button({
           <View
             style={[
               styles.face,
-              { height: HEIGHT[size], backgroundColor: skin.bg },
+              { minHeight: HEIGHT[size], backgroundColor: skin.bg },
               skin.lip
                 ? { borderBottomWidth: down ? 0 : LIP, borderBottomColor: skin.lip, marginTop: down ? LIP : 0 }
                 : pressed && { opacity: 0.7 },
@@ -95,12 +95,13 @@ const styles = StyleSheet.create({
   face: {
     borderRadius: radii.pill,
     paddingHorizontal: 20,
+    paddingVertical: 4,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
   },
-  label: { fontSize: 15, fontWeight: '700' },
+  label: { flexShrink: 1, textAlign: 'center', fontSize: 15, fontWeight: '700' },
   labelLg: { fontSize: 16 },
   inactive: { opacity: 0.5 },
 });

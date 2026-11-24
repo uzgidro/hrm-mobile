@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
-import {
-  View, Text, StyleSheet, TouchableOpacity,
-  FlatList, RefreshControl,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, FlatList, RefreshControl } from 'react-native';
+import { Text } from '@/ui/scaled';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { router, type Href } from 'expo-router';

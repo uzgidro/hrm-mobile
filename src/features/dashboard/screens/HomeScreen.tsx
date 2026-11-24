@@ -9,6 +9,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/authStore';
 import { homeBoardFor } from '@/utils/homeBoard';
 import { MENU_BADGES_KEY } from '@/lib/menuBadges';
+import { groundTop } from '@/theme/accents';
+import { useTheme } from '@/theme/ThemeProvider';
 import { LoadingView, Screen } from '@/ui';
 import { dashboardKeys, prefetchHomeData } from '../api/queries';
 import { HomeHeader } from '../components/HomeHeader';
@@ -18,6 +20,7 @@ import { useActiveBranchId } from '@/lib/useActiveBranch';
 
 export default function HomeScreen() {
   const user = useAuthStore((s) => s.user);
+  const { colors: c } = useTheme();
   const activeBranchId = useActiveBranchId();
   const queryClient = useQueryClient();
   const board = homeBoardFor(user);
@@ -60,10 +63,16 @@ export default function HomeScreen() {
   if (target) return <Redirect href={target as Href} />;
 
   return (
-    <Screen refreshing={refreshing} onRefresh={onRefresh} testID="home-screen">
+    <Screen refreshing={refreshing} onRefresh={onRefresh} groundTop={groundTop(home.config.look?.bg, c)} testID="home-screen">
       <HomeHeader />
       {!kind || !home.localRead ? null : home.ready ? (
-        <HomeBlocks board={kind} blocks={home.visible} onCustomise={() => router.push('/home-customise' as Href)} />
+        <HomeBlocks
+          board={kind}
+          blocks={home.visible}
+          look={home.config.look}
+          items={home.config.items}
+          onCustomise={() => router.push('/home-customise' as Href)}
+        />
       ) : (
         <LoadingView />
       )}

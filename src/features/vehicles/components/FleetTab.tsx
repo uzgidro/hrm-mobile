@@ -290,7 +290,7 @@ function VehicleRow({
                 size={24}
               />
               <View style={styles.flex}>
-                <Text variant="caption" numberOfLines={1}>
+                <Text variant="caption" numberOfLines={1} grow>
                   {v.driver.legal_name}
                 </Text>
                 {v.driver_available === false && !!v.driver_block_reason ? (

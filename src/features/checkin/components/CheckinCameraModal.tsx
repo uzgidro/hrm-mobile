@@ -1,7 +1,8 @@
 // In-app capture for the phone check-in photo: FRONT camera only (fixed facing, no flip button,
 // no gallery). Flow: live preview with a face-oval guide -> shutter -> preview -> retake / confirm.
 import { useRef, useState } from 'react';
-import { ActivityIndicator, Image, Modal, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Modal, StyleSheet, View } from 'react-native';
+import { Text } from '@/ui/scaled';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useTranslation } from 'react-i18next';

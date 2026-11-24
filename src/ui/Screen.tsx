@@ -2,6 +2,7 @@
 // pull-to-refresh. Keng ekranda kontent `maxWidth` bilan markazlanadi.
 import React from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 import { useTheme } from '@/theme/ThemeProvider';
 
@@ -16,6 +17,7 @@ export function Screen({
   padded = true,
   edges = ['top'],
   maxWidth = SCREEN_MAX_WIDTH,
+  groundTop,
   testID,
 }: {
   children: React.ReactNode;
@@ -25,6 +27,8 @@ export function Screen({
   padded?: boolean;
   edges?: Edge[];
   maxWidth?: number;
+  /** The canvas fades from this colour to its own. */
+  groundTop?: string | null;
   testID?: string;
 }) {
   const { colors: c } = useTheme();
@@ -33,6 +37,14 @@ export function Screen({
   const inner = [styles.inner, padded && styles.padded, { width: '100%' as const, maxWidth }];
   return (
     <SafeAreaView edges={edges} style={[styles.root, { backgroundColor: c.bg }]} testID={testID}>
+      {groundTop ? (
+        <LinearGradient
+          testID="screen-ground"
+          colors={[groundTop, c.bg]}
+          locations={[0, 0.6]}
+          style={[StyleSheet.absoluteFill, styles.ground]}
+        />
+      ) : null}
       {scroll ? (
         <ScrollView
           contentContainerStyle={styles.scroll}
@@ -53,6 +65,7 @@ export function Screen({
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
+  ground: { pointerEvents: 'none' },
   scroll: { alignItems: 'center', paddingBottom: 24 },
   inner: { alignSelf: 'center' },
   padded: { paddingHorizontal: SCREEN_GUTTER },

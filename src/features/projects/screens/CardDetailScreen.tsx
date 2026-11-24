@@ -1,7 +1,14 @@
 import { useState } from 'react';
 import {
-  View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Linking, Image, TextInput,
+  View,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+  Linking,
+  Image,
 } from 'react-native';
+import { Text, TextInput } from '@/ui/scaled';
 import { useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
 import dayjs from 'dayjs';
@@ -138,7 +145,7 @@ export default function CardDetailScreen() {
                     ) : (
                       <View style={[styles.avatar, styles.avatarFallback]}><Icon name="user" size={16} color={colors.textMuted} /></View>
                     )}
-                    <Text style={styles.memberName} numberOfLines={1}>{m.member?.legal_name ?? '—'}</Text>
+                    <Text style={styles.memberName} numberOfLines={1} grow>{m.member?.legal_name ?? '—'}</Text>
                   </View>
                 ))}
               </View>

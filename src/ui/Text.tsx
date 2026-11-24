@@ -1,7 +1,8 @@
 // v3 matn primitivi: variant (tipografik shkala) + tone (semantik rang).
-// Display/title/number — Nunito, qolganlari — Inter. Font scale 1.3x bilan cheklangan.
+// Display/title/number — Nunito, qolganlari — Inter. Font scale 1.3x bilan cheklangan; the person's own text size comes from `scaled`.
 import React from 'react';
-import { StyleSheet, Text as RNText, type TextProps, type TextStyle } from 'react-native';
+import { StyleSheet, type TextProps, type TextStyle } from 'react-native';
+import { Text as ScaledText } from './scaled';
 import { useTheme } from '@/theme/ThemeProvider';
 import { ff, type FontWeight } from '@/theme/typography';
 
@@ -19,6 +20,8 @@ const VARIANTS: Record<TextVariant, () => TextStyle> = {
 };
 
 export type UIText = TextProps & {
+  /** See `scaled`: two lines instead of one when the text is large. */
+  grow?: boolean;
   variant?: TextVariant;
   tone?: TextTone;
   /** Og'irlik — style'da `fontWeight` emas, shu prop (maxsus shriftda soxta qalinlik bo'lmasin). */
@@ -54,5 +57,5 @@ export function Text({ variant = 'body', tone = 'fg', weight, style, ...rest }: 
     const w = (Number(fontWeight) < 400 ? '400' : fontWeight) as FontWeight;
     tail = { ...restStyle, ...ff(w, DISPLAY.includes(variant) ? 'display' : 'text') };
   }
-  return <RNText maxFontSizeMultiplier={1.3} {...rest} style={[base, { color }, tail]} />;
+  return <ScaledText maxFontSizeMultiplier={1.3} {...rest} style={[base, { color }, tail]} />;
 }

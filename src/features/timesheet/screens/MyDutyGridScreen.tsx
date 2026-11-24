@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
-import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, } from 'react-native';
+import { View, ScrollView, TouchableOpacity, StyleSheet, RefreshControl } from 'react-native';
+import { Text } from '@/ui/scaled';
 import dayjs from 'dayjs';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -173,7 +173,7 @@ export default function MyDutyGridScreen({ embedded = false }: { embedded?: bool
             <View style={styles.tabsRow}>
               {groups.map((g, i) => (
                 <TouchableOpacity key={g.id} style={[styles.tab, i === selectedGroupIdx && styles.tabActive]} onPress={() => setSelectedGroupIdx(i)}>
-                  <Text style={[styles.tabText, i === selectedGroupIdx && styles.tabTextActive]} numberOfLines={1}>{g.name ?? `#${g.id}`}</Text>
+                  <Text style={[styles.tabText, i === selectedGroupIdx && styles.tabTextActive]} numberOfLines={1} grow>{g.name ?? `#${g.id}`}</Text>
                 </TouchableOpacity>
               ))}
             </View>

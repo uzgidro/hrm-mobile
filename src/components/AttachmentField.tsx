@@ -1,6 +1,7 @@
 // Presentational attachment list + "add file" button for the create forms.
 // The picking (expo-document-picker) and upload live in the screens.
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { Text } from '@/ui/scaled';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 import type { ThemeColors } from '../theme/palettes';
@@ -40,7 +41,7 @@ export function AttachmentField({
       {files.map((f, i) => (
         <View key={`${f.uri}-${i}`} style={styles.fileRow}>
           <Icon name="doc" size={16} color={colors.primary} />
-          <Text style={styles.fileName} numberOfLines={1}>{f.name}</Text>
+          <Text style={styles.fileName} numberOfLines={1} grow>{f.name}</Text>
           <TouchableOpacity onPress={() => onRemove(i)} hitSlop={8}>
             <Icon name="trash" size={16} color={colors.error} />
           </TouchableOpacity>

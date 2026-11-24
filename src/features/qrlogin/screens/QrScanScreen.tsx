@@ -5,7 +5,8 @@
 // shundan keyin tasdiqlash tugmasi chiqadi. Begona qurilmani bilmasdan
 // tasdiqlab qo'yishning oldini oladi.
 import { useCallback, useRef, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { Text } from '@/ui/scaled';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
