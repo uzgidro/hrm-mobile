@@ -8,6 +8,8 @@ export default {
   create: 'Создать',
   send: 'Отправить',
   search: 'Поиск...',
+  live: 'В эфире',
+  reconnecting: 'Подключение…',
   done: 'Готово',
   yes: 'Да',
   no: 'Нет',

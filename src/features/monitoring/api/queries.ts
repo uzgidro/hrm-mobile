@@ -1,6 +1,6 @@
 // Monitoring so'rovlari — web v2 `features/monitoring/useMonitoring.ts` manbalari.
-// Filial bo'lmasa hech narsa so'ralmaydi (v2: «filial tanlang»). Real vaqt: v2
-// soketi o'rniga v2 zaxira kadensi — 120 s.
+// Filial bo'lmasa hech narsa so'ralmaydi (v2: «filial tanlang»). Real vaqt — soket
+// (`useLiveSocket`); bu yerdagi 120 s — v2 zaxira kadensi.
 import { queryOptions } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { apiClient } from '@/api/client';

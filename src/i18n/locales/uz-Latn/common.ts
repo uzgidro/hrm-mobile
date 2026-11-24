@@ -10,6 +10,8 @@ export default {
   create: 'Yaratish',
   send: 'Yuborish',
   search: 'Qidirish...',
+  live: 'Jonli',
+  reconnecting: 'Ulanmoqda…',
   done: 'Tayyor',
   yes: 'Ha',
   no: "Yo'q",

@@ -1,11 +1,11 @@
 // v3 KPP posti — web v2 `pages/KppPage.tsx` porti. Mehmonlar (qidiruv + tashrif
 // filtri, oxirgi tashrif kuni bo'yicha guruhlangan) va bugungi turniket
 // o'tishlari. Mehmonni bosish o'tishlarni unga filtrlaydi, qayta bosish bekor
-// qiladi (v2). Real vaqt: v2 soketi o'rniga 120 s polling. Planshetda ikki ustun.
+// qiladi (v2). Real vaqt: v2 dagi soket (`useLiveSocket`), u uzilsa — tez-tez so'rov. Planshetda ikki ustun.
 import React, { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import dayjs from 'dayjs';
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeProvider';
@@ -13,6 +13,11 @@ import { moduleTint, radii } from '@/theme/tokens';
 import { useAuthStore } from '@/store/authStore';
 import { useBreakpoint } from '@/utils/responsive';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
+import { isGuestCard, passInBranch } from '@/lib/liveSocket';
+import { useLiveSocket } from '@/lib/useLiveSocket';
+import { useThrottled } from '@/lib/useThrottled';
+import { usePull } from '@/lib/usePull';
+import { LiveBadge } from '@/components/LiveBadge';
 import {
   Avatar,
   Badge,
@@ -32,6 +37,9 @@ import {
 import { flattenPages, pagesTotal } from '@/lib/pagedList';
 import { kppVisitorsQuery, visitorEventsQuery, type VisitFilter } from '../api/queries';
 import { countPasses, groupVisitorsByDay, kppBranchId, NO_VISIT } from '../utils/kpp';
+
+/** How often the lists are asked for while the live socket is down. */
+const DOWN_POLL_MS = 30_000;
 
 /** Bugungi sana — daqiqada bir yangilanadi (yarim tundan keyin «bugun» almashadi). */
 function useToday(): string {
@@ -59,10 +67,27 @@ export default function KppScreen({ showBack = false }: { showBack?: boolean } =
   const [visit, setVisit] = useState<VisitFilter>('all');
   const [selected, setSelected] = useState<{ id: number; name: string } | null>(null);
 
-  const visitorsQ = useInfiniteQuery(kppVisitorsQuery({ search: debounced, visit, branchId }));
+  // A pass or a changed guest card asks for the lists again. Several come together (a car with
+  // its passengers, the morning queue): they share one request.
+  const queryClient = useQueryClient();
+  const reload = useThrottled(() => {
+    void queryClient.invalidateQueries({ queryKey: ['kpp', 'visitors'] });
+    void queryClient.invalidateQueries({ queryKey: ['kpp', 'events'] });
+  }, 700);
+  const live = useLiveSocket(true, {
+    message: (m) => {
+      if (isGuestCard(m) || (m.visitor_id && passInBranch(m, branchId))) reload();
+    },
+    resync: reload,
+  });
+  // While the socket is down the lists are polled instead.
+  const poll = live === 'down' ? { refetchInterval: DOWN_POLL_MS } : {};
+
+  const { pulling, pull } = usePull();
+  const visitorsQ = useInfiniteQuery({ ...kppVisitorsQuery({ search: debounced, visit, branchId }), ...poll });
   const visitors = useMemo(() => flattenPages(visitorsQ.data?.pages), [visitorsQ.data]);
   const visitorsTotal = pagesTotal(visitorsQ.data?.pages) ?? visitors.length;
-  const eventsQ = useQuery(visitorEventsQuery(today, selected?.id ?? null));
+  const eventsQ = useQuery({ ...visitorEventsQuery(today, selected?.id ?? null), ...poll });
   const events = eventsQ.data ?? [];
   const groups = useMemo(() => groupVisitorsByDay(visitors), [visitors]);
   const passes = countPasses(events);
@@ -194,12 +219,13 @@ export default function KppScreen({ showBack = false }: { showBack?: boolean } =
   );
 
   return (
-    <Screen refreshing={visitorsQ.isRefetching} onRefresh={() => void Promise.all([visitorsQ.refetch(), eventsQ.refetch()])}>
+    <Screen refreshing={pulling} onRefresh={() => void pull(() => Promise.all([visitorsQ.refetch(), eventsQ.refetch()]))}>
       <View style={styles.header}>
         {showBack && <IconButton icon="chevronLeft" accessibilityLabel={t('common.back')} onPress={() => router.back()} />}
         <Text variant="title" accessibilityRole="header" style={styles.flex}>
           {t('kpp.title')}
         </Text>
+        <LiveBadge status={live} />
         <View style={[styles.counter, { backgroundColor: green.wash }]} testID="kpp-entered">
           <Text variant="caption" tone="muted">
             {t('kpp.entered')}
