@@ -2,7 +2,7 @@
 // (react-native-sortables: JS only, on the gesture-handler and reanimated already in the
 // binary).
 import React, { useCallback, useEffect, useState } from 'react';
-import { AppState, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { AppState, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { useReducedMotion, type AnimatedRef } from 'react-native-reanimated';
 import type Animated from 'react-native-reanimated';
 import Sortable from 'react-native-sortables';
@@ -11,7 +11,12 @@ import { useTheme } from '@/theme/ThemeProvider';
 import { moduleTint, radii } from '@/theme/tokens';
 import { Icon } from '@/components/Icon';
 import { Text } from '@/ui';
-import { HOME_BLOCKS, type HomeBlockKey } from '../board/homeBlocks';
+import { useTextScale } from '@/store/textSizeStore';
+import { accentFill } from '@/theme/accents';
+import { osCap } from '@/ui/scaled';
+import { blockDef, type HomeBlockKey } from '../board/homeBlocks';
+import type { BlockLook } from '../board/homeLook';
+import { useBlockName } from './custom/customBlocks';
 
 /** Two title lines at the app's text size cap (`maxFontSizeMultiplier` 1.3). */
 const ROW = 56;
@@ -22,6 +27,8 @@ export function SortableBlocks({
   disabled,
   scrollRef,
   onReorder,
+  onEdit,
+  items,
   actions,
 }: {
   blocks: readonly HomeBlockKey[];
@@ -29,21 +36,25 @@ export function SortableBlocks({
   /** The scroll view the list stands in; it scrolls when a row is held near its edge. */
   scrollRef: AnimatedRef<Animated.ScrollView>;
   onReorder: (from: number, to: number) => void;
+  /** Opens the block's own settings. */
+  onEdit: (block: HomeBlockKey) => void;
+  items?: Record<string, BlockLook>;
   actions: (block: HomeBlockKey) => React.ReactNode;
 }) {
   const { fontScale } = useWindowDimensions();
   const reduced = useReducedMotion();
   const epoch = useBackgroundEpoch();
-  const height = Math.round(ROW * Math.min(Math.max(fontScale, 1), MAX_FONT_SCALE));
+  const textScale = useTextScale();
+  const height = Math.round(ROW * textScale * Math.min(Math.max(fontScale, 1), osCap(MAX_FONT_SCALE, textScale)));
   const data = [...blocks];
 
   const renderItem = useCallback(
     ({ item }: { item: HomeBlockKey }) => (
-      <BlockRow block={item} height={height} draggable>
+      <BlockRow block={item} height={height} look={items?.[item]} onPress={() => onEdit(item)} draggable>
         {actions(item)}
       </BlockRow>
     ),
-    [actions, height],
+    [actions, height, items, onEdit],
   );
 
   return (
@@ -106,6 +117,9 @@ export function BlockRow({
   height = ROW,
   draggable = false,
   hint = false,
+  plain = false,
+  look,
+  onPress,
   children,
 }: {
   block: HomeBlockKey;
@@ -113,11 +127,18 @@ export function BlockRow({
   draggable?: boolean;
   /** Say under the title when the block appears at all. */
   hint?: boolean;
+  /** The module's own name, without «… — button». */
+  plain?: boolean;
+  look?: BlockLook;
+  onPress?: () => void;
   children: React.ReactNode;
 }) {
   const { t } = useTranslation();
   const { colors: c } = useTheme();
-  const def = HOME_BLOCKS[block];
+  const name = useBlockName();
+  const def = blockDef(block);
+  if (!def) return null;
+  const title = plain ? t(def.titleKey) : name(block, look);
   const tint = moduleTint(c, def.tint);
   const icon = (
     <View style={[styles.icon, { backgroundColor: tint.wash }]}>
@@ -150,16 +171,26 @@ export function BlockRow({
       ) : (
         icon
       )}
-      <View style={[styles.text, !draggable && styles.textGap]}>
-        <Text variant="heading" numberOfLines={2} style={styles.title}>
-          {t(def.titleKey)}
-        </Text>
+      <Pressable
+        testID={onPress && `edit-${block}`}
+        disabled={!onPress}
+        onPress={onPress}
+        accessibilityRole={onPress && 'button'}
+        accessibilityLabel={onPress && t('dashboard.customise.edit', { name: title })}
+        style={[styles.text, !draggable && styles.textGap]}
+      >
+        <View style={styles.titleRow}>
+          {look?.accent ? <View style={[styles.dot, { backgroundColor: accentFill(look.accent) }]} /> : null}
+          <Text variant="heading" numberOfLines={2} style={styles.title}>
+            {title}
+          </Text>
+        </View>
         {hint && def.hintKey ? (
           <Text variant="caption" tone="subtle" numberOfLines={2}>
             {t(def.hintKey)}
           </Text>
         ) : null}
-      </View>
+      </Pressable>
       <View style={styles.actions}>{children}</View>
     </View>
   );
@@ -172,9 +203,11 @@ const styles = StyleSheet.create({
   // Narrow enough for the longest word of a title («Исполнительская») next to the handle
   // and three 44pt targets at 360dp.
   icon: { width: 26, height: 26, borderRadius: radii.xs, alignItems: 'center', justifyContent: 'center' },
-  text: { flex: 1, minWidth: 0 },
+  text: { flex: 1, minWidth: 0, minHeight: 44, justifyContent: 'center' },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  dot: { width: 10, height: 10, borderRadius: 5 },
   textGap: { marginLeft: 4 },
-  title: { fontSize: 14, lineHeight: 19 },
+  title: { flexShrink: 1, fontSize: 14, lineHeight: 19 },
   // The glyphs line up with the card's edge, the 44pt targets reach into its padding.
   actions: { flexDirection: 'row', marginRight: -12 },
 });

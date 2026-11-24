@@ -55,18 +55,18 @@ export function ListRow({
       <View style={styles.text}>
         {titleAddon ? (
           <View style={styles.titleLine}>
-            <Text variant="heading" numberOfLines={1} style={[styles.title, styles.titleShrink]}>
+            <Text variant="heading" numberOfLines={1} grow style={[styles.title, styles.titleShrink]}>
               {title}
             </Text>
             {titleAddon}
           </View>
         ) : (
-          <Text variant="heading" numberOfLines={1} style={styles.title}>
+          <Text variant="heading" numberOfLines={1} grow style={styles.title}>
             {title}
           </Text>
         )}
         {subtitle ? (
-          <Text variant="caption" tone="subtle" numberOfLines={1}>
+          <Text variant="caption" tone="subtle" numberOfLines={1} grow>
             {subtitle}
           </Text>
         ) : null}

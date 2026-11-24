@@ -41,7 +41,7 @@ export function OrderListCard({
     >
       <View style={styles.cardTop}>
         {unseen && !action && <View style={styles.unseenDot} testID="order-unseen-dot" />}
-        <Text style={styles.cardCategory} numberOfLines={1}>
+        <Text style={styles.cardCategory} numberOfLines={1} grow>
           {order.category_rel?.name || t('orders.fallbackTitle')}
           {order.act_number ? `  №${order.act_number}` : ''}
         </Text>

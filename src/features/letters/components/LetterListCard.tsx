@@ -58,7 +58,7 @@ export function LetterListCard({
       {!!letter.description && <Text style={styles.cardDesc} numberOfLines={2}>{letter.description}</Text>}
 
       <View style={styles.cardMeta}>
-        <Text style={styles.cardMetaText} numberOfLines={1}>
+        <Text style={styles.cardMetaText} numberOfLines={1} grow>
           {letter.creator_employee?.legal_name || letter.submitter?.legal_name || ''}
         </Text>
         {/* Web letters/helpers.js:88 parity: the REGISTRATION date once the

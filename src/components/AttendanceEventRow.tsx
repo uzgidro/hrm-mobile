@@ -60,7 +60,7 @@ export function AttendanceEventRow({
         </View>
         <View style={styles.texts}>
           <Text style={styles.dir}>{entry ? t('timesheet.entryTitle') : t('timesheet.exitTitle')}</Text>
-          <Text style={styles.place} numberOfLines={1}>
+          <Text style={styles.place} numberOfLines={1} grow>
             {place.name ?? t('timesheet.placeUnknown')}
           </Text>
         </View>

@@ -267,8 +267,8 @@ function DirectoryRow({
     <View style={[styles.row, grid && styles.rowGrid]}>
       <EmployeeAvatar emp={{ photo_path: entry.photo_thumb_path ?? entry.photo_path, legal_name: entry.legal_name }} size={48} />
       <View style={styles.info}>
-        <Text style={styles.name} numberOfLines={1}>{entry.legal_name || '—'}</Text>
-        <Text style={styles.sub} numberOfLines={1}>
+        <Text style={styles.name} numberOfLines={1} grow>{entry.legal_name || '—'}</Text>
+        <Text style={styles.sub} numberOfLines={1} grow>
           {entry.job_position_name || entry.department_name || '—'}
         </Text>
       </View>

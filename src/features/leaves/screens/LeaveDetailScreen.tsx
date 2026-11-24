@@ -210,7 +210,7 @@ export default function LeaveDetailScreen() {
             <EmployeeAvatar emp={leave.employee} size={56} />
             <View style={s.empInfo}>
               <Text style={s.empName}>{leave.employee.legal_name}</Text>
-              <Text style={s.empSub} numberOfLines={1}>{leave.employee.job_position?.name ?? leave.employee.department?.name ?? '—'}</Text>
+              <Text style={s.empSub} numberOfLines={1} grow>{leave.employee.job_position?.name ?? leave.employee.department?.name ?? '—'}</Text>
             </View>
             <View style={[s.badge, { backgroundColor: stMeta.bg }]}>
               <Text style={[s.badgeText, { color: stMeta.fg }]}>{stMeta.label}</Text>
@@ -268,7 +268,7 @@ export default function LeaveDetailScreen() {
                   <EmployeeAvatar emp={signer} size={40} />
                   <View style={s.signerInfo}>
                     <Text style={s.signerName}>{signer.legal_name}</Text>
-                    <Text style={s.signerSub} numberOfLines={1}>{signer.job_position?.name ?? signer.department?.name ?? '—'}</Text>
+                    <Text style={s.signerSub} numberOfLines={1} grow>{signer.job_position?.name ?? signer.department?.name ?? '—'}</Text>
                   </View>
                   <View style={[s.signerStatus, { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: bg }]}>
                     <Icon name={hasSigned ? 'check' : rejected ? 'close' : 'clock'} size={13} color={tone} />

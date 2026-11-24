@@ -252,7 +252,7 @@ export default function KpiEntryScreen() {
                           onPress={() => setStatusPickerFor(task.id)}
                           activeOpacity={0.8}
                         >
-                          <Text style={[styles.statusPillText, { color: pillColor }]} numberOfLines={1}>
+                          <Text style={[styles.statusPillText, { color: pillColor }]} numberOfLines={1} grow>
                             {task.task_status?.name || t('kpi.statusNone')}
                           </Text>
                           {canStatus && !locked && <Icon name="chevronRight" size={13} color={pillColor} />}

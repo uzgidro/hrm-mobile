@@ -152,9 +152,9 @@ export default function MehmonlarScreen() {
             >
               <EmployeeAvatar emp={item} size={48} />
               <View style={{ flex: 1 }}>
-                <Text style={styles.name} numberOfLines={1}>{item.legal_name || t('visitors.nameFallback')}</Text>
+                <Text style={styles.name} numberOfLines={1} grow>{item.legal_name || t('visitors.nameFallback')}</Text>
                 {!!(item.organization_name || item.job_position) && (
-                  <Text style={styles.sub} numberOfLines={1}>
+                  <Text style={styles.sub} numberOfLines={1} grow>
                     {[item.organization_name, item.job_position].filter(Boolean).join(' · ')}
                   </Text>
                 )}

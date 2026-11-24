@@ -130,7 +130,7 @@ export default function LoyihaDetailScreen() {
       <View key={col.id} style={[styles.column, isBoardLandscape && styles.columnLandscape]}>
         <View style={styles.columnHeader}>
           <View style={[styles.colDot, { backgroundColor: col.color || colors.primary }]} />
-          <Text style={styles.columnName} numberOfLines={1}>{col.name || t('projects.columnFallback')}</Text>
+          <Text style={styles.columnName} numberOfLines={1} grow>{col.name || t('projects.columnFallback')}</Text>
           <Text style={styles.columnCount}>{cards.length}</Text>
         </View>
         {loading ? (
@@ -195,7 +195,7 @@ export default function LoyihaDetailScreen() {
                   {members.map((m, i) => (
                     <View key={m.id ?? i} style={styles.memberChip}>
                       <EmployeeAvatar emp={m.member ?? {}} size={26} />
-                      <Text style={styles.memberName} numberOfLines={1}>{m.member?.legal_name || t('projects.memberFallback')}</Text>
+                      <Text style={styles.memberName} numberOfLines={1} grow>{m.member?.legal_name || t('projects.memberFallback')}</Text>
                     </View>
                   ))}
                 </View>

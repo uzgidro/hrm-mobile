@@ -224,7 +224,7 @@ export function Composer({
             <Pressable key={p.id} accessibilityRole="button" onPress={() => choose(p)} style={styles.mentionRow}>
               <Avatar name={p.legal_name ?? '?'} uri={p.photo_path} thumb={p.photo_thumb_path} size={26} />
               <View style={styles.shrink}>
-                <Text variant="label" numberOfLines={1}>
+                <Text variant="label" numberOfLines={1} grow>
                   {p.legal_name}
                 </Text>
                 {!!(p.position_name || p.branch_name) && (

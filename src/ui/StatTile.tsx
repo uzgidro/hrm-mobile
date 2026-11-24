@@ -6,6 +6,7 @@ import React from 'react';
 import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useTheme } from '@/theme/ThemeProvider';
 import { LIP, moduleTint, radii, type ModuleTintKey } from '@/theme/tokens';
+import { useCardLook } from '@/theme/CardLook';
 import { Icon, type IconName } from '@/components/Icon';
 import { Text } from './Text';
 import { ProgressBar } from './ProgressBar';
@@ -38,11 +39,13 @@ export function StatTile({
 }) {
   const { colors: c } = useTheme();
   const t = moduleTint(c, tint);
+  const { radius } = useCardLook();
   const body = (pressed: boolean) => (
     <View
       style={[
         styles.tile,
         { backgroundColor: t.wash },
+        radius !== undefined && { borderRadius: radius },
         onPress && {
           borderColor: selected ? t.fg : `${t.fg}40`,
           borderWidth: selected ? 2 : 1.5,

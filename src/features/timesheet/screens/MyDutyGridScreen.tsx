@@ -173,7 +173,7 @@ export default function MyDutyGridScreen({ embedded = false }: { embedded?: bool
             <View style={styles.tabsRow}>
               {groups.map((g, i) => (
                 <TouchableOpacity key={g.id} style={[styles.tab, i === selectedGroupIdx && styles.tabActive]} onPress={() => setSelectedGroupIdx(i)}>
-                  <Text style={[styles.tabText, i === selectedGroupIdx && styles.tabTextActive]} numberOfLines={1}>{g.name ?? `#${g.id}`}</Text>
+                  <Text style={[styles.tabText, i === selectedGroupIdx && styles.tabTextActive]} numberOfLines={1} grow>{g.name ?? `#${g.id}`}</Text>
                 </TouchableOpacity>
               ))}
             </View>

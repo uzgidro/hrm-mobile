@@ -143,7 +143,7 @@ export default function ProfileScreen() {
                 {userDisplayName(user) || t('profile.userFallback')}
               </Text>
               {employee?.job_position?.name ? (
-                <Text style={styles.userRole} numberOfLines={1}>
+                <Text style={styles.userRole} numberOfLines={1} grow>
                   {employee.job_position.name}
                 </Text>
               ) : typeKey ? (
@@ -185,10 +185,10 @@ export default function ProfileScreen() {
               <Icon name="building" size={22} color={colors.primary} />
             </View>
             <View style={styles.orgInfo}>
-              <Text style={styles.orgName} numberOfLines={1}>
+              <Text style={styles.orgName} numberOfLines={1} grow>
                 {employee?.department?.name || t('profile.orgFallback')}
               </Text>
-              <Text style={styles.orgBranch} numberOfLines={1}>
+              <Text style={styles.orgBranch} numberOfLines={1} grow>
                 {employee?.organization_branches?.[0]?.name || t('profile.branchFallback')}
               </Text>
             </View>

@@ -5,6 +5,7 @@ import React from 'react';
 import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useTheme } from '@/theme/ThemeProvider';
 import { moduleTint, radii, shadow, type ModuleTintKey } from '@/theme/tokens';
+import { useCardLook } from '@/theme/CardLook';
 import { Icon, type IconName } from '@/components/Icon';
 import { Text } from './Text';
 
@@ -29,10 +30,19 @@ export function Card({
 }) {
   const { colors: c } = useTheme();
   const t = moduleTint(c, tint);
+  const look = useCardLook();
   return (
     <View
       testID={testID}
-      style={[styles.card, { backgroundColor: c.surface, borderColor: c.border }, shadow('sm', c), padded && styles.padded, style]}
+      style={[
+        styles.card,
+        { backgroundColor: look.ground ?? c.surface, borderColor: c.border },
+        look.style !== 'flat' && look.style !== 'outline' && shadow('sm', c),
+        look.style === 'outline' && { borderWidth: 1, borderColor: c.borderStrong },
+        look.radius !== undefined && { borderRadius: look.radius },
+        padded && styles.padded,
+        style,
+      ]}
     >
       {(title || action) && (
         <View style={styles.header}>
@@ -42,7 +52,7 @@ export function Card({
             </View>
           )}
           {title && (
-            <Text variant="heading" style={styles.title} numberOfLines={1} accessibilityRole="header">
+            <Text variant="heading" style={styles.title} numberOfLines={1} grow accessibilityRole="header">
               {title}
             </Text>
           )}

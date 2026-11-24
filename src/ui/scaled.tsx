@@ -12,7 +12,7 @@ import {
   type TextProps,
   type TextStyle,
 } from 'react-native';
-import { MAX_TOTAL_SCALE, useTextScale } from '@/store/textSizeStore';
+import { LARGE_SCALE, MAX_TOTAL_SCALE, useTextScale } from '@/store/textSizeStore';
 
 /** So `useRef<TextInput>` keeps working. */
 export type TextInput = RNTextInput;
@@ -40,13 +40,19 @@ export function scaledText(style: TextStyle | undefined, scale: number, fallback
 export const osCap = (given: number | null | undefined, scale: number): number =>
   Math.max(1, Math.min(given || Infinity, MAX_TOTAL_SCALE / scale));
 
-export function Text({ style, maxFontSizeMultiplier, ...rest }: TextProps & { ref?: React.Ref<RNText> }) {
+export type ScaledTextProps = TextProps & {
+  ref?: React.Ref<RNText>;
+  /** One line at the normal sizes, two once the text is large: names and titles. */
+  grow?: boolean;
+};
+
+export function Text({ style, maxFontSizeMultiplier, grow, numberOfLines, ...rest }: ScaledTextProps) {
   const scale = useTextScale();
   const nested = useContext(Nested);
   if (scale === 1) {
     return (
       <Nested.Provider value>
-        <RNText {...rest} style={style} maxFontSizeMultiplier={maxFontSizeMultiplier} />
+        <RNText {...rest} numberOfLines={numberOfLines} style={style} maxFontSizeMultiplier={maxFontSizeMultiplier} />
       </Nested.Provider>
     );
   }
@@ -55,6 +61,7 @@ export function Text({ style, maxFontSizeMultiplier, ...rest }: TextProps & { re
     <Nested.Provider value>
       <RNText
         {...rest}
+        numberOfLines={grow && numberOfLines === 1 && scale >= LARGE_SCALE ? 2 : numberOfLines}
         style={[flat, scaledText(flat, scale, nested ? undefined : DEFAULT_SIZE)]}
         maxFontSizeMultiplier={osCap(maxFontSizeMultiplier, scale)}
       />

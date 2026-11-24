@@ -145,7 +145,7 @@ export default function CardDetailScreen() {
                     ) : (
                       <View style={[styles.avatar, styles.avatarFallback]}><Icon name="user" size={16} color={colors.textMuted} /></View>
                     )}
-                    <Text style={styles.memberName} numberOfLines={1}>{m.member?.legal_name ?? '—'}</Text>
+                    <Text style={styles.memberName} numberOfLines={1} grow>{m.member?.legal_name ?? '—'}</Text>
                   </View>
                 ))}
               </View>

@@ -8,6 +8,7 @@
 // PATHS below using the same 24×24 viewBox.
 
 import React from 'react';
+import { useTextScale } from '@/store/textSizeStore';
 import Svg, { Path, Circle, Line, Polyline, Rect } from 'react-native-svg';
 
 export type IconName =
@@ -84,6 +85,8 @@ export const Icon = React.memo(function Icon({
   color = '#000',
   strokeWidth = 2,
 }: Props) {
+  // Icons keep pace with the text, up to what their fixed boxes hold.
+  const px = size * Math.min(useTextScale(), 1.25);
   const common = {
     stroke: color,
     strokeWidth,
@@ -93,7 +96,7 @@ export const Icon = React.memo(function Icon({
   };
 
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24">
+    <Svg width={px} height={px} viewBox="0 0 24 24">
       {render(name, common)}
     </Svg>
   );

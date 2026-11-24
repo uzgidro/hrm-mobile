@@ -62,7 +62,7 @@ const makeStyles = (c: ThemeColors) =>
       borderWidth: 2,
       borderColor: c.cardBorder,
       paddingHorizontal: 12,
-      height: 46,
+      minHeight: 46,
     },
-    searchInput: { flex: 1, color: c.text, fontSize: 15, ...NO_WEB_OUTLINE, ...ff('700') },
+    searchInput: { flex: 1, minWidth: 0, color: c.text, fontSize: 15, ...NO_WEB_OUTLINE, ...ff('700') },
   });

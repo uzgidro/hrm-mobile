@@ -198,7 +198,7 @@ export default function MehmonFormScreen() {
           {!isEdit && mode === 'employee' && (
             <TouchableOpacity style={styles.empPick} onPress={() => setEmpPickerOpen(true)} activeOpacity={0.8}>
               <Icon name="users" size={18} color={colors.primary} />
-              <Text style={[styles.empPickText, !sourceEmployee && { color: colors.textMuted }]} numberOfLines={1}>
+              <Text style={[styles.empPickText, !sourceEmployee && { color: colors.textMuted }]} numberOfLines={1} grow>
                 {sourceEmployee?.legal_name || t('visitors.pickEmployee')}
               </Text>
               <Icon name="chevronRight" size={18} color={colors.textMuted} />

@@ -135,7 +135,7 @@ export default function TeamLeavesScreen() {
                 {leave.employee && (
                   <View style={styles.empRow}>
                     <EmployeeAvatar emp={leave.employee} size={30} />
-                    <Text style={styles.empName} numberOfLines={1}>{leave.employee.legal_name}</Text>
+                    <Text style={styles.empName} numberOfLines={1} grow>{leave.employee.legal_name}</Text>
                   </View>
                 )}
                 <View style={styles.cardTop}>

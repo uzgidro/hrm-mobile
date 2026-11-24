@@ -20,6 +20,8 @@ const VARIANTS: Record<TextVariant, () => TextStyle> = {
 };
 
 export type UIText = TextProps & {
+  /** See `scaled`: two lines instead of one when the text is large. */
+  grow?: boolean;
   variant?: TextVariant;
   tone?: TextTone;
   /** Og'irlik — style'da `fontWeight` emas, shu prop (maxsus shriftda soxta qalinlik bo'lmasin). */

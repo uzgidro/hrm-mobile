@@ -112,9 +112,9 @@ export default function KpiTeamScreen() {
                 <EmployeeAvatar emp={m} size={48} />
 
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.name} numberOfLines={1}>{m.legal_name || '—'}</Text>
+                  <Text style={styles.name} numberOfLines={1} grow>{m.legal_name || '—'}</Text>
                   {!!(m.job_position_name || m.department_name) && (
-                    <Text style={styles.sub} numberOfLines={1}>
+                    <Text style={styles.sub} numberOfLines={1} grow>
                       {[m.job_position_name, m.department_name].filter(Boolean).join(' · ')}
                     </Text>
                   )}

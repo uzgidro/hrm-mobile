@@ -165,7 +165,7 @@ export default function VehicleProfileScreen() {
               size={38}
             />
             <View style={styles.flex}>
-              <Text variant="body" weight="600" numberOfLines={1}>
+              <Text variant="body" weight="600" numberOfLines={1} grow>
                 {v.driver.legal_name}
               </Text>
               <Text variant="caption" tone="subtle" selectable numberOfLines={1}>

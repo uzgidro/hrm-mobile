@@ -31,6 +31,7 @@ import { Button } from '../../src/ui/Button';
 import { Badge } from '../../src/ui/Badge';
 import { LinearGradient } from 'expo-linear-gradient';
 import { gradients, radii, shadow } from '../../src/theme/tokens';
+import { useTightLabel } from '../../src/store/textSizeStore';
 import { Tomchi } from '../../src/ui/mascot/Tomchi';
 import { caretRatio, moodForLogin, type TomchiMood } from '../../src/ui/mascot/tomchiPose';
 import { LANGUAGES, LANGUAGE_FLAG, LANGUAGE_NATIVE_NAME } from '../../src/i18n/locales';
@@ -55,6 +56,9 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [showPass, setShowPass] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
+  // The bubble's line changes with the focus: past this size it would grow taller than
+  // Tomchi and move the form under the finger.
+  const bubble = useTightLabel();
   // Tomchi maskoti: qaysi maydon fokusda va oxirgi urinish natijasi. Xato
   // foydalanuvchi yana yoza boshlaganda o'chadi (maskot xafa turib qolmaydi).
   const [focused, setFocused] = useState<'username' | 'password' | null>(null);
@@ -228,7 +232,7 @@ export default function LoginScreen() {
             <Tomchi mood={mood} lookX={focused === 'username' ? caretRatio(username) : 0.5} size={132} />
             <View style={styles.bubble} accessibilityLiveRegion="polite">
               <View style={styles.bubbleTail} />
-              <Text style={styles.bubbleText}>{t(BUBBLE_KEY[mood])}</Text>
+              <Text style={[styles.bubbleText, { fontSize: 15 * bubble, lineHeight: 20 * bubble }]}>{t(BUBBLE_KEY[mood])}</Text>
             </View>
           </LinearGradient>
 

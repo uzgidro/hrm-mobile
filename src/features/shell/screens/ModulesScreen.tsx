@@ -16,7 +16,7 @@ import { Icon, type IconName } from '@/components/Icon';
 import { canAccessPage, type PageKey } from '@/utils/roles';
 import { catalogBySection, visibleCatalog } from '@/utils/moduleCatalog';
 import { useBreakpoint } from '@/utils/responsive';
-import { useTextScale } from '@/store/textSizeStore';
+import { useLargeText, useTextScale } from '@/store/textSizeStore';
 import { fitLabelFontSize } from '../utils/fitLabel';
 import { EmptyState, Screen, SearchField, Text } from '@/ui';
 
@@ -97,7 +97,9 @@ export default function ModulesScreen() {
       .filter((g) => g.tiles.length > 0);
   }, [groups, query]);
 
-  const cols = sizeClass === 'expanded' ? 6 : sizeClass === 'medium' ? 4 : 3;
+  // Enlarged text gets wider tiles: in a narrow one the longest word would shrink it back.
+  const large = useLargeText();
+  const cols = sizeClass === 'expanded' ? (large ? 5 : 6) : sizeClass === 'medium' ? (large ? 3 : 4) : large ? 2 : 3;
   const tileW = width > 0 ? Math.floor((width - GAP * (cols - 1)) / cols) : 0;
 
   return (

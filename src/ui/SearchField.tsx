@@ -58,10 +58,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    height: 44,
+    minHeight: 44,
     borderRadius: radii.pill,
     borderWidth: 1.5,
     paddingHorizontal: 12.5,
   },
-  input: { flex: 1, fontSize: 15, paddingVertical: 0 },
+  // `minWidth: 0`: a browser's input is as wide as twenty letters and pushed the icon out.
+  input: { flex: 1, minWidth: 0, fontSize: 15, paddingVertical: 0 },
 });

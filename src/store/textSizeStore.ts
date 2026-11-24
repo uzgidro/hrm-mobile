@@ -53,5 +53,18 @@ export const useTextSizeStore = create<TextSizeState>((set) => ({
   },
 }));
 
+/** Enlarged enough that a name no longer fits one line. */
+export const LARGE_SCALE = 1.25;
+
 /** How much the chosen step enlarges the text (1 = normal). */
 export const useTextScale = (): number => useTextSizeStore((s) => scaleOf(s.id));
+/**
+ * Factor for labels whose width is fixed by their number (seven weekdays in a row): the size
+ * they are drawn at never passes 112 %, whatever the step.
+ */
+export const useTightLabel = (): number => {
+  const scale = useTextScale();
+  return Math.min(scale, 1.125) / scale;
+};
+
+export const useLargeText = (): boolean => useTextScale() >= LARGE_SCALE;

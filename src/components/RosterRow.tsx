@@ -30,8 +30,8 @@ export const RosterRow = React.memo(function RosterRow({ row, colors: c, showBor
       <View style={[styles.statusStripe, { backgroundColor: sectionColor(row.status, c) }]} />
       <EmployeeAvatar emp={row.employee} size={48} />
       <View style={styles.empInfo}>
-        <Text style={[styles.empName, { color: c.text }]} numberOfLines={1}>{row.employee.legal_name}</Text>
-        <Text style={[styles.empPosition, { color: c.textMuted }]} numberOfLines={1}>
+        <Text style={[styles.empName, { color: c.text }]} numberOfLines={1} grow>{row.employee.legal_name}</Text>
+        <Text style={[styles.empPosition, { color: c.textMuted }]} numberOfLines={1} grow>
           {row.employee.job_position?.name ?? row.employee.department?.name ?? '—'}
         </Text>
       </View>

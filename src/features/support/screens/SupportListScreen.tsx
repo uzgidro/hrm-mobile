@@ -141,7 +141,7 @@ export default function SupportListScreen() {
               <Text style={styles.desc} numberOfLines={2}>{item.description}</Text>
               {/* In the queue the REQUESTER matters (who to walk to); in "mine" the specialist. */}
               {scope === 'queue' && !!item.creator?.legal_name && (
-                <Text style={styles.metaText} numberOfLines={1}>
+                <Text style={styles.metaText} numberOfLines={1} grow>
                   {item.creator.legal_name}{item.creator_internal_number ? ` · ${item.creator_internal_number}` : ''}
                   {item.room_number ? ` · ${t('support.fieldRoom')} ${item.room_number}` : ''}
                 </Text>

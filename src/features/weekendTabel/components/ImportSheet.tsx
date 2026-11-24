@@ -78,7 +78,7 @@ export function ImportSheet({
           full
         />
         {file && (
-          <Text variant="caption" tone="subtle" numberOfLines={1}>
+          <Text variant="caption" tone="subtle" numberOfLines={1} grow>
             {file.name}
           </Text>
         )}

@@ -2,15 +2,19 @@
 // home screen»). One catalogue of blocks for both boards (web v2 `boardConfig` is the
 // counterpart; the blocks differ, so the storage key does too).
 //
-// The config is an ordered list of block keys. A key the account may not read simply
-// is not drawn — the config never grants access to anything. A block that is off is
+// The config is an ordered list of block keys: built-in blocks, plus the ones a person adds —
+// a module's list (`mod:<page>`), a button to a page (`page:<page>`), a note (`note:<id>`).
+// A key the account may not read simply is not drawn — the config never grants access to anything. A block that is off is
 // not mounted, so it asks the server for nothing.
+import { CATALOG, type CatalogEntry } from '@/utils/moduleCatalog';
 import type { IconName } from '@/components/Icon';
 import type { ModuleTintKey } from '@/theme/tokens';
 import type { User } from '@/types';
 import { canAccessPage } from '@/utils/roles';
 import type { HomeBoard } from '@/utils/homeBoard';
 import { canSeeSanatorium } from '@/features/sanatorium/utils/sanatorium';
+import { isFacePage } from '../faces/faceQueries';
+import { readBlockLook, readLook, type BlockLook, type HomeLook } from './homeLook';
 
 /** The boards a person can arrange; the other `HomeBoard`s live on other screens. */
 export type HomeBoardKind = Extract<HomeBoard, 'employee' | 'leader'>;
@@ -20,7 +24,20 @@ export const HOME_BLOCK_KEYS = [
   'hero', 'timeline', 'stats', 'week',
   'tiles', 'live', 'status', 'birthdays', 'composition', 'discipline',
 ] as const;
-export type HomeBlockKey = (typeof HOME_BLOCK_KEYS)[number];
+export type BuiltinKey = (typeof HOME_BLOCK_KEYS)[number];
+export type CustomKind = 'mod' | 'page' | 'note';
+export type HomeBlockKey = BuiltinKey | `${CustomKind}:${string}`;
+
+/** How many of each a person may keep: a module list asks the server, the others do not. */
+export const CUSTOM_MAX: Record<CustomKind, number> = { mod: 6, page: 12, note: 4 };
+
+/** `null` — a built-in block. */
+export function customOf(key: HomeBlockKey): { kind: CustomKind; id: string } | null {
+  const m = /^(mod|page|note):(.+)$/.exec(key);
+  return m ? { kind: m[1] as CustomKind, id: m[2]! } : null;
+}
+export const entryOf = (page: string): CatalogEntry | undefined =>
+  page === 'home' ? undefined : CATALOG.find((m) => m.page === page);
 
 export interface HomeBlockDef {
   titleKey: string;
@@ -37,7 +54,7 @@ const hasCard = (user: User | null | undefined) => !!user?.employee?.id;
 const mine: HomeBlockDef['available'] = (user, board) => board === 'employee' || hasCard(user);
 const apparatus: HomeBlockDef['available'] = (_user, board) => board === 'leader';
 
-export const HOME_BLOCKS: Record<HomeBlockKey, HomeBlockDef> = {
+export const HOME_BLOCKS: Record<BuiltinKey, HomeBlockDef> = {
   sanatorium: {
     titleKey: 'sanatorium.title',
     icon: 'sun',
@@ -75,6 +92,35 @@ export const HOME_BLOCKS: Record<HomeBlockKey, HomeBlockDef> = {
   discipline: { titleKey: 'dashboard.home.discipline', icon: 'checklist', tint: 'pink', available: apparatus },
 };
 
+/** Module lists that are about the person: the server refuses them without an employee card. */
+const FACES_WITH_CARD: readonly string[] = ['chrono', 'support'];
+
+/** Title, icon and rights of any block; `undefined` — a page this version does not know. */
+export function blockDef(key: HomeBlockKey): HomeBlockDef | undefined {
+  const custom = customOf(key);
+  if (!custom) return HOME_BLOCKS[key as BuiltinKey];
+  if (custom.kind === 'note') {
+    return { titleKey: 'dashboard.customise.note', icon: 'edit', tint: 'amber', available: () => true };
+  }
+  const entry = entryOf(custom.id);
+  if (!entry || (custom.kind === 'mod' && !isFacePage(custom.id))) return undefined;
+  return {
+    titleKey: entry.labelKey,
+    icon: entry.icon,
+    tint: entry.tint,
+    available: (u) =>
+      canAccessPage(u, entry.page) && (custom.kind === 'page' || hasCard(u) || !FACES_WITH_CARD.includes(entry.page)),
+  };
+}
+
+/** Pages the account may put on its home screen, as a button or as a list. */
+export function offeredKeys(kind: 'mod' | 'page', user: User | null | undefined, board: HomeBoardKind): HomeBlockKey[] {
+  const pages = [...new Set(CATALOG.map((m) => m.page))];
+  return pages
+    .map((page) => `${kind}:${page}` as HomeBlockKey)
+    .filter((k) => isHomeBlockAvailable(k, user, board));
+}
+
 /** Blocks drawn from the leader's day board (one pair of requests between them). */
 export const DAY_BLOCKS: readonly HomeBlockKey[] = ['tiles', 'live', 'status'];
 
@@ -92,7 +138,22 @@ const BUILTIN: Record<HomeBoardKind, readonly HomeBlockKey[]> = {
 };
 export const builtinHome = (board: HomeBoardKind): HomeBlockKey[] => [...BUILTIN[board]];
 
-const isKey = (k: unknown): k is HomeBlockKey => (HOME_BLOCK_KEYS as readonly unknown[]).includes(k);
+const isKey = (k: unknown): k is HomeBlockKey => {
+  if (typeof k !== 'string') return false;
+  if ((HOME_BLOCK_KEYS as readonly string[]).includes(k)) return true;
+  const custom = customOf(k as HomeBlockKey);
+  if (!custom) return false;
+  return custom.kind === 'note' ? /^[a-z0-9]{1,12}$/.test(custom.id) : blockDef(k as HomeBlockKey) !== undefined;
+};
+
+/** Over the limit of its kind: the server may hold anything, the screen draws a bounded number. */
+function withinLimits(keys: HomeBlockKey[]): HomeBlockKey[] {
+  const n: Record<CustomKind, number> = { mod: 0, page: 0, note: 0 };
+  return keys.filter((k) => {
+    const custom = customOf(k);
+    return !custom || ++n[custom.kind] <= CUSTOM_MAX[custom.kind];
+  });
+}
 
 /**
  * A stored config made safe to draw: unknown and repeated keys dropped. `null` — not a
@@ -107,7 +168,7 @@ export function normaliseHome(raw: unknown, board: HomeBoardKind): HomeBlockKey[
   const r = raw as Record<string, unknown>;
   if (!Array.isArray(r.blocks)) return null;
   if (r.board != null && r.board !== board) return null;
-  const out = [...new Set(r.blocks.filter(isKey))];
+  const out = withinLimits([...new Set(r.blocks.filter(isKey))]);
   return out.length === 0 && r.blocks.length > 0 ? null : out;
 }
 
@@ -124,11 +185,46 @@ export function standardHome(defaults: unknown, board: HomeBoardKind, role: stri
 }
 
 export const isHomeBlockAvailable = (k: HomeBlockKey, user: User | null | undefined, board: HomeBoardKind) =>
-  HOME_BLOCKS[k].available(user, board);
+  blockDef(k)?.available(user, board) ?? false;
 
 /** The part of the config this account may see, in order. */
 export const visibleHome = (blocks: readonly HomeBlockKey[], user: User | null | undefined, board: HomeBoardKind) =>
   blocks.filter((k) => isHomeBlockAvailable(k, user, board));
+
+/** Everything a person decides about their home screen. */
+export interface HomeSetup {
+  blocks: HomeBlockKey[];
+  look?: HomeLook;
+  /** Name, colour and text of single blocks. */
+  items?: Record<string, BlockLook>;
+}
+
+/** A setup in the one shape it is saved and compared in. */
+export function setupOf(blocks: HomeBlockKey[], look?: unknown, items?: unknown): HomeSetup {
+  const cleanLook = readLook(look);
+  const raw = items && typeof items === 'object' ? (items as Record<string, unknown>) : {};
+  const kept = blocks
+    .map((k) => [k, readBlockLook(raw[k])] as const)
+    .filter((e): e is [HomeBlockKey, BlockLook] => e[1] !== undefined)
+    .sort(([a], [b]) => (a < b ? -1 : 1));
+  return { blocks, ...(cleanLook && { look: cleanLook }), ...(kept.length > 0 && { items: Object.fromEntries(kept) }) };
+}
+
+/** A stored config made safe to draw; `null` — see `normaliseHome`. */
+export function normaliseSetup(raw: unknown, board: HomeBoardKind): HomeSetup | null {
+  const blocks = normaliseHome(raw, board);
+  if (!blocks) return null;
+  const r = raw as Record<string, unknown>;
+  return setupOf(blocks, r.look, r.items);
+}
+
+/** The standard of a role with its design. */
+export function standardSetup(defaults: unknown, board: HomeBoardKind, role: string): HomeSetup {
+  const stored = (defaults as Record<string, unknown> | null | undefined)?.[roleHomeKey(role)];
+  return normaliseSetup(stored, board) ?? { blocks: builtinHome(board) };
+}
+
+export const sameSetup = (a: HomeSetup, b: HomeSetup) => JSON.stringify(a) === JSON.stringify(b);
 
 export const sameHome = (a: readonly HomeBlockKey[], b: readonly HomeBlockKey[]) => a.join() === b.join();
 

@@ -174,7 +174,7 @@ function FolderRow({
         <Icon name="folder" size={22} color={colors.primary} />
       </View>
       <View style={{ flex: 1 }}>
-        <Text style={styles.name} numberOfLines={1}>{folder.name || t('documents.folderFallback')}</Text>
+        <Text style={styles.name} numberOfLines={1} grow>{folder.name || t('documents.folderFallback')}</Text>
         <Text style={styles.sub}>{t('documents.fileCount', { count })}</Text>
       </View>
       {/* Web parity: the scope pill is shown for files only, never folders. */}

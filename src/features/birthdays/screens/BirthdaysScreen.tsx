@@ -81,7 +81,7 @@ export default function BirthdaysScreen() {
                 <EmployeeAvatar emp={emp} size={48} />
                 <View style={styles.empInfo}>
                   <View style={styles.nameRow}>
-                    <Text style={styles.empName} numberOfLines={1}>{emp.legal_name}</Text>
+                    <Text style={styles.empName} numberOfLines={1} grow>{emp.legal_name}</Text>
                     {isToday && (
                       <View style={styles.todayBadgeRow}>
                         <Icon name="gift" size={13} color={colors.warning} />
@@ -90,7 +90,7 @@ export default function BirthdaysScreen() {
                     )}
                     {isSoon && !isToday && <Text style={styles.soonBadge}>{t('birthdays.daysLeft', { count: emp.days_left })}</Text>}
                   </View>
-                  <Text style={styles.empSub} numberOfLines={1}>{emp.job_position?.name ?? '—'}</Text>
+                  <Text style={styles.empSub} numberOfLines={1} grow>{emp.job_position?.name ?? '—'}</Text>
                   {birthDay && (
                     <View style={styles.birthDateRow}>
                       <Icon name="cake" size={14} color={isToday ? colors.warning : colors.textSecondary} />

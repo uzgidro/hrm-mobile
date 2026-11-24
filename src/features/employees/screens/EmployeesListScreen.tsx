@@ -119,8 +119,8 @@ export default function EmployeesListScreen() {
           >
             <EmployeeAvatar emp={emp} size={48} />
             <View style={styles.empInfo}>
-              <Text style={styles.empName} numberOfLines={1}>{emp.legal_name}</Text>
-              <Text style={styles.empSub} numberOfLines={1}>{emp.job_position?.name ?? emp.department?.name ?? '—'}</Text>
+              <Text style={styles.empName} numberOfLines={1} grow>{emp.legal_name}</Text>
+              <Text style={styles.empSub} numberOfLines={1} grow>{emp.job_position?.name ?? emp.department?.name ?? '—'}</Text>
             </View>
             <Icon name="chevronRight" size={20} color={colors.textMuted} />
           </TouchableOpacity>

@@ -50,7 +50,7 @@ export function StatFilterTiles<K extends string>({
               <Icon name={tile.icon} size={18} color="#FFFFFF" strokeWidth={2.3} />
             </View>
             <View style={styles.texts}>
-              <Text style={styles.label} numberOfLines={1}>{tile.label}</Text>
+              <Text style={styles.label} numberOfLines={1} grow>{tile.label}</Text>
               <Text style={styles.value}>{tile.value ?? '—'}</Text>
             </View>
           </TouchableOpacity>

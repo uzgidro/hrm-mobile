@@ -221,7 +221,7 @@ export default function AssistantScreen() {
                     style={styles.sessionNameBtn}
                     onPress={() => { setSessionId(s.id); setShowSessions(false); }}
                   >
-                    <Text style={[styles.sessionName, s.id === activeId && styles.sessionNameActive]} numberOfLines={1}>
+                    <Text style={[styles.sessionName, s.id === activeId && styles.sessionNameActive]} numberOfLines={1} grow>
                       {s.name || t('assistant.sessionFallback')} · #{s.id}
                     </Text>
                   </TouchableOpacity>

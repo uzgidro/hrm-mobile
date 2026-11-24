@@ -119,11 +119,11 @@ function FaceRowView({ row, testID }: { row: FaceRow; testID: string }) {
     >
       {row.person && <Avatar name={row.person.name} uri={row.person.uri} thumb={row.person.thumb} size={32} />}
       <View style={styles.text}>
-        <Text variant="label" weight="600" numberOfLines={1}>
+        <Text variant="label" weight="600" numberOfLines={1} grow>
           {row.title}
         </Text>
         {!!row.subtitle && (
-          <Text variant="caption" tone="subtle" numberOfLines={1}>
+          <Text variant="caption" tone="subtle" numberOfLines={1} grow>
             {row.subtitle}
           </Text>
         )}
@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
   },
   text: { flex: 1, minWidth: 0, gap: 1 },
-  badge: { flexShrink: 1, maxWidth: '38%' },
+  badge: { flexShrink: 1, maxWidth: '46%' },
   error: { gap: 8, alignItems: 'flex-start' },
   errorText: { alignSelf: 'stretch' },
   retry: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 14, borderRadius: radii.pill, borderWidth: StyleSheet.hairlineWidth },

@@ -160,7 +160,7 @@ export default function LoyihaFormScreen() {
               {selectedMembers.map((m) => (
                 <View key={m.id} style={styles.chip}>
                   <EmployeeAvatar emp={m} size={24} />
-                  <Text style={styles.chipName} numberOfLines={1}>{m.legal_name}</Text>
+                  <Text style={styles.chipName} numberOfLines={1} grow>{m.legal_name}</Text>
                   <TouchableOpacity onPress={() => toggleMember(m.id)} hitSlop={6}>
                     <Icon name="close" size={14} color={colors.textMuted} />
                   </TouchableOpacity>

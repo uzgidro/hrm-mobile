@@ -378,7 +378,7 @@ export function CheckinRow({ item, onPress, showName }: { item: MobileCheckin; o
       <View style={styles.flex}>
         {/* Kadr ro'yxatida ism — alohida sarlavha (vaqt bilan bir qatorda kesilib qolardi). */}
         {showName && !!item.employee?.legal_name && (
-          <Text variant="label" numberOfLines={1}>
+          <Text variant="label" numberOfLines={1} grow>
             {item.employee.legal_name}
           </Text>
         )}
