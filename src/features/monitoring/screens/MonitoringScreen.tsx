@@ -8,11 +8,16 @@ import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import dayjs from 'dayjs';
 import { router } from 'expo-router';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import type { IconName } from '@/components/Icon';
 import type { ModuleTintKey } from '@/theme/tokens';
 import { useAuthStore } from '@/store/authStore';
+import { isGuestCard, isPass, passInBranch } from '@/lib/liveSocket';
+import { useLiveSocket } from '@/lib/useLiveSocket';
+import { usePull } from '@/lib/usePull';
+import { useThrottled } from '@/lib/useThrottled';
+import { LiveBadge } from '@/components/LiveBadge';
 import { canSeeLateness } from '@/utils/roles';
 import {
   defaultGlobalBranchId,
@@ -47,6 +52,10 @@ import {
   visitorPassesQuery,
 } from '../api/queries';
 
+const TOTALS_MS = 30_000;
+/** How often the screen asks while the live socket is down. */
+const DOWN_POLL_MS = 30_000;
+
 export default function MonitoringScreen({ showBack = false }: { showBack?: boolean } = {}) {
   const { t } = useTranslation();
   const { sizeClass } = useBreakpoint();
@@ -67,10 +76,33 @@ export default function MonitoringScreen({ showBack = false }: { showBack?: bool
   const lateness = canSeeLateness(user);
   const today = dayjs().format('YYYY-MM-DD');
 
-  const main = useQuery(monitoringMainQuery(branchId, today));
-  const late = useQuery(lateEmployeesQuery(branchId, lateness));
+  // A pass is a hint to ask the server again, never a verdict of its own: the totals and the
+  // late list are heavy, so at most once in half a minute; the guests' list right away.
+  const queryClient = useQueryClient();
+  const { pulling, pull } = usePull();
+  const reloadTotals = useThrottled(() => {
+    void queryClient.invalidateQueries({ queryKey: ['monitoring', 'main'] });
+    void queryClient.invalidateQueries({ queryKey: ['monitoring', 'late'] });
+  }, TOTALS_MS, 2_000);
+  const reloadGuests = useThrottled(() => void queryClient.invalidateQueries({ queryKey: ['monitoring', 'visitors'] }), 700);
+  const live = useLiveSocket(branchId != null, {
+    message: (m) => {
+      if (isGuestCard(m)) return reloadGuests();
+      if (!isPass(m) || !passInBranch(m, branchId)) return;
+      reloadTotals();
+      if (m.visitor_id) reloadGuests();
+    },
+    resync: () => {
+      reloadTotals();
+      reloadGuests();
+    },
+  });
+  const poll = live === 'down' ? { refetchInterval: DOWN_POLL_MS } : {};
+
+  const main = useQuery({ ...monitoringMainQuery(branchId, today), ...poll });
+  const late = useQuery({ ...lateEmployeesQuery(branchId, lateness), ...poll });
   const frequent = useQuery(frequentLateQuery(branchId, today, lateness));
-  const guests = useQuery(visitorPassesQuery(branchId, today));
+  const guests = useQuery({ ...visitorPassesQuery(branchId, today), ...poll });
 
   const header = (
     <View style={styles.header}>
@@ -78,6 +110,7 @@ export default function MonitoringScreen({ showBack = false }: { showBack?: bool
       <Text variant="title" accessibilityRole="header">
         {t('monitoring.title')}
       </Text>
+      <LiveBadge status={live} />
     </View>
   );
 
@@ -256,8 +289,8 @@ export default function MonitoringScreen({ showBack = false }: { showBack?: bool
 
   return (
     <Screen
-      refreshing={main.isRefetching}
-      onRefresh={() => void Promise.all([main.refetch(), late.refetch(), frequent.refetch(), guests.refetch()])}
+      refreshing={pulling}
+      onRefresh={() => void pull(() => Promise.all([main.refetch(), late.refetch(), frequent.refetch(), guests.refetch()]))}
     >
       {header}
       {branchSelect}
