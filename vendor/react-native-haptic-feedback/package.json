@@ -1,0 +1,8 @@
+{
+  "name": "react-native-haptic-feedback",
+  "version": "3.0.0",
+  "description": "Empty stand-in that keeps the native haptics module out of the app (see index.js)",
+  "main": "index.js",
+  "license": "MIT",
+  "private": true
+}

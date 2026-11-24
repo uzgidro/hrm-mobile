@@ -12,6 +12,7 @@ export function IconButton({
   accessibilityLabel,
   badge,
   tone = 'plain',
+  disabled = false,
   testID,
 }: {
   icon: IconName;
@@ -19,19 +20,23 @@ export function IconButton({
   accessibilityLabel: string;
   badge?: number;
   tone?: 'plain' | 'soft';
+  disabled?: boolean;
   testID?: string;
 }) {
   const { colors: c } = useTheme();
   return (
     <Pressable
       onPress={onPress}
+      disabled={disabled}
       testID={testID}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
+      accessibilityState={disabled ? { disabled } : undefined}
       style={({ pressed }) => [
         styles.btn,
         tone === 'soft' && { backgroundColor: c.surface, borderColor: c.border, borderWidth: StyleSheet.hairlineWidth },
         pressed && { backgroundColor: c.surface2 },
+        disabled && styles.disabled,
       ]}
     >
       <Icon name={icon} size={22} color={c.fgMuted} />
@@ -48,6 +53,7 @@ export function IconButton({
 
 const styles = StyleSheet.create({
   btn: { width: 44, height: 44, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
+  disabled: { opacity: 0.3 },
   badge: {
     position: 'absolute',
     top: 4,

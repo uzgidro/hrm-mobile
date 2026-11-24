@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
-import {
-  View, Text, StyleSheet, TextInput, TouchableOpacity, RefreshControl, FlatList, BackHandler,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, RefreshControl, FlatList, BackHandler } from 'react-native';
+import { Text, TextInput } from '@/ui/scaled';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { router, useFocusEffect } from 'expo-router';
@@ -175,7 +174,7 @@ function FolderRow({
         <Icon name="folder" size={22} color={colors.primary} />
       </View>
       <View style={{ flex: 1 }}>
-        <Text style={styles.name} numberOfLines={1}>{folder.name || t('documents.folderFallback')}</Text>
+        <Text style={styles.name} numberOfLines={1} grow>{folder.name || t('documents.folderFallback')}</Text>
         <Text style={styles.sub}>{t('documents.fileCount', { count })}</Text>
       </View>
       {/* Web parity: the scope pill is shown for files only, never folders. */}

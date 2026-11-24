@@ -15,6 +15,7 @@ import { locationsCatalogQuery } from '@/utils/attendance';
 import { resolveEmployeeBranchId } from '@/utils/branch';
 import { useBreakpoint } from '@/utils/responsive';
 import { weekdayNameShort } from '@/i18n/dates';
+import { useTightLabel } from '@/store/textSizeStore';
 import { AttendanceEventRow } from '@/components/AttendanceEventRow';
 import { MonthNavigator } from '@/components/MonthNavigator';
 import { Card, EmptyState, ErrorState, PageHeader, Screen, Skeleton, StatTile, Text } from '@/ui';
@@ -31,6 +32,7 @@ export default function MyTimesheetScreen({ embedded = false }: { embedded?: boo
   const user = useAuthStore((s) => s.user);
   const employeeId = user?.employee?.id;
   const { colors } = useTheme();
+  const weekDay = useTightLabel();
   const { sizeClass } = useBreakpoint();
   const wide = sizeClass !== 'compact';
 
@@ -83,7 +85,7 @@ export default function MyTimesheetScreen({ embedded = false }: { embedded?: boo
       <MonthNavigator month={currentMonth} onChange={goToMonth} />
       <View style={styles.weekRow}>
         {WEEKDAY_INDICES.map((d) => (
-          <Text key={d} variant="caption" tone="subtle" style={styles.weekDay}>
+          <Text key={d} variant="caption" tone="subtle" numberOfLines={1} style={[styles.weekDay, { fontSize: 12 * weekDay }]}>
             {weekdayNameShort(d)}
           </Text>
         ))}

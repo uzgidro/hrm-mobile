@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import {
-  View, Text, StyleSheet, TouchableOpacity, Modal, Platform, Linking, ScrollView,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Modal, Platform, Linking, ScrollView } from 'react-native';
+import { Text } from '@/ui/scaled';
 import { Image } from 'expo-image';
 import { WebView } from 'react-native-webview';
 import dayjs from 'dayjs';
@@ -61,7 +60,7 @@ export function AttendanceEventRow({
         </View>
         <View style={styles.texts}>
           <Text style={styles.dir}>{entry ? t('timesheet.entryTitle') : t('timesheet.exitTitle')}</Text>
-          <Text style={styles.place} numberOfLines={1}>
+          <Text style={styles.place} numberOfLines={1} grow>
             {place.name ?? t('timesheet.placeUnknown')}
           </Text>
         </View>

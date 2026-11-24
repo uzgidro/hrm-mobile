@@ -4,7 +4,8 @@
 // feature, so neither has to cross-import the other (see
 // `src/features/README.md`).
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { Text } from '@/ui/scaled';
 import { useTranslation } from 'react-i18next';
 import Svg, { Circle, G } from 'react-native-svg';
 import type { ThemeColors } from '@/theme/palettes';

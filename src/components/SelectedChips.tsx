@@ -7,7 +7,8 @@
 // Endi nomlar chip sifatida ko'rinadi va har birini shu yerdayoq olib
 // tashlash mumkin.
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { Text } from '@/ui/scaled';
 import { Icon } from './Icon';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 import type { ThemeColors } from '../theme/palettes';

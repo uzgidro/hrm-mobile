@@ -1,6 +1,5 @@
-import {
-  View, Text, StyleSheet, TouchableOpacity, RefreshControl, FlatList,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, RefreshControl, FlatList } from 'react-native';
+import { Text } from '@/ui/scaled';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';
@@ -58,7 +57,7 @@ export default function LoyihalarScreen() {
               >
                 <View style={styles.cardTop}>
                   <View style={styles.iconWrap}><Icon name="board" size={22} color={colors.primary} /></View>
-                  <Text style={styles.name} numberOfLines={1}>{item.name || t('projects.nameFallback')}</Text>
+                  <Text style={styles.name} numberOfLines={1} grow>{item.name || t('projects.nameFallback')}</Text>
                 </View>
                 {!!item.description && <Text style={styles.desc} numberOfLines={2}>{item.description}</Text>}
                 <View style={styles.metaRow}>

@@ -1,6 +1,7 @@
 // Themed labeled text input used by the create/edit forms.
 import type React from 'react';
-import { View, Text, TextInput, StyleSheet, type KeyboardTypeOptions } from 'react-native';
+import { View, StyleSheet, type KeyboardTypeOptions } from 'react-native';
+import { Text, TextInput } from '@/ui/scaled';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 import type { ThemeColors } from '../theme/palettes';
 import { ff } from '../theme/typography';

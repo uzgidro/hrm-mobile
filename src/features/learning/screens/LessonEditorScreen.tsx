@@ -182,7 +182,7 @@ function Editor({ course, lesson }: { course: CourseDetail; lesson: LearningLess
                 <View style={[styles.fileRow, { borderColor: c.border }]}>
                   <Icon name="doc" size={16} color={c.brand} />
                   <View style={styles.flex}>
-                    <Text variant="label" numberOfLines={1}>
+                    <Text variant="label" numberOfLines={1} grow>
                       {file.name}
                     </Text>
                     <Text variant="caption" tone="subtle">

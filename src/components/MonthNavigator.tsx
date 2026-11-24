@@ -5,7 +5,8 @@
 //
 // The month itself stays in the caller's useState; this only renders and steps.
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { Text } from '@/ui/scaled';
 import type { Dayjs } from 'dayjs';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';

@@ -1,7 +1,8 @@
 // "Saqlanmagan qoralama bor" — one shared prompt for every create form that
 // autosaves (see `src/lib/formDraft.ts`). Rendered as a dismissable banner
 // rather than an Alert so it never fights the screen's own dialogs.
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Text } from '@/ui/scaled';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';

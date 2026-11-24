@@ -1,8 +1,6 @@
 import { useState } from 'react';
-import {
-  View, Text, StyleSheet,
-  TouchableOpacity,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { Text } from '@/ui/scaled';
 import { ChipScroll } from '@/components/ChipScroll';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -79,7 +77,7 @@ function LeaveCard({ leave, showEmployee, actionNeeded, styles, colors }: {
       {showEmployee && leave.employee && (
         <View style={styles.empRow}>
           <EmployeeAvatar emp={leave.employee} size={30} />
-          <Text style={styles.empName} numberOfLines={1}>{leave.employee.legal_name}</Text>
+          <Text style={styles.empName} numberOfLines={1} grow>{leave.employee.legal_name}</Text>
         </View>
       )}
       <View style={styles.cardTop}>

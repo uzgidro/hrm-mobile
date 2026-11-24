@@ -1,50 +1,46 @@
 // v3 bosh sahifa («Tomchi × v2», spec §7). Qaysi panel — `homeBoardFor` (web v2
-// DashboardPage porti): xodim → EmployeeBoard, apparat → LeaderBoard, kiosk
-// akkauntlar → o'z tabiga (post / monitoring). Pull-to-refresh barcha panel
-// so'rovlarini yangilaydi.
+// DashboardPage porti): xodim / apparat → HomeBlocks, kiosk akkauntlar → o'z tabiga
+// (post / monitoring). Pull-to-refresh barcha panel so'rovlarini yangilaydi.
+// Blocks and their order are the person's own (2026-11-24, `useHomeBoard`).
 import React, { useCallback, useEffect, useState } from 'react';
 import dayjs from 'dayjs';
-import { Redirect, type Href } from 'expo-router';
+import { Redirect, router, type Href } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
-import { StyleSheet, View } from 'react-native';
 import { useAuthStore } from '@/store/authStore';
-import { canAccessPage } from '@/utils/roles';
 import { homeBoardFor } from '@/utils/homeBoard';
 import { MENU_BADGES_KEY } from '@/lib/menuBadges';
-import { Screen } from '@/ui';
+import { groundTop } from '@/theme/accents';
+import { useTheme } from '@/theme/ThemeProvider';
+import { LoadingView, Screen } from '@/ui';
 import { dashboardKeys, prefetchHomeData } from '../api/queries';
 import { HomeHeader } from '../components/HomeHeader';
-import { EmployeeBoard } from '../components/EmployeeBoard';
-import { LeaderBoard } from '../components/LeaderBoard';
-// Xizmat safari «Keldim» kartasi — checkin feature'idan (notifications → orders kabi istisno):
-// tugma bosh sahifada turishi kerak, mantiq esa o'z feature'ida.
-import { TripCheckinCard } from '@/features/checkin/components/TripCheckinCard';
-import { HomeLeavesCard } from '@/features/leaves/components/HomeLeavesCard';
-import { SanatoriumHomeCard } from '@/features/sanatorium/components/HomeCard';
-// Nurse: today's pre-shift health check progress, one tap into the queue.
-import { HealthHomeCard } from '@/features/health/components/HealthHomeCard';
+import { HomeBlocks } from '../components/HomeBlocks';
+import { homeKeys, useHomeBoard } from '../board/useHomeBoard';
 import { useActiveBranchId } from '@/lib/useActiveBranch';
 
 export default function HomeScreen() {
   const user = useAuthStore((s) => s.user);
+  const { colors: c } = useTheme();
   const activeBranchId = useActiveBranchId();
   const queryClient = useQueryClient();
   const board = homeBoardFor(user);
   const branchId = activeBranchId ?? undefined;
+  const kind = board === 'employee' || board === 'leader' ? board : null;
+  const home = useHomeBoard(kind);
+  const ready = !!kind && home.ready;
+  const birthdays = home.visible.includes('birthdays');
   const [refreshing, setRefreshing] = useState(false);
 
   // Keyingi ekranlar (davomat, jamoa, tug'ilgan kunlar) keshini isitish.
   useEffect(() => {
-    if (board === 'employee' || board === 'leader') {
-      prefetchHomeData(queryClient, branchId, dayjs().format('YYYY-MM-DD'));
-    }
-  }, [queryClient, branchId, board]);
+    if (ready) prefetchHomeData(queryClient, branchId, dayjs().format('YYYY-MM-DD'), { birthdays });
+  }, [queryClient, branchId, ready, birthdays]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
       await Promise.all(
-        [dashboardKeys.all, ['attendance'], ['birthdays'], ['work-leaves'], ['mobile-checkins'], MENU_BADGES_KEY].map((queryKey) =>
+        [dashboardKeys.all, ['attendance'], ['birthdays'], ['work-leaves'], ['mobile-checkins'], MENU_BADGES_KEY, homeKeys.all].map((queryKey) =>
           queryClient.invalidateQueries({ queryKey: [...queryKey] }),
         ),
       );
@@ -67,23 +63,19 @@ export default function HomeScreen() {
   if (target) return <Redirect href={target as Href} />;
 
   return (
-    <Screen refreshing={refreshing} onRefresh={onRefresh} testID="home-screen">
+    <Screen refreshing={refreshing} onRefresh={onRefresh} groundTop={groundTop(home.config.look?.bg, c)} testID="home-screen">
       <HomeHeader />
-      {/* Sanatorium staff: their own dashboard is the main thing on home (`sanatorium_home`). */}
-      {user?.sanatorium_home ? <SanatoriumHomeCard /> : null}
-      <HealthHomeCard />
-      <TripCheckinCard />
-      {/* Qo'shimcha roli bor xodim (rahbar paneli): o'zi uchun ruxsat so'rash va tasdig'ini
-          kutayotgan so'rovlar shu yerda (2026-10-07). Oddiy xodim panelida «So'rovlarim» bor. */}
-      {board === 'leader' && !!user?.employee && canAccessPage(user, 'requests') ? (
-        <View style={styles.leaves}>
-          <HomeLeavesCard />
-        </View>
-      ) : null}
-      {board === 'leader' ? <LeaderBoard /> : <EmployeeBoard />}
+      {!kind || !home.localRead ? null : home.ready ? (
+        <HomeBlocks
+          board={kind}
+          blocks={home.visible}
+          look={home.config.look}
+          items={home.config.items}
+          onCustomise={() => router.push('/home-customise' as Href)}
+        />
+      ) : (
+        <LoadingView />
+      )}
     </Screen>
   );
 }
-
-// Keyingi panel bilan oraliq — kartalar orasi 12 (safar kartasi bilan bir xil).
-const styles = StyleSheet.create({ leaves: { marginBottom: 12 } });

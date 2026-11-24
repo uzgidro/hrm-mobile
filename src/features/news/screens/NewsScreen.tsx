@@ -1,7 +1,8 @@
 // Yangiliklar — kompaniya sayti uzgidro.uz dan (web v2 NewsPage bilan bir manba, hamma filialga
 // bir xil). Karta bosilsa maqola ilova ichida ochiladi (/media, WebView).
 import { memo, useState } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, StyleSheet, Pressable } from 'react-native';
+import { Text } from '@/ui/scaled';
 import { Image } from 'expo-image';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';

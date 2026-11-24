@@ -1,6 +1,7 @@
 // Shown when a user opens a page their role can't access (mirrors the web,
 // where the page simply isn't in their nav). Keeps a back button via ScreenHeader.
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import { Text } from '@/ui/scaled';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';

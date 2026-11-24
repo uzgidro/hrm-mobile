@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, Platform,
-} from 'react-native';
+import { View, ScrollView, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { TextSizePicker } from '@/components/TextSizePicker';
+import { Text } from '@/ui/scaled';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Toggle } from '@/ui';
@@ -143,7 +143,7 @@ export default function ProfileScreen() {
                 {userDisplayName(user) || t('profile.userFallback')}
               </Text>
               {employee?.job_position?.name ? (
-                <Text style={styles.userRole} numberOfLines={1}>
+                <Text style={styles.userRole} numberOfLines={1} grow>
                   {employee.job_position.name}
                 </Text>
               ) : typeKey ? (
@@ -185,10 +185,10 @@ export default function ProfileScreen() {
               <Icon name="building" size={22} color={colors.primary} />
             </View>
             <View style={styles.orgInfo}>
-              <Text style={styles.orgName} numberOfLines={1}>
+              <Text style={styles.orgName} numberOfLines={1} grow>
                 {employee?.department?.name || t('profile.orgFallback')}
               </Text>
-              <Text style={styles.orgBranch} numberOfLines={1}>
+              <Text style={styles.orgBranch} numberOfLines={1} grow>
                 {employee?.organization_branches?.[0]?.name || t('profile.branchFallback')}
               </Text>
             </View>
@@ -217,6 +217,8 @@ export default function ProfileScreen() {
               );
             })}
           </View>
+          <Text style={styles.textSizeLabel}>{t('profile.textSize')}</Text>
+          <TextSizePicker />
         </View>
 
         {/* Language */}
@@ -415,6 +417,7 @@ const makeStyles = (c: ThemeColors) =>
     orgName: { fontSize: 15, ...ff('800'), color: c.text },
     orgBranch: { fontSize: 12, color: c.textMuted, marginTop: 2, ...ff('700') },
 
+    textSizeLabel: { fontSize: 13, ...ff('700'), color: c.text, marginTop: 14, marginBottom: 8 },
     segmentRow: { flexDirection: 'row', gap: 8 },
     segment: {
       flex: 1, alignItems: 'center', gap: 6, paddingVertical: 12, borderRadius: 12,

@@ -40,11 +40,14 @@ export const TURNSTILE_ATTENDANCE_NORMALIZED = 'turnstile-attendance-events/norm
 // the web employee dashboard's source. Branch-scoped, NOT narrowed to "own
 // people" for a regular employee (unlike /normalized), so a plain employee
 // sees their whole branch exactly like on the web.
+// Headcount composition + data-quality counters (leaders / HR only; 403 for an ordinary employee).
+export const DASHBOARD_ROSTER_COMPOSITION = 'dashboard/roster-composition';
 export const DASHBOARD_EMPLOYEES_BY_CATEGORY = 'dashboard/employees-by-category';
 // Navbatchilik (duty roster), read-only on mobile. /my is truly self-scoped;
 // {pk}/members is the effective (dept-expanded) roster; work-schedule-days are
 // the actual day/shift rows — branch-scoped server-side since backend `f9c79f0`
 // but NOT self-scoped, so always pass our employee_id for a personal view.
+export const NAVBATCHILIK_GROUPS = 'navbatchilik-groups';
 export const NAVBATCHILIK_GROUPS_MY = 'navbatchilik-groups/my';
 export const NAVBATCHILIK_GROUP_MEMBERS = (id: number) => `navbatchilik-groups/${id}/members`;
 export const WORK_SCHEDULE_DAYS = 'work-schedule-days';
@@ -83,6 +86,8 @@ export const WORK_LEAVES_RULES = 'work-leaves/rules';
 export const DICTIONARY_OPTIONS = (code: string) => `dictionaries/${code}/options`;
 /** System settings (`{ values, schema }`); `values['nav.modules']` is the web v2 module matrix. */
 export const SYSTEM_SETTINGS = 'system-settings';
+/** Per-user UI settings (`{ value }`; `GET` answers `value: null` when nothing is saved). */
+export const UI_SETTING = (key: string) => `ui-settings/${key}`;
 
 // Davomat (tabel) kodlari — HR manbasi + filial shabloni «Kodlar» varag'i (backend 3de99d9).
 export const TABEL_CODES = 'organization-branches/tabel-codes';

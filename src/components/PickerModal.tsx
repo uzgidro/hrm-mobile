@@ -1,8 +1,14 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, Modal, TextInput, FlatList,
-  TouchableOpacity, ActivityIndicator, type ImageStyle,
+  View,
+  StyleSheet,
+  Modal,
+  FlatList,
+  TouchableOpacity,
+  ActivityIndicator,
+  type ImageStyle,
 } from 'react-native';
+import { Text, TextInput } from '@/ui/scaled';
 import { Image } from 'expo-image';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

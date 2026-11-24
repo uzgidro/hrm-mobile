@@ -19,6 +19,8 @@ export default {
   sectionLanguage: 'Язык',
   sectionSettings: 'Настройки',
 
+  textSize: 'Размер шрифта',
+  textSizeStep: 'Размер шрифта: {{percent}} процентов',
   themeSystem: 'Система',
   themeLight: 'Светлая',
   themeDark: 'Тёмная',

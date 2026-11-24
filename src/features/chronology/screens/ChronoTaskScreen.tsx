@@ -206,7 +206,7 @@ function TaskBody({
               <Text variant="label" numberOfLines={2}>
                 {task.title}
               </Text>
-              <Text variant="caption" tone="muted" numberOfLines={1}>
+              <Text variant="caption" tone="muted" numberOfLines={1} grow>
                 {task.main_executor?.legal_name ?? '—'} · {fmt(task.deadline)}
               </Text>
             </View>
@@ -247,7 +247,7 @@ function TaskBody({
                     <Text variant="label" numberOfLines={2}>
                       {number}. {s.title}
                     </Text>
-                    <Text variant="caption" tone="muted" numberOfLines={1}>
+                    <Text variant="caption" tone="muted" numberOfLines={1} grow>
                       {[s.assignee?.legal_name ?? '—', fmt(s.deadline), s.children_total ? `${s.children_done}/${s.children_total}` : null]
                         .filter(Boolean)
                         .join(' · ')}
@@ -293,7 +293,7 @@ function TaskBody({
               <View key={m.id} style={styles.member}>
                 <Avatar name={m.legal_name ?? '?'} uri={m.photo_path} thumb={m.photo_thumb_path} size={30} />
                 <View style={styles.flex}>
-                  <Text variant="label" numberOfLines={1}>
+                  <Text variant="label" numberOfLines={1} grow>
                     {m.legal_name}
                   </Text>
                   <Text variant="caption" tone="subtle" numberOfLines={1}>

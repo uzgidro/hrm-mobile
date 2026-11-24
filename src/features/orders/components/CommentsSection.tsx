@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import {
-  View, Text, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { Text, TextInput } from '@/ui/scaled';
 import { useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
@@ -45,7 +45,7 @@ export function CommentsSection({ orderId }: { orderId: number }) {
         {comments.map((c) => (
           <View key={c.id} style={styles.row}>
             <View style={styles.rowHead}>
-              <Text style={styles.author} numberOfLines={1}>
+              <Text style={styles.author} numberOfLines={1} grow>
                 {c.employee?.legal_name ?? t('status.unknown')}
               </Text>
               {!!c.created_at && (
@@ -86,7 +86,7 @@ export function CommentsSection({ orderId }: { orderId: number }) {
           {history.map((h) => (
             <View key={h.id} style={styles.row}>
               <View style={styles.rowHead}>
-                <Text style={styles.author} numberOfLines={1}>
+                <Text style={styles.author} numberOfLines={1} grow>
                   {h.editor?.legal_name ?? t('status.unknown')}
                 </Text>
                 {!!h.created_at && (

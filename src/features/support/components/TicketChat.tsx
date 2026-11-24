@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import {
-  View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { Text, TextInput } from '@/ui/scaled';
 import { useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';

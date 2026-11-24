@@ -11,6 +11,7 @@ import { moduleTint, radii } from '@/theme/tokens';
 import { Icon } from '@/components/Icon';
 import { Text } from '@/ui';
 import { TAB_META, type TabKey } from '@/utils/tabs';
+import { useTextScale } from '@/store/textSizeStore';
 import { fitLabelFontSize } from '../utils/fitLabel';
 
 type TabBarProps = Parameters<NonNullable<React.ComponentProps<typeof Tabs>['tabBar']>>[0];
@@ -24,6 +25,7 @@ export function TabBar({
   const { colors: c } = useTheme();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const textScale = useTextScale();
   const activeName = state.routes[state.index]?.name;
   // Har tab sloti kengligi — uzun yorliq («Посещаемость») kesilmasin, shrifti kichrayadi.
   const [barWidth, setBarWidth] = useState(0);
@@ -43,7 +45,7 @@ export function TabBar({
         const focused = activeName === key;
         const badge = badges?.[key];
         const label = t(meta.labelKey);
-        const fontSize = fitLabelFontSize(label, slotWidth, { base: LABEL_SIZE, min: 8.5 });
+        const fontSize = fitLabelFontSize(label, slotWidth / textScale, { base: LABEL_SIZE, min: 8.5 });
         const onPress = () => {
           const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
           if (!focused && !event.defaultPrevented) navigation.navigate(route.name, route.params);

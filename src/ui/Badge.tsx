@@ -19,6 +19,6 @@ export function Badge({ label, tone = 'neutral', testID }: { label: string; tone
 }
 
 const styles = StyleSheet.create({
-  badge: { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 2, borderRadius: radii.pill },
+  badge: { alignSelf: 'flex-start', maxWidth: '100%', paddingHorizontal: 8, paddingVertical: 2, borderRadius: radii.pill },
   text: { fontWeight: '600' },
 });

@@ -3,7 +3,8 @@
 // PIN string and auto-submits when it reaches maxLength. PinPad never touches a
 // store and never submits — it only reports the new value on each key press.
 import React from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, StyleSheet, Pressable } from 'react-native';
+import { Text } from '@/ui/scaled';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/palettes';

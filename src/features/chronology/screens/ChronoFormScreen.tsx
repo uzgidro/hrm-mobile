@@ -350,7 +350,7 @@ function Form({ task, onDone }: { task: ChronoTask | null; onDone: () => void })
                     <View key={m.id} style={[styles.member, { borderColor: isMain ? colors.brand : colors.border }]}>
                       <Avatar name={m.legal_name ?? '?'} uri={m.photo_path} thumb={m.photo_thumb_path} size={34} />
                       <View style={styles.flex}>
-                        <Text variant="label" numberOfLines={1}>
+                        <Text variant="label" numberOfLines={1} grow>
                           {m.legal_name}
                         </Text>
                         <Text variant="caption" tone="subtle" numberOfLines={1}>
@@ -399,7 +399,7 @@ function Form({ task, onDone }: { task: ChronoTask | null; onDone: () => void })
                     <Text variant="label" numberOfLines={2}>
                       {number}. {s.title.trim() || t('chrono.stepN', { n: number })}
                     </Text>
-                    <Text variant="caption" tone="muted" numberOfLines={1}>
+                    <Text variant="caption" tone="muted" numberOfLines={1} grow>
                       {[(s.assigneeId != null && byId.get(s.assigneeId)?.legal_name) || t('chrono.pickFromMembers'), fmt(s.deadline) || '—'].join(' · ')}
                     </Text>
                   </View>
