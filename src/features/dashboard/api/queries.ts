@@ -203,6 +203,8 @@ export function prefetchHomeData(
   qc: QueryClient,
   orgBranchId: number | undefined,
   today: string,
+  // `birthdays: false` — the person took that card off the home screen.
+  { birthdays = true }: { birthdays?: boolean } = {},
 ) {
   // The roster itself (server statuses) — same key Home/Team/AttendanceDetail read.
   qc.prefetchQuery(dayRosterQuery(today, orgBranchId, false));
@@ -211,6 +213,7 @@ export function prefetchHomeData(
     queryFn: () => fetchAllAttendanceEvents(today, orgBranchId),
     staleTime: 3 * 60 * 1000,
   });
+  if (!birthdays) return;
   qc.prefetchQuery({
     // Same key shape as the birthdays feature's birthdayKeys.list(orgBranchId)
     // so the Team screen's birthday card reads this warmed entry instead of

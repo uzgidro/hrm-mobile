@@ -83,6 +83,8 @@ export const WORK_LEAVES_RULES = 'work-leaves/rules';
 export const DICTIONARY_OPTIONS = (code: string) => `dictionaries/${code}/options`;
 /** System settings (`{ values, schema }`); `values['nav.modules']` is the web v2 module matrix. */
 export const SYSTEM_SETTINGS = 'system-settings';
+/** Per-user UI settings (`{ value }`; `GET` answers `value: null` when nothing is saved). */
+export const UI_SETTING = (key: string) => `ui-settings/${key}`;
 
 // Davomat (tabel) kodlari — HR manbasi + filial shabloni «Kodlar» varag'i (backend 3de99d9).
 export const TABEL_CODES = 'organization-branches/tabel-codes';

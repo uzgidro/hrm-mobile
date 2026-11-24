@@ -81,3 +81,23 @@ jest.mock('react-native-reanimated', () => ({
   ...require('react-native-reanimated/mock'),
   useReducedMotion: () => true,
 }));
+
+// react-native-gesture-handler — the library's own mock of its native module.
+require('react-native-gesture-handler/jestSetup');
+
+// react-native-sortables measures and places rows on the UI thread, which jest has not.
+// The stand-in draws the rows in order; a test ends a drag with
+// `fireEvent(getByTestId('sortable-grid'), 'dragEnd', { fromIndex, toIndex })`.
+jest.mock('react-native-sortables', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  // `any`: a jest.mock factory may not refer to named types.
+  const Grid = ({ data, keyExtractor, renderItem, onDragEnd, sortEnabled = true }: any) =>
+    React.createElement(
+      View,
+      { testID: 'sortable-grid', onDragEnd, accessibilityState: { disabled: !sortEnabled } },
+      data.map((item: any, index: number) => React.createElement(React.Fragment, { key: keyExtractor(item, index) }, renderItem({ item, index }))),
+    );
+  const Handle = ({ children }: any) => children;
+  return { __esModule: true, default: { Grid, Handle } };
+});

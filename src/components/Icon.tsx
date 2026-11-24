@@ -64,7 +64,8 @@ export type IconName =
   | 'mapPin'
   | 'camera'
   | 'filter'
-  | 'refresh';
+  | 'refresh'
+  | 'grip';
 
 type Props = {
   name: IconName;
@@ -352,6 +353,14 @@ function render(name: IconName, p: any) {
         <>
           <Line x1="6" y1="6" x2="18" y2="18" {...p} />
           <Line x1="18" y1="6" x2="6" y2="18" {...p} />
+        </>
+      );
+    case 'grip':
+      // Drag handle: two columns of dots (round-capped zero-length strokes).
+      return (
+        <>
+          <Path d="M9 5h.01M9 12h.01M9 19h.01" {...p} />
+          <Path d="M15 5h.01M15 12h.01M15 19h.01" {...p} />
         </>
       );
     case 'refresh':
