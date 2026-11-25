@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { useSingleFlight } from '../../simple/useSingleFlight';
 import { FormInput } from '@/components/FormInput';
 import { toast } from '@/lib/toast';
 import { Button, Card, PageHeader, Screen } from '@/ui';
@@ -40,6 +41,7 @@ function LocationForm({ loc }: { loc: SanLocation }) {
   const [notes, setNotes] = useState({ uz: loc.directions_note_uz ?? '', ru: loc.directions_note_ru ?? '', en: loc.directions_note_en ?? '' });
   const [error, setError] = useState<string | null>(null);
 
+  const flight = useSingleFlight();
   const submit = async () => {
     const r = locationBody({ lat, lng, zoom, address, uz: notes.uz, ru: notes.ru, en: notes.en });
     if (!r.ok) return setError(t(`san1.location.err.${r.error}`));
@@ -81,7 +83,7 @@ function LocationForm({ loc }: { loc: SanLocation }) {
         <LangFields label={t('san1.location.notes')} values={notes} onChange={readOnly ? () => {} : setNotes} multiline maxLength={1000} testID="loc-note" />
       </Card>
       <ErrorLine message={error} testID="loc-error" />
-      {!readOnly && <Button testID="loc-save" label={t('common.save')} full loading={save.isPending} onPress={() => void submit()} />}
+      {!readOnly && <Button testID="loc-save" label={t('common.save')} full loading={save.isPending} onPress={() => void flight.run(submit)} />}
     </View>
   );
 }

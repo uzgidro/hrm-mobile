@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { useSingleFlight } from '../../simple/useSingleFlight';
 import { FormInput } from '@/components/FormInput';
 import { toast } from '@/lib/toast';
 import { useAuthStore } from '@/store/authStore';
@@ -134,6 +135,7 @@ function RoomStatusForm({ room, supervisor, onClose }: { room: HkRoom; superviso
   const set = useSetRoomHkStatus();
   const [note, setNote] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const flight = useSingleFlight();
   const apply = async (status: HkStatus) => {
     try {
       await set.mutateAsync({ roomId: room.id, status, note: opt(note) });
@@ -154,7 +156,7 @@ function RoomStatusForm({ room, supervisor, onClose }: { room: HkRoom; superviso
       <FormInput label={t('sanatorium.notes')} value={note} onChangeText={setNote} maxLength={300} testID="hk-room-note" />
       <ErrorLine message={error} testID="hk-room-error" />
       {hkAllowedStatuses(HK_STATUSES, supervisor).filter((s) => s !== room.hk_status).map((s) => (
-        <Button key={s} testID={`hk-set-${s}`} label={t(`san1.hk.status.${s}`)} variant="soft" full loading={set.isPending} onPress={() => void apply(s)} />
+        <Button key={s} testID={`hk-set-${s}`} label={t(`san1.hk.status.${s}`)} variant="soft" full loading={set.isPending} onPress={() => void flight.run(() => apply(s))} />
       ))}
     </View>
   );
@@ -242,6 +244,7 @@ function TaskForm({ task, onClose }: { task: HkTask | null; onClose: () => void 
   const [note, setNote] = useState(task?.note ?? '');
   const [error, setError] = useState<string | null>(null);
 
+  const flight = useSingleFlight();
   const submit = async () => {
     if (roomId == null) return setError(t('san1.hk.pickRoom'));
     try {
@@ -298,12 +301,13 @@ function TaskForm({ task, onClose }: { task: HkTask | null; onClose: () => void 
           value={status}
           options={(['open', 'in_progress', 'done'] as const).map((s) => ({ value: s as HkTaskStatus, label: t(`san1.hk.taskStatus.${s}`) }))}
           onChange={(v) => v && setStatus(v)}
+          testID="hk-task-statusfield"
         />
       )}
       <FormInput label={t('sanatorium.notes')} value={note} onChangeText={setNote} multiline maxLength={500} testID="hk-task-note" />
       <ErrorLine message={error} testID="hk-task-error" />
-      <Button testID="hk-task-save" label={t('common.save')} full loading={save.isPending} onPress={() => void submit()} />
-      {task && <Button testID="hk-task-delete" label={t('sanatorium.remove')} variant="dangerGhost" full loading={del.isPending} onPress={() => void remove()} />}
+      <Button testID="hk-task-save" label={t('common.save')} full loading={save.isPending} onPress={() => void flight.run(submit)} />
+      {task && <Button testID="hk-task-delete" label={t('sanatorium.remove')} variant="dangerGhost" full loading={del.isPending} onPress={() => void flight.run(remove)} />}
     </View>
   );
 }
@@ -354,6 +358,7 @@ function LinenSettings() {
   const q = useQuery(hkSettingsQuery());
   const save = useSaveHkSettings();
   const editable = canSanWrite(user, 'registrar');
+  const flight = useSingleFlight();
   const [days, setDays] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   return (
@@ -377,7 +382,7 @@ function LinenSettings() {
             <FormInput label={t('san1.hk.linenDays')} value={value} onChangeText={editable ? setDays : () => {}} keyboardType="number-pad" testID="hk-linen" />
             <Text variant="caption" tone="muted">{t('san1.hk.linenHint')}</Text>
             <ErrorLine message={error} />
-            {editable && <Button testID="hk-linen-save" label={t('common.save')} full loading={save.isPending} onPress={() => void submit()} />}
+            {editable && <Button testID="hk-linen-save" label={t('common.save')} full loading={save.isPending} onPress={() => void flight.run(submit)} />}
           </Card>
         );
       }}

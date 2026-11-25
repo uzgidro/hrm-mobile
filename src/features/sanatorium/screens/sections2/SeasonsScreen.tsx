@@ -14,6 +14,7 @@ import { ChoiceField, DateField, ErrorLine, SwitchRow } from '../../components/f
 import { ChipWrap, FieldLabel, RowTools, SectionScreen, useConfirmDelete, useContentLang } from '../../components/sections2/kit';
 import { SEASON_SCOPES, emptySeasonDraft, filterSeasons, pickText, seasonBody, seasonScopeText, toggleValue, type SeasonDraft } from '../../utils/sections2';
 import { fmtDate, sanErrorMessage, todayIso } from '../../utils/sanatorium';
+import { useSingleFlight } from '../../simple/useSingleFlight';
 
 export default function SeasonsScreen() {
   const { t } = useTranslation();
@@ -28,10 +29,10 @@ export default function SeasonsScreen() {
   // Maps a scope value (room / package id) to its label; unknown ids stay as they are.
   const lookup = (r: SeasonRule) => (id: string) => {
     if (r.scope === 'rooms') {
-      const room = (rooms.data ?? []).find((x) => String(x.id) === id);
+      const room = (rooms.data ?? []).find((x) => String(x.id) === String(id));
       return room ? [room.number, room.building].filter(Boolean).join(' · ') : id;
     }
-    const pkg = (packages.data ?? []).find((x) => String(x.id) === id);
+    const pkg = (packages.data ?? []).find((x) => String(x.id) === String(id));
     return pkg ? pickText(pkg as never, 'name', lang) : id;
   };
   return (
@@ -79,7 +80,7 @@ function SeasonForm({ rule, onClose }: { rule: SeasonRule | null; onClose: () =>
   const packages = useQuery(packagesQuery(true));
   const [d, setD] = useState<SeasonDraft>(() =>
     rule
-      ? { name: rule.name, from: rule.date_from, to: rule.date_to, scope: rule.scope, values: rule.scope_values ?? [], mode: rule.mode, value: String(Number(rule.value)), priority: String(rule.priority), active: rule.is_active }
+      ? { name: rule.name, from: rule.date_from, to: rule.date_to, scope: rule.scope, values: (rule.scope_values ?? []).map(String), mode: rule.mode, value: String(Number(rule.value)), priority: String(rule.priority), active: rule.is_active }
       : emptySeasonDraft(todayIso()),
   );
   const [error, setError] = useState<string | null>(null);
@@ -91,7 +92,8 @@ function SeasonForm({ rule, onClose }: { rule: SeasonRule | null; onClose: () =>
     return [];
   }, [d.scope, rooms.data, packages.data, lang]);
 
-  const submit = async () => {
+  const flight = useSingleFlight();
+  const submit = () => flight.run(async () => {
     const r = seasonBody(d);
     if (!r.ok) return setError(t(r.error));
     try {
@@ -101,7 +103,7 @@ function SeasonForm({ rule, onClose }: { rule: SeasonRule | null; onClose: () =>
     } catch (e) {
       setError(sanErrorMessage(e, t('errors.generic')));
     }
-  };
+  });
   return (
     <View testID="season-form">
       <FormInput label={t('sanatorium.s2.name')} value={d.name} onChangeText={(v) => set({ name: v })} required testID="ss-name" />

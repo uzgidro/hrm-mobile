@@ -3,7 +3,7 @@ import {
   buildBody, clearedHealth, derive, emptyState, memberErrors, memberFromGuest, newMember, prefillFromRequest, prefillFromStays, relationOf, startStep, stateFromPrefill, stepForError,
   stepWarnings, typedPerson, wizardSteps, type WizState,
 } from '../state';
-import { maskDmy } from '../StepWho';
+import { maskDmy } from '../../../components/BirthField';
 import { placeOnly } from '../StepRoom';
 
 const T = '2026-11-25';

@@ -4,8 +4,9 @@ import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { useSingleFlight } from '../../simple/useSingleFlight';
 import { toast } from '@/lib/toast';
-import { Badge, Button, Card, EmptyState, ListRow, PageHeader, Screen, Text } from '@/ui';
+import { Badge, Button, Card, EmptyState, IconButton, ListRow, PageHeader, Screen, Text } from '@/ui';
 import { territoryQuery, useDeletePlan, useReorderPois, useUploadPlan } from '../../api/sections1';
 import { QueryBlock, useSanReadOnly } from '../../components/common';
 import { PlanView } from '../../components/sections1/PlanView';
@@ -59,6 +60,7 @@ function PlanCard({ data, onPoi, readOnly }: { data: Territory; onPoi?: (p: Poi)
       setBusy(false);
     }
   };
+  const flight = useSingleFlight();
   const remove = async () => {
     if (await askDelete(t, t('san1.territory.deletePlan'))) del.mutate(undefined, { onError });
   };
@@ -67,7 +69,7 @@ function PlanCard({ data, onPoi, readOnly }: { data: Territory; onPoi?: (p: Poi)
       {data.plan ? <PlanView plan={data.plan} pois={data.pois} onPoi={onPoi} /> : <Text variant="body" tone="muted">{t('san1.territory.noPlan')}</Text>}
       {!readOnly && <View style={styles.actions}>
         <Button testID="plan-upload" label={data.plan ? t('san1.territory.replacePlan') : t('san1.territory.uploadPlan')} icon="camera" variant="soft" size="sm" loading={busy} onPress={() => void pick()} />
-        {data.plan && <Button testID="plan-delete" label={t('sanatorium.remove')} variant="dangerGhost" size="sm" onPress={() => void remove()} />}
+        {data.plan && <Button testID="plan-delete" label={t('sanatorium.remove')} variant="dangerGhost" size="sm" onPress={() => void flight.run(remove)} />}
       </View>}
     </Card>
   );
@@ -85,17 +87,16 @@ function PoiList({ data, onEdit }: { data: Territory; onEdit?: (p: Poi) => void 
       {data.pois.map((p, i) => (
         <ListRow
           key={p.id}
-          pressable={!!onEdit}
           testID={`poi-${p.id}`}
           title={pickLang(i18n.language, { uz: p.name_uz, ru: p.name_ru, en: p.name_en })}
           subtitle={[t(`san1.poi.kind.${p.kind}`), p.floor != null && p.floor !== '' ? `${t('san1.poi.floor')}: ${p.floor}` : null].filter(Boolean).join(' · ')}
           right={
             <View style={styles.actions}>
               {p.is_active === false && <Badge label={t('sanatorium.inactive')} tone="neutral" />}
+              {onEdit && <IconButton icon="edit" tone="soft" accessibilityLabel={t('common.edit')} onPress={() => onEdit(p)} testID={`poi-${p.id}-edit`} />}
               {onEdit && <MoveButtons first={i === 0} last={i === data.pois.length - 1} testID={`poi-${p.id}`} onUp={() => move(p.id, -1)} onDown={() => move(p.id, 1)} />}
             </View>
           }
-          onPress={onEdit ? () => onEdit(p) : undefined}
         />
       ))}
     </View>

@@ -10,6 +10,7 @@ import { useTheme } from '@/theme/ThemeProvider';
 import { Badge, Button, Card, EmptyState, PageHeader, Screen, Segmented, Sheet, Text } from '@/ui';
 import { toneColors } from '@/ui/Chip';
 import { useSaveRoom } from '../api/mutations';
+import { useSingleFlight } from '../simple/useSingleFlight';
 import { availabilityQuery, roomsQuery, sanKeys } from '../api/queries';
 import { ChoiceField, ErrorLine, opt, optNull, SwitchRow } from '../components/forms';
 import { Denied, QueryBlock, useSanAccess, useSanReadOnly } from '../components/common';
@@ -104,8 +105,8 @@ function RoomCard({ room, occ, start, onEdit, onGallery }: { room: Room; occ?: A
           </Text>
           {!!price && <Text variant="caption" tone="muted">{price}</Text>}
         </View>
-        {!room.is_active ? <Badge label={t('sanatorium.inactive')} tone="neutral" /> : room.out_of_service ? <Badge label={t('sanatorium.outOfService')} tone="danger" /> : null}
-        {onEdit && <Button label={t('sanatorium.edit')} variant="soft" size="sm" icon="edit" onPress={onEdit} testID="room-edit" />}
+        {!room.is_active ? <Badge label={t('sanatorium.inactive')} tone="neutral" testID={`room-inactive-${room.id}`} /> : room.out_of_service ? <Badge label={t('sanatorium.outOfService')} tone="danger" /> : null}
+        {onEdit && <Button label={t('sanatorium.edit')} variant="soft" size="sm" icon="edit" onPress={onEdit} testID={`room-edit-${room.id}`} />}
       </View>
       {room.out_of_service && !!room.out_of_service_note && (
         <Text variant="caption" tone="danger" testID={`room-oos-note-${room.id}`}>{room.out_of_service_note}</Text>
@@ -140,6 +141,7 @@ function RoomSheet({ room, onClose, onCreated }: { room: Room | 'new' | null; on
 function RoomForm({ room, onClose, onCreated }: { room: Room | null; onClose: () => void; onCreated: (r: Room) => void }) {
   const { t } = useTranslation();
   const save = useSaveRoom();
+  const flight = useSingleFlight();
   const [number, setNumber] = useState(room?.number ?? '');
   const [building, setBuilding] = useState(room?.building ?? '');
   const [floor, setFloor] = useState(room?.floor != null ? String(room.floor) : '');
@@ -192,9 +194,9 @@ function RoomForm({ room, onClose, onCreated }: { room: Room | null; onClose: ()
     <View style={styles.form} testID="room-sheet">
       {room ? <RoomPhotoManager roomId={room.id} title={`${t('sanatorium.room')} ${room.number}`} /> : <Text variant="caption" tone="muted">{t('sanatorium.photosAfterSave')}</Text>}
       <FormInput label={t('sanatorium.roomNumber')} value={number} onChangeText={setNumber} required testID="room-number" />
-      <FormInput label={t('sanatorium.building')} value={building} onChangeText={setBuilding} />
-      <FormInput label={t('sanatorium.floorLabel')} value={floor} onChangeText={setFloor} keyboardType="number-pad" />
-      <FormInput label={t('sanatorium.roomType')} value={type} onChangeText={setType} />
+      <FormInput label={t('sanatorium.building')} value={building} onChangeText={setBuilding} testID="room-building" />
+      <FormInput label={t('sanatorium.floorLabel')} value={floor} onChangeText={setFloor} keyboardType="number-pad" testID="room-floor" />
+      <FormInput label={t('sanatorium.roomType')} value={type} onChangeText={setType} testID="room-type" />
       <FormInput label={t('sanatorium.capacity')} value={capacity} onChangeText={setCapacity} keyboardType="number-pad" required testID="room-capacity" />
       <FormInput label={t('sanatorium.pricePerDay')} value={price} onChangeText={setPrice} keyboardType="decimal-pad" testID="room-price" />
       <ChoiceField
@@ -202,14 +204,15 @@ function RoomForm({ room, onClose, onCreated }: { room: Room | null; onClose: ()
         value={mode}
         options={[{ value: 'per_bed' as PriceMode, label: t('sanatorium.perBed') }, { value: 'per_room' as PriceMode, label: t('sanatorium.perRoom') }]}
         onChange={(v) => v && setMode(v)}
+        testID="room-mode"
       />
-      <FormInput label={t('sanatorium.description')} value={desc} onChangeText={setDesc} multiline />
+      <FormInput label={t('sanatorium.description')} value={desc} onChangeText={setDesc} multiline testID="room-desc" />
       <PoiField value={poiId} onChange={setPoiId} testID="room-poi" />
       <SwitchRow label={t('sanatorium.outOfService')} value={oos} onChange={setOos} testID="room-oos" />
-      {oos && <FormInput label={t('sanatorium.outOfServiceNote')} value={oosNote} onChangeText={setOosNote} />}
-      <SwitchRow label={t('sanatorium.active')} value={active} onChange={setActive} />
+      {oos && <FormInput label={t('sanatorium.outOfServiceNote')} value={oosNote} onChangeText={setOosNote} testID="room-oos-note-input" />}
+      <SwitchRow label={t('sanatorium.active')} value={active} onChange={setActive} testID="room-active" />
       <ErrorLine message={error} testID="room-error" />
-      <Button testID="room-save" label={t('common.save')} full loading={save.isPending} onPress={() => void submit()} />
+      <Button testID="room-save" label={t('common.save')} full loading={save.isPending || flight.pending} onPress={() => void flight.run(submit)} />
     </View>
   );
 }

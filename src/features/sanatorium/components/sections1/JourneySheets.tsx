@@ -5,6 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { useSingleFlight } from '../../simple/useSingleFlight';
 import { FormInput } from '@/components/FormInput';
 import { toast } from '@/lib/toast';
 import { Button, Sheet, Text } from '@/ui';
@@ -39,6 +40,7 @@ function MoveForm({ stayId, currentId, given, onClose }: { stayId: number; curre
   const options = (stages.data ?? [])
     .filter((s) => s.is_active)
     .map((s) => ({ value: s.id, label: pickLang(i18n.language, { uz: s.name_uz, ru: s.name_ru, en: s.name_en }) + (s.id === currentId ? ` · ${t('san1.journey.current')}` : '') }));
+  const flight = useSingleFlight();
   const submit = async () => {
     if (stageId == null) return setError(t('san1.journey.pickStage'));
     try {
@@ -55,7 +57,7 @@ function MoveForm({ stayId, currentId, given, onClose }: { stayId: number; curre
       <FormInput label={t('san1.journey.note')} value={note} onChangeText={setNote} multiline maxLength={500} testID="move-note" />
       <Text variant="caption" tone="muted">{t('san1.journey.moveHint')}</Text>
       <ErrorLine message={error} testID="move-error" />
-      <Button testID="move-save" label={t('san1.journey.move')} full loading={move.isPending} onPress={() => void submit()} />
+      <Button testID="move-save" label={t('san1.journey.move')} full loading={move.isPending} onPress={() => void flight.run(submit)} />
       <Button
         testID="move-open-stay"
         label={t('san1.journey.openStay')}
@@ -98,6 +100,7 @@ function StageForm({ stage, onClose }: { stage: JourneyStage | null; onClose: ()
     if (!stage && !keyTouched) setKey(slugKey(v.uz));
   };
 
+  const flight = useSingleFlight();
   const submit = async () => {
     if (name.uz.trim().length < 2) return setError(t('sanatorium.nameShort'));
     if (!stage && !isStageKey(key)) return setError(t('san1.journey.keyInvalid'));
@@ -162,8 +165,8 @@ function StageForm({ stage, onClose }: { stage: JourneyStage | null; onClose: ()
       {notify && <LangFields label={t('san1.journey.message')} values={msg} onChange={setMsg} multiline requiredUz maxLength={1000} testID="stage-msg" />}
       <SwitchRow label={t('sanatorium.active')} value={active} onChange={setActive} />
       <ErrorLine message={error} testID="stage-error" />
-      <Button testID="stage-save" label={t('common.save')} full loading={save.isPending} onPress={() => void submit()} />
-      {stage && <Button testID="stage-delete" label={t('sanatorium.remove')} variant="dangerGhost" full loading={del.isPending} onPress={() => void remove()} />}
+      <Button testID="stage-save" label={t('common.save')} full loading={save.isPending} onPress={() => void flight.run(submit)} />
+      {stage && <Button testID="stage-delete" label={t('sanatorium.remove')} variant="dangerGhost" full loading={del.isPending} onPress={() => void flight.run(remove)} />}
     </View>
   );
 }

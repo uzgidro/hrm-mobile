@@ -16,6 +16,7 @@ import { GUEST_TYPES } from '../../types';
 import { parseAges, pickText, quoteBody, type QuoteDraft } from '../../utils/sections2';
 import { useSanFeatures } from '../../utils/features';
 import { fmtDate, fmtMoney, sanErrorMessage, todayIso } from '../../utils/sanatorium';
+import { useSingleFlight } from '../../simple/useSingleFlight';
 
 export default function QuoteScreen() {
   const { t } = useTranslation();
@@ -33,7 +34,8 @@ export default function QuoteScreen() {
   const [error, setError] = useState<string | null>(null);
   const set = (p: Partial<QuoteDraft>) => setD((x) => ({ ...x, ...p }));
 
-  const submit = async () => {
+  const flight = useSingleFlight();
+  const submit = () => flight.run(async () => {
     const draft = { ...d, children: parseAges(ages) };
     const r = quoteBody(draft);
     if (!r.ok) return setError(t(r.error));
@@ -44,7 +46,7 @@ export default function QuoteScreen() {
       setResult(null);
       setError(sanErrorMessage(e, t('errors.generic')));
     }
-  };
+  });
   const toggleService = (id: number) =>
     set({ services: d.services.some((s) => s.serviceId === id) ? d.services.filter((s) => s.serviceId !== id) : [...d.services, { serviceId: id, quantity: 1 }] });
   const setQty = (id: number, delta: number) => set({ services: d.services.map((s) => (s.serviceId === id ? { ...s, quantity: Math.max(1, Math.min(1000, s.quantity + delta)) } : s)) });
@@ -68,9 +70,9 @@ export default function QuoteScreen() {
             {d.services.map((s) => (
               <View key={s.serviceId} style={styles.qty}>
                 <Text variant="body" style={styles.flex} numberOfLines={1}>{pickText((services.data ?? []).find((x) => x.id === s.serviceId) as never, 'name', lang)}</Text>
-                <Button label="−" size="sm" variant="soft" onPress={() => setQty(s.serviceId, -1)} />
-                <Text variant="heading">{s.quantity}</Text>
-                <Button label="+" size="sm" variant="soft" onPress={() => setQty(s.serviceId, 1)} />
+                <Button testID={`qt-svc-${s.serviceId}-minus`} label="−" size="sm" variant="soft" onPress={() => setQty(s.serviceId, -1)} />
+                <Text variant="heading" testID={`qt-svc-${s.serviceId}-qty`}>{s.quantity}</Text>
+                <Button testID={`qt-svc-${s.serviceId}-plus`} label="+" size="sm" variant="soft" onPress={() => setQty(s.serviceId, 1)} />
               </View>
             ))}
           </>
@@ -90,18 +92,18 @@ function QuoteResultView({ r }: { r: QuoteResult }) {
     <Card title={t('sanatorium.s2.quoteResult')} icon="wallet" tint="green" testID="quote-result">
       <Text variant="caption" tone="muted">{fmtDate(r.start)} → {fmtDate(r.end)} · {r.nights} {t('sanatorium.s2.nightsShort')} · {r.adults} + {r.children}</Text>
       {r.room && <View style={styles.badges}><Badge label={`${t('sanatorium.room')} ${r.room.number}`} tone="info" testID="quote-room" /></View>}
-      {r.package && <ListRow title={`${t('sanatorium.s2.package')}: ${pickText(r.package as never, 'name', lang)}`} subtitle={`${r.package.nights} ${t('sanatorium.s2.nightsShort')}`} right={<Text variant="heading">{fmtMoney(r.package.amount)}</Text>} />}
+      {r.package && <ListRow testID="quote-package" title={`${t('sanatorium.s2.package')}: ${pickText(r.package as never, 'name', lang)}`} subtitle={`${r.package.nights} ${t('sanatorium.s2.nightsShort')}`} right={<Text variant="heading">{fmtMoney(r.package.amount)}</Text>} />}
       {r.night_lines.map((l) => (
-        <ListRow key={l.date} title={fmtDate(l.date)} subtitle={`${fmtMoney(l.unit_price)} × ${l.persons_charged}${l.season ? ` · ${typeof l.season === 'string' ? l.season : l.season.name}` : ''}`} right={<Text variant="body">{fmtMoney(l.amount)}</Text>} />
+        <ListRow testID={`quote-night-${l.date}`} key={l.date} title={fmtDate(l.date)} subtitle={`${fmtMoney(l.unit_price)} × ${l.persons_charged}${l.season ? ` · ${typeof l.season === 'string' ? l.season : l.season.name}` : ''}`} right={<Text variant="body">{fmtMoney(l.amount)}</Text>} />
       ))}
       {Number(r.child_discount?.amount) !== 0 && r.child_discount && (
         <ListRow testID="quote-child-discount" title={`${t('sanatorium.childDiscount')} (${r.child_discount.percent}%${r.children_discounted != null ? ` · ${t('sanCatalog.quote.children', { n: r.children_discounted })}` : ''})`} right={<Text variant="body">{fmtMoney(r.child_discount.amount)}</Text>} />
       )}
       {r.services.map((s) => (
-        <ListRow key={s.service_id} title={pickText(s as never, 'name', lang)} subtitle={`${s.quantity} × ${fmtMoney(s.unit_price)} / ${t(`sanatorium.s2.unit.${s.unit}`, { defaultValue: s.unit })}`} right={<Text variant="body">{fmtMoney(s.amount)}</Text>} />
+        <ListRow testID={`quote-svc-${s.service_id}`} key={s.service_id} title={pickText(s as never, 'name', lang)} subtitle={`${s.quantity} × ${fmtMoney(s.unit_price)} / ${t(`sanatorium.s2.unit.${s.unit}`, { defaultValue: s.unit })}`} right={<Text variant="body">{fmtMoney(s.amount)}</Text>} />
       ))}
-      <ListRow title={t('sanatorium.s2.accommodationTotal')} right={<Text variant="body">{fmtMoney(r.accommodation_total)}</Text>} />
-      <ListRow title={t('sanatorium.s2.servicesTotal')} right={<Text variant="body">{fmtMoney(r.services_total)}</Text>} />
+      <ListRow title={t('sanatorium.s2.accommodationTotal')} right={<Text variant="body" testID="quote-accommodation">{fmtMoney(r.accommodation_total)}</Text>} />
+      <ListRow title={t('sanatorium.s2.servicesTotal')} right={<Text variant="body" testID="quote-services-total">{fmtMoney(r.services_total)}</Text>} />
       <ListRow title={t('sanatorium.total')} right={<Text variant="title" testID="quote-total">{fmtMoney(r.total)}</Text>} />
     </Card>
   );

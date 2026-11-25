@@ -22,6 +22,7 @@ import { canDeleteOrder, canEditOrder, isPastDay, nextOrderStatuses, orderQuanti
 import { fmtDate, fmtDateTime, fmtMoney, fmtTime, sanErrorMessage, todayIso } from '../../utils/sanatorium';
 import { ChipWrap, FieldLabel, useContentLang } from './kit';
 import type { Tone } from '@/ui/Chip';
+import { useSingleFlight } from '../../simple/useSingleFlight';
 
 const TONE: Record<OrderStatus, Tone> = { requested: 'warning', confirmed: 'info', done: 'success', cancelled: 'danger' };
 
@@ -95,7 +96,8 @@ function OrderForm({ stayId, onClose }: { stayId?: number; onClose: () => void }
   const svc: SanService | undefined = (services.data ?? []).find((s) => s.id === svcId);
   const live = (stays.data?.pages.flatMap((p) => p.items) ?? []).filter((s) => s.status === 'booked' || s.status === 'checked_in');
 
-  const submit = async () => {
+  const flight = useSingleFlight();
+  const submit = () => flight.run(async () => {
     const n = orderQuantity(qty);
     if (!stay) return setError(t('sanatorium.s2.pickStay'));
     if (!svc) return setError(t('sanatorium.s2.pickService'));
@@ -108,7 +110,7 @@ function OrderForm({ stayId, onClose }: { stayId?: number; onClose: () => void }
     } catch (e) {
       setError(sanErrorMessage(e, t('errors.generic')));
     }
-  };
+  });
   return (
     <View testID="order-form">
       {stayId == null && (
@@ -178,7 +180,8 @@ function RescheduleForm({ o, onClose }: { o: ServiceOrder; onClose: () => void }
   const patch = usePatchServiceOrder();
   const [slot, setSlot] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const submit = async () => {
+  const flight = useSingleFlight();
+  const submit = () => flight.run(async () => {
     if (!slot) return setError(t('sanatorium.errors.schedule_required'));
     try {
       await patch.mutateAsync({ id: o.id, body: { scheduled_at: slot } });
@@ -187,7 +190,7 @@ function RescheduleForm({ o, onClose }: { o: ServiceOrder; onClose: () => void }
     } catch (e) {
       setError(sanErrorMessage(e, t('errors.generic')));
     }
-  };
+  });
   return (
     <View>
       <Text variant="caption" tone="muted">{o.scheduled_at ? `${t('sanCatalog.orders.current')}: ${fmtDateTime(o.scheduled_at)}` : ''}</Text>

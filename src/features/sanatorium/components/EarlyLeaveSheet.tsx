@@ -11,7 +11,7 @@ import { toast } from '@/lib/toast';
 import { Button, SelectField, Sheet, Text } from '@/ui';
 import { useAuthStore } from '@/store/authStore';
 import { useEarlyLeave } from '../api/mutations';
-import { earlyPreviewQuery, groupStaysQuery } from '../simple/api';
+import { debtFromWarnings, earlyPreviewQuery, groupStaysQuery } from '../simple/api';
 import { Note } from '../simple/components/parts';
 import { RefundSheet } from '../simple/components/StayActions';
 import { flowErrorText } from '../simple/errors';
@@ -58,6 +58,8 @@ export function EarlyLeaveForm({ stay, group, onClose }: { stay: Stay; group?: P
       const res = await save.mutateAsync({ id: stay.id, leave_date: date, reason: reason.trim(), whole_group: all });
       toast.success(t('sanatorium.earlyLeaveSaved'));
       toastWarnings(res, ['prepaid', 'refund']);
+      const left = debtFromWarnings(res);
+      if (left > 0) toast.info(t('sanSimple.debtLeft', { amount: fmtMoney(left) }), 8000);
       const back = refundOf(res);
       if (back > 0 && registrar) setRefund(back);
       else onClose();
@@ -102,14 +104,14 @@ export function EarlyLeaveForm({ stay, group, onClose }: { stay: Stay; group?: P
         )}
         <Button testID="early-save" label={t('sanatorium.confirm')} full loading={save.isPending || flight.pending} onPress={() => void submit()} />
       </View>
-      <DatePickerModal
-        visible={pickDate} value={date} title={t('sanatorium.leaveDate')} onClose={() => setPickDate(false)}
+      {pickDate && <DatePickerModal
+        visible value={date} title={t('sanatorium.leaveDate')} onClose={() => setPickDate(false)}
         onConfirm={(v) => {
           if (v < stay.planned_from) return setError(t('sanFlow.early.beforeFrom'));
           setError(null);
           setDate(v);
         }}
-      />
+      />}
     </>
   );
 }

@@ -10,8 +10,9 @@ import { dayStaysQuery } from '../api/staffQueries';
 import { countsQuery, kitchenDayQuery } from '../api/queries';
 import { dietsQuery, type Diet } from '../api/sections2';
 import type { Stay } from '../types';
+import { useAuthStore } from '@/store/authStore';
 import { useSanFeatures } from '../utils/features';
-import { fmtDate, todayIso } from '../utils/sanatorium';
+import { fmtDate, hasSanRole, todayIso } from '../utils/sanatorium';
 import { pickText } from '../utils/sections2';
 import { filterByGuestName, foodLine, KITCHEN_RANGES } from '../utils/staffParity';
 import { DayBar, QueryBlock } from './common';
@@ -131,6 +132,8 @@ export function KitchenCounts({ enabled }: { enabled: boolean }) {
 // ── Arrivals / departures strip ──
 function FlowCard({ title, empty, rows, food, testID }: { title: string; empty: string; rows: Stay[]; food: (s: Stay) => string; testID: string }) {
   const { t } = useTranslation();
+  // The stay screen is for the registrar and the room keeper; the kitchen only reads the line.
+  const canOpen = hasSanRole(useAuthStore((s) => s.user), 'registrar', 'room_keeper');
   return (
     <View testID={testID}>
       <SectionHeader title={`${title} (${rows.length})`} />
@@ -143,8 +146,8 @@ function FlowCard({ title, empty, rows, food, testID }: { title: string; empty: 
             title={s.guest?.full_name ?? '—'}
             subtitle={[s.room ? `${t('sanatorium.room')} ${s.room.number}` : t('sanatorium.noRoom'), food(s)].filter(Boolean).join(' · ')}
             right={<Badge label={t(`sanatorium.stayStatus.${s.status}`)} tone={s.status === 'checked_in' ? 'success' : 'info'} />}
-            chevron
-            onPress={() => router.push({ pathname: '/sanatorium-stay', params: { id: String(s.id) } })}
+            chevron={canOpen}
+            onPress={canOpen ? () => router.push({ pathname: '/sanatorium-stay', params: { id: String(s.id) } }) : undefined}
           />
         ))}
       </Card>

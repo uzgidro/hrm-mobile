@@ -14,6 +14,7 @@ import type { Appointment, Procedure, QrResolveResult } from '../types';
 import { apptTone, fmtDate, fmtDateTime, fmtTime, procTone, sanErrorMessage, stayTone } from '../utils/sanatorium';
 import { FINISH_MAX, finishBody, finishError } from '../utils/staffParity';
 import { ErrorLine } from './forms';
+import { useSingleFlight } from '../simple/useSingleFlight';
 
 // ── Finish ──
 export function FinishSheet({ appt, onClose }: { appt: Appointment | null; onClose: () => void }) {
@@ -28,6 +29,7 @@ export function FinishSheet({ appt, onClose }: { appt: Appointment | null; onClo
 function FinishForm({ appt, onClose }: { appt: Appointment; onClose: () => void }) {
   const { t } = useTranslation();
   const finish = useFinishAppointment();
+  const flight = useSingleFlight();
   const [f, setF] = useState({ complaint: appt.complaint ?? '', diagnosis: appt.diagnosis ?? '', recommendation: appt.recommendation ?? '' });
   const [error, setError] = useState<string | null>(null);
   const bad = finishError(f);
@@ -52,7 +54,7 @@ function FinishForm({ appt, onClose }: { appt: Appointment; onClose: () => void 
       <FormInput label={t('sanatorium.diagnosis')} value={f.diagnosis} onChangeText={set('diagnosis')} multiline maxLength={FINISH_MAX} testID="finish-diagnosis" />
       <FormInput label={t('sanatorium.recommendation')} value={f.recommendation} onChangeText={set('recommendation')} multiline maxLength={FINISH_MAX} testID="finish-recommendation" />
       <ErrorLine message={error} testID="finish-error" />
-      <Button testID="finish-save" label={t('sanatorium.finish')} full disabled={!!bad} loading={finish.isPending} onPress={() => void submit()} />
+      <Button testID="finish-save" label={t('sanatorium.finish')} full disabled={!!bad} loading={finish.isPending || flight.pending} onPress={() => void flight.run(submit)} />
     </View>
   );
 }

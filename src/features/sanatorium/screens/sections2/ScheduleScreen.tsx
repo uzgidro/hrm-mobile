@@ -15,6 +15,7 @@ import { ScheduleBoard } from '../../components/sections2/Schedule';
 import { emptyProcRoomDraft, procRoomBody, toggleValue, weekdaysLabel, type ProcRoomDraft } from '../../utils/sections2';
 import { hasSanRole, sanErrorMessage } from '../../utils/sanatorium';
 import { useAuthStore } from '@/store/authStore';
+import { useSingleFlight } from '../../simple/useSingleFlight';
 
 export default function ScheduleScreen() {
   const { t } = useTranslation();
@@ -87,7 +88,8 @@ function RoomForm({ room, onClose }: { room: ProcRoom | null; onClose: () => voi
   );
   const [error, setError] = useState<string | null>(null);
   const set = (p: Partial<ProcRoomDraft>) => setD((x) => ({ ...x, ...p }));
-  const submit = async () => {
+  const flight = useSingleFlight();
+  const submit = () => flight.run(async () => {
     const r = procRoomBody(d);
     if (!r.ok) return setError(t(r.error));
     try {
@@ -97,7 +99,7 @@ function RoomForm({ room, onClose }: { room: ProcRoom | null; onClose: () => voi
     } catch (e) {
       setError(sanErrorMessage(e, t('errors.generic')));
     }
-  };
+  });
   return (
     <View testID="proc-room-form">
       <FormInput label={t('sanatorium.s2.procRoomName')} value={d.name} onChangeText={(v) => set({ name: v })} required testID="pr-name" />

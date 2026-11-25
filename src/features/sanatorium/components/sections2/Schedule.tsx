@@ -19,6 +19,7 @@ import { DayBar, QueryBlock } from '../common';
 import { ChoiceField, DateField, ErrorLine } from '../forms';
 import { fmtDateTime, fmtTime, sanErrorMessage, toLocalIso, todayIso } from '../../utils/sanatorium';
 import { moveBody, remainingSessions, scheduleBody, scheduleStart, slotUsage } from '../../utils/sections2';
+import { useSingleFlight } from '../../simple/useSingleFlight';
 
 const TONE: Record<SessionStatus, Tone> = { planned: 'info', done: 'success', missed: 'warning', cancelled: 'danger' };
 
@@ -143,7 +144,8 @@ function MoveForm({ s, onClose }: { s: ProcSession; onClose: () => void }) {
   const [roomId, setRoomId] = useState<number | null>(null);
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const submit = async () => {
+  const flight = useSingleFlight();
+  const submit = () => flight.run(async () => {
     try {
       await move.mutateAsync({ id: s.id, body: moveBody(toLocalIso(at), roomId) });
       toast.success(t('sanatorium.saved'));
@@ -151,7 +153,7 @@ function MoveForm({ s, onClose }: { s: ProcSession; onClose: () => void }) {
     } catch (e) {
       setError(sanErrorMessage(e, t('errors.generic')));
     }
-  };
+  });
   return (
     <View testID="session-move-form">
       <Text variant="body" weight="600">{s.guest?.full_name} · {s.procedure_name}</Text>
@@ -187,7 +189,8 @@ function ScheduleForm({ p, onClose }: { p: ScheduleProcedure; onClose: () => voi
   const [count, setCount] = useState(String(remaining));
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<{ n: number; left: number } | null>(null);
-  const submit = async () => {
+  const flight = useSingleFlight();
+  const submit = () => flight.run(async () => {
     const r = scheduleBody({ roomId, start, time, count }, remaining, today);
     if (!r.ok) return setError(t(r.error));
     try {
@@ -197,7 +200,7 @@ function ScheduleForm({ p, onClose }: { p: ScheduleProcedure; onClose: () => voi
     } catch (e) {
       setError(sanErrorMessage(e, t('errors.generic')));
     }
-  };
+  });
   return (
     <View testID="schedule-form">
       <Text variant="body" weight="600">{p.name} · {p.sessions_done}/{p.sessions_total}</Text>

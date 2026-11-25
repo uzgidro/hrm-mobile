@@ -6,10 +6,11 @@ import { StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { useSingleFlight } from '../../simple/useSingleFlight';
 import { FormInput } from '@/components/FormInput';
 import { toast } from '@/lib/toast';
 import { useAuthStore } from '@/store/authStore';
-import { Badge, Button, Card, EmptyState, ListRow, PageHeader, Screen, Segmented, Text } from '@/ui';
+import { Badge, Button, Card, EmptyState, IconButton, ListRow, PageHeader, Screen, Segmented, Text } from '@/ui';
 import {
   journeyBoardQuery, journeySettingsQuery, stagesQuery, useReorderStages, useSaveJourneySettings,
 } from '../../api/sections1';
@@ -135,7 +136,6 @@ function Catalog({ q, onEdit }: { q: UseQueryResult<JourneyStage[]>; onEdit?: (s
             {stages.map((s, i) => (
               <ListRow
                 key={s.id}
-                pressable={!!onEdit}
                 testID={`stage-${s.id}`}
                 title={`${i + 1}. ${pickLang(i18n.language, { uz: s.name_uz, ru: s.name_ru, en: s.name_en })}`}
                 subtitle={[s.responsible_role ? t(`sanatorium.role.${s.responsible_role}`) : null, s.trigger ? t(`san1.journey.triggers.${s.trigger}`) : null].filter(Boolean).join(' · ') || undefined}
@@ -143,10 +143,10 @@ function Catalog({ q, onEdit }: { q: UseQueryResult<JourneyStage[]>; onEdit?: (s
                   <View style={styles.badges}>
                     {!s.is_active && <Badge label={t('sanatorium.inactive')} tone="neutral" />}
                     {s.notify_guest && <Badge label={t('san1.journey.notifies')} tone="info" />}
+                    {onEdit && <IconButton icon="edit" tone="soft" accessibilityLabel={t('common.edit')} onPress={() => onEdit(s)} testID={`stage-${s.id}-edit`} />}
                     {onEdit && <MoveButtons first={i === 0} last={i === stages.length - 1} testID={`stage-${s.id}`} onUp={() => move(stages.map((x) => x.id), s.id, -1)} onDown={() => move(stages.map((x) => x.id), s.id, 1)} />}
                   </View>
                 }
-                onPress={onEdit ? () => onEdit(s) : undefined}
               />
             ))}
           </View>
@@ -169,6 +169,7 @@ function SettingsForm({ s }: { s: JourneySettings }) {
   const [pre, setPre] = useState(String(s.pre_arrival_days));
   const [fin, setFin] = useState(String(s.final_exam_days));
   const [error, setError] = useState<string | null>(null);
+  const flight = useSingleFlight();
   const submit = async () => {
     const a = Number.parseInt(pre, 10);
     const b = Number.parseInt(fin, 10);
@@ -187,7 +188,7 @@ function SettingsForm({ s }: { s: JourneySettings }) {
       <FormInput label={t('san1.journey.preArrivalDays')} value={pre} onChangeText={readOnly ? () => {} : setPre} keyboardType="number-pad" maxLength={2} testID="jset-pre" />
       <FormInput label={t('san1.journey.finalExamDays')} value={fin} onChangeText={readOnly ? () => {} : setFin} keyboardType="number-pad" maxLength={2} testID="jset-final" />
       <ErrorLine message={error} />
-      {!readOnly && <Button testID="jset-save" label={t('common.save')} full loading={save.isPending} onPress={() => void submit()} />}
+      {!readOnly && <Button testID="jset-save" label={t('common.save')} full loading={save.isPending} onPress={() => void flight.run(submit)} />}
     </Card>
   );
 }

@@ -53,7 +53,8 @@ function boot(){
     map.on('zoomend',function(){send({type:'zoom',zoom:Math.round(map.getZoom())});});
     window.__setPoint=function(lat,lng){
       if(lat===null){if(marker){marker.remove();marker=null;}return;}
-      put(lat,lng);map.easeTo({center:[lng,lat],duration:250});
+      // No animation: a page that is throttled (off screen) would leave the pin behind the map.
+      map.jumpTo({center:[lng,lat]});put(lat,lng);
     };
     window.addEventListener('message',function(e){try{var m=JSON.parse(e.data);if(m&&m.cmd==='set')window.__setPoint(m.lat,m.lng);}catch(x){}});
     map.once('load',function(){send({type:'ready'});});

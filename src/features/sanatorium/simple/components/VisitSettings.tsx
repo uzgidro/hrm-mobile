@@ -14,12 +14,14 @@ import { GUEST_TYPES, type GuestType, type SanSettings } from '../../types';
 import { sanErrorMessage } from '../../utils/sanatorium';
 import { splitHours, validateVisitSettings } from '../utils';
 import { joinWindow, mealTimesBody, splitWindow, windowValid } from '../../utils/staffParity';
+import { useSingleFlight } from '../useSingleFlight';
 
 export const hasVisitSettings = (s: SanSettings | undefined) => s?.exam_slot_min !== undefined;
 
 export function VisitSettings({ s }: { s: SanSettings }) {
   const { t } = useTranslation();
   const save = useSaveSettings();
+  const flight = useSingleFlight();
   const readOnly = useSanReadOnly();
   const [from0, to0] = splitHours(s.exam_hours);
   const [from, setFrom] = useState(from0);
@@ -90,7 +92,7 @@ export function VisitSettings({ s }: { s: SanSettings }) {
         <View style={styles.flex}><TimeField label={t('sanSimple.set.checkout')} value={cout} onChange={setCout} testID="set-checkout" /></View>
       </View>
       <ErrorLine message={error} testID="visit-error" />
-      {!readOnly && <Button testID="visit-save" label={t('common.save')} full loading={save.isPending} onPress={() => void submit()} />}
+      {!readOnly && <Button testID="visit-save" label={t('common.save')} full loading={save.isPending || flight.pending} onPress={() => void flight.run(submit)} />}
     </Card>
   );
 }

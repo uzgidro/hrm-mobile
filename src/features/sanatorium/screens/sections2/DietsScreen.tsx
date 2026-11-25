@@ -7,13 +7,29 @@ import { FormInput } from '@/components/FormInput';
 import { toast } from '@/lib/toast';
 import { Badge, Button, Card, EmptyState, SearchField, Sheet, Text } from '@/ui';
 import { dietsQuery, useDeleteDiet, useSaveDiet, type Diet } from '../../api/sections2';
-import { QueryBlock } from '../../components/common';
+import { QueryBlock, useSanAccess } from '../../components/common';
 import { ErrorLine, SwitchRow } from '../../components/forms';
 import { RowTools, SectionScreen, TextTrio, useConfirmDelete, useContentLang } from '../../components/sections2/kit';
+import { KitchenDietView } from '../../components/sections2/DietParts';
 import { dietBody, emptyDietDraft, pickText, type DietDraft } from '../../utils/sections2';
 import { sanErrorMessage } from '../../utils/sanatorium';
+import { useSingleFlight } from '../../simple/useSingleFlight';
 
+// The kitchen has no catalog to edit: it opens the day's diet list (the same view as the kitchen's diets tab).
 export default function DietsScreen() {
+  const { t } = useTranslation();
+  const registrar = useSanAccess('registrar');
+  if (!registrar) {
+    return (
+      <SectionScreen title={t('sanatorium.s2.diets')} feature="diet" roles={['kitchen']} testID="san-diets-screen">
+        <KitchenDietView />
+      </SectionScreen>
+    );
+  }
+  return <DietCatalog />;
+}
+
+function DietCatalog() {
   const { t } = useTranslation();
   const lang = useContentLang();
   const q = useQuery(dietsQuery(true));
@@ -63,7 +79,8 @@ function DietForm({ diet, onClose }: { diet: Diet | null; onClose: () => void })
   );
   const [error, setError] = useState<string | null>(null);
   const set = (p: Partial<DietDraft>) => setD((x) => ({ ...x, ...p }));
-  const submit = async () => {
+  const flight = useSingleFlight();
+  const submit = () => flight.run(async () => {
     const r = dietBody(d);
     if (!r.ok) return setError(t(r.error));
     try {
@@ -73,7 +90,7 @@ function DietForm({ diet, onClose }: { diet: Diet | null; onClose: () => void })
     } catch (e) {
       setError(sanErrorMessage(e, t('errors.generic')));
     }
-  };
+  });
   return (
     <View testID="diet-form">
       <FormInput label={t('sanatorium.s2.dietCode')} value={d.code} onChangeText={(v) => set({ code: v })} required testID="dt-code" />

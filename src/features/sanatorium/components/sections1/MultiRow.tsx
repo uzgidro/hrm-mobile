@@ -21,8 +21,9 @@ export function MultiRow({
   onPress?: () => void;
   testID?: string;
 }) {
-  const body = (
-    <Card testID={testID ? `${testID}-card` : undefined}>
+  // Only the text part is pressable: phone links and buttons in `children` must not sit inside another button.
+  const head = (
+    <>
       <View style={styles.top}>
         <Text variant="heading" style={styles.flex}>{title}</Text>
         {right}
@@ -30,14 +31,19 @@ export function MultiRow({
       {(lines ?? []).filter(Boolean).map((l, i) => (
         <Text key={i} variant="caption" tone="muted">{l as string}</Text>
       ))}
+    </>
+  );
+  return (
+    <Card testID={testID}>
+      {onPress ? (
+        <Pressable testID={testID ? `${testID}-open` : undefined} accessibilityRole="button" accessibilityLabel={title} onPress={onPress}>
+          {head}
+        </Pressable>
+      ) : (
+        head
+      )}
       {children}
     </Card>
-  );
-  if (!onPress) return <View testID={testID}>{body}</View>;
-  return (
-    <Pressable testID={testID} accessibilityRole="button" accessibilityLabel={title} onPress={onPress}>
-      {body}
-    </Pressable>
   );
 }
 

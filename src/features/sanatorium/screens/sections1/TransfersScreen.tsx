@@ -6,6 +6,7 @@ import { StyleSheet, View } from 'react-native';
 import dayjs from 'dayjs';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { useSingleFlight } from '../../simple/useSingleFlight';
 import { DateTimePickerModal } from '@/components/DateTimePicker';
 import { FormInput } from '@/components/FormInput';
 import { toast } from '@/lib/toast';
@@ -136,6 +137,7 @@ function TransferForm({ item, onClose }: { item: Transfer | null; onClose: () =>
   const final = !!item && (item.status === 'done' || item.status === 'cancelled');
   const nexts = item ? nextTransferStatuses(item.status) : [];
 
+  const flight = useSingleFlight();
   const submit = async () => {
     const n = Number.parseInt(people, 10);
     const pr = price.trim() ? Number(price.replace(',', '.')) : null;
@@ -270,9 +272,9 @@ function TransferForm({ item, onClose }: { item: Transfer | null; onClose: () =>
       )}
       <ErrorLine message={error} testID="tr-error" />
  {item?.status === 'requested' && (
-        <Button testID="tr-confirm" label={t('sanPlaces.transfer.confirm')} variant="soft" full icon="check" loading={confirmTr.isPending} onPress={() => void confirmNow()} />
+        <Button testID="tr-confirm" label={t('sanPlaces.transfer.confirm')} variant="soft" full icon="check" loading={confirmTr.isPending} onPress={() => void flight.run(confirmNow)} />
       )}
-      {!final && <Button testID="tr-save" label={t('common.save')} full loading={create.isPending || patch.isPending} onPress={() => void submit()} />}
+      {!final && <Button testID="tr-save" label={t('common.save')} full loading={create.isPending || patch.isPending} onPress={() => void flight.run(submit)} />}
       <DateTimePickerModal visible={pickWhen} value={when} title={t('sanatorium.dateTime')} onConfirm={(iso) => setWhen(toLocalIso(iso))} onClose={() => setPickWhen(false)} />
     </View>
   );

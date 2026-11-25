@@ -16,6 +16,7 @@ import { KitchenDietView } from '../components/sections2/DietParts';
 import { useSanFeatures } from '../utils/features';
 import { MEALS, type Meal, type MenuDay, type MenuMeal } from '../types';
 import { fmtDate, sanErrorMessage, todayIso } from '../utils/sanatorium';
+import { useSingleFlight } from '../simple/useSingleFlight';
 
 type Seg = 'counts' | 'today' | 'menu' | 'diets';
 
@@ -73,7 +74,7 @@ export default function KitchenScreen() {
                   <Card key={d.date} testID={`menu-${d.date}`}>
                     <View style={styles.row}>
                       <Text variant="heading" style={styles.flex}>{fmtDate(d.date)}</Text>
-                      {!readOnly && <Button label={t("sanatorium.edit")} variant="soft" size="sm" icon="edit" onPress={() => setEditing(d)} testID="menu-edit" />}
+                      {!readOnly && <Button label={t("sanatorium.edit")} variant="soft" size="sm" icon="edit" onPress={() => setEditing(d)} testID={`menu-edit-${d.date}`} />}
                     </View>
                     {MEALS.map((m) => {
                       const x = d.meals.find((y) => y.meal === m);
@@ -113,6 +114,7 @@ function MenuEditor({ day, onClose }: { day: MenuDay | null; onClose: () => void
 function MenuForm({ day, onClose }: { day: MenuDay; onClose: () => void }) {
   const { t } = useTranslation();
   const save = usePutMenu();
+  const flight = useSingleFlight();
   const [draft, setDraft] = useState<Draft>(() => {
     const d = emptyDraft();
     for (const m of day.meals as MenuMeal[]) d[m.meal] = { dishes: m.dishes ?? '', diet: m.diet_dishes ?? '' };
@@ -150,11 +152,12 @@ function MenuForm({ day, onClose }: { day: MenuDay; onClose: () => void }) {
               onChangeText={(v) => setDraft((d) => ({ ...d, [m]: { ...d[m], diet: v } }))}
               multiline
               maxLength={2000}
+              testID={`menu-diet-${m}`}
             />
           </View>
         ))}
         {!!error && <Text variant="label" tone="danger">{error}</Text>}
-        <Button testID="menu-save" label={t('common.save')} full loading={save.isPending} onPress={() => void submit()} />
+        <Button testID="menu-save" label={t('common.save')} full loading={save.isPending || flight.pending} onPress={() => void flight.run(submit)} />
     </View>
   );
 }

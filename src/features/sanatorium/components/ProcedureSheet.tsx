@@ -10,6 +10,7 @@ import { useCreateProcedure } from '../api/mutations';
 import type { Appointment } from '../types';
 import { fmtDate, sanErrorMessage, todayIso } from '../utils/sanatorium';
 import { endBeforeStart } from '../utils/staffParity';
+import { useSingleFlight } from '../simple/useSingleFlight';
 
 export function ProcedureSheet({ appt, onClose }: { appt: Appointment | null; onClose: () => void }) {
   const { t } = useTranslation();
@@ -24,6 +25,7 @@ export function ProcedureSheet({ appt, onClose }: { appt: Appointment | null; on
 function ProcedureForm({ appt, onClose }: { appt: Appointment; onClose: () => void }) {
   const { t } = useTranslation();
   const create = useCreateProcedure();
+  const flight = useSingleFlight();
   const [name, setName] = useState('');
   const [sessions, setSessions] = useState('5');
   const [start, setStart] = useState(todayIso());
@@ -66,14 +68,14 @@ function ProcedureForm({ appt, onClose }: { appt: Appointment; onClose: () => vo
         <FormInput label={t('sanatorium.sessionsTotal')} value={sessions} onChangeText={setSessions} keyboardType="number-pad" required testID="proc-sessions" />
         <SelectField label={t('sanatorium.startDate')} value={fmtDate(start)} icon="calendar" onPress={() => setPickDate(true)} testID="proc-start" />
         <SelectField label={t('sanatorium.endDate')} value={end ? fmtDate(end) : undefined} placeholder="—" icon="calendar" onPress={() => setPickEnd(true)} testID="proc-end" />
-        <FormInput label={t('sanatorium.timeText')} value={timeText} onChangeText={setTimeText} placeholder="09:00" maxLength={50} />
-        <FormInput label={t('sanatorium.place')} value={place} onChangeText={setPlace} maxLength={100} />
-        <FormInput label={t('sanatorium.notes')} value={notes} onChangeText={setNotes} multiline maxLength={2000} />
+        <FormInput label={t('sanatorium.timeText')} value={timeText} onChangeText={setTimeText} placeholder="09:00" maxLength={50} testID="proc-time" />
+        <FormInput label={t('sanatorium.place')} value={place} onChangeText={setPlace} maxLength={100} testID="proc-place" />
+        <FormInput label={t('sanatorium.notes')} value={notes} onChangeText={setNotes} multiline maxLength={2000} testID="proc-notes" />
         {!!error && <Text variant="label" tone="danger" testID="proc-error">{error}</Text>}
-        <Button testID="proc-save" label={t('common.save')} full loading={create.isPending} onPress={() => void submit()} />
+        <Button testID="proc-save" label={t('common.save')} full loading={create.isPending || flight.pending} onPress={() => void flight.run(submit)} />
       </View>
-      <DatePickerModal visible={pickDate} value={start} title={t('sanatorium.startDate')} onConfirm={setStart} onClose={() => setPickDate(false)} />
-      <DatePickerModal visible={pickEnd} value={end ?? start} title={t('sanatorium.endDate')} onConfirm={setEnd} onClose={() => setPickEnd(false)} />
+      {pickDate && <DatePickerModal visible value={start} title={t('sanatorium.startDate')} onConfirm={setStart} onClose={() => setPickDate(false)} />}
+      {pickEnd && <DatePickerModal visible value={end ?? start} title={t('sanatorium.endDate')} onConfirm={setEnd} onClose={() => setPickEnd(false)} />}
     </>
   );
 }

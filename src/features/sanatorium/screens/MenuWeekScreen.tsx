@@ -18,6 +18,7 @@ import { useSanFeatures } from '../utils/features';
 import { MEALS, type Meal, type MenuDay } from '../types';
 import { addDays, fmtDate, sanErrorMessage, todayIso } from '../utils/sanatorium';
 import { mondayOf, weekdayIndex } from '../utils/staffParity';
+import { useSingleFlight } from '../simple/useSingleFlight';
 
 const DAYS = 7;
 
@@ -48,6 +49,7 @@ type Draft = Record<string, Cell>; // key = `${date}|${meal}`
 function WeekForm({ start, days }: { start: string; days: MenuDay[] }) {
   const { t } = useTranslation();
   const save = usePutMenu();
+  const flight = useSingleFlight();
   const readOnly = useSanReadOnly();
   const wd = useWeekdayNames();
   const dates = Array.from({ length: DAYS }, (_, i) => addDays(start, i));
@@ -69,7 +71,9 @@ function WeekForm({ start, days }: { start: string; days: MenuDay[] }) {
       );
       setError(null);
       toast.success(t('sanatorium.menuSaved'));
-      router.back();
+      // Opened by a link (no history): fall back to the kitchen.
+      if (router.canGoBack()) router.back();
+      else router.replace('/sanatorium-kitchen');
     } catch (e) {
       setError(sanErrorMessage(e, t('errors.generic')));
     }
@@ -83,13 +87,13 @@ function WeekForm({ start, days }: { start: string; days: MenuDay[] }) {
           {MEALS.map((m) => (
             <View key={m}>
               <FormInput label={t(`sanatorium.meal.${m}`)} value={draft[`${date}|${m}`]!.dishes} onChangeText={(v) => (readOnly ? undefined : set(`${date}|${m}`, { dishes: v }))} multiline maxLength={2000} testID={`wk-${date}-${m}`} />
-              <FormInput label={`${t(`sanatorium.meal.${m}`)} · ${t('sanatorium.diet')}`} value={draft[`${date}|${m}`]!.diet} onChangeText={(v) => (readOnly ? undefined : set(`${date}|${m}`, { diet: v }))} multiline maxLength={2000} />
+              <FormInput label={`${t(`sanatorium.meal.${m}`)} · ${t('sanatorium.diet')}`} value={draft[`${date}|${m}`]!.diet} onChangeText={(v) => (readOnly ? undefined : set(`${date}|${m}`, { diet: v }))} multiline maxLength={2000} testID={`wk-diet-${date}-${m}`} />
             </View>
           ))}
         </Card>
       ))}
       <ErrorLine message={error} />
-      {!readOnly && <Button testID="week-save" label={t('common.save')} full loading={save.isPending} onPress={() => void submit()} />}
+      {!readOnly && <Button testID="week-save" label={t('common.save')} full loading={save.isPending || flight.pending} onPress={() => void flight.run(submit)} />}
     </View>
   );
 }

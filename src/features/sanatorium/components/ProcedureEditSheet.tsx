@@ -10,6 +10,7 @@ import type { ProcStatus, Procedure } from '../types';
 import { sanErrorMessage } from '../utils/sanatorium';
 import { endBeforeStart } from '../utils/staffParity';
 import { ChoiceField, DateField, ErrorLine, optNull } from './forms';
+import { useSingleFlight } from '../simple/useSingleFlight';
 
 export function ProcedureEditSheet({ proc, onClose }: { proc: Procedure | null; onClose: () => void }) {
   const { t } = useTranslation();
@@ -23,6 +24,7 @@ export function ProcedureEditSheet({ proc, onClose }: { proc: Procedure | null; 
 function ProcForm({ proc, onClose }: { proc: Procedure; onClose: () => void }) {
   const { t } = useTranslation();
   const save = useUpdateProcedure();
+  const flight = useSingleFlight();
   const [name, setName] = useState(proc.name);
   const [total, setTotal] = useState(String(proc.sessions_total));
   const [done, setDone] = useState(String(proc.sessions_done));
@@ -63,7 +65,7 @@ function ProcForm({ proc, onClose }: { proc: Procedure; onClose: () => void }) {
       <FormInput label={t('sanatorium.notes')} value={notes} onChangeText={setNotes} multiline maxLength={2000} />
       <ChoiceField label={t('sanatorium.statusLabel')} value={status} options={(['active', 'done', 'cancelled'] as ProcStatus[]).map((s) => ({ value: s, label: t(`sanatorium.procStatus.${s}`) }))} onChange={(v) => v && setStatus(v)} />
       <ErrorLine message={error} testID="pe-error" />
-      <Button testID="pe-save" label={t('common.save')} full loading={save.isPending} onPress={() => void submit()} />
+      <Button testID="pe-save" label={t('common.save')} full loading={save.isPending || flight.pending} onPress={() => void flight.run(submit)} />
     </View>
   );
 }

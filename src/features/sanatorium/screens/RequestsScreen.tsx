@@ -11,6 +11,7 @@ import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { Badge, Button, Card, EmptyState, PageHeader, Screen, SearchField, Segmented, Sheet, Text } from '@/ui';
 import { useRejectRequest } from '../api/mutations';
 import { useSimpleAvailable } from '../simple/useSimpleAvailable';
+import { useSingleFlight } from '../simple/useSingleFlight';
 import { requestsInfinite } from '../api/queries';
 import { AcceptSheet, type Accepted } from '../components/AcceptSheet';
 import { CredentialsSheet } from '../components/CredentialsSheet';
@@ -119,6 +120,7 @@ export default function RequestsScreen() {
 function RejectSheet({ request, onClose }: { request: SanRequest | null; onClose: () => void }) {
   const { t } = useTranslation();
   const reject = useRejectRequest();
+  const flight = useSingleFlight();
   const [reason, setReason] = useState('');
   const [error, setError] = useState<string | null>(null);
   const submit = async () => {
@@ -140,7 +142,7 @@ function RejectSheet({ request, onClose }: { request: SanRequest | null; onClose
         <Text variant="body" weight="600">{request?.full_name}</Text>
         <FormInput label={t('sanatorium.reason')} value={reason} onChangeText={(v) => { setReason(clip(v, LIMITS.reason)); setError(null); }} multiline required testID="reject-reason" />
         {!!error && <Text variant="label" tone="danger">{error}</Text>}
-        <Button testID="reject-save" label={t('sanatorium.reject')} variant="danger" full loading={reject.isPending} onPress={() => void submit()} />
+        <Button testID="reject-save" label={t('sanatorium.reject')} variant="danger" full loading={reject.isPending || flight.pending} onPress={() => void flight.run(submit)} />
       </View>
     </Sheet>
   );

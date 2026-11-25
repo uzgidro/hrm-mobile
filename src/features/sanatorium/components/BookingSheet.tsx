@@ -14,6 +14,7 @@ import { familiesQuery, guestsQuery, settingsQuery } from '../api/queries';
 import type { Family, GuestLite } from '../types';
 import { isChildMember } from '../utils/guests';
 import { sanErrorMessage } from '../utils/sanatorium';
+import { useSingleFlight } from '../simple/useSingleFlight';
 import { BookingFields, newBookingDraft, type BookingDraft } from './BookingFields';
 import { ChoiceField, ErrorLine, opt, SwitchRow } from './forms';
 
@@ -33,6 +34,7 @@ export function BookingSheet({ open, onClose, onDone }: { open: { guests: GuestL
 function BookingForm({ initial, onClose, onDone }: { initial: GuestLite[]; onClose: () => void; onDone?: (ids: number[]) => void }) {
   const { t } = useTranslation();
   const create = useCreateStays();
+  const flight = useSingleFlight();
   const families = useQuery(familiesQuery(''));
   const registrar = useSanAccess('registrar');
   const settings = useQuery(settingsQuery(registrar));
@@ -120,7 +122,7 @@ function BookingForm({ initial, onClose, onDone }: { initial: GuestLite[]; onClo
       ))}
       <BookingFields draft={draft} onChange={(p) => setDraft((d) => ({ ...d, ...p }))} need={Math.max(1, members.length)} />
       <ErrorLine message={error} testID="bs-error" />
-      <Button testID="bs-save" label={t('sanatorium.createBooking')} full loading={create.isPending} onPress={() => void submit()} />
+      <Button testID="bs-save" label={t('sanatorium.createBooking')} full loading={create.isPending || flight.pending} onPress={() => void flight.run(submit)} />
     </View>
   );
 }

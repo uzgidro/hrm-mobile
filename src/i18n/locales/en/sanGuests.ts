@@ -21,7 +21,7 @@ export default {
   telegram: "Telegram",
   registeredAt: "Registered",
   referralNote: "Referral note",
-  requestSearch: "Name, passport or phone",
+  requestSearch: "Search by name",
   handledAt: "Handled",
   earlyDate: "Left on",
   select: "Select",

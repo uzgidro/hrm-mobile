@@ -243,7 +243,7 @@ function CheckOutSheet({ party, debt, stay, onClose }: { party: Party; debt?: st
   const solo = party.size > 1 && !whole;
   const { code, params } = sanErrorInfo(failure);
   const server = params as DebtParams;
-  const known = solo || party.size === 1 ? (paid ? null : s?.debt ?? (party.size === 1 ? debt : null)) : paid ? null : debt;
+  const known = solo || party.size === 1 ? s?.debt ?? (party.size === 1 ? debt : null) : paid ? null : debt;
   const owed = debtNumber(code === 'debt_exists' ? server.amount ?? known : known);
   const run = (allow: boolean) => flight.run(async () => {
     try {

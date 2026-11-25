@@ -14,6 +14,7 @@ import { doctorsQuery, specialtiesQuery } from '../api/queries';
 import type { Appointment } from '../types';
 import { fmtDateTime, sanErrorMessage, toLocalIso } from '../utils/sanatorium';
 import { doctorsOfSpecialty, REFER_NOTE_MAX, referDuration, referError, referSpecialties } from '../utils/staffParity';
+import { useSingleFlight } from '../simple/useSingleFlight';
 
 export function ReferSheet({ appt, onClose }: { appt: Appointment | null; onClose: () => void }) {
   const { t } = useTranslation();
@@ -30,6 +31,7 @@ function ReferForm({ appt, onClose }: { appt: Appointment; onClose: () => void }
   const specialties = useQuery(specialtiesQuery());
   const doctors = useQuery(doctorsQuery());
   const refer = useReferAppointment();
+  const flight = useSingleFlight();
   const [specialtyId, setSpecialtyId] = useState<number | null>(null);
   const [doctorId, setDoctorId] = useState<number | null>(null);
   const [when, setWhen] = useState<string>(() => toLocalIso(dayjs().add(1, 'day').hour(10).minute(0).second(0)));
@@ -79,7 +81,7 @@ function ReferForm({ appt, onClose }: { appt: Appointment; onClose: () => void }
         <FormInput label={t('sanatorium.duration')} value={duration} onChangeText={setDuration} keyboardType="number-pad" testID="refer-duration" />
         <FormInput label={t('sanatorium.referralNote')} value={note} onChangeText={setNote} multiline maxLength={REFER_NOTE_MAX} testID="refer-note" />
         {!!error && <Text variant="label" tone="danger" testID="refer-error">{error}</Text>}
-        <Button testID="refer-save" label={t('sanatorium.refer')} full loading={refer.isPending} onPress={() => void submit()} />
+        <Button testID="refer-save" label={t('sanatorium.refer')} full loading={refer.isPending || flight.pending} onPress={() => void flight.run(submit)} />
       </View>
       <PickerModal
         visible={pick === 'specialty'}

@@ -135,7 +135,7 @@ export function OccupancyGrid() {
       <Sheet visible={!!openRoom} onClose={() => setOpen(null)} title={openRoom ? `${t('sanatorium.room')} ${openRoom.number}` : ''} scroll>
         {openRoom && <Occupants room={openRoom} onOpen={(id) => { setOpen(null); router.push({ pathname: '/sanatorium-stay', params: { id: String(id) } }); }} />}
       </Sheet>
-      <DatePickerModal visible={picker} value={start} title={t('sanatorium.pickDate')} onConfirm={(v) => v && setStart(v)} onClose={() => setPicker(false)} />
+      {picker && <DatePickerModal visible value={start} title={t('sanatorium.pickDate')} onConfirm={(v) => v && setStart(v)} onClose={() => setPicker(false)} />}
       <RoomGallery state={gallery} onClose={() => setGallery(null)} />
     </View>
   );

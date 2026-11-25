@@ -13,7 +13,7 @@ import { FamiliesPanel } from '../components/FamiliesPanel';
 import { GuestSheet } from '../components/GuestSheet';
 import { Denied, PagedBlock, useSanAccess, useSanWrite } from '../components/common';
 import type { GuestLite } from '../types';
-import { fmtDate, stayTone } from '../utils/sanatorium';
+import { fmtDate, fmtMoney, stayTone } from '../utils/sanatorium';
 
 export default function GuestsScreen() {
   const { t } = useTranslation();
@@ -96,12 +96,15 @@ function GuestRow({ g, registrar }: { g: GuestLite; registrar: boolean }) {
       subtitle={sub}
       left={<Avatar name={g.full_name} size={40} />}
       below={
-        st ? (
+        st || Number(g.debt_left) > 0 ? (
           <View style={styles.stay} testID={`guest-stay-${g.id}`}>
-            <Badge label={t(`sanatorium.stayStatus.${st.status}`)} tone={stayTone(st.status)} />
-            <Text variant="caption" tone="muted">
-              {[st.room ? `${t('sanatorium.room')} ${st.room.number}` : null, `${fmtDate(st.planned_from)} → ${fmtDate(st.planned_to)}`].filter(Boolean).join(' · ')}
-            </Text>
+            {st && <Badge label={t(`sanatorium.stayStatus.${st.status}`)} tone={stayTone(st.status)} />}
+            {st && (
+              <Text variant="caption" tone="muted">
+                {[st.room ? `${t('sanatorium.room')} ${st.room.number}` : null, `${fmtDate(st.planned_from)} → ${fmtDate(st.planned_to)}`].filter(Boolean).join(' · ')}
+              </Text>
+            )}
+            {registrar && Number(g.debt_left) > 0 && <Badge testID={`guest-debt-${g.id}`} label={`${t('sanatorium.debt')}: ${fmtMoney(g.debt_left)}`} tone="danger" />}
           </View>
         ) : undefined
       }

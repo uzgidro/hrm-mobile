@@ -14,6 +14,7 @@ import { RELATIONS, type Credentials, type GuestLite } from '../types';
 import { LIMITS, clip, maskPassportInput, normalizePhoneInput, validateGuestFields, type GuestFormErrors } from '../utils/guests';
 import { parseDmy, sanErrorMessage } from '../utils/sanatorium';
 import { ChoiceField, ErrorLine, optNull } from './forms';
+import { useSingleFlight } from '../simple/useSingleFlight';
 
 export type GuestSavedInfo = { id: number; guestName: string; credentials: Credentials | null };
 
@@ -38,6 +39,7 @@ export function GuestSheet({
 function GuestForm({ guest, onClose, onSaved }: { guest: GuestLite | null; onClose: () => void; onSaved: (i: GuestSavedInfo) => void }) {
   const { t } = useTranslation();
   const save = useSaveGuest();
+  const flight = useSingleFlight();
   const families = useQuery(familiesQuery(''));
   const [name, setName] = useState(guest?.full_name ?? '');
   const [birth, setBirth] = useState(guest?.birth_date ? dayjs(guest.birth_date).format('DD.MM.YYYY') : '');
@@ -116,10 +118,11 @@ function GuestForm({ guest, onClose, onSaved }: { guest: GuestLite | null; onClo
           value={relation}
           options={RELATIONS.map((r) => ({ value: r as string, label: t(`sanatorium.relation.${r}`) }))}
           onChange={setRelation}
+          testID="guest-relation"
         />
       )}
       <ErrorLine message={error} testID="guest-error" />
-      <Button testID="guest-save" label={t('common.save')} full loading={save.isPending} onPress={() => void submit()} />
+      <Button testID="guest-save" label={t('common.save')} full loading={save.isPending || flight.pending} onPress={() => void flight.run(submit)} />
     </View>
   );
 }

@@ -72,7 +72,7 @@ function GuestCard({ g }: { g: MyGuest }) {
       <View style={styles.actions}>
         {doctor && (g.can_start_exam ?? !g.has_exam) && <Button testID={`my-start-${g.stay_id}`} label={t('sanSimple.my.start')} full loading={start.isPending || flight.pending} onPress={() => void begin()} />}
         {doctor && <Button testID={`my-history-${g.stay_id}`} label={t('sanStaff.desk.history')} variant="ghost" full onPress={() => setHist(true)} />}
-        <Button label={t('sanSimple.my.open')} variant="soft" full onPress={open} />
+        <Button testID={`my-open-${g.stay_id}`} label={t('sanSimple.my.open')} variant="soft" full onPress={open} />
       </View>
       <HistorySheet guest={hist ? { id: g.guest.id, name: g.guest.full_name } : null} onClose={() => setHist(false)} />
     </Card>

@@ -13,6 +13,7 @@ import { ChoiceField, DateField, ErrorLine } from '../forms';
 import { fmtDate, sanErrorMessage, todayIso } from '../../utils/sanatorium';
 import { DIET_COUNT_DAYS, NO_DIET, canEditStayDiet, dietCodes, dietRoomNumber, filterDietGuests, pickText } from '../../utils/sections2';
 import { ChipWrap, HBar, useContentLang } from './kit';
+import { useSingleFlight } from '../../simple/useSingleFlight';
 
 export { canEditStayDiet };
 
@@ -55,7 +56,8 @@ function DietForm({ stay, onClose }: { stay: DietStay; onClose: () => void }) {
   const [allergies, setAllergies] = useState(initialAllergies ?? '');
   const [clear, setClear] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const submit = async () => {
+  const flight = useSingleFlight();
+  const submit = () => flight.run(async () => {
     const allergyPatch =
       initialAllergies !== undefined
         ? allergies.trim() !== initialAllergies.trim() ? { allergies: allergies.trim() || null } : {}
@@ -74,7 +76,7 @@ function DietForm({ stay, onClose }: { stay: DietStay; onClose: () => void }) {
     } catch (e) {
       setError(sanErrorMessage(e, t('errors.generic')));
     }
-  };
+  });
   return (
     <View testID="stay-diet-form">
       <ChoiceField label={t('sanatorium.s2.diet')} value={dietId} noneLabel={t('sanatorium.none')} options={options} onChange={setDietId} loading={q.isPending} testID="sd-diet" />
@@ -112,8 +114,8 @@ export function KitchenDietView() {
           return (
             <View style={styles.stack}>
               <Card title={t('sanatorium.s2.dietCounts')} icon="gift" tint="orange">
-                <Text variant="caption" tone="muted">{t('sanatorium.total')}: {d.total}</Text>
-                {d.by_diet.map((x, i) => <HBar key={i} label={dietName(x.diet)} value={x.count} max={d.total} />)}
+                <Text variant="caption" tone="muted" testID="diet-total">{t('sanatorium.total')}: {d.total}</Text>
+                {d.by_diet.map((x, i) => <HBar key={i} testID={`diet-bar-${x.diet?.code ?? 'none'}`} label={dietName(x.diet)} value={x.count} max={d.total} />)}
               </Card>
               {d.allergy_count > 0 && (
                 <Card title={`${t('sanatorium.s2.allergyList')} (${d.allergy_count})`} icon="bell" tint="pink" testID="allergy-list">
@@ -170,6 +172,7 @@ export function DietCounts() {
               {c.days.map((x) => (
                 <ListRow
                   key={x.date}
+                  testID={`dc-day-${x.date}`}
                   title={fmtDate(x.date)}
                   subtitle={Object.entries(x.by_diet).map(([code, n]) => `${code === NO_DIET ? t('sanatorium.s2.noDiet') : code}: ${n}`).join(' · ') || undefined}
                   right={<View style={styles.right}><Text variant="heading">{x.total}</Text>{x.with_allergies > 0 && <Badge label={`${t('sanatorium.s2.allergies')}: ${x.with_allergies}`} tone="danger" />}</View>}

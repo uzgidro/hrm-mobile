@@ -15,6 +15,7 @@ import { ChoiceField, ErrorLine } from '../forms';
 import { FEEDBACK_SOURCES, FEEDBACK_STAY_STATUSES, emptyFeedbackDraft, emptyFeedbackItem, feedbackBody, type FeedbackDraft, type FeedbackFilterDraft, type FeedbackItemDraft } from '../../utils/sections2';
 import { fmtDate, sanErrorMessage } from '../../utils/sanatorium';
 import { ChipWrap, FieldLabel } from './kit';
+import { useSingleFlight } from '../../simple/useSingleFlight';
 
 /** Five pressable stars. Tapping the current value clears it when `clearable` (optional ratings). */
 export function StarInput({ value, onChange, clearable, label, testID }: { value: number; onChange: (n: number) => void; clearable?: boolean; label: string; testID?: string }) {
@@ -115,7 +116,8 @@ function PaperForm({ onClose }: { onClose: () => void }) {
   const [error, setError] = useState<string | null>(null);
   const set = (p: Partial<FeedbackDraft>) => setD((x) => ({ ...x, ...p }));
   const setItem = (i: number, p: Partial<FeedbackItemDraft>) => setD((x) => ({ ...x, items: x.items.map((it, k) => (k === i ? { ...it, ...p } : it)) }));
-  const submit = async () => {
+  const flight = useSingleFlight();
+  const submit = () => flight.run(async () => {
     const r = feedbackBody(d);
     if (!r.ok) return setError(t(r.error));
     try {
@@ -125,7 +127,7 @@ function PaperForm({ onClose }: { onClose: () => void }) {
     } catch (e) {
       setError(sanErrorMessage(e, t('errors.generic')));
     }
-  };
+  });
   if (picking) {
     return <StayPicker onBack={() => setPicking(false)} onPick={(s) => { set({ stayId: s.id }); setStayLabel(s.label); setPicking(false); setError(null); }} />;
   }

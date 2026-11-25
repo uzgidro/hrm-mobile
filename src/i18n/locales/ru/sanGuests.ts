@@ -21,7 +21,7 @@ export default {
   telegram: "Telegram",
   registeredAt: "Зарегистрирован",
   referralNote: "Примечание к направлению",
-  requestSearch: "Имя, паспорт или телефон",
+  requestSearch: "Поиск по имени",
   handledAt: "Рассмотрена",
   earlyDate: "Дата выезда",
   select: "Выбрать",

@@ -12,6 +12,7 @@ import { applyDietToStays } from '../api/sections2';
 import { familiesQuery } from '../api/queries';
 import type { Credentials, SanRequest } from '../types';
 import { sanErrorMessage, todayIso } from '../utils/sanatorium';
+import { useSingleFlight } from '../simple/useSingleFlight';
 import { BookingFields, newBookingDraft, type BookingDraft } from './BookingFields';
 import { ChoiceField, ErrorLine, opt, SwitchRow } from './forms';
 
@@ -43,6 +44,7 @@ export function AcceptSheet({
 function AcceptForm({ request, onAccepted }: { request: SanRequest; onAccepted: (a: Accepted) => void }) {
   const { t } = useTranslation();
   const accept = useAcceptRequest();
+  const flight = useSingleFlight();
   const families = useQuery(familiesQuery(''));
   const from = request.referral_from ?? todayIso();
   const [draft, setDraft] = useState<BookingDraft>(() =>
@@ -111,7 +113,7 @@ function AcceptForm({ request, onAccepted }: { request: SanRequest; onAccepted: 
       />
       <SwitchRow label={t('sanatorium.childDiscount')} value={child} onChange={setChild} testID="accept-child" />
       <ErrorLine message={error} testID="accept-error" />
-      <Button testID="accept-save" label={t('sanatorium.accept')} full loading={accept.isPending} onPress={() => void submit()} />
+      <Button testID="accept-save" label={t('sanatorium.accept')} full loading={accept.isPending || flight.pending} onPress={() => void flight.run(submit)} />
     </View>
   );
 }

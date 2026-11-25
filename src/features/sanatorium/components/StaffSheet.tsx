@@ -14,6 +14,7 @@ import { sanErrorMessage } from '../utils/sanatorium';
 import { flagLocked, lockExternal, staffBody, staffError, phoneIssue } from '../utils/staffParity';
 import { ChoiceField, ErrorLine, SwitchRow } from './forms';
 import { PoiField, usePoiOn } from './sections1/PoiField';
+import { useSingleFlight } from '../simple/useSingleFlight';
 
 const ROLE_FLAGS = [
   ['is_registrar', 'registrar'],
@@ -38,6 +39,7 @@ export function StaffSheet({ staff, onClose }: { staff: StaffMember | 'new' | nu
 function StaffForm({ staff, onClose }: { staff: StaffMember | null; onClose: () => void }) {
   const { t } = useTranslation();
   const save = useSaveStaff();
+  const flight = useSingleFlight();
   const specialties = useQuery(specialtiesQuery());
   const [term, setTerm] = useState('');
   const debounced = useDebouncedValue(term);
@@ -150,9 +152,9 @@ function StaffForm({ staff, onClose }: { staff: StaffMember | null; onClose: () 
             error={phoneIssue(phone) ? t('sanStaff.staff.phoneInvalid') : undefined}
             testID="staff-phone"
           />
-          <SwitchRow label={t('sanatorium.active')} value={active} onChange={setActive} />
+          <SwitchRow label={t('sanatorium.active')} value={active} onChange={setActive} testID="staff-active" />
           <ErrorLine message={error} testID="staff-error" />
-          <Button testID="staff-save" label={t('common.save')} full loading={save.isPending} onPress={() => void submit()} />
+          <Button testID="staff-save" label={t('common.save')} full loading={save.isPending || flight.pending} onPress={() => void flight.run(submit)} />
         </>
       )}
       {!picked && <ErrorLine message={error} />}

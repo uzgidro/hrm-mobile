@@ -102,13 +102,13 @@ export function DayBar({ value, onChange }: { value: string; onChange: (iso: str
   const [open, setOpen] = useState(false);
   return (
     <View style={styles.dayBar}>
-      <IconButton icon="chevronLeft" tone="soft" accessibilityLabel={t('sanatorium.prevDay')} onPress={() => onChange(addDays(value, -1))} />
+      <IconButton icon="chevronLeft" tone="soft" accessibilityLabel={t('sanatorium.prevDay')} onPress={() => onChange(addDays(value, -1))} testID="san-day-prev" />
       <Pressable onPress={() => setOpen(true)} style={styles.dayLabel} accessibilityRole="button" testID="san-day">
         <Icon name="calendar" size={16} color={c.fgMuted} />
         <Text variant="heading">{value === todayIso() ? `${t('sanatorium.today')}, ${fmtDate(value)}` : fmtDate(value)}</Text>
       </Pressable>
-      <IconButton icon="chevronRight" tone="soft" accessibilityLabel={t('sanatorium.nextDay')} onPress={() => onChange(addDays(value, 1))} />
-      <DatePickerModal visible={open} value={value} title={t('sanatorium.pickDate')} onConfirm={onChange} onClose={() => setOpen(false)} />
+      <IconButton icon="chevronRight" tone="soft" accessibilityLabel={t('sanatorium.nextDay')} onPress={() => onChange(addDays(value, 1))} testID="san-day-next" />
+      {open && <DatePickerModal visible value={value} title={t('sanatorium.pickDate')} onConfirm={onChange} onClose={() => setOpen(false)} />}
     </View>
   );
 }

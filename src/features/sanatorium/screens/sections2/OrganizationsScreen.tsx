@@ -16,6 +16,7 @@ import { DateField, ErrorLine, SwitchRow } from '../../components/forms';
 import { ChipWrap, DownloadButton, RowTools, SectionScreen, useConfirmDelete } from '../../components/sections2/kit';
 import { docFileName, emptyOrgDraft, filterOrgs, orgBody, type OrgDraft } from '../../utils/sections2';
 import { fmtDate, fmtMoney, sanErrorMessage, todayIso } from '../../utils/sanatorium';
+import { useSingleFlight } from '../../simple/useSingleFlight';
 
 export default function OrganizationsScreen() {
   const { t } = useTranslation();
@@ -80,7 +81,8 @@ function OrgForm({ org, onClose }: { org: Organization | null; onClose: () => vo
   );
   const [error, setError] = useState<string | null>(null);
   const set = (p: Partial<OrgDraft>) => setD((x) => ({ ...x, ...p }));
-  const submit = async () => {
+  const flight = useSingleFlight();
+  const submit = () => flight.run(async () => {
     const r = orgBody(d);
     if (!r.ok) return setError(t(r.error));
     try {
@@ -90,19 +92,19 @@ function OrgForm({ org, onClose }: { org: Organization | null; onClose: () => vo
     } catch (e) {
       setError(sanErrorMessage(e, t('errors.generic')));
     }
-  };
+  });
   return (
     <View testID="org-form">
       <FormInput label={t('sanatorium.s2.orgName')} value={d.name} onChangeText={(v) => set({ name: v })} required testID="og-name" />
       <FormInput label={t('sanatorium.s2.tin')} value={d.tin} onChangeText={(v) => set({ tin: v })} keyboardType="number-pad" testID="og-tin" />
-      <FormInput label={t('sanatorium.address')} value={d.address} onChangeText={(v) => set({ address: v })} multiline />
-      <FormInput label={t('sanatorium.s2.bankName')} value={d.bankName} onChangeText={(v) => set({ bankName: v })} />
-      <FormInput label={t('sanatorium.s2.bankAccount')} value={d.bankAccount} onChangeText={(v) => set({ bankAccount: v })} keyboardType="number-pad" />
-      <FormInput label={t('sanatorium.s2.bankMfo')} value={d.bankMfo} onChangeText={(v) => set({ bankMfo: v })} keyboardType="number-pad" />
-      <FormInput label={t('sanatorium.s2.contactPerson')} value={d.contactPerson} onChangeText={(v) => set({ contactPerson: v })} />
-      <FormInput label={t('sanatorium.s2.contactPhone')} value={d.contactPhone} onChangeText={(v) => set({ contactPhone: v })} keyboardType="phone-pad" />
-      <FormInput label={t('sanatorium.s2.contractNo')} value={d.contractNo} onChangeText={(v) => set({ contractNo: v })} />
-      <DateField label={t('sanatorium.s2.contractDate')} value={d.contractDate} onChange={(v) => set({ contractDate: v })} />
+      <FormInput label={t('sanatorium.address')} value={d.address} onChangeText={(v) => set({ address: v })} multiline testID="og-address" />
+      <FormInput label={t('sanatorium.s2.bankName')} value={d.bankName} onChangeText={(v) => set({ bankName: v })} testID="og-bank" />
+      <FormInput label={t('sanatorium.s2.bankAccount')} value={d.bankAccount} onChangeText={(v) => set({ bankAccount: v })} keyboardType="number-pad" testID="og-account" />
+      <FormInput label={t('sanatorium.s2.bankMfo')} value={d.bankMfo} onChangeText={(v) => set({ bankMfo: v })} keyboardType="number-pad" testID="og-mfo" />
+      <FormInput label={t('sanatorium.s2.contactPerson')} value={d.contactPerson} onChangeText={(v) => set({ contactPerson: v })} testID="og-person" />
+      <FormInput label={t('sanatorium.s2.contactPhone')} value={d.contactPhone} onChangeText={(v) => set({ contactPhone: v })} keyboardType="phone-pad" testID="og-phone" />
+      <FormInput label={t('sanatorium.s2.contractNo')} value={d.contractNo} onChangeText={(v) => set({ contractNo: v })} testID="og-contract" />
+      <DateField label={t('sanatorium.s2.contractDate')} value={d.contractDate} onChange={(v) => set({ contractDate: v })} testID="og-contract-date" />
       <FormInput label={t('sanatorium.notes')} value={d.note} onChangeText={(v) => set({ note: v })} multiline />
       <SwitchRow label={t('sanatorium.s2.active')} value={d.active} onChange={(v) => set({ active: v })} testID="og-active" />
       <ErrorLine message={error} testID="og-error" />
@@ -136,11 +138,11 @@ function InvoiceView({ org }: { org: Organization }) {
                   right={<Text variant="body">{fmtMoney(r.total)}</Text>}
                 />
               ))}
-              <ListRow title={t('sanatorium.s2.accommodationTotal')} right={<Text variant="body">{fmtMoney(inv.accommodation_total)}</Text>} />
+              <ListRow title={t('sanatorium.s2.accommodationTotal')} right={<Text variant="body" testID="inv-accommodation">{fmtMoney(inv.accommodation_total)}</Text>} />
               <ListRow title={t('sanatorium.s2.servicesTotal')} right={<Text variant="body">{fmtMoney(inv.services_total)}</Text>} />
               <ListRow title={t('sanatorium.total')} right={<Text variant="heading" testID="inv-total">{fmtMoney(inv.grand_total)}</Text>} />
-              <ListRow title={t('sanatorium.paidAmount')} right={<Text variant="body">{fmtMoney(inv.paid_amount)}</Text>} />
-              <ListRow title={t('sanatorium.debt')} right={<Text variant="heading">{fmtMoney(inv.debt)}</Text>} />
+              <ListRow title={t('sanatorium.paidAmount')} right={<Text variant="body" testID="inv-paid">{fmtMoney(inv.paid_amount)}</Text>} />
+              <ListRow title={t('sanatorium.debt')} right={<Text variant="heading" testID="inv-debt">{fmtMoney(inv.debt)}</Text>} />
               <View style={styles.actions}>
                 <DownloadButton testID="inv-pdf" label="PDF" format="pdf" url={SANATORIUM_ORG_INVOICE_FILE(org.id)} params={{ start: from, end: to, format: 'pdf' }} filename={docFileName('org-invoice', org.id, 'pdf')} />
                 <DownloadButton testID="inv-docx" label="DOCX" format="docx" url={SANATORIUM_ORG_INVOICE_FILE(org.id)} params={{ start: from, end: to, format: 'docx' }} filename={docFileName('org-invoice', org.id, 'docx')} />

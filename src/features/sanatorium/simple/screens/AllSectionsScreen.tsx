@@ -7,7 +7,7 @@ import { useAuthStore } from '@/store/authStore';
 import { ListRow, PageHeader, Screen, SectionHeader } from '@/ui';
 import { Denied, useSanAccess } from '../../components/common';
 import { useSanFeatures } from '../../utils/features';
-import { hasSanRole } from '../../utils/sanatorium';
+import { hasSanRole, isSanReadOnly } from '../../utils/sanatorium';
 import { visibleGroups } from '../sectionGroups';
 
 export default function AllSectionsScreen() {
@@ -16,7 +16,11 @@ export default function AllSectionsScreen() {
   const user = useAuthStore((s) => s.user);
   const { on } = useSanFeatures();
   if (!allowed) return <Denied />;
-  const groups = visibleGroups((...r) => hasSanRole(user, ...r), on);
+  // The quote calculator is a POST: the view-only account does not get it (as in the home shortcuts).
+  const readOnly = isSanReadOnly(user);
+  const groups = visibleGroups((...r) => hasSanRole(user, ...r), on)
+    .map((g) => ({ ...g, links: g.links.filter((l) => !(readOnly && l.route === '/sanatorium-quote')) }))
+    .filter((g) => g.links.length > 0);
   return (
     <Screen testID="sanatorium-all-screen">
       <PageHeader title={t('sanSimple.today.allSections')} />

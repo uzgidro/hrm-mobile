@@ -252,11 +252,11 @@ export function BarChart({
 }
 
 /** Horizontal labelled bar: `value` out of `max`. */
-export function HBar({ label, value, max, right, tone }: { label: string; value: number; max: number; right?: string; tone?: 'brand' | 'warn' }) {
+export function HBar({ label, value, max, right, tone, testID }: { label: string; value: number; max: number; right?: string; tone?: 'brand' | 'warn'; testID?: string }) {
   const { colors: c } = useTheme();
   const p = barPercents([value], max)[0] ?? 0;
   return (
-    <View style={styles.hbar}>
+    <View style={styles.hbar} testID={testID}>
       <View style={styles.hbarHead}>
         <Text variant="label" style={styles.flex} numberOfLines={1}>{label}</Text>
         <Text variant="label" tone="muted">{right ?? String(value)}</Text>

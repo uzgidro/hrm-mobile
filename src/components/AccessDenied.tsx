@@ -15,7 +15,7 @@ export function AccessDenied({ title }: { title?: string }) {
   const styles = useThemedStyles(makeStyles);
   const { t } = useTranslation();
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <SafeAreaView style={styles.safe} edges={['top']} testID="access-denied">
       <ScreenHeader title={title ?? ''} />
       <View style={styles.center}>
         <View style={styles.iconWrap}><Icon name="lock" size={30} color={colors.textMuted} /></View>

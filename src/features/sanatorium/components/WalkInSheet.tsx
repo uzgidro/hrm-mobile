@@ -13,6 +13,7 @@ import { fmtMoney, parseDmy, sanErrorInfo, sanErrorMessage, todayIso } from '../
 import { RoomPickerField } from './RoomPickerField';
 import { ChoiceField, DateField, ErrorLine } from './forms';
 import dayjs from 'dayjs';
+import { useSingleFlight } from '../simple/useSingleFlight';
 
 export function WalkInSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { t } = useTranslation();
@@ -26,6 +27,7 @@ export function WalkInSheet({ open, onClose }: { open: boolean; onClose: () => v
 function WalkInForm({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation();
   const create = useCreateWalkIn();
+  const flight = useSingleFlight();
   const [name, setName] = useState('');
   const [birth, setBirth] = useState('');
   const [passport, setPassport] = useState('');
@@ -104,7 +106,7 @@ function WalkInForm({ onClose }: { onClose: () => void }) {
       />
       <ChoiceField label={t('sanatorium.language')} value={lang} options={[{ value: 'uz', label: "O'zbekcha" }, { value: 'ru', label: 'Русский' }, { value: 'en', label: 'English' }]} onChange={setLang} />
       <ErrorLine message={error} testID="wi-error" />
-      <Button testID="wi-save" label={t('sanatorium.createRequest')} full loading={create.isPending} onPress={() => void submit()} />
+      <Button testID="wi-save" label={t('sanatorium.createRequest')} full loading={create.isPending || flight.pending} onPress={() => void flight.run(submit)} />
     </View>
   );
 }

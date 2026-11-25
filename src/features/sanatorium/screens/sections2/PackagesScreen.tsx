@@ -23,6 +23,7 @@ import { GUEST_TYPES } from '../../types';
 import { emptyPackageDraft, limitRows, packageBody, pickText, reorderIds, toggleValue, type PackageDraft } from '../../utils/sections2';
 import { fmtMoney, sanErrorMessage } from '../../utils/sanatorium';
 import { useSanFeatures } from '../../utils/features';
+import { useSingleFlight } from '../../simple/useSingleFlight';
 
 export default function PackagesScreen() {
   const { t } = useTranslation();
@@ -113,7 +114,8 @@ function PackageForm({ pkg, onClose }: { pkg: SanPackage | null; onClose: () => 
   const set = (p: Partial<PackageDraft>) => setD((x) => ({ ...x, ...p }));
   const { colors: c } = useTheme();
 
-  const submit = async () => {
+  const flight = useSingleFlight();
+  const submit = () => flight.run(async () => {
     const r = packageBody(d);
     if (!r.ok) return setError(t(r.error));
     try {
@@ -125,7 +127,7 @@ function PackageForm({ pkg, onClose }: { pkg: SanPackage | null; onClose: () => 
     } catch (e) {
       setError(sanErrorMessage(e, t('errors.generic')));
     }
-  };
+  });
 
   return (
     <View testID="package-form">
@@ -155,11 +157,12 @@ function PackageForm({ pkg, onClose }: { pkg: SanPackage | null; onClose: () => 
               options={(services.data ?? []).map((s) => ({ value: s.id, label: pickText(s as never, 'name', lang) }))}
               onChange={(v) => set({ items: d.items.map((x, j) => (j === i ? { ...x, serviceId: v } : x)) })}
               loading={services.isPending}
+              testID={`pk-item-${i}-service`}
             />
           )}
-          <FormInput label={t('sanatorium.s2.itemText')} value={it.text} onChangeText={(v) => set({ items: d.items.map((x, j) => (j === i ? { ...x, text: v } : x)) })} />
-          <FormInput label={t('sanatorium.s2.quantity')} value={it.quantity} onChangeText={(v) => set({ items: d.items.map((x, j) => (j === i ? { ...x, quantity: v } : x)) })} keyboardType="number-pad" />
-          <Button label={t('sanatorium.remove')} variant="dangerGhost" size="sm" onPress={() => set({ items: d.items.filter((_, j) => j !== i) })} />
+          <FormInput label={t('sanatorium.s2.itemText')} value={it.text} onChangeText={(v) => set({ items: d.items.map((x, j) => (j === i ? { ...x, text: v } : x)) })} testID={`pk-item-${i}-text`} />
+          <FormInput label={t('sanatorium.s2.quantity')} value={it.quantity} onChangeText={(v) => set({ items: d.items.map((x, j) => (j === i ? { ...x, quantity: v } : x)) })} keyboardType="number-pad" testID={`pk-item-${i}-qty`} />
+          <Button testID={`pk-item-${i}-remove`} label={t('sanatorium.remove')} variant="dangerGhost" size="sm" onPress={() => set({ items: d.items.filter((_, j) => j !== i) })} />
         </View>
       ))}
       <Button testID="pk-add-item" label={t('sanatorium.s2.addItem')} icon="plus" size="sm" variant="soft" onPress={() => set({ items: [...d.items, { serviceId: null, quantity: '1', text: '' }] })} />

@@ -21,7 +21,7 @@ export default {
   telegram: "Telegram",
   registeredAt: "Ro'yxatga olingan",
   referralNote: "Yo'llanma izohi",
-  requestSearch: "Ism, pasport yoki telefon",
+  requestSearch: "Ism bo'yicha qidirish",
   handledAt: "Ko'rib chiqilgan",
   earlyDate: "Ketgan sana",
   select: "Tanlash",

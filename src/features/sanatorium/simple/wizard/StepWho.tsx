@@ -1,11 +1,10 @@
 // «Kim keldi?»: the people, the family shortcuts, the guest type (and the contract of a contract guest).
-import React, { useState } from 'react';
+import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { FormInput } from '@/components/FormInput';
-import { formatDdMmYyyy } from '@/lib/dateText';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { Badge, Button, Card, Chip, Text } from '@/ui';
 import { orgsQuery } from '../../api/sections2';
@@ -14,7 +13,8 @@ import { PhoneField } from '../../components/sections1/shared';
 import { GUEST_TYPES, RELATIONS, type GuestType } from '../../types';
 import { useSanFeatures } from '../../utils/features';
 import { clip, LIMITS, maskPassportInput } from '../../utils/guests';
-import { fmtDate, parseDmy } from '../../utils/sanatorium';
+import { BirthField } from '../../components/BirthField';
+import { fmtDate } from '../../utils/sanatorium';
 import { familyGuestsQuery, guestMatchesQuery } from '../api';
 import { ChoiceCard, MoreBlock, Note } from '../components/parts';
 import { ageOf, isChild, memberErrors, memberFromGuest, newMember, relationOf, relationValue, type WizMember, type WizState } from './state';
@@ -92,30 +92,6 @@ function FamilyChips({ s, onAdd }: { s: WizState; onAdd: (m: WizMember) => void 
   );
 }
 
-/** `14.03.1985` typed with automatic dots; the parent hears a real ISO date or ''. */
-export function BirthField({ value, onChange, error, testID }: { value: string; onChange: (iso: string) => void; error?: string; testID?: string }) {
-  const { t } = useTranslation();
-  const [text, setText] = useState(() => formatDdMmYyyy(value));
-  return (
-    <FormInput
-      label={t('sanatorium.birthDate')} required value={text} placeholder="14.03.1985" keyboardType="number-pad" maxLength={10} error={error} testID={testID}
-      onChangeText={(raw) => {
-        const next = maskDmy(raw, text);
-        setText(next);
-        onChange(parseDmy(next) ?? '');
-      }}
-    />
-  );
-}
-
-/** Dots appear by themselves while typing and disappear while deleting. */
-export function maskDmy(raw: string, before = ''): string {
-  const d = raw.replace(/\D/g, '').slice(0, 8);
-  const out = [d.slice(0, 2), d.slice(2, 4), d.slice(4)].filter(Boolean).join('.');
-  const deleting = raw.length < before.length;
-  return !deleting && (d.length === 2 || d.length === 4) ? `${out}.` : out;
-}
-
 function PersonCard({
   m, i, s, limit, percent, showErrors, fixed, canRemove, onPatch, onReplace, onRemove,
 }: {
@@ -150,7 +126,7 @@ function PersonCard({
           <FormInput label={t('sanatorium.fullName')} required value={m.full_name} maxLength={LIMITS.name} error={err('full_name')} onChangeText={(v) => onPatch({ full_name: v })} testID={`person-name-${i}`} />
           {i === 0 && !m.full_name && <Text variant="caption" tone="muted" style={styles.hint}>{t('sanFlow.who.nameHint')}</Text>}
           {!requester && <Matches q={m.full_name} exclude={s.members.map((x) => x.guest_id ?? 0)} onPick={onReplace} />}
-          <BirthField value={m.birth_date} onChange={(v) => onPatch({ birth_date: v })} error={err('birth_date')} testID={`person-birth-${i}`} />
+          <BirthField required value={m.birth_date} onChange={(v) => onPatch({ birth_date: v })} error={err('birth_date')} testID={`person-birth-${i}`} />
           <PhoneField label={t('sanatorium.phone')} value={m.phone} onChange={(v) => onPatch({ phone: v })} testID={`person-phone-${i}`} />
           {!!err('phone') && <Text variant="caption" tone="danger" style={styles.hint} testID={`person-phone-error-${i}`}>{err('phone')}</Text>}
           <FormInput label={t('sanatorium.passport')} value={m.passport} placeholder="AA1234567" maxLength={9} error={err('passport')} onChangeText={(v) => onPatch({ passport: maskPassportInput(v) })} testID={`person-passport-${i}`} />

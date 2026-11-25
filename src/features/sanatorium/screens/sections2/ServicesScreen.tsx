@@ -22,6 +22,7 @@ import {
   type OrderStatus, type ServiceDraft, type ServiceFilter,
 } from '../../utils/sections2';
 import { fmtMoney, sanErrorMessage } from '../../utils/sanatorium';
+import { useSingleFlight } from '../../simple/useSingleFlight';
 
 export default function ServicesScreen() {
   const { t } = useTranslation();
@@ -122,7 +123,8 @@ function ServiceForm({ svc, categories, onClose }: { svc: SanService | null; cat
   const [photo, setPhoto] = useState<PhotoValue>(() => emptyPhoto(svc?.photo ?? null));
   const [error, setError] = useState<string | null>(null);
   const set = (p: Partial<ServiceDraft>) => setD((x) => ({ ...x, ...p }));
-  const submit = async () => {
+  const flight = useSingleFlight();
+  const submit = () => flight.run(async () => {
     const r = serviceBody(d);
     if (!r.ok) return setError(t(r.error));
     try {
@@ -134,7 +136,7 @@ function ServiceForm({ svc, categories, onClose }: { svc: SanService | null; cat
     } catch (e) {
       setError(sanErrorMessage(e, t('errors.generic')));
     }
-  };
+  });
   return (
     <View testID="service-form">
       <TextTrio label={t('sanatorium.s2.name')} values={[d.nameUz, d.nameRu, d.nameEn]} onChange={(i, v) => set(i === 0 ? { nameUz: v } : i === 1 ? { nameRu: v } : { nameEn: v })} testID="sv-name" />

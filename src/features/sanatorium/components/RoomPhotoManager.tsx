@@ -100,7 +100,7 @@ export function RoomPhotoManager({ roomId, title }: { roomId: number; title: str
         <View style={styles.grid}>
           {photos.map((p, i) => (
             <View key={p.id} style={[styles.cell, { backgroundColor: c.surface2, borderColor: i === 0 ? c.brand : c.border }]} testID={`photo-${p.id}`}>
-              <Pressable onPress={() => setGallery({ title, photos, index: i })} accessibilityRole="imagebutton" accessibilityLabel={`${t('sanatorium.photos')} ${i + 1}`}>
+              <Pressable testID={`photo-open-${p.id}`} onPress={() => setGallery({ title, photos, index: i })} accessibilityRole="imagebutton" accessibilityLabel={`${t('sanatorium.photos')} ${i + 1}`}>
                 <Image source={{ uri: p.thumb_url }} style={styles.thumb} contentFit="cover" />
               </Pressable>
               {i === 0 && <View style={styles.cover}><Badge label={t('sanatorium.cover')} tone="brand" /></View>}

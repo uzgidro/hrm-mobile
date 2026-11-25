@@ -15,6 +15,7 @@ import { useSanFeatures } from '../utils/features';
 import type { Appointment, Procedure } from '../types';
 import { apptTone, fmtDate, fmtDateTime, fmtTime, sanErrorMessage, todayIso } from '../utils/sanatorium';
 import { sortByTime } from '../utils/staffParity';
+import { useSingleFlight } from '../simple/useSingleFlight';
 
 export default function NurseScreen() {
   const { t } = useTranslation();
@@ -76,6 +77,7 @@ export default function NurseScreen() {
 function NurseAppt({ a }: { a: Appointment }) {
   const { t } = useTranslation();
   const notified = useNurseNotified();
+  const flight = useSingleFlight();
   const done = !!a.nurse_notified_at;
   return (
     <Card testID={`nurse-appt-${a.id}`}>
@@ -105,8 +107,8 @@ function NurseAppt({ a }: { a: Appointment }) {
               label={t('sanatorium.notified')}
               icon="check"
               size="sm"
-              loading={notified.isPending}
-              onPress={() => notified.mutate(a.id, { onError: (e) => toast.error(sanErrorMessage(e, t('errors.generic'))) })}
+              loading={notified.isPending || flight.pending}
+              onPress={() => void flight.run(() => notified.mutateAsync(a.id).catch((e) => toast.error(sanErrorMessage(e, t('errors.generic')))))}
             />
           )
         )}

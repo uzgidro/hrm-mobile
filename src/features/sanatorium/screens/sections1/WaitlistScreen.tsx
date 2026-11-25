@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { useSingleFlight } from '../../simple/useSingleFlight';
 import { FormInput } from '@/components/FormInput';
 import { toast } from '@/lib/toast';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
@@ -115,6 +116,7 @@ function EntryForm({ item, onClose, onConvert }: { item: WaitlistItem | null; on
   const [error, setError] = useState<string | null>(null);
   const readOnly = !!item && !isOpen(item);
 
+  const flight = useSingleFlight();
   const submit = async () => {
     const n = Number.parseInt(size, 10);
     const phoneNorm = normalizeUzPhone(phone);
@@ -191,17 +193,18 @@ function EntryForm({ item, onClose, onConvert }: { item: WaitlistItem | null; on
             value={lang}
             options={(['uz', 'ru', 'en'] as const).map((l) => ({ value: l as 'uz' | 'ru' | 'en', label: t(`san1.waitlist.langName.${l}`) }))}
             onChange={(v) => v && setLang(v)}
+            testID="wl-lang"
           />
         </>
       )}
       <FormInput label={t('sanatorium.notes')} value={note} onChangeText={setNote} multiline maxLength={500} testID="wl-note" />
       <ErrorLine message={error} testID="wl-error" />
-      {!readOnly && <Button testID="wl-save" label={t('common.save')} full loading={create.isPending || patch.isPending} onPress={() => void submit()} />}
+      {!readOnly && <Button testID="wl-save" label={t('common.save')} full loading={create.isPending || patch.isPending} onPress={() => void flight.run(submit)} />}
       {item && isOpen(item) && (
         <>
           <Button testID="wl-convert" label={t('san1.waitlist.convert')} variant="soft" full icon="check" onPress={() => onConvert(item)} />
           <FormInput label={t('san1.waitlist.cancelReason')} value={reason} onChangeText={setReason} maxLength={255} testID="wl-reason" />
-          <Button testID="wl-cancel" label={t('san1.waitlist.cancelEntry')} variant="dangerGhost" full loading={cancel.isPending} onPress={() => void doCancel()} />
+          <Button testID="wl-cancel" label={t('san1.waitlist.cancelEntry')} variant="dangerGhost" full loading={cancel.isPending} onPress={() => void flight.run(doCancel)} />
         </>
       )}
     </View>

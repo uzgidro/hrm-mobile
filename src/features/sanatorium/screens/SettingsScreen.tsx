@@ -20,6 +20,7 @@ import { SPECIALTY_KINDS, type SanRole, type SanSettings, type Specialty, type S
 import { formatUzPhone } from '@/utils/phone';
 import { sanErrorMessage } from '../utils/sanatorium';
 import { filterStaff, staffRoles, type StaffFilter } from '../utils/staffParity';
+import { useSingleFlight } from '../simple/useSingleFlight';
 
 type Seg = 'staff' | 'specialties' | 'texts' | 'sections' | 'visit';
 const SEGS: Seg[] = ['staff', 'specialties', 'texts', 'sections', 'visit'];
@@ -158,6 +159,7 @@ function SpecialtySheet({ spec, onClose }: { spec: Specialty | 'new' | null; onC
 function SpecialtyForm({ spec, onClose }: { spec: Specialty | null; onClose: () => void }) {
   const { t } = useTranslation();
   const save = useSaveSpecialty();
+  const flight = useSingleFlight();
   const [name, setName] = useState(spec?.name ?? '');
   const [kind, setKind] = useState<SpecialtyKind>((spec?.kind as SpecialtyKind) ?? 'doctor');
   const [active, setActive] = useState(spec?.is_active ?? true);
@@ -179,9 +181,9 @@ function SpecialtyForm({ spec, onClose }: { spec: Specialty | null; onClose: () 
       <FormInput label={t('sanatorium.name')} value={name} onChangeText={setName} required testID="spec-name" />
       <ChoiceField label={t('sanatorium.kindLabel')} value={kind} options={SPECIALTY_KINDS.map((k) => ({ value: k, label: t(`sanatorium.kind.${k}`) }))} onChange={(v) => v && setKind(v)} testID="spec-kind" />
       <PoiField value={poiId} onChange={setPoiId} testID="spec-poi" />
-      <SwitchRow label={t('sanatorium.active')} value={active} onChange={setActive} />
+      <SwitchRow label={t('sanatorium.active')} value={active} onChange={setActive} testID="spec-active" />
       <ErrorLine message={error} />
-      <Button testID="spec-save" label={t('common.save')} full loading={save.isPending} onPress={() => void submit()} />
+      <Button testID="spec-save" label={t('common.save')} full loading={save.isPending || flight.pending} onPress={() => void flight.run(submit)} />
     </View>
   );
 }
@@ -189,6 +191,7 @@ function SpecialtyForm({ spec, onClose }: { spec: Specialty | null; onClose: () 
 function TextsForm({ s }: { s: SanSettings }) {
   const { t } = useTranslation();
   const save = useSaveSettings();
+  const flight = useSingleFlight();
   const readOnly = useSanReadOnly();
   const [contacts, setContacts] = useState(s.contacts ?? '');
   const [addresses, setAddresses] = useState(s.addresses ?? '');
@@ -220,13 +223,13 @@ function TextsForm({ s }: { s: SanSettings }) {
   return (
     <Card testID="settings-texts">
       <FormInput label={t('sanatorium.contacts')} value={contacts} onChangeText={readOnly ? () => {} : setContacts} multiline maxLength={2000} testID="set-contacts" />
-      <FormInput label={t('sanatorium.addresses')} value={addresses} onChangeText={readOnly ? () => {} : setAddresses} multiline maxLength={2000} />
-      <FormInput label={t('sanatorium.workHours')} value={hours} onChangeText={readOnly ? () => {} : setHours} maxLength={500} />
-      <FormInput label={t('sanatorium.about')} value={about} onChangeText={readOnly ? () => {} : setAbout} multiline maxLength={2000} />
+      <FormInput label={t('sanatorium.addresses')} value={addresses} onChangeText={readOnly ? () => {} : setAddresses} multiline maxLength={2000} testID="set-addresses" />
+      <FormInput label={t('sanatorium.workHours')} value={hours} onChangeText={readOnly ? () => {} : setHours} maxLength={500} testID="set-hours" />
+      <FormInput label={t('sanatorium.about')} value={about} onChangeText={readOnly ? () => {} : setAbout} multiline maxLength={2000} testID="set-about" />
       <FormInput label={t('sanatorium.childDiscountPercent')} value={percent} onChangeText={readOnly ? () => {} : setPercent} keyboardType="number-pad" testID="set-percent" />
-      <FormInput label={t('sanatorium.childAgeLimit')} value={age} onChangeText={readOnly ? () => {} : setAge} keyboardType="number-pad" />
+      <FormInput label={t('sanatorium.childAgeLimit')} value={age} onChangeText={readOnly ? () => {} : setAge} keyboardType="number-pad" testID="set-age" />
       <ErrorLine message={error} />
-      {!readOnly && <Button testID="settings-save" label={t('common.save')} full loading={save.isPending} onPress={() => void submit()} />}
+      {!readOnly && <Button testID="settings-save" label={t('common.save')} full loading={save.isPending || flight.pending} onPress={() => void flight.run(submit)} />}
       <Text variant="caption" tone="muted" style={styles.hint}>{t('sanatorium.textsHint')}</Text>
     </Card>
   );

@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useSingleFlight } from '../../simple/useSingleFlight';
 import { FormInput } from '@/components/FormInput';
 import { toast } from '@/lib/toast';
 import { Button, Sheet, Text } from '@/ui';
@@ -35,6 +36,7 @@ function PoiForm({ poi, plan, others, onClose }: { poi: Poi | null; plan: Territ
   const [active, setActive] = useState(poi?.is_active ?? true);
   const [error, setError] = useState<string | null>(null);
 
+  const flight = useSingleFlight();
   const submit = async () => {
     if (!name.uz.trim()) return setError(t('sanatorium.nameShort'));
     if (!pos) return setError(t('san1.territory.placeFirst'));
@@ -88,8 +90,8 @@ function PoiForm({ poi, plan, others, onClose }: { poi: Poi | null; plan: Territ
       <LangFields label={t('sanatorium.description')} values={desc} onChange={setDesc} multiline maxLength={1000} testID="poi-desc" />
       <SwitchRow label={t('sanatorium.active')} value={active} onChange={setActive} />
       <ErrorLine message={error} testID="poi-error" />
-      <Button testID="poi-save" label={t('common.save')} full loading={save.isPending} onPress={() => void submit()} />
-      {poi && <Button testID="poi-delete" label={t('sanatorium.remove')} variant="dangerGhost" full loading={del.isPending} onPress={() => void remove()} />}
+      <Button testID="poi-save" label={t('common.save')} full loading={save.isPending} onPress={() => void flight.run(submit)} />
+      {poi && <Button testID="poi-delete" label={t('sanatorium.remove')} variant="dangerGhost" full loading={del.isPending} onPress={() => void flight.run(remove)} />}
     </View>
   );
 }

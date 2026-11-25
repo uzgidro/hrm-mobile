@@ -5,6 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { useSingleFlight } from '../../simple/useSingleFlight';
 import { FormInput } from '@/components/FormInput';
 import { toast } from '@/lib/toast';
 import { Button, Card, Sheet, Text } from '@/ui';
@@ -14,7 +15,8 @@ import { useSimpleAvailable } from '../../simple/useSimpleAvailable';
 import type { WaitlistItem } from '../../types1';
 import { convertDefaults } from '../../utils/sections1';
 import { fmtDate, sanErrorMessage, todayIso } from '../../utils/sanatorium';
-import { ChoiceField, DateField, ErrorLine, opt } from '../forms';
+import { BirthField } from '../BirthField';
+import { ChoiceField, ErrorLine, opt } from '../forms';
 
 /** After a conversion: the arrival wizard when the simplified flow exists, otherwise the requests list. */
 export function useAfterConvert(): (requestId: number) => void {
@@ -42,9 +44,12 @@ function ConvertForm({ item, onClose, onConverted }: { item: WaitlistItem; onClo
   const [roomId, setRoomId] = useState<number | null>(null);
   const [passport, setPassport] = useState(d.passport);
   const [birth, setBirth] = useState<string | null>(d.birth);
+  const [birthOk, setBirthOk] = useState(true);
   const [org, setOrg] = useState(d.org);
   const [error, setError] = useState<string | null>(null);
+  const flight = useSingleFlight();
   const submit = async () => {
+    if (!birthOk) return setError(t('sanSimple.val.birth'));
     if (birth && birth > todayIso()) return setError(t('sanPlaces.waitlist.birthFuture'));
     try {
       const res = (await conv.mutateAsync({
@@ -80,11 +85,10 @@ function ConvertForm({ item, onClose, onConverted }: { item: WaitlistItem; onClo
         testID="conv-room"
       />
       <FormInput label={t('san1.waitlist.passport')} value={passport} onChangeText={(v) => setPassport(v.toUpperCase())} maxLength={9} testID="conv-passport" />
-      <DateField label={t('san1.waitlist.birth')} value={birth} onChange={setBirth} testID="conv-birth" />
-      {!!birth && <Button testID="conv-birth-clear" label={t('san1.waitlist.clearDates')} variant="link" size="sm" onPress={() => setBirth(null)} />}
+      <BirthField label={t('san1.waitlist.birth')} value={birth ?? ''} onChange={(v, complete) => { setBirth(v || null); setBirthOk(complete); setError(null); }} testID="conv-birth" />
       <FormInput label={t('san1.waitlist.organization')} value={org} onChangeText={setOrg} maxLength={200} testID="conv-org" />
       <ErrorLine message={error} testID="conv-error" />
-      <Button testID="conv-save" label={t('san1.waitlist.convert')} full loading={conv.isPending} onPress={() => void submit()} />
+      <Button testID="conv-save" label={t('san1.waitlist.convert')} full loading={conv.isPending} onPress={() => void flight.run(submit)} />
     </View>
   );
 }
