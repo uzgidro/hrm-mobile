@@ -20,10 +20,12 @@ const TODAY = {
   totals: { arriving: 2, in_house: 30, leaving: 1, free_beds: 12 },
   items: [
     { key: 'req-12', kind: 'request_new', urgency: 'overdue', guest: { id: 9, full_name: 'Karimova Nodira', phone: null }, stay_id: null, request_id: 12, room: null, action: 'accept' },
-    { key: 'stay-5', kind: 'arrival_today', urgency: 'today', guest: { id: 1, full_name: 'Aliyev Vali', phone: null }, stay_id: 5, request_id: null, room: { id: 2, number: '204' }, action: 'arrive' },
+    { key: 'stay-5', kind: 'arrival_today', urgency: 'today', guest: { id: 1, full_name: 'Aliyev Vali', phone: null }, stay_id: 5, request_id: null, room: { id: 2, number: '204' }, action: 'arrive', missing: ['doctor'] },
   ],
 };
+const PREFILL = { source: 'request', request_id: 12, stay_ids: [], start: '2026-11-25', end: '2026-12-05', guest_type: 'treatment', party_size: 1, members: [{ full_name: 'Karimova Nodira', phone: '+998901234567' }] };
 const OPTIONS = {
+  prefill: PREFILL,
   rooms: [{ id: 7, number: '101', building: 'A', capacity: 2, free_beds: 2, price_per_day: '300000.00', ready: true, fits: true }],
   suggested_room_id: 7,
   doctors: [{ staff_id: 3, full_name: 'Dr Ahmedov', specialty: 'Terapevt', cabinet: '12', load: 4, next_slots: ['2026-11-26T10:20:00'] }],
@@ -32,7 +34,6 @@ const OPTIONS = {
   nurses: [], suggested_nurse_id: null, diets: [], default_diet_id: null, packages: [],
   exam_required: true, warnings: [],
 };
-const REQUEST = { id: 12, source: 'bot', status: 'new', full_name: 'Karimova Nodira', birth_date: null, passport: null, phone: '+998901234567', organization_name: null, referral_from: null, referral_to: null, guest_type: 'treatment', note: null, reject_reason: null, guest_id: null, created_at: null };
 
 describe('sanatorium simplified screens', () => {
   const mock = new MockAdapter(apiClient);
@@ -60,6 +61,17 @@ describe('sanatorium simplified screens', () => {
     expect(mockPush).toHaveBeenLastCalledWith('/sanatorium-arrive');
   });
 
+  it('queue: a complete family card arrives all its stays in one tap (group check-in)', async () => {
+    const family = { key: 'g-1', kind: 'arrival_today', urgency: 'today', guest: { id: 1, full_name: 'Aliyev Vali', phone: null }, stay_id: 5, request_id: null, group_key: 'g', group_size: 2, missing: [], room: { id: 2, number: '204' }, action: 'arrive', members: [{ stay_id: 5, guest_id: 1, full_name: 'Aliyev Vali' }, { stay_id: 6, guest_id: 2, full_name: 'Aliyeva Zarina' }] };
+    mock.onGet('sanatorium/today').reply(200, { ...TODAY, items: [family] });
+    mock.onPost('sanatorium/stays/group-check-in').reply(200, { stays: [], warnings: [] });
+    const { findByTestId } = await renderWithProviders(<SanatoriumHomeScreen />);
+    fireEvent.press(await findByTestId('queue-act-g-1'));
+    await waitFor(() => expect(mock.history.post).toHaveLength(1));
+    expect(JSON.parse(mock.history.post[0]!.data)).toEqual({ stay_ids: [5, 6] });
+    expect(mockPush).not.toHaveBeenCalledWith(expect.objectContaining({ pathname: '/sanatorium-arrive' }));
+  });
+
   it('queue: search narrows the cards', async () => {
     mock.onGet('sanatorium/today').reply(200, TODAY);
     const { findByTestId, queryByText } = await renderWithProviders(<SanatoriumHomeScreen />);
@@ -78,7 +90,6 @@ describe('sanatorium simplified screens', () => {
 
   it('wizard: request -> five steps with suggestions -> place -> route sheet and one-time login', async () => {
     mockParams = { request: '12' };
-    mock.onGet('sanatorium/requests').reply(200, { items: [REQUEST], total: 1 });
     mock.onGet('sanatorium/arrivals/options').reply(200, OPTIONS);
     mock.onGet('sanatorium/specialties').reply(200, []);
     let body: Record<string, unknown> = {};
@@ -111,7 +122,6 @@ describe('sanatorium simplified screens', () => {
 
   it('wizard: «Faqat bron» sends check_in false and a server error stays on the review step with its translated text', async () => {
     mockParams = { request: '12' };
-    mock.onGet('sanatorium/requests').reply(200, { items: [REQUEST], total: 1 });
     mock.onGet('sanatorium/arrivals/options').reply(200, OPTIONS);
     mock.onPost('sanatorium/arrivals').reply(409, { detail: { code: 'same_room' } });
     const { findByTestId, getByTestId } = await renderWithProviders(<WizardScreen />);
@@ -123,6 +133,24 @@ describe('sanatorium simplified screens', () => {
     fireEvent.press(getByTestId('wizard-book'));
     expect(await findByTestId('wizard-error')).toHaveTextContent(/allaqachon shu xonada/);
     expect(JSON.parse(mock.history.post[0]!.data).check_in).toBe(false);
+  }, 30000);
+
+  it('wizard: opened from one stay of a booked family it loads the whole group from prefill', async () => {
+    mockParams = { stay: '5' };
+    const prefill = { source: 'stay', request_id: null, stay_ids: [5, 6, 7], group_key: 'g', start: '2026-11-25', end: '2026-12-05', guest_type: 'rest', party_size: 3, room_id: 7, with_meals: true,
+      members: [{ stay_id: 5, guest_id: 1, full_name: 'Aliyev Vali' }, { stay_id: 6, guest_id: 2, full_name: 'Aliyeva Zarina' }, { stay_id: 7, guest_id: 3, full_name: 'Aliyev Bobur' }] };
+    mock.onGet('sanatorium/arrivals/options').reply(200, { ...OPTIONS, prefill, doctors: [], suggested_doctor_id: null, exam_required: false });
+    mock.onPost('sanatorium/arrivals').reply(200, { stays: [{ id: 5 }], route_sheet: { steps: [] } });
+    const { findByText, getByText, getByTestId, findByTestId } = await renderWithProviders(<WizardScreen />);
+    expect(await findByText('Aliyev Vali')).toBeTruthy();
+    expect(getByText('Aliyeva Zarina')).toBeTruthy();
+    expect(getByText('Aliyev Bobur')).toBeTruthy();
+    for (let i = 0; i < 3; i++) fireEvent.press(await findByTestId('wizard-next'));
+    await waitFor(() => expect(getByTestId('wizard-step')).toHaveTextContent(/4-qadam, jami 4/));
+    fireEvent.press(await findByTestId('wizard-place'));
+    await waitFor(() => expect(mock.history.post.length).toBe(1));
+    expect(JSON.parse(mock.history.post[0]!.data)).toMatchObject({ stay_ids: [5, 6, 7], room_id: 7, check_in: true });
+    expect(JSON.parse(mock.history.post[0]!.data).members).toBeUndefined();
   }, 30000);
 
   it('all sections: four groups for the registrar', async () => {

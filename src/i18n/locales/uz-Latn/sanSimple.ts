@@ -132,7 +132,9 @@ export default {
     details: "Batafsil",
     lessDetails: "Yashirish",
   },
+  arrivedDone: "Mehmonlar joylashtirildi",
   act: {
+    checkOutGroup: "Butun guruhni chiqarish ({{count}})",
     extend: "Uzaytirish",
     move: "Xonani almashtirish",
     payment: "To'lov qabul qilish",
@@ -203,6 +205,8 @@ export default {
     left: "Yetishmaydi: {{count}}",
   },
   errors: {
+    invalid_guest_type: "Mehmon turi noto'g'ri.",
+    invalid_lang: "Til noto'g'ri.",
     one_source_required: "Faqat bitta manba kerak: ariza, bron yoki yangi mehmon. Sahifani yangilab qayta boshlang.",
     period_required: "Kelish va ketish sanalarini kiriting.",
     guest_type_required: "Mehmon turini tanlang.",

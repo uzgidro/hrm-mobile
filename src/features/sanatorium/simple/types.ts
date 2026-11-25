@@ -70,8 +70,23 @@ export type ArrivalOptions = {
   has_exam?: boolean;
   exam_required: boolean;
   warnings: string[];
+  prefill?: Prefill | null;
 };
-export type OptionsParams = { start: string; end: string; people: number; guest_type: GuestType; request_id?: number; stay_id?: number };
+/** start / end / people / guest_type may be left out when request_id or stay_id is given. */
+export type OptionsParams = { start?: string; end?: string; people?: number; guest_type?: GuestType; request_id?: number; stay_id?: number };
+export type PrefillMember = {
+  stay_id: number | null; guest_id: number | null; full_name: string; birth_date?: string | null; phone?: string | null; passport?: string | null;
+  gender?: string | null; organization_name?: string | null; relation?: string | null; is_child?: boolean; child_discount?: boolean | null;
+  diet_id?: number | null; diet_note?: string | null; allergies?: string | null;
+};
+/** What the server already knows about a request or a booked group (GET /arrivals/options `prefill`). */
+export type Prefill = {
+  source: 'request' | 'stay'; request_id: number | null; stay_ids: number[]; group_key: string | null;
+  start: string; end: string; guest_type: GuestType | null; party_size?: number;
+  room_id: number | null; package_id: number | null; organization_id: number | null; with_meals: boolean;
+  doctor_staff_id: number | null; nurse_staff_id: number | null; note: string | null;
+  existing_guest_id?: number | null; existing_guest_matches?: boolean | null; members: PrefillMember[];
+};
 
 // ── POST /arrivals ──
 export type ArrivalMember = {
@@ -89,6 +104,7 @@ export type ArrivalBody = {
   package_id?: number;
   organization_id?: number;
   members?: ArrivalMember[];
+  contract_note?: string;
   doctor_staff_id?: number;
   nurse_staff_id?: number;
   exam?: { specialty_id?: number; doctor_staff_id?: number; at: string; minutes?: number } | null;

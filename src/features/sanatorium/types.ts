@@ -46,6 +46,8 @@ export type Stay = {
   checked_out_at: string | null;
   with_meals: boolean;
   diet_note: string | null;
+  /** Same value for the stays of one family / group (null for a single stay). */
+  group_key?: string | null;
   doctor: StaffLite | null;
   nurse: StaffLite | null;
 };

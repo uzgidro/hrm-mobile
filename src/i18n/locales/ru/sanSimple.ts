@@ -132,7 +132,9 @@ export default {
     details: "Подробнее",
     lessDetails: "Скрыть",
   },
+  arrivedDone: "Гости поселены",
   act: {
+    checkOutGroup: "Выписать всю группу ({{count}})",
     extend: "Продлить",
     move: "Сменить комнату",
     payment: "Принять оплату",
@@ -203,6 +205,8 @@ export default {
     left: "Не хватает: {{count}}",
   },
   errors: {
+    invalid_guest_type: "Неверный тип гостя.",
+    invalid_lang: "Неверный язык.",
     one_source_required: "Нужен ровно один источник: заявка, бронь или новый гость. Обновите страницу и начните заново.",
     period_required: "Укажите даты заезда и выезда.",
     guest_type_required: "Выберите тип гостя.",

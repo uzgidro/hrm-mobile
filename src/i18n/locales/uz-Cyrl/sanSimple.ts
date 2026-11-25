@@ -132,7 +132,9 @@ export default {
     details: "Батафсил",
     lessDetails: "Яшириш",
   },
+  arrivedDone: "Меҳмонлар жойлаштирилди",
   act: {
+    checkOutGroup: "Бутун гуруҳни чиқариш ({{count}})",
     extend: "Узайтириш",
     move: "Хонани алмаштириш",
     payment: "Тўлов қабул қилиш",
@@ -203,6 +205,8 @@ export default {
     left: "Етишмайди: {{count}}",
   },
   errors: {
+    invalid_guest_type: "Меҳмон тури нотўғри.",
+    invalid_lang: "Тил нотўғри.",
     one_source_required: "Фақат битта манба керак: ариза, брон ёки янги меҳмон. Саҳифани янгиланг ва қайта бошланг.",
     period_required: "Келиш ва кетиш саналарини киритинг.",
     guest_type_required: "Меҳмон турини танланг.",

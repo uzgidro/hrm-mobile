@@ -132,7 +132,9 @@ export default {
     details: "Details",
     lessDetails: "Hide",
   },
+  arrivedDone: "Guests checked in",
   act: {
+    checkOutGroup: "Check out the whole group ({{count}})",
     extend: "Extend",
     move: "Change room",
     payment: "Take payment",
@@ -203,6 +205,8 @@ export default {
     left: "Missing: {{count}}",
   },
   errors: {
+    invalid_guest_type: "The guest type is wrong.",
+    invalid_lang: "The language is wrong.",
     one_source_required: "Exactly one source is needed: a request, a booking or a new guest. Refresh the page and start again.",
     period_required: "Enter the arrival and departure dates.",
     guest_type_required: "Choose the guest type.",

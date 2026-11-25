@@ -13,8 +13,8 @@ import { StayDietSheet } from '../../components/sections2/DietParts';
 import type { StayFull } from '../../types';
 import { useSanFeatures } from '../../utils/features';
 import { fmtMoney, sanErrorMessage, todayIso } from '../../utils/sanatorium';
-import { routeSheetQuery } from '../api';
-import { hasDebt, nextStepFor } from '../utils';
+import { groupStaysQuery, routeSheetQuery, useGroupCheckIn } from '../api';
+import { debtNumber, hasDebt, nextStepFor } from '../utils';
 import { RouteStepper } from './RouteSheetView';
 import { StayActionSheets, useCheckOutFlow, type StayActionKind, type StayRef } from './StayActions';
 
@@ -39,14 +39,19 @@ export function StayNext({ stay, onEarlyLeave }: { stay: StayFull; onEarlyLeave:
   const features = useSanFeatures();
   const checkIn = useCheckIn();
   const checkOut = useCheckOutFlow();
+  const groupIn = useGroupCheckIn();
+  // The family: every stay with the same group key and status (a stay screen knows only its own row).
+  const groupQ = useQuery(groupStaysQuery(stay.group_key, stay.status, stay.status === 'booked' || stay.status === 'checked_in'));
+  const group = (groupQ.data ?? []).length > 1 ? groupQ.data! : [];
+  const groupIds = group.map((s) => s.id);
+  const groupDebt = group.reduce((n, s) => n + debtNumber(s.debt), 0);
   const [sheet, setSheet] = useState<StayActionKind | null>(null);
   const [appt, setAppt] = useState(false);
   const [diet, setDiet] = useState(false);
   const route = sheetQ.data ?? null;
   const next = nextStepFor(stay, route, todayIso());
   const live = stay.status === 'booked' || stay.status === 'checked_in';
-  // The route sheet lists the REST of the group, so the group is that plus this guest.
-  const ref = stayRefOf(stay, (route?.members?.length ?? 0) + 1);
+  const ref = { ...stayRefOf(stay, Math.max(groupIds.length, (route?.members?.length ?? 0) + 1)), groupIds: groupIds.length > 1 ? groupIds : undefined };
 
   const label: Record<string, string> = {
     check_in: t('sanatorium.checkIn'), choose_room: t('sanSimple.action.choose_room'), book_exam: t('sanSimple.action.assign_doctor'),
@@ -55,7 +60,8 @@ export function StayNext({ stay, onEarlyLeave }: { stay: StayFull; onEarlyLeave:
   const runNext = async () => {
     if (next.kind === 'check_in') {
       try {
-        await checkIn.mutateAsync(stay.id);
+        if (groupIds.length > 1) await groupIn.mutateAsync(groupIds);
+        else await checkIn.mutateAsync(stay.id);
         toast.success(t('sanatorium.checkedIn'));
       } catch (e) {
         toast.error(sanErrorMessage(e, t('errors.generic')));
@@ -65,8 +71,8 @@ export function StayNext({ stay, onEarlyLeave }: { stay: StayFull; onEarlyLeave:
     else if (next.kind === 'diet') setDiet(true);
     else if (next.kind === 'check_out') await out();
   };
-  const out = async () => {
-    const r = await checkOut.run([stay.id], stay.debt);
+  const out = async (whole = false) => {
+    const r = whole && groupIds.length > 1 ? await checkOut.run(groupIds, groupDebt) : await checkOut.run([stay.id], stay.debt);
     if (r === 'early') onEarlyLeave();
   };
 
@@ -85,6 +91,7 @@ export function StayNext({ stay, onEarlyLeave }: { stay: StayFull; onEarlyLeave:
           <Button testID="stay-move" label={t('sanSimple.act.move')} variant="soft" size="sm" onPress={() => setSheet('move')} />
           <Button testID="stay-pay-add" label={t('sanSimple.act.payment')} variant="soft" size="sm" onPress={() => setSheet('payment')} />
           {stay.status === 'checked_in' && next.kind !== 'check_out' && <Button testID="stay-out" label={t('sanSimple.action.check_out')} variant="soft" size="sm" loading={checkOut.pending} onPress={() => void out()} />}
+          {stay.status === 'checked_in' && groupIds.length > 1 && <Button testID="stay-out-group" label={t('sanSimple.act.checkOutGroup', { count: groupIds.length })} variant="soft" size="sm" loading={checkOut.pending} onPress={() => void out(true)} />}
         </View>
       )}
       <StayActionSheets stay={sheet ? ref : null} kind={sheet} onClose={() => setSheet(null)} />

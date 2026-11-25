@@ -4,6 +4,7 @@ import dayjs from 'dayjs';
 import type { GuestType, StayFull } from '../types';
 import { sanErrorInfo } from '../utils/sanatorium';
 import type {
+  Prefill,
   ArrivalBody, ArrivalMember, ArrivalOptions, NewCredential, QueueItem, QueueUrgency, RouteSheet, RouteStep, SetupItem,
 } from './types';
 
@@ -95,6 +96,7 @@ export type WizardDraft = {
   roomId: number | null;
   withMeals: boolean;
   packageId: number | null;
+  organizationId: number | null;
   needExam: boolean;
   doctorId: number | null;
   nurseId: number | null;
@@ -112,7 +114,7 @@ export function newDraft(over: Partial<WizardDraft> = {}): WizardDraft {
   const start = dayjs().format('YYYY-MM-DD');
   return {
     requestId: null, stayIds: [], members: [emptyMember()], start, end: dayjs(start).add(10, 'day').format('YYYY-MM-DD'),
-    guestType: 'treatment', roomId: null, withMeals: true, packageId: null, needExam: false, doctorId: null, nurseId: null,
+    guestType: 'treatment', roomId: null, withMeals: true, packageId: null, organizationId: null, needExam: false, doctorId: null, nurseId: null,
     examAt: null, dietId: null, dietNote: '', allergies: '', payment: '', note: '', ...over,
   };
 }
@@ -203,6 +205,7 @@ export function buildArrivalBody(d: WizardDraft, checkIn: boolean): ArrivalBody 
     ...(d.roomId ? { room_id: d.roomId } : {}),
     with_meals: d.withMeals,
     ...(d.packageId ? { package_id: d.packageId } : {}),
+    ...(d.organizationId ? { organization_id: d.organizationId } : {}),
     ...(d.needExam && d.doctorId ? { doctor_staff_id: d.doctorId } : {}),
     ...(d.nurseId ? { nurse_staff_id: d.nurseId } : {}),
     exam: d.needExam && d.examAt ? { ...(d.doctorId ? { doctor_staff_id: d.doctorId } : {}), at: d.examAt } : null,
@@ -315,6 +318,7 @@ export function actionRoute(item: QueueItem, action: string): ActionRoute | null
       return item.request_id != null ? { pathname: '/sanatorium-arrive', params: { request: String(item.request_id) } } : null;
     case 'arrive': {
       const ids = itemStayIds(item);
+      if (isCompleteArrival(item)) return null;
       return ids.length ? { pathname: '/sanatorium-arrive', params: { stay: ids.join(',') } } : null;
     }
     case 'convert':
@@ -371,9 +375,42 @@ export function draftFromStays(stays: StayLike[], today: string): WizardDraft {
   });
 }
 
+// ── Prefill from the server (`prefill` of /arrivals/options) ──
+
+/** Draft of a request or of a whole booked group; an arrival in the past starts today. */
+export function draftFromPrefill(p: Prefill, today: string): WizardDraft {
+  const start = dayjs(p.start).isBefore(dayjs(today)) ? today : p.start;
+  const end = dayjs(p.end).isAfter(dayjs(start)) ? p.end : dayjs(start).add(10, 'day').format('YYYY-MM-DD');
+  const first = p.members[0];
+  const fromStays = p.source === 'stay' && p.stay_ids.length > 0;
+  return newDraft({
+    requestId: p.source === 'request' ? p.request_id : null,
+    stayIds: fromStays ? p.stay_ids : [],
+    members: p.members.length
+      ? p.members.map((m) => ({ guestId: m.guest_id ?? undefined, name: m.full_name, birth: isoToDmy(m.birth_date), phone: m.phone ?? '', passport: m.passport ?? '', relation: m.relation ?? undefined }))
+      : [emptyMember()],
+    start, end,
+    guestType: p.guest_type ?? 'treatment',
+    roomId: p.room_id ?? null,
+    packageId: p.package_id ?? null,
+    withMeals: p.with_meals ?? true,
+    doctorId: p.doctor_staff_id ?? null,
+    nurseId: p.nurse_staff_id ?? null,
+    needExam: !!p.doctor_staff_id,
+    dietId: first?.diet_id ?? null,
+    dietNote: first?.diet_note ?? '',
+    allergies: first?.allergies ?? '',
+    note: p.note ?? '',
+  });
+}
+
 /** Number of people the room must hold: the declared party of a request, else the listed members. */
 export const partySize = (d: Pick<WizardDraft, 'members' | 'stayIds'>, declared?: number | null): number =>
   Math.min(20, Math.max(d.stayIds.length || d.members.length, declared ?? 1, 1));
 
 /** `"2026-11-26T10:20:00"` -> `26.11 10:20` */
 export const slotLabel = (iso: string) => dayjs(iso).format('DD.MM HH:mm');
+
+/** Nothing is missing on the card: one tap can arrive the whole family without the wizard. */
+export const isCompleteArrival = (item: Pick<QueueItem, 'missing' | 'stay_id' | 'members'>): boolean =>
+  (item.missing ?? []).length === 0 && itemStayIds(item).length > 0;

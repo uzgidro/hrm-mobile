@@ -6,7 +6,7 @@ import { apiClient } from '@/api/client';
 import { unwrapList } from '@/api/response';
 import {
   SANATORIUM_ARRIVALS, SANATORIUM_ARRIVAL_OPTIONS, SANATORIUM_DOCTOR_SLOTS, SANATORIUM_MY_GUESTS, SANATORIUM_SETUP_STATUS,
-  SANATORIUM_STAYS_GROUP_CHECK_IN, SANATORIUM_STAYS_GROUP_CHECK_OUT, SANATORIUM_STAY_EXTEND, SANATORIUM_STAY_MOVE,
+  SANATORIUM_STAYS, SANATORIUM_STAYS_GROUP_CHECK_IN, SANATORIUM_STAYS_GROUP_CHECK_OUT, SANATORIUM_STAY_EXTEND, SANATORIUM_STAY_MOVE,
   SANATORIUM_STAY_NO_SHOW, SANATORIUM_STAY_PAYMENTS, SANATORIUM_STAY_ROUTE_SHEET, SANATORIUM_STAY_START_EXAM, SANATORIUM_TODAY,
 } from '@/api/urls';
 import type { Appointment, Stay, StayFull } from '../types';
@@ -37,6 +37,9 @@ async function getOrNull<T>(url: string, params?: Record<string, unknown>): Prom
 export const fetchToday = () => getOrNull<TodayData>(SANATORIUM_TODAY);
 export const fetchArrivalOptions = (p: OptionsParams) => apiClient.get<ArrivalOptions>(SANATORIUM_ARRIVAL_OPTIONS, { params: p }).then((r) => r.data);
 export const fetchRouteSheet = (stayId: number) => getOrNull<RouteSheet>(SANATORIUM_STAY_ROUTE_SHEET(stayId));
+/** Stays of one family / group in a given status (the stay list has no group filter, so it is filtered here). */
+export const fetchGroupStays = (groupKey: string, status: string) =>
+  apiClient.get(SANATORIUM_STAYS, { params: { status, size: 200 } }).then((r) => unwrapList<StayFull>(r.data).filter((s) => s.group_key === groupKey));
 export const fetchSetupStatus = () => getOrNull<SetupStatus>(SANATORIUM_SETUP_STATUS);
 export const fetchMyGuests = async () => {
   const data = await getOrNull<unknown>(SANATORIUM_MY_GUESTS);
@@ -49,6 +52,8 @@ export const todayQuery = (enabled = true) =>
   queryOptions({ queryKey: simpleKeys.today(), queryFn: fetchToday, enabled, staleTime: 30_000, retry: false });
 export const optionsQuery = (p: OptionsParams, enabled = true) =>
   queryOptions({ queryKey: simpleKeys.options(p), queryFn: () => fetchArrivalOptions(p), enabled, staleTime: 15_000, retry: false });
+export const groupStaysQuery = (groupKey: string | null | undefined, status: string, enabled = true) =>
+  queryOptions({ queryKey: [...sanKeys.all, 'group-stays', groupKey, status], queryFn: () => fetchGroupStays(groupKey!, status), enabled: enabled && !!groupKey, retry: false });
 export const routeSheetQuery = (stayId: number, enabled = true) =>
   queryOptions({ queryKey: simpleKeys.routeSheet(stayId), queryFn: () => fetchRouteSheet(stayId), enabled: enabled && stayId > 0, retry: false });
 export const setupStatusQuery = (enabled = true) => queryOptions({ queryKey: simpleKeys.setup(), queryFn: fetchSetupStatus, enabled, retry: false });
@@ -90,7 +95,8 @@ export async function addPayment({ id, amount, note, paid_before, whole_group }:
 }
 export const markNoShow = ({ id, reason, whole_group }: { id: number; reason?: string; whole_group?: boolean }) =>
   apiClient.post(SANATORIUM_STAY_NO_SHOW(id), { ...(reason ? { reason } : {}), ...(whole_group ? { whole_group: true } : {}) }).then((r) => r.data);
-export const groupCheckIn = (stay_ids: number[]) => apiClient.post<{ stays?: Stay[] }>(SANATORIUM_STAYS_GROUP_CHECK_IN, { stay_ids }).then((r) => r.data);
+export const groupCheckIn = (stay_ids: number[]) =>
+  apiClient.post<{ stays?: Stay[]; warnings?: { code: string; room_number?: string; hk_status?: string }[] }>(SANATORIUM_STAYS_GROUP_CHECK_IN, { stay_ids }).then((r) => r.data);
 export const groupCheckOut = ({ stay_ids, allow_debt }: { stay_ids: number[]; allow_debt?: boolean }) =>
   apiClient.post<{ stays?: Stay[]; warnings?: unknown[] }>(SANATORIUM_STAYS_GROUP_CHECK_OUT, { stay_ids, ...(allow_debt ? { allow_debt: true } : {}) }).then((r) => r.data);
 /** One stay checks out through the classic endpoint, a group through the all-or-nothing one. */

@@ -11,7 +11,7 @@ import { Button, Card, EmptyState, IconButton, ListRow, PageHeader, ProgressBar,
 import { guestsQuery } from '../../api/queries';
 import { AppointmentSheet } from '../../components/AppointmentSheet';
 import { fmtDate, sanErrorMessage } from '../../utils/sanatorium';
-import { setupStatusQuery, useNoShow } from '../api';
+import { setupStatusQuery, useGroupCheckIn, useNoShow } from '../api';
 import { QueueCard } from '../components/QueueCard';
 import { StayActionSheets, useCheckOutFlow, type StayActionKind, type StayRef } from '../components/StayActions';
 import type { QueueItem, TodayData } from '../types';
@@ -62,6 +62,7 @@ export function TodayHome({ data, refreshing, onRefresh }: { data: TodayData; re
   const setup = useQuery(setupStatusQuery());
   const guests = useQuery(guestsQuery(search));
   const noShow = useNoShow();
+  const groupIn = useGroupCheckIn();
   const checkOut = useCheckOutFlow();
 
   const items = filterQueue(data.items, search);
@@ -87,7 +88,17 @@ export function TodayHome({ data, refreshing, onRefresh }: { data: TodayData; re
     if (action === 'assign_doctor') return setApptStay(ref.id);
     setBusy(item.key);
     try {
-      if (action === 'no_show') {
+      if (action === 'arrive') {
+        // Nothing is missing: one tap arrives the whole family.
+        try {
+          const res = await groupIn.mutateAsync(ref.groupIds ?? [ref.id]);
+          toast.success(t('sanSimple.arrivedDone'));
+          const w = res.warnings?.find((x) => x.code === 'room_not_ready');
+          if (w) toast.info(t('san1.hk.roomNotReady', { room: w.room_number ?? '', status: t(`san1.hk.status.${w.hk_status ?? 'dirty'}`) }), 8000);
+        } catch (e) {
+          toast.error(sanErrorMessage(e, t('errors.generic')));
+        }
+      } else if (action === 'no_show') {
         const ok = await confirm({ title: t('sanSimple.noShowTitle'), message: t('sanSimple.noShowAsk', { name: item.guest?.full_name ?? '' }), confirmLabel: t('sanSimple.action.no_show'), cancelLabel: t('common.cancel'), destructive: true });
         if (!ok) return;
         try {

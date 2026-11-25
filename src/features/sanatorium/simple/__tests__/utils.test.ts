@@ -1,5 +1,5 @@
 import {
-  actionRoute, applySuggestions, buildArrivalBody, canCheckInNow, dmyToIso, draftFromRequest, draftFromStays, examDefault, filterQueue,
+  isCompleteArrival, draftFromPrefill, actionRoute, applySuggestions, buildArrivalBody, canCheckInNow, dmyToIso, draftFromRequest, draftFromStays, examDefault, filterQueue,
   groupQueue, isMissingEndpoint, itemStayIds, moneyString, newDraft, nextStepFor, normalizeSlots, parseIds, queueActions, routeSheetText,
   setupRoute, splitAction, validateStep, validateVisitSettings, visibleSteps,
 } from '../utils';
@@ -41,7 +41,11 @@ describe('queue helpers', () => {
   });
   it('routes main buttons: wizard for accept / arrive, lists for the rest, null for in-place actions', () => {
     expect(actionRoute(item({ request_id: 8, kind: 'request_new', action: 'accept', stay_id: null }), 'accept')).toEqual({ pathname: '/sanatorium-arrive', params: { request: '8' } });
-    expect(actionRoute(item({ members: [{ stay_id: 5, guest_id: 1, full_name: 'a' }, { stay_id: 6, guest_id: 2, full_name: 'b' }] }), 'arrive')).toEqual({ pathname: '/sanatorium-arrive', params: { stay: '5,6' } });
+    expect(actionRoute(item({ missing: ['doctor'], members: [{ stay_id: 5, guest_id: 1, full_name: 'a' }, { stay_id: 6, guest_id: 2, full_name: 'b' }] }), 'arrive')).toEqual({ pathname: '/sanatorium-arrive', params: { stay: '5,6' } });
+    // nothing missing: no wizard, the card arrives the whole family in one tap
+    expect(actionRoute(item({ missing: [] }), 'arrive')).toBeNull();
+    expect(isCompleteArrival(item({ missing: [] }))).toBe(true);
+    expect(isCompleteArrival(item({ missing: ['room'] }))).toBe(false);
     expect(actionRoute(item({}), 'confirm_transfer')).toEqual({ pathname: '/sanatorium-transfers' });
     expect(actionRoute(item({}), 'check_out')).toBeNull();
     expect(itemStayIds(item({ stay_id: null }))).toEqual([]);
@@ -196,8 +200,33 @@ describe('error texts', () => {
     expect(sanErrorMessage(err('guest_has_stay'))).toBe("Mehmonda shu davrda boshqa yashash bor");
   });
   it('translates every new simplification code', () => {
-    for (const code of ['one_source_required', 'period_required', 'guest_type_required', 'member_required', 'member_not_in_stays', 'stays_not_one_group', 'stay_not_booked', 'invalid_exam_member', 'not_later', 'same_room', 'invalid_move_date', 'not_no_show', 'debt_exists', 'not_your_guest', 'conflict', 'invalid_nurse', 'duplicate_member']) {
+    for (const code of ['one_source_required', 'period_required', 'guest_type_required', 'member_required', 'member_not_in_stays', 'stays_not_one_group', 'stay_not_booked', 'invalid_exam_member', 'not_later', 'same_room', 'invalid_move_date', 'not_no_show', 'debt_exists', 'not_your_guest', 'conflict', 'invalid_nurse', 'duplicate_member', 'invalid_guest_type', 'invalid_lang']) {
       expect(sanErrorMessage(err(code), 'FALLBACK')).not.toBe('FALLBACK');
     }
+  });
+});
+
+describe('prefill', () => {
+  it('loads every member of a booked group with the group dates, room, doctor and diet', () => {
+    const d = draftFromPrefill({
+      source: 'stay', request_id: null, stay_ids: [3, 4, 5], group_key: 'g1', start: '2026-11-24', end: '2026-12-02', guest_type: 'treatment', party_size: 3,
+      room_id: 8, package_id: null, organization_id: null, with_meals: false, doctor_staff_id: 3, nurse_staff_id: null, note: 'n',
+      members: [
+        { stay_id: 3, guest_id: 11, full_name: 'Father', birth_date: '1980-01-02', diet_id: 4, allergies: 'nuts' },
+        { stay_id: 4, guest_id: 12, full_name: 'Mother' },
+        { stay_id: 5, guest_id: 13, full_name: 'Child', is_child: true },
+      ],
+    }, '2026-11-25');
+    expect(d.stayIds).toEqual([3, 4, 5]);
+    expect(d.members.map((m) => m.name)).toEqual(['Father', 'Mother', 'Child']);
+    expect(d.start).toBe('2026-11-25');
+    expect(d).toMatchObject({ roomId: 8, doctorId: 3, needExam: true, dietId: 4, allergies: 'nuts', withMeals: false, requestId: null });
+    expect(buildArrivalBody(d, true).stay_ids).toEqual([3, 4, 5]);
+  });
+  it('a request prefill keeps request_id as the only source', () => {
+    const d = draftFromPrefill({ source: 'request', request_id: 12, stay_ids: [], start: '2026-11-26', end: '2026-12-01', guest_type: 'rest', members: [{ full_name: 'Karimova Nodira' }] } as never, '2026-11-25');
+    const b = buildArrivalBody(d, false);
+    expect(b.request_id).toBe(12);
+    expect(b.stay_ids).toBeUndefined();
   });
 });

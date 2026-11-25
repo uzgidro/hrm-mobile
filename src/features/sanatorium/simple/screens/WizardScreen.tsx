@@ -20,7 +20,7 @@ import { optionsQuery, useCreateArrival } from '../api';
 import { ArrivalResultView } from '../components/ArrivalResultView';
 import type { ArrivalOptions, ArrivalResult } from '../types';
 import {
-  applySuggestions, buildArrivalBody, canCheckInNow, draftFromRequest, draftFromStays, emptyMember, examDefault, parseIds, partySize,
+  applySuggestions, buildArrivalBody, canCheckInNow, draftFromPrefill, draftFromRequest, draftFromStays, emptyMember, examDefault, parseIds, partySize,
   slotLabel, validateStep, visibleSteps, type MemberDraft, type WizardDraft, type WizardStep,
 } from '../utils';
 import dayjs from 'dayjs';
@@ -31,19 +31,29 @@ export default function WizardScreen() {
   const params = useLocalSearchParams<{ request?: string; stay?: string }>();
   const requestId = Number(params.request ?? 0);
   const stayIds = parseIds(params.stay);
-  const reqs = useQuery(requestsQuery('new', allowed && requestId > 0));
-  const stays = useQueries({ queries: stayIds.map((id) => stayQuery(id, allowed)) });
+  const source = requestId > 0 || stayIds.length > 0;
+  // The server knows the request / the whole booked group: its `prefill` is the starting point.
+  const pre = useQuery(optionsQuery(requestId > 0 ? { request_id: requestId } : { stay_id: stayIds[0] ?? 0 }, allowed && source));
+  const prefill = pre.data?.prefill ?? null;
+  // Older answer without `prefill`: build the draft from the request list / the stays themselves.
+  const legacy = allowed && source && !pre.isPending && !prefill;
+  const reqs = useQuery(requestsQuery('new', legacy && requestId > 0));
+  const stays = useQueries({ queries: stayIds.map((id) => stayQuery(id, legacy && requestId <= 0)) });
   if (!allowed) return <Denied />;
 
   let content: React.ReactNode;
-  if (requestId > 0) {
+  if (!source) {
+    content = <Wizard key="walkin" initial={draftFromStays([], todayIso())} />;
+  } else if (pre.isPending) {
+    content = <LoadingView rows={3} />;
+  } else if (prefill) {
+    content = <Wizard key={`p${prefill.source}${prefill.request_id}${prefill.stay_ids.join('-')}`} initial={draftFromPrefill(prefill, todayIso())} declared={prefill.party_size ?? null} />;
+  } else if (requestId > 0) {
     const req = reqs.data?.find((r) => r.id === requestId);
     content = reqs.isPending ? <LoadingView rows={3} /> : !req ? <ErrorState onRetry={() => void reqs.refetch()} /> : <Wizard key={`r${req.id}`} initial={draftFromRequest(req, todayIso())} declared={req.party_size ?? null} />;
-  } else if (stayIds.length > 0) {
+  } else {
     const loaded = stays.every((s) => s.data);
     content = stays.some((s) => s.isPending) ? <LoadingView rows={3} /> : !loaded ? <ErrorState onRetry={() => stays.forEach((s) => void s.refetch())} /> : <Wizard key={`s${stayIds.join('-')}`} initial={draftFromStays(stays.map((s) => s.data!), todayIso())} />;
-  } else {
-    content = <Wizard key="walkin" initial={draftFromStays([], todayIso())} />;
   }
   return (
     <Screen testID="sanatorium-arrive-screen">
