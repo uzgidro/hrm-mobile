@@ -18,7 +18,7 @@ import { ErrorLine, optNull, SwitchRow } from '../../components/forms';
 import { askDelete, LangFields, MoveButtons, SectionGate } from '../../components/sections1/shared';
 import type { InfoSection } from '../../types1';
 import { pickImage } from '../../utils/pickImage';
-import { moveId, pickLang } from '../../utils/sections1';
+import { moveId, photoThumb, pickLang } from '../../utils/sections1';
 import { sanErrorMessage } from '../../utils/sanatorium';
 
 export default function InfoSectionsScreen() {
@@ -42,7 +42,7 @@ export default function InfoSectionsScreen() {
                     key={s.id}
                     pressable={!readOnly}
                     testID={`info-${s.id}`}
-                    left={s.photo ? <Image source={{ uri: s.photo.thumb_url }} style={styles.thumb} contentFit="cover" /> : s.emoji ? <Text variant="title">{s.emoji}</Text> : undefined}
+                    left={photoThumb(s.photo) ? <Image source={{ uri: photoThumb(s.photo) }} style={styles.thumb} contentFit="cover" /> : s.emoji ? <Text variant="title">{s.emoji}</Text> : undefined}
                     title={pickLang(i18n.language, { uz: s.title_uz, ru: s.title_ru, en: s.title_en })}
                     subtitle={[s.show_in_bot ? t('san1.info.inBot') : null, s.show_in_cabinet ? t('san1.info.inCabinet') : null].filter(Boolean).join(' · ') || undefined}
                     right={
@@ -87,7 +87,7 @@ function InfoForm({ item, onClose }: { item: InfoSection | null; onClose: () => 
   const [photo, setPhoto] = useState<UploadFile | null>(null);
   const [dropPhoto, setDropPhoto] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const shown = photo?.uri ?? (!dropPhoto ? item?.photo?.thumb_url : undefined);
+  const shown = photo?.uri ?? (!dropPhoto ? photoThumb(item?.photo) : undefined);
 
   const choose = async () => {
     try {
@@ -102,7 +102,8 @@ function InfoForm({ item, onClose }: { item: InfoSection | null; onClose: () => 
   };
 
   const submit = async () => {
-    if (title.uz.trim().length < 2) return setError(t('sanatorium.nameShort'));
+    if (!title.uz.trim()) return setError(t('sanPlaces.info.titleRequired'));
+    if (!body.uz.trim()) return setError(t('sanPlaces.info.bodyRequired'));
     try {
       const saved = await save.mutateAsync({
         id: item?.id,
@@ -141,9 +142,9 @@ function InfoForm({ item, onClose }: { item: InfoSection | null; onClose: () => 
 
   return (
     <View style={styles.form} testID="info-sheet">
-      <LangFields label={t('san1.info.titleLabel')} values={title} onChange={setTitle} requiredUz testID="info-title" />
-      <LangFields label={t('san1.info.body')} values={body} onChange={setBody} multiline testID="info-body" />
-      <FormInput label={t('san1.info.emoji')} value={emoji} onChangeText={setEmoji} testID="info-emoji" />
+      <LangFields label={t('san1.info.titleLabel')} values={title} onChange={setTitle} requiredUz maxLength={150} testID="info-title" />
+      <LangFields label={t('san1.info.body')} values={body} onChange={setBody} multiline requiredUz maxLength={3500} testID="info-body" />
+      <FormInput label={t('san1.info.emoji')} value={emoji} onChangeText={setEmoji} maxLength={8} testID="info-emoji" />
       {!!shown && <Image source={{ uri: shown }} style={styles.preview} contentFit="cover" />}
       <View style={styles.row}>
         <Button testID="info-photo" label={shown ? t('san1.info.changePhoto') : t('san1.info.addPhoto')} icon="camera" variant="soft" size="sm" onPress={() => void choose()} />
