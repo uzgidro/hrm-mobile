@@ -94,6 +94,8 @@ export type WizardDraft = {
   end: string;
   guestType: GuestType;
   roomId: number | null;
+  /** The registrar picked a room by hand (otherwise `rooms_assigned` keeps every member in their own room). */
+  roomTouched: boolean;
   withMeals: boolean;
   packageId: number | null;
   organizationId: number | null;
@@ -114,7 +116,7 @@ export function newDraft(over: Partial<WizardDraft> = {}): WizardDraft {
   const start = dayjs().format('YYYY-MM-DD');
   return {
     requestId: null, stayIds: [], members: [emptyMember()], start, end: dayjs(start).add(10, 'day').format('YYYY-MM-DD'),
-    guestType: 'treatment', roomId: null, withMeals: true, packageId: null, organizationId: null, needExam: false, doctorId: null, nurseId: null,
+    guestType: 'treatment', roomId: null, roomTouched: false, withMeals: true, packageId: null, organizationId: null, needExam: false, doctorId: null, nurseId: null,
     examAt: null, dietId: null, dietNote: '', allergies: '', payment: '', note: '', ...over,
   };
 }
@@ -132,7 +134,7 @@ export function visibleSteps(opts: { options?: ArrivalOptions | null; doctorsOn:
 /** Fill the unset suggestions from the server (never overrides what the registrar already chose). */
 export function applySuggestions(d: WizardDraft, o: ArrivalOptions): WizardDraft {
   const next = { ...d };
-  if (next.roomId == null && o.suggested_room_id != null) next.roomId = o.suggested_room_id;
+  if (next.roomId == null && o.suggested_room_id != null && !o.rooms_assigned) next.roomId = o.suggested_room_id;
   if (next.doctorId == null && o.suggested_doctor_id != null) next.doctorId = o.suggested_doctor_id;
   if (next.nurseId == null && o.suggested_nurse_id != null) next.nurseId = o.suggested_nurse_id;
   if (next.examAt == null && o.suggested_exam_at) next.examAt = o.suggested_exam_at;
@@ -174,7 +176,7 @@ export function validateStep(step: WizardStep, d: WizardDraft): string | null {
 }
 
 /** «Joylashtirish» (check in now) needs a room and an arrival that is not in the future. */
-export const canCheckInNow = (d: WizardDraft, today: string): boolean => d.roomId != null && !dayjs(d.start).isAfter(dayjs(today));
+export const canCheckInNow = (d: WizardDraft, today: string, keepRooms = false): boolean => (d.roomId != null || keepRooms) && !dayjs(d.start).isAfter(dayjs(today));
 
 function memberBody(m: MemberDraft): ArrivalMember {
   if (m.guestId) return { guest_id: m.guestId, ...(m.relation ? { relation: m.relation } : {}) };
@@ -188,7 +190,7 @@ function memberBody(m: MemberDraft): ArrivalMember {
 }
 
 /** Strict body of POST /arrivals: exactly one source, empty optionals dropped. */
-export function buildArrivalBody(d: WizardDraft, checkIn: boolean): ArrivalBody {
+export function buildArrivalBody(d: WizardDraft, checkIn: boolean, clientRef?: string, keepRooms = false): ArrivalBody {
   const source: Partial<ArrivalBody> =
     d.requestId != null
       ? { request_id: d.requestId, ...(d.members.length > 1 ? { members: d.members.map(memberBody) } : {}) }
@@ -202,7 +204,8 @@ export function buildArrivalBody(d: WizardDraft, checkIn: boolean): ArrivalBody 
     start: d.start,
     end: d.end,
     guest_type: d.guestType,
-    ...(d.roomId ? { room_id: d.roomId } : {}),
+    // `keepRooms`: no room_id, so every member keeps the room they already have.
+    ...(d.roomId && !keepRooms ? { room_id: d.roomId } : {}),
     with_meals: d.withMeals,
     ...(d.packageId ? { package_id: d.packageId } : {}),
     ...(d.organizationId ? { organization_id: d.organizationId } : {}),
@@ -214,6 +217,7 @@ export function buildArrivalBody(d: WizardDraft, checkIn: boolean): ArrivalBody 
     ...(money ? { payment: { amount: money } } : {}),
     ...(d.note.trim() ? { note: d.note.trim() } : {}),
     check_in: checkIn,
+    ...(clientRef ? { client_ref: clientRef } : {}),
   };
 }
 
@@ -414,3 +418,37 @@ export const slotLabel = (iso: string) => dayjs(iso).format('DD.MM HH:mm');
 /** Nothing is missing on the card: one tap can arrive the whole family without the wizard. */
 export const isCompleteArrival = (item: Pick<QueueItem, 'missing' | 'stay_id' | 'members'>): boolean =>
   (item.missing ?? []).length === 0 && itemStayIds(item).length > 0;
+
+// ── Idempotency, warnings, duplicates ──
+/** UUID v4 for `client_ref`; works where `crypto.randomUUID` is missing (Hermes / old browsers). */
+export function newClientRef(): string {
+  const c = (globalThis as { crypto?: { randomUUID?: () => string; getRandomValues?: (a: Uint8Array) => Uint8Array } }).crypto;
+  if (c?.randomUUID) return c.randomUUID();
+  const b = new Uint8Array(16);
+  if (c?.getRandomValues) c.getRandomValues(b);
+  else for (let i = 0; i < 16; i += 1) b[i] = Math.floor(Math.random() * 256);
+  b[6] = (b[6]! & 0x0f) | 0x40;
+  b[8] = (b[8]! & 0x3f) | 0x80;
+  const h = Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('');
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+}
+
+/** An older server that knows `client_ref` only on some routes rejects it with 422 naming the field. */
+export function rejectsClientRef(e: unknown): boolean {
+  const r = (e as { response?: { status?: number; data?: unknown } } | undefined)?.response;
+  return r?.status === 422 && JSON.stringify(r.data ?? '').includes('client_ref');
+}
+
+/** The queue may list a stay twice (departure / overstay card AND a debt card): keep the card that already shows the debt. */
+export function dedupeDebt(items: QueueItem[]): QueueItem[] {
+  const shown = new Set<number>();
+  for (const i of items) if (i.kind !== 'debt' && hasDebt(i.debt)) itemStayIds(i).forEach((id) => shown.add(id));
+  return items.filter((i) => i.kind !== 'debt' || !itemStayIds(i).some((id) => shown.has(id)));
+}
+
+export type ServerWarning = { code: string; [k: string]: unknown };
+/** Warning objects of an action response (strings of older servers become `{code}`). */
+export function warningsOf(res: unknown): ServerWarning[] {
+  const w = (res as { warnings?: unknown } | null | undefined)?.warnings;
+  return (Array.isArray(w) ? w : []).map((x) => (typeof x === 'string' ? { code: x } : x)).filter((x): x is ServerWarning => !!x && typeof (x as { code?: unknown }).code === 'string');
+}

@@ -7,27 +7,31 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { FormInput } from '@/components/FormInput';
+import { confirm } from '@/lib/confirm';
+import { toast } from '@/lib/toast';
 import { DateTimePickerModal } from '@/components/DateTimePicker';
 import { Button, Card, ErrorState, LoadingView, PageHeader, ProgressBar, Screen, SearchField, SelectField, Text, ListRow } from '@/ui';
 import { guestsQuery, requestsQuery, stayQuery } from '../../api/queries';
 import { RoomPickerField } from '../../components/RoomPickerField';
 import { ChoiceField, DateField, ErrorLine, SwitchRow } from '../../components/forms';
-import { Denied, useSanAccess } from '../../components/common';
+import { Denied, useSanAccess, useSanReadOnly } from '../../components/common';
 import { GUEST_TYPES, type GuestType } from '../../types';
 import { useSanFeatures } from '../../utils/features';
-import { fmtDate, fmtDateTime, fmtMoney, sanErrorMessage, todayIso, toLocalIso } from '../../utils/sanatorium';
+import { fmtDate, fmtDateTime, fmtMoney, sanErrorInfo, sanErrorMessage, todayIso, toLocalIso } from '../../utils/sanatorium';
 import { optionsQuery, useCreateArrival } from '../api';
 import { ArrivalResultView } from '../components/ArrivalResultView';
 import type { ArrivalOptions, ArrivalResult } from '../types';
 import {
-  applySuggestions, buildArrivalBody, canCheckInNow, draftFromPrefill, draftFromRequest, draftFromStays, emptyMember, examDefault, parseIds, partySize,
+  applySuggestions, buildArrivalBody, canCheckInNow, draftFromPrefill, draftFromRequest, draftFromStays, emptyMember, examDefault, newClientRef, parseIds, partySize,
   slotLabel, validateStep, visibleSteps, type MemberDraft, type WizardDraft, type WizardStep,
 } from '../utils';
 import dayjs from 'dayjs';
 
 export default function WizardScreen() {
   const { t } = useTranslation();
-  const allowed = useSanAccess('registrar');
+  const registrarAccess = useSanAccess('registrar');
+  const readOnly = useSanReadOnly();
+  const allowed = registrarAccess && !readOnly;
   const params = useLocalSearchParams<{ request?: string; stay?: string }>();
   const requestId = Number(params.request ?? 0);
   const stayIds = parseIds(params.stay);
@@ -72,6 +76,12 @@ function Wizard({ initial, declared = null }: { initial: WizardDraft; declared?:
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<{ data: ArrivalResult; checkedIn: boolean } | null>(null);
   const [examTouched, setExamTouched] = useState(false);
+  // Bumped by «another guest» once the fresh options are in, so they are applied to the new draft.
+  const [runNo, setRunNo] = useState(0);
+  // One reference per wizard run: a retry or a double tap carries the same value, so the server never places twice.
+  const clientRef = useRef(newClientRef());
+  const sending = useRef(false);
+  const [busy, setBusy] = useState(false);
   const people = partySize(d, declared);
   const periodOk = dayjs(d.end).isAfter(dayjs(d.start));
   const optsQ = useQuery(
@@ -83,6 +93,8 @@ function Wizard({ initial, declared = null }: { initial: WizardDraft; declared?:
   const options = optsQ.data ?? null;
   const steps = visibleSteps({ options, doctorsOn: true, mealsOn: features.on('kitchen_menu') || features.on('diet'), dietOn: features.on('diet') });
   const idx = Math.max(0, steps.indexOf(step));
+  // Every member already has a room that stays free: leave `room_id` out so each keeps their own.
+  const keepRooms = !!options?.rooms_assigned && !d.roomTouched;
 
   // Take the server's suggestions once per options answer, never over what was chosen by hand.
   const applied = useRef<ArrivalOptions | null>(null);
@@ -93,14 +105,16 @@ function Wizard({ initial, declared = null }: { initial: WizardDraft; declared?:
       const next = applySuggestions(cur, options);
       return examTouched ? next : { ...next, needExam: examDefault(next.guestType, options) && !!next.doctorId };
     });
-  }, [options, examTouched]);
+  }, [options, examTouched, runNo]);
 
   const patch = (p: Partial<WizardDraft>) => {
     setError(null);
     setD((cur) => ({ ...cur, ...p }));
   };
   // A new period / type / head count means the old room and slot may no longer fit.
-  const patchPeriod = (p: Partial<WizardDraft>) => patch({ ...p, roomId: d.stayIds.length ? d.roomId : null, examAt: null });
+  // A new guest type also drops the doctor and nurse: the new answer suggests the right ones (a rest guest has none).
+  const patchPeriod = (p: Partial<WizardDraft>) =>
+    patch({ ...p, roomId: d.stayIds.length ? d.roomId : null, examAt: null, ...(p.guestType && p.guestType !== d.guestType ? { doctorId: null, nurseId: null } : {}) });
 
   const go = (to: WizardStep) => {
     setError(null);
@@ -114,6 +128,7 @@ function Wizard({ initial, declared = null }: { initial: WizardDraft; declared?:
   const back = () => (idx === 0 ? router.back() : go(steps[idx - 1]!));
 
   const submit = async (checkIn: boolean) => {
+    if (sending.current) return;
     for (const s of steps) {
       const bad = validateStep(s, d);
       if (bad) {
@@ -121,18 +136,56 @@ function Wizard({ initial, declared = null }: { initial: WizardDraft; declared?:
         return setError(t(`sanSimple.val.${bad}`));
       }
     }
+    sending.current = true;
+    setBusy(true);
     try {
-      const data = await create.mutateAsync(buildArrivalBody(d, checkIn));
+      const data = await create.mutateAsync(buildArrivalBody(d, checkIn, clientRef.current, keepRooms));
       setResult({ data, checkedIn: checkIn });
     } catch (e) {
-      setError(sanErrorMessage(e, t('errors.generic')));
+      await onSubmitError(e);
+    } finally {
+      sending.current = false;
+      setBusy(false);
     }
+  };
+
+  const onSubmitError = async (e: unknown) => {
+    const info = sanErrorInfo(e);
+    if (info.code === 'duplicate_submit') {
+      // The same press was already saved: open the stay it created instead of showing an error.
+      const ids = Array.isArray(info.params.stay_ids) ? (info.params.stay_ids as number[]) : [];
+      toast.info(t('sanSimple.wiz.duplicate'));
+      if (ids[0]) router.replace({ pathname: '/sanatorium-stay', params: { id: String(ids[0]) } });
+      else router.back();
+      return;
+    }
+    if (info.code === 'extend_first') {
+      // The booked period is over: offer new dates starting today instead of a dead end.
+      const ok = await confirm({
+        title: t('sanSimple.wiz.extendAskTitle'),
+        message: t('sanSimple.wiz.extendAsk', { name: String(info.params.name ?? d.members[0]?.name ?? ''), planned_to: fmtDate(String(info.params.planned_to ?? d.end)) }),
+        confirmLabel: t('sanSimple.wiz.extendGo'),
+        cancelLabel: t('common.cancel'),
+      });
+      if (ok) {
+        const today = todayIso();
+        const nights = Math.max(1, dayjs(d.end).diff(dayjs(d.start), 'day'));
+        patch({ start: today, end: dayjs(today).add(nights, 'day').format('YYYY-MM-DD'), examAt: null });
+        go('room');
+      }
+      return;
+    }
+    if (info.code === 'room_full') go('room');
+    setError(sanErrorMessage(e, t('errors.generic')));
   };
 
   const reset = () => {
     setResult(null);
     setD(initial.requestId || initial.stayIds.length ? initial : { ...initial, members: [emptyMember()] });
+    // The beds changed since the last placement: fetch fresh options, then take the suggestions again.
     applied.current = null;
+    void optsQ.refetch().finally(() => setRunNo((n) => n + 1));
+    clientRef.current = newClientRef();
     setExamTouched(false);
     setStep('who');
   };
@@ -147,17 +200,17 @@ function Wizard({ initial, declared = null }: { initial: WizardDraft; declared?:
         <ProgressBar value={(idx + 1) / steps.length} />
         <Text variant="caption" tone="muted">{t(`sanSimple.wiz.help.${step}`)}</Text>
       </View>
-      {step === 'who' && <WhoStep d={d} patch={patch} patchPeriod={patchPeriod} />}
-      {step === 'room' && <RoomStep d={d} patch={patch} patchPeriod={patchPeriod} people={people} options={options} loading={optsQ.isPending && periodOk} failed={optsQ.isError} onRetry={() => void optsQ.refetch()} />}
+      {step === 'who' && <WhoStep d={d} patch={patch} patchPeriod={patchPeriod} declared={declared} />}
+      {step === 'room' && <RoomStep d={d} patch={patch} patchPeriod={patchPeriod} people={people} options={options} keepRooms={keepRooms} loading={optsQ.isPending && periodOk} failed={optsQ.isError} onRetry={() => void optsQ.refetch()} />}
       {step === 'doctor' && <DoctorStep d={d} patch={patch} options={options} onTouch={() => setExamTouched(true)} />}
       {step === 'meal' && <MealStep d={d} patch={patch} options={options} dietOn={features.on('diet')} />}
-      {step === 'review' && <ReviewStep d={d} patch={patch} options={options} people={people} />}
+      {step === 'review' && <ReviewStep d={d} patch={patch} options={options} people={people} keepRooms={keepRooms} />}
       <ErrorLine message={error} testID="wizard-error" />
       {step === 'review' ? (
         <View style={styles.stack}>
-          <Button testID="wizard-place" label={t('sanSimple.wiz.place')} size="lg" full icon="check" disabled={!canCheckInNow(d, todayIso())} loading={create.isPending} onPress={() => void submit(true)} />
-          {!canCheckInNow(d, todayIso()) && <Text variant="caption" tone="muted">{t(d.roomId ? 'sanSimple.wiz.futureHint' : 'sanSimple.wiz.noRoomHint')}</Text>}
-          <Button testID="wizard-book" label={t('sanSimple.wiz.bookOnly')} variant="soft" full loading={create.isPending} onPress={() => void submit(false)} />
+          <Button testID="wizard-place" label={t('sanSimple.wiz.place')} size="lg" full icon="check" disabled={!canCheckInNow(d, todayIso(), keepRooms) || busy} loading={create.isPending || busy} onPress={() => void submit(true)} />
+          {!canCheckInNow(d, todayIso(), keepRooms) && <Text variant="caption" tone="muted">{t(d.roomId ? 'sanSimple.wiz.futureHint' : 'sanSimple.wiz.noRoomHint')}</Text>}
+          <Button testID="wizard-book" label={t('sanSimple.wiz.bookOnly')} variant="soft" full disabled={busy} loading={create.isPending || busy} onPress={() => void submit(false)} />
         </View>
       ) : (
         <Button testID="wizard-next" label={t('sanSimple.wiz.next')} size="lg" full onPress={next} />
@@ -169,7 +222,7 @@ function Wizard({ initial, declared = null }: { initial: WizardDraft; declared?:
 
 type StepProps = { d: WizardDraft; patch: (p: Partial<WizardDraft>) => void };
 
-function WhoStep({ d, patch, patchPeriod }: StepProps & { patchPeriod: (p: Partial<WizardDraft>) => void }) {
+function WhoStep({ d, patch, patchPeriod, declared }: StepProps & { patchPeriod: (p: Partial<WizardDraft>) => void; declared: number | null }) {
   const { t } = useTranslation();
   const fromStays = d.stayIds.length > 0;
   const fromRequest = d.requestId != null;
@@ -213,6 +266,9 @@ function WhoStep({ d, patch, patchPeriod }: StepProps & { patchPeriod: (p: Parti
       {!fromStays && !fromRequest && !d.members[0]?.guestId && (
         <Button testID="wiz-extra" label={extra ? t('sanSimple.wiz.lessFields') : t('sanSimple.wiz.moreFields')} variant="link" onPress={() => setExtra((v) => !v)} />
       )}
+      {fromRequest && declared != null && declared > d.members.length && (
+        <Text variant="caption" tone="danger" testID="wiz-more-needed">{t('sanSimple.wiz.moreNeeded', { count: declared })}</Text>
+      )}
       {!fromStays && (
         <Button testID="wiz-add-person" label={t('sanSimple.wiz.addPerson')} variant="soft" icon="plus" onPress={() => patch({ members: [...d.members, emptyMember()] })} />
       )}
@@ -227,7 +283,7 @@ function WhoStep({ d, patch, patchPeriod }: StepProps & { patchPeriod: (p: Parti
   );
 }
 
-function RoomStep({ d, patch, patchPeriod, people, options, loading, failed, onRetry }: StepProps & { patchPeriod: (p: Partial<WizardDraft>) => void; people: number; options: ArrivalOptions | null; loading: boolean; failed: boolean; onRetry: () => void }) {
+function RoomStep({ d, patch, patchPeriod, people, options, keepRooms, loading, failed, onRetry }: StepProps & { patchPeriod: (p: Partial<WizardDraft>) => void; people: number; options: ArrivalOptions | null; keepRooms: boolean; loading: boolean; failed: boolean; onRetry: () => void }) {
   const { t } = useTranslation();
   const nights = Math.max(0, dayjs(d.end).diff(dayjs(d.start), 'day'));
   return (
@@ -240,15 +296,15 @@ function RoomStep({ d, patch, patchPeriod, people, options, loading, failed, onR
       ) : (
         <RoomPickerField
           label={t('sanatorium.room')}
-          value={d.roomId}
-          noneLabel={t('sanSimple.wiz.roomLater')}
+          value={keepRooms ? null : d.roomId}
+          noneLabel={keepRooms ? t('sanSimple.wiz.keepRooms') : t('sanSimple.wiz.roomLater')}
           loading={loading}
           options={(options?.rooms ?? []).map((r) => ({
             id: r.id,
             title: `${[r.number, r.building].filter(Boolean).join(' · ')}${r.id === options?.suggested_room_id ? ` · ${t('sanSimple.wiz.suggested')}` : ''}`,
             sub: `${t('sanatorium.freeBeds')}: ${r.free_beds}/${r.capacity}${r.price_per_day ? ` · ${fmtMoney(r.price_per_day)}` : ''}${r.ready === false ? ` · ${t('sanSimple.room.notReady')}` : ''}${r.fits === false ? ` · ${t('sanSimple.room.noFit')}` : ''}${r.held ? ` · ${t('sanSimple.room.held')}` : ''}`,
           }))}
-          onChange={(v) => patch({ roomId: v })}
+          onChange={(v) => patch({ roomId: v, roomTouched: v != null })}
           testID="wiz-room"
         />
       )}
@@ -320,7 +376,7 @@ function MealStep({ d, patch, options, dietOn }: StepProps & { options: ArrivalO
   );
 }
 
-function ReviewStep({ d, patch, options, people }: StepProps & { options: ArrivalOptions | null; people: number }) {
+function ReviewStep({ d, patch, options, people, keepRooms }: StepProps & { options: ArrivalOptions | null; people: number; keepRooms: boolean }) {
   const { t } = useTranslation();
   const room = options?.rooms.find((r) => r.id === d.roomId);
   const doc = options?.doctors.find((x) => x.staff_id === d.doctorId);
@@ -328,7 +384,7 @@ function ReviewStep({ d, patch, options, people }: StepProps & { options: Arriva
     [t('sanSimple.wiz.step.who'), d.members.map((m) => m.name).filter(Boolean).join(', ') || '—'],
     [t('sanatorium.guestTypeLabel'), t(`sanatorium.guestType.${d.guestType}`)],
     [t('sanatorium.period'), `${fmtDate(d.start)} → ${fmtDate(d.end)} · ${t('sanSimple.wiz.people', { count: people })}`],
-    [t('sanatorium.room'), room ? [room.number, room.building].filter(Boolean).join(' · ') : d.roomId ? String(d.roomId) : t('sanSimple.wiz.roomLater')],
+    [t('sanatorium.room'), keepRooms ? t('sanSimple.wiz.keepRooms') : room ? [room.number, room.building].filter(Boolean).join(' · ') : d.roomId ? String(d.roomId) : t('sanSimple.wiz.roomLater')],
     [t('sanatorium.doctor'), d.needExam ? `${doc?.full_name ?? '—'}${d.examAt ? ` · ${fmtDateTime(d.examAt)}` : ''}` : t('sanSimple.wiz.noExam')],
     [t('sanatorium.meals'), d.withMeals ? t('sanatorium.yes') : t('sanatorium.no')],
   ];

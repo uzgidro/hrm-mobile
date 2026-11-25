@@ -68,12 +68,14 @@ export type ArrivalOptions = {
   packages: OptionPackage[];
   meals?: { breakfast?: string | null; lunch?: string | null; dinner?: string | null };
   has_exam?: boolean;
+  /** True = every member already has a room that stays free: the room step may be skipped, each keeps their own. */
+  rooms_assigned?: boolean;
   exam_required: boolean;
   warnings: string[];
   prefill?: Prefill | null;
 };
 /** start / end / people / guest_type may be left out when request_id or stay_id is given. */
-export type OptionsParams = { start?: string; end?: string; people?: number; guest_type?: GuestType; request_id?: number; stay_id?: number };
+export type OptionsParams = { start?: string; end?: string; people?: number; guest_type?: GuestType; request_id?: number; stay_id?: number; whole_group?: boolean };
 export type PrefillMember = {
   stay_id: number | null; guest_id: number | null; full_name: string; birth_date?: string | null; phone?: string | null; passport?: string | null;
   gender?: string | null; organization_name?: string | null; relation?: string | null; is_child?: boolean; child_discount?: boolean | null;
@@ -113,6 +115,8 @@ export type ArrivalBody = {
   payment?: { amount: string; note?: string };
   note?: string;
   check_in: boolean;
+  /** One UUID per press of the button, the same value on a retry (server answers 409 duplicate_submit on a replay). */
+  client_ref?: string;
 };
 export type RouteStep = {
   key: 'reception' | 'room' | 'doctor' | 'kitchen' | 'procedures' | 'departure' | string;

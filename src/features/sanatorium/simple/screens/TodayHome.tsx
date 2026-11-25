@@ -1,6 +1,6 @@
 // «Bugun»: the registrar's home. A big «Mehmon keldi» button, a search box, today's numbers, the
 // setup checklist banner and the work queue (Kechikkan / Bugun / Tez orada) with ONE main button per card.
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
@@ -10,12 +10,14 @@ import { toast } from '@/lib/toast';
 import { Button, Card, EmptyState, IconButton, ListRow, PageHeader, ProgressBar, Screen, SearchField, SectionHeader, Sheet, StatTile, Text } from '@/ui';
 import { guestsQuery } from '../../api/queries';
 import { AppointmentSheet } from '../../components/AppointmentSheet';
-import { fmtDate, sanErrorMessage } from '../../utils/sanatorium';
+import { useSanReadOnly } from '../../components/common';
+import { fmtDate, sanErrorInfo, sanErrorMessage } from '../../utils/sanatorium';
 import { setupStatusQuery, useGroupCheckIn, useNoShow } from '../api';
 import { QueueCard } from '../components/QueueCard';
 import { StayActionSheets, useCheckOutFlow, type StayActionKind, type StayRef } from '../components/StayActions';
 import type { QueueItem, TodayData } from '../types';
-import { actionRoute, filterQueue, groupQueue, itemStayIds, setupRequiredLeft } from '../utils';
+import { actionRoute, dedupeDebt, filterQueue, groupQueue, itemStayIds, setupRequiredLeft } from '../utils';
+import { toastWarnings } from '../warnings';
 
 const STEP_KEYS = ['accept', 'room', 'doctor', 'meal', 'check', 'route'] as const;
 
@@ -59,13 +61,16 @@ export function TodayHome({ data, refreshing, onRefresh }: { data: TodayData; re
   const [sheet, setSheet] = useState<{ stay: StayRef; kind: StayActionKind } | null>(null);
   const [apptStay, setApptStay] = useState<number | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const readOnly = useSanReadOnly();
+  const flying = useRef(false);
   const setup = useQuery(setupStatusQuery());
   const guests = useQuery(guestsQuery(search));
   const noShow = useNoShow();
   const groupIn = useGroupCheckIn();
   const checkOut = useCheckOutFlow();
 
-  const items = filterQueue(data.items, search);
+  // A stay that already shows its debt on a departure / overstay card gets no second «debt» card.
+  const items = filterQueue(dedupeDebt(data.items), search);
   const groups = groupQueue(items);
   const totals = data.totals ?? {};
   const left = setup.data ? setupRequiredLeft(setup.data.items) : 0;
@@ -86,6 +91,8 @@ export function TodayHome({ data, refreshing, onRefresh }: { data: TodayData; re
     if (action === 'choose_room') return setSheet({ stay: ref, kind: 'move' });
     if (action === 'take_payment') return setSheet({ stay: ref, kind: 'payment' });
     if (action === 'assign_doctor') return setApptStay(ref.id);
+    if (flying.current) return;
+    flying.current = true;
     setBusy(item.key);
     try {
       if (action === 'arrive') {
@@ -93,17 +100,27 @@ export function TodayHome({ data, refreshing, onRefresh }: { data: TodayData; re
         try {
           const res = await groupIn.mutateAsync(ref.groupIds ?? [ref.id]);
           toast.success(t('sanSimple.arrivedDone'));
-          const w = res.warnings?.find((x) => x.code === 'room_not_ready');
-          if (w) toast.info(t('san1.hk.roomNotReady', { room: w.room_number ?? '', status: t(`san1.hk.status.${w.hk_status ?? 'dirty'}`) }), 8000);
+          toastWarnings(res);
         } catch (e) {
-          toast.error(sanErrorMessage(e, t('errors.generic')));
+          if (sanErrorInfo(e).code === 'extend_first') {
+            // The booked period is over: the wizard takes new dates (it starts from today).
+            const info = sanErrorInfo(e);
+            const ok = await confirm({
+              title: t('sanSimple.wiz.extendAskTitle'),
+              message: t('sanSimple.wiz.extendAsk', { name: String(info.params.name ?? item.guest?.full_name ?? ''), planned_to: fmtDate(String(info.params.planned_to ?? item.planned_to ?? '')) }),
+              confirmLabel: t('sanSimple.wiz.extendGo'),
+              cancelLabel: t('common.cancel'),
+            });
+            if (ok) router.push({ pathname: '/sanatorium-arrive', params: { stay: (ref.groupIds ?? [ref.id]).join(',') } });
+          } else toast.error(sanErrorMessage(e, t('errors.generic')));
         }
       } else if (action === 'no_show') {
         const ok = await confirm({ title: t('sanSimple.noShowTitle'), message: t('sanSimple.noShowAsk', { name: item.guest?.full_name ?? '' }), confirmLabel: t('sanSimple.action.no_show'), cancelLabel: t('common.cancel'), destructive: true });
         if (!ok) return;
         try {
-          await noShow.mutateAsync({ id: ref.id, whole_group: (ref.groupIds?.length ?? 1) > 1 });
+          const res = await noShow.mutateAsync({ id: ref.id, whole_group: (ref.groupIds?.length ?? 1) > 1 });
           toast.success(t('sanSimple.noShowDone'));
+          toastWarnings(res);
         } catch (e) {
           toast.error(sanErrorMessage(e, t('errors.generic')));
         }
@@ -112,6 +129,7 @@ export function TodayHome({ data, refreshing, onRefresh }: { data: TodayData; re
         if (r === 'early') open(item);
       }
     } finally {
+      flying.current = false;
       setBusy(null);
     }
   };
@@ -127,14 +145,14 @@ export function TodayHome({ data, refreshing, onRefresh }: { data: TodayData; re
     <Screen refreshing={refreshing} onRefresh={onRefresh} testID="sanatorium-screen">
       <PageHeader title={t('sanSimple.today.title')} subtitle={fmtDate(data.date)} right={<IconButton icon="help" tone="soft" accessibilityLabel={t('sanSimple.help.title')} onPress={() => setHelp(true)} testID="today-help" />} />
       <View style={styles.stack}>
-        <Button testID="today-arrived" label={t('sanSimple.today.arrived')} icon="plus" size="lg" full onPress={() => router.push('/sanatorium-arrive')} />
+        {!readOnly && <Button testID="today-arrived" label={t('sanSimple.today.arrived')} icon="plus" size="lg" full onPress={() => router.push('/sanatorium-arrive')} />}
         <SearchField value={search} onChangeText={setSearch} placeholder={t('sanSimple.today.search')} testID="today-search" />
         <View style={styles.tiles}>
           {tiles.map((x) => (
             <StatTile key={x.key} testID={`tile-${x.key}`} label={t(`sanSimple.totals.${x.key}`)} value={totals[x.key] ?? 0} icon={x.icon} tint={x.tint} labelLines={2} style={styles.tile} />
           ))}
         </View>
-        {showSetup && (
+        {showSetup && !readOnly && (
           <Card testID="setup-banner">
             <Text variant="heading">{t('sanSimple.setup.banner', { done: setup.data!.done, total: setup.data!.total })}</Text>
             <ProgressBar value={setup.data!.total ? setup.data!.done / setup.data!.total : 0} />
@@ -157,7 +175,7 @@ export function TodayHome({ data, refreshing, onRefresh }: { data: TodayData; re
             <View key={g.urgency} style={styles.stack} testID={`group-${g.urgency}`}>
               <SectionHeader title={`${t(`sanSimple.urgency.${g.urgency}`)} (${g.items.length})`} />
               {g.items.map((item) => (
-                <QueueCard key={item.key} item={item} busy={busy === item.key} onAction={(a) => void act(item, a)} onOpen={() => open(item)} />
+                <QueueCard key={item.key} item={item} readOnly={readOnly} busy={busy === item.key} onAction={(a) => void act(item, a)} onOpen={() => open(item)} />
               ))}
             </View>
           ))

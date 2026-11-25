@@ -91,6 +91,8 @@ export interface User {
   } | null;
   /** Sanatorium («Energetiklar sihatgohi») staff roles from /auth/me; empty/missing = module hidden. */
   sanatorium_roles?: string[];
+  /** Chairman: sees the whole sanatorium but every write is refused (403), so the screens hide the action buttons. */
+  sanatorium_read_only?: boolean;
   /** Real sanatorium staff: the sanatorium dashboard goes to the top of home. */
   sanatorium_home?: boolean;
   /** Doktorning o'z turlari (auth/me) — bitta bo'lsa ko'rik formasida tanlash chiqmaydi (v2). */

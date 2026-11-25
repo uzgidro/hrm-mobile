@@ -1,7 +1,7 @@
 import {
   isCompleteArrival, draftFromPrefill, actionRoute, applySuggestions, buildArrivalBody, canCheckInNow, dmyToIso, draftFromRequest, draftFromStays, examDefault, filterQueue,
   groupQueue, isMissingEndpoint, itemStayIds, moneyString, newDraft, nextStepFor, normalizeSlots, parseIds, queueActions, routeSheetText,
-  setupRoute, splitAction, validateStep, validateVisitSettings, visibleSteps,
+  setupRoute, splitAction, validateStep, validateVisitSettings, visibleSteps, newClientRef, dedupeDebt, rejectsClientRef,
 } from '../utils';
 import { SECTION_GROUPS, visibleGroups } from '../sectionGroups';
 import { sanErrorMessage } from '../../utils/sanatorium';
@@ -228,5 +228,49 @@ describe('prefill', () => {
     const b = buildArrivalBody(d, false);
     expect(b.request_id).toBe(12);
     expect(b.stay_ids).toBeUndefined();
+  });
+});
+
+describe('idempotency and duplicates', () => {
+  it('newClientRef is a uuid even without crypto.randomUUID', () => {
+    const g = globalThis as { crypto?: unknown };
+    const saved = g.crypto;
+    g.crypto = undefined;
+    try {
+      const a = newClientRef();
+      expect(a).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+      expect(newClientRef()).not.toBe(a);
+    } finally {
+      g.crypto = saved;
+    }
+  });
+
+  it('buildArrivalBody sends client_ref and leaves room_id out when rooms are kept', () => {
+    const d = newDraft({ stayIds: [1, 2], roomId: 7 });
+    expect(buildArrivalBody(d, true, 'ref-1', false)).toMatchObject({ client_ref: 'ref-1', room_id: 7 });
+    expect(buildArrivalBody(d, true, 'ref-1', true)).not.toHaveProperty('room_id');
+    expect(buildArrivalBody(d, true)).not.toHaveProperty('client_ref');
+  });
+
+  it('canCheckInNow accepts kept rooms without a room id', () => {
+    const d = newDraft({ stayIds: [1] });
+    expect(canCheckInNow(d, d.start)).toBe(false);
+    expect(canCheckInNow(d, d.start, true)).toBe(true);
+  });
+
+  it('dedupeDebt drops the debt card of a stay that already shows its debt', () => {
+    const base = { urgency: 'today', guest: null, request_id: null, room: null, action: 'x' } as const;
+    const out = dedupeDebt([
+      { ...base, key: 'a', kind: 'departure_today', stay_id: 5, debt: '100.00' },
+      { ...base, key: 'b', kind: 'debt', stay_id: 5, debt: '100.00' },
+      { ...base, key: 'c', kind: 'debt', stay_id: 6, debt: '50.00' },
+    ]);
+    expect(out.map((i) => i.key)).toEqual(['a', 'c']);
+  });
+
+  it('rejectsClientRef recognises a strict-body 422 that names the field', () => {
+    const e = { response: { status: 422, data: { detail: [{ loc: ['body', 'client_ref'], type: 'extra_forbidden' }] } } };
+    expect(rejectsClientRef(e)).toBe(true);
+    expect(rejectsClientRef({ response: { status: 422, data: { detail: 'other' } } })).toBe(false);
   });
 });

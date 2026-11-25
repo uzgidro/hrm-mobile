@@ -90,6 +90,12 @@ export default {
     cabinet: "Kabinet",
     load: "{{count}} mehmon",
     prepay: "Avans to'lov (ixtiyoriy)",
+    moreNeeded: "Arizada {{count}} kishi ko'rsatilgan. Qolganlarini «Yana odam qo'shish» bilan kiriting.",
+    keepRooms: "Har bir mehmon o'z xonasida qoladi",
+    extendAskTitle: "Bron muddati o'tgan",
+    extendAsk: "{{name}}: bron {{planned_to}} da tugagan. Sanalarni bugundan boshlab yangilaymizmi?",
+    extendGo: "Sanalarni yangilash",
+    duplicate: "Mehmon allaqachon joylashtirilgan",
   },
   room: { notReady: "tozalanmagan", noFit: "sig'maydi", held: "boshqa ariza ushlab turibdi" },
   warn: {
@@ -104,6 +110,9 @@ export default {
     identity_mismatch: "Pasport boshqa ism yoki tug'ilgan sana bilan yozilgan",
     duplicate_request: "Xuddi shu pasport bilan boshqa ariza ham bor",
     guest_has_stay: "Mehmonda shu davrda boshqa yashash bor",
+    room_occupied: "{{room_number}}-xonada o'rin yetmaydi: sig'im {{capacity}}, hozir {{in_house}} kishi",
+    prepaid: "Mehmonga {{amount}} qaytarish kerak (oldindan to'langan)",
+    payer_changed: "{{name}} endi xona uchun to'laydi: {{amount}}",
   },
   val: {
     name: "Mehmonning to'liq ismini kiriting",
@@ -146,6 +155,7 @@ export default {
     extended: "Muddat uzaytirildi",
     moved: "Xona almashtirildi",
     paid: "To'lov qabul qilindi",
+    replayed: "Bu to'lov avval qabul qilingan, takror qo'shilmadi",
     overpaid: "Summa qarzdan ortiq, ortig'iga e'tibor bering",
   },
   my: {
@@ -225,5 +235,10 @@ export default {
     invalid_nurse: "Hamshira noto'g'ri tanlangan.",
     duplicate_member: "Bir mehmon ro'yxatda ikki marta yozilgan.",
     guest_has_stay_named: "{{name}} bu davrda allaqachon yashayapti yoki bron qilingan.",
+    duplicate_submit: "Bu joylashtirish allaqachon saqlangan. Bron ochilmoqda.",
+    duplicate_payment: "Bu to'lov hozirgina qabul qilingan. Takror qo'shilmadi.",
+    extend_first: "Bron muddati {{planned_to}} da tugagan. Avval yangi sanalarni belgilang.",
+    extend_first_named: "{{name}}: bron muddati {{planned_to}} da tugagan. Avval yangi sanalarni belgilang.",
+    room_full_detail: "{{room_number}}-xonada {{date}} sanasida bo'sh o'rin yo'q. Hozir shu yerda: {{guests}}.",
   },
 };

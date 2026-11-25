@@ -1,6 +1,6 @@
 import { apiClient } from '@/api/client';
 import {
-  addPayment, checkOutStays, createArrival, debtFromWarnings, extendStay, fetchMyGuests, fetchRouteSheet, fetchSetupStatus, fetchSlots, fetchToday, moveStay,
+  addPayment, checkOutStays, createArrival, debtFromWarnings, extendStay, fetchGroupStays, fetchMyGuests, groupCheckIn, fetchRouteSheet, fetchSetupStatus, fetchSlots, fetchToday, moveStay,
 } from '../api';
 
 jest.mock('@/api/client', () => ({ apiClient: { get: jest.fn(), post: jest.fn(), put: jest.fn(), patch: jest.fn(), delete: jest.fn() } }));
@@ -79,5 +79,35 @@ describe('writes', () => {
     expect(debtFromWarnings({ warnings: [{ code: 'debt', amount: '100.00', stay_id: 1 }, { code: 'debt', amount: '50.50', stay_id: 2 }, { code: 'overpaid', amount: '9' }] })).toBe(150.5);
     expect(debtFromWarnings({ warnings: [] })).toBe(0);
     expect(debtFromWarnings(undefined)).toBe(0);
+  });
+});
+
+describe('client_ref and old-server fallbacks', () => {
+  it('sends client_ref with a payment and again without it when the server rejects the field', async () => {
+    api.post!.mockRejectedValueOnce({ response: { status: 422, data: { detail: [{ loc: ['body', 'client_ref'], type: 'extra_forbidden' }] } } });
+    await addPayment({ id: 7, amount: '100.00', client_ref: 'abc-123456' });
+    expect(api.post).toHaveBeenNthCalledWith(1, 'sanatorium/stays/7/payments', { amount: '100.00', client_ref: 'abc-123456' });
+    expect(api.post).toHaveBeenNthCalledWith(2, 'sanatorium/stays/7/payments', { amount: '100.00' });
+  });
+  it('retries a rejected arrival without client_ref only for that error', async () => {
+    api.post!.mockRejectedValueOnce({ response: { status: 422, data: { detail: [{ loc: ['body', 'client_ref'] }] } } });
+    await createArrival({ start: 'a', end: 'b', guest_type: 'rest', with_meals: true, check_in: false, client_ref: 'r-12345678' });
+    expect(api.post).toHaveBeenLastCalledWith('sanatorium/arrivals', { start: 'a', end: 'b', guest_type: 'rest', with_meals: true, check_in: false });
+    api.post!.mockReset().mockRejectedValue({ response: { status: 409, data: { detail: { code: 'duplicate_submit' } } } });
+    await expect(createArrival({ start: 'a', end: 'b', guest_type: 'rest', with_meals: true, check_in: false, client_ref: 'r-12345678' })).rejects.toBeTruthy();
+    expect(api.post).toHaveBeenCalledTimes(1);
+  });
+  it('checks a family in one by one when the group endpoint is missing', async () => {
+    api.post!.mockImplementation((url: string) => (url.includes('group') ? Promise.reject(missing) : Promise.resolve({ data: { id: 1 } })));
+    const res = await groupCheckIn([4, 5]);
+    expect(res.stays).toHaveLength(2);
+    expect(api.post).toHaveBeenCalledWith('sanatorium/stays/4/check-in');
+  });
+  it('pages the stay list at 100 per page to find a group', async () => {
+    const page = Array.from({ length: 100 }, (_, i) => ({ id: i, group_key: i === 3 ? 'g' : null }));
+    api.get!.mockResolvedValueOnce({ data: { items: page } }).mockResolvedValueOnce({ data: { items: [{ id: 200, group_key: 'g' }] } });
+    const rows = await fetchGroupStays('g', 'checked_in');
+    expect(rows.map((r) => r.id)).toEqual([3, 200]);
+    expect(api.get).toHaveBeenNthCalledWith(1, 'sanatorium/stays', { params: { status: 'checked_in', size: 100, page: 1 } });
   });
 });

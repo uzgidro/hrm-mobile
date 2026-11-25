@@ -11,7 +11,7 @@ import { hasDebt, queueActions } from '../utils';
 
 const TONE: Record<QueueUrgency, Tone> = { overdue: 'danger', today: 'info', soon: 'neutral' };
 
-export function QueueCard({ item, busy, onAction, onOpen }: { item: QueueItem; busy?: boolean; onAction: (action: string) => void; onOpen: () => void }) {
+export function QueueCard({ item, busy, readOnly = false, onAction, onOpen }: { item: QueueItem; busy?: boolean; readOnly?: boolean; onAction: (action: string) => void; onOpen: () => void }) {
   const { t } = useTranslation();
   const { primary, secondary } = queueActions(item);
   const name = item.guest?.full_name ?? String(item.title_params?.name ?? '—');
@@ -40,12 +40,12 @@ export function QueueCard({ item, busy, onAction, onOpen }: { item: QueueItem; b
         </View>
       )}
       {hasDebt(item.debt) && <Text variant="label" tone="danger">{t('sanatorium.debt')}: {fmtMoney(item.debt)}</Text>}
-      <View style={styles.actions}>
+      {!readOnly && <View style={styles.actions}>
         <Button testID={`queue-act-${item.key}`} label={t(`sanSimple.action.${primary}`, { defaultValue: primary })} size="lg" full loading={busy} onPress={() => onAction(primary)} />
         {!!secondary && (
-          <Button testID={`queue-act2-${item.key}`} label={t(`sanSimple.action.${secondary}`, { defaultValue: secondary })} variant="soft" full onPress={() => onAction(secondary)} />
+          <Button testID={`queue-act2-${item.key}`} label={t(`sanSimple.action.${secondary}`, { defaultValue: secondary })} variant="soft" full disabled={busy} onPress={() => onAction(secondary)} />
         )}
-      </View>
+      </View>}
     </Card>
   );
 }

@@ -63,7 +63,8 @@ export default function SanatoriumHomeScreen() {
   const registrar = hasSanRole(user, 'registrar');
   // The work queue replaces the old home for the registrar; an older server (404) keeps the classic one.
   const today = useQuery(todayQuery(allowed && registrar));
-  const keeper = hasSanRole(user, 'room_keeper', 'kitchen') && !registrar;
+  // The work queue is open to the registrar, the chairman and the room keeper (the kitchen gets 403).
+  const keeper = hasSanRole(user, 'room_keeper') && !registrar;
   const keeperToday = useQuery(todayQuery(allowed && keeper));
   if (!allowed) return <Denied />;
   if (registrar && today.isPending) {

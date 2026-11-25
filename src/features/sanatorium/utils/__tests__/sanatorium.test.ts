@@ -26,8 +26,10 @@ describe('sanatorium errors', () => {
   });
   it('translates the code with params, in the active language', async () => {
     await i18n.changeLanguage('ru');
-    expect(sanErrorMessage(err({ code: 'room_full', params: { date: '2026-11-20' } }))).toContain('2026-11-20');
+    expect(sanErrorMessage(err({ code: 'room_full', params: { date: '2026-11-20' } }))).toContain('20.11.2026');
     expect(sanErrorMessage(err({ code: 'use_early_leave' }))).toMatch(/досрочн/i);
+    await i18n.changeLanguage('uz-Latn');
+    expect(sanErrorMessage(err({ code: 'room_full', params: { date: '2026-11-20', room_number: '7', guests: ['Aliyev Vali', 'Karimov Sher'] } }))).toContain('Aliyev Vali, Karimov Sher');
     await i18n.changeLanguage('uz-Latn');
   });
   it('detects the early-leave code that opens the sheet', () => {

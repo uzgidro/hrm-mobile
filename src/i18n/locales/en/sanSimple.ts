@@ -90,6 +90,12 @@ export default {
     cabinet: "Cabinet",
     load: "{{count}} guests",
     prepay: "Advance payment (optional)",
+    moreNeeded: "The request lists {{count}} people. Add the others with «Add a person».",
+    keepRooms: "Each guest keeps their own room",
+    extendAskTitle: "The booked period is over",
+    extendAsk: "{{name}}: the booking ended on {{planned_to}}. Update the dates starting today?",
+    extendGo: "Update dates",
+    duplicate: "The guest is already placed",
   },
   room: { notReady: "not cleaned", noFit: "too small", held: "held by another request" },
   warn: {
@@ -104,6 +110,9 @@ export default {
     identity_mismatch: "The passport is registered under another name or birth date",
     duplicate_request: "Another request has the same passport",
     guest_has_stay: "The guest already has a stay in this period",
+    room_occupied: "Room {{room_number}} is over capacity: {{capacity}} beds, {{in_house}} in house",
+    prepaid: "Refund {{amount}} to the guest (prepaid)",
+    payer_changed: "{{name}} now pays for the room: {{amount}}",
   },
   val: {
     name: "Enter the guest's full name",
@@ -146,6 +155,7 @@ export default {
     extended: "Stay extended",
     moved: "Room changed",
     paid: "Payment accepted",
+    replayed: "This payment was already recorded, not added again",
     overpaid: "The amount is above the debt, please check",
   },
   my: {
@@ -225,5 +235,10 @@ export default {
     invalid_nurse: "The nurse is chosen wrongly.",
     duplicate_member: "The same guest is listed twice.",
     guest_has_stay_named: "{{name}} already stays or is booked for this period.",
+    duplicate_submit: "This placement was already saved. Opening the stay.",
+    duplicate_payment: "This payment was just recorded. It was not added twice.",
+    extend_first: "The booked period ended on {{planned_to}}. Set new dates first.",
+    extend_first_named: "{{name}}: the booked period ended on {{planned_to}}. Set new dates first.",
+    room_full_detail: "Room {{room_number}} has no free bed on {{date}}. Still there: {{guests}}.",
   },
 };

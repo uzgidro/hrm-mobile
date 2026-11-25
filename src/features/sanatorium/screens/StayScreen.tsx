@@ -12,7 +12,7 @@ import { useCheckIn, useCheckOut } from '../api/mutations';
 import { roomNotReady } from '../utils/sections1';
 import { stayQuery } from '../api/queries';
 import { AppointmentSheet } from '../components/AppointmentSheet';
-import { Denied, PhoneLink, QueryBlock, useSanAccess } from '../components/common';
+import { Denied, PhoneLink, QueryBlock, useSanAccess, useSanReadOnly } from '../components/common';
 import { EarlyLeaveSheet } from '../components/EarlyLeaveSheet';
 import { JourneyCard } from '../components/sections1/JourneyCard';
 import { StayDietSheet } from '../components/sections2/DietParts';
@@ -51,6 +51,7 @@ function Detail({ stay }: { stay: StayFull }) {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const registrar = hasSanRole(user, 'registrar');
+  const readOnly = useSanReadOnly();
   const checkIn = useCheckIn();
   const checkOut = useCheckOut();
   const [sheet, setSheet] = useState<StaySheetKind | null>(null);
@@ -75,7 +76,7 @@ function Detail({ stay }: { stay: StayFull }) {
 
   return (
     <View style={styles.stack}>
-      {registrar && <StayNext stay={stay} onEarlyLeave={() => setEarly(true)} />}
+      {registrar && <StayNext stay={stay} readOnly={readOnly} onEarlyLeave={() => setEarly(true)} />}
       <Card testID="stay-detail">
         <View style={styles.row}>
           <Text
@@ -109,7 +110,7 @@ function Detail({ stay }: { stay: StayFull }) {
           <Row label={t('sanatorium.paidAmount')} value={fmtMoney(stay.paid_amount)} />
           <Row label={t('sanatorium.debt')} value={fmtMoney(stay.debt)} />
           <View style={styles.row}>{stay.payment_status && <Badge label={t(`sanatorium.pay.${stay.payment_status}`)} tone={stay.payment_status === 'paid' ? 'success' : stay.payment_status === 'partial' ? 'warning' : 'danger'} />}</View>
-          <Button testID="stay-pay" label={t('sanatorium.payment')} variant="soft" size="sm" onPress={() => setSheet('payment')} />
+          {!readOnly && <Button testID="stay-pay" label={t('sanatorium.payment')} variant="soft" size="sm" onPress={() => setSheet('payment')} />}
         </Card>
       )}
 
@@ -117,8 +118,8 @@ function Detail({ stay }: { stay: StayFull }) {
       <StayServicesCard stay={stay} />
       <StayDocumentsCard stay={stay} />
 
-      {registrar && <Button testID="stay-more" label={more ? t('sanSimple.next.lessDetails') : t('sanSimple.next.details')} variant="soft" full onPress={() => setMore((v) => !v)} />}
-      {(!registrar || more) && <View style={styles.actions}>
+      {registrar && !readOnly && <Button testID="stay-more" label={more ? t('sanSimple.next.lessDetails') : t('sanSimple.next.details')} variant="soft" full onPress={() => setMore((v) => !v)} />}
+      {!readOnly && (!registrar || more) && <View style={styles.actions}>
         {live && registrar && features.on('diet') && <Button testID="stay-diet" label={t('sanatorium.s2.dietAndAllergies')} variant="soft" onPress={() => setDietOpen(true)} />}
         {stay.status === 'booked' && <Button testID="stay-checkin" label={t('sanatorium.checkIn')} icon="check" loading={checkIn.isPending} onPress={() => void run('in')} />}
         {stay.status === 'checked_in' && (

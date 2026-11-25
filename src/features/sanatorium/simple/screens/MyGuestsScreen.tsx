@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from '@/lib/toast';
 import { Badge, Button, Card, EmptyState, PageHeader, Screen, Text } from '@/ui';
+import { useSingleFlight } from '../useSingleFlight';
 import { Denied, PhoneLink, QueryBlock, useSanAccess } from '../../components/common';
 import { useAuthStore } from '@/store/authStore';
 import { fmtDate, fmtDateTime, hasSanRole, sanErrorMessage } from '../../utils/sanatorium';
@@ -41,14 +42,16 @@ function GuestCard({ g }: { g: MyGuest }) {
   const start = useStartExam();
   const doctor = hasSanRole(user, 'doctor');
   const open = () => router.push({ pathname: '/sanatorium-guest', params: { id: String(g.guest.id) } });
-  const begin = async () => {
-    try {
-      const a = await start.mutateAsync(g.stay_id);
-      router.push({ pathname: '/sanatorium-appointment', params: { id: String(a.id), guestId: String(g.guest.id) } });
-    } catch (e) {
-      toast.error(sanErrorMessage(e, t('errors.generic')));
-    }
-  };
+  const flight = useSingleFlight();
+  const begin = () =>
+    flight.run(async () => {
+      try {
+        const a = await start.mutateAsync(g.stay_id);
+        router.push({ pathname: '/sanatorium-appointment', params: { id: String(a.id), guestId: String(g.guest.id) } });
+      } catch (e) {
+        toast.error(sanErrorMessage(e, t('errors.generic')));
+      }
+    });
   return (
     <Card testID={`my-guest-${g.stay_id}`}>
       <Text variant="heading" onPress={open}>{g.guest.full_name}</Text>
@@ -61,7 +64,7 @@ function GuestCard({ g }: { g: MyGuest }) {
         {doctor && g.has_exam === false && <Badge label={t('sanSimple.my.noExam')} tone="warning" />}
       </View>
       <View style={styles.actions}>
-        {doctor && (g.can_start_exam ?? !g.has_exam) && <Button testID={`my-start-${g.stay_id}`} label={t('sanSimple.my.start')} full loading={start.isPending} onPress={() => void begin()} />}
+        {doctor && (g.can_start_exam ?? !g.has_exam) && <Button testID={`my-start-${g.stay_id}`} label={t('sanSimple.my.start')} full loading={start.isPending || flight.pending} onPress={() => void begin()} />}
         <Button label={t('sanSimple.my.open')} variant="soft" full onPress={open} />
       </View>
     </Card>

@@ -19,6 +19,12 @@ export function useSanAccess(...roles: SanRole[]): boolean {
   return roles.length ? hasSanRole(user, ...roles) : (user?.sanatorium_roles?.length ?? 0) > 0;
 }
 
+/** The chairman reads everything the registrar reads but cannot change anything. */
+export function useSanReadOnly(): boolean {
+  const user = useAuthStore((s) => s.user);
+  return user?.sanatorium_read_only === true;
+}
+
 export function Denied() {
   const { t } = useTranslation();
   return <AccessDenied title={t('sanatorium.title')} />;

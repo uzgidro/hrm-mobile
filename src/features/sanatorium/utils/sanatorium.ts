@@ -45,11 +45,21 @@ export function sanErrorInfo(e: unknown): { code: string | null; params: Record<
 
 /** `sanatorium.errors.<code>` first (translated, with params), then the generic API text. */
 export function sanErrorMessage(e: unknown, fallback?: string): string {
-  const { code, params } = sanErrorInfo(e);
+  const info = sanErrorInfo(e);
+  const code = info.code;
+  // ISO dates in the params read as DD.MM.YYYY in the message.
+  const params: Record<string, unknown> = { ...info.params };
+  for (const k of ['date', 'planned_to', 'planned_from']) {
+    if (typeof params[k] === 'string' && /^\d{4}-\d{2}-\d{2}/.test(params[k] as string)) params[k] = fmtDate(params[k] as string);
+  }
   if (code) {
     // A variant that names the guest wins when the server sends `params.name` (guest_has_stay).
     const named = `sanSimple.errors.${code}_named`;
     if (params.name != null && i18n.exists(named)) return i18n.t(named, params as Record<string, string>);
+    // room_full names the room and who is still in it (`guests` is a list of names).
+    const detail = `sanSimple.errors.${code}_detail`;
+    const who = Array.isArray(params.guests) ? params.guests.join(', ') : '';
+    if (who && params.room_number != null && i18n.exists(detail)) return i18n.t(detail, { ...params, guests: who } as Record<string, string>);
     const key = `sanatorium.errors.${code}`;
     const text = i18n.t(key, params as Record<string, string>);
     if (text && text !== key) return text;

@@ -3,8 +3,11 @@
 // stays below under «Batafsil».
 import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import dayjs from 'dayjs';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { router } from 'expo-router';
+import { confirm } from '@/lib/confirm';
 import { toast } from '@/lib/toast';
 import { Badge, Button, Card, Text } from '@/ui';
 import { useCheckIn } from '../../api/mutations';
@@ -12,9 +15,11 @@ import { AppointmentSheet } from '../../components/AppointmentSheet';
 import { StayDietSheet } from '../../components/sections2/DietParts';
 import type { StayFull } from '../../types';
 import { useSanFeatures } from '../../utils/features';
-import { fmtMoney, sanErrorMessage, todayIso } from '../../utils/sanatorium';
+import { fmtDate, fmtMoney, sanErrorInfo, sanErrorMessage, todayIso } from '../../utils/sanatorium';
 import { groupStaysQuery, routeSheetQuery, useGroupCheckIn } from '../api';
+import { useSingleFlight } from '../useSingleFlight';
 import { debtNumber, hasDebt, nextStepFor } from '../utils';
+import { toastWarnings } from '../warnings';
 import { RouteStepper } from './RouteSheetView';
 import { StayActionSheets, useCheckOutFlow, type StayActionKind, type StayRef } from './StayActions';
 
@@ -33,13 +38,14 @@ export function stayRefOf(stay: StayFull, groupSize = 1): StayRef {
   };
 }
 
-export function StayNext({ stay, onEarlyLeave }: { stay: StayFull; onEarlyLeave: () => void }) {
+export function StayNext({ stay, onEarlyLeave, readOnly = false }: { stay: StayFull; onEarlyLeave: () => void; readOnly?: boolean }) {
   const { t } = useTranslation();
   const sheetQ = useQuery(routeSheetQuery(stay.id));
   const features = useSanFeatures();
   const checkIn = useCheckIn();
   const checkOut = useCheckOutFlow();
   const groupIn = useGroupCheckIn();
+  const flight = useSingleFlight();
   // The family: every stay with the same group key and status (a stay screen knows only its own row).
   const groupQ = useQuery(groupStaysQuery(stay.group_key, stay.status, stay.status === 'booked' || stay.status === 'checked_in'));
   const group = (groupQ.data ?? []).length > 1 ? groupQ.data! : [];
@@ -59,19 +65,33 @@ export function StayNext({ stay, onEarlyLeave }: { stay: StayFull; onEarlyLeave:
   };
   const runNext = async () => {
     if (next.kind === 'check_in') {
-      try {
-        if (groupIds.length > 1) await groupIn.mutateAsync(groupIds);
-        else await checkIn.mutateAsync(stay.id);
-        toast.success(t('sanatorium.checkedIn'));
-      } catch (e) {
-        toast.error(sanErrorMessage(e, t('errors.generic')));
-      }
+      await flight.run(async () => {
+        try {
+          const res = groupIds.length > 1 ? await groupIn.mutateAsync(groupIds) : await checkIn.mutateAsync(stay.id);
+          toast.success(t('sanatorium.checkedIn'));
+          toastWarnings(res);
+        } catch (e) {
+          const info = sanErrorInfo(e);
+          if (info.code === 'extend_first') {
+            // The booked period is over: the wizard takes new dates.
+            const ok = await confirm({
+              title: t('sanSimple.wiz.extendAskTitle'),
+              message: t('sanSimple.wiz.extendAsk', { name: String(info.params.name ?? stay.guest?.full_name ?? ''), planned_to: fmtDate(String(info.params.planned_to ?? stay.planned_to)) }),
+              confirmLabel: t('sanSimple.wiz.extendGo'),
+              cancelLabel: t('common.cancel'),
+            });
+            if (ok) router.push({ pathname: '/sanatorium-arrive', params: { stay: (groupIds.length > 1 ? groupIds : [stay.id]).join(',') } });
+          } else toast.error(sanErrorMessage(e, t('errors.generic')));
+        }
+      });
     } else if (next.kind === 'choose_room') setSheet('move');
     else if (next.kind === 'book_exam') setAppt(true);
     else if (next.kind === 'diet') setDiet(true);
     else if (next.kind === 'check_out') await out();
   };
   const out = async (whole = false) => {
+    // Leaving before the planned end is an early leave (its own form with a reason): no debt prompt, no 409 round trip.
+    if (stay.status === 'checked_in' && dayjs(stay.planned_to).isAfter(dayjs(todayIso()))) return onEarlyLeave();
     const r = whole && groupIds.length > 1 ? await checkOut.run(groupIds, groupDebt) : await checkOut.run([stay.id], stay.debt);
     if (r === 'early') onEarlyLeave();
   };
@@ -80,12 +100,12 @@ export function StayNext({ stay, onEarlyLeave }: { stay: StayFull; onEarlyLeave:
     <Card title={t('sanSimple.next.title')} icon="target" testID="stay-next">
       {route && <RouteStepper steps={route.steps} />}
       {hasDebt(stay.debt) && <Badge label={`${t('sanatorium.debt')}: ${fmtMoney(stay.debt)}`} tone="danger" testID="stay-debt-badge" />}
-      {next.kind !== 'none' ? (
-        <Button testID="stay-next-btn" label={label[next.kind]!} size="lg" full loading={checkIn.isPending} onPress={() => void runNext()} />
+      {readOnly ? null : next.kind !== 'none' ? (
+        <Button testID="stay-next-btn" label={label[next.kind]!} size="lg" full loading={checkIn.isPending || groupIn.isPending || flight.pending} onPress={() => void runNext()} />
       ) : (
         <Text variant="body" tone="muted" testID="stay-next-none">{t('sanSimple.next.none')}</Text>
       )}
-      {live && (
+      {live && !readOnly && (
         <View style={styles.actions}>
           <Button testID="stay-extend" label={t('sanSimple.act.extend')} variant="soft" size="sm" onPress={() => setSheet('extend')} />
           <Button testID="stay-move" label={t('sanSimple.act.move')} variant="soft" size="sm" onPress={() => setSheet('move')} />

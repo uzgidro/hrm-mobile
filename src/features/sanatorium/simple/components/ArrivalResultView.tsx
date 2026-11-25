@@ -7,6 +7,7 @@ import { Badge, Button, Card, Text } from '@/ui';
 import { GuestCardSheet, type GuestCardInfo } from '../../components/GuestCardSheet';
 import type { ArrivalResult } from '../types';
 import { routeSheetText } from '../utils';
+import { warningText } from '../warnings';
 import { RouteSheetBody } from './RouteSheetView';
 
 export function ArrivalResultView({ result, checkedIn, onAnother }: { result: ArrivalResult; checkedIn: boolean; onAnother: () => void }) {
@@ -27,7 +28,7 @@ export function ArrivalResultView({ result, checkedIn, onAnother }: { result: Ar
       <Card>
         <Text variant="title" testID="result-title">{checkedIn ? t('sanSimple.res.placed') : t('sanSimple.res.booked')}</Text>
         {(result.stays ?? []).map((s) => !!s.guest && <Text key={s.id} variant="body">{s.guest.full_name}</Text>)}
-        {(result.warnings ?? []).map((w, i) => <Badge key={`${w.code}${i}`} label={t(`sanSimple.warn.${w.code}`, { defaultValue: w.code })} tone="warning" />)}
+        {(result.warnings ?? []).map((w, i) => <Badge key={`${w.code}${i}`} label={warningText(w)} tone="warning" />)}
       </Card>
       {sheet && (
         <Card title={t('sanSimple.route.title')} icon="target" testID="result-route">
