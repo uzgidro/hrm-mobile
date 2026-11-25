@@ -11,7 +11,7 @@ import { getApiErrorMessage } from '@/api/errors';
 import { toast } from '@/lib/toast';
 import { confirm } from '@/lib/confirm';
 import { useAuthStore } from '@/store/authStore';
-import { isHR, isSiteMasterAdmin } from '@/utils/roles';
+import { isChairmanViewOnly, isHR, isMinister, isSiteMasterAdmin } from '@/utils/roles';
 import { departmentOptionsQuery, jobPositionOptionsQuery } from '@/utils/employees';
 import { PickerModal } from '@/components/PickerModal';
 import {
@@ -49,7 +49,9 @@ export default function ResponsiblesScreen() {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const activeBranchId = useActiveBranchId();
-  const allowed = isHR(user) || isSiteMasterAdmin(user);
+  const allowed = isHR(user) || isSiteMasterAdmin(user) || isMinister(user);
+  // The chairman reads the list; adding / removing is not offered to him.
+  const readOnly = isChairmanViewOnly(user);
   const branchId = activeBranchId;
   const [scope, setScope] = useState<ResponsibleScope>('department');
   const [picking, setPicking] = useState(false);
@@ -137,7 +139,7 @@ export default function ResponsiblesScreen() {
   return (
     <Screen refreshing={list.isRefetching} onRefresh={() => void list.refetch()}>
       <PageHeader title={t('responsibles.title')} subtitle={t('responsibles.subtitle')} />
-      <Card>
+      {!readOnly && <Card>
         <View style={styles.form}>
           <Text variant="label" tone="muted">
             {t('responsibles.scopeKind')}
@@ -159,8 +161,8 @@ export default function ResponsiblesScreen() {
             full
           />
         </View>
-      </Card>
-      <View style={styles.gap} />
+      </Card>}
+      {!readOnly && <View style={styles.gap} />}
       <Card>
         {list.isError ? (
           <ErrorState onRetry={() => list.refetch()} />
@@ -179,14 +181,14 @@ export default function ResponsiblesScreen() {
                   <Badge label={t(SCOPE_LABEL[scopeOf(r.scope_type)])} />
                 </View>
               }
-              right={
+              right={readOnly ? undefined : (
                 <IconButton
                   testID={`responsible-remove-${r.id}`}
                   icon="trash"
                   accessibilityLabel={t('common.delete')}
                   onPress={() => void onRemove(r)}
                 />
-              }
+              )}
             />
           ))
         )}

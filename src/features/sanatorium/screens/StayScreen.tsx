@@ -20,7 +20,7 @@ import { StayDocumentsCard, StayServicesCard } from '../components/sections2/Sta
 import { useSanFeatures } from '../utils/features';
 import { StaySheets, type StaySheetKind } from '../components/StaySheets';
 import type { StayFull } from '../types';
-import { fmtDate, fmtDateTime, fmtMoney, hasSanRole, sanErrorInfo, sanErrorMessage, stayTone } from '../utils/sanatorium';
+import { fmtDate, fmtDateTime, fmtMoney, hasSanRole, isSanReadOnly, sanErrorInfo, sanErrorMessage, stayTone } from '../utils/sanatorium';
 
 export default function StayScreen() {
   const { t } = useTranslation();
@@ -50,6 +50,8 @@ function Detail({ stay }: { stay: StayFull }) {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const registrar = hasSanRole(user, 'registrar');
+  // The view-only chairman reads the stay but changes nothing.
+  const canWrite = !isSanReadOnly(user);
   const checkIn = useCheckIn();
   const checkOut = useCheckOut();
   const [sheet, setSheet] = useState<StaySheetKind | null>(null);
@@ -106,7 +108,7 @@ function Detail({ stay }: { stay: StayFull }) {
           <Row label={t('sanatorium.paidAmount')} value={fmtMoney(stay.paid_amount)} />
           <Row label={t('sanatorium.debt')} value={fmtMoney(stay.debt)} />
           <View style={styles.row}>{stay.payment_status && <Badge label={t(`sanatorium.pay.${stay.payment_status}`)} tone={stay.payment_status === 'paid' ? 'success' : stay.payment_status === 'partial' ? 'warning' : 'danger'} />}</View>
-          <Button testID="stay-pay" label={t('sanatorium.payment')} variant="soft" size="sm" onPress={() => setSheet('payment')} />
+          {canWrite && <Button testID="stay-pay" label={t('sanatorium.payment')} variant="soft" size="sm" onPress={() => setSheet('payment')} />}
         </Card>
       )}
 
@@ -115,17 +117,17 @@ function Detail({ stay }: { stay: StayFull }) {
       <StayDocumentsCard stay={stay} />
 
       <View style={styles.actions}>
-        {live && registrar && features.on('diet') && <Button testID="stay-diet" label={t('sanatorium.s2.dietAndAllergies')} variant="soft" onPress={() => setDietOpen(true)} />}
-        {stay.status === 'booked' && <Button testID="stay-checkin" label={t('sanatorium.checkIn')} icon="check" loading={checkIn.isPending} onPress={() => void run('in')} />}
-        {stay.status === 'checked_in' && (
+        {canWrite && live && registrar && features.on('diet') && <Button testID="stay-diet" label={t('sanatorium.s2.dietAndAllergies')} variant="soft" onPress={() => setDietOpen(true)} />}
+        {canWrite && stay.status === 'booked' && <Button testID="stay-checkin" label={t('sanatorium.checkIn')} icon="check" loading={checkIn.isPending} onPress={() => void run('in')} />}
+        {canWrite && stay.status === 'checked_in' && (
           <>
             <Button testID="stay-checkout" label={t('sanatorium.checkOut')} icon="logout" loading={checkOut.isPending} onPress={() => void run('out')} />
             <Button testID="stay-early" label={t('sanatorium.earlyLeave')} variant="soft" onPress={() => setEarly(true)} />
           </>
         )}
-        {live && registrar && <Button testID="stay-edit" label={t('sanatorium.edit')} variant="soft" icon="edit" onPress={() => setSheet('edit')} />}
-        {live && <Button testID="stay-appt" label={t('sanatorium.newAppointment')} variant="soft" icon="plus" onPress={() => setAppt(true)} />}
-        {stay.status === 'booked' && registrar && <Button testID="stay-cancel" label={t('sanatorium.cancelStay')} variant="dangerGhost" onPress={() => setSheet('cancel')} />}
+        {canWrite && live && registrar && <Button testID="stay-edit" label={t('sanatorium.edit')} variant="soft" icon="edit" onPress={() => setSheet('edit')} />}
+        {canWrite && live && <Button testID="stay-appt" label={t('sanatorium.newAppointment')} variant="soft" icon="plus" onPress={() => setAppt(true)} />}
+        {canWrite && stay.status === 'booked' && registrar && <Button testID="stay-cancel" label={t('sanatorium.cancelStay')} variant="dangerGhost" onPress={() => setSheet('cancel')} />}
       </View>
 
       <StaySheets stay={stay} kind={sheet} onClose={() => setSheet(null)} />

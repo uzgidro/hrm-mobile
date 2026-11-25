@@ -10,7 +10,7 @@ import { sanMeQuery } from '../../api/sections2';
 import type { StayFull } from '../../types';
 import { useSanFeatures } from '../../utils/features';
 import { docFileName } from '../../utils/sections2';
-import { fmtMoney, hasSanRole } from '../../utils/sanatorium';
+import { fmtMoney, hasSanRole, isSanReadOnly } from '../../utils/sanatorium';
 import { useAuthStore } from '@/store/authStore';
 import { OrderList, ServiceOrderSheet } from './ServiceOrders';
 import { DownloadButton } from './kit';
@@ -47,6 +47,7 @@ export function StayServicesCard({ stay }: { stay: Pick<StayFull, 'id'> & { serv
   const user = useAuthStore((s) => s.user);
   const f = useSanFeatures();
   const [adding, setAdding] = useState(false);
+  const readOnly = isSanReadOnly(user);
   if (!f.on('paid_services') || !hasSanRole(user, 'registrar')) return null;
   return (
     <Card title={t('sanatorium.s2.services')} icon="gift" tint="orange" testID="stay-services">
@@ -54,7 +55,7 @@ export function StayServicesCard({ stay }: { stay: Pick<StayFull, 'id'> & { serv
       <ListRow title={t('sanatorium.s2.servicesTotal')} right={<Text variant="body" testID="stay-services-total">{fmtMoney(stay.services_total ?? '0')}</Text>} />
       <ListRow title={t('sanatorium.s2.grandTotal')} right={<Text variant="heading" testID="stay-grand-total">{fmtMoney(stay.grand_total ?? stay.total_amount)}</Text>} />
       <ListRow title={t('sanatorium.debt')} right={<Text variant="heading">{fmtMoney(stay.debt)}</Text>} />
-      <Button testID="stay-add-service" label={t('sanatorium.s2.newOrder')} icon="plus" size="sm" variant="soft" onPress={() => setAdding(true)} />
+      {!readOnly && <Button testID="stay-add-service" label={t('sanatorium.s2.newOrder')} icon="plus" size="sm" variant="soft" onPress={() => setAdding(true)} />}
       <OrderList filter={{ stay_id: stay.id }} showGuest={false} />
       <ServiceOrderSheet open={adding} stayId={stay.id} onClose={() => setAdding(false)} />
     </Card>

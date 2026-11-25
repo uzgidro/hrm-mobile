@@ -20,7 +20,7 @@ import type { DeleteResult, PickedFile } from '../../api/sections2';
 import { PHOTO_UPLOAD_QUALITY, downscaleAction } from '../../utils/roomPhotos';
 import { DOC_MIME, barPercents } from '../../utils/sections2';
 import { sanErrorMessage } from '../../utils/sanatorium';
-import { Denied, useSanAccess } from '../common';
+import { Denied, useSanAccess, useSanReadOnly } from '../common';
 
 /** Role + section switch gate. `loaded` false = switches unknown yet (counts as on). */
 export function useSectionGate(feature: SanFeatureKey | null, ...roles: SanRole[]): boolean {
@@ -102,6 +102,8 @@ export function RowTools({
   testID?: string;
 }) {
   const { t } = useTranslation();
+  // Row tools are all writes (edit / delete / reorder): not drawn for the view-only chairman.
+  if (useSanReadOnly()) return null;
   return (
     <View style={styles.tools} testID={testID}>
       {onUp !== undefined && <IconButton icon="arrowUp" tone="soft" accessibilityLabel={t('sanatorium.s2.moveUp')} onPress={onUp ?? (() => {})} testID={testID ? `${testID}-up` : undefined} />}
@@ -290,6 +292,7 @@ export function SectionScreen({
   children: React.ReactNode;
 }) {
   const allowed = useSectionGate(feature, ...roles);
+  const readOnly = useSanReadOnly();
   if (!allowed) return <Denied />;
   return (
     <>
@@ -297,7 +300,7 @@ export function SectionScreen({
         <PageHeader title={title} subtitle={subtitle} />
         <View style={styles.body}>{children}</View>
       </Screen>
-      {onAdd && <Fab onPress={onAdd} accessibilityLabel={addLabel ?? title} testID={`${testID}-add`} />}
+      {onAdd && !readOnly && <Fab onPress={onAdd} accessibilityLabel={addLabel ?? title} testID={`${testID}-add`} />}
     </>
   );
 }

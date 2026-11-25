@@ -8,7 +8,7 @@ import { toast } from '@/lib/toast';
 import { Badge, Button, Card, EmptyState, Segmented, Sheet, Text } from '@/ui';
 import { allSpecialtiesQuery } from '../../api/queries';
 import { procRoomsQuery, useDeleteProcRoom, useSaveProcRoom, type ProcRoom } from '../../api/sections2';
-import { QueryBlock } from '../../components/common';
+import { QueryBlock, useSanReadOnly } from '../../components/common';
 import { ChoiceField, ErrorLine, SwitchRow } from '../../components/forms';
 import { ChipWrap, FieldLabel, RowTools, SectionScreen, useConfirmDelete, useWeekdayNames } from '../../components/sections2/kit';
 import { ScheduleBoard } from '../../components/sections2/Schedule';
@@ -20,6 +20,7 @@ export default function ScheduleScreen() {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const registrar = hasSanRole(user, 'registrar');
+  const readOnly = useSanReadOnly();
   const [seg, setSeg] = useState<'board' | 'rooms'>('board');
   const [edit, setEdit] = useState<ProcRoom | 'new' | null>(null);
   const q = useQuery(procRoomsQuery(true, registrar && seg === 'rooms'));
@@ -35,7 +36,7 @@ export default function ScheduleScreen() {
       addLabel={t('sanatorium.s2.addProcRoom')}
     >
       {registrar && <Segmented testID="schedule-seg" value={seg} onChange={setSeg} options={[{ value: 'board', label: t('sanatorium.s2.board') }, { value: 'rooms', label: t('sanatorium.s2.procRooms') }]} />}
-      {seg === 'board' ? <ScheduleBoard canAct /> : <Rooms q={q} onEdit={setEdit} />}
+      {seg === 'board' ? <ScheduleBoard canAct={!readOnly} /> : <Rooms q={q} onEdit={setEdit} />}
       <Sheet visible={!!edit} onClose={() => setEdit(null)} title={edit === 'new' ? t('sanatorium.s2.addProcRoom') : t('sanatorium.s2.editProcRoom')} scroll>
         {edit && <RoomForm key={edit === 'new' ? 'new' : edit.id} room={edit === 'new' ? null : edit} onClose={() => setEdit(null)} />}
       </Sheet>

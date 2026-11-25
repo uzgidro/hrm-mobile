@@ -9,7 +9,7 @@ import { toast } from '@/lib/toast';
 import { Badge, Button, Card, EmptyState, ListRow, PageHeader, Screen, Segmented, Sheet, Text } from '@/ui';
 import { usePutMenu } from '../api/mutations';
 import { countsQuery, kitchenDayQuery, menuQuery } from '../api/queries';
-import { Denied, QueryBlock, useSanAccess } from '../components/common';
+import { Denied, QueryBlock, useSanAccess, useSanReadOnly } from '../components/common';
 import { FeatureOff } from '../components/sections1/shared';
 import { KitchenDietView } from '../components/sections2/DietParts';
 import { useSanFeatures } from '../utils/features';
@@ -21,6 +21,7 @@ type Seg = 'counts' | 'today' | 'menu' | 'diets';
 export default function KitchenScreen() {
   const { t } = useTranslation();
   const allowed = useSanAccess('kitchen');
+  const readOnly = useSanReadOnly();
   const { on, loaded } = useSanFeatures();
   const [seg, setSeg] = useState<Seg>('counts');
   const today = todayIso();
@@ -99,7 +100,7 @@ export default function KitchenScreen() {
             }
           </QueryBlock>
         )}
-        {seg === 'menu' && <Button testID="menu-week" label={t('sanatorium.editWeek')} icon="edit" variant="soft" full onPress={() => router.push('/sanatorium-menu')} />}
+        {seg === 'menu' && !readOnly && <Button testID="menu-week" label={t('sanatorium.editWeek')} icon="edit" variant="soft" full onPress={() => router.push('/sanatorium-menu')} />}
         {seg === 'menu' && (
           <QueryBlock query={menu}>
             {(days) => (
@@ -108,7 +109,7 @@ export default function KitchenScreen() {
                   <Card key={d.date} testID={`menu-${d.date}`}>
                     <View style={styles.row}>
                       <Text variant="heading" style={styles.flex}>{fmtDate(d.date)}</Text>
-                      <Button label={t('sanatorium.edit')} variant="soft" size="sm" icon="edit" onPress={() => setEditing(d)} testID="menu-edit" />
+                      {!readOnly && <Button label={t("sanatorium.edit")} variant="soft" size="sm" icon="edit" onPress={() => setEditing(d)} testID="menu-edit" />}
                     </View>
                     {MEALS.map((m) => {
                       const x = d.meals.find((y) => y.meal === m);

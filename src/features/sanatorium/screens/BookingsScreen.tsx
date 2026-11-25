@@ -13,7 +13,7 @@ import { BookingSheet } from '../components/BookingSheet';
 import { Denied, PagedBlock, useSanAccess } from '../components/common';
 import { ChoiceField, DateField } from '../components/forms';
 import { GUEST_TYPES } from '../types';
-import { fmtDate, hasSanRole, stayTone } from '../utils/sanatorium';
+import { canSanWrite, fmtDate, stayTone } from '../utils/sanatorium';
 
 type F = 'all' | 'booked' | 'checked_in' | 'checked_out' | 'left_early' | 'cancelled';
 const FILTERS: F[] = ['all', 'booked', 'checked_in', 'checked_out', 'left_early', 'cancelled'];
@@ -21,7 +21,7 @@ const FILTERS: F[] = ['all', 'booked', 'checked_in', 'checked_out', 'left_early'
 export default function BookingsScreen() {
   const { t } = useTranslation();
   const allowed = useSanAccess('registrar', 'room_keeper');
-  const registrar = hasSanRole(useAuthStore((s) => s.user), 'registrar');
+  const registrar = canSanWrite(useAuthStore((s) => s.user), 'registrar');
   const [f, setF] = useState<F>('all');
   const [term, setTerm] = useState('');
   const [type, setType] = useState<string | null>(null);

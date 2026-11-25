@@ -407,6 +407,15 @@ export function isMinister(user?: User | null): boolean {
   return getMultiOrgRole(user) === 'ministr';
 }
 
+/**
+ * The chairman of the board WITHOUT the site master-admin account type: he sees the business
+ * modules but the server refuses his writes there (fleet, health roster, responsibles, tabel
+ * settings, holidays, KPP, monitoring). Screens hide write controls with this.
+ */
+export function isChairmanViewOnly(user?: User | null): boolean {
+  return isMinister(user) && !isSiteMasterAdmin(user);
+}
+
 export function isSecretariat(user?: User | null): boolean {
   return !!user?.is_secretariat;
 }
@@ -501,8 +510,13 @@ const ALL: RoleKey[] = [
   'accounting', 'dashboard', 'monitoring', 'kpp', 'nazoratchi', 'employee',
 ];
 const ADMIN_ONLY: RoleKey[] = ['masterAdmin'];
-const ADMIN_HR: RoleKey[] = ['masterAdmin', 'hr'];
 const ADMIN_HR_LEAD: RoleKey[] = ['masterAdmin', 'hr', 'ministr', 'deputy'];
+const ADMIN_HR: RoleKey[] = ['masterAdmin', 'hr'];
+// The chairman sees the business modules (web v2 ADMIN_HR_CHAIR) — view-only where the server gives
+// the role no write. The working desks of others stay out (order types, temporary orders, module
+// responsibles, holidays, tabel settings, monitoring, KPP), like the technical consoles; the master
+// admin can give any of them back through `nav.modules`. `deputy` is NOT part of it.
+const ADMIN_HR_CHAIR: RoleKey[] = ['masterAdmin', 'hr', 'ministr'];
 
 type ModuleGate = (user: User | null | undefined) => boolean;
 type ModuleDef = {
@@ -538,9 +552,11 @@ const needsSanatorium: ModuleGate = (u) => (u?.sanatorium_roles?.length ?? 0) > 
 // Rest-day tabel: the server may not have `/weekend-tabel` yet (OTA ships before the backend) —
 // hidden until the probe in `lib/serverCaps.ts` has seen the route.
 const needsWeekendServer: ModuleGate = () => weekendTabelSupported() === true;
-const needsHealth: ModuleGate = (u) => !!u?.nurse_branch_ids?.length || isSiteMasterAdmin(u);
+// The chairman reads the health roster (view only — see useHealthBranch).
+const needsHealth: ModuleGate = (u) => !!u?.nurse_branch_ids?.length || isSiteMasterAdmin(u) || isMinister(u);
 const needsFleet: ModuleGate = (u) =>
-  isSiteMasterAdmin(u) || !!u?.transport_branch_ids?.length || !!u?.transport_approver_branch_ids?.length;
+  // The chairman opens the fleet read-only; the server's /vehicles/access `can_view` is the final say.
+  isSiteMasterAdmin(u) || isMinister(u) || !!u?.transport_branch_ids?.length || !!u?.transport_approver_branch_ids?.length;
 
 /** v2 `canSeeReports` — modul darvozasi (server `services/reports/access.py` bilan bir xil). */
 export function reportsGate(user?: User | null): boolean {
@@ -608,12 +624,12 @@ const MODULE_FOR_PAGE: Partial<Record<PageKey, ModuleDef>> = {
   staffPositions: { key: 'staffPositions', defaultRoles: ADMIN_HR_LEAD },
   structure: { key: 'structure', defaultRoles: ALL },
   responsibles: { key: 'responsibles', defaultRoles: ADMIN_HR },
-  hrQuality: { key: 'hrQuality', defaultRoles: ADMIN_HR },
+  hrQuality: { key: 'hrQuality', defaultRoles: ADMIN_HR_CHAIR },
   trainings: { key: 'trainings', defaultRoles: ALL },
   learning: { key: 'learning', defaultRoles: ALL },
   inspections: { key: 'inspections', defaultRoles: ADMIN_HR_LEAD },
   // Xizmat safaridagi xodimlarning telefon belgilari — kadr ko'radi va bekor qiladi (v2 `mobileCheckins`).
-  mobileCheckins: { key: 'mobileCheckins', defaultRoles: ADMIN_HR },
+  mobileCheckins: { key: 'mobileCheckins', defaultRoles: ADMIN_HR_CHAIR },
   reports: {
     key: 'reports',
     defaultRoles: ['masterAdmin', 'ministr', 'deputy', 'hr', 'accounting', 'employee'],

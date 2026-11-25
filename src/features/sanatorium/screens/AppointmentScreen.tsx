@@ -18,7 +18,7 @@ import { ProcedureSheet } from '../components/ProcedureSheet';
 import { RescheduleSheet } from '../components/RescheduleSheet';
 import { ReferSheet } from '../components/ReferSheet';
 import type { Appointment, GuestProfile } from '../types';
-import { apptTone, fmtDateTime, hasSanRole, sanErrorMessage } from '../utils/sanatorium';
+import { apptTone, canSanWrite, fmtDateTime, hasSanRole, sanErrorMessage } from '../utils/sanatorium';
 
 export default function AppointmentScreen() {
   const { t } = useTranslation();
@@ -50,7 +50,8 @@ function Detail({ appt, history }: { appt: Appointment; history: Appointment[] }
   const finish = useFinishAppointment();
   const notified = useNurseNotified();
   const patch = usePatchAppointment();
-  const registrar = hasSanRole(user, 'registrar');
+  // Write only: the view-only chairman never reschedules / cancels.
+  const registrar = canSanWrite(user, 'registrar');
   const [resched, setResched] = useState<Appointment | null>(null);
   const [complaint, setComplaint] = useState(appt.complaint ?? '');
   const [diagnosis, setDiagnosis] = useState(appt.diagnosis ?? '');

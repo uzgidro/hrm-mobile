@@ -15,6 +15,11 @@ export const hasSanRole = (user: User | null | undefined, ...roles: SanRole[]) =
   const mine = sanRoles(user);
   return roles.some((r) => mine.includes(r));
 };
+/** View-only account (the chairman): sees what the registrar sees, the server refuses every write. */
+export const isSanReadOnly = (user: User | null | undefined) => user?.sanatorium_read_only === true;
+/** May CHANGE data as one of `roles` — hasSanRole() minus the view-only account. Use for every write control. */
+export const canSanWrite = (user: User | null | undefined, ...roles: SanRole[]) =>
+  !isSanReadOnly(user) && hasSanRole(user, ...roles);
 export const canSeeSanatorium = (user: User | null | undefined) => sanRoles(user).length > 0;
 
 export const todayIso = () => dayjs().format('YYYY-MM-DD');

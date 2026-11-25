@@ -9,7 +9,7 @@ import { useAuthStore } from '@/store/authStore';
 import { ListRow } from '@/ui';
 import type { SanRole } from '../../types';
 import { useSanFeatures, type SanFeatureKey } from '../../utils/features';
-import { hasSanRole } from '../../utils/sanatorium';
+import { hasSanRole, isSanReadOnly } from '../../utils/sanatorium';
 
 type Link = { route: string; icon: IconName; labelKey: string; roles: SanRole[]; feature: SanFeatureKey | null };
 
@@ -37,7 +37,9 @@ export function Sections2Links() {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const f = useSanFeatures();
-  const links = visibleSections2Links((...r) => hasSanRole(user, ...r), f.on);
+  const readOnly = isSanReadOnly(user);
+  // The quote calculator is a POST the view-only account cannot make.
+  const links = visibleSections2Links((...r) => hasSanRole(user, ...r), f.on).filter((l) => !(readOnly && l.route === '/sanatorium-quote'));
   if (links.length === 0) return null;
   return (
     <View style={styles.links} testID="sections2-links">

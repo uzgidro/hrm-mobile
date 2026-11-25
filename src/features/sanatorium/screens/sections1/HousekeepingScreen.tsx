@@ -18,7 +18,7 @@ import { ChoiceField, DateField, ErrorLine, opt } from '../../components/forms';
 import { askDelete, SectionGate } from '../../components/sections1/shared';
 import { HK_KINDS, HK_STATUSES, type HkKind, type HkRoom, type HkStatus, type HkTask, type HkTaskStatus } from '../../types1';
 import { hkAllowedStatuses, hkTaskTone, hkTone } from '../../utils/sections1';
-import { fmtDate, hasSanRole, sanErrorMessage } from '../../utils/sanatorium';
+import { canSanWrite, fmtDate, hasSanRole, isSanReadOnly, sanErrorMessage } from '../../utils/sanatorium';
 
 type Tab = 'mine' | 'board' | 'tasks' | 'settings';
 
@@ -27,6 +27,8 @@ export default function HousekeepingScreen() {
   const user = useAuthStore((s) => s.user);
   const supervisor = hasSanRole(user, 'registrar', 'room_keeper');
   const housekeeper = hasSanRole(user, 'housekeeper');
+  // The view-only chairman reads the board and the task list but changes nothing.
+  const readOnly = isSanReadOnly(user);
   const [tab, setTab] = useState<Tab>(housekeeper && !supervisor ? 'mine' : 'board');
   const [taskSheet, setTaskSheet] = useState<HkTask | 'new' | null>(null);
   return (
@@ -34,7 +36,7 @@ export default function HousekeepingScreen() {
       <Screen testID="sanatorium-housekeeping-screen">
         <PageHeader
           title={t('san1.hk.title')}
-          right={tab === 'tasks' && supervisor ? <Button testID="hk-task-add" label={t('sanatorium.add')} icon="plus" size="sm" onPress={() => setTaskSheet('new')} /> : undefined}
+          right={tab === 'tasks' && supervisor && !readOnly ? <Button testID="hk-task-add" label={t('sanatorium.add')} icon="plus" size="sm" onPress={() => setTaskSheet('new')} /> : undefined}
         />
         <Segmented
           testID="hk-tabs"
@@ -48,8 +50,8 @@ export default function HousekeepingScreen() {
         />
         <View style={styles.body}>
           {tab === 'mine' && <MyTasks />}
-          {tab === 'board' && <Board supervisor={supervisor} />}
-          {tab === 'tasks' && supervisor && <Tasks onEdit={setTaskSheet} />}
+          {tab === 'board' && <Board supervisor={supervisor} readOnly={readOnly} />}
+          {tab === 'tasks' && supervisor && <Tasks onEdit={readOnly ? undefined : setTaskSheet} />}
           {tab === 'settings' && supervisor && <LinenSettings />}
         </View>
         <Sheet visible={!!taskSheet} onClose={() => setTaskSheet(null)} title={taskSheet === 'new' ? t('san1.hk.addTask') : t('san1.hk.editTask')} scroll>
@@ -61,7 +63,7 @@ export default function HousekeepingScreen() {
 }
 
 // ── Board ──
-function Board({ supervisor }: { supervisor: boolean }) {
+function Board({ supervisor, readOnly }: { supervisor: boolean; readOnly: boolean }) {
   const { t } = useTranslation();
   const [status, setStatus] = useState<'all' | HkStatus>('all');
   const q = useQuery(hkBoardQuery(status));
@@ -96,8 +98,8 @@ function Board({ supervisor }: { supervisor: boolean }) {
                     r.open_tasks.length ? `${t('san1.hk.openTasks')}: ${r.open_tasks.length}` : null,
                   ].filter(Boolean).join(' · ') || undefined}
                   right={<Badge label={t(`san1.hk.status.${r.hk_status}`)} tone={hkTone(r.hk_status)} />}
-                  chevron
-                  onPress={() => setRoom(r)}
+                  chevron={!readOnly}
+                  onPress={readOnly ? undefined : () => setRoom(r)}
                 />
               ))
             )}
@@ -166,7 +168,7 @@ function TaskLine({ k, onPress, right }: { k: HkTask; onPress?: () => void; righ
   );
 }
 
-function Tasks({ onEdit }: { onEdit: (t: HkTask) => void }) {
+function Tasks({ onEdit }: { onEdit?: (t: HkTask) => void }) {
   const { t } = useTranslation();
   const [status, setStatus] = useState<'all' | HkTaskStatus>('open');
   const [kind, setKind] = useState<'all' | HkKind>('all');
@@ -189,7 +191,7 @@ function Tasks({ onEdit }: { onEdit: (t: HkTask) => void }) {
         options={[{ value: 'all' as const, label: t('common.all') }, ...HK_KINDS.map((k) => ({ value: k as 'all' | HkKind, label: t(`san1.hk.kind.${k}`) }))]}
       />
       <PagedBlock query={query}>
-        {(items) => (items.length === 0 ? <EmptyState title={t('san1.hk.noTasks')} /> : <View style={styles.stack}>{items.map((k) => <TaskLine key={k.id} k={k} onPress={() => onEdit(k)} />)}</View>)}
+        {(items) => (items.length === 0 ? <EmptyState title={t('san1.hk.noTasks')} /> : <View style={styles.stack}>{items.map((k) => <TaskLine key={k.id} k={k} onPress={onEdit ? () => onEdit(k) : undefined} />)}</View>)}
       </PagedBlock>
     </View>
   );
@@ -319,7 +321,7 @@ function LinenSettings() {
   const user = useAuthStore((s) => s.user);
   const q = useQuery(hkSettingsQuery());
   const save = useSaveHkSettings();
-  const editable = hasSanRole(user, 'registrar');
+  const editable = canSanWrite(user, 'registrar');
   const [days, setDays] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   return (

@@ -11,6 +11,7 @@ import {
   employeeBranchIds,
   isBranchAdmin,
   isHR,
+  isMinister,
   isSiteMasterAdmin,
 } from '@/utils/roles';
 import type { BranchBlank } from './blank';
@@ -135,7 +136,7 @@ export interface BranchScope {
 export function branchScope(user: User | null | undefined, branches: TabelBranch[]): BranchScope {
   const execBranchId = branches.find((b) => b.is_head_office)?.id ?? null;
   const isGlobal =
-    isSiteMasterAdmin(user) || isBranchAdmin(user) || (isHR(user) && canSwitchBranchScope(user, execBranchId));
+    isSiteMasterAdmin(user) || isBranchAdmin(user) || isMinister(user) || (isHR(user) && canSwitchBranchScope(user, execBranchId));
   const visible = isGlobal ? branches : branches.filter((b) => canAdministerBranch(user, b.id, { execBranchId }));
   return { execBranchId, isGlobal, visible, sole: !isGlobal && visible.length === 1 ? visible[0] : null };
 }
