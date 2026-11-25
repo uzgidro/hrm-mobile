@@ -10,11 +10,10 @@ import { sanMeQuery } from '../../api/sections2';
 import type { StayFull } from '../../types';
 import { useSanFeatures } from '../../utils/features';
 import { docFileName } from '../../utils/sections2';
-import { fmtMoney, hasSanRole } from '../../utils/sanatorium';
+import { fmtMoney, hasSanRole, isSanReadOnly } from '../../utils/sanatorium';
 import { useAuthStore } from '@/store/authStore';
 import { OrderList, ServiceOrderSheet } from './ServiceOrders';
 import { DownloadButton } from './kit';
-import { useSanReadOnly } from '../common';
 
 const KINDS = ['contract', 'invoice', 'act', 'epikriz'] as const;
 
@@ -48,7 +47,7 @@ export function StayServicesCard({ stay }: { stay: Pick<StayFull, 'id'> & { serv
   const user = useAuthStore((s) => s.user);
   const f = useSanFeatures();
   const [adding, setAdding] = useState(false);
-  const readOnly = useSanReadOnly();
+  const readOnly = isSanReadOnly(user);
   if (!f.on('paid_services') || !hasSanRole(user, 'registrar')) return null;
   return (
     <Card title={t('sanatorium.s2.services')} icon="gift" tint="orange" testID="stay-services">

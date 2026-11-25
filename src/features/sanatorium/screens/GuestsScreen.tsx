@@ -9,12 +9,13 @@ import { guestsInfinite } from '../api/queries';
 import { CredentialsSheet, type CredentialsShown } from '../components/CredentialsSheet';
 import { FamiliesPanel } from '../components/FamiliesPanel';
 import { GuestSheet } from '../components/GuestSheet';
-import { Denied, PagedBlock, useSanAccess } from '../components/common';
+import { Denied, PagedBlock, useSanAccess, useSanReadOnly } from '../components/common';
 import type { GuestLite } from '../types';
 
 export default function GuestsScreen() {
   const { t } = useTranslation();
   const allowed = useSanAccess('registrar');
+  const readOnly = useSanReadOnly();
   const [seg, setSeg] = useState<'guests' | 'families'>('guests');
   const [term, setTerm] = useState('');
   const debounced = useDebouncedValue(term);
@@ -25,7 +26,7 @@ export default function GuestsScreen() {
   if (!allowed) return <Denied />;
   return (
     <Screen refreshing={q.isRefetching} onRefresh={() => void q.refetch()} testID="sanatorium-guests-screen">
-      <PageHeader title={t('sanatorium.nav.guests')} right={<Button testID="guest-add" label={t('sanatorium.add')} icon="plus" size="sm" onPress={() => setEdit('new')} />} />
+      <PageHeader title={t('sanatorium.nav.guests')} right={readOnly ? undefined : <Button testID="guest-add" label={t('sanatorium.add')} icon="plus" size="sm" onPress={() => setEdit('new')} />} />
       <Segmented
         testID="guests-seg"
         value={seg}

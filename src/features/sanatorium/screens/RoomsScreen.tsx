@@ -11,7 +11,7 @@ import { toneColors } from '@/ui/Chip';
 import { useSaveRoom } from '../api/mutations';
 import { availabilityQuery, roomsQuery } from '../api/queries';
 import { ChoiceField, ErrorLine, opt, optNull, SwitchRow } from '../components/forms';
-import { Denied, QueryBlock, useSanAccess } from '../components/common';
+import { Denied, QueryBlock, useSanAccess, useSanReadOnly } from '../components/common';
 import { PoiField, usePoiOn } from '../components/sections1/PoiField';
 import { RoomCover } from '../components/RoomCover';
 import { RoomGallery, type GalleryState } from '../components/RoomGallery';
@@ -24,6 +24,7 @@ const DAYS = 14;
 export default function RoomsScreen() {
   const { t } = useTranslation();
   const allowed = useSanAccess('registrar');
+  const readOnly = useSanReadOnly();
   const start = todayIso();
   const rooms = useQuery(roomsQuery(allowed));
   const avail = useQuery(availabilityQuery(start, DAYS, allowed));
@@ -40,7 +41,7 @@ export default function RoomsScreen() {
       }}
       testID="sanatorium-rooms-screen"
     >
-      <PageHeader title={t('sanatorium.nav.rooms')} right={<Button testID="room-add" label={t('sanatorium.add')} icon="plus" size="sm" onPress={() => setEdit('new')} />} />
+      <PageHeader title={t('sanatorium.nav.rooms')} right={readOnly ? undefined : <Button testID="room-add" label={t('sanatorium.add')} icon="plus" size="sm" onPress={() => setEdit('new')} />} />
       <QueryBlock query={rooms}>
         {(items) =>
           items.length === 0 ? (
@@ -48,7 +49,7 @@ export default function RoomsScreen() {
           ) : (
             <View style={styles.stack}>
               {items.map((r) => (
-                <RoomCard key={r.id} room={r} occ={byId.get(r.id)} start={start} onEdit={() => setEdit(r)} onGallery={() => setGallery({ title: `${t('sanatorium.room')} ${r.number}`, photos: r.photos ?? [], index: 0 })} />
+                <RoomCard key={r.id} room={r} occ={byId.get(r.id)} start={start} onEdit={readOnly ? undefined : () => setEdit(r)} onGallery={() => setGallery({ title: `${t('sanatorium.room')} ${r.number}`, photos: r.photos ?? [], index: 0 })} />
               ))}
             </View>
           )
@@ -60,7 +61,7 @@ export default function RoomsScreen() {
   );
 }
 
-function RoomCard({ room, occ, start, onEdit, onGallery }: { room: Room; occ?: AvailabilityRoom; start: string; onEdit: () => void; onGallery: () => void }) {
+function RoomCard({ room, occ, start, onEdit, onGallery }: { room: Room; occ?: AvailabilityRoom; start: string; onEdit?: () => void; onGallery: () => void }) {
   const { t } = useTranslation();
   const { colors: c } = useTheme();
   const price = room.price_per_day ? `${Number(room.price_per_day).toLocaleString('ru-RU')} / ${t(room.price_mode === 'per_room' ? 'sanatorium.perRoom' : 'sanatorium.perBed')}` : null;
@@ -76,7 +77,7 @@ function RoomCard({ room, occ, start, onEdit, onGallery }: { room: Room; occ?: A
           {!!price && <Text variant="caption" tone="muted">{price}</Text>}
         </View>
         {!room.is_active ? <Badge label={t('sanatorium.inactive')} tone="neutral" /> : room.out_of_service ? <Badge label={t('sanatorium.outOfService')} tone="danger" /> : null}
-        <Button label={t('sanatorium.edit')} variant="soft" size="sm" icon="edit" onPress={onEdit} testID="room-edit" />
+        {onEdit && <Button label={t('sanatorium.edit')} variant="soft" size="sm" icon="edit" onPress={onEdit} testID="room-edit" />}
       </View>
       {occ && !room.out_of_service && (
         <View style={styles.strip} testID={`strip-${room.id}`}>

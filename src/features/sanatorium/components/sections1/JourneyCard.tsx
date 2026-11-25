@@ -9,9 +9,8 @@ import { Badge, Button, Card, Text } from '@/ui';
 import { journeyStayQuery } from '../../api/sections1';
 import { useSanFeatures } from '../../utils/features';
 import { pickLang } from '../../utils/sections1';
-import { fmtDateTime, hasSanRole } from '../../utils/sanatorium';
+import { canSanWrite, fmtDateTime } from '../../utils/sanatorium';
 import { MoveStageSheet } from './JourneySheets';
-import { useSanReadOnly } from '../common';
 
 export function JourneyCard({ stayId }: { stayId: number }) {
   const { t, i18n } = useTranslation();
@@ -20,7 +19,6 @@ export function JourneyCard({ stayId }: { stayId: number }) {
   const enabled = on('journey');
   const q = useQuery(journeyStayQuery(stayId, enabled));
   const [move, setMove] = useState(false);
-  const readOnly = useSanReadOnly();
   if (!enabled || q.isError || !q.data) return null;
   const d = q.data;
   const name = (s: { name_uz: string; name_ru: string | null; name_en: string | null } | null) =>
@@ -40,7 +38,7 @@ export function JourneyCard({ stayId }: { stayId: number }) {
           </Text>
         </View>
       ))}
-      {!readOnly && hasSanRole(user, 'registrar', 'room_keeper') && (
+      {canSanWrite(user, 'registrar', 'room_keeper') && (
         <Button testID="stay-journey-move" label={t('san1.journey.move')} variant="soft" size="sm" onPress={() => setMove(true)} />
       )}
       <MoveStageSheet stayId={move ? stayId : null} currentId={d.current?.id} onClose={() => setMove(false)} />

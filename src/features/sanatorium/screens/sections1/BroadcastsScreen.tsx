@@ -11,7 +11,7 @@ import { toast } from '@/lib/toast';
 import { radii } from '@/theme/tokens';
 import { Badge, Button, Card, EmptyState, PageHeader, ProgressBar, Screen, Sheet, Text } from '@/ui';
 import { audiencesQuery, broadcastsQuery, useSendBroadcast, useUploadBroadcastPhoto } from '../../api/sections1';
-import { QueryBlock } from '../../components/common';
+import { QueryBlock, useSanReadOnly } from '../../components/common';
 import { ChoiceField, ErrorLine, optNull } from '../../components/forms';
 import { LangFields, SectionGate } from '../../components/sections1/shared';
 import { BROADCAST_AUDIENCES, type Broadcast, type BroadcastAudience } from '../../types1';
@@ -24,11 +24,12 @@ const MAX_TEXT = 3500;
 export default function BroadcastsScreen() {
   const { t } = useTranslation();
   const q = useQuery(broadcastsQuery());
+  const readOnly = useSanReadOnly();
   const [compose, setCompose] = useState(false);
   return (
     <SectionGate feature="broadcasts" roles={['registrar']}>
       <Screen refreshing={q.isRefetching} onRefresh={() => void q.refetch()} testID="sanatorium-broadcasts-screen">
-        <PageHeader title={t('san1.broadcast.title')} right={<Button testID="bc-new" label={t('san1.broadcast.new')} icon="plus" size="sm" onPress={() => setCompose(true)} />} />
+        <PageHeader title={t('san1.broadcast.title')} right={readOnly ? undefined : <Button testID="bc-new" label={t('san1.broadcast.new')} icon="plus" size="sm" onPress={() => setCompose(true)} />} />
         <QueryBlock query={q}>
           {(d) =>
             d.items.length === 0 ? (

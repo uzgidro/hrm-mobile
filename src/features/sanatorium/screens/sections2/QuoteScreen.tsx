@@ -11,6 +11,7 @@ import { packagesQuery, servicesQuery, useQuote, type QuoteResult } from '../../
 import { roomsQuery } from '../../api/queries';
 import { ChoiceField, DateField, ErrorLine } from '../../components/forms';
 import { ChipWrap, FieldLabel, SectionScreen, useContentLang } from '../../components/sections2/kit';
+import { useSanReadOnly } from '../../components/common';
 import { GUEST_TYPES } from '../../types';
 import { parseAges, pickText, quoteBody, type QuoteDraft } from '../../utils/sections2';
 import { useSanFeatures } from '../../utils/features';
@@ -24,6 +25,8 @@ export default function QuoteScreen() {
   const packages = useQuery(packagesQuery(false, f.on('packages')));
   const services = useQuery(servicesQuery(false, f.on('paid_services')));
   const quote = useQuote();
+  // The calculator is a POST: the server refuses it for the view-only chairman.
+  const readOnly = useSanReadOnly();
   const [d, setD] = useState<QuoteDraft>(() => ({ start: todayIso(), end: dayjs().add(7, 'day').format('YYYY-MM-DD'), adults: '1', children: [], roomId: null, packageId: null, guestType: null, services: [] }));
   const [ages, setAges] = useState('');
   const [result, setResult] = useState<QuoteResult | null>(null);
@@ -73,7 +76,7 @@ export default function QuoteScreen() {
           </>
         )}
         <ErrorLine message={error} testID="qt-error" />
-        <Button testID="qt-calc" label={t('sanatorium.s2.calculate')} full loading={quote.isPending} onPress={() => void submit()} />
+        {!readOnly && <Button testID="qt-calc" label={t('sanatorium.s2.calculate')} full loading={quote.isPending} onPress={() => void submit()} />}
       </Card>
       {result && <QuoteResultView r={result} />}
     </SectionScreen>

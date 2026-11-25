@@ -8,7 +8,7 @@ import { FormInput } from '@/components/FormInput';
 import { toast } from '@/lib/toast';
 import { Button, Card, PageHeader, Screen } from '@/ui';
 import { locationQuery, useSaveLocation } from '../../api/sections1';
-import { QueryBlock } from '../../components/common';
+import { QueryBlock, useSanReadOnly } from '../../components/common';
 import { ErrorLine } from '../../components/forms';
 import { MapPicker } from '../../components/sections1/MapPicker';
 import { LangFields, SectionGate } from '../../components/sections1/shared';
@@ -32,6 +32,7 @@ export default function LocationScreen() {
 function LocationForm({ loc }: { loc: SanLocation }) {
   const { t } = useTranslation();
   const save = useSaveLocation();
+  const readOnly = useSanReadOnly();
   const [lat, setLat] = useState(loc.latitude != null ? String(loc.latitude) : '');
   const [lng, setLng] = useState(loc.longitude != null ? String(loc.longitude) : '');
   const [zoom, setZoom] = useState(String(loc.zoom ?? 15));
@@ -59,24 +60,25 @@ function LocationForm({ loc }: { loc: SanLocation }) {
           lng={parseCoord(lng)}
           zoom={Number.parseInt(zoom, 10) || 15}
           onPick={(p) => {
+            if (readOnly) return;
             setLat(String(p.lat));
             setLng(String(p.lng));
             setZoom(String(Math.min(19, Math.max(1, p.zoom))));
           }}
         />
         <View style={styles.pair}>
-          <View style={styles.flex}><FormInput label={t('san1.location.lat')} value={lat} onChangeText={setLat} keyboardType="decimal-pad" testID="loc-lat" /></View>
-          <View style={styles.flex}><FormInput label={t('san1.location.lng')} value={lng} onChangeText={setLng} keyboardType="decimal-pad" testID="loc-lng" /></View>
+          <View style={styles.flex}><FormInput label={t('san1.location.lat')} value={lat} onChangeText={readOnly ? () => {} : setLat} keyboardType="decimal-pad" testID="loc-lat" /></View>
+          <View style={styles.flex}><FormInput label={t('san1.location.lng')} value={lng} onChangeText={readOnly ? () => {} : setLng} keyboardType="decimal-pad" testID="loc-lng" /></View>
         </View>
-        <FormInput label={t('san1.location.zoom')} value={zoom} onChangeText={setZoom} keyboardType="number-pad" testID="loc-zoom" />
-        <Button testID="loc-clear" label={t('san1.location.clear')} variant="ghost" size="sm" onPress={() => { setLat(''); setLng(''); }} />
+        <FormInput label={t('san1.location.zoom')} value={zoom} onChangeText={readOnly ? () => {} : setZoom} keyboardType="number-pad" testID="loc-zoom" />
+        {!readOnly && <Button testID="loc-clear" label={t('san1.location.clear')} variant="ghost" size="sm" onPress={() => { setLat(''); setLng(''); }} />}
       </Card>
       <Card>
-        <FormInput label={t('san1.location.address')} value={address} onChangeText={setAddress} multiline testID="loc-address" />
-        <LangFields label={t('san1.location.notes')} values={notes} onChange={setNotes} multiline testID="loc-note" />
+        <FormInput label={t('san1.location.address')} value={address} onChangeText={readOnly ? () => {} : setAddress} multiline testID="loc-address" />
+        <LangFields label={t('san1.location.notes')} values={notes} onChange={readOnly ? () => {} : setNotes} multiline testID="loc-note" />
       </Card>
       <ErrorLine message={error} testID="loc-error" />
-      <Button testID="loc-save" label={t('common.save')} full loading={save.isPending} onPress={() => void submit()} />
+      {!readOnly && <Button testID="loc-save" label={t('common.save')} full loading={save.isPending} onPress={() => void submit()} />}
     </View>
   );
 }

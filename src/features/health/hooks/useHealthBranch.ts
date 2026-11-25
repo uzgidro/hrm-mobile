@@ -6,7 +6,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/authStore';
-import { isSiteMasterAdmin } from '@/utils/roles';
+import { isChairmanViewOnly, isSiteMasterAdmin } from '@/utils/roles';
 import { healthAccessQuery, healthBranchesQuery } from '../api/queries';
 import { branchCandidates, resolveHealthBranch } from '../utils/health';
 
@@ -16,7 +16,7 @@ export function useHealthBranch({ withPicker = true }: { withPicker?: boolean } 
   const userNurse = user?.nurse_branch_ids;
   const identity = useQuery(healthAccessQuery(null, !userNurse?.length));
   const candidates = branchCandidates(userNurse, identity.data?.nurse_branch_ids);
-  const anyBranch = withPicker && !candidates.length && isSiteMasterAdmin(user);
+  const anyBranch = withPicker && !candidates.length && (isSiteMasterAdmin(user) || isChairmanViewOnly(user));
   const branchId = resolveHealthBranch(picked, candidates);
   const showPicker = withPicker && (candidates.length > 1 || anyBranch);
   const branches = useQuery(healthBranchesQuery(showPicker));
@@ -28,7 +28,8 @@ export function useHealthBranch({ withPicker = true }: { withPicker?: boolean } 
 
   // `can_check` is asked for EXACTLY the branch on screen (the server narrows it).
   const access = useQuery(healthAccessQuery(branchId, branchId != null));
-  const canCheck = branchId != null && !!access.data?.can_check;
+  // The chairman only reads the roster: no grading controls whatever the server says.
+  const canCheck = branchId != null && !isChairmanViewOnly(user) && !!access.data?.can_check;
 
   return {
     branchId,

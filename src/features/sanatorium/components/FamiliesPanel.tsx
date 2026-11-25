@@ -12,7 +12,7 @@ import { useAddFamilyMember, useRemoveFamilyMember, useSaveFamily } from '../api
 import { familiesQuery, guestsQuery } from '../api/queries';
 import { RELATIONS, type Family } from '../types';
 import { sanErrorMessage } from '../utils/sanatorium';
-import { QueryBlock } from './common';
+import { QueryBlock, useSanReadOnly } from './common';
 import { ChoiceField, ErrorLine, optNull } from './forms';
 
 export function FamiliesPanel() {
@@ -21,6 +21,7 @@ export function FamiliesPanel() {
   const [edit, setEdit] = useState<Family | 'new' | null>(null);
   const [adding, setAdding] = useState<Family | null>(null);
   const remove = useRemoveFamilyMember();
+  const readOnly = useSanReadOnly();
   const drop = async (f: Family, guestId: number, name: string) => {
     const ok = await confirm({ title: t('sanatorium.removeMember'), message: name, confirmLabel: t('sanatorium.remove'), cancelLabel: t('common.cancel'), destructive: true });
     if (!ok) return;
@@ -28,7 +29,7 @@ export function FamiliesPanel() {
   };
   return (
     <View style={styles.stack}>
-      <Button testID="family-add" label={t('sanatorium.newFamily')} icon="plus" variant="soft" full onPress={() => setEdit('new')} />
+      {!readOnly && <Button testID="family-add" label={t('sanatorium.newFamily')} icon="plus" variant="soft" full onPress={() => setEdit('new')} />}
       <QueryBlock query={q}>
         {(items) =>
           items.length === 0 ? (
@@ -39,7 +40,7 @@ export function FamiliesPanel() {
                 <Card key={f.id} testID={`family-${f.id}`}>
                   <View style={styles.row}>
                     <Text variant="heading" style={styles.flex}>{f.name}</Text>
-                    <Button label={t('sanatorium.edit')} variant="soft" size="sm" icon="edit" onPress={() => setEdit(f)} />
+                    {!readOnly && <Button label={t('sanatorium.edit')} variant="soft" size="sm" icon="edit" onPress={() => setEdit(f)} />}
                   </View>
                   {!!f.note && <Text variant="caption" tone="muted">{f.note}</Text>}
                   {f.members.map((m) => (
@@ -47,10 +48,10 @@ export function FamiliesPanel() {
                       key={m.id}
                       title={m.full_name}
                       subtitle={[m.relation ? t(`sanatorium.relation.${m.relation}`) : null, m.age != null ? `${m.age} ${t('sanatorium.yearsOld')}` : null].filter(Boolean).join(' · ')}
-                      right={<Button label={t('sanatorium.remove')} variant="dangerGhost" size="sm" onPress={() => void drop(f, m.id, m.full_name)} />}
+                      right={readOnly ? undefined : <Button label={t('sanatorium.remove')} variant="dangerGhost" size="sm" onPress={() => void drop(f, m.id, m.full_name)} />}
                     />
                   ))}
-                  <Button testID="family-add-member" label={t('sanatorium.addMember')} variant="link" size="sm" onPress={() => setAdding(f)} />
+                  {!readOnly && <Button testID="family-add-member" label={t('sanatorium.addMember')} variant="link" size="sm" onPress={() => setAdding(f)} />}
                 </Card>
               ))}
             </>

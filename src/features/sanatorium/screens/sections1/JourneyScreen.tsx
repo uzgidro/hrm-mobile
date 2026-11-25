@@ -13,13 +13,13 @@ import { Badge, Button, Card, EmptyState, ListRow, PageHeader, Screen, Segmented
 import {
   journeyBoardQuery, journeySettingsQuery, stagesQuery, useReorderStages, useSaveJourneySettings,
 } from '../../api/sections1';
-import { QueryBlock } from '../../components/common';
+import { QueryBlock, useSanReadOnly } from '../../components/common';
 import { ErrorLine } from '../../components/forms';
 import { MoveStageSheet, StageSheet } from '../../components/sections1/JourneySheets';
 import { MoveButtons, SectionGate } from '../../components/sections1/shared';
 import type { JourneyCardData, JourneySettings, JourneyStage } from '../../types1';
 import { moveId, pickLang } from '../../utils/sections1';
-import { fmtDate, fmtDateTime, hasSanRole, sanErrorMessage } from '../../utils/sanatorium';
+import { canSanWrite, fmtDate, fmtDateTime, hasSanRole, isSanReadOnly, sanErrorMessage } from '../../utils/sanatorium';
 
 type Seg = 'board' | 'stages';
 const UNASSIGNED = 0;
@@ -27,7 +27,9 @@ const UNASSIGNED = 0;
 export default function JourneyScreen() {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
+  // Write gates: false for the view-only chairman (he still sees the board and the stage catalog).
   const registrar = hasSanRole(user, 'registrar');
+  const readOnly = isSanReadOnly(user);
   const [seg, setSeg] = useState<Seg>('board');
   const [stageSheet, setStageSheet] = useState<JourneyStage | 'new' | null>(null);
   return (
@@ -35,7 +37,7 @@ export default function JourneyScreen() {
       <Screen testID="sanatorium-journey-screen">
         <PageHeader
           title={t('san1.journey.title')}
-          right={registrar && seg === 'stages' ? <Button testID="stage-add" label={t('sanatorium.add')} icon="plus" size="sm" onPress={() => setStageSheet('new')} /> : undefined}
+          right={registrar && !readOnly && seg === 'stages' ? <Button testID="stage-add" label={t('sanatorium.add')} icon="plus" size="sm" onPress={() => setStageSheet('new')} /> : undefined}
         />
         {registrar && (
           <Segmented
@@ -48,7 +50,7 @@ export default function JourneyScreen() {
             ]}
           />
         )}
-        <View style={styles.body}>{seg === 'board' ? <Board /> : <Catalog onEdit={setStageSheet} />}</View>
+        <View style={styles.body}>{seg === 'board' ? <Board /> : <Catalog onEdit={readOnly ? undefined : setStageSheet} />}</View>
         <StageSheet stage={stageSheet} onClose={() => setStageSheet(null)} />
       </Screen>
     </SectionGate>
@@ -77,7 +79,7 @@ function CardRow({ c, onMove }: { c: JourneyCardData; onMove?: () => void }) {
 function Board() {
   const { t, i18n } = useTranslation();
   const user = useAuthStore((s) => s.user);
-  const canMove = hasSanRole(user, 'registrar', 'room_keeper');
+  const canMove = canSanWrite(user, 'registrar', 'room_keeper');
   const q = useQuery(journeyBoardQuery());
   const [tab, setTab] = useState<number | null>(null);
   const [moving, setMoving] = useState<{ stayId: number; stageId: number | null } | null>(null);
@@ -113,7 +115,7 @@ function Board() {
   );
 }
 
-function Catalog({ onEdit }: { onEdit: (s: JourneyStage) => void }) {
+function Catalog({ onEdit }: { onEdit?: (s: JourneyStage) => void }) {
   const { t, i18n } = useTranslation();
   const q = useQuery(stagesQuery());
   const reorder = useReorderStages();
@@ -127,7 +129,7 @@ function Catalog({ onEdit }: { onEdit: (s: JourneyStage) => void }) {
             {stages.map((s, i) => (
               <ListRow
                 key={s.id}
-                pressable
+                pressable={!!onEdit}
                 testID={`stage-${s.id}`}
                 title={`${i + 1}. ${pickLang(i18n.language, { uz: s.name_uz, ru: s.name_ru, en: s.name_en })}`}
                 subtitle={[s.responsible_role ? t(`sanatorium.role.${s.responsible_role}`) : null, s.trigger ? t(`san1.journey.triggers.${s.trigger}`) : null].filter(Boolean).join(' · ') || undefined}
@@ -135,10 +137,10 @@ function Catalog({ onEdit }: { onEdit: (s: JourneyStage) => void }) {
                   <View style={styles.badges}>
                     {!s.is_active && <Badge label={t('sanatorium.inactive')} tone="neutral" />}
                     {s.notify_guest && <Badge label={t('san1.journey.notifies')} tone="info" />}
-                    <MoveButtons first={i === 0} last={i === stages.length - 1} testID={`stage-${s.id}`} onUp={() => move(stages.map((x) => x.id), s.id, -1)} onDown={() => move(stages.map((x) => x.id), s.id, 1)} />
+                    {onEdit && <MoveButtons first={i === 0} last={i === stages.length - 1} testID={`stage-${s.id}`} onUp={() => move(stages.map((x) => x.id), s.id, -1)} onDown={() => move(stages.map((x) => x.id), s.id, 1)} />}
                   </View>
                 }
-                onPress={() => onEdit(s)}
+                onPress={onEdit ? () => onEdit(s) : undefined}
               />
             ))}
           </View>
@@ -157,6 +159,7 @@ function JourneySettingsCard() {
 function SettingsForm({ s }: { s: JourneySettings }) {
   const { t } = useTranslation();
   const save = useSaveJourneySettings();
+  const readOnly = useSanReadOnly();
   const [pre, setPre] = useState(String(s.pre_arrival_days));
   const [fin, setFin] = useState(String(s.final_exam_days));
   const [error, setError] = useState<string | null>(null);
@@ -175,10 +178,10 @@ function SettingsForm({ s }: { s: JourneySettings }) {
   };
   return (
     <Card title={t('san1.journey.settings')} icon="settings" testID="journey-settings">
-      <FormInput label={t('san1.journey.preArrivalDays')} value={pre} onChangeText={setPre} keyboardType="number-pad" testID="jset-pre" />
-      <FormInput label={t('san1.journey.finalExamDays')} value={fin} onChangeText={setFin} keyboardType="number-pad" testID="jset-final" />
+      <FormInput label={t('san1.journey.preArrivalDays')} value={pre} onChangeText={readOnly ? () => {} : setPre} keyboardType="number-pad" testID="jset-pre" />
+      <FormInput label={t('san1.journey.finalExamDays')} value={fin} onChangeText={readOnly ? () => {} : setFin} keyboardType="number-pad" testID="jset-final" />
       <ErrorLine message={error} />
-      <Button testID="jset-save" label={t('common.save')} full loading={save.isPending} onPress={() => void submit()} />
+      {!readOnly && <Button testID="jset-save" label={t('common.save')} full loading={save.isPending} onPress={() => void submit()} />}
     </Card>
   );
 }

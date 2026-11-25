@@ -13,7 +13,7 @@ import { Badge, Button, EmptyState, ListRow, PageHeader, Screen, Sheet, Text } f
 import {
   infoSectionsQuery, useDeleteInfoPhoto, useDeleteInfoSection, useReorderInfoSections, useSaveInfoSection, useUploadInfoPhoto,
 } from '../../api/sections1';
-import { QueryBlock } from '../../components/common';
+import { QueryBlock, useSanReadOnly } from '../../components/common';
 import { ErrorLine, optNull, SwitchRow } from '../../components/forms';
 import { askDelete, LangFields, MoveButtons, SectionGate } from '../../components/sections1/shared';
 import type { InfoSection } from '../../types1';
@@ -26,10 +26,11 @@ export default function InfoSectionsScreen() {
   const q = useQuery(infoSectionsQuery());
   const reorder = useReorderInfoSections();
   const [edit, setEdit] = useState<InfoSection | 'new' | null>(null);
+  const readOnly = useSanReadOnly();
   return (
     <SectionGate feature="info_sections" roles={['registrar']}>
       <Screen refreshing={q.isRefetching} onRefresh={() => void q.refetch()} testID="sanatorium-info-screen">
-        <PageHeader title={t('san1.info.title')} right={<Button testID="info-add" label={t('sanatorium.add')} icon="plus" size="sm" onPress={() => setEdit('new')} />} />
+        <PageHeader title={t('san1.info.title')} right={readOnly ? undefined : <Button testID="info-add" label={t('sanatorium.add')} icon="plus" size="sm" onPress={() => setEdit('new')} />} />
         <QueryBlock query={q}>
           {(items) =>
             items.length === 0 ? (
@@ -39,7 +40,7 @@ export default function InfoSectionsScreen() {
                 {items.map((s, i) => (
                   <ListRow
                     key={s.id}
-                    pressable
+                    pressable={!readOnly}
                     testID={`info-${s.id}`}
                     left={s.photo ? <Image source={{ uri: s.photo.thumb_url }} style={styles.thumb} contentFit="cover" /> : s.emoji ? <Text variant="title">{s.emoji}</Text> : undefined}
                     title={pickLang(i18n.language, { uz: s.title_uz, ru: s.title_ru, en: s.title_en })}
@@ -56,7 +57,7 @@ export default function InfoSectionsScreen() {
                         />
                       </View>
                     }
-                    onPress={() => setEdit(s)}
+                    onPress={readOnly ? undefined : () => setEdit(s)}
                   />
                 ))}
               </View>

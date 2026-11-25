@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { toast } from '@/lib/toast';
 import { Badge, Card, Text, Toggle } from '@/ui';
 import { featuresQuery, useSaveFeatures } from '../../api/sections1';
-import { QueryBlock } from '../../components/common';
+import { QueryBlock, useSanReadOnly } from '../../components/common';
 import { featureLabel, groupFeatures } from '../../utils/sections1';
 import { sanErrorMessage } from '../../utils/sanatorium';
 
@@ -16,6 +16,7 @@ export function FeaturesPanel() {
   const { t, i18n } = useTranslation();
   const q = useQuery(featuresQuery());
   const save = useSaveFeatures();
+  const readOnly = useSanReadOnly();
   const [pending, setPending] = useState<string | null>(null);
 
   const toggle = async (key: string, enabled: boolean) => {
@@ -45,7 +46,7 @@ export function FeaturesPanel() {
                   </View>
                   <Toggle
                     value={r.enabled}
-                    disabled={pending === r.key}
+                    disabled={readOnly || pending === r.key}
                     onValueChange={(v) => void toggle(r.key, v)}
                     accessibilityLabel={featureLabel(r, i18n.language)}
                     testID={`feature-${r.key}`}

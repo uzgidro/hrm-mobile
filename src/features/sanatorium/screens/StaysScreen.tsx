@@ -10,7 +10,7 @@ import { Badge, Card, EmptyState, PageHeader, Screen, Segmented, Text } from '@/
 import { availabilityQuery, dashboardQuery } from '../api/queries';
 import { useCheckIn, useCheckOut } from '../api/mutations';
 import { roomNotReady } from '../utils/sections1';
-import { Denied, PhoneLink, QueryBlock, useSanAccess } from '../components/common';
+import { Denied, PhoneLink, QueryBlock, useSanAccess, useSanReadOnly } from '../components/common';
 import { RoomCover } from '../components/RoomCover';
 import { RoomGallery, type GalleryState } from '../components/RoomGallery';
 import { EarlyLeaveSheet } from '../components/EarlyLeaveSheet';
@@ -23,6 +23,7 @@ type Seg = 'arrivals' | 'departures' | 'rooms';
 export default function StaysScreen() {
   const { t } = useTranslation();
   const allowed = useSanAccess('room_keeper', 'registrar');
+  const readOnly = useSanReadOnly();
   const [seg, setSeg] = useState<Seg>('arrivals');
   const [early, setEarly] = useState<Stay | null>(null);
   const [gallery, setGallery] = useState<GalleryState>(null);
@@ -68,7 +69,7 @@ export default function StaysScreen() {
           <StayCard
             key={s.id}
             stay={s}
-            canAct
+            canAct={!readOnly}
             busy={busyId === s.id}
             onCheckIn={() => void run(s, 'in')}
             onCheckOut={() => void run(s, 'out')}

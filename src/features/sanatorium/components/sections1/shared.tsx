@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { FormInput } from '@/components/FormInput';
 import { confirm } from '@/lib/confirm';
 import { EmptyState, IconButton, Text } from '@/ui';
-import { useSanAccess, Denied } from '../common';
+import { useSanAccess, useSanReadOnly, Denied } from '../common';
 import { useSanFeatures, type SanFeatureKey } from '../../utils/features';
 import type { SanRole } from '../../types';
 
@@ -27,6 +27,8 @@ export function FeatureOff() {
 /** Up / down arrows of a reorderable row. */
 export function MoveButtons({ onUp, onDown, first, last, testID }: { onUp: () => void; onDown: () => void; first: boolean; last: boolean; testID?: string }) {
   const { t } = useTranslation();
+  // Reordering is a write: not drawn for the view-only chairman.
+  if (useSanReadOnly()) return null;
   return (
     <View style={styles.move}>
       <View style={first ? styles.off : undefined} pointerEvents={first ? 'none' : 'auto'}>
