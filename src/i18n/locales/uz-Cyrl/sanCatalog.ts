@@ -48,7 +48,7 @@ export default {
     prompted: "{{n}} та сўров юборилган",
     rating: "Баҳо",
     room: "Хона",
-    search: "Меҳмон ёки изоҳ бўйича қидириш",
+    search: "Меҳмон исми бўйича қидириш",
     serviceName: "Хизмат номи",
     shown: "{{n}} / {{total}} та жавоб",
     source: "Манба",

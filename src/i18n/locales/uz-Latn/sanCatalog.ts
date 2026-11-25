@@ -48,7 +48,7 @@ export default {
     prompted: "{{n}} ta so'rov yuborilgan",
     rating: "Baho",
     room: "Xona",
-    search: "Mehmon yoki izoh bo'yicha qidirish",
+    search: "Mehmon ismi bo'yicha qidirish",
     serviceName: "Xizmat nomi",
     shown: "{{n}} / {{total}} ta javob",
     source: "Manba",

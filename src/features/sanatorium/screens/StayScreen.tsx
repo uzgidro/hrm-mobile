@@ -17,6 +17,8 @@ import { JourneyCard } from '../components/sections1/JourneyCard';
 import { StayDietSheet } from '../components/sections2/DietParts';
 import { StayDocumentsCard, StayServicesCard } from '../components/sections2/StayDocuments';
 import { StayNext } from '../simple/components/StayNext';
+import { RefundSheet } from '../simple/components/StayActions';
+import { refundOf } from '../simple/utils';
 import { toastWarnings } from '../simple/warnings';
 import { useSanFeatures } from '../utils/features';
 import { StaySheets, type StaySheetKind } from '../components/StaySheets';
@@ -59,6 +61,8 @@ function Detail({ stay }: { stay: StayFull }) {
   const [early, setEarly] = useState(false);
   const [appt, setAppt] = useState(false);
   const [dietOpen, setDietOpen] = useState(false);
+  const [refund, setRefund] = useState(0);
+  const leaveCard = () => (router.canGoBack() ? router.back() : router.replace('/sanatorium-stays'));
   const [more, setMore] = useState(false);
   const features = useSanFeatures();
   const live = stay.status === 'booked' || stay.status === 'checked_in';
@@ -67,7 +71,12 @@ function Detail({ stay }: { stay: StayFull }) {
     try {
       const res = await (kind === 'in' ? checkIn : checkOut).mutateAsync(stay.id);
       toast.success(t(kind === 'in' ? 'sanatorium.checkedIn' : 'sanatorium.checkedOut'));
-      toastWarnings(res);
+      toastWarnings(res, ['refund']);
+      // Money to give back is shown until it is read (the registrar only gets it).
+      const back = refundOf(res);
+      if (kind === 'out' && back > 0) return setRefund(back);
+      // Who has left is out of the room keeper's sight: the card would only answer 404.
+      if (kind === 'out' && !registrar) leaveCard();
     } catch (e) {
       if (kind === 'out' && sanErrorInfo(e).code === 'use_early_leave') setEarly(true);
       else toast.error(sanErrorMessage(e, t('errors.generic')));
@@ -135,7 +144,8 @@ function Detail({ stay }: { stay: StayFull }) {
       </View>}
 
       <StaySheets stay={stay} kind={sheet} onClose={() => setSheet(null)} />
-      <EarlyLeaveSheet stay={early ? stay : null} onClose={() => setEarly(false)} />
+      <EarlyLeaveSheet stay={early ? stay : null} onDone={registrar ? undefined : leaveCard} onClose={() => setEarly(false)} />
+      {refund > 0 && <RefundSheet name={stay.guest?.full_name ?? ''} amount={refund} kind="refund" onClose={() => setRefund(0)} />}
       <AppointmentSheet stayId={appt ? stay.id : null} from={stay.planned_from} to={stay.planned_to} onClose={() => setAppt(false)} />
       <StayDietSheet stay={dietOpen ? stay : null} onClose={() => setDietOpen(false)} />
     </View>

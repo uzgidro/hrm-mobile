@@ -48,7 +48,7 @@ export default {
     prompted: "Отправлено запросов: {{n}}",
     rating: "Оценка",
     room: "Номер",
-    search: "Поиск по гостю или комментарию",
+    search: "Поиск по имени гостя",
     serviceName: "Название услуги",
     shown: "Показано {{n}} из {{total}}",
     source: "Источник",

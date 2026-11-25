@@ -151,7 +151,7 @@ function useInvalidate() {
 const hook = <V, R>(fn: (v: V) => Promise<R>) =>
   function useSanMutation() {
     const onSuccess = useInvalidate();
-    return useMutation({ meta, mutationFn: fn, onSuccess });
+    return useMutation({ meta, networkMode: 'always', mutationFn: fn, onSuccess });
   };
 
 export const useCheckIn = hook(checkIn);
@@ -166,7 +166,7 @@ export const usePutMenu = hook(putMenu);
 export const useAcceptRequest = hook(acceptRequest);
 export const useRejectRequest = hook(rejectRequest);
 export function useResolveGuestQr() {
-  return useMutation({ meta, mutationFn: resolveGuestQr });
+  return useMutation({ meta, networkMode: 'always', mutationFn: resolveGuestQr });
 }
 
 export const useSaveSettings = hook(saveSettings);

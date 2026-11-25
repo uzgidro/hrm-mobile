@@ -7,6 +7,7 @@ import { router } from 'expo-router';
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Icon } from '@/components/Icon';
+import { confirm } from '@/lib/confirm';
 import { toast } from '@/lib/toast';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { useTheme } from '@/theme/ThemeProvider';
@@ -69,6 +70,7 @@ export default function BookingsScreen() {
   };
   const bulkCheckIn = async () => {
     if (progress || picked.length === 0) return;
+    if (!(await confirm({ title: t('sanGuests.bulkCheckIn'), message: t('sanFlow.bulk.ask', { n: picked.length }), confirmLabel: t('sanGuests.bulkCheckIn'), cancelLabel: t('common.cancel') }))) return;
     const names = new Map(rows.map((r) => [r.id, r.guest?.full_name ?? `#${r.id}`]));
     setProgress({ done: 0, total: picked.length });
     const res = await runBulk(picked, (id) => checkIn(id), (e) => sanErrorMessage(e, t('errors.generic')), (done, total) => setProgress({ done, total }));

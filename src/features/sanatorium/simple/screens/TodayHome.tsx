@@ -50,7 +50,8 @@ export function TodayHome({ data, refreshing, onRefresh }: { data: TodayData; re
   const left = setup.data ? setupRequiredLeft(setup.data.items) : 0;
   const showSetup = !!setup.data && setup.data.done < setup.data.total;
   const searching = text.trim().length >= 2;
-  const hits = searching ? (guests.data ?? []).slice(0, 6) : [];
+  const fresh = text.trim() === search.trim();
+  const hits = searching && fresh ? (guests.data ?? []).slice(0, 6) : [];
   const dot: Record<QueueUrgency, string> = { overdue: c.dangerMark, today: c.brand, soon: c.fgSubtle };
 
   const open = (item: QueueItem) => {
@@ -135,7 +136,7 @@ export function TodayHome({ data, refreshing, onRefresh }: { data: TodayData; re
                 onPress={() => openHit(g.id, g.active_stay)}
               />
             ))}
-            {guests.isSuccess && hits.length === 0 && (
+            {guests.isSuccess && fresh && hits.length === 0 && (
               <Card testID="today-not-found">
                 <Text variant="body">{t('sanFlow.today.notFound')}</Text>
                 {!readOnly && <Button testID="today-new-guest" label={t('sanFlow.today.newGuest')} variant="soft" onPress={() => router.push({ pathname: '/sanatorium-arrive', params: { name: text.trim() } })} />}

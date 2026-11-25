@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { FormInput } from '@/components/FormInput';
 import { confirm } from '@/lib/confirm';
-import { uzPhoneFromInput, uzPhoneInputValue } from '@/utils/phone';
+import { isUzPhoneEmpty, UZ_PHONE_PREFIX, uzPhoneFromInput, uzPhoneInputValue } from '@/utils/phone';
 import { EmptyState, IconButton, Text } from '@/ui';
 import { useSanAccess, useSanReadOnly, Denied } from '../common';
 import { useSanFeatures, type SanFeatureKey } from '../../utils/features';
@@ -85,8 +85,12 @@ export function PhoneField({ label, value, onChange, required, testID }: { label
   return (
     <FormInput
       label={label}
-      value={uzPhoneInputValue(value)}
-      onChangeText={(v) => onChange(uzPhoneFromInput(v))}
+      // A half-typed value already carries the prefix; only a stored number in another shape is normalised.
+      value={value.startsWith(UZ_PHONE_PREFIX) ? value : uzPhoneInputValue(value)}
+      onChangeText={(v) => {
+        const next = uzPhoneFromInput(v);
+        onChange(isUzPhoneEmpty(next) ? '' : next);
+      }}
       keyboardType="phone-pad"
       required={required}
       maxLength={13}

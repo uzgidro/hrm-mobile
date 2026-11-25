@@ -16,6 +16,7 @@ import { DateField, ErrorLine, SwitchRow } from '../../components/forms';
 import { ChipWrap, DownloadButton, RowTools, SectionScreen, useConfirmDelete } from '../../components/sections2/kit';
 import { docFileName, emptyOrgDraft, filterOrgs, orgBody, type OrgDraft } from '../../utils/sections2';
 import { fmtDate, fmtMoney, sanErrorMessage, todayIso } from '../../utils/sanatorium';
+import { PhoneField } from '../../components/sections1/shared';
 import { useSingleFlight } from '../../simple/useSingleFlight';
 
 export default function OrganizationsScreen() {
@@ -96,13 +97,13 @@ function OrgForm({ org, onClose }: { org: Organization | null; onClose: () => vo
   return (
     <View testID="org-form">
       <FormInput label={t('sanatorium.s2.orgName')} value={d.name} onChangeText={(v) => set({ name: v })} required testID="og-name" />
-      <FormInput label={t('sanatorium.s2.tin')} value={d.tin} onChangeText={(v) => set({ tin: v })} keyboardType="number-pad" testID="og-tin" />
+      <FormInput label={t('sanatorium.s2.tin')} value={d.tin} onChangeText={(v) => set({ tin: v })} keyboardType="number-pad" maxLength={14} testID="og-tin" />
       <FormInput label={t('sanatorium.address')} value={d.address} onChangeText={(v) => set({ address: v })} multiline testID="og-address" />
       <FormInput label={t('sanatorium.s2.bankName')} value={d.bankName} onChangeText={(v) => set({ bankName: v })} testID="og-bank" />
       <FormInput label={t('sanatorium.s2.bankAccount')} value={d.bankAccount} onChangeText={(v) => set({ bankAccount: v })} keyboardType="number-pad" testID="og-account" />
       <FormInput label={t('sanatorium.s2.bankMfo')} value={d.bankMfo} onChangeText={(v) => set({ bankMfo: v })} keyboardType="number-pad" testID="og-mfo" />
       <FormInput label={t('sanatorium.s2.contactPerson')} value={d.contactPerson} onChangeText={(v) => set({ contactPerson: v })} testID="og-person" />
-      <FormInput label={t('sanatorium.s2.contactPhone')} value={d.contactPhone} onChangeText={(v) => set({ contactPhone: v })} keyboardType="phone-pad" testID="og-phone" />
+      <PhoneField label={t('sanatorium.s2.contactPhone')} value={d.contactPhone} onChange={(v) => set({ contactPhone: v })} testID="og-phone" />
       <FormInput label={t('sanatorium.s2.contractNo')} value={d.contractNo} onChangeText={(v) => set({ contractNo: v })} testID="og-contract" />
       <DateField label={t('sanatorium.s2.contractDate')} value={d.contractDate} onChange={(v) => set({ contractDate: v })} testID="og-contract-date" />
       <FormInput label={t('sanatorium.notes')} value={d.note} onChangeText={(v) => set({ note: v })} multiline />

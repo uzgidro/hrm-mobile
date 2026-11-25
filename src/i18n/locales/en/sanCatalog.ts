@@ -48,7 +48,7 @@ export default {
     prompted: "{{n}} requests sent",
     rating: "Rating",
     room: "Room",
-    search: "Search by guest or comment",
+    search: "Search by guest name",
     serviceName: "Service name",
     shown: "Showing {{n}} of {{total}}",
     source: "Source",

@@ -191,8 +191,9 @@ export const requestsInfinite = (status: RequestStatus, enabled = true, q = '') 
     getNextPageParam: nextPage,
     enabled,
   });
+/** A stay may leave the reader's sight (room keeper after a check-out): its background refresh stays silent. */
 export const stayQuery = (id: number, enabled = true) =>
-  queryOptions({ queryKey: sanKeys.stay(id), queryFn: () => fetchStay(id), enabled: enabled && id > 0 });
+  queryOptions({ queryKey: sanKeys.stay(id), queryFn: () => fetchStay(id), enabled: enabled && id > 0, meta: { skipErrorToast: true } });
 
 /** Active staff holding one clinical role (doctors / nurses for pickers). */
 export const fetchStaffByRole = (role: string) =>

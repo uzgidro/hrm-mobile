@@ -45,7 +45,8 @@ export function QueryBlock<T>({
   rows?: number;
 }) {
   if (query.isPending) return <LoadingView rows={rows} />;
-  if (query.isError || query.data === undefined) return <ErrorState onRetry={() => void query.refetch()} />;
+  // A failed refresh keeps what is already on screen (the query client tells about it with a toast).
+  if (query.data === undefined) return <ErrorState onRetry={() => void query.refetch()} />;
   return <>{children(query.data)}</>;
 }
 

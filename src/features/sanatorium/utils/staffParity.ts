@@ -204,7 +204,7 @@ export function dashboardTiles(s: Record<string, number | string | undefined>): 
   if (has('occupied_beds') || has('total_beds')) out.push({ key: 'occupied_beds', tint: 'cyan', icon: 'building', value: `${num('occupied_beds')} / ${num('total_beds')}`, hint: has('free_beds') ? { kind: 'free', n: num('free_beds') } : undefined });
   if (has('in_house')) out.push({ key: 'in_house', tint: 'green', icon: 'users', value: String(num('in_house')) });
   if (has('arrivals_today')) out.push({ key: 'arrivals_today', tint: 'drop', icon: 'arrowDown', value: String(num('arrivals_today')), hint: num('overdue_arrivals') ? { kind: 'overdue', n: num('overdue_arrivals') } : undefined, danger: num('overdue_arrivals') > 0 });
-  if (has('departures_today')) out.push({ key: 'departures_today', tint: 'amber', icon: 'arrowUp', value: String(num('departures_today')) });
+  if (has('departures_today')) out.push({ key: 'departures_today', tint: 'amber', icon: 'arrowUp', value: String(num('departures_today')), hint: num('overdue_departures') ? { kind: 'overdue', n: num('overdue_departures') } : undefined, danger: num('overdue_departures') > 0 });
   if (has('leaving_tomorrow')) out.push({ key: 'leaving_tomorrow', tint: 'orange', icon: 'clock', value: String(num('leaving_tomorrow')) });
   if (has('early_leaves_30d')) out.push({ key: 'early_leaves_30d', tint: 'amber', icon: 'logout', value: String(num('early_leaves_30d')), danger: num('early_leaves_30d') > 0 });
   if (has('meals_today')) out.push({ key: 'meals_today', tint: 'orange', icon: 'gift', value: String(num('meals_today')) });

@@ -23,19 +23,19 @@ import { fmtDate, fmtMoney, hasSanRole, todayIso } from '../utils/sanatorium';
 import { SwitchRow } from './forms';
 
 /** `group` undefined = the sheet finds the family itself (people of the same group who live here too). */
-export function EarlyLeaveSheet({ stay, group, onClose }: { stay: Stay | null; group?: Party; onClose: () => void }) {
+export function EarlyLeaveSheet({ stay, group, onDone, onClose }: { stay: Stay | null; group?: Party; onDone?: () => void; onClose: () => void }) {
   const { t } = useTranslation();
   const family = useQuery(groupStaysQuery(stay?.group_key, 'checked_in', !!stay && !group && stay.status === 'checked_in'));
   const mates = (family.data ?? []).filter((m) => m.id !== stay?.id && m.planned_to > todayIso());
   return (
     <Sheet visible={!!stay} onClose={onClose} title={t('sanatorium.earlyLeave')} scroll>
-      {stay && <EarlyLeaveForm key={stay.id} stay={stay} group={group ?? (mates.length ? partyOfStays(stay, mates) : undefined)} onClose={onClose} />}
+      {stay && <EarlyLeaveForm key={stay.id} stay={stay} group={group ?? (mates.length ? partyOfStays(stay, mates) : undefined)} onDone={onDone} onClose={onClose} />}
     </Sheet>
   );
 }
 
 // State lives here and starts fresh each time the sheet opens (the form is mounted per stay).
-export function EarlyLeaveForm({ stay, group, onClose }: { stay: Stay; group?: Party; onClose: () => void }) {
+export function EarlyLeaveForm({ stay, group, onDone, onClose }: { stay: Stay; group?: Party; /** The guest has left (called after the sheet is closed). */ onDone?: () => void; onClose: () => void }) {
   const { t } = useTranslation();
   const save = useEarlyLeave();
   const flight = useSingleFlight();
@@ -49,7 +49,7 @@ export function EarlyLeaveForm({ stay, group, onClose }: { stay: Stay; group?: P
   const [refund, setRefund] = useState(0);
   const all = size > 1 && whole;
   // Money is the registrar's business; the preview already knows the nights that will not be paid.
-  const preview = useQuery(earlyPreviewQuery(stay.id, date, all, registrar));
+  const preview = useQuery(earlyPreviewQuery(stay.id, date, all, registrar && !save.isPending && !save.isSuccess));
   const money = moneyLine(preview.data);
 
   const submit = () => flight.run(async () => {
@@ -62,7 +62,10 @@ export function EarlyLeaveForm({ stay, group, onClose }: { stay: Stay; group?: P
       if (left > 0) toast.info(t('sanSimple.debtLeft', { amount: fmtMoney(left) }), 8000);
       const back = refundOf(res);
       if (back > 0 && registrar) setRefund(back);
-      else onClose();
+      else {
+        onClose();
+        onDone?.();
+      }
     } catch (e) {
       setError(flowErrorText(e, t('errors.generic')));
     }

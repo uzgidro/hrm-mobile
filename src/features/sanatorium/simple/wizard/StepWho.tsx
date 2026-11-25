@@ -156,7 +156,8 @@ function Matches({ q, exclude, onPick }: { q: string; exclude: number[]; onPick:
   const { t } = useTranslation();
   const text = useDebouncedValue(q, 350);
   const res = useQuery(guestMatchesQuery(text));
-  const rows = text.trim().length >= 3 && q.trim().length >= 3 ? (res.data ?? []).filter((g) => !exclude.includes(g.id)).slice(0, 4) : [];
+  // Suggestions of a previous spelling are never offered while a new one is being looked up.
+  const rows = text.trim().length >= 3 && text.trim() === q.trim() ? (res.data ?? []).filter((g) => !exclude.includes(g.id)).slice(0, 4) : [];
   if (!rows.length) return null;
   return (
     <View testID="guest-matches" style={styles.stack}>

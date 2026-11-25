@@ -226,7 +226,7 @@ function useInvalidate() {
 const hook = <V, R>(fn: (v: V) => Promise<R>) =>
   function useSection1Mutation() {
     const onSuccess = useInvalidate();
-    return useMutation({ meta, mutationFn: fn, onSuccess });
+    return useMutation({ meta, networkMode: 'always', mutationFn: fn, onSuccess });
   };
 
 export const useSaveFeatures = hook(saveFeatures);

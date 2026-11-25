@@ -321,9 +321,9 @@ const meta = { skipErrorToast: true };
 const hook = <V, R>(fn: (v: V) => Promise<R>) =>
   function useS2Mutation() {
     const qc = useQueryClient();
-    return useMutation({ meta, mutationFn: fn, onSuccess: () => qc.invalidateQueries({ queryKey: sanKeys.all }) });
+    return useMutation({ meta, networkMode: 'always', mutationFn: fn, onSuccess: () => qc.invalidateQueries({ queryKey: sanKeys.all }) });
   };
-export const useQuote = () => useMutation({ meta, mutationFn: quote });
+export const useQuote = () => useMutation({ meta, networkMode: 'always', mutationFn: quote });
 export const useSavePackage = hook(savePackage);
 export const useSaveSeason = hook(saveSeason);
 export const useSaveService = hook(saveService);

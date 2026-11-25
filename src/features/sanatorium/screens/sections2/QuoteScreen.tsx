@@ -32,7 +32,11 @@ export default function QuoteScreen() {
   const [ages, setAges] = useState('');
   const [result, setResult] = useState<QuoteResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const set = (p: Partial<QuoteDraft>) => setD((x) => ({ ...x, ...p }));
+  // A sum of other dates or people must not stay on screen as if it belonged to the new ones.
+  const set = (p: Partial<QuoteDraft>) => {
+    setResult(null);
+    setD((x) => ({ ...x, ...p }));
+  };
 
   const flight = useSingleFlight();
   const submit = () => flight.run(async () => {
@@ -57,7 +61,7 @@ export default function QuoteScreen() {
         <DateField label={t('sanatorium.dateFrom')} value={d.start} onChange={(v) => set({ start: v })} testID="qt-start" />
         <DateField label={t('sanatorium.dateTo')} value={d.end} onChange={(v) => set({ end: v })} testID="qt-end" />
         <FormInput label={t('sanatorium.adults')} value={d.adults} onChangeText={(v) => set({ adults: v })} keyboardType="number-pad" testID="qt-adults" />
-        <FormInput label={t('sanatorium.s2.childrenAges')} value={ages} onChangeText={setAges} placeholder="3, 7" keyboardType="numbers-and-punctuation" testID="qt-ages" />
+        <FormInput label={t('sanatorium.s2.childrenAges')} value={ages} onChangeText={(v) => { setResult(null); setAges(v); }} placeholder="3, 7" keyboardType="numbers-and-punctuation" testID="qt-ages" />
         <ChoiceField label={t('sanatorium.room')} value={d.roomId} noneLabel={t('sanatorium.noRoom')} options={(rooms.data ?? []).filter((r) => r.is_active).map((r) => ({ value: r.id, label: [r.number, r.building].filter(Boolean).join(' · ') }))} onChange={(v) => set({ roomId: v })} loading={rooms.isPending} testID="qt-room" />
         {f.on('packages') && (
           <ChoiceField label={t('sanatorium.s2.package')} value={d.packageId} noneLabel={t('sanatorium.none')} options={(packages.data ?? []).map((p) => ({ value: p.id, label: pickText(p as never, 'name', lang), sub: `${p.nights} ${t('sanatorium.s2.nightsShort')}` }))} onChange={(v) => set({ packageId: v })} loading={packages.isPending} testID="qt-package" />

@@ -5,6 +5,7 @@
 
 import dayjs from 'dayjs';
 import type { User } from '@/types';
+import { normalizePhoneInput, PHONE_RE } from './guests';
 import { hasSanRole } from './sanatorium';
 
 export type Built<T> = { ok: true; body: T } | { ok: false; error: string };
@@ -193,13 +194,14 @@ export const emptyOrgDraft = (): OrgDraft => ({
 });
 export function orgBody(d: OrgDraft): Built<Record<string, unknown>> {
   if (d.name.trim().length < 2) return fail('sanatorium.nameShort');
-  if (d.tin.trim() && !/^\d{9}$/.test(d.tin.trim())) return fail('sanatorium.s2.tinInvalid');
+  if (d.contactPhone.trim() && !PHONE_RE.test(normalizePhoneInput(d.contactPhone))) return fail('sanFlow.who.phoneBad');
+  if (d.tin.trim() && !/^(\d{9}|\d{14})$/.test(d.tin.trim())) return fail('sanatorium.s2.tinInvalid');
   return {
     ok: true,
     body: {
       name: d.name.trim(), tin: trimOrNull(d.tin), address: trimOrNull(d.address), bank_name: trimOrNull(d.bankName),
       bank_account: trimOrNull(d.bankAccount), bank_mfo: trimOrNull(d.bankMfo), contact_person: trimOrNull(d.contactPerson),
-      contact_phone: trimOrNull(d.contactPhone), contract_no: trimOrNull(d.contractNo), contract_date: d.contractDate,
+      contact_phone: d.contactPhone.trim() ? normalizePhoneInput(d.contactPhone) : null, contract_no: trimOrNull(d.contractNo), contract_date: d.contractDate,
       note: trimOrNull(d.note), is_active: d.active,
     },
   };

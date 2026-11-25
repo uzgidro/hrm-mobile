@@ -50,6 +50,17 @@ export function sanErrorInfo(e: unknown): { code: string | null; params: Record<
 
 /** `sanatorium.errors.<code>` first (translated, with params), then the generic API text. */
 export function sanErrorMessage(e: unknown, fallback?: string): string {
+  const err = e as { response?: { data?: { detail?: unknown } }; isAxiosError?: boolean; code?: string } | undefined;
+  // No answer at all: it is the connection, not the data.
+  if (err && !err.response && (err.isAxiosError === true || err.code === 'ERR_NETWORK')) return i18n.t('sanFlow.err.noNet');
+  // The server's own validation sentences are English and name body keys: the fields are named in words instead.
+  if (Array.isArray(err?.response?.data?.detail)) {
+    const names = (err!.response!.data!.detail as { loc?: unknown[] }[]).flatMap((d) => {
+      const key = [...(d?.loc ?? [])].reverse().find((x): x is string => typeof x === 'string' && x !== 'body');
+      return key && i18n.exists(`sanFlow.fields.${key}`) ? [i18n.t(`sanFlow.fields.${key}`)] : [];
+    });
+    return names.length ? i18n.t('sanFlow.err.fields', { fields: [...new Set(names)].join(', ') }) : i18n.t('sanFlow.err.form');
+  }
   const info = sanErrorInfo(e);
   const code = info.code;
   // ISO dates in the params read as DD.MM.YYYY in the message.
