@@ -75,7 +75,7 @@ export default {
   },
   guest: "Гость",
   guestType: {
-    hotel: "Гостиница",
+    hotel: "Обычный гость",
     rest: "Отдыхающий",
     treatment: "Лечение",
     contract: "По договору",

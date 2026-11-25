@@ -9,6 +9,7 @@ import { FormInput } from '@/components/FormInput';
 import { toast } from '@/lib/toast';
 import { Badge, Button, Card, EmptyState, PageHeader, Screen, Segmented, Sheet, Text } from '@/ui';
 import { useRejectRequest } from '../api/mutations';
+import { useSimpleAvailable } from '../simple/useSimpleAvailable';
 import { requestsInfinite } from '../api/queries';
 import { AcceptSheet, type Accepted } from '../components/AcceptSheet';
 import { CredentialsSheet } from '../components/CredentialsSheet';
@@ -26,11 +27,12 @@ export default function RequestsScreen() {
   const [rejecting, setRejecting] = useState<SanRequest | null>(null);
   const [walkIn, setWalkIn] = useState(false);
   const [creds, setCreds] = useState<Accepted | null>(null);
+  const simple = useSimpleAvailable(allowed);
   if (!allowed) return <Denied />;
 
   return (
     <Screen refreshing={q.isRefetching} onRefresh={() => void q.refetch()} testID="sanatorium-requests-screen">
-      <PageHeader title={t('sanatorium.nav.requests')} right={<Button testID="walkin-add" label={t('sanatorium.walkIn')} icon="plus" size="sm" onPress={() => setWalkIn(true)} />} />
+      <PageHeader title={t('sanatorium.nav.requests')} right={<Button testID="walkin-add" label={t('sanatorium.walkIn')} icon="plus" size="sm" onPress={() => (simple ? router.push('/sanatorium-arrive') : setWalkIn(true))} />} />
       <Segmented
         testID="requests-seg"
         value={status}
@@ -73,7 +75,7 @@ export default function RequestsScreen() {
                     {r.status === 'rejected' && !!r.reject_reason && <Text variant="caption" tone="danger">{r.reject_reason}</Text>}
                     {r.status === 'new' && (
                       <View style={styles.actions}>
-                        <Button testID="request-accept" label={t('sanatorium.accept')} icon="check" size="sm" onPress={() => setAccepting(r)} />
+                        <Button testID="request-accept" label={t('sanatorium.accept')} icon="check" size="sm" onPress={() => (simple ? router.push({ pathname: '/sanatorium-arrive', params: { request: String(r.id) } }) : setAccepting(r))} />
                         <Button testID="request-reject" label={t('sanatorium.reject')} variant="dangerGhost" size="sm" onPress={() => setRejecting(r)} />
                         {!!r.existing_guest_id && (
                           <Button label={t('sanatorium.existingGuest')} variant="link" size="sm" onPress={() => router.push({ pathname: '/sanatorium-guest', params: { id: String(r.existing_guest_id) } })} />

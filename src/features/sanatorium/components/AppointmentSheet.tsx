@@ -11,6 +11,7 @@ import { Button, SelectField, Sheet } from '@/ui';
 import { useCreateAppointment } from '../api/mutations';
 import { specialtiesQuery, staffRoleQuery } from '../api/queries';
 import { fmtDateTime, sanErrorMessage, toLocalIso } from '../utils/sanatorium';
+import { SlotChips } from '../simple/components/SlotChips';
 import { ChoiceField, ErrorLine, opt } from './forms';
 
 /** `stayId` null = closed. */
@@ -76,6 +77,7 @@ function AppointmentForm({ stayId, onClose }: { stayId: number; onClose: () => v
         testID="ac-doctor"
       />
       <SelectField label={t('sanatorium.dateTime')} value={fmtDateTime(when)} icon="calendar" onPress={() => setPickWhen(true)} testID="ac-when" />
+      <SlotChips staffId={doctorId} day={dayjs(when).format('YYYY-MM-DD')} minutes={Number.parseInt(duration, 10) || 20} value={when} onPick={(iso) => setWhen(toLocalIso(iso))} />
       <FormInput label={t('sanatorium.duration')} value={duration} onChangeText={setDuration} keyboardType="number-pad" testID="ac-duration" />
       <FormInput label={t('sanatorium.referralNote')} value={note} onChangeText={setNote} multiline testID="ac-note" />
       <ErrorLine message={error} testID="ac-error" />

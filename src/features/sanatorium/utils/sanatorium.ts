@@ -47,6 +47,9 @@ export function sanErrorInfo(e: unknown): { code: string | null; params: Record<
 export function sanErrorMessage(e: unknown, fallback?: string): string {
   const { code, params } = sanErrorInfo(e);
   if (code) {
+    // A variant that names the guest wins when the server sends `params.name` (guest_has_stay).
+    const named = `sanSimple.errors.${code}_named`;
+    if (params.name != null && i18n.exists(named)) return i18n.t(named, params as Record<string, string>);
     const key = `sanatorium.errors.${code}`;
     const text = i18n.t(key, params as Record<string, string>);
     if (text && text !== key) return text;
@@ -54,6 +57,10 @@ export function sanErrorMessage(e: unknown, fallback?: string): string {
     const key1 = `san1.errors.${code}`;
     const text1 = i18n.t(key1, params as Record<string, string>);
     if (text1 && text1 !== key1) return text1;
+    // Simplification round (work queue, arrival wizard, short actions).
+    const key2 = `sanSimple.errors.${code}`;
+    const text2 = i18n.t(key2, params as Record<string, string>);
+    if (text2 && text2 !== key2) return text2;
   }
   return getApiErrorMessage(e, fallback);
 }

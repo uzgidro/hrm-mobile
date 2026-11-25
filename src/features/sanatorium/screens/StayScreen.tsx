@@ -17,6 +17,7 @@ import { EarlyLeaveSheet } from '../components/EarlyLeaveSheet';
 import { JourneyCard } from '../components/sections1/JourneyCard';
 import { StayDietSheet } from '../components/sections2/DietParts';
 import { StayDocumentsCard, StayServicesCard } from '../components/sections2/StayDocuments';
+import { StayNext } from '../simple/components/StayNext';
 import { useSanFeatures } from '../utils/features';
 import { StaySheets, type StaySheetKind } from '../components/StaySheets';
 import type { StayFull } from '../types';
@@ -56,6 +57,7 @@ function Detail({ stay }: { stay: StayFull }) {
   const [early, setEarly] = useState(false);
   const [appt, setAppt] = useState(false);
   const [dietOpen, setDietOpen] = useState(false);
+  const [more, setMore] = useState(false);
   const features = useSanFeatures();
   const live = stay.status === 'booked' || stay.status === 'checked_in';
 
@@ -73,6 +75,7 @@ function Detail({ stay }: { stay: StayFull }) {
 
   return (
     <View style={styles.stack}>
+      {registrar && <StayNext stay={stay} onEarlyLeave={() => setEarly(true)} />}
       <Card testID="stay-detail">
         <View style={styles.row}>
           <Text
@@ -114,7 +117,8 @@ function Detail({ stay }: { stay: StayFull }) {
       <StayServicesCard stay={stay} />
       <StayDocumentsCard stay={stay} />
 
-      <View style={styles.actions}>
+      {registrar && <Button testID="stay-more" label={more ? t('sanSimple.next.lessDetails') : t('sanSimple.next.details')} variant="soft" full onPress={() => setMore((v) => !v)} />}
+      {(!registrar || more) && <View style={styles.actions}>
         {live && registrar && features.on('diet') && <Button testID="stay-diet" label={t('sanatorium.s2.dietAndAllergies')} variant="soft" onPress={() => setDietOpen(true)} />}
         {stay.status === 'booked' && <Button testID="stay-checkin" label={t('sanatorium.checkIn')} icon="check" loading={checkIn.isPending} onPress={() => void run('in')} />}
         {stay.status === 'checked_in' && (
@@ -126,7 +130,7 @@ function Detail({ stay }: { stay: StayFull }) {
         {live && registrar && <Button testID="stay-edit" label={t('sanatorium.edit')} variant="soft" icon="edit" onPress={() => setSheet('edit')} />}
         {live && <Button testID="stay-appt" label={t('sanatorium.newAppointment')} variant="soft" icon="plus" onPress={() => setAppt(true)} />}
         {stay.status === 'booked' && registrar && <Button testID="stay-cancel" label={t('sanatorium.cancelStay')} variant="dangerGhost" onPress={() => setSheet('cancel')} />}
-      </View>
+      </View>}
 
       <StaySheets stay={stay} kind={sheet} onClose={() => setSheet(null)} />
       <EarlyLeaveSheet stay={early ? stay : null} onClose={() => setEarly(false)} />

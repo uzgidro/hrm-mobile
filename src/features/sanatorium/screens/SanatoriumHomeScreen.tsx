@@ -8,10 +8,14 @@ import { useTranslation } from 'react-i18next';
 import type { IconName } from '@/components/Icon';
 import type { ModuleTintKey } from '@/theme/tokens';
 import { useAuthStore } from '@/store/authStore';
-import { Badge, Card, EmptyState, ListRow, PageHeader, Screen, SectionHeader, StatTile, Text } from '@/ui';
+import { Badge, Card, EmptyState, ListRow, LoadingView, PageHeader, Screen, SectionHeader, StatTile, Text } from '@/ui';
 import { dashboardQuery } from '../api/queries';
 import { ApptRow } from '../components/ApptRow';
 import { Denied, QueryBlock, useSanAccess } from '../components/common';
+import { todayQuery } from '../simple/api';
+import { ArrivalsStrip } from '../simple/components/ArrivalsStrip';
+import { MyGuestsLink } from '../simple/components/MyGuestsLink';
+import { TodayHome } from '../simple/screens/TodayHome';
 import { Sections2Links } from '../components/sections2/Sections2Links';
 import type { Dashboard, SanRole, Stay } from '../types';
 import { useSanFeatures, type SanFeatureKey } from '../utils/features';
@@ -56,7 +60,21 @@ export default function SanatoriumHomeScreen() {
   const allowed = useSanAccess();
   const q = useQuery(dashboardQuery(allowed));
   const { on } = useSanFeatures();
+  const registrar = hasSanRole(user, 'registrar');
+  // The work queue replaces the old home for the registrar; an older server (404) keeps the classic one.
+  const today = useQuery(todayQuery(allowed && registrar));
+  const keeper = hasSanRole(user, 'room_keeper', 'kitchen') && !registrar;
+  const keeperToday = useQuery(todayQuery(allowed && keeper));
   if (!allowed) return <Denied />;
+  if (registrar && today.isPending) {
+    return (
+      <Screen testID="sanatorium-screen">
+        <PageHeader title={t('sanatorium.title')} />
+        <LoadingView rows={3} />
+      </Screen>
+    );
+  }
+  if (registrar && today.data) return <TodayHome data={today.data} refreshing={today.isRefetching} onRefresh={() => void today.refetch()} />;
 
   const stats = q.data?.stats ?? {};
   const value = (key: string) => (key === 'free_beds' ? stats.free_beds : stats[key]);
@@ -97,8 +115,10 @@ export default function SanatoriumHomeScreen() {
                 />
               ))}
             </View>
+            <MyGuestsLink enabled={hasSanRole(user, 'doctor', 'nurse')} />
             <Sections2Links />
-            <RoleSections d={d} kitchenOn={on('kitchen_menu')} />
+            {keeper && !!keeperToday.data && <ArrivalsStrip enabled />}
+            <RoleSections d={d} kitchenOn={on('kitchen_menu')} stripOn={keeper && !!keeperToday.data} />
           </View>
         )}
       </QueryBlock>
@@ -119,10 +139,10 @@ function StayLine({ s }: { s: Stay }) {
   );
 }
 
-function RoleSections({ d, kitchenOn }: { d: Dashboard; kitchenOn: boolean }) {
+function RoleSections({ d, kitchenOn, stripOn }: { d: Dashboard; kitchenOn: boolean; stripOn: boolean }) {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
-  const showStays = hasSanRole(user, 'registrar', 'room_keeper');
+  const showStays = hasSanRole(user, 'registrar', 'room_keeper') && !stripOn;
   const appts = d.appointments_today ?? [];
   return (
     <>

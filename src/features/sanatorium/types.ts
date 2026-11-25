@@ -206,6 +206,14 @@ export type SanSettings = {
   about: string | null;
   child_discount_percent: number;
   child_age_limit: number;
+  /** Visit / meal / check-in times (sanatorium simplification, S8); absent on an older server. */
+  exam_hours?: string;
+  exam_slot_min?: number;
+  exam_weekend?: boolean;
+  exam_types?: string[];
+  meal_times?: { breakfast?: string; lunch?: string; dinner?: string };
+  checkin_time?: string;
+  checkout_time?: string;
 };
 
 export type Room = {

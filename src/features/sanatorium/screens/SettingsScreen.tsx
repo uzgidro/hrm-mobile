@@ -11,12 +11,13 @@ import { allSpecialtiesQuery, settingsQuery, staffQuery } from '../api/queries';
 import { ChoiceField, ErrorLine, optNull, SwitchRow } from '../components/forms';
 import { Denied, QueryBlock, useSanAccess } from '../components/common';
 import { StaffSheet } from '../components/StaffSheet';
+import { hasVisitSettings, VisitSettings } from '../simple/components/VisitSettings';
 import { FeaturesPanel } from './sections1/FeaturesPanel';
 import { PoiField, usePoiOn } from '../components/sections1/PoiField';
 import { SPECIALTY_KINDS, type SanSettings, type Specialty, type SpecialtyKind, type StaffMember } from '../types';
 import { sanErrorMessage } from '../utils/sanatorium';
 
-type Seg = 'staff' | 'specialties' | 'texts' | 'sections';
+type Seg = 'staff' | 'specialties' | 'texts' | 'sections' | 'visit';
 
 export default function SettingsScreen() {
   const { t } = useTranslation();
@@ -24,7 +25,7 @@ export default function SettingsScreen() {
   const [seg, setSeg] = useState<Seg>('staff');
   const staff = useQuery(staffQuery(allowed && seg === 'staff'));
   const specs = useQuery(allSpecialtiesQuery(allowed && seg === 'specialties'));
-  const settings = useQuery(settingsQuery(allowed && seg === 'texts'));
+  const settings = useQuery(settingsQuery(allowed));
   const [editStaff, setEditStaff] = useState<StaffMember | 'new' | null>(null);
   const [editSpec, setEditSpec] = useState<Specialty | 'new' | null>(null);
   if (!allowed) return <Denied />;
@@ -50,6 +51,7 @@ export default function SettingsScreen() {
           { value: 'staff', label: t('sanatorium.staff') },
           { value: 'specialties', label: t('sanatorium.specialties') },
           { value: 'texts', label: t('sanatorium.texts') },
+          ...(hasVisitSettings(settings.data) ? [{ value: 'visit' as const, label: t('sanSimple.set.tab') }] : []),
           { value: 'sections', label: t('san1.sections') },
         ]}
       />
@@ -106,6 +108,7 @@ export default function SettingsScreen() {
           </QueryBlock>
         )}
         {seg === 'sections' && <FeaturesPanel />}
+        {seg === 'visit' && settings.data && <VisitSettings key={JSON.stringify(settings.data)} s={settings.data} />}
         {seg === 'texts' && <QueryBlock query={settings}>{(s) => <TextsForm key={JSON.stringify(s)} s={s} />}</QueryBlock>}
       </View>
       <StaffSheet staff={editStaff} onClose={() => setEditStaff(null)} />
