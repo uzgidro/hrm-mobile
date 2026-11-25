@@ -108,6 +108,6 @@ describe('client_ref and old-server fallbacks', () => {
     api.get!.mockResolvedValueOnce({ data: { items: page } }).mockResolvedValueOnce({ data: { items: [{ id: 200, group_key: 'g' }] } });
     const rows = await fetchGroupStays('g', 'checked_in');
     expect(rows.map((r) => r.id)).toEqual([3, 200]);
-    expect(api.get).toHaveBeenNthCalledWith(1, 'sanatorium/stays', { params: { status: 'checked_in', size: 100, page: 1 } });
+    expect(api.get).toHaveBeenNthCalledWith(1, 'sanatorium/stays', { params: { group_key: 'g', status: 'checked_in', size: 100, page: 1 } });
   });
 });

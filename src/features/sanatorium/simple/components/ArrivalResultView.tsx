@@ -1,58 +1,83 @@
-// Finish screen of the wizard: route sheet, the new login cards (shown ONCE), share and «another guest».
+// The end of the wizard: what happened, where the guest goes now, the paper to hand over and the new logins
+// (shown ONCE, kept only in the memory of this screen).
 import React, { useState } from 'react';
-import { Share, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Badge, Button, Card, Text } from '@/ui';
+import { Button, Card, Text } from '@/ui';
 import { GuestCardSheet, type GuestCardInfo } from '../../components/GuestCardSheet';
+import { useSanFeatures } from '../../utils/features';
+import { guestCabinetUrl } from '../../utils/guests';
+import { fmtDate } from '../../utils/sanatorium';
 import type { ArrivalResult } from '../types';
-import { routeSheetText } from '../utils';
 import { warningText } from '../warnings';
-import { RouteSheetBody } from './RouteSheetView';
+import { Note, useRoomText } from './parts';
+import { RouteSheetBody, RouteSheetTools, useSheetLang } from './RouteSheetView';
 
-export function ArrivalResultView({ result, checkedIn, onAnother }: { result: ArrivalResult; checkedIn: boolean; onAnother: () => void }) {
+export function ArrivalResultView({ result, checkedIn, replayed = false, onAnother, onHome }: {
+  result: ArrivalResult;
+  checkedIn: boolean;
+  /** The same press had been saved before (lost answer, second tap): the stays are shown, the passwords cannot be. */
+  replayed?: boolean;
+  onAnother: () => void;
+  onHome: () => void;
+}) {
   const { t } = useTranslation();
+  const features = useSanFeatures();
+  const roomText = useRoomText();
   const [card, setCard] = useState<GuestCardInfo | null>(null);
-  const sheet = result.route_sheet;
+  const sheet = result.route_sheet ?? null;
+  const [lang, setLang] = useSheetLang(sheet);
   const creds = result.credentials ?? [];
   const first = result.stays[0];
-
-  const share = () => {
-    if (!sheet) return;
-    const text = routeSheetText(sheet, null, { loginCode: t('sanatorium.loginCode'), password: t('sanatorium.password'), period: t('sanatorium.period') }, creds);
-    void Share.share({ message: text }).catch(() => {});
-  };
+  const family = (result.route_sheets ?? []).filter((r) => r.stay_id !== sheet?.stay_id);
+  const names = result.stays.map((s) => s.guest?.full_name).filter(Boolean).join(', ');
+  const rooms = [...new Map(result.stays.flatMap((s) => (s.room ? [[s.room.id, roomText(s.room)] as const] : []))).values()].join(', ');
 
   return (
     <View style={styles.stack} testID="wizard-result">
       <Card>
-        <Text variant="title" testID="result-title">{checkedIn ? t('sanSimple.res.placed') : t('sanSimple.res.booked')}</Text>
-        {(result.stays ?? []).map((s) => !!s.guest && <Text key={s.id} variant="body">{s.guest.full_name}</Text>)}
-        {(result.warnings ?? []).map((w, i) => <Badge key={`${w.code}${i}`} label={warningText(w)} tone="warning" />)}
+        <Text variant="title" testID="result-title">{t(replayed ? 'sanFlow.done.already' : checkedIn ? 'sanFlow.done.settled' : 'sanFlow.done.booked')}</Text>
+        <Text variant="body" testID="result-names">{[names, rooms].filter(Boolean).join(' — ')}</Text>
+        {!!first?.planned_from && <Text variant="label" tone="muted">{fmtDate(first.planned_from)} — {fmtDate(first.planned_to)}</Text>}
       </Card>
+      {(result.warnings ?? []).map((w, i) => <Note key={`${w.code}${i}`} tone="warning" testID={`result-warn-${w.code}`}>{warningText(w)}</Note>)}
       {sheet && (
         <Card title={t('sanSimple.route.title')} icon="target" testID="result-route">
-          <RouteSheetBody sheet={sheet} />
+          {!!first && <RouteSheetTools stayId={sheet.stay_id ?? first.id} sheet={sheet} others={family} creds={creds} lang={lang} onLang={setLang} />}
+          <View style={styles.gap} />
+          <RouteSheetBody sheet={sheet} others={family} lang={lang} />
         </Card>
+      )}
+      {creds.length > 0 ? (
+        <Note tone="warning" testID="creds-once">{t('sanatorium.credentialsOnce')}</Note>
+      ) : replayed ? (
+        <>
+          <Note tone="warning" testID="replayed">{t('sanFlow.done.alreadyHint')}</Note>
+          {result.stays.map((s) => !!s.guest && (
+            <Button key={s.id} label={s.guest.full_name} icon="lock" variant="soft" full testID={`replayed-${s.guest.id}`} onPress={() => router.push({ pathname: '/sanatorium-guest', params: { id: String(s.guest!.id) } })} />
+          ))}
+        </>
+      ) : (
+        <Note tone="info" testID="keeps-login">{t('sanFlow.done.keepsLogin')}</Note>
       )}
       {creds.map((c) => (
         <Card key={c.guest_id} testID={`result-cred-${c.guest_id}`}>
           <Text variant="heading">{c.full_name}</Text>
-          <Text variant="label" tone="danger">{t('sanatorium.credentialsOnce')}</Text>
           <Text variant="caption" tone="muted">{t('sanatorium.loginCode')}</Text>
           <Text variant="display" selectable testID={`result-login-${c.guest_id}`}>{c.login_code}</Text>
           <Text variant="caption" tone="muted">{t('sanatorium.password')}</Text>
           <Text variant="display" selectable testID={`result-password-${c.guest_id}`}>{c.password}</Text>
-          <Button label={t('sanatorium.idCard')} variant="soft" onPress={() => setCard({ guestId: c.guest_id, name: c.full_name, loginCode: c.login_code, password: c.password })} />
+          <Button testID={`result-card-${c.guest_id}`} label={t('sanatorium.idCard')} icon="qr" variant="soft" onPress={() => setCard({ guestId: c.guest_id, name: c.full_name, loginCode: c.login_code, password: c.password })} />
         </Card>
       ))}
-      <Button testID="result-share" label={t('sanSimple.res.shareOrPrint')} icon="arrowUp" size="lg" full onPress={share} disabled={!sheet} />
+      {features.on('guest_cabinet') && creds.length > 0 && <Text variant="caption" tone="muted" selectable testID="result-cabinet">{t('sanFlow.sheet.cabinet', { url: guestCabinetUrl() })}</Text>}
       {!!first && <Button testID="result-open" label={t('sanSimple.res.openStay')} variant="soft" full onPress={() => router.replace({ pathname: '/sanatorium-stay', params: { id: String(first.id) } })} />}
-      <Button testID="result-another" label={t('sanSimple.res.another')} variant="soft" full onPress={onAnother} />
-      <Button testID="result-done" label={t('sanSimple.res.done')} variant="neutral" full onPress={() => router.back()} />
+      <Button testID="result-another" label={t('sanFlow.done.again')} variant="soft" icon="plus" full onPress={onAnother} />
+      <Button testID="result-done" label={t('sanFlow.done.home')} full onPress={onHome} />
       <GuestCardSheet info={card} onClose={() => setCard(null)} />
     </View>
   );
 }
 
-const styles = StyleSheet.create({ stack: { gap: 12 } });
+const styles = StyleSheet.create({ stack: { gap: 12 }, gap: { height: 12 } });

@@ -1,11 +1,11 @@
 // Shapes of the "simplification" API (work queue, arrival wizard, route sheet, short actions).
 // Everything the server may add later is optional so an older or newer server never crashes a screen.
-import type { GuestType } from '../types';
+import type { GuestType, StayFull } from '../types';
 
 export type QueueUrgency = 'overdue' | 'today' | 'soon';
 export type QueueKind =
   | 'request_new' | 'waitlist_offered' | 'arrival_overdue' | 'arrival_today' | 'no_exam' | 'no_room'
-  | 'service_request' | 'transfer_request' | 'departure_today' | 'overstay' | 'debt';
+  | 'service_request' | 'transfer_request' | 'departure_today' | 'overstay' | 'debt' | 'debt_left';
 export type QueueAction =
   | 'accept' | 'convert' | 'arrive' | 'no_show' | 'assign_doctor' | 'choose_room' | 'confirm_service'
   | 'confirm_transfer' | 'check_out' | 'extend' | 'take_payment';
@@ -43,18 +43,21 @@ export type TodayData = { date: string; counts: Record<string, number>; items: Q
 
 // ── Wizard options ──
 export type OptionRoom = {
+  /** Another new request wished this room (not blocking). */
   held?: boolean;
+  /** How many of the party already have this room. */
+  own?: number;
   id: number; number: string; building?: string | null; floor?: number | null; room_type?: string | null;
   capacity: number; free_beds: number; price_per_day?: string; price_mode?: 'per_bed' | 'per_room';
   hk_status?: string | null; ready?: boolean; fits?: boolean; photo_thumb?: string | null; place?: string | null;
 };
 export type OptionDoctor = {
   staff_id: number; full_name: string; specialty_id?: number | null; specialty?: string | null;
-  cabinet?: string | null; place?: string | null; load?: number; next_slots?: string[];
+  cabinet?: string | null; place?: string | null; load?: number; next_slots: string[];
 };
 export type OptionNurse = { staff_id: number; full_name: string; load?: number };
-export type OptionDiet = { id: number; code?: string | null; name: string };
-export type OptionPackage = { id: number; name: string; price?: string | null; [k: string]: unknown };
+export type OptionDiet = { id: number; code?: string | null; name: string; name_uz?: string | null; name_ru?: string | null; name_en?: string | null };
+export type OptionPackage = { id: number; name?: string; name_uz?: string | null; name_ru?: string | null; name_en?: string | null; nights?: number; price?: string | null; [k: string]: unknown };
 export type ArrivalOptions = {
   rooms: OptionRoom[];
   suggested_room_id: number | null;
@@ -66,11 +69,14 @@ export type ArrivalOptions = {
   diets: OptionDiet[];
   default_diet_id: number | null;
   packages: OptionPackage[];
-  meals?: { breakfast?: string | null; lunch?: string | null; dinner?: string | null };
+  meals?: { breakfast?: string | null; lunch?: string | null; dinner?: string | null } | null;
   has_exam?: boolean;
   /** True = every member already has a room that stays free: the room step may be skipped, each keeps their own. */
   rooms_assigned?: boolean;
   exam_required: boolean;
+  exam_slot_min?: number;
+  child_age_limit?: number;
+  child_discount_percent?: number;
   warnings: string[];
   prefill?: Prefill | null;
 };
@@ -79,12 +85,12 @@ export type OptionsParams = { start?: string; end?: string; people?: number; gue
 export type PrefillMember = {
   stay_id: number | null; guest_id: number | null; full_name: string; birth_date?: string | null; phone?: string | null; passport?: string | null;
   gender?: string | null; organization_name?: string | null; relation?: string | null; is_child?: boolean; child_discount?: boolean | null;
-  diet_id?: number | null; diet_note?: string | null; allergies?: string | null;
+  diet_id?: number | null; diet_note?: string | null; allergies?: string | null; room_id?: number | null; room_number?: string | null;
 };
 /** What the server already knows about a request or a booked group (GET /arrivals/options `prefill`). */
 export type Prefill = {
   source: 'request' | 'stay'; request_id: number | null; stay_ids: number[]; group_key: string | null;
-  start: string; end: string; guest_type: GuestType | null; party_size?: number;
+  start: string | null; end: string | null; guest_type: GuestType | null; party_size?: number | null;
   room_id: number | null; package_id: number | null; organization_id: number | null; with_meals: boolean;
   doctor_staff_id: number | null; nurse_staff_id: number | null; note: string | null;
   existing_guest_id?: number | null; existing_guest_matches?: boolean | null; members: PrefillMember[];
@@ -92,28 +98,31 @@ export type Prefill = {
 
 // ── POST /arrivals ──
 export type ArrivalMember = {
-  guest_id?: number; full_name?: string; birth_date?: string; phone?: string; passport?: string;
-  gender?: string; relation?: string; child_discount?: boolean;
+  guest_id?: number; full_name?: string; birth_date?: string | null; phone?: string | null; passport?: string | null;
+  gender?: string | null; organization_name?: string | null; relation?: string; child_discount?: boolean; allergies?: string | null;
 };
+/** Everything optional: a booking keeps what is not sent. */
 export type ArrivalBody = {
   request_id?: number;
   stay_ids?: number[];
-  start: string;
-  end: string;
-  guest_type: GuestType;
-  room_id?: number;
-  with_meals: boolean;
-  package_id?: number;
-  organization_id?: number;
+  start?: string;
+  end?: string;
+  guest_type?: GuestType;
+  room_id?: number | null;
+  with_meals?: boolean;
+  package_id?: number | null;
+  organization_id?: number | null;
   members?: ArrivalMember[];
-  contract_note?: string;
-  doctor_staff_id?: number;
-  nurse_staff_id?: number;
+  contract_note?: string | null;
+  doctor_staff_id?: number | null;
+  nurse_staff_id?: number | null;
   exam?: { specialty_id?: number; doctor_staff_id?: number; at: string; minutes?: number } | null;
-  diet?: { diet_id?: number; diet_note?: string };
-  allergies?: string;
-  payment?: { amount: string; note?: string };
-  note?: string;
+  /** One visit per person (index of the member). */
+  member_exams?: { index: number; at: string; doctor_staff_id: number; minutes?: number }[];
+  diet?: { diet_id?: number | null; diet_note?: string | null } | null;
+  allergies?: string | null;
+  payment?: { amount: string; note?: string | null } | null;
+  note?: string | null;
   check_in: boolean;
   /** One UUID per press of the button, the same value on a retry (server answers 409 duplicate_submit on a replay). */
   client_ref?: string;
@@ -126,6 +135,9 @@ export type RouteStep = {
   title_uz?: string; title_ru?: string; title_en?: string;
   text_uz?: string; text_ru?: string; text_en?: string;
   place?: string | null;
+  place_uz?: string | null;
+  place_ru?: string | null;
+  place_en?: string | null;
   at?: string | null;
   person?: string | null;
 };
@@ -135,21 +147,24 @@ export type RouteSheet = {
   guest?: { full_name: string; login_code?: string | null };
   /** The rest of the group (without this guest). */
   members?: { full_name: string; room_number?: string | null; is_child?: boolean }[];
-  period?: { from: string; to: string; nights: number };
+  period?: { from: string; to: string; nights: number; checkin_time?: string | null; checkout_time?: string | null };
   steps: RouteStep[];
-  meals?: { breakfast?: string | null; lunch?: string | null; dinner?: string | null };
+  meals?: { breakfast?: string | null; lunch?: string | null; dinner?: string | null } | null;
+  phone?: string | null;
   contacts?: string | null;
   qr?: string | null;
 };
-export type NewCredential = { guest_id: number; full_name: string; login_code: string; password: string };
+export type NewCredential = { guest_id: number; full_name: string; login_code: string; password: string; qr_code?: string | null };
 export type ActionWarning = { code: string; amount?: string | number; [k: string]: unknown };
 export type ArrivalResult = {
-  stays: { id: number; guest?: { id: number; full_name: string } | null }[];
+  stays: (Partial<StayFull> & { id: number })[];
   group_key?: string | null;
   credentials?: NewCredential[];
   appointment_ids?: number[];
   warnings?: ActionWarning[];
-  route_sheet?: RouteSheet;
+  route_sheet?: RouteSheet | null;
+  /** One sheet per stay (a family may have different rooms and visits). */
+  route_sheets?: RouteSheet[];
 };
 
 // ── Setup status, my guests, short actions ──
@@ -157,14 +172,22 @@ export type SetupItem = { key: string; ok: boolean; count?: number; severity: 'r
 export type SetupStatus = { done: number; total: number; items: SetupItem[] };
 export type MyGuest = {
   stay_id: number;
-  guest: { id: number; full_name: string; phone?: string | null };
+  guest: { id: number; full_name: string; phone?: string | null; allergies?: string | null };
   room?: { id: number; number: string; building?: string | null } | null;
   planned_from?: string | null;
   planned_to?: string | null;
   guest_type?: string;
-  diet?: { id: number; name: string; note?: string | null } | null;
+  diet?: { id: number | null; name: string | null; code?: string | null; name_uz?: string | null; name_ru?: string | null; name_en?: string | null; note?: string | null } | null;
   next_appointment?: { id: number; scheduled_at: string } | null;
   has_exam?: boolean;
   can_start_exam?: boolean;
 };
 export type DebtWarning = { code: 'debt'; amount?: string | number };
+
+/** GET /stays/{id}/early-leave/preview: what leaving that day would cost (money keys for the registrar only). */
+export type EarlyPreview = {
+  date?: string;
+  members?: { stay_id: number; full_name: string; nights?: number; total_after?: string; paid?: string; debt?: string; refund?: string }[];
+  totals?: { total_after?: string; paid?: string; debt?: string; refund?: string };
+  warnings?: unknown[];
+};

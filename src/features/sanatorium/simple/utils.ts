@@ -3,10 +3,8 @@
 import dayjs from 'dayjs';
 import type { GuestType, StayFull } from '../types';
 import { sanErrorInfo } from '../utils/sanatorium';
-import type {
-  Prefill,
-  ArrivalBody, ArrivalMember, ArrivalOptions, NewCredential, QueueItem, QueueUrgency, RouteSheet, RouteStep, SetupItem,
-} from './types';
+import { SHEET_TEXT, type SheetLang } from './sheetText';
+import type { EarlyPreview, NewCredential, QueueItem, QueueUrgency, RouteSheet, RouteStep, SetupItem } from './types';
 
 /** True when the server simply does not know the endpoint yet (old backend): 404/405 without a business code. */
 export function isMissingEndpoint(e: unknown): boolean {
@@ -40,7 +38,9 @@ export function queueActions(item: QueueItem): { primary: string; secondary: str
 export type QueueGroup = { urgency: QueueUrgency; items: QueueItem[] };
 /** Server order is kept inside a group; empty groups are dropped. */
 export function groupQueue(items: QueueItem[]): QueueGroup[] {
-  return URGENCY_ORDER.map((urgency) => ({ urgency, items: items.filter((i) => i.urgency === urgency) })).filter((g) => g.items.length > 0);
+  // A card with an urgency this version does not know is still shown (last group), never lost.
+  const known = (i: QueueItem): QueueUrgency => (URGENCY_ORDER.includes(i.urgency) ? i.urgency : 'soon');
+  return URGENCY_ORDER.map((urgency) => ({ urgency, items: items.filter((i) => known(i) === urgency) })).filter((g) => g.items.length > 0);
 }
 
 const digits = (s: string) => s.replace(/\D/g, '');
@@ -69,157 +69,16 @@ export const SETUP_ROUTES: Record<string, string> = {
   specialties: '/sanatorium-settings', nurse: '/sanatorium-settings', room_keeper: '/sanatorium-settings', kitchen: '/sanatorium-settings',
   housekeeper: '/sanatorium-settings', diets: '/sanatorium-diets', menu_week: '/sanatorium-menu', contacts: '/sanatorium-settings',
   exam_hours: '/sanatorium-settings', location: '/sanatorium-location', territory: '/sanatorium-territory',
-  procedure_rooms: '/sanatorium-settings', bot_token: '/sanatorium-settings',
+  procedure_rooms: '/sanatorium-schedule', bot_token: '/sanatorium-settings',
 };
 export const setupRoute = (item: Pick<SetupItem, 'key'>): string => SETUP_ROUTES[item.key] ?? '/sanatorium-settings';
 export const setupRequiredLeft = (items: SetupItem[]) => items.filter((i) => !i.ok && i.severity === 'required').length;
 
-// ── Wizard ──
-export type WizardStep = 'who' | 'room' | 'doctor' | 'meal' | 'review';
-export const WIZARD_STEPS: WizardStep[] = ['who', 'room', 'doctor', 'meal', 'review'];
-
-export type MemberDraft = {
-  guestId?: number;
-  name: string;
-  birth: string; // dd.mm.yyyy as typed
-  phone: string;
-  passport: string;
-  relation?: string;
-};
-export type WizardDraft = {
-  requestId: number | null;
-  stayIds: number[];
-  members: MemberDraft[];
-  start: string;
-  end: string;
-  guestType: GuestType;
-  roomId: number | null;
-  /** The registrar picked a room by hand (otherwise `rooms_assigned` keeps every member in their own room). */
-  roomTouched: boolean;
-  withMeals: boolean;
-  packageId: number | null;
-  organizationId: number | null;
-  needExam: boolean;
-  doctorId: number | null;
-  nurseId: number | null;
-  examAt: string | null;
-  dietId: number | null;
-  dietNote: string;
-  allergies: string;
-  payment: string;
-  note: string;
-};
-
-export const emptyMember = (): MemberDraft => ({ name: '', birth: '', phone: '', passport: '' });
-
-export function newDraft(over: Partial<WizardDraft> = {}): WizardDraft {
-  const start = dayjs().format('YYYY-MM-DD');
-  return {
-    requestId: null, stayIds: [], members: [emptyMember()], start, end: dayjs(start).add(10, 'day').format('YYYY-MM-DD'),
-    guestType: 'treatment', roomId: null, roomTouched: false, withMeals: true, packageId: null, organizationId: null, needExam: false, doctorId: null, nurseId: null,
-    examAt: null, dietId: null, dietNote: '', allergies: '', payment: '', note: '', ...over,
-  };
-}
-
-/** Which steps the registrar actually sees: parts that are switched off or have nothing to offer are skipped. */
-export function visibleSteps(opts: { options?: ArrivalOptions | null; doctorsOn: boolean; mealsOn: boolean; dietOn: boolean }): WizardStep[] {
-  const steps: WizardStep[] = ['who', 'room'];
-  const o = opts.options;
-  if (opts.doctorsOn && (!o || o.doctors.length > 0 || o.nurses.length > 0)) steps.push('doctor');
-  if (opts.mealsOn || opts.dietOn) steps.push('meal');
-  steps.push('review');
-  return steps;
-}
-
-/** Fill the unset suggestions from the server (never overrides what the registrar already chose). */
-export function applySuggestions(d: WizardDraft, o: ArrivalOptions): WizardDraft {
-  const next = { ...d };
-  if (next.roomId == null && o.suggested_room_id != null && !o.rooms_assigned) next.roomId = o.suggested_room_id;
-  if (next.doctorId == null && o.suggested_doctor_id != null) next.doctorId = o.suggested_doctor_id;
-  if (next.nurseId == null && o.suggested_nurse_id != null) next.nurseId = o.suggested_nurse_id;
-  if (next.examAt == null && o.suggested_exam_at) next.examAt = o.suggested_exam_at;
-  if (next.dietId == null && o.default_diet_id != null) next.dietId = o.default_diet_id;
-  return next;
-}
-
-/** Exam is expected only for a treatment guest with the server's «exam required» flag. */
-export const examDefault = (guestType: GuestType, o: ArrivalOptions | null | undefined): boolean => !!o?.exam_required && guestType === 'treatment';
-
-/** `14.03.1985` -> `1985-03-14` (null when not a real date). */
-export function dmyToIso(text: string): string | null {
-  const m = text.trim().match(/^(\d{1,2})[./,-](\d{1,2})[./,-](\d{4})$/);
-  if (!m) return null;
-  const iso = `${m[3]}-${m[2]!.padStart(2, '0')}-${m[1]!.padStart(2, '0')}`;
-  const d = dayjs(iso);
-  return d.isValid() && d.format('YYYY-MM-DD') === iso ? iso : null;
-}
-
+// ── Money ──
 export const moneyString = (v: string): string | null => {
   const n = Number(v.replace(/\s/g, '').replace(',', '.'));
   return Number.isFinite(n) && n > 0 ? n.toFixed(2) : null;
 };
-
-/** Machine code of the first problem on a step, or null (the screen translates `sanSimple.val.<code>`). */
-export function validateStep(step: WizardStep, d: WizardDraft): string | null {
-  if (step === 'who') {
-    const first = d.members[0];
-    const fromSource = d.requestId != null || d.stayIds.length > 0;
-    if (!fromSource && (!first || (!first.guestId && first.name.trim().length < 5))) return 'name';
-    for (const m of d.members) {
-      if (m.birth.trim() && !dmyToIso(m.birth)) return 'birth';
-      if (!fromSource && !m.guestId && m.name.trim().length < 5) return 'name';
-    }
-  }
-  if (step === 'room' && !dayjs(d.end).isAfter(dayjs(d.start))) return 'period';
-  if (step === 'review' && d.payment.trim() && !moneyString(d.payment)) return 'payment';
-  return null;
-}
-
-/** «Joylashtirish» (check in now) needs a room and an arrival that is not in the future. */
-export const canCheckInNow = (d: WizardDraft, today: string, keepRooms = false): boolean => (d.roomId != null || keepRooms) && !dayjs(d.start).isAfter(dayjs(today));
-
-function memberBody(m: MemberDraft): ArrivalMember {
-  if (m.guestId) return { guest_id: m.guestId, ...(m.relation ? { relation: m.relation } : {}) };
-  return {
-    full_name: m.name.trim(),
-    ...(dmyToIso(m.birth) ? { birth_date: dmyToIso(m.birth)! } : {}),
-    ...(m.phone.trim() ? { phone: m.phone.trim() } : {}),
-    ...(m.passport.trim() ? { passport: m.passport.trim().toUpperCase() } : {}),
-    ...(m.relation ? { relation: m.relation } : {}),
-  };
-}
-
-/** Strict body of POST /arrivals: exactly one source, empty optionals dropped. */
-export function buildArrivalBody(d: WizardDraft, checkIn: boolean, clientRef?: string, keepRooms = false): ArrivalBody {
-  const source: Partial<ArrivalBody> =
-    d.requestId != null
-      ? { request_id: d.requestId, ...(d.members.length > 1 ? { members: d.members.map(memberBody) } : {}) }
-      : d.stayIds.length > 0
-        ? { stay_ids: d.stayIds }
-        : { members: d.members.map(memberBody) };
-  const money = moneyString(d.payment);
-  const diet = { ...(d.dietId ? { diet_id: d.dietId } : {}), ...(d.dietNote.trim() ? { diet_note: d.dietNote.trim() } : {}) };
-  return {
-    ...source,
-    start: d.start,
-    end: d.end,
-    guest_type: d.guestType,
-    // `keepRooms`: no room_id, so every member keeps the room they already have.
-    ...(d.roomId && !keepRooms ? { room_id: d.roomId } : {}),
-    with_meals: d.withMeals,
-    ...(d.packageId ? { package_id: d.packageId } : {}),
-    ...(d.organizationId ? { organization_id: d.organizationId } : {}),
-    ...(d.needExam && d.doctorId ? { doctor_staff_id: d.doctorId } : {}),
-    ...(d.nurseId ? { nurse_staff_id: d.nurseId } : {}),
-    exam: d.needExam && d.examAt ? { ...(d.doctorId ? { doctor_staff_id: d.doctorId } : {}), at: d.examAt } : null,
-    ...(Object.keys(diet).length ? { diet } : {}),
-    ...(d.allergies.trim() ? { allergies: d.allergies.trim() } : {}),
-    ...(money ? { payment: { amount: money } } : {}),
-    ...(d.note.trim() ? { note: d.note.trim() } : {}),
-    check_in: checkIn,
-    ...(clientRef ? { client_ref: clientRef } : {}),
-  };
-}
 
 // ── Route sheet / share ──
 export type Lang = 'uz' | 'ru' | 'en';
@@ -235,42 +94,83 @@ export function stepText(s: RouteStep, lang: Lang | null): string {
   return own || s.text || s.text_uz || '';
 }
 
-/** Plain text of the route sheet for the OS share sheet (the app has no print module). */
-export function routeSheetText(
-  sheet: RouteSheet,
-  lang: Lang | null,
-  labels: { loginCode: string; password: string; period: string },
-  creds: NewCredential[] = [],
-): string {
-  const out: string[] = [];
-  if (sheet.guest?.full_name) out.push(sheet.guest.full_name);
-  if (sheet.period) out.push(`${labels.period}: ${dayjs(sheet.period.from).format('DD.MM.YYYY')} - ${dayjs(sheet.period.to).format('DD.MM.YYYY')}`);
-  sheet.steps.forEach((s, i) => {
-    const bits = [stepText(s, lang), s.place, s.at ? dayjs(s.at).format('DD.MM HH:mm') : null, s.person].filter(Boolean);
-    out.push(`${i + 1}. ${stepTitle(s, lang)}${bits.length ? `: ${bits.join(', ')}` : ''}`);
+/** The sentence of the departure step carries its own date; a finished reception needs none. */
+const stepTime = (s: RouteStep) => (s.key === 'departure' || (s.key === 'reception' && s.done) ? null : s.at ?? null);
+/** The doctor's sentence only repeats the time of the line above it. */
+export const stepSaysMore = (s: RouteStep) => !(s.key === 'doctor' && !!s.at && !s.done);
+export function stepPlace(s: RouteStep, lang: Lang): string | null {
+  const own = lang === 'ru' ? s.place_ru : lang === 'en' ? s.place_en : s.place_uz;
+  return own || s.place || null;
+}
+/** «time · person · place» of a step; `when` turns the ISO time into words. */
+export const stepLine = (s: RouteStep, lang: Lang, when: (iso: string) => string): string => {
+  const at = stepTime(s);
+  return [at ? when(at) : null, s.person, stepPlace(s, lang)].filter(Boolean).join(' · ');
+};
+
+/** Family members whose room or visit differs from the first person's: one line each under that step. */
+export function familyLines(first: RouteSheet, others: RouteSheet[], key: string, lang: Lang, when: (iso: string) => string): string[] {
+  if (key !== 'doctor' && key !== 'room') return [];
+  const mine = first.steps.find((s) => s.key === key);
+  const lineOf = (s: RouteStep) => (key === 'room' ? stepText(s, lang) : stepLine(s, lang, when));
+  return others.flatMap((o) => {
+    const s = o.steps.find((x) => x.key === key);
+    if (!s || (key === 'doctor' && !s.at)) return [];
+    const line = lineOf(s);
+    return line && line !== (mine ? lineOf(mine) : '') ? [`${o.guest?.full_name ?? ''}: ${line}`] : [];
   });
-  if (sheet.contacts) out.push(sheet.contacts);
-  const code = sheet.guest?.login_code;
-  if (code && creds.length === 0) out.push(`${labels.loginCode}: ${code}`);
-  for (const c of creds) out.push(`${c.full_name}: ${labels.loginCode} ${c.login_code}, ${labels.password} ${c.password}`);
+}
+
+const paperTime = (iso: string) => dayjs(iso).format('DD.MM.YYYY HH:mm');
+/** Plain text of the route sheet for the OS share sheet, in the guest's language. */
+export function routeSheetText(sheet: RouteSheet, lang: SheetLang, opts: { others?: RouteSheet[]; creds?: NewCredential[]; cabinetUrl?: string | null } = {}): string {
+  const x = SHEET_TEXT[lang];
+  const { others = [], creds = [] } = opts;
+  const out: string[] = [`${x.org}. ${x.title}`];
+  if (sheet.guest?.full_name) out.push(sheet.guest.full_name);
+  const together = (sheet.members ?? []).map((m) => m.full_name);
+  if (together.length) out.push(`${x.with}: ${together.join(', ')}`);
+  if (sheet.period) {
+    out.push([
+      `${dayjs(sheet.period.from).format('DD.MM.YYYY')} - ${dayjs(sheet.period.to).format('DD.MM.YYYY')}`, x.nights(sheet.period.nights), sheet.period.checkout_time ? x.outBy(sheet.period.checkout_time) : null,
+    ].filter(Boolean).join(' · '));
+  }
+  sheet.steps.forEach((s, i) => {
+    const bits = [stepLine(s, lang, paperTime), stepSaysMore(s) ? stepText(s, lang) : null].filter(Boolean);
+    out.push(`${i + 1}. ${stepTitle(s, lang)}${bits.length ? `: ${bits.join('. ')}` : ''}`);
+    familyLines(sheet, others, s.key, lang, paperTime).forEach((l) => out.push(`   ${l}`));
+  });
+  if (creds.length) for (const c of creds) out.push(`${c.full_name}: ${x.id} ${c.login_code}, ${x.password} ${c.password}`);
+  else if (sheet.guest?.login_code) out.push(`${x.id}: ${sheet.guest.login_code}`);
+  if (opts.cabinetUrl && (creds.length || sheet.guest?.login_code)) out.push(`${x.cabinet}: ${opts.cabinetUrl}`);
+  const foot = [sheet.phone && !sheet.contacts?.includes(sheet.phone) ? sheet.phone : null, sheet.contacts].filter(Boolean).join('\n');
+  if (foot) out.push(foot);
   return out.join('\n');
 }
 
 // ── Next step of a stay ──
-export type NextStep = { kind: 'check_in' | 'choose_room' | 'book_exam' | 'diet' | 'check_out' | 'none'; stepKey?: string };
-/** One suggested action for the stay drawer, from the route sheet when the server has it, else from the stay itself. */
-export function nextStepFor(stay: Pick<StayFull, 'status' | 'room' | 'planned_from' | 'planned_to'>, sheet: RouteSheet | null | undefined, today: string): NextStep {
-  if (stay.status === 'booked') {
-    if (!stay.room) return { kind: 'choose_room' };
-    return dayjs(stay.planned_from).isAfter(dayjs(today)) ? { kind: 'none' } : { kind: 'check_in' };
-  }
-  if (stay.status !== 'checked_in') return { kind: 'none' };
-  const open = sheet?.steps.find((s) => !s.done && s.key !== 'procedures');
-  if (open?.key === 'room') return { kind: 'choose_room', stepKey: open.key };
-  if (open?.key === 'doctor') return { kind: 'book_exam', stepKey: open.key };
-  if (open?.key === 'kitchen') return { kind: 'diet', stepKey: open.key };
-  if (open?.key === 'departure' || !dayjs(stay.planned_to).isAfter(dayjs(today))) return { kind: 'check_out', stepKey: open?.key };
-  return { kind: 'none' };
+export type NextKind = 'expired' | 'late' | 'today' | 'noRoom' | 'waiting' | 'over' | 'leaves' | 'exam' | 'debt' | 'fine' | 'cancelled' | 'goneDebt' | 'gone';
+export type NextAction = 'no_show' | 'arrive' | 'choose_room' | 'extend' | 'check_out' | 'assign_doctor' | 'take_payment';
+/** `text` is a key of `sanFlow.next`; `action` the one main button (null = nothing to do). */
+export type NextStep = { text: NextKind; action: NextAction | null; date?: string; sum?: number };
+
+/** One sentence and one button for the guest's card: the same order as the web. */
+export function nextStepFor(stay: Pick<StayFull, 'status' | 'room' | 'planned_from' | 'planned_to' | 'debt'>, today: string, needsExam: boolean): NextStep {
+  const booked = stay.status === 'booked';
+  const inHouse = stay.status === 'checked_in';
+  const debt = debtNumber(stay.debt);
+  if (booked && stay.planned_to <= today) return { text: 'expired', action: 'no_show', date: stay.planned_from };
+  if (booked && stay.planned_from < today) return { text: 'late', action: 'arrive', date: stay.planned_from };
+  if (booked && stay.planned_from === today) return { text: 'today', action: 'arrive' };
+  if (booked && !stay.room) return { text: 'noRoom', action: 'choose_room', date: stay.planned_from };
+  if (booked) return { text: 'waiting', action: null, date: stay.planned_from };
+  if (inHouse && stay.planned_to < today) return { text: 'over', action: 'extend', date: stay.planned_to };
+  if (inHouse && stay.planned_to === today) return { text: 'leaves', action: 'check_out' };
+  if (inHouse && needsExam) return { text: 'exam', action: 'assign_doctor' };
+  if (inHouse && debt > 0 && stay.planned_to <= dayjs(today).add(1, 'day').format('YYYY-MM-DD')) return { text: 'debt', action: 'take_payment', sum: debt };
+  if (inHouse) return { text: 'fine', action: null, date: stay.planned_to };
+  if (stay.status === 'cancelled') return { text: 'cancelled', action: null };
+  return debt > 0 ? { text: 'goneDebt', action: 'take_payment', sum: debt } : { text: 'gone', action: null };
 }
 
 // ── Settings S8 ──
@@ -322,95 +222,14 @@ export function actionRoute(item: QueueItem, action: string): ActionRoute | null
       return item.request_id != null ? { pathname: '/sanatorium-arrive', params: { request: String(item.request_id) } } : null;
     case 'arrive': {
       const ids = itemStayIds(item);
-      if (isCompleteArrival(item)) return null;
       return ids.length ? { pathname: '/sanatorium-arrive', params: { stay: ids.join(',') } } : null;
     }
-    case 'convert':
-      return { pathname: '/sanatorium-waitlist' };
-    case 'confirm_service':
-      return { pathname: '/sanatorium-services' };
-    case 'confirm_transfer':
-      return { pathname: '/sanatorium-transfers' };
     default:
       return null;
   }
 }
 /** `?stay=1,2` -> ids (garbage dropped). */
 export const parseIds = (v: string | undefined): number[] => (v ?? '').split(',').map((s) => Number.parseInt(s, 10)).filter((n) => Number.isFinite(n) && n > 0);
-
-// ── Prefill from a request / booked stays ──
-type RequestLike = {
-  id: number; full_name: string; birth_date?: string | null; passport?: string | null; phone?: string | null;
-  referral_from?: string | null; referral_to?: string | null; guest_type?: GuestType | null; party_size?: number | null;
-  package_id?: number | null; preferred_room?: { id: number } | null; existing_guest_id?: number | null;
-};
-const isoToDmy = (iso?: string | null) => (iso ? dayjs(iso).format('DD.MM.YYYY') : '');
-
-export function draftFromRequest(r: RequestLike, today: string): WizardDraft {
-  const start = r.referral_from && !dayjs(r.referral_from).isBefore(dayjs(today)) ? r.referral_from : today;
-  const end = r.referral_to && dayjs(r.referral_to).isAfter(dayjs(start)) ? r.referral_to : dayjs(start).add(10, 'day').format('YYYY-MM-DD');
-  return newDraft({
-    requestId: r.id,
-    members: [{ guestId: undefined, name: r.full_name, birth: isoToDmy(r.birth_date), phone: r.phone ?? '', passport: r.passport ?? '' }],
-    start, end,
-    guestType: r.guest_type ?? 'treatment',
-    roomId: r.preferred_room?.id ?? null,
-    packageId: r.package_id ?? null,
-  });
-}
-
-type StayLike = {
-  id: number; guest: { id: number; full_name: string; phone?: string | null } | null; guest_type: GuestType;
-  planned_from: string; planned_to: string; room: { id: number } | null; with_meals: boolean; diet_note?: string | null; package_id?: number | null;
-};
-/** Booked stays about to arrive: dates, room and meals come from the booking. */
-export function draftFromStays(stays: StayLike[], today: string): WizardDraft {
-  const f = stays[0];
-  return newDraft({
-    stayIds: stays.map((s) => s.id),
-    members: stays.length ? stays.map((s) => ({ guestId: s.guest?.id, name: s.guest?.full_name ?? '', birth: '', phone: s.guest?.phone ?? '', passport: '' })) : [emptyMember()],
-    start: f && dayjs(f.planned_from).isAfter(dayjs(today)) ? f.planned_from : today,
-    end: f?.planned_to ?? dayjs(today).add(10, 'day').format('YYYY-MM-DD'),
-    guestType: f?.guest_type ?? 'treatment',
-    roomId: f?.room?.id ?? null,
-    withMeals: f?.with_meals ?? true,
-    dietNote: f?.diet_note ?? '',
-    packageId: f?.package_id ?? null,
-  });
-}
-
-// ── Prefill from the server (`prefill` of /arrivals/options) ──
-
-/** Draft of a request or of a whole booked group; an arrival in the past starts today. */
-export function draftFromPrefill(p: Prefill, today: string): WizardDraft {
-  const start = dayjs(p.start).isBefore(dayjs(today)) ? today : p.start;
-  const end = dayjs(p.end).isAfter(dayjs(start)) ? p.end : dayjs(start).add(10, 'day').format('YYYY-MM-DD');
-  const first = p.members[0];
-  const fromStays = p.source === 'stay' && p.stay_ids.length > 0;
-  return newDraft({
-    requestId: p.source === 'request' ? p.request_id : null,
-    stayIds: fromStays ? p.stay_ids : [],
-    members: p.members.length
-      ? p.members.map((m) => ({ guestId: m.guest_id ?? undefined, name: m.full_name, birth: isoToDmy(m.birth_date), phone: m.phone ?? '', passport: m.passport ?? '', relation: m.relation ?? undefined }))
-      : [emptyMember()],
-    start, end,
-    guestType: p.guest_type ?? 'treatment',
-    roomId: p.room_id ?? null,
-    packageId: p.package_id ?? null,
-    withMeals: p.with_meals ?? true,
-    doctorId: p.doctor_staff_id ?? null,
-    nurseId: p.nurse_staff_id ?? null,
-    needExam: !!p.doctor_staff_id,
-    dietId: first?.diet_id ?? null,
-    dietNote: first?.diet_note ?? '',
-    allergies: first?.allergies ?? '',
-    note: p.note ?? '',
-  });
-}
-
-/** Number of people the room must hold: the declared party of a request, else the listed members. */
-export const partySize = (d: Pick<WizardDraft, 'members' | 'stayIds'>, declared?: number | null): number =>
-  Math.min(20, Math.max(d.stayIds.length || d.members.length, declared ?? 1, 1));
 
 /** `"2026-11-26T10:20:00"` -> `26.11 10:20` */
 export const slotLabel = (iso: string) => dayjs(iso).format('DD.MM HH:mm');
@@ -451,4 +270,43 @@ export type ServerWarning = { code: string; [k: string]: unknown };
 export function warningsOf(res: unknown): ServerWarning[] {
   const w = (res as { warnings?: unknown } | null | undefined)?.warnings;
   return (Array.isArray(w) ? w : []).map((x) => (typeof x === 'string' ? { code: x } : x)).filter((x): x is ServerWarning => !!x && typeof (x as { code?: unknown }).code === 'string');
+}
+
+/** The same minute, whatever the notation of the two values. */
+export const sameTime = (a?: string | null, b?: string | null): boolean => !!a && !!b && dayjs(a).isSame(dayjs(b), 'minute');
+
+// ── The people a short action is about ──
+export type Party = { stayId: number; name: string; size: number; stayIds: number[] };
+export const partyOfItem = (i: QueueItem): Party => {
+  const ids = itemStayIds(i);
+  const names = (i.members ?? []).map((m) => m.full_name).filter(Boolean);
+  return { stayId: ids[0] ?? 0, name: names.length ? names.join(', ') : i.guest?.full_name ?? '', size: Math.max(1, ids.length), stayIds: ids };
+};
+export const partyOfStays = (first: Pick<StayFull, 'id' | 'guest'>, mates: Pick<StayFull, 'id' | 'guest'>[]): Party => ({
+  stayId: first.id,
+  name: [first, ...mates].map((m) => m.guest?.full_name ?? '').filter(Boolean).join(', '),
+  size: mates.length + 1,
+  stayIds: [first.id, ...mates.map((m) => m.id)],
+});
+
+/** Badges of a queue card: what the title already says is not repeated. */
+export function shownMissing(item: Pick<QueueItem, 'kind' | 'missing'>): string[] {
+  const all = item.missing ?? [];
+  if (item.kind === 'arrival_overdue' || item.kind === 'arrival_today') return all;
+  if (item.kind === 'no_room') return all.filter((m) => m !== 'room');
+  if (item.kind === 'no_exam') return all.filter((m) => m === 'room' || m === 'doctor');
+  return [];
+}
+
+/** Money to give back: `prepaid` (a closed booking) and `refund` (nights that will not be used), 0 when there are none. */
+export const refundOf = (res: unknown): number => warningsOf(res).filter((w) => w.code === 'prepaid' || w.code === 'refund').reduce((n, w) => n + debtNumber(w.amount as string), 0);
+
+/** What the early-leave preview says about the money: to pay, to give back, or nothing; null = unknown (no money line). */
+export function moneyLine(p: EarlyPreview | null | undefined): { kind: 'debt' | 'refund' | 'none'; amount: number } | null {
+  const sums = p?.totals;
+  if (!sums) return null;
+  const refund = debtNumber(sums.refund);
+  const debt = debtNumber(sums.debt);
+  if (refund > 0) return { kind: 'refund', amount: refund };
+  return debt > 0 ? { kind: 'debt', amount: debt } : { kind: 'none', amount: 0 };
 }

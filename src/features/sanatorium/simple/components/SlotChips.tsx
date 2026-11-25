@@ -14,7 +14,7 @@ export function SlotChips({ staffId, day, minutes, value, onPick }: { staffId: n
   if (q.data.length === 0) return <Text variant="caption" tone="muted" testID="slots-none">{t('sanSimple.slots.none')}</Text>;
   return (
     <View style={styles.wrap} testID="slot-chips">
-      {q.data.slice(0, 12).map((s) => (
+      {q.data.map((s) => (
         <Button key={s} label={dayjs(s).format('HH:mm')} size="sm" variant={dayjs(s).isSame(dayjs(value)) ? 'primary' : 'soft'} onPress={() => onPick(s)} testID={`slot-${dayjs(s).format('HHmm')}`} />
       ))}
     </View>

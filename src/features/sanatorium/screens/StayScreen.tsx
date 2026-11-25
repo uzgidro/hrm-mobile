@@ -9,7 +9,6 @@ import { toast } from '@/lib/toast';
 import { useAuthStore } from '@/store/authStore';
 import { Badge, Button, Card, PageHeader, Screen, Text } from '@/ui';
 import { useCheckIn, useCheckOut } from '../api/mutations';
-import { roomNotReady } from '../utils/sections1';
 import { stayQuery } from '../api/queries';
 import { AppointmentSheet } from '../components/AppointmentSheet';
 import { Denied, PhoneLink, QueryBlock, useSanAccess } from '../components/common';
@@ -18,6 +17,7 @@ import { JourneyCard } from '../components/sections1/JourneyCard';
 import { StayDietSheet } from '../components/sections2/DietParts';
 import { StayDocumentsCard, StayServicesCard } from '../components/sections2/StayDocuments';
 import { StayNext } from '../simple/components/StayNext';
+import { toastWarnings } from '../simple/warnings';
 import { useSanFeatures } from '../utils/features';
 import { StaySheets, type StaySheetKind } from '../components/StaySheets';
 import type { StayFull } from '../types';
@@ -67,8 +67,7 @@ function Detail({ stay }: { stay: StayFull }) {
     try {
       const res = await (kind === 'in' ? checkIn : checkOut).mutateAsync(stay.id);
       toast.success(t(kind === 'in' ? 'sanatorium.checkedIn' : 'sanatorium.checkedOut'));
-      const warn = roomNotReady(res);
-      if (kind === 'in' && warn) toast.info(t('san1.hk.roomNotReady', { room: warn.room_number ?? '', status: t(`san1.hk.status.${warn.hk_status ?? 'dirty'}`) }), 8000);
+      toastWarnings(res);
     } catch (e) {
       if (kind === 'out' && sanErrorInfo(e).code === 'use_early_leave') setEarly(true);
       else toast.error(sanErrorMessage(e, t('errors.generic')));
@@ -77,7 +76,7 @@ function Detail({ stay }: { stay: StayFull }) {
 
   return (
     <View style={styles.stack}>
-      {registrar && <StayNext stay={stay} readOnly={!canWrite} onEarlyLeave={() => setEarly(true)} />}
+      {registrar && <StayNext stay={stay} readOnly={!canWrite} />}
       <Card testID="stay-detail">
         <View style={styles.row}>
           <Text
@@ -94,6 +93,7 @@ function Detail({ stay }: { stay: StayFull }) {
         <Row label={t('sanatorium.room')} value={stay.room ? [stay.room.number, stay.room.building].filter(Boolean).join(' · ') : t('sanatorium.noRoom')} />
         <Row label={t('sanatorium.period')} value={`${fmtDate(stay.planned_from)} → ${fmtDate(stay.planned_to)} (${stay.nights})`} />
         {stay.left_early && <Row label={t('sanatorium.leftEarly')} value={`${fmtDate(stay.early_leave_date)}${stay.early_leave_reason ? ` · ${stay.early_leave_reason}` : ''}`} />}
+        {stay.days_left != null && live && <Row label={t('sanFlow.stay.daysLeft')} value={String(stay.days_left)} />}
         <Row label={t('sanatorium.meals')} value={stay.with_meals ? t('sanatorium.yes') : t('sanatorium.no')} />
         <Row label={t('sanatorium.dietNote')} value={stay.diet_note} />
         <Row label={t('sanatorium.doctor')} value={stay.doctor?.full_name} />
@@ -130,13 +130,13 @@ function Detail({ stay }: { stay: StayFull }) {
           </>
         )}
         {live && registrar && <Button testID="stay-edit" label={t('sanatorium.edit')} variant="soft" icon="edit" onPress={() => setSheet('edit')} />}
-        {live && <Button testID="stay-appt" label={t('sanatorium.newAppointment')} variant="soft" icon="plus" onPress={() => setAppt(true)} />}
+        {live && registrar && <Button testID="stay-appt" label={t('sanatorium.newAppointment')} variant="soft" icon="plus" onPress={() => setAppt(true)} />}
         {stay.status === 'booked' && registrar && <Button testID="stay-cancel" label={t('sanatorium.cancelStay')} variant="dangerGhost" onPress={() => setSheet('cancel')} />}
       </View>}
 
       <StaySheets stay={stay} kind={sheet} onClose={() => setSheet(null)} />
       <EarlyLeaveSheet stay={early ? stay : null} onClose={() => setEarly(false)} />
-      <AppointmentSheet stayId={appt ? stay.id : null} onClose={() => setAppt(false)} />
+      <AppointmentSheet stayId={appt ? stay.id : null} from={stay.planned_from} to={stay.planned_to} onClose={() => setAppt(false)} />
       <StayDietSheet stay={dietOpen ? stay : null} onClose={() => setDietOpen(false)} />
     </View>
   );

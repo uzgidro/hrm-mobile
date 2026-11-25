@@ -9,6 +9,9 @@ import { Button, Sheet, Text } from '@/ui';
 import { useCancelStay, useUpdatePayment, useUpdateStay } from '../api/mutations';
 import { applyDietToStays } from '../api/sections2';
 import { PAYMENT_STATUSES, type PaymentStatus, type StayFull } from '../types';
+import { Note } from '../simple/components/parts';
+import { refundOf } from '../simple/utils';
+import { toastWarnings } from '../simple/warnings';
 import { fmtMoney, sanErrorMessage } from '../utils/sanatorium';
 import { BookingFields, newBookingDraft, type BookingDraft } from './BookingFields';
 import { ChoiceField, ErrorLine, optNull, SwitchRow } from './forms';
@@ -52,24 +55,25 @@ function EditForm({ stay, onClose }: { stay: StayFull; onClose: () => void }) {
   const submit = async () => {
     if (!dayjs(draft.to).isAfter(dayjs(draft.from))) return setError(t('sanatorium.errors.invalid_period'));
     try {
-      await save.mutateAsync({
-        id: stay.id,
-        body: {
-          guest_type: draft.type,
-          room_id: draft.roomId,
-          planned_from: draft.from,
-          planned_to: draft.to,
-          with_meals: draft.meals,
-          diet_note: draft.meals ? optNull(draft.diet) : null,
-          child_discount: child,
-          doctor_staff_id: draft.doctorId,
-          nurse_staff_id: draft.nurseId,
-          contract_note: optNull(draft.contract),
-          note: optNull(draft.note),
-          package_id: draft.packageId,
-          organization_id: draft.organizationId,
-        },
-      });
+      // Only what differs is sent: an untouched field is never re-validated (or repriced) by the server.
+      const body: Record<string, unknown> = {};
+      const put = (key: string, now: unknown, was: unknown) => {
+        if (now !== was) body[key] = now;
+      };
+      put('guest_type', draft.type, stay.guest_type);
+      put('room_id', draft.roomId, stay.room?.id ?? null);
+      put('planned_from', draft.from, stay.planned_from);
+      put('planned_to', draft.to, stay.planned_to);
+      put('with_meals', draft.meals, stay.with_meals);
+      put('diet_note', draft.meals ? optNull(draft.diet) : null, stay.diet_note ?? null);
+      put('child_discount', child, !!stay.child_discount);
+      put('doctor_staff_id', draft.doctorId, stay.doctor?.id ?? null);
+      put('nurse_staff_id', draft.nurseId, stay.nurse?.id ?? null);
+      put('contract_note', draft.type === 'contract' ? optNull(draft.contract) : null, stay.contract_note ?? null);
+      put('note', optNull(draft.note), stay.note ?? null);
+      put('package_id', draft.packageId, stay.package_id ?? null);
+      put('organization_id', draft.organizationId, stay.organization_id ?? null);
+      if (Object.keys(body).length) await save.mutateAsync({ id: stay.id, body });
       if (draft.dietId !== (stay.diet_id ?? null) && (await applyDietToStays([stay.id], draft.dietId))) toast.error(t('sanatorium.s2.dietNotSaved'));
       toast.success(t('sanatorium.saved'));
       onClose();
@@ -130,12 +134,26 @@ function CancelForm({ stay, onClose }: { stay: StayFull; onClose: () => void }) 
   const cancel = useCancelStay();
   const [reason, setReason] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [refund, setRefund] = useState(0);
+  if (refund > 0) {
+    return (
+      <View style={styles.form} testID="refund-sheet">
+        <Text variant="body" weight="600">{stay.guest?.full_name}</Text>
+        <Note tone="warning" testID="refund-text">{t('sanFlow.warn.prepaid', { sum: fmtMoney(refund) })}</Note>
+        <Button testID="refund-ok" label={t('sanFlow.act.refundOk')} full onPress={onClose} />
+      </View>
+    );
+  }
   const submit = async () => {
     if (reason.trim().length < 3) return setError(t('sanatorium.reasonShort'));
     try {
-      await cancel.mutateAsync({ id: stay.id, reason: reason.trim() });
+      const res = await cancel.mutateAsync({ id: stay.id, reason: reason.trim() });
       toast.success(t('sanatorium.stayCancelled'));
-      onClose();
+      toastWarnings(res, ['prepaid', 'refund']);
+      const back = refundOf(res);
+      // Money was taken for this booking: the sheet stays until it is read.
+      if (back > 0) setRefund(back);
+      else onClose();
     } catch (e) {
       setError(sanErrorMessage(e, t('errors.generic')));
     }
@@ -143,7 +161,7 @@ function CancelForm({ stay, onClose }: { stay: StayFull; onClose: () => void }) 
   return (
     <View style={styles.form} testID="cancel-sheet">
       <Text variant="body" weight="600">{stay.guest?.full_name}</Text>
-      <FormInput label={t('sanatorium.reason')} value={reason} onChangeText={(v) => { setReason(v); setError(null); }} multiline required testID="cancel-reason" />
+      <FormInput label={t('sanatorium.reason')} value={reason} onChangeText={(v) => { setReason(v); setError(null); }} multiline required maxLength={1000} testID="cancel-reason" />
       <ErrorLine message={error} />
       <Button testID="cancel-save" label={t('sanatorium.cancelStay')} variant="danger" full loading={cancel.isPending} onPress={() => void submit()} />
     </View>
