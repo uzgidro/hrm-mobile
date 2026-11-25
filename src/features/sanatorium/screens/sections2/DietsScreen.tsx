@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { FormInput } from '@/components/FormInput';
 import { toast } from '@/lib/toast';
-import { Badge, Button, Card, EmptyState, Sheet, Text } from '@/ui';
+import { Badge, Button, Card, EmptyState, SearchField, Sheet, Text } from '@/ui';
 import { dietsQuery, useDeleteDiet, useSaveDiet, type Diet } from '../../api/sections2';
 import { QueryBlock } from '../../components/common';
 import { ErrorLine, SwitchRow } from '../../components/forms';
@@ -20,11 +20,15 @@ export default function DietsScreen() {
   const del = useDeleteDiet();
   const confirmDelete = useConfirmDelete();
   const [edit, setEdit] = useState<Diet | 'new' | null>(null);
+  const [term, setTerm] = useState('');
   return (
     <SectionScreen title={t('sanatorium.s2.diets')} feature="diet" roles={['registrar']} testID="san-diets-screen" refreshing={q.isRefetching} onRefresh={() => void q.refetch()} onAdd={() => setEdit('new')} addLabel={t('sanatorium.s2.addDiet')}>
+      <SearchField testID="diet-catalog-search" value={term} onChangeText={setTerm} placeholder={t('sanCatalog.diet.search')} />
       <QueryBlock query={q}>
-        {(list) =>
-          list.length === 0 ? (
+        {(all) => {
+          const needle = term.trim().toLowerCase();
+          const list = needle ? all.filter((d) => `${d.code} ${d.name_uz} ${d.name_ru ?? ''} ${d.name_en ?? ''}`.toLowerCase().includes(needle)) : all;
+          return list.length === 0 ? (
             <EmptyState title={t('sanatorium.s2.noDiets')} />
           ) : (
             <View style={styles.stack}>
@@ -41,8 +45,8 @@ export default function DietsScreen() {
                 </Card>
               ))}
             </View>
-          )
-        }
+          );
+        }}
       </QueryBlock>
       <Sheet visible={!!edit} onClose={() => setEdit(null)} title={edit === 'new' ? t('sanatorium.s2.addDiet') : t('sanatorium.s2.editDiet')} scroll>
         {edit && <DietForm key={edit === 'new' ? 'new' : edit.id} diet={edit === 'new' ? null : edit} onClose={() => setEdit(null)} />}

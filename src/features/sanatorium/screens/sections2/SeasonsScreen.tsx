@@ -12,7 +12,7 @@ import { roomsQuery } from '../../api/queries';
 import { QueryBlock } from '../../components/common';
 import { ChoiceField, DateField, ErrorLine, SwitchRow } from '../../components/forms';
 import { ChipWrap, FieldLabel, RowTools, SectionScreen, useConfirmDelete, useContentLang } from '../../components/sections2/kit';
-import { SEASON_SCOPES, emptySeasonDraft, pickText, seasonBody, toggleValue, type SeasonDraft } from '../../utils/sections2';
+import { SEASON_SCOPES, emptySeasonDraft, filterSeasons, pickText, seasonBody, seasonScopeText, toggleValue, type SeasonDraft } from '../../utils/sections2';
 import { fmtDate, sanErrorMessage, todayIso } from '../../utils/sanatorium';
 
 export default function SeasonsScreen() {
@@ -21,12 +21,27 @@ export default function SeasonsScreen() {
   const del = useDeleteSeason();
   const confirmDelete = useConfirmDelete();
   const [edit, setEdit] = useState<SeasonRule | 'new' | null>(null);
+  const [scope, setScope] = useState<string | null>(null);
+  const lang = useContentLang();
+  const rooms = useQuery(roomsQuery());
+  const packages = useQuery(packagesQuery(true));
+  // Maps a scope value (room / package id) to its label; unknown ids stay as they are.
+  const lookup = (r: SeasonRule) => (id: string) => {
+    if (r.scope === 'rooms') {
+      const room = (rooms.data ?? []).find((x) => String(x.id) === id);
+      return room ? [room.number, room.building].filter(Boolean).join(' · ') : id;
+    }
+    const pkg = (packages.data ?? []).find((x) => String(x.id) === id);
+    return pkg ? pickText(pkg as never, 'name', lang) : id;
+  };
   return (
     <SectionScreen title={t('sanatorium.s2.seasons')} feature="seasonal_pricing" roles={['registrar']} testID="san-seasons-screen" refreshing={q.isRefetching} onRefresh={() => void q.refetch()} onAdd={() => setEdit('new')} addLabel={t('sanatorium.s2.addSeason')}>
       <Text variant="caption" tone="muted">{t('sanatorium.s2.seasonsHint')}</Text>
+      <ChoiceField label={t('sanatorium.s2.scopeLabel')} value={scope} noneLabel={t('sanCatalog.season.anyScope')} options={SEASON_SCOPES.map((x) => ({ value: x as string, label: t(`sanatorium.s2.scope.${x}`) }))} onChange={setScope} testID="season-scope-filter" />
       <QueryBlock query={q}>
-        {(list) =>
-          list.length === 0 ? (
+        {(all) => {
+          const list = filterSeasons(all, scope);
+          return list.length === 0 ? (
             <EmptyState title={t('sanatorium.s2.noSeasons')} />
           ) : (
             <View style={styles.stack}>
@@ -41,12 +56,13 @@ export default function SeasonsScreen() {
                     {r.mode === 'percent' ? `${Number(r.value) > 0 ? '+' : ''}${Number(r.value)}%` : `${Number(r.value).toLocaleString('ru-RU')} ${t('sanatorium.s2.perNight')}`}
                     {' · '}{t(`sanatorium.s2.scope.${r.scope}`)}{' · '}{t('sanatorium.s2.priority')}: {r.priority}
                   </Text>
+                  {r.scope !== 'all' && <Text variant="caption" tone="subtle" testID={`season-scope-${r.id}`}>{seasonScopeText(r, lookup(r))}</Text>}
                   <RowTools testID={`season-tools-${r.id}`} onEdit={() => setEdit(r)} onDelete={() => void confirmDelete(t('sanatorium.s2.deleteSeason'), () => del.mutateAsync(r.id))} />
                 </Card>
               ))}
             </View>
-          )
-        }
+          );
+        }}
       </QueryBlock>
       <Sheet visible={!!edit} onClose={() => setEdit(null)} title={edit === 'new' ? t('sanatorium.s2.addSeason') : t('sanatorium.s2.editSeason')} scroll>
         {edit && <SeasonForm key={edit === 'new' ? 'new' : edit.id} rule={edit === 'new' ? null : edit} onClose={() => setEdit(null)} />}

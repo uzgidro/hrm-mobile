@@ -172,7 +172,7 @@ export function PhotoField({ value, onChange, testID }: { value: PhotoValue; onC
 // ── Files ──
 /** Authenticated download of a document; the user picks where to save it (existing app approach). */
 export function DownloadButton({
-  label, url, params, filename, format = 'pdf', size = 'sm', variant = 'soft', testID,
+  label, url, params, filename, format = 'pdf', size = 'sm', variant = 'soft', testID, onError, disabled,
 }: {
   label: string;
   url: string;
@@ -182,6 +182,9 @@ export function DownloadButton({
   size?: 'sm' | 'md';
   variant?: 'soft' | 'primary';
   testID?: string;
+  /** Called with the error instead of the default toast; the caller may fall back (e.g. to another file). */
+  onError?: (e: unknown) => void;
+  disabled?: boolean;
 }) {
   const { t } = useTranslation();
   const [busy, setBusy] = useState(false);
@@ -192,33 +195,57 @@ export function DownloadButton({
       const r = await downloadAndSave({ url, params }, filename, mime);
       if (r === 'saved') toast.success(t('sanatorium.s2.fileSaved'));
     } catch (e) {
-      toast.error(sanErrorMessage(e, t('sanatorium.s2.downloadFail')));
+      if (onError) onError(e);
+      else toast.error(sanErrorMessage(e, t('sanatorium.s2.downloadFail')));
     } finally {
       setBusy(false);
     }
   };
-  return <Button label={label} icon="doc" size={size} variant={variant} loading={busy} onPress={() => void run()} testID={testID} />;
+  return <Button label={label} icon="doc" size={size} variant={variant} loading={busy} disabled={disabled} onPress={() => void run()} testID={testID} />;
 }
 
 // ── Charts ──
-/** Vertical bars drawn with Views (no chart library in the app). */
-export function BarChart({ values, labels, height = 96, max, testID }: { values: number[]; labels?: string[]; height?: number; max?: number; testID?: string }) {
+/**
+ * Vertical bars drawn with Views (no chart library in the app). Optional: `reference` draws a dashed
+ * line at that value (e.g. total beds), `allLabels` labels every bar, `showValues` prints the value above it.
+ */
+export function BarChart({
+  values, labels, height = 96, max, testID, reference, allLabels, showValues,
+}: { values: number[]; labels?: string[]; height?: number; max?: number; testID?: string; reference?: number; allLabels?: boolean; showValues?: boolean }) {
   const { colors: c } = useTheme();
-  const pct = barPercents(values, max);
+  const top = reference && reference > 0 ? Math.max(max ?? 0, reference, ...values) : max;
+  const pct = barPercents(values, top);
+  const refPct = reference && reference > 0 && top ? Math.min(100, (reference / top) * 100) : null;
   return (
     <View testID={testID}>
+      {showValues && (
+        <View style={styles.barLabels}>
+          {values.map((v, i) => (
+            <Text key={i} variant="caption" tone="muted" style={styles.barCell}>{v}</Text>
+          ))}
+        </View>
+      )}
       <View style={[styles.bars, { height }]}>
         {pct.map((p, i) => (
           <View key={i} style={styles.barCol} accessibilityLabel={`${labels?.[i] ?? i + 1}: ${values[i]}`}>
             <View style={[styles.bar, { height: `${p}%`, backgroundColor: c.brand }]} />
           </View>
         ))}
+        {refPct != null && <View pointerEvents="none" testID={testID ? `${testID}-ref` : undefined} style={[styles.refLine, { bottom: `${refPct}%`, borderColor: c.danger }]} />}
       </View>
       {labels && labels.length > 0 && (
-        <View style={styles.barLabels}>
-          <Text variant="caption" tone="subtle">{labels[0]}</Text>
-          <Text variant="caption" tone="subtle">{labels[labels.length - 1]}</Text>
-        </View>
+        allLabels ? (
+          <View style={styles.barLabels}>
+            {labels.map((l, i) => (
+              <Text key={i} variant="caption" tone="subtle" style={styles.barCell} numberOfLines={1}>{l}</Text>
+            ))}
+          </View>
+        ) : (
+          <View style={styles.barLabels}>
+            <Text variant="caption" tone="subtle">{labels[0]}</Text>
+            <Text variant="caption" tone="subtle">{labels[labels.length - 1]}</Text>
+          </View>
+        )
       )}
     </View>
   );
@@ -268,6 +295,8 @@ const styles = StyleSheet.create({
   barCol: { flex: 1, height: '100%', justifyContent: 'flex-end' },
   bar: { width: '100%', borderTopLeftRadius: 2, borderTopRightRadius: 2 },
   barLabels: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 2 },
+  barCell: { flex: 1, textAlign: 'center' },
+  refLine: { position: 'absolute', left: 0, right: 0, borderTopWidth: 1, borderStyle: 'dashed' },
   hbar: { marginVertical: 4, gap: 3 },
   hbarHead: { flexDirection: 'row', gap: 8 },
   hbarTrack: { height: 8, borderRadius: 4, overflow: 'hidden' },

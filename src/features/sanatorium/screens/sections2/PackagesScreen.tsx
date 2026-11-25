@@ -20,7 +20,7 @@ import {
   ChipWrap, FieldLabel, PhotoField, RowTools, SectionScreen, TextTrio, emptyPhoto, useConfirmDelete, useContentLang, type PhotoValue,
 } from '../../components/sections2/kit';
 import { GUEST_TYPES } from '../../types';
-import { emptyPackageDraft, packageBody, pickText, reorderIds, toggleValue, type PackageDraft } from '../../utils/sections2';
+import { emptyPackageDraft, limitRows, packageBody, pickText, reorderIds, toggleValue, type PackageDraft } from '../../utils/sections2';
 import { fmtMoney, sanErrorMessage } from '../../utils/sanatorium';
 import { useSanFeatures } from '../../utils/features';
 
@@ -55,11 +55,20 @@ export default function PackagesScreen() {
                     </View>
                     {!p.is_active && <Badge label={t('sanatorium.s2.inactive')} tone="warning" />}
                   </View>
-                  {p.items.length > 0 && (
-                    <Text variant="caption" tone="muted">
-                      {p.items.map((it) => `${it.quantity > 1 ? `${it.quantity}× ` : ''}${it.service ? pickText(it.service as never, 'name', lang) : it.text ?? ''}`).join(' · ')}
-                    </Text>
-                  )}
+                  <View style={styles.badges} testID={`package-types-${p.id}`}>
+                    {p.guest_types.length === 0
+                      ? <Badge label={t('sanCatalog.pkg.allTypes')} tone="neutral" />
+                      : p.guest_types.map((g) => <Badge key={g} label={t(`sanatorium.guestType.${g}`, { defaultValue: g })} tone="info" />)}
+                  </View>
+                  {p.items.length > 0 && (() => {
+                    const { shown, more } = limitRows(p.items, 4);
+                    return (
+                      <Text variant="caption" tone="muted" testID={`package-items-${p.id}`}>
+                        {shown.map((it) => `${it.quantity > 1 ? `${it.quantity}× ` : ''}${it.service ? pickText(it.service as never, 'name', lang) : it.text ?? ''}`).join(' · ')}
+                        {more > 0 ? ` · ${t('sanCatalog.pkg.more', { n: more })}` : ''}
+                      </Text>
+                    );
+                  })()}
                   <RowTools
                     testID={`package-tools-${p.id}`}
                     onUp={i > 0 ? () => move(p.id, -1) : null}
@@ -166,6 +175,7 @@ function PackageForm({ pkg, onClose }: { pkg: SanPackage | null; onClose: () => 
 
 const styles = StyleSheet.create({
   stack: { gap: 10 },
+  badges: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 4 },
   flex: { flex: 1 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
   thumb: { width: 56, height: 56, borderRadius: radii.md },

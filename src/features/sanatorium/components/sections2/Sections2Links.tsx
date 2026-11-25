@@ -10,6 +10,7 @@ import { ListRow } from '@/ui';
 import type { SanRole } from '../../types';
 import { useSanFeatures, type SanFeatureKey } from '../../utils/features';
 import { hasSanRole, isSanReadOnly } from '../../utils/sanatorium';
+import { externalMayOpen, isExternalDoctorUser } from '../../utils/staffParity';
 
 type Link = { route: string; icon: IconName; labelKey: string; roles: SanRole[]; feature: SanFeatureKey | null };
 
@@ -21,7 +22,7 @@ export const SECTIONS2_LINKS: Link[] = [
   { route: '/sanatorium-orgs', icon: 'briefcase', labelKey: 'sanatorium.s2.organizations', roles: ['registrar'], feature: 'documents' },
   { route: '/sanatorium-doc-templates', icon: 'doc', labelKey: 'sanatorium.s2.docTemplates', roles: ['registrar'], feature: 'documents' },
   { route: '/sanatorium-schedule', icon: 'board', labelKey: 'sanatorium.s2.schedule', roles: ['registrar', 'doctor', 'nurse'], feature: 'procedure_schedule' },
-  { route: '/sanatorium-diets', icon: 'checklist', labelKey: 'sanatorium.s2.diets', roles: ['registrar'], feature: 'diet' },
+  { route: '/sanatorium-diets', icon: 'checklist', labelKey: 'sanatorium.s2.diets', roles: ['registrar', 'kitchen'], feature: 'diet' },
   { route: '/sanatorium-feedback', icon: 'news', labelKey: 'sanatorium.s2.feedback', roles: ['registrar'], feature: 'feedback' },
   { route: '/sanatorium-feedback', icon: 'news', labelKey: 'sanatorium.s2.myRatings', roles: ['doctor'], feature: 'feedback' },
   { route: '/sanatorium-analytics', icon: 'chart', labelKey: 'sanatorium.s2.analytics', roles: ['registrar'], feature: 'analytics' },
@@ -39,7 +40,9 @@ export function Sections2Links() {
   const f = useSanFeatures();
   const readOnly = isSanReadOnly(user);
   // The quote calculator is a POST the view-only account cannot make.
-  const links = visibleSections2Links((...r) => hasSanRole(user, ...r), f.on).filter((l) => !(readOnly && l.route === '/sanatorium-quote'));
+  // An invited (external) doctor is confined to the dashboard, desk and nurse screens.
+  const external = isExternalDoctorUser(user);
+  const links = visibleSections2Links((...r) => hasSanRole(user, ...r), f.on).filter((l) => !(readOnly && l.route === '/sanatorium-quote') && !(external && !externalMayOpen(l.route)));
   if (links.length === 0) return null;
   return (
     <View style={styles.links} testID="sections2-links">

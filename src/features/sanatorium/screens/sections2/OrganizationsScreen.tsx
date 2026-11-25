@@ -13,8 +13,8 @@ import { Badge, Button, Card, EmptyState, ListRow, SearchField, Sheet, Text } fr
 import { invoiceQuery, orgsQuery, useDeleteOrganization, useSaveOrganization, type Organization } from '../../api/sections2';
 import { QueryBlock } from '../../components/common';
 import { DateField, ErrorLine, SwitchRow } from '../../components/forms';
-import { DownloadButton, RowTools, SectionScreen, useConfirmDelete } from '../../components/sections2/kit';
-import { docFileName, emptyOrgDraft, orgBody, type OrgDraft } from '../../utils/sections2';
+import { ChipWrap, DownloadButton, RowTools, SectionScreen, useConfirmDelete } from '../../components/sections2/kit';
+import { docFileName, emptyOrgDraft, filterOrgs, orgBody, type OrgDraft } from '../../utils/sections2';
 import { fmtDate, fmtMoney, sanErrorMessage, todayIso } from '../../utils/sanatorium';
 
 export default function OrganizationsScreen() {
@@ -25,12 +25,20 @@ export default function OrganizationsScreen() {
   const confirmDelete = useConfirmDelete();
   const [edit, setEdit] = useState<Organization | 'new' | null>(null);
   const [invoice, setInvoice] = useState<Organization | null>(null);
+  const [active, setActive] = useState<boolean | null>(null);
   return (
     <SectionScreen title={t('sanatorium.s2.organizations')} feature="documents" roles={['registrar']} testID="san-orgs-screen" refreshing={q.isRefetching} onRefresh={() => void q.refetch()} onAdd={() => setEdit('new')} addLabel={t('sanatorium.s2.addOrg')}>
       <SearchField testID="org-search" value={term} onChangeText={setTerm} placeholder={t('sanatorium.s2.searchOrg')} />
+      <ChipWrap
+        testID="org-active-filter"
+        options={[{ value: 'on', label: t('sanatorium.s2.active') }, { value: 'off', label: t('sanatorium.s2.inactive') }]}
+        isOn={(v) => (v === 'on' ? active === true : active === false)}
+        onToggle={(v) => setActive(v === 'on' ? (active === true ? null : true) : active === false ? null : false)}
+      />
       <QueryBlock query={q}>
-        {(list) =>
-          list.length === 0 ? (
+        {(all) => {
+          const list = filterOrgs(all, active);
+          return list.length === 0 ? (
             <EmptyState title={t('sanatorium.s2.noOrgs')} />
           ) : (
             <View style={styles.stack}>
@@ -40,7 +48,8 @@ export default function OrganizationsScreen() {
                     <Text variant="heading" style={styles.flex}>{o.name}</Text>
                     {!o.is_active && <Badge label={t('sanatorium.s2.inactive')} tone="warning" />}
                   </View>
-                  <Text variant="caption" tone="muted">{[o.tin ? `${t('sanatorium.s2.tin')}: ${o.tin}` : null, o.contract_no ? `${t('sanatorium.s2.contractNo')}: ${o.contract_no}` : null, o.contact_person].filter(Boolean).join(' · ')}</Text>
+                  <Text variant="caption" tone="muted">{[o.tin ? `${t('sanatorium.s2.tin')}: ${o.tin}` : null, o.contract_no ? `${t('sanatorium.s2.contractNo')}: ${o.contract_no}${o.contract_date ? ` · ${fmtDate(o.contract_date)}` : ''}` : null].filter(Boolean).join(' · ')}</Text>
+                  {!!(o.contact_person || o.contact_phone) && <Text variant="caption" tone="muted" testID={`org-contact-${o.id}`}>{[o.contact_person, o.contact_phone].filter(Boolean).join(' · ')}</Text>}
                   <View style={styles.actions}>
                     <Button testID={`org-invoice-${o.id}`} label={t('sanatorium.s2.invoice')} size="sm" variant="soft" icon="doc" onPress={() => setInvoice(o)} />
                     <RowTools testID={`org-tools-${o.id}`} onEdit={() => setEdit(o)} onDelete={() => void confirmDelete(t('sanatorium.s2.deleteOrg'), () => del.mutateAsync(o.id))} />
@@ -48,8 +57,8 @@ export default function OrganizationsScreen() {
                 </Card>
               ))}
             </View>
-          )
-        }
+          );
+        }}
       </QueryBlock>
       <Sheet visible={!!edit} onClose={() => setEdit(null)} title={edit === 'new' ? t('sanatorium.s2.addOrg') : t('sanatorium.s2.editOrg')} scroll>
         {edit && <OrgForm key={edit === 'new' ? 'new' : edit.id} org={edit === 'new' ? null : edit} onClose={() => setEdit(null)} />}
@@ -118,7 +127,14 @@ function InvoiceView({ org }: { org: Organization }) {
             <View>
               {inv.rows.length === 0 && <Text variant="body" tone="muted">{t('sanatorium.s2.noInvoiceRows')}</Text>}
               {inv.rows.map((r) => (
-                <ListRow key={r.stay_id} title={`${r.no}. ${r.guest}`} subtitle={`${r.room ? `${t('sanatorium.room')} ${r.room} · ` : ''}${fmtDate(r.planned_from)} → ${fmtDate(r.planned_to)} (${r.nights})`} right={<Text variant="body">{fmtMoney(r.total)}</Text>} />
+                <ListRow
+                  key={r.stay_id}
+                  testID={`inv-row-${r.stay_id}`}
+                  title={`${r.no}. ${r.guest}`}
+                  subtitle={`${r.room ? `${t('sanatorium.room')} ${r.room} · ` : ''}${fmtDate(r.planned_from)} → ${fmtDate(r.planned_to)} (${r.nights})`}
+                  below={<Text variant="caption" tone="muted">{`${t('sanatorium.s2.accommodationTotal')}: ${fmtMoney(r.accommodation)} · ${t('sanatorium.s2.servicesTotal')}: ${fmtMoney(r.services)} · ${t('sanatorium.paidAmount')}: ${fmtMoney(r.paid)}`}</Text>}
+                  right={<Text variant="body">{fmtMoney(r.total)}</Text>}
+                />
               ))}
               <ListRow title={t('sanatorium.s2.accommodationTotal')} right={<Text variant="body">{fmtMoney(inv.accommodation_total)}</Text>} />
               <ListRow title={t('sanatorium.s2.servicesTotal')} right={<Text variant="body">{fmtMoney(inv.services_total)}</Text>} />

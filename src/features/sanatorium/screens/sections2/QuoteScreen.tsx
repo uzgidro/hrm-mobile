@@ -6,7 +6,7 @@ import dayjs from 'dayjs';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { FormInput } from '@/components/FormInput';
-import { Button, Card, ListRow, Text } from '@/ui';
+import { Badge, Button, Card, ListRow, Text } from '@/ui';
 import { packagesQuery, servicesQuery, useQuote, type QuoteResult } from '../../api/sections2';
 import { roomsQuery } from '../../api/queries';
 import { ChoiceField, DateField, ErrorLine } from '../../components/forms';
@@ -64,7 +64,7 @@ export default function QuoteScreen() {
         {f.on('paid_services') && (services.data ?? []).length > 0 && (
           <>
             <FieldLabel>{t('sanatorium.s2.services')}</FieldLabel>
-            <ChipWrap options={(services.data ?? []).map((s) => ({ value: s.id, label: pickText(s as never, 'name', lang) }))} isOn={(v) => d.services.some((s) => s.serviceId === v)} onToggle={toggleService} testID="qt-services" />
+            <ChipWrap options={(services.data ?? []).map((s) => ({ value: s.id, label: `${pickText(s as never, 'name', lang)} · ${fmtMoney(s.price)} / ${t(`sanatorium.s2.unit.${s.unit}`)}` }))} isOn={(v) => d.services.some((s) => s.serviceId === v)} onToggle={toggleService} testID="qt-services" />
             {d.services.map((s) => (
               <View key={s.serviceId} style={styles.qty}>
                 <Text variant="body" style={styles.flex} numberOfLines={1}>{pickText((services.data ?? []).find((x) => x.id === s.serviceId) as never, 'name', lang)}</Text>
@@ -89,15 +89,16 @@ function QuoteResultView({ r }: { r: QuoteResult }) {
   return (
     <Card title={t('sanatorium.s2.quoteResult')} icon="wallet" tint="green" testID="quote-result">
       <Text variant="caption" tone="muted">{fmtDate(r.start)} → {fmtDate(r.end)} · {r.nights} {t('sanatorium.s2.nightsShort')} · {r.adults} + {r.children}</Text>
+      {r.room && <View style={styles.badges}><Badge label={`${t('sanatorium.room')} ${r.room.number}`} tone="info" testID="quote-room" /></View>}
       {r.package && <ListRow title={`${t('sanatorium.s2.package')}: ${pickText(r.package as never, 'name', lang)}`} subtitle={`${r.package.nights} ${t('sanatorium.s2.nightsShort')}`} right={<Text variant="heading">{fmtMoney(r.package.amount)}</Text>} />}
       {r.night_lines.map((l) => (
         <ListRow key={l.date} title={fmtDate(l.date)} subtitle={`${fmtMoney(l.unit_price)} × ${l.persons_charged}${l.season ? ` · ${typeof l.season === 'string' ? l.season : l.season.name}` : ''}`} right={<Text variant="body">{fmtMoney(l.amount)}</Text>} />
       ))}
       {Number(r.child_discount?.amount) !== 0 && r.child_discount && (
-        <ListRow title={`${t('sanatorium.childDiscount')} (${r.child_discount.percent}%)`} right={<Text variant="body">{fmtMoney(r.child_discount.amount)}</Text>} />
+        <ListRow testID="quote-child-discount" title={`${t('sanatorium.childDiscount')} (${r.child_discount.percent}%${r.children_discounted != null ? ` · ${t('sanCatalog.quote.children', { n: r.children_discounted })}` : ''})`} right={<Text variant="body">{fmtMoney(r.child_discount.amount)}</Text>} />
       )}
       {r.services.map((s) => (
-        <ListRow key={s.service_id} title={pickText(s as never, 'name', lang)} subtitle={`${s.quantity} × ${fmtMoney(s.unit_price)}`} right={<Text variant="body">{fmtMoney(s.amount)}</Text>} />
+        <ListRow key={s.service_id} title={pickText(s as never, 'name', lang)} subtitle={`${s.quantity} × ${fmtMoney(s.unit_price)} / ${t(`sanatorium.s2.unit.${s.unit}`, { defaultValue: s.unit })}`} right={<Text variant="body">{fmtMoney(s.amount)}</Text>} />
       ))}
       <ListRow title={t('sanatorium.s2.accommodationTotal')} right={<Text variant="body">{fmtMoney(r.accommodation_total)}</Text>} />
       <ListRow title={t('sanatorium.s2.servicesTotal')} right={<Text variant="body">{fmtMoney(r.services_total)}</Text>} />
@@ -106,4 +107,4 @@ function QuoteResultView({ r }: { r: QuoteResult }) {
   );
 }
 
-const styles = StyleSheet.create({ flex: { flex: 1 }, qty: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 } });
+const styles = StyleSheet.create({ badges: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 }, flex: { flex: 1 }, qty: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 } });
