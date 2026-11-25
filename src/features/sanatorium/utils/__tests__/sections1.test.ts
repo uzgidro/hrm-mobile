@@ -1,7 +1,7 @@
 import type { FeatureRow } from '../../types1';
 import {
   broadcastProgress, featureDiff, featureLabel, groupFeatures, hkAllowedStatuses, inUzbekistan, isStageKey,
-  locationBody, moveId, nextTransferStatuses, roomNotReady, parseCoord, parseMapHash, pickLang, planPoint, slugKey, waitlistParams,
+  locationBody, moveId, nextTransferStatuses, canSendBroadcast, convertDefaults, normalizeUzPhone, parseFloor, photoThumb, transferNeedsCar, validTransferPeople, roomNotReady, parseCoord, parseMapHash, pickLang, planPoint, slugKey, waitlistParams,
 } from '../sections1';
 
 const row = (key: string, enabled = true): FeatureRow => ({ key, enabled, default: true, label_uz: `uz ${key}`, label_ru: `ru ${key}` });
@@ -9,7 +9,7 @@ const row = (key: string, enabled = true): FeatureRow => ({ key, enabled, defaul
 describe('features', () => {
   it('groups known keys and keeps unknown ones in «other»', () => {
     const g = groupFeatures([row('journey'), row('telegram_bot'), row('mystery')]);
-    expect(g.map((x) => x.id)).toEqual(['guest', 'stay', 'other']);
+    expect(g.map((x) => x.id)).toEqual(['existing', 'content', 'other']);
     expect(g[2]!.rows[0]!.key).toBe('mystery');
   });
   it('diff holds only changed switches', () => {
@@ -107,5 +107,61 @@ describe('roomNotReady', () => {
     expect(roomNotReady({ warnings: [{ code: 'x' }, { code: 'room_not_ready', room_number: '12', hk_status: 'dirty' }] })).toMatchObject({ room_number: '12' });
     expect(roomNotReady({})).toBeNull();
     expect(roomNotReady(null)).toBeNull();
+  });
+});
+
+describe('phone', () => {
+  it('normalises full UZ numbers only', () => {
+    expect(normalizeUzPhone('+998901234567')).toBe('+998901234567');
+    expect(normalizeUzPhone('998 90 123 45 67')).toBe('+998901234567');
+    expect(normalizeUzPhone('901234567')).toBe('+998901234567');
+    expect(normalizeUzPhone('+99890123')).toBeNull();
+    expect(normalizeUzPhone('')).toBeNull();
+    expect(normalizeUzPhone(null)).toBeNull();
+  });
+});
+
+describe('parseFloor', () => {
+  it('blank is null, integers in range pass, the rest fail', () => {
+    expect(parseFloor('')).toEqual({ ok: true, value: null });
+    expect(parseFloor(' 3 ')).toEqual({ ok: true, value: 3 });
+    expect(parseFloor('-1')).toEqual({ ok: true, value: -1 });
+    expect(parseFloor('101')).toEqual({ ok: false });
+    expect(parseFloor('-6')).toEqual({ ok: false });
+    expect(parseFloor('1.5')).toEqual({ ok: false });
+    expect(parseFloor('A')).toEqual({ ok: false });
+  });
+});
+
+describe('transfer checks', () => {
+  it('assigned needs a vehicle or a driver', () => {
+    expect(transferNeedsCar('assigned', null, ' ')).toBe(true);
+    expect(transferNeedsCar('assigned', 3, '')).toBe(false);
+    expect(transferNeedsCar('assigned', null, 'Ali')).toBe(false);
+    expect(transferNeedsCar('confirmed', null, '')).toBe(false);
+  });
+  it('people is 1..20', () => {
+    expect(validTransferPeople(1)).toBe(true);
+    expect(validTransferPeople(20)).toBe(true);
+    expect(validTransferPeople(0)).toBe(false);
+    expect(validTransferPeople(21)).toBe(false);
+    expect(validTransferPeople(Number.NaN)).toBe(false);
+  });
+});
+
+describe('small helpers', () => {
+  it('photo falls back to the original url', () => {
+    expect(photoThumb({ url: 'a', thumb_url: 'b' })).toBe('b');
+    expect(photoThumb({ url: 'a', thumb_url: '' })).toBe('a');
+    expect(photoThumb(null)).toBeUndefined();
+  });
+  it('broadcast needs somebody reachable', () => {
+    expect(canSendBroadcast(0)).toBe(false);
+    expect(canSendBroadcast(undefined)).toBe(false);
+    expect(canSendBroadcast(2)).toBe(true);
+  });
+  it('convert starts from the entry', () => {
+    expect(convertDefaults({ birth_date: '1990-01-02', passport: 'AA1234567', organization_name: 'X' })).toEqual({ birth: '1990-01-02', passport: 'AA1234567', org: 'X' });
+    expect(convertDefaults({})).toEqual({ birth: null, passport: '', org: '' });
   });
 });

@@ -77,8 +77,9 @@ export const fetchAvailability = (start: string, days: number) =>
 /** `mine` keeps a doctor's list to their own patients (a nurse is scoped by the server anyway). */
 export const fetchAppointments = (day: string, mine: boolean) =>
   apiClient.get(SANATORIUM_APPOINTMENTS, { params: { day, mine } }).then((r) => unwrapList<Appointment>(r.data));
-export const fetchProcedures = () =>
-  apiClient.get(SANATORIUM_PROCEDURES, { params: { active_only: true } }).then((r) => unwrapList<Procedure>(r.data));
+/** `mine` keeps a nurse / doctor to the procedures of their own guests. */
+export const fetchProcedures = (mine = false) =>
+  apiClient.get(SANATORIUM_PROCEDURES, { params: { active_only: true, ...(mine ? { mine: true } : {}) } }).then((r) => unwrapList<Procedure>(r.data));
 export const fetchGuest = (id: number) => apiClient.get<GuestProfile>(SANATORIUM_GUEST(id)).then((r) => r.data);
 export const fetchGuests = (q: string) =>
   apiClient.get(SANATORIUM_GUESTS, { params: { ...(q.trim() ? { q: q.trim() } : {}), size: 30 } }).then((r) => unwrapList<GuestLite & { active_stay?: unknown }>(r.data));
@@ -94,12 +95,16 @@ export const fetchSpecialties = () => apiClient.get(SANATORIUM_SPECIALTIES).then
 export const fetchDoctors = () =>
   apiClient.get(SANATORIUM_STAFF, { params: { role: 'doctor', active_only: true } }).then((r) => unwrapList<StaffRow>(r.data));
 
-export const dashboardQuery = (enabled = true) => queryOptions({ queryKey: sanKeys.dashboard(), queryFn: fetchDashboard, enabled });
+/** The dashboard refreshes by itself once a minute while a screen shows it. */
+export const DASHBOARD_REFRESH_MS = 60_000;
+export const dashboardQuery = (enabled = true) =>
+  queryOptions({ queryKey: sanKeys.dashboard(), queryFn: fetchDashboard, enabled, refetchInterval: DASHBOARD_REFRESH_MS });
 export const availabilityQuery = (start: string, days: number, enabled = true) =>
   queryOptions({ queryKey: sanKeys.availability(start, days), queryFn: () => fetchAvailability(start, days), enabled });
 export const appointmentsQuery = (day: string, mine: boolean, enabled = true) =>
   queryOptions({ queryKey: [...sanKeys.appointments(day), mine], queryFn: () => fetchAppointments(day, mine), enabled });
-export const proceduresQuery = (enabled = true) => queryOptions({ queryKey: sanKeys.procedures(), queryFn: fetchProcedures, enabled });
+export const proceduresQuery = (enabled = true, mine = false) =>
+  queryOptions({ queryKey: mine ? [...sanKeys.procedures(), 'mine'] : sanKeys.procedures(), queryFn: () => fetchProcedures(mine), enabled });
 export const guestQuery = (id: number) => queryOptions({ queryKey: sanKeys.guest(id), queryFn: () => fetchGuest(id), enabled: id > 0 });
 export const guestsQuery = (q: string) =>
   queryOptions({ queryKey: sanKeys.guests(q.trim()), queryFn: () => fetchGuests(q), enabled: q.trim().length >= 2 });
@@ -115,7 +120,18 @@ export const specialtiesQuery = (enabled = true) => queryOptions({ queryKey: san
 export const doctorsQuery = (enabled = true) => queryOptions({ queryKey: sanKeys.doctors(), queryFn: fetchDoctors, enabled });
 
 // ── Registrar-side reads ──
-export type StayFilter = { status?: string; q?: string; left_early?: boolean; guest_type?: string; room_id?: number; on_date?: string };
+export type StayFilter = {
+  status?: string;
+  q?: string;
+  left_early?: boolean;
+  guest_type?: string;
+  room_id?: number;
+  on_date?: string;
+  /** ISO dates: stays arriving / leaving that day. */
+  arrivals?: string;
+  departures?: string;
+  group_key?: string;
+};
 export const fetchSettings = () => apiClient.get<SanSettings>(SANATORIUM_SETTINGS).then((r) => r.data);
 export const fetchRooms = () => apiClient.get(SANATORIUM_ROOMS, { params: { include_inactive: true } }).then((r) => unwrapList<Room>(r.data));
 export const fetchAllSpecialties = () =>
@@ -137,8 +153,8 @@ export const fetchStaysPage = (f: StayFilter, page: number) =>
   apiClient.get(SANATORIUM_STAYS, { params: { ...f, page, size: PAGE_SIZE } }).then((r) => toPage<StayFull>(r.data, page));
 export const fetchGuestsPage = (q: string, page: number) =>
   apiClient.get(SANATORIUM_GUESTS, { params: { ...(q.trim() ? { q: q.trim() } : {}), page, size: PAGE_SIZE } }).then((r) => toPage<GuestLite>(r.data, page));
-export const fetchRequestsPage = (status: RequestStatus, page: number) =>
-  apiClient.get(SANATORIUM_REQUESTS, { params: { status, page, size: PAGE_SIZE } }).then((r) => toPage<SanRequest>(r.data, page));
+export const fetchRequestsPage = (status: RequestStatus, page: number, q = '') =>
+  apiClient.get(SANATORIUM_REQUESTS, { params: { status, ...(q.trim() ? { q: q.trim() } : {}), page, size: PAGE_SIZE } }).then((r) => toPage<SanRequest>(r.data, page));
 export const fetchStay = (id: number) => apiClient.get<StayFull>(SANATORIUM_STAY(id)).then((r) => r.data);
 
 export const settingsQuery = (enabled = true) => queryOptions({ queryKey: sanKeys.settings(), queryFn: fetchSettings, enabled });
@@ -167,10 +183,10 @@ export const guestsInfinite = (q: string, enabled = true) =>
     getNextPageParam: nextPage,
     enabled,
   });
-export const requestsInfinite = (status: RequestStatus, enabled = true) =>
+export const requestsInfinite = (status: RequestStatus, enabled = true, q = '') =>
   infiniteQueryOptions({
-    queryKey: [...sanKeys.requests(status), 'inf'],
-    queryFn: ({ pageParam }) => fetchRequestsPage(status, pageParam),
+    queryKey: [...sanKeys.requests(status), 'inf', q.trim()],
+    queryFn: ({ pageParam }) => fetchRequestsPage(status, pageParam, q),
     initialPageParam: 1,
     getNextPageParam: nextPage,
     enabled,

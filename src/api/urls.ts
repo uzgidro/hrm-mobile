@@ -760,6 +760,7 @@ export const SANATORIUM_ME = 'sanatorium/me';
 export const SANATORIUM_TODAY = 'sanatorium/today';
 export const SANATORIUM_ARRIVAL_OPTIONS = 'sanatorium/arrivals/options';
 export const SANATORIUM_ARRIVALS = 'sanatorium/arrivals';
+export const SANATORIUM_STAY_EARLY_PREVIEW = (id: number) => `sanatorium/stays/${id}/early-leave/preview`;
 export const SANATORIUM_STAY_ROUTE_SHEET = (id: number) => `sanatorium/stays/${id}/route-sheet`;
 export const SANATORIUM_STAY_EXTEND = (id: number) => `sanatorium/stays/${id}/extend`;
 export const SANATORIUM_STAY_MOVE = (id: number) => `sanatorium/stays/${id}/move`;

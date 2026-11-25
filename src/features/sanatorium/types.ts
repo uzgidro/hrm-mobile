@@ -26,6 +26,25 @@ export type GuestLite = {
   family_name?: string | null;
   login_code?: string | null;
   relation?: string | null;
+  family_id?: number | null;
+  family_relation?: string | null;
+  allergies?: string | null;
+  /** Registrar's guest list: what a departed guest still owes. */
+  debt_left?: string | null;
+  /** Registrar only: cabinet password set / Telegram linked / registration time. */
+  has_password?: boolean;
+  telegram_linked?: boolean;
+  created_at?: string | null;
+  /** Present in guest lists: the current or next stay (names only, no money). */
+  active_stay?: GuestActiveStay | null;
+};
+
+export type GuestActiveStay = {
+  id: number;
+  status: StayStatus;
+  planned_from: string;
+  planned_to: string;
+  room?: { id: number; number: string; building?: string | null } | null;
 };
 
 export type StaffLite = { id: number; full_name?: string | null; specialty?: string | null };
@@ -46,6 +65,8 @@ export type Stay = {
   checked_out_at: string | null;
   with_meals: boolean;
   diet_note: string | null;
+  /** Diet section only. */
+  diet_id?: number | null;
   /** Same value for the stays of one family / group (null for a single stay). */
   group_key?: string | null;
   doctor: StaffLite | null;
@@ -67,6 +88,8 @@ export type Appointment = {
   guest?: GuestLite | null;
   room_number?: string | null;
   referral_note?: string | null;
+  /** start-exam only: true = an already open visit was returned instead of a new one. */
+  existing?: boolean;
   complaint?: string | null;
   diagnosis?: string | null;
   recommendation?: string | null;
@@ -101,7 +124,7 @@ export type GuestEvent = {
 
 export type GuestProfile = {
   guest: GuestLite;
-  stays: Stay[];
+  stays: StayFull[];
   appointments?: Appointment[];
   procedures?: Procedure[];
   events?: GuestEvent[];
@@ -118,6 +141,7 @@ export type KitchenDay = {
   diet: number;
   arrivals: number;
   checked_in: number;
+  departures?: number;
 };
 export type KitchenCounts = { start: string; days: KitchenDay[]; early_leaves?: { guest: GuestLite; date: string; planned_to: string }[] };
 export type KitchenPerson = {
@@ -127,6 +151,10 @@ export type KitchenPerson = {
   diet_note: string | null;
   status: StayStatus;
   is_child?: boolean;
+  /** Diet section only. */
+  diet_id?: number | null;
+  diet_code?: string | null;
+  allergies?: string | null;
 };
 
 export type Dashboard = {
@@ -140,6 +168,19 @@ export type Dashboard = {
   rooms_out_of_service?: unknown[];
   appointments_today?: Appointment[];
   kitchen_week?: KitchenDay[];
+  /** Registrar / chairman only. */
+  in_house_by_type?: Record<string, number>;
+  recent_events?: DashboardEvent[];
+};
+export type DashboardEvent = {
+  id: number;
+  kind: string;
+  title: string;
+  details?: string | null;
+  created_at: string | null;
+  actor_name?: string | null;
+  guest_id?: number | null;
+  guest_name?: string | null;
 };
 
 export type RoomPhoto = { id: number; url: string; thumb_url: string; width: number; height: number; sort_order: number };
@@ -152,6 +193,9 @@ export type AvailabilityRoom = {
   floor?: number | null;
   capacity: number;
   out_of_service: boolean;
+  out_of_service_note?: string | null;
+  room_type?: string | null;
+  is_active?: boolean;
   occupancy: number[];
   used_today: number;
   free_today: number;
@@ -185,6 +229,8 @@ export type SanRequest = {
   /** Another request carries the same passport. */
   duplicate_passport?: boolean;
   created_at: string | null;
+  /** When the registrar accepted / rejected it. */
+  handled_at?: string | null;
 };
 
 export type Specialty = { id: number; name: string; kind: string; is_active: boolean; poi_id?: number | null };

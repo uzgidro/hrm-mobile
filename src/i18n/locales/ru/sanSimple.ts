@@ -25,6 +25,7 @@ export default {
     departure_today: "Выезжает сегодня",
     overstay: "Срок истёк",
     debt: "Есть долг",
+    debt_left: "Выехал с долгом",
   },
   action: {
     accept: "Принять и поселить",
@@ -112,6 +113,7 @@ export default {
     guest_has_stay: "У гостя уже есть проживание в этот период",
     room_occupied: "В номере {{room_number}} не хватает мест: вместимость {{capacity}}, сейчас {{in_house}}",
     prepaid: "Нужно вернуть гостю {{amount}} (предоплата)",
+    refund: "Нужно вернуть гостю {{amount}}",
     payer_changed: "{{name}} теперь платит за номер: {{amount}}",
   },
   val: {

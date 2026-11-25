@@ -5,6 +5,10 @@ import {
   barPercents, canDeleteOrder, canEditOrder, dietBody, docFileName, downsample, emptyDietDraft, emptyOrgDraft, emptyPackageDraft,
   emptyProcRoomDraft, emptySeasonDraft, emptyServiceDraft, isHhmm, nextOrderStatuses, orgBody, packageBody, parseAges, parseIntIn,
   parseMoney, pickText, procRoomBody, quoteBody, reorderIds, seasonBody, serviceBody, toggleValue, weekdaysLabel,
+  FEEDBACK_SOURCES, NO_DIET, bucketSeries, canEditStayDiet, dietCodes, dietRoomNumber, emptyFeedbackDraft, emptyFeedbackItem, feedbackBody, feedbackFilterCount,
+  feedbackParams, filterDietGuests, filterOrgs, filterSeasons, filterServices, isPastDay, limitRows, moveBody, niceMax, orderQuantity,
+  presetRange, procRoomUsage, rangeTooLong, ratingTone, remainingSessions, scheduleBody, scheduleStart, seasonScopeText, serviceCategories,
+  serviceFilterOn, slotCaption, slotUsage, stackPercents, topRows,
 } from '../sections2';
 import { SECTIONS2_LINKS, visibleSections2Links } from '../../components/sections2/Sections2Links';
 
@@ -168,6 +172,14 @@ describe('texts', () => {
   };
   const literal = walk(path.join(ROOT, 'src/features/sanatorium'))
     .flatMap((f) => [...fs.readFileSync(f, 'utf8').matchAll(/['"`](sanatorium\.[a-zA-Z0-9_]+(?:\.[a-zA-Z0-9_]+)*)['"`]/g)].map((m) => m[1]!));
+  // sanCatalog texts: every key the new code uses (literal t() keys are checked by usedKeys.test too).
+  const catalogKeys = [...new Set(walk(path.join(ROOT, 'src/features/sanatorium')).flatMap((f) => [...fs.readFileSync(f, 'utf8').matchAll(/['"`](sanCatalog\.[a-zA-Z0-9_.]+)['"`]/g)].map((m) => m[1]!)))];
+  const catalogDynamic = FEEDBACK_SOURCES.map((x) => `sanCatalog.fb.source_${x}`);
+  it('has every sanCatalog text in all four languages', () => {
+    const missing: string[] = [];
+    for (const lang of LANGS) for (const key of [...catalogKeys.filter((k) => k !== 'sanCatalog.fb.source_'), ...catalogDynamic]) if (!has(lang, key)) missing.push(`${lang}: ${key}`);
+    expect(missing).toEqual([]);
+  });
   it('every key the new code uses exists in all four languages', () => {
     const missing: string[] = [];
     for (const lang of LANGS) for (const key of new Set([...dynamic, ...literal])) if (!has(lang, key)) missing.push(`${lang}: ${key}`);
@@ -179,5 +191,124 @@ describe('texts', () => {
         expect(has(lang, `sanatorium.errors.${code}`)).toBe(true);
       }
     }
+  });
+});
+
+describe('round 2: feedback, analytics, diet, schedule, services', () => {
+  it('builds a paper feedback body and rejects incomplete input', () => {
+    const d = { ...emptyFeedbackDraft(), stayId: 5, overall: 4, room: 5 };
+    expect(feedbackBody({ ...d, stayId: null })).toEqual({ ok: false, error: 'sanCatalog.fb.pickStay' });
+    expect(feedbackBody({ ...d, overall: 0 })).toEqual({ ok: false, error: 'sanCatalog.fb.overallRequired' });
+    expect(feedbackBody({ ...d, items: [{ ...emptyFeedbackItem(), rating: 3 }] }).ok).toBe(false);
+    const r = feedbackBody({ ...d, comment: ' ok ', items: [{ kind: 'doctor', refId: 7, name: '', rating: 5, comment: '' }, { kind: 'service', refId: null, name: ' Massage ', rating: 4, comment: 'fine' }] });
+    expect(r).toEqual({
+      ok: true,
+      body: {
+        stay_id: 5, overall: 4, room_rating: 5, food_rating: null, staff_rating: null, comment: 'ok',
+        items: [{ kind: 'doctor', ref_id: 7, rating: 5, comment: null }, { kind: 'service', name: 'Massage', rating: 4, comment: 'fine' }],
+      },
+    });
+  });
+  it('builds the feedback list params without empty filters', () => {
+    const base = { from: '2026-11-01', to: '2026-11-30', min: null, max: null, doctor: null, source: null, q: ' ' };
+    expect(feedbackParams(base)).toEqual({ from: '2026-11-01', to: '2026-11-30' });
+    expect(feedbackParams({ ...base, min: 2, max: 4, doctor: 9, source: 'registrar', q: 'ali' })).toEqual({
+      from: '2026-11-01', to: '2026-11-30', min_overall: 2, max_overall: 4, doctor_staff_id: 9, source: 'registrar', q: 'ali',
+    });
+    expect(feedbackFilterCount({ ...base, min: 2, q: 'x' })).toBe(2);
+    expect(ratingTone(5)).toBe('success');
+    expect(ratingTone(3)).toBe('warning');
+    expect(ratingTone(1)).toBe('danger');
+  });
+  it('computes analytics ranges like the web', () => {
+    expect(presetRange(30, '2026-11-30')).toEqual({ from: '2026-11-01', to: '2026-11-30' });
+    expect(presetRange(7, '2026-11-30').from).toBe('2026-11-24');
+    expect(rangeTooLong('2025-11-30', '2026-11-30')).toBe(false);
+    expect(rangeTooLong('2025-11-29', '2026-11-30')).toBe(true);
+  });
+  it('buckets series and scales axes', () => {
+    const r = bucketSeries([1, 2, 3, 4], ['a', 'b', 'c', 'd'], 2, 'sum');
+    expect(r).toEqual({ values: [3, 7], labels: ['a', 'c'] });
+    expect(bucketSeries([2, 4], ['a', 'b'], 5, 'avg')).toEqual({ values: [2, 4], labels: ['a', 'b'] });
+    expect(bucketSeries([2, 4, 6, 8], ['a', 'b', 'c', 'd'], 2, 'avg').values).toEqual([3, 7]);
+    expect([0, 1, 3, 7, 12, 130].map(niceMax)).toEqual([1, 1, 5, 10, 20, 200]);
+    expect(stackPercents([2, 0, 2], 4)).toEqual([50, 0, 50]);
+    expect(topRows([1, 2, 3], 2)).toEqual([1, 2]);
+    expect(procRoomUsage([{ name: 'R', done: 3, planned: 2, missed: 1, utilization_percent: 60 }, null])).toEqual([
+      { name: 'R', done: 3, planned: 2, missed: 1, percent: 60 }, { name: '', done: 0, planned: 0, missed: 0, percent: 0 },
+    ]);
+  });
+  it('filters kitchen diet guests, including «no diet»', () => {
+    const g = [
+      { guest: { full_name: 'Ali Valiyev' }, diet: { id: 1 } },
+      { guest: { full_name: 'Vali Aliyev' }, diet: null },
+      { guest: { full_name: 'Sardor' }, diet: { id: 2 } },
+    ];
+    expect(filterDietGuests(g, '', null)).toHaveLength(3);
+    expect(filterDietGuests(g, 'ali', null).map((x) => x.guest.full_name)).toEqual(['Ali Valiyev', 'Vali Aliyev']);
+    expect(filterDietGuests(g, '', NO_DIET)).toHaveLength(1);
+    expect(filterDietGuests(g, '', '2').map((x) => x.guest.full_name)).toEqual(['Sardor']);
+    expect(dietRoomNumber('12')).toBe('12');
+    expect(dietRoomNumber({ number: '7' })).toBe('7');
+    expect(dietRoomNumber(null)).toBeNull();
+    expect(dietCodes([{ by_diet: { '-': 2, '№9': 1 } }, { by_diet: { '№5': 3 } }])).toEqual(['№5', '№9', '-']);
+  });
+  it('lets the registrar and the attending doctor edit the stay diet', () => {
+    const user = (roles: string[], ro = false) => ({ sanatorium_roles: roles, sanatorium_read_only: ro }) as never;
+    const stay = { doctor: { id: 4 } };
+    expect(canEditStayDiet(user(['registrar']), null, stay)).toBe(true);
+    expect(canEditStayDiet(user(['registrar'], true), null, stay)).toBe(false);
+    expect(canEditStayDiet(user(['doctor']), { staff_id: 4 }, stay)).toBe(true);
+    expect(canEditStayDiet(user(['doctor']), { staff_id: 5 }, stay)).toBe(false);
+    expect(canEditStayDiet(user(['doctor']), undefined, stay)).toBe(false);
+    expect(canEditStayDiet(user(['nurse']), { staff_id: 4 }, stay)).toBe(false);
+    expect(canEditStayDiet(null, { staff_id: 4 }, stay)).toBe(false);
+  });
+  it('defaults and validates the schedule form', () => {
+    expect(remainingSessions({ sessions_total: 10, sessions_done: 4 })).toBe(6);
+    expect(remainingSessions({ sessions_total: 3, sessions_done: 3 })).toBe(1);
+    expect(scheduleStart({ start_date: '2026-12-10' }, '2026-12-01')).toBe('2026-12-10');
+    expect(scheduleStart({ start_date: '2026-11-10' }, '2026-12-01')).toBe('2026-12-01');
+    const ok = { roomId: 3, start: '2026-12-01', time: '', count: '6' };
+    expect(scheduleBody({ ...ok, roomId: null }, 6, '2026-12-01')).toEqual({ ok: false, error: 'sanatorium.s2.pickProcRoom' });
+    expect(scheduleBody({ ...ok, start: '2026-11-30' }, 6, '2026-12-01')).toEqual({ ok: false, error: 'sanCatalog.sched.startPast' });
+    expect(scheduleBody({ ...ok, count: '7' }, 6, '2026-12-01')).toEqual({ ok: false, error: 'sanCatalog.sched.countRange' });
+    expect(scheduleBody({ ...ok, time: '25:00' }, 6, '2026-12-01').ok).toBe(false);
+    expect(scheduleBody({ ...ok, time: '10:30' }, 6, '2026-12-01')).toEqual({ ok: true, body: { room_id: 3, start_date: '2026-12-01', preferred_time: '10:30', sessions: 6 } });
+    expect(moveBody('2026-12-01T10:00:00', null)).toEqual({ starts_at: '2026-12-01T10:00:00' });
+    expect(moveBody('2026-12-01T10:00:00', 4)).toEqual({ starts_at: '2026-12-01T10:00:00', room_id: 4 });
+    expect(slotUsage(10, 4)).toBeCloseTo(0.6);
+    expect(slotUsage(0, 0)).toBe(0);
+  });
+  it('filters services and suggests categories', () => {
+    const list = [
+      { name_uz: 'Massaj', name_ru: 'Массаж', category: 'Spa', is_active: true },
+      { name_uz: 'Sauna', name_ru: null, category: 'Spa', is_active: false },
+      { name_uz: 'Taksi', name_ru: 'Такси', category: null, is_active: true },
+    ];
+    const f = { q: '', category: null, active: null };
+    expect(filterServices(list, f)).toHaveLength(3);
+    expect(filterServices(list, { ...f, q: 'масс' })).toHaveLength(1);
+    expect(filterServices(list, { ...f, category: 'Spa', active: true })).toHaveLength(1);
+    expect(filterServices(list, { ...f, active: false })[0]!.name_uz).toBe('Sauna');
+    expect(serviceCategories(list)).toEqual(['Spa']);
+    expect(serviceFilterOn(f)).toBe(false);
+    expect(serviceFilterOn({ ...f, active: false })).toBe(true);
+  });
+  it('validates order quantity and day', () => {
+    expect([orderQuantity('1'), orderQuantity('1000'), orderQuantity('1001'), orderQuantity('0'), orderQuantity('x')]).toEqual([1, 1000, null, null, null]);
+    expect(isPastDay('2026-11-24', '2026-11-25')).toBe(true);
+    expect(isPastDay('2026-11-25', '2026-11-25')).toBe(false);
+    expect(slotCaption({ free: 2, capacity: 5 })).toBe('2/5');
+  });
+  it('filters seasons / organizations and limits rows', () => {
+    expect(filterSeasons([{ scope: 'all' }, { scope: 'rooms' }], 'rooms')).toEqual([{ scope: 'rooms' }]);
+    expect(filterSeasons([{ scope: 'all' }], null)).toHaveLength(1);
+    expect(seasonScopeText({ scope: 'rooms', scope_values: ['1', '2'] }, (id) => `R${id}`)).toBe('R1, R2');
+    expect(seasonScopeText({ scope: 'room_type', scope_values: ['lux', 'std'] }, () => 'x')).toBe('lux, std');
+    expect(seasonScopeText({ scope: 'all', scope_values: [] }, () => 'x')).toBe('');
+    expect(filterOrgs([{ is_active: true }, { is_active: false }], false)).toEqual([{ is_active: false }]);
+    expect(limitRows([1, 2, 3, 4, 5, 6], 4)).toEqual({ shown: [1, 2, 3, 4], more: 2 });
+    expect(limitRows([1], 4)).toEqual({ shown: [1], more: 0 });
   });
 });

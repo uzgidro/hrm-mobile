@@ -25,6 +25,7 @@ export default {
     departure_today: "Leaves today",
     overstay: "Past planned end",
     debt: "Has a debt",
+    debt_left: "Left with a debt",
   },
   action: {
     accept: "Accept and place",
@@ -112,6 +113,7 @@ export default {
     guest_has_stay: "The guest already has a stay in this period",
     room_occupied: "Room {{room_number}} is over capacity: {{capacity}} beds, {{in_house}} in house",
     prepaid: "Refund {{amount}} to the guest (prepaid)",
+    refund: "{{amount}} must be returned to the guest",
     payer_changed: "{{name}} now pays for the room: {{amount}}",
   },
   val: {

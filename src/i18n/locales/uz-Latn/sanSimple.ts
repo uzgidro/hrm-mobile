@@ -25,6 +25,7 @@ export default {
     departure_today: "Bugun ketadi",
     overstay: "Muddatdan oshdi",
     debt: "Qarz bor",
+    debt_left: "Ketgan, qarzi qolgan",
   },
   action: {
     accept: "Qabul qilish va joylashtirish",
@@ -112,6 +113,7 @@ export default {
     guest_has_stay: "Mehmonda shu davrda boshqa yashash bor",
     room_occupied: "{{room_number}}-xonada o'rin yetmaydi: sig'im {{capacity}}, hozir {{in_house}} kishi",
     prepaid: "Mehmonga {{amount}} qaytarish kerak (oldindan to'langan)",
+    refund: "Mehmonga {{amount}} qaytarish kerak",
     payer_changed: "{{name}} endi xona uchun to'laydi: {{amount}}",
   },
   val: {

@@ -84,18 +84,20 @@ export function SwitchRow({
   value,
   onChange,
   testID,
+  disabled,
 }: {
   label: string;
   value: boolean;
   onChange: (v: boolean) => void;
   testID?: string;
+  disabled?: boolean;
 }) {
   return (
     <View style={styles.switchRow}>
       <Text variant="body" style={styles.flex}>
         {label}
       </Text>
-      <Toggle value={value} onValueChange={onChange} accessibilityLabel={label} testID={testID} />
+      <Toggle value={value} onValueChange={onChange} accessibilityLabel={label} testID={testID} disabled={disabled} />
     </View>
   );
 }

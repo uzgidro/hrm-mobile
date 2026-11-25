@@ -25,6 +25,7 @@ export default {
     departure_today: "Бугун кетади",
     overstay: "Муддатдан ошди",
     debt: "Қарз бор",
+    debt_left: "Кетган, қарзи қолган",
   },
   action: {
     accept: "Қабул қилиш ва жойлаштириш",
@@ -112,6 +113,7 @@ export default {
     guest_has_stay: "Меҳмонда шу даврда бошқа яшаш бор",
     room_occupied: "{{room_number}}-хонада ўрин етмайди: сиғим {{capacity}}, ҳозир {{in_house}} киши",
     prepaid: "Меҳмонга {{amount}} қайтариш керак (олдиндан тўланган)",
+    refund: "Меҳмонга {{amount}} қайтариш керак",
     payer_changed: "{{name}} энди хона учун тўлайди: {{amount}}",
   },
   val: {

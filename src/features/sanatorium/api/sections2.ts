@@ -140,8 +140,8 @@ export type ScheduleResult = { scheduled: ProcSession[]; unscheduled: number };
 export type Diet = { id: number; code: string; name_uz: string; name_ru: string | null; name_en: string | null; description: string | null; sort_order: number; is_active: boolean; stays_count?: number };
 export type DietDay = {
   date: string; total: number; by_diet: { diet: Diet | null; count: number }[]; allergy_count: number;
-  allergic_guests: { stay_id: number; guest: { id: number; full_name: string }; room: string | null; allergies: string | null }[];
-  guests: { stay_id: number; guest: { id: number; full_name: string }; room: string | null; diet: Diet | null; diet_note: string | null; allergies: string | null; status: string }[];
+  allergic_guests: { stay_id: number; guest: { id: number; full_name: string }; room: string | { number?: string } | null; allergies: string | null }[];
+  guests: { stay_id: number; guest: { id: number; full_name: string }; room: string | { number?: string } | null; diet: Diet | null; diet_note: string | null; allergies: string | null; status: string }[];
 };
 export type DietCounts = { days: { date: string; total: number; by_diet: Record<string, number>; with_allergies: number }[] };
 export type StayDietResult = { stay_id: number; diet: Diet | null; diet_note: string | null; allergies: string | null };
@@ -187,7 +187,7 @@ export const s2Keys = {
   invoice: (id: number, a: string, b: string) => k('invoice', id, a, b),
   templates: () => k('templates'),
   procRooms: (all: boolean) => k('proc-rooms', all),
-  board: (day: string) => k('board', day),
+  board: (day: string, roomId?: number | null) => k('board', day, roomId ?? 0),
   diets: (all: boolean) => k('diets', all),
   dietDay: (day: string) => k('diet-day', day),
   dietCounts: (start: string, days: number) => k('diet-counts', start, days),
@@ -216,8 +216,8 @@ export const invoiceQuery = (id: number, start: string, end: string, enabled = t
 export const templatesQuery = (enabled = true) => queryOptions({ queryKey: s2Keys.templates(), queryFn: () => list<DocTemplate>(SANATORIUM_DOC_TEMPLATES), enabled });
 export const procRoomsQuery = (all: boolean, enabled = true) =>
   queryOptions({ queryKey: s2Keys.procRooms(all), queryFn: () => list<ProcRoom>(SANATORIUM_PROCEDURE_ROOMS, { include_inactive: all }), enabled });
-export const boardQuery = (day: string, enabled = true) =>
-  queryOptions({ queryKey: s2Keys.board(day), queryFn: () => get<SessionBoard>(SANATORIUM_SESSION_BOARD, { day }), enabled });
+export const boardQuery = (day: string, enabled = true, roomId?: number | null) =>
+  queryOptions({ queryKey: s2Keys.board(day, roomId), queryFn: () => get<SessionBoard>(SANATORIUM_SESSION_BOARD, { day, ...(roomId ? { room_id: roomId } : {}) }), enabled });
 export const dietsQuery = (all: boolean, enabled = true) =>
   queryOptions({ queryKey: s2Keys.diets(all), queryFn: () => list<Diet>(SANATORIUM_DIETS, { include_inactive: all }), enabled });
 export const dietDayQuery = (day: string, enabled = true) =>
@@ -249,8 +249,10 @@ export const ordersInfinite = (f: OrderFilter, enabled = true) =>
     getNextPageParam: nextPage,
     enabled,
   });
-export type FeedbackFilter = { from?: string; to?: string; max_overall?: number; q?: string };
-export const feedbackInfinite = (f: FeedbackFilter, enabled = true) =>
+export type FeedbackFilter = {
+  from?: string; to?: string; min_overall?: number; max_overall?: number; doctor_staff_id?: number; source?: string; q?: string;
+};
+export const feedbackInfinite = (f: FeedbackFilter | Json, enabled = true) =>
   infiniteQueryOptions({
     queryKey: s2Keys.feedback(JSON.stringify(f)),
     queryFn: ({ pageParam }) => pageOf<FeedbackItem>(SANATORIUM_FEEDBACK, f, pageParam),
@@ -295,7 +297,11 @@ export const uploadServicePhoto = ({ id, file }: { id: number; file: PickedFile 
 export const deleteServicePhoto = (id: number) => apiClient.delete<SanService>(SANATORIUM_SERVICE_PHOTO(id)).then((r) => r.data);
 
 export const createServiceOrder = (body: Json) => apiClient.post<ServiceOrder>(SANATORIUM_SERVICE_ORDERS, body).then((r) => r.data);
+/** Registrar paper feedback form (`stay_id` is required for staff). */
+export const createFeedback = (body: Json) => apiClient.post<FeedbackItem>(SANATORIUM_FEEDBACK, body).then((r) => r.data);
 export const patchServiceOrder = ({ id, body }: { id: number; body: Json }) => apiClient.patch<ServiceOrder>(SANATORIUM_SERVICE_ORDER(id), body).then((r) => r.data);
+/** requested -> confirmed (the server re-checks the slot). */
+export const confirmOrder = (id: number) => patchServiceOrder({ id, body: { status: 'confirmed' } });
 
 /** DOCX template upload (multipart `file`, max 5 MB); the server test-renders it first. */
 export const uploadTemplate = ({ kind, file }: { kind: DocKind; file: PickedFile }) => upload<DocTemplate>(SANATORIUM_DOC_TEMPLATE(kind), file, 'put');
@@ -346,6 +352,8 @@ export const useRescheduleSession = hook(rescheduleSession);
 export const useCancelSession = hook(cancelSession);
 export const useMarkSession = hook(markSession);
 export const useSaveStayDiet = hook(saveStayDiet);
+export const useCreateFeedback = hook(createFeedback);
+export const useConfirmOrder = hook(confirmOrder);
 
 /** Diet is set per stay (not part of the create body): applied after the stays exist. Failures are returned, not thrown. */
 export async function applyDietToStays(stayIds: number[], dietId: number | null): Promise<unknown | null> {
