@@ -1,17 +1,19 @@
 // Registrar's rooms: capacity, price, a 14-day occupancy strip per room and create / edit.
 import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useQuery } from '@tanstack/react-query';
+import { useLocalSearchParams } from 'expo-router';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { FormInput } from '@/components/FormInput';
 import { toast } from '@/lib/toast';
 import { useTheme } from '@/theme/ThemeProvider';
-import { Badge, Button, Card, EmptyState, PageHeader, Screen, Sheet, Text } from '@/ui';
+import { Badge, Button, Card, EmptyState, PageHeader, Screen, Segmented, Sheet, Text } from '@/ui';
 import { toneColors } from '@/ui/Chip';
 import { useSaveRoom } from '../api/mutations';
-import { availabilityQuery, roomsQuery } from '../api/queries';
+import { availabilityQuery, roomsQuery, sanKeys } from '../api/queries';
 import { ChoiceField, ErrorLine, opt, optNull, SwitchRow } from '../components/forms';
 import { Denied, QueryBlock, useSanAccess, useSanReadOnly } from '../components/common';
+import { OccupancyGrid } from '../components/OccupancyGrid';
 import { PoiField, usePoiOn } from '../components/sections1/PoiField';
 import { RoomCover } from '../components/RoomCover';
 import { RoomGallery, type GalleryState } from '../components/RoomGallery';
@@ -21,27 +23,53 @@ import { addDays, sanErrorMessage, todayIso } from '../utils/sanatorium';
 
 const DAYS = 14;
 
+type View_ = 'grid' | 'rooms';
+
 export default function RoomsScreen() {
   const { t } = useTranslation();
-  const allowed = useSanAccess('registrar');
+  // The occupancy grid is for the registrar and the room keeper; the rooms CRUD list stays registrar-only.
+  const allowed = useSanAccess('registrar', 'room_keeper');
+  const registrar = useSanAccess('registrar');
+  const params = useLocalSearchParams<{ view?: string }>();
+  const [view, setView] = useState<View_>(params.view === 'rooms' ? 'rooms' : 'grid');
+  const showList = registrar && view === 'rooms';
+  const qc = useQueryClient();
+  if (!allowed) return <Denied />;
+  return (
+    <Screen refreshing={false} onRefresh={() => {
+        void qc.invalidateQueries({ queryKey: [...sanKeys.all, 'availability'] });
+        void qc.invalidateQueries({ queryKey: sanKeys.rooms() });
+      }} testID="sanatorium-rooms-screen">
+      {registrar ? (
+        <>
+          <PageHeader title={t('sanatorium.nav.rooms')} />
+          <Segmented
+            testID="rooms-seg"
+            value={view}
+            onChange={setView}
+            options={[{ value: 'grid', label: t('sanGuests.gridTab') }, { value: 'rooms', label: t('sanGuests.listTab') }]}
+          />
+        </>
+      ) : (
+        <PageHeader title={t('sanatorium.nav.rooms')} />
+      )}
+      {showList ? <RoomsList /> : <OccupancyGrid />}
+    </Screen>
+  );
+}
+
+function RoomsList() {
+  const { t } = useTranslation();
   const readOnly = useSanReadOnly();
   const start = todayIso();
-  const rooms = useQuery(roomsQuery(allowed));
-  const avail = useQuery(availabilityQuery(start, DAYS, allowed));
+  const rooms = useQuery(roomsQuery(true));
+  const avail = useQuery(availabilityQuery(start, DAYS, true));
   const [edit, setEdit] = useState<Room | 'new' | null>(null);
   const [gallery, setGallery] = useState<GalleryState>(null);
-  if (!allowed) return <Denied />;
   const byId = new Map((avail.data?.rooms ?? []).map((r) => [r.id, r]));
   return (
-    <Screen
-      refreshing={rooms.isRefetching}
-      onRefresh={() => {
-        void rooms.refetch();
-        void avail.refetch();
-      }}
-      testID="sanatorium-rooms-screen"
-    >
-      <PageHeader title={t('sanatorium.nav.rooms')} right={readOnly ? undefined : <Button testID="room-add" label={t('sanatorium.add')} icon="plus" size="sm" onPress={() => setEdit('new')} />} />
+    <View testID="rooms-list">
+      {!readOnly && <Button testID="room-add" label={t('sanatorium.addRoom')} icon="plus" size="sm" variant="soft" onPress={() => setEdit('new')} />}
       <QueryBlock query={rooms}>
         {(items) =>
           items.length === 0 ? (
@@ -57,7 +85,7 @@ export default function RoomsScreen() {
       </QueryBlock>
       <RoomSheet room={edit} onClose={() => setEdit(null)} onCreated={(r) => setEdit(r)} />
       <RoomGallery state={gallery} onClose={() => setGallery(null)} />
-    </Screen>
+    </View>
   );
 }
 
@@ -79,6 +107,9 @@ function RoomCard({ room, occ, start, onEdit, onGallery }: { room: Room; occ?: A
         {!room.is_active ? <Badge label={t('sanatorium.inactive')} tone="neutral" /> : room.out_of_service ? <Badge label={t('sanatorium.outOfService')} tone="danger" /> : null}
         {onEdit && <Button label={t('sanatorium.edit')} variant="soft" size="sm" icon="edit" onPress={onEdit} testID="room-edit" />}
       </View>
+      {room.out_of_service && !!room.out_of_service_note && (
+        <Text variant="caption" tone="danger" testID={`room-oos-note-${room.id}`}>{room.out_of_service_note}</Text>
+      )}
       {occ && !room.out_of_service && (
         <View style={styles.strip} testID={`strip-${room.id}`}>
           {occ.occupancy.map((n, i) => {

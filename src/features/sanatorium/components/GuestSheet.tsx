@@ -11,6 +11,7 @@ import { Button, Sheet } from '@/ui';
 import { useSaveGuest } from '../api/mutations';
 import { familiesQuery } from '../api/queries';
 import { RELATIONS, type Credentials, type GuestLite } from '../types';
+import { LIMITS, clip, maskPassportInput, normalizePhoneInput, validateGuestFields, type GuestFormErrors } from '../utils/guests';
 import { parseDmy, sanErrorMessage } from '../utils/sanatorium';
 import { ChoiceField, ErrorLine, optNull } from './forms';
 
@@ -50,9 +51,13 @@ function GuestForm({ guest, onClose, onSaved }: { guest: GuestLite | null; onClo
   const [familyId, setFamilyId] = useState<number | null>(null);
   const [relation, setRelation] = useState<string | null>(guest?.relation ?? null);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErr, setFieldErr] = useState<GuestFormErrors>({});
+  const msg = (k?: string) => (k ? t(k) : undefined);
 
   const submit = async () => {
-    if (name.trim().length < 3) return setError(t('sanatorium.nameShort'));
+    const errs = validateGuestFields({ name, passport, phone }, 'guest');
+    setFieldErr(errs);
+    if (errs.name || errs.passport || errs.phone) return setError(null);
     const iso = birth.trim() ? parseDmy(birth) : null;
     if (birth.trim() && !iso) return setError(t('sanatorium.birthInvalid'));
     try {
@@ -64,7 +69,7 @@ function GuestForm({ guest, onClose, onSaved }: { guest: GuestLite | null; onClo
           gender,
           // Blank passport on edit = leave as is: the server PUT keeps the stored value only if sent as-is.
           ...(passport.trim() || !guest ? { passport: optNull(passport) } : {}),
-          phone: optNull(phone),
+          phone: optNull(normalizePhoneInput(phone)),
           organization_name: optNull(org),
           address: optNull(address),
           note: optNull(note),
@@ -81,7 +86,7 @@ function GuestForm({ guest, onClose, onSaved }: { guest: GuestLite | null; onClo
 
   return (
     <View style={styles.form} testID="guest-sheet">
-      <FormInput label={t('sanatorium.fullName')} value={name} onChangeText={setName} required testID="guest-name" />
+      <FormInput label={t('sanatorium.fullName')} value={name} onChangeText={(v) => setName(clip(v, LIMITS.name))} required error={msg(fieldErr.name)} testID="guest-name" />
       <FormInput label={t('sanatorium.birthDateInput')} value={birth} onChangeText={setBirth} placeholder="14.03.1985" keyboardType="numbers-and-punctuation" testID="guest-birth" />
       <ChoiceField
         label={t('sanatorium.genderLabel')}
@@ -91,11 +96,11 @@ function GuestForm({ guest, onClose, onSaved }: { guest: GuestLite | null; onClo
         onChange={setGender}
         testID="guest-gender"
       />
-      <FormInput label={t('sanatorium.passport')} value={passport} onChangeText={(v) => setPassport(v.toUpperCase())} placeholder={guest ? t('sanatorium.passportKeep') : 'AA1234567'} testID="guest-passport" />
-      <FormInput label={t('sanatorium.phone')} value={phone} onChangeText={setPhone} keyboardType="phone-pad" testID="guest-phone" />
-      <FormInput label={t('sanatorium.organization')} value={org} onChangeText={setOrg} />
-      <FormInput label={t('sanatorium.address')} value={address} onChangeText={setAddress} />
-      <FormInput label={t('sanatorium.notes')} value={note} onChangeText={setNote} multiline />
+      <FormInput label={t('sanatorium.passport')} value={passport} onChangeText={(v) => setPassport(maskPassportInput(v))} placeholder={guest ? t('sanatorium.passportKeep') : 'AA1234567'} error={msg(fieldErr.passport)} testID="guest-passport" />
+      <FormInput label={t('sanatorium.phone')} value={phone} onChangeText={(v) => setPhone(clip(v, 20))} placeholder="+998901234567" keyboardType="phone-pad" error={msg(fieldErr.phone)} testID="guest-phone" />
+      <FormInput label={t('sanatorium.organization')} value={org} onChangeText={(v) => setOrg(clip(v, LIMITS.short))} testID="guest-org" />
+      <FormInput label={t('sanatorium.address')} value={address} onChangeText={(v) => setAddress(clip(v, LIMITS.short))} testID="guest-address" />
+      <FormInput label={t('sanatorium.notes')} value={note} onChangeText={(v) => setNote(clip(v, LIMITS.note))} multiline testID="guest-note" />
       <ChoiceField
         label={t('sanatorium.family')}
         value={familyId}

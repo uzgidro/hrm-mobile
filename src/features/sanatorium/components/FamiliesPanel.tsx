@@ -11,13 +11,16 @@ import { Button, Card, EmptyState, ListRow, SearchField, Sheet, Text } from '@/u
 import { useAddFamilyMember, useRemoveFamilyMember, useSaveFamily } from '../api/mutations';
 import { familiesQuery, guestsQuery } from '../api/queries';
 import { RELATIONS, type Family } from '../types';
+import { LIMITS, clip } from '../utils/guests';
 import { sanErrorMessage } from '../utils/sanatorium';
 import { QueryBlock, useSanReadOnly } from './common';
 import { ChoiceField, ErrorLine, optNull } from './forms';
 
 export function FamiliesPanel() {
   const { t } = useTranslation();
-  const q = useQuery(familiesQuery(''));
+  const [term, setTerm] = useState('');
+  const debounced = useDebouncedValue(term);
+  const q = useQuery(familiesQuery(debounced));
   const [edit, setEdit] = useState<Family | 'new' | null>(null);
   const [adding, setAdding] = useState<Family | null>(null);
   const remove = useRemoveFamilyMember();
@@ -29,6 +32,7 @@ export function FamiliesPanel() {
   };
   return (
     <View style={styles.stack}>
+      <SearchField testID="family-search" value={term} onChangeText={setTerm} placeholder={t('sanGuests.familySearch')} />
       {!readOnly && <Button testID="family-add" label={t('sanatorium.newFamily')} icon="plus" variant="soft" full onPress={() => setEdit('new')} />}
       <QueryBlock query={q}>
         {(items) =>
@@ -43,6 +47,7 @@ export function FamiliesPanel() {
                     {!readOnly && <Button label={t('sanatorium.edit')} variant="soft" size="sm" icon="edit" onPress={() => setEdit(f)} />}
                   </View>
                   {!!f.note && <Text variant="caption" tone="muted">{f.note}</Text>}
+                  {f.members.length === 0 && <Text variant="caption" tone="subtle">{t('sanGuests.noMembers')}</Text>}
                   {f.members.map((m) => (
                     <ListRow
                       key={m.id}
@@ -86,8 +91,8 @@ function FamilyForm({ family, onClose }: { family: Family | null; onClose: () =>
   };
   return (
     <View style={styles.form} testID="family-sheet">
-      <FormInput label={t('sanatorium.name')} value={name} onChangeText={setName} required testID="family-name" />
-      <FormInput label={t('sanatorium.notes')} value={note} onChangeText={setNote} multiline />
+      <FormInput label={t('sanatorium.name')} value={name} onChangeText={(v) => setName(clip(v, LIMITS.family))} required testID="family-name" />
+      <FormInput label={t('sanatorium.notes')} value={note} onChangeText={(v) => setNote(clip(v, LIMITS.note))} multiline />
       <ErrorLine message={error} />
       <Button testID="family-save" label={t('common.save')} full loading={save.isPending} onPress={() => void submit()} />
     </View>

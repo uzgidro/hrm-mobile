@@ -74,7 +74,7 @@ function AcceptForm({ request, onAccepted }: { request: SanRequest; onAccepted: 
           ...(draft.doctorId ? { doctor_staff_id: draft.doctorId } : {}),
           ...(draft.nurseId ? { nurse_staff_id: draft.nurseId } : {}),
           ...(familyId ? { family_id: familyId } : {}),
-          ...(opt(draft.contract) ? { contract_note: opt(draft.contract) } : {}),
+          ...(draft.type === 'contract' && opt(draft.contract) ? { contract_note: opt(draft.contract) } : {}),
           ...(opt(draft.note) ? { note: opt(draft.note) } : {}),
           ...(draft.packageId ? { package_id: draft.packageId } : {}),
           ...(draft.organizationId ? { organization_id: draft.organizationId } : {}),
@@ -97,6 +97,7 @@ function AcceptForm({ request, onAccepted }: { request: SanRequest; onAccepted: 
         draft={draft}
         onChange={(p) => setDraft((d) => ({ ...d, ...p }))}
         showDiet={false}
+        need={Math.max(1, request.party_size ?? 1)}
         keepRoom={request.preferred_room ? { id: request.preferred_room.id, label: request.preferred_room.number } : null}
       />
       <ChoiceField

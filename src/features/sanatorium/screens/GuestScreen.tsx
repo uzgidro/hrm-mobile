@@ -6,25 +6,30 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from '@/theme/ThemeProvider';
 import { confirm } from '@/lib/confirm';
 import { toast } from '@/lib/toast';
 import { useAuthStore } from '@/store/authStore';
 import { Avatar, Button, Badge, Card, EmptyState, ListRow, PageHeader, ProgressBar, Screen, SectionHeader, Text } from '@/ui';
 import { useResetCredentials } from '../api/mutations';
 import { guestQuery } from '../api/queries';
+import { AddToFamilySheet } from '../components/AddToFamilySheet';
 import { AppointmentSheet } from '../components/AppointmentSheet';
 import { BookingSheet } from '../components/BookingSheet';
 import { CredentialsSheet, type CredentialsShown } from '../components/CredentialsSheet';
 import { GuestCardSheet } from '../components/GuestCardSheet';
 import { GuestSheet } from '../components/GuestSheet';
+import { ApptNotes, EventLine, StayMoneyLine, TypeBadge } from '../components/GuestParts';
 import { ProcedureEditSheet } from '../components/ProcedureEditSheet';
+import { sanMeQuery } from '../api/sections2';
+import { StayDietSheet, canEditStayDiet } from '../components/sections2/DietParts';
 import { ScheduleProcedureSheet } from '../components/sections2/Schedule';
 import { StayDocumentsCard } from '../components/sections2/StayDocuments';
+import { useSimpleAvailable } from '../simple/useSimpleAvailable';
 import { useSanFeatures } from '../utils/features';
+import { arriveTarget } from '../utils/guests';
 import { ApptRow } from '../components/ApptRow';
 import { Denied, PhoneLink, QueryBlock, useSanAccess } from '../components/common';
-import type { GuestEvent, GuestProfile, Procedure } from '../types';
+import type { GuestProfile, Procedure } from '../types';
 import { fmtDate, canSanWrite, fmtDateTime, hasSanRole, maskPassport, procTone, sanErrorMessage, stayTone } from '../utils/sanatorium';
 
 export default function GuestScreen() {
@@ -55,11 +60,22 @@ function Profile({ p }: { p: GuestProfile }) {
   const [apptStay, setApptStay] = useState<number | null>(null);
   const [proc, setProc] = useState<Procedure | null>(null);
   const [schedProc, setSchedProc] = useState<Procedure | null>(null);
-  const scheduleOn = useSanFeatures().on('procedure_schedule');
+  const feat = useSanFeatures();
+  const scheduleOn = feat.on('procedure_schedule');
+  const cabinetOn = feat.on('guest_cabinet');
+  const telegramOn = feat.on('telegram_bot');
+  const [family, setFamily] = useState(false);
+  // The arrival wizard exists only on a server that has the simplified flow.
+  const simple = useSimpleAvailable(registrar);
   const [creds, setCreds] = useState<CredentialsShown | null>(null);
   const [card, setCard] = useState(false);
   const g = p.guest;
   const liveStay = p.stays.find((s) => s.status === 'booked' || s.status === 'checked_in');
+  // The attending doctor keeps the diet and the allergies of the guest who lives here (the registrar has them on the stay).
+  const [dietOpen, setDietOpen] = useState(false);
+  const isDoctor = hasSanRole(user, 'doctor');
+  const me = useQuery(sanMeQuery(isDoctor && feat.on('diet')));
+  const dietStay = isDoctor && feat.on('diet') && liveStay && canEditStayDiet(user, me.data, liveStay) ? liveStay : null;
   const resetLogin = async () => {
     const ok = await confirm({ title: t('sanatorium.resetLogin'), message: t('sanatorium.resetLoginInfo'), confirmLabel: t('sanatorium.resetLogin'), cancelLabel: t('common.cancel'), destructive: true });
     if (!ok) return;
@@ -70,6 +86,11 @@ function Profile({ p }: { p: GuestProfile }) {
     } catch (e) {
       toast.error(sanErrorMessage(e, t('errors.generic')));
     }
+  };
+  const arrive = () => {
+    const tgt = arriveTarget(g.id, p.stays);
+    if (tgt.kind === 'stay') router.push({ pathname: '/sanatorium-stay', params: { id: String(tgt.id) } });
+    else router.push({ pathname: '/sanatorium-arrive', params: tgt.params });
   };
   const facts = [
     g.age != null ? `${g.age} ${t('sanatorium.yearsOld')}` : null,
@@ -87,12 +108,16 @@ function Profile({ p }: { p: GuestProfile }) {
             <PhoneLink phone={g.phone} />
           </View>
         </View>
-        {(!!g.birth_date || !!g.passport || !!g.address || !!g.login_code) && (
+        {(!!g.birth_date || !!g.passport || !!g.address || !!g.login_code || !!g.note || !!g.created_at || g.has_password !== undefined || g.telegram_linked !== undefined) && (
           <View style={styles.details}>
             {!!g.birth_date && <Fact label={t('sanatorium.birthDate')} value={fmtDate(g.birth_date)} />}
             {!!g.passport && <Fact label={t('sanatorium.passport')} value={maskPassport(g.passport)} />}
             {!!g.address && <Fact label={t('sanatorium.address')} value={g.address} />}
             {!!g.login_code && <Fact label={t('sanatorium.loginCode')} value={g.login_code} />}
+            {cabinetOn && g.has_password !== undefined && <Fact label={t('sanGuests.cabinet')} value={g.has_password ? t('sanGuests.cabinetOn') : t('sanGuests.cabinetOff')} testID="guest-cabinet" />}
+            {telegramOn && g.telegram_linked !== undefined && <Fact label={t('sanGuests.telegram')} value={g.telegram_linked ? t('sanatorium.yes') : t('sanatorium.no')} testID="guest-telegram" />}
+            {!!g.created_at && <Fact label={t('sanGuests.registeredAt')} value={fmtDateTime(g.created_at)} testID="guest-registered" />}
+            {!!g.note && <Fact label={t('sanatorium.notes')} value={g.note} testID="guest-note-text" />}
           </View>
         )}
       </Card>
@@ -101,8 +126,11 @@ function Profile({ p }: { p: GuestProfile }) {
         <View style={styles.actions}>
           {registrar && <Button testID="guest-edit" label={t('sanatorium.edit')} variant="soft" size="sm" icon="edit" onPress={() => setEditing(true)} />}
           {registrar && <Button testID="guest-book" label={t('sanatorium.newBooking')} variant="soft" size="sm" icon="plus" onPress={() => setBooking(true)} />}
+          {registrar && simple && <Button testID="guest-arrive" label={t('sanGuests.arrive')} size="sm" icon="check" onPress={arrive} />}
+          {registrar && <Button testID="guest-family-add" label={t('sanGuests.addToFamily')} variant="soft" size="sm" icon="users" onPress={() => setFamily(true)} />}
           {registrar && <Button testID="guest-card" label={t('sanatorium.idCard')} variant="soft" size="sm" icon="qr" onPress={() => setCard(true)} />}
           {registrar && <Button testID="guest-reset" label={t('sanatorium.resetLogin')} variant="dangerGhost" size="sm" loading={reset.isPending} onPress={() => void resetLogin()} />}
+          {dietStay && <Button testID="guest-diet" label={t('sanatorium.s2.dietAndAllergies')} variant="soft" size="sm" onPress={() => setDietOpen(true)} />}
           {canBook && liveStay && <Button testID="guest-appt" label={t('sanatorium.newAppointment')} variant="soft" size="sm" onPress={() => setApptStay(liveStay.id)} />}
         </View>
       )}
@@ -114,7 +142,10 @@ function Profile({ p }: { p: GuestProfile }) {
           <ListRow
             key={s.id}
             title={`${fmtDate(s.planned_from)} → ${fmtDate(s.planned_to)}`}
-            subtitle={[t(`sanatorium.guestType.${s.guest_type}`), s.room ? `${t('sanatorium.room')} ${s.room.number}` : null].filter(Boolean).join(' · ')}
+            subtitle={s.room ? `${t('sanatorium.room')} ${s.room.number}` : t('sanatorium.noRoom')}
+            testID={`guest-stay-${s.id}`}
+            below={<StayMoneyLine id={s.id} total={s.total_amount} debt={s.debt} status={s.payment_status} />}
+            titleAddon={<TypeBadge type={s.guest_type} />}
             right={<Badge label={t(`sanatorium.stayStatus.${s.status}`)} tone={stayTone(s.status)} />}
             chevron={hasSanRole(user, 'registrar', 'room_keeper')}
             onPress={hasSanRole(user, 'registrar', 'room_keeper') ? () => router.push({ pathname: '/sanatorium-stay', params: { id: String(s.id) } }) : undefined}
@@ -130,11 +161,13 @@ function Profile({ p }: { p: GuestProfile }) {
           <Card>
             {p.appointments.length === 0 && <Text variant="body" tone="muted">{t('sanatorium.noAppointments')}</Text>}
             {p.appointments.map((a) => (
-              <ApptRow
-                key={a.id}
-                appt={{ ...a, guest: g }}
-                onPress={() => router.push({ pathname: '/sanatorium-appointment', params: { id: String(a.id), guestId: String(g.id) } })}
-              />
+              <React.Fragment key={a.id}>
+                <ApptRow
+                  appt={{ ...a, guest: g }}
+                  onPress={() => router.push({ pathname: '/sanatorium-appointment', params: { id: String(a.id), guestId: String(g.id) } })}
+                />
+                <ApptNotes appt={a} />
+              </React.Fragment>
             ))}
           </Card>
         </>
@@ -159,11 +192,11 @@ function Profile({ p }: { p: GuestProfile }) {
         </>
       )}
 
-      {p.family_members && p.family_members.length > 1 && (
+      {((p.family_members && p.family_members.length > 1) || !!g.family_name) && (
         <>
-          <SectionHeader title={t('sanatorium.family')} />
-          <Card>
-            {p.family_members.filter((m) => m.id !== g.id).map((m) => (
+          <SectionHeader title={g.family_name ? `${t('sanGuests.familyTitle')}: ${g.family_name}` : t('sanatorium.family')} />
+          <Card testID="guest-family">
+            {(p.family_members ?? []).filter((m) => m.id !== g.id).map((m) => (
               <ListRow
                 key={m.id}
                 title={m.full_name}
@@ -188,7 +221,9 @@ function Profile({ p }: { p: GuestProfile }) {
       {!p.appointments && !p.events && <EmptyState title={t('sanatorium.limitedView')} />}
       <GuestSheet guest={editing ? g : null} onClose={() => setEditing(false)} onSaved={() => {}} />
       <BookingSheet open={booking ? { guests: [g] } : null} onClose={() => setBooking(false)} onDone={(ids) => ids[0] && router.push({ pathname: '/sanatorium-stay', params: { id: String(ids[0]) } })} />
-      <AppointmentSheet stayId={apptStay} onClose={() => setApptStay(null)} />
+      <AddToFamilySheet guest={family ? { id: g.id, full_name: g.full_name } : null} onClose={() => setFamily(false)} />
+      <AppointmentSheet stayId={apptStay} from={liveStay?.planned_from} to={liveStay?.planned_to} onClose={() => setApptStay(null)} />
+      <StayDietSheet stay={dietOpen && dietStay ? dietStay : null} onClose={() => setDietOpen(false)} />
       <ProcedureEditSheet proc={proc} onClose={() => setProc(null)} />
       <ScheduleProcedureSheet procedure={schedProc} onClose={() => setSchedProc(null)} />
       <CredentialsSheet creds={creds} onClose={() => setCreds(null)} />
@@ -197,29 +232,11 @@ function Profile({ p }: { p: GuestProfile }) {
   );
 }
 
-function Fact({ label, value }: { label: string; value: string }) {
+function Fact({ label, value, testID }: { label: string; value: string; testID?: string }) {
   return (
-    <View style={styles.fact}>
+    <View style={styles.fact} testID={testID}>
       <Text variant="caption" tone="muted" style={styles.factLabel}>{label}</Text>
       <Text variant="body" style={styles.flex}>{value}</Text>
-    </View>
-  );
-}
-
-/** A timeline row: dot + line on the left, title / details / who and when on the right. */
-function EventLine({ e, last }: { e: GuestEvent; last: boolean }) {
-  const { colors: c } = useTheme();
-  return (
-    <View style={styles.event} testID={`event-${e.id}`}>
-      <View style={styles.rail}>
-        <View style={[styles.dot, { backgroundColor: c.brand }]} />
-        {!last && <View style={[styles.line, { backgroundColor: c.border }]} />}
-      </View>
-      <View style={[styles.flex, styles.eventBody]}>
-        <Text variant="body" weight="600">{e.title}</Text>
-        {!!e.details && <Text variant="caption" tone="muted">{e.details}</Text>}
-        <Text variant="caption" tone="subtle">{[fmtDateTime(e.created_at), e.actor_name].filter(Boolean).join(' · ')}</Text>
-      </View>
     </View>
   );
 }
@@ -234,9 +251,4 @@ const styles = StyleSheet.create({
   fact: { flexDirection: 'row', gap: 8 },
   factLabel: { width: 96 },
   proc: { paddingVertical: 8, gap: 6 },
-  event: { flexDirection: 'row', gap: 10 },
-  rail: { width: 14, alignItems: 'center' },
-  dot: { width: 10, height: 10, borderRadius: 5, marginTop: 5 },
-  line: { flex: 1, width: 2, marginTop: 2 },
-  eventBody: { paddingBottom: 14 },
 });

@@ -44,6 +44,11 @@ export function StayCard({
         <Badge label={t(`sanatorium.stayStatus.${stay.status}`)} tone={stayTone(stay.status)} />
       </View>
       <PhoneLink phone={stay.guest?.phone} />
+      {(!stay.with_meals || !!stay.diet_note) && (
+        <Text variant="caption" tone="muted" testID={`stay-meals-${stay.id}`}>
+          {[!stay.with_meals ? t('sanGuests.noMeals') : null, stay.diet_note ? `${t('sanatorium.diet')}: ${stay.diet_note}` : null].filter(Boolean).join(' · ')}
+        </Text>
+      )}
       {canAct && (stay.status === 'booked' || stay.status === 'checked_in') && (
         <View style={styles.actions}>
           {stay.status === 'booked' ? (
@@ -56,6 +61,7 @@ export function StayCard({
           )}
         </View>
       )}
+      {canAct && stay.status === 'checked_in' && <Text variant="caption" tone="subtle" testID={`stay-early-info-${stay.id}`}>{t('sanatorium.earlyLeaveInfo')}</Text>}
     </Card>
   );
 }

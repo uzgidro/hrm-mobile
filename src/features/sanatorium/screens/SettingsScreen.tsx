@@ -1,30 +1,39 @@
 // Registrar settings: staff, specialties and the public texts / discount rules.
 import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { FormInput } from '@/components/FormInput';
 import { toast } from '@/lib/toast';
-import { Badge, Button, Card, EmptyState, ListRow, PageHeader, Screen, Segmented, Sheet, Text } from '@/ui';
+import { Badge, Button, Card, EmptyState, ListRow, PageHeader, Screen, SearchField, Segmented, Sheet, Text } from '@/ui';
 import { useSaveSettings, useSaveSpecialty } from '../api/mutations';
 import { allSpecialtiesQuery, settingsQuery, staffQuery } from '../api/queries';
 import { ChoiceField, ErrorLine, optNull, SwitchRow } from '../components/forms';
 import { Denied, QueryBlock, useSanAccess, useSanReadOnly } from '../components/common';
 import { StaffSheet } from '../components/StaffSheet';
+import { ChipWrap } from '../components/sections2/kit';
 import { hasVisitSettings, VisitSettings } from '../simple/components/VisitSettings';
 import { FeaturesPanel } from './sections1/FeaturesPanel';
 import { PoiField, usePoiOn } from '../components/sections1/PoiField';
-import { SPECIALTY_KINDS, type SanSettings, type Specialty, type SpecialtyKind, type StaffMember } from '../types';
+import { SPECIALTY_KINDS, type SanRole, type SanSettings, type Specialty, type SpecialtyKind, type StaffMember } from '../types';
+import { formatUzPhone } from '@/utils/phone';
 import { sanErrorMessage } from '../utils/sanatorium';
+import { filterStaff, staffRoles, type StaffFilter } from '../utils/staffParity';
 
 type Seg = 'staff' | 'specialties' | 'texts' | 'sections' | 'visit';
+const SEGS: Seg[] = ['staff', 'specialties', 'texts', 'sections', 'visit'];
+const ROLES: SanRole[] = ['registrar', 'room_keeper', 'kitchen', 'doctor', 'nurse', 'housekeeper'];
 
 export default function SettingsScreen() {
   const { t } = useTranslation();
   const allowed = useSanAccess('registrar');
   // The view-only chairman reads staff, specialties and texts; add / edit / save are not drawn.
   const readOnly = useSanReadOnly();
-  const [seg, setSeg] = useState<Seg>('staff');
+  // `?tab=` lets the setup checklist open the tab where an item is filled in.
+  const params = useLocalSearchParams<{ tab?: string }>();
+  const [seg, setSeg] = useState<Seg>(() => (SEGS.includes(params?.tab as Seg) ? (params.tab as Seg) : 'staff'));
+  const [filter, setFilter] = useState<StaffFilter>({ q: '', role: '', active: '' });
   const staff = useQuery(staffQuery(allowed && seg === 'staff'));
   const specs = useQuery(allSpecialtiesQuery(allowed && seg === 'specialties'));
   const settings = useQuery(settingsQuery(allowed));
@@ -60,33 +69,51 @@ export default function SettingsScreen() {
       <View style={styles.body}>
         {seg === 'staff' && (
           <QueryBlock query={staff}>
-            {(items) =>
-              items.length === 0 ? (
-                <EmptyState title={t('sanatorium.noStaff')} />
-              ) : (
+            {(all) => {
+              const items = filterStaff(all, filter);
+              return (
                 <View style={styles.stack}>
-                  {items.map((m) => (
-                    <ListRow
-                      key={m.id}
-                      pressable
-                      testID={`staff-${m.id}`}
-                      title={m.full_name}
-                      subtitle={[
-                        ...(['registrar', 'room_keeper', 'kitchen', 'doctor', 'nurse', 'housekeeper'] as const)
-                          .filter((r) => m[`is_${r}` as keyof StaffMember])
-                          .map((r) => t(`sanatorium.role.${r}`)),
-                        m.specialty,
-                      ]
-                        .filter(Boolean)
-                        .join(' · ')}
-                      right={!m.is_active ? <Badge label={t('sanatorium.inactive')} tone="neutral" /> : m.is_external ? <Badge label={t('sanatorium.external')} tone="info" /> : undefined}
-                      chevron={!readOnly}
-                      onPress={readOnly ? undefined : () => setEditStaff(m)}
-                    />
-                  ))}
+                  <SearchField testID="staff-filter-q" value={filter.q} onChangeText={(q) => setFilter((f) => ({ ...f, q }))} placeholder={t('sanStaff.staff.search')} />
+                  <ChipWrap<string>
+                    testID="staff-filter-role"
+                    options={ROLES.map((r) => ({ value: r, label: t(`sanatorium.role.${r}`) }))}
+                    isOn={(v) => filter.role === v}
+                    onToggle={(v) => setFilter((f) => ({ ...f, role: f.role === v ? '' : (v as SanRole) }))}
+                  />
+                  <ChipWrap<string>
+                    testID="staff-filter-active"
+                    options={[{ value: '1', label: t('sanatorium.active') }, { value: '0', label: t('sanatorium.inactive') }]}
+                    isOn={(v) => filter.active === v}
+                    onToggle={(v) => setFilter((f) => ({ ...f, active: f.active === v ? '' : (v as '1' | '0') }))}
+                  />
+                  {items.length === 0 ? (
+                    <EmptyState title={t('sanatorium.noStaff')} />
+                  ) : (
+                    items.map((m) => (
+                      <ListRow
+                        key={m.id}
+                        pressable
+                        testID={`staff-${m.id}`}
+                        title={m.full_name}
+                        subtitle={[...staffRoles(m).map((r) => t(`sanatorium.role.${r}`)), m.specialty].filter(Boolean).join(' · ')}
+                        below={
+                          !!m.cabinet || !!m.phone || m.is_external ? (
+                            <View style={styles.badges}>
+                              {!!m.cabinet && <Badge testID={`staff-cabinet-${m.id}`} label={`${t('sanatorium.cabinet')}: ${m.cabinet}`} tone="brand" />}
+                              {!!m.phone && <Badge testID={`staff-phone-${m.id}`} label={formatUzPhone(m.phone)} tone="neutral" />}
+                              {m.is_external && <Badge testID={`staff-invited-${m.id}`} label={t('sanatorium.external')} tone="info" />}
+                            </View>
+                          ) : undefined
+                        }
+                        right={!m.is_active ? <Badge label={t('sanatorium.inactive')} tone="neutral" /> : undefined}
+                        chevron={!readOnly}
+                        onPress={readOnly ? undefined : () => setEditStaff(m)}
+                      />
+                    ))
+                  )}
                 </View>
-              )
-            }
+              );
+            }}
           </QueryBlock>
         )}
         {seg === 'specialties' && (
@@ -192,10 +219,10 @@ function TextsForm({ s }: { s: SanSettings }) {
   };
   return (
     <Card testID="settings-texts">
-      <FormInput label={t('sanatorium.contacts')} value={contacts} onChangeText={readOnly ? () => {} : setContacts} multiline testID="set-contacts" />
-      <FormInput label={t('sanatorium.addresses')} value={addresses} onChangeText={readOnly ? () => {} : setAddresses} multiline />
-      <FormInput label={t('sanatorium.workHours')} value={hours} onChangeText={readOnly ? () => {} : setHours} />
-      <FormInput label={t('sanatorium.about')} value={about} onChangeText={readOnly ? () => {} : setAbout} multiline />
+      <FormInput label={t('sanatorium.contacts')} value={contacts} onChangeText={readOnly ? () => {} : setContacts} multiline maxLength={2000} testID="set-contacts" />
+      <FormInput label={t('sanatorium.addresses')} value={addresses} onChangeText={readOnly ? () => {} : setAddresses} multiline maxLength={2000} />
+      <FormInput label={t('sanatorium.workHours')} value={hours} onChangeText={readOnly ? () => {} : setHours} maxLength={500} />
+      <FormInput label={t('sanatorium.about')} value={about} onChangeText={readOnly ? () => {} : setAbout} multiline maxLength={2000} />
       <FormInput label={t('sanatorium.childDiscountPercent')} value={percent} onChangeText={readOnly ? () => {} : setPercent} keyboardType="number-pad" testID="set-percent" />
       <FormInput label={t('sanatorium.childAgeLimit')} value={age} onChangeText={readOnly ? () => {} : setAge} keyboardType="number-pad" />
       <ErrorLine message={error} />
@@ -210,4 +237,5 @@ const styles = StyleSheet.create({
   stack: { gap: 8 },
   form: { gap: 4, paddingBottom: 8 },
   hint: { marginTop: 8 },
+  badges: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 },
 });

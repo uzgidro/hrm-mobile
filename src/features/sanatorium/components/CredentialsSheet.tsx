@@ -3,7 +3,11 @@
 import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { toast } from '@/lib/toast';
 import { Button, Sheet, Text } from '@/ui';
+import { useSanFeatures } from '../utils/features';
+import { guestCabinetUrl } from '../utils/guests';
+import { CopyButton, PrintButton } from './CardActions';
 import { GuestCardSheet } from './GuestCardSheet';
 import type { Credentials } from '../types';
 
@@ -12,8 +16,14 @@ export type CredentialsShown = { guestName: string; credentials: Credentials | n
 export function CredentialsSheet({ creds, onClose }: { creds: CredentialsShown | null; onClose: () => void }) {
   const { t } = useTranslation();
   const [card, setCard] = useState(false);
+  const cabinetOn = useSanFeatures().on('guest_cabinet');
+  // Closing the sheet hides the password for good: say so (like the web dialog does).
+  const close = () => {
+    if (creds?.credentials) toast.info(t('sanGuests.closedNote'));
+    onClose();
+  };
   return (
-    <Sheet visible={!!creds} onClose={onClose} title={t('sanatorium.credentials')}>
+    <Sheet visible={!!creds} onClose={close} title={t('sanatorium.credentials')}>
       <View style={styles.body} testID="credentials-sheet">
         <Text variant="body" weight="600">{creds?.guestName}</Text>
         {creds?.credentials ? (
@@ -22,17 +32,26 @@ export function CredentialsSheet({ creds, onClose }: { creds: CredentialsShown |
             <View style={styles.row}>
               <Text variant="caption" tone="muted">{t('sanatorium.loginCode')}</Text>
               <Text variant="display" selectable testID="cred-login">{creds.credentials.login_code}</Text>
+              <CopyButton value={creds.credentials.login_code} testID="cred-copy-login" />
             </View>
             <View style={styles.row}>
               <Text variant="caption" tone="muted">{t('sanatorium.password')}</Text>
               <Text variant="display" selectable testID="cred-password">{creds.credentials.password}</Text>
+              <CopyButton value={creds.credentials.password} testID="cred-copy-password" />
             </View>
+            {cabinetOn && (
+              <View style={styles.row}>
+                <Text variant="caption" tone="muted">{t('sanGuests.cabinetAt')}</Text>
+                <Text variant="label" selectable testID="cred-cabinet">{guestCabinetUrl()}</Text>
+              </View>
+            )}
           </>
         ) : (
           <Text variant="body" testID="cred-none">{t('sanatorium.credentialsNone')}</Text>
         )}
         {!!creds?.guestId && !!creds.credentials && <Button testID="cred-card" label={t('sanatorium.idCard')} variant="soft" full onPress={() => setCard(true)} />}
-        <Button label={t('sanatorium.credentialsDone')} full onPress={onClose} testID="cred-done" />
+        {!!creds?.credentials && <PrintButton testID="cred-print" />}
+        <Button label={t('sanatorium.credentialsDone')} full onPress={close} testID="cred-done" />
       </View>
       <GuestCardSheet
         info={card && creds?.guestId ? { guestId: creds.guestId, name: creds.guestName, loginCode: creds.credentials?.login_code, password: creds.credentials?.password } : null}
@@ -42,4 +61,4 @@ export function CredentialsSheet({ creds, onClose }: { creds: CredentialsShown |
   );
 }
 
-const styles = StyleSheet.create({ body: { gap: 10, paddingBottom: 8 }, row: { gap: 2 } });
+const styles = StyleSheet.create({ body: { gap: 10, paddingBottom: 8 }, row: { gap: 2, alignItems: 'flex-start' } });

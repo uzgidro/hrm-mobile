@@ -17,8 +17,10 @@ import { Denied, PhoneLink, QueryBlock, useSanAccess } from '../components/commo
 import { ProcedureSheet } from '../components/ProcedureSheet';
 import { RescheduleSheet } from '../components/RescheduleSheet';
 import { ReferSheet } from '../components/ReferSheet';
+import { HistorySheet } from '../components/DeskParts';
 import type { Appointment, GuestProfile } from '../types';
 import { apptTone, canSanWrite, fmtDateTime, hasSanRole, sanErrorMessage } from '../utils/sanatorium';
+import { FINISH_MAX, finishBody, finishError } from '../utils/staffParity';
 
 export default function AppointmentScreen() {
   const { t } = useTranslation();
@@ -59,10 +61,13 @@ function Detail({ appt, history }: { appt: Appointment; history: Appointment[] }
   const [error, setError] = useState<string | null>(null);
   const [refer, setRefer] = useState<Appointment | null>(null);
   const [proc, setProc] = useState<Appointment | null>(null);
+  const [hist, setHist] = useState(false);
 
   const save = async () => {
+    const bad = finishError({ complaint, diagnosis, recommendation });
+    if (bad) return setError(t(bad === 'empty' ? 'sanStaff.desk.finishEmpty' : 'sanStaff.desk.tooLong', { max: FINISH_MAX }));
     try {
-      await finish.mutateAsync({ id: appt.id, complaint: complaint.trim(), diagnosis: diagnosis.trim(), recommendation: recommendation.trim() });
+      await finish.mutateAsync({ id: appt.id, ...finishBody({ complaint, diagnosis, recommendation }) });
       setError(null);
       toast.success(t('sanatorium.appointmentFinished'));
     } catch (e) {
@@ -123,15 +128,16 @@ function Detail({ appt, history }: { appt: Appointment; history: Appointment[] }
         <>
           <SectionHeader title={t('sanatorium.conclusion')} />
           <Card>
-            <FormInput label={t('sanatorium.complaint')} value={complaint} onChangeText={setComplaint} multiline testID="appt-complaint" />
-            <FormInput label={t('sanatorium.diagnosis')} value={diagnosis} onChangeText={setDiagnosis} multiline testID="appt-diagnosis" />
-            <FormInput label={t('sanatorium.recommendation')} value={recommendation} onChangeText={setRecommendation} multiline testID="appt-recommendation" />
+            <FormInput label={t('sanatorium.complaint')} value={complaint} onChangeText={setComplaint} multiline maxLength={FINISH_MAX} testID="appt-complaint" />
+            <FormInput label={t('sanatorium.diagnosis')} value={diagnosis} onChangeText={setDiagnosis} multiline maxLength={FINISH_MAX} testID="appt-diagnosis" />
+            <FormInput label={t('sanatorium.recommendation')} value={recommendation} onChangeText={setRecommendation} multiline maxLength={FINISH_MAX} testID="appt-recommendation" />
             {!!error && <Text variant="label" tone="danger" testID="appt-error">{error}</Text>}
             <Button testID="appt-finish" label={appt.status === 'done' ? t('common.save') : t('sanatorium.finish')} full loading={finish.isPending} onPress={() => void save()} />
           </Card>
           <View style={styles.actions}>
             <Button testID="appt-refer" label={t('sanatorium.refer')} variant="soft" icon="arrowUp" onPress={() => setRefer(appt)} />
             <Button testID="appt-procedure" label={t('sanatorium.addProcedure')} variant="soft" icon="plus" onPress={() => setProc(appt)} />
+            <Button testID="appt-history" label={t('sanStaff.desk.history')} variant="ghost" onPress={() => setHist(true)} />
           </View>
         </>
       )}
@@ -160,6 +166,7 @@ function Detail({ appt, history }: { appt: Appointment; history: Appointment[] }
       <RescheduleSheet appt={resched} onClose={() => setResched(null)} />
       <ReferSheet appt={refer} onClose={() => setRefer(null)} />
       <ProcedureSheet appt={proc} onClose={() => setProc(null)} />
+      <HistorySheet guest={hist ? { id: appt.guest_id, name: appt.guest?.full_name ?? `#${appt.guest_id}` } : null} onClose={() => setHist(false)} />
     </View>
   );
 }

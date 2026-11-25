@@ -1,44 +1,57 @@
-// Registrar: guests (search, create) and families.
+// Guests: the registrar lists everyone (search, create, families); the room keeper and the doctor
+// only find guests by typing at least two characters, with no organisation, families or add button.
 import React, { useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
-import { Avatar, Button, Card, EmptyState, ListRow, PageHeader, Screen, SearchField, Segmented } from '@/ui';
+import { Avatar, Badge, Button, Card, EmptyState, ListRow, PageHeader, Screen, SearchField, Segmented, Text } from '@/ui';
 import { guestsInfinite } from '../api/queries';
 import { CredentialsSheet, type CredentialsShown } from '../components/CredentialsSheet';
 import { FamiliesPanel } from '../components/FamiliesPanel';
 import { GuestSheet } from '../components/GuestSheet';
-import { Denied, PagedBlock, useSanAccess, useSanReadOnly } from '../components/common';
+import { Denied, PagedBlock, useSanAccess, useSanWrite } from '../components/common';
 import type { GuestLite } from '../types';
+import { fmtDate, stayTone } from '../utils/sanatorium';
 
 export default function GuestsScreen() {
   const { t } = useTranslation();
-  const allowed = useSanAccess('registrar');
-  const readOnly = useSanReadOnly();
+  const allowed = useSanAccess('registrar', 'room_keeper', 'doctor');
+  const registrar = useSanAccess('registrar');
+  const canAdd = useSanWrite('registrar');
   const [seg, setSeg] = useState<'guests' | 'families'>('guests');
   const [term, setTerm] = useState('');
   const debounced = useDebouncedValue(term);
-  // The registrar may list everyone; an empty search shows the latest guests.
-  const q = useInfiniteQuery(guestsInfinite(debounced, allowed && seg === 'guests' && (debounced.trim().length === 0 || debounced.trim().length >= 2)));
+  const len = debounced.trim().length;
+  // Non-registrars must type two characters (the server refuses a bare list); the registrar may list everyone.
+  const searchOk = registrar ? len === 0 || len >= 2 : len >= 2;
+  const q = useInfiniteQuery(guestsInfinite(debounced, allowed && seg === 'guests' && searchOk));
   const [edit, setEdit] = useState<GuestLite | 'new' | null>(null);
   const [creds, setCreds] = useState<CredentialsShown | null>(null);
   if (!allowed) return <Denied />;
+  const showFamilies = registrar && seg === 'families';
   return (
     <Screen refreshing={q.isRefetching} onRefresh={() => void q.refetch()} testID="sanatorium-guests-screen">
-      <PageHeader title={t('sanatorium.nav.guests')} right={readOnly ? undefined : <Button testID="guest-add" label={t('sanatorium.add')} icon="plus" size="sm" onPress={() => setEdit('new')} />} />
-      <Segmented
-        testID="guests-seg"
-        value={seg}
-        onChange={setSeg}
-        options={[{ value: 'guests', label: t('sanatorium.nav.guests') }, { value: 'families', label: t('sanatorium.families') }]}
-      />
-      {seg === 'families' ? (
+      <PageHeader title={t('sanatorium.nav.guests')} right={canAdd && !showFamilies ? <Button testID="guest-add" label={t('sanatorium.add')} icon="plus" size="sm" onPress={() => setEdit('new')} /> : undefined} />
+      {registrar && (
+        <Segmented
+          testID="guests-seg"
+          value={seg}
+          onChange={setSeg}
+          options={[{ value: 'guests', label: t('sanatorium.nav.guests') }, { value: 'families', label: t('sanatorium.families') }]}
+        />
+      )}
+      {showFamilies ? (
         <FamiliesPanel />
       ) : (
         <>
           <SearchField testID="guests-search" value={term} onChangeText={setTerm} placeholder={t('sanatorium.guestSearch')} />
-          {debounced.trim().length === 1 ? null : (
+          {!searchOk ? (
+            <View testID="guests-type-hint">
+              <EmptyState title={t('sanGuests.typeToSearch')} message={t('sanatorium.guestSearchHint')} />
+            </View>
+          ) : (
             <PagedBlock query={q}>
               {(items) =>
                 items.length === 0 ? (
@@ -46,15 +59,7 @@ export default function GuestsScreen() {
                 ) : (
                   <Card>
                     {items.map((g) => (
-                      <ListRow
-                        key={g.id}
-                        testID={`guest-${g.id}`}
-                        title={g.full_name}
-                        subtitle={[g.phone, g.organization_name].filter(Boolean).join(' · ')}
-                        left={<Avatar name={g.full_name} size={40} />}
-                        chevron
-                        onPress={() => router.push({ pathname: '/sanatorium-guest', params: { id: String(g.id) } })}
-                      />
+                      <GuestRow key={g.id} g={g} registrar={registrar} />
                     ))}
                   </Card>
                 )
@@ -74,3 +79,36 @@ export default function GuestsScreen() {
     </Screen>
   );
 }
+
+function GuestRow({ g, registrar }: { g: GuestLite; registrar: boolean }) {
+  const { t } = useTranslation();
+  const st = g.active_stay;
+  const sub = [
+    g.phone,
+    g.age != null ? `${g.age} ${t('sanatorium.yearsOld')}` : g.birth_date ? fmtDate(g.birth_date) : null,
+    registrar ? g.organization_name : null,
+    registrar ? g.family_name : null,
+  ].filter(Boolean).join(' · ');
+  return (
+    <ListRow
+      testID={`guest-${g.id}`}
+      title={g.full_name}
+      subtitle={sub}
+      left={<Avatar name={g.full_name} size={40} />}
+      below={
+        st ? (
+          <View style={styles.stay} testID={`guest-stay-${g.id}`}>
+            <Badge label={t(`sanatorium.stayStatus.${st.status}`)} tone={stayTone(st.status)} />
+            <Text variant="caption" tone="muted">
+              {[st.room ? `${t('sanatorium.room')} ${st.room.number}` : null, `${fmtDate(st.planned_from)} → ${fmtDate(st.planned_to)}`].filter(Boolean).join(' · ')}
+            </Text>
+          </View>
+        ) : undefined
+      }
+      chevron
+      onPress={() => router.push({ pathname: '/sanatorium-guest', params: { id: String(g.id) } })}
+    />
+  );
+}
+
+const styles = StyleSheet.create({ stay: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginTop: 2 } });

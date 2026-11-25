@@ -1,16 +1,17 @@
-// Kitchen: seven-day headcounts, today's eating list and the menu (view + a simple day editor).
+// Kitchen: arrivals / departures strip, headcounts, the eating list and the menu (view + a simple day editor).
 import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { FormInput } from '@/components/FormInput';
 import { toast } from '@/lib/toast';
-import { Badge, Button, Card, EmptyState, ListRow, PageHeader, Screen, Segmented, Sheet, Text } from '@/ui';
+import { Button, Card, PageHeader, Screen, Segmented, Sheet, Text } from '@/ui';
 import { usePutMenu } from '../api/mutations';
-import { countsQuery, kitchenDayQuery, menuQuery } from '../api/queries';
+import { menuQuery, sanKeys } from '../api/queries';
 import { Denied, QueryBlock, useSanAccess, useSanReadOnly } from '../components/common';
 import { FeatureOff } from '../components/sections1/shared';
+import { KitchenCounts, KitchenFlowStrip, KitchenToday } from '../components/KitchenParts';
 import { KitchenDietView } from '../components/sections2/DietParts';
 import { useSanFeatures } from '../utils/features';
 import { MEALS, type Meal, type MenuDay, type MenuMeal } from '../types';
@@ -20,24 +21,34 @@ type Seg = 'counts' | 'today' | 'menu' | 'diets';
 
 export default function KitchenScreen() {
   const { t } = useTranslation();
-  const allowed = useSanAccess('kitchen');
+  // The registrar (and the view-only chairman) opens the kitchen too, as on the web.
+  const allowed = useSanAccess('kitchen', 'registrar');
   const readOnly = useSanReadOnly();
   const { on, loaded } = useSanFeatures();
   const [seg, setSeg] = useState<Seg>('counts');
   const today = todayIso();
-  const counts = useQuery(countsQuery(today, 7, allowed && seg === 'counts'));
-  const list = useQuery(kitchenDayQuery(today, allowed && seg === 'today'));
   const menu = useQuery(menuQuery(today, 7, allowed && seg === 'menu'));
   const [editing, setEditing] = useState<MenuDay | null>(null);
   const dietOn = useSanFeatures().on('diet');
+  const qc = useQueryClient();
+  const [spin, setSpin] = useState(false);
+  // Pull to refresh reloads whatever tab is open (they all live under the sanatorium query key).
+  const refresh = async () => {
+    setSpin(true);
+    try {
+      await qc.invalidateQueries({ queryKey: sanKeys.all });
+    } finally {
+      setSpin(false);
+    }
+  };
   if (!allowed) return <Denied />;
   if (loaded && !on('kitchen_menu')) return <FeatureOff />;
-  const cur = seg === 'counts' ? counts : seg === 'today' ? list : menu;
   const dietSeg = seg === 'diets';
 
   return (
-    <Screen refreshing={cur.isRefetching} onRefresh={() => void cur.refetch()} testID="sanatorium-kitchen-screen">
+    <Screen refreshing={spin} onRefresh={() => void refresh()} testID="sanatorium-kitchen-screen">
       <PageHeader title={t('sanatorium.nav.kitchen')} subtitle={fmtDate(today)} />
+      <KitchenFlowStrip enabled />
       <Segmented
         testID="kitchen-seg"
         value={seg}
@@ -51,55 +62,8 @@ export default function KitchenScreen() {
       />
       <View style={styles.body}>
         {dietSeg && <KitchenDietView />}
-        {seg === 'counts' && (
-          <QueryBlock query={counts}>
-            {(c) => (
-              <View style={styles.stack}>
-                {c.days.map((d) => (
-                  <Card key={d.date} testID={`count-${d.date}`}>
-                    <View style={styles.row}>
-                      <Text variant="heading" style={styles.flex}>{fmtDate(d.date)}</Text>
-                      <Text variant="number">{d.total}</Text>
-                    </View>
-                    <Text variant="caption" tone="muted">
-                      {t('sanatorium.adults')}: {d.adults} · {t('sanatorium.children')}: {d.children} · {t('sanatorium.diet')}: {d.diet}
-                    </Text>
-                  </Card>
-                ))}
-                {(c.early_leaves ?? []).length > 0 && (
-                  <Card title={t('sanatorium.earlyLeaves')} icon="logout" tint="amber">
-                    {c.early_leaves!.map((e, i) => (
-                      <ListRow key={i} title={e.guest.full_name} subtitle={fmtDate(e.date)} />
-                    ))}
-                  </Card>
-                )}
-              </View>
-            )}
-          </QueryBlock>
-        )}
-        {seg === 'today' && (
-          <QueryBlock query={list}>
-            {(items) =>
-              items.length === 0 ? (
-                <EmptyState title={t('sanatorium.noEating')} />
-              ) : (
-                <Card>
-                  {items.map((p) => (
-                    <ListRow
-                      key={p.stay_id}
-                      testID={`eat-${p.stay_id}`}
-                      title={p.guest.full_name}
-                      subtitle={[p.room ? `${t('sanatorium.room')} ${p.room}` : null, p.diet_note].filter(Boolean).join(' · ')}
-                      right={
-                        p.diet_note ? <Badge label={t('sanatorium.diet')} tone="warning" /> : p.is_child ? <Badge label={t('sanatorium.child')} tone="info" /> : undefined
-                      }
-                    />
-                  ))}
-                </Card>
-              )
-            }
-          </QueryBlock>
-        )}
+        {seg === 'counts' && <KitchenCounts enabled />}
+        {seg === 'today' && <KitchenToday enabled />}
         {seg === 'menu' && !readOnly && <Button testID="menu-week" label={t('sanatorium.editWeek')} icon="edit" variant="soft" full onPress={() => router.push('/sanatorium-menu')} />}
         {seg === 'menu' && (
           <QueryBlock query={menu}>
@@ -177,6 +141,7 @@ function MenuForm({ day, onClose }: { day: MenuDay; onClose: () => void }) {
               value={draft[m].dishes}
               onChangeText={(v) => setDraft((d) => ({ ...d, [m]: { ...d[m], dishes: v } }))}
               multiline
+              maxLength={2000}
               testID={`menu-${m}`}
             />
             <FormInput
@@ -184,6 +149,7 @@ function MenuForm({ day, onClose }: { day: MenuDay; onClose: () => void }) {
               value={draft[m].diet}
               onChangeText={(v) => setDraft((d) => ({ ...d, [m]: { ...d[m], diet: v } }))}
               multiline
+              maxLength={2000}
             />
           </View>
         ))}
