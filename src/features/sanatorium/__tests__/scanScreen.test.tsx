@@ -14,8 +14,8 @@ jest.mock('expo-router', () => ({
   useLocalSearchParams: () => ({}),
 }));
 jest.mock('@/components/CodeScanner', () => {
-  const R = require('react');
-  const { Pressable: P, Text: T } = require('react-native');
+  const R = jest.requireActual<typeof import('react')>('react');
+  const { Pressable: P, Text: T } = jest.requireActual<typeof import('react-native')>('react-native');
   return {
     CodeScanner: ({ onCode, message }: { onCode: (c: string) => void; message?: string | null }) =>
       R.createElement(R.Fragment, null, R.createElement(P, { testID: 'fake-scan', onPress: () => onCode('77528724503944013730') }, R.createElement(T, null, 'scan')), message ? R.createElement(T, { testID: 'scan-message' }, message) : null),
