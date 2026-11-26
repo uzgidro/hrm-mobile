@@ -10,6 +10,7 @@ import { useCancelStay, useUpdatePayment, useUpdateStay } from '../api/mutations
 import { applyDietToStays } from '../api/sections2';
 import { PAYMENT_STATUSES, type PaymentStatus, type StayFull } from '../types';
 import { Note } from '../simple/components/parts';
+import { useSingleFlight } from '../simple/useSingleFlight';
 import { refundOf } from '../simple/utils';
 import { toastWarnings } from '../simple/warnings';
 import { fmtMoney, sanErrorMessage } from '../utils/sanatorium';
@@ -52,7 +53,8 @@ function EditForm({ stay, onClose }: { stay: StayFull; onClose: () => void }) {
   );
   const [child, setChild] = useState(!!stay.child_discount);
   const [error, setError] = useState<string | null>(null);
-  const submit = async () => {
+  const flight = useSingleFlight();
+  const submit = () => flight.run(async () => {
     if (!dayjs(draft.to).isAfter(dayjs(draft.from))) return setError(t('sanatorium.errors.invalid_period'));
     try {
       // Only what differs is sent: an untouched field is never re-validated (or repriced) by the server.
@@ -80,7 +82,8 @@ function EditForm({ stay, onClose }: { stay: StayFull; onClose: () => void }) {
     } catch (e) {
       setError(sanErrorMessage(e, t('errors.generic')));
     }
-  };
+  });
+
   return (
     <View style={styles.form} testID="stay-edit-sheet">
       <BookingFields
@@ -101,7 +104,8 @@ function PaymentForm({ stay, onClose }: { stay: StayFull; onClose: () => void })
   const [paid, setPaid] = useState(stay.paid_amount ? String(Number(stay.paid_amount)) : '0');
   const [status, setStatus] = useState<PaymentStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const submit = async () => {
+  const flight = useSingleFlight();
+  const submit = () => flight.run(async () => {
     const n = Number(paid.replace(',', '.'));
     if (!Number.isFinite(n) || n < 0) return setError(t('sanatorium.priceInvalid'));
     try {
@@ -111,7 +115,8 @@ function PaymentForm({ stay, onClose }: { stay: StayFull; onClose: () => void })
     } catch (e) {
       setError(sanErrorMessage(e, t('errors.generic')));
     }
-  };
+  });
+
   return (
     <View style={styles.form} testID="payment-sheet">
       <Text variant="body">{t('sanatorium.total')}: {fmtMoney(stay.total_amount)} · {t('sanatorium.debt')}: {fmtMoney(stay.debt)}</Text>
@@ -135,6 +140,7 @@ function CancelForm({ stay, onClose }: { stay: StayFull; onClose: () => void }) 
   const [reason, setReason] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [refund, setRefund] = useState(0);
+  const flight = useSingleFlight();
   if (refund > 0) {
     return (
       <View style={styles.form} testID="refund-sheet">
@@ -144,7 +150,7 @@ function CancelForm({ stay, onClose }: { stay: StayFull; onClose: () => void }) 
       </View>
     );
   }
-  const submit = async () => {
+  const submit = () => flight.run(async () => {
     if (reason.trim().length < 3) return setError(t('sanatorium.reasonShort'));
     try {
       const res = await cancel.mutateAsync({ id: stay.id, reason: reason.trim() });
@@ -157,7 +163,8 @@ function CancelForm({ stay, onClose }: { stay: StayFull; onClose: () => void }) 
     } catch (e) {
       setError(sanErrorMessage(e, t('errors.generic')));
     }
-  };
+  });
+
   return (
     <View style={styles.form} testID="cancel-sheet">
       <Text variant="body" weight="600">{stay.guest?.full_name}</Text>

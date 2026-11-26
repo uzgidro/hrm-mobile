@@ -17,6 +17,7 @@ import { JourneyCard } from '../components/sections1/JourneyCard';
 import { StayDietSheet } from '../components/sections2/DietParts';
 import { StayDocumentsCard, StayServicesCard } from '../components/sections2/StayDocuments';
 import { StayNext } from '../simple/components/StayNext';
+import { useSingleFlight } from '../simple/useSingleFlight';
 import { RefundSheet } from '../simple/components/StayActions';
 import { refundOf } from '../simple/utils';
 import { toastWarnings } from '../simple/warnings';
@@ -67,7 +68,8 @@ function Detail({ stay }: { stay: StayFull }) {
   const features = useSanFeatures();
   const live = stay.status === 'booked' || stay.status === 'checked_in';
 
-  const run = async (kind: 'in' | 'out') => {
+  const flight = useSingleFlight();
+  const run = (kind: 'in' | 'out') => flight.run(async () => {
     try {
       const res = await (kind === 'in' ? checkIn : checkOut).mutateAsync(stay.id);
       toast.success(t(kind === 'in' ? 'sanatorium.checkedIn' : 'sanatorium.checkedOut'));
@@ -81,7 +83,8 @@ function Detail({ stay }: { stay: StayFull }) {
       if (kind === 'out' && sanErrorInfo(e).code === 'use_early_leave') setEarly(true);
       else toast.error(sanErrorMessage(e, t('errors.generic')));
     }
-  };
+  });
+
 
   return (
     <View style={styles.stack}>
