@@ -57,7 +57,8 @@ function boot(){
       map.jumpTo({center:[lng,lat]});put(lat,lng);
     };
     window.addEventListener('message',function(e){try{var m=JSON.parse(e.data);if(m&&m.cmd==='set')window.__setPoint(m.lat,m.lng);}catch(x){}});
-    map.once('load',function(){send({type:'ready'});});
+    // The credits start folded: unfolded they cover half of a phone-sized map.
+    map.once('load',function(){var a=document.querySelector('.maplibregl-ctrl-attrib');if(a){a.classList.remove('maplibregl-compact-show');a.removeAttribute('open');}send({type:'ready'});});
     map.once('styledata',function(){send({type:'ready'});});
   }catch(e){send({type:'error'});}
 }
