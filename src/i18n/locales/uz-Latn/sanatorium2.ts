@@ -151,7 +151,7 @@ export default {
     orgName: "Tashkilot nomi",
     organization: "Tashkilot (to'lovchi)",
     tin: "STIR",
-    tinInvalid: "STIR 9 ta raqamdan iborat bo'lishi kerak",
+    tinInvalid: "STIR 9 yoki 14 ta raqamdan iborat bo'lishi kerak",
     bankName: "Bank",
     bankAccount: "Hisob raqami",
     bankMfo: "MFO",

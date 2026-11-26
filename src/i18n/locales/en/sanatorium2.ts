@@ -151,7 +151,7 @@ export default {
     orgName: "Organization name",
     organization: "Organization (payer)",
     tin: "TIN",
-    tinInvalid: "TIN must be 9 digits",
+    tinInvalid: "TIN must be 9 or 14 digits",
     bankName: "Bank",
     bankAccount: "Bank account",
     bankMfo: "MFO",

@@ -1,17 +1,20 @@
 // Registrar's rooms: capacity, price, a 14-day occupancy strip per room and create / edit.
 import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useQuery } from '@tanstack/react-query';
+import { useLocalSearchParams } from 'expo-router';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { FormInput } from '@/components/FormInput';
 import { toast } from '@/lib/toast';
 import { useTheme } from '@/theme/ThemeProvider';
-import { Badge, Button, Card, EmptyState, PageHeader, Screen, Sheet, Text } from '@/ui';
+import { Badge, Button, Card, EmptyState, PageHeader, Screen, Segmented, Sheet, Text } from '@/ui';
 import { toneColors } from '@/ui/Chip';
 import { useSaveRoom } from '../api/mutations';
-import { availabilityQuery, roomsQuery } from '../api/queries';
+import { useSingleFlight } from '../simple/useSingleFlight';
+import { availabilityQuery, roomsQuery, sanKeys } from '../api/queries';
 import { ChoiceField, ErrorLine, opt, optNull, SwitchRow } from '../components/forms';
 import { Denied, QueryBlock, useSanAccess, useSanReadOnly } from '../components/common';
+import { OccupancyGrid } from '../components/OccupancyGrid';
 import { PoiField, usePoiOn } from '../components/sections1/PoiField';
 import { RoomCover } from '../components/RoomCover';
 import { RoomGallery, type GalleryState } from '../components/RoomGallery';
@@ -21,27 +24,53 @@ import { addDays, sanErrorMessage, todayIso } from '../utils/sanatorium';
 
 const DAYS = 14;
 
+type View_ = 'grid' | 'rooms';
+
 export default function RoomsScreen() {
   const { t } = useTranslation();
-  const allowed = useSanAccess('registrar');
+  // The occupancy grid is for the registrar and the room keeper; the rooms CRUD list stays registrar-only.
+  const allowed = useSanAccess('registrar', 'room_keeper');
+  const registrar = useSanAccess('registrar');
+  const params = useLocalSearchParams<{ view?: string }>();
+  const [view, setView] = useState<View_>(params.view === 'rooms' ? 'rooms' : 'grid');
+  const showList = registrar && view === 'rooms';
+  const qc = useQueryClient();
+  if (!allowed) return <Denied />;
+  return (
+    <Screen refreshing={false} onRefresh={() => {
+        void qc.invalidateQueries({ queryKey: [...sanKeys.all, 'availability'] });
+        void qc.invalidateQueries({ queryKey: sanKeys.rooms() });
+      }} testID="sanatorium-rooms-screen">
+      {registrar ? (
+        <>
+          <PageHeader title={t('sanatorium.nav.rooms')} />
+          <Segmented
+            testID="rooms-seg"
+            value={view}
+            onChange={setView}
+            options={[{ value: 'grid', label: t('sanGuests.gridTab') }, { value: 'rooms', label: t('sanGuests.listTab') }]}
+          />
+        </>
+      ) : (
+        <PageHeader title={t('sanatorium.nav.rooms')} />
+      )}
+      {showList ? <RoomsList /> : <OccupancyGrid />}
+    </Screen>
+  );
+}
+
+function RoomsList() {
+  const { t } = useTranslation();
   const readOnly = useSanReadOnly();
   const start = todayIso();
-  const rooms = useQuery(roomsQuery(allowed));
-  const avail = useQuery(availabilityQuery(start, DAYS, allowed));
+  const rooms = useQuery(roomsQuery(true));
+  const avail = useQuery(availabilityQuery(start, DAYS, true));
   const [edit, setEdit] = useState<Room | 'new' | null>(null);
   const [gallery, setGallery] = useState<GalleryState>(null);
-  if (!allowed) return <Denied />;
   const byId = new Map((avail.data?.rooms ?? []).map((r) => [r.id, r]));
   return (
-    <Screen
-      refreshing={rooms.isRefetching}
-      onRefresh={() => {
-        void rooms.refetch();
-        void avail.refetch();
-      }}
-      testID="sanatorium-rooms-screen"
-    >
-      <PageHeader title={t('sanatorium.nav.rooms')} right={readOnly ? undefined : <Button testID="room-add" label={t('sanatorium.add')} icon="plus" size="sm" onPress={() => setEdit('new')} />} />
+    <View testID="rooms-list">
+      {!readOnly && <Button testID="room-add" label={t('sanatorium.addRoom')} icon="plus" size="sm" variant="soft" onPress={() => setEdit('new')} />}
       <QueryBlock query={rooms}>
         {(items) =>
           items.length === 0 ? (
@@ -57,7 +86,7 @@ export default function RoomsScreen() {
       </QueryBlock>
       <RoomSheet room={edit} onClose={() => setEdit(null)} onCreated={(r) => setEdit(r)} />
       <RoomGallery state={gallery} onClose={() => setGallery(null)} />
-    </Screen>
+    </View>
   );
 }
 
@@ -76,9 +105,12 @@ function RoomCard({ room, occ, start, onEdit, onGallery }: { room: Room; occ?: A
           </Text>
           {!!price && <Text variant="caption" tone="muted">{price}</Text>}
         </View>
-        {!room.is_active ? <Badge label={t('sanatorium.inactive')} tone="neutral" /> : room.out_of_service ? <Badge label={t('sanatorium.outOfService')} tone="danger" /> : null}
-        {onEdit && <Button label={t('sanatorium.edit')} variant="soft" size="sm" icon="edit" onPress={onEdit} testID="room-edit" />}
+        {!room.is_active ? <Badge label={t('sanatorium.inactive')} tone="neutral" testID={`room-inactive-${room.id}`} /> : room.out_of_service ? <Badge label={t('sanatorium.outOfService')} tone="danger" /> : null}
+        {onEdit && <Button label={t('sanatorium.edit')} variant="soft" size="sm" icon="edit" onPress={onEdit} testID={`room-edit-${room.id}`} />}
       </View>
+      {room.out_of_service && !!room.out_of_service_note && (
+        <Text variant="caption" tone="danger" testID={`room-oos-note-${room.id}`}>{room.out_of_service_note}</Text>
+      )}
       {occ && !room.out_of_service && (
         <View style={styles.strip} testID={`strip-${room.id}`}>
           {occ.occupancy.map((n, i) => {
@@ -109,6 +141,7 @@ function RoomSheet({ room, onClose, onCreated }: { room: Room | 'new' | null; on
 function RoomForm({ room, onClose, onCreated }: { room: Room | null; onClose: () => void; onCreated: (r: Room) => void }) {
   const { t } = useTranslation();
   const save = useSaveRoom();
+  const flight = useSingleFlight();
   const [number, setNumber] = useState(room?.number ?? '');
   const [building, setBuilding] = useState(room?.building ?? '');
   const [floor, setFloor] = useState(room?.floor != null ? String(room.floor) : '');
@@ -161,9 +194,9 @@ function RoomForm({ room, onClose, onCreated }: { room: Room | null; onClose: ()
     <View style={styles.form} testID="room-sheet">
       {room ? <RoomPhotoManager roomId={room.id} title={`${t('sanatorium.room')} ${room.number}`} /> : <Text variant="caption" tone="muted">{t('sanatorium.photosAfterSave')}</Text>}
       <FormInput label={t('sanatorium.roomNumber')} value={number} onChangeText={setNumber} required testID="room-number" />
-      <FormInput label={t('sanatorium.building')} value={building} onChangeText={setBuilding} />
-      <FormInput label={t('sanatorium.floorLabel')} value={floor} onChangeText={setFloor} keyboardType="number-pad" />
-      <FormInput label={t('sanatorium.roomType')} value={type} onChangeText={setType} />
+      <FormInput label={t('sanatorium.building')} value={building} onChangeText={setBuilding} testID="room-building" />
+      <FormInput label={t('sanatorium.floorLabel')} value={floor} onChangeText={setFloor} keyboardType="number-pad" testID="room-floor" />
+      <FormInput label={t('sanatorium.roomType')} value={type} onChangeText={setType} testID="room-type" />
       <FormInput label={t('sanatorium.capacity')} value={capacity} onChangeText={setCapacity} keyboardType="number-pad" required testID="room-capacity" />
       <FormInput label={t('sanatorium.pricePerDay')} value={price} onChangeText={setPrice} keyboardType="decimal-pad" testID="room-price" />
       <ChoiceField
@@ -171,14 +204,15 @@ function RoomForm({ room, onClose, onCreated }: { room: Room | null; onClose: ()
         value={mode}
         options={[{ value: 'per_bed' as PriceMode, label: t('sanatorium.perBed') }, { value: 'per_room' as PriceMode, label: t('sanatorium.perRoom') }]}
         onChange={(v) => v && setMode(v)}
+        testID="room-mode"
       />
-      <FormInput label={t('sanatorium.description')} value={desc} onChangeText={setDesc} multiline />
+      <FormInput label={t('sanatorium.description')} value={desc} onChangeText={setDesc} multiline testID="room-desc" />
       <PoiField value={poiId} onChange={setPoiId} testID="room-poi" />
       <SwitchRow label={t('sanatorium.outOfService')} value={oos} onChange={setOos} testID="room-oos" />
-      {oos && <FormInput label={t('sanatorium.outOfServiceNote')} value={oosNote} onChangeText={setOosNote} />}
-      <SwitchRow label={t('sanatorium.active')} value={active} onChange={setActive} />
+      {oos && <FormInput label={t('sanatorium.outOfServiceNote')} value={oosNote} onChangeText={setOosNote} testID="room-oos-note-input" />}
+      <SwitchRow label={t('sanatorium.active')} value={active} onChange={setActive} testID="room-active" />
       <ErrorLine message={error} testID="room-error" />
-      <Button testID="room-save" label={t('common.save')} full loading={save.isPending} onPress={() => void submit()} />
+      <Button testID="room-save" label={t('common.save')} full loading={save.isPending || flight.pending} onPress={() => void flight.run(submit)} />
     </View>
   );
 }

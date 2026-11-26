@@ -115,6 +115,8 @@ export type Broadcast = {
   created_at: string | null;
   started_at: string | null;
   finished_at: string | null;
+  /** Display name of the sender (absent on an older server). */
+  created_by?: string | null;
 };
 
 // ── Waitlist ──

@@ -24,7 +24,7 @@ export function PoiField({ value, onChange, testID }: { value: number | null; on
       value={value}
       noneLabel={t('sanatorium.none')}
       loading={q.isPending}
-      options={(q.data?.pois ?? []).map((p) => ({
+      options={(q.data?.pois ?? []).filter((p) => p.is_active !== false || p.id === value).map((p) => ({
         value: p.id,
         label: pickLang(i18n.language, { uz: p.name_uz, ru: p.name_ru, en: p.name_en }),
         sub: p.floor != null && p.floor !== '' ? `${t('san1.poi.floor')}: ${p.floor}` : undefined,

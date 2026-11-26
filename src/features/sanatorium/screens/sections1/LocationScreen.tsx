@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { useSingleFlight } from '../../simple/useSingleFlight';
 import { FormInput } from '@/components/FormInput';
 import { toast } from '@/lib/toast';
 import { Button, Card, PageHeader, Screen } from '@/ui';
@@ -40,6 +41,7 @@ function LocationForm({ loc }: { loc: SanLocation }) {
   const [notes, setNotes] = useState({ uz: loc.directions_note_uz ?? '', ru: loc.directions_note_ru ?? '', en: loc.directions_note_en ?? '' });
   const [error, setError] = useState<string | null>(null);
 
+  const flight = useSingleFlight();
   const submit = async () => {
     const r = locationBody({ lat, lng, zoom, address, uz: notes.uz, ru: notes.ru, en: notes.en });
     if (!r.ok) return setError(t(`san1.location.err.${r.error}`));
@@ -59,26 +61,29 @@ function LocationForm({ loc }: { loc: SanLocation }) {
           lat={parseCoord(lat)}
           lng={parseCoord(lng)}
           zoom={Number.parseInt(zoom, 10) || 15}
+          readOnly={readOnly}
           onPick={(p) => {
             if (readOnly) return;
             setLat(String(p.lat));
             setLng(String(p.lng));
-            setZoom(String(Math.min(19, Math.max(1, p.zoom))));
+            setZoom(String(p.zoom));
+            setError(null);
           }}
+          onZoom={(z) => !readOnly && setZoom(String(z))}
         />
         <View style={styles.pair}>
-          <View style={styles.flex}><FormInput label={t('san1.location.lat')} value={lat} onChangeText={readOnly ? () => {} : setLat} keyboardType="decimal-pad" testID="loc-lat" /></View>
-          <View style={styles.flex}><FormInput label={t('san1.location.lng')} value={lng} onChangeText={readOnly ? () => {} : setLng} keyboardType="decimal-pad" testID="loc-lng" /></View>
+          <View style={styles.flex}><FormInput label={t('san1.location.lat')} value={lat} onChangeText={readOnly ? () => {} : setLat} keyboardType="numbers-and-punctuation" testID="loc-lat" /></View>
+          <View style={styles.flex}><FormInput label={t('san1.location.lng')} value={lng} onChangeText={readOnly ? () => {} : setLng} keyboardType="numbers-and-punctuation" testID="loc-lng" /></View>
         </View>
         <FormInput label={t('san1.location.zoom')} value={zoom} onChangeText={readOnly ? () => {} : setZoom} keyboardType="number-pad" testID="loc-zoom" />
         {!readOnly && <Button testID="loc-clear" label={t('san1.location.clear')} variant="ghost" size="sm" onPress={() => { setLat(''); setLng(''); }} />}
       </Card>
       <Card>
-        <FormInput label={t('san1.location.address')} value={address} onChangeText={readOnly ? () => {} : setAddress} multiline testID="loc-address" />
-        <LangFields label={t('san1.location.notes')} values={notes} onChange={readOnly ? () => {} : setNotes} multiline testID="loc-note" />
+        <FormInput label={t('san1.location.address')} value={address} onChangeText={readOnly ? () => {} : setAddress} multiline maxLength={300} testID="loc-address" />
+        <LangFields label={t('san1.location.notes')} values={notes} onChange={readOnly ? () => {} : setNotes} multiline maxLength={1000} testID="loc-note" />
       </Card>
       <ErrorLine message={error} testID="loc-error" />
-      {!readOnly && <Button testID="loc-save" label={t('common.save')} full loading={save.isPending} onPress={() => void submit()} />}
+      {!readOnly && <Button testID="loc-save" label={t('common.save')} full loading={save.isPending} onPress={() => void flight.run(submit)} />}
     </View>
   );
 }

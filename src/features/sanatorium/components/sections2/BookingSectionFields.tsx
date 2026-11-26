@@ -6,13 +6,15 @@ import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { orgsQuery, packagesQuery } from '../../api/sections2';
 import { useSanFeatures } from '../../utils/features';
+import type { GuestType } from '../../types';
+import { packageFitsType } from '../../utils/guests';
 import { hasSanRole } from '../../utils/sanatorium';
 import { pickText } from '../../utils/sections2';
 import { ChoiceField } from '../forms';
 import { useDietOptions } from './DietParts';
 import { useContentLang } from './kit';
 
-type Draft = { packageId: number | null; organizationId: number | null; dietId: number | null };
+type Draft = { type?: GuestType; packageId: number | null; organizationId: number | null; dietId: number | null };
 
 export function BookingSectionFields({ draft, onChange }: { draft: Draft; onChange: (p: Partial<Draft>) => void }) {
   const { t } = useTranslation();
@@ -32,7 +34,7 @@ export function BookingSectionFields({ draft, onChange }: { draft: Draft; onChan
           label={t('sanatorium.s2.package')}
           value={draft.packageId}
           noneLabel={t('sanatorium.none')}
-          options={(packages.data ?? []).map((p) => ({ value: p.id, label: pickText(p as never, 'name', lang), sub: `${p.nights} ${t('sanatorium.s2.nightsShort')}` }))}
+          options={(packages.data ?? []).filter((p) => !draft.type || packageFitsType(p, draft.type, draft.packageId)).map((p) => ({ value: p.id, label: pickText(p as never, 'name', lang), sub: `${p.nights} ${t('sanatorium.s2.nightsShort')}` }))}
           onChange={(v) => onChange({ packageId: v })}
           loading={packages.isPending}
           testID="bk-package"

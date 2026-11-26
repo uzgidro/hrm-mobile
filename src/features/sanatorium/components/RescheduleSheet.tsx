@@ -12,6 +12,7 @@ import { staffRoleQuery } from '../api/queries';
 import type { Appointment } from '../types';
 import { fmtDateTime, sanErrorMessage, toLocalIso } from '../utils/sanatorium';
 import { ChoiceField, ErrorLine } from './forms';
+import { useSingleFlight } from '../simple/useSingleFlight';
 
 export function RescheduleSheet({ appt, onClose }: { appt: Appointment | null; onClose: () => void }) {
   const { t } = useTranslation();
@@ -25,6 +26,7 @@ export function RescheduleSheet({ appt, onClose }: { appt: Appointment | null; o
 function Form({ appt, onClose }: { appt: Appointment; onClose: () => void }) {
   const { t } = useTranslation();
   const patch = usePatchAppointment();
+  const flight = useSingleFlight();
   const doctors = useQuery(staffRoleQuery('doctor'));
   const [when, setWhen] = useState(appt.scheduled_at);
   const [pick, setPick] = useState(false);
@@ -45,7 +47,7 @@ function Form({ appt, onClose }: { appt: Appointment; onClose: () => void }) {
   return (
     <View style={styles.form} testID="reschedule-sheet">
       <SelectField label={t('sanatorium.dateTime')} value={fmtDateTime(when)} icon="calendar" onPress={() => setPick(true)} testID="rs-when" />
-      <FormInput label={t('sanatorium.duration')} value={duration} onChangeText={setDuration} keyboardType="number-pad" />
+      <FormInput label={t('sanatorium.duration')} value={duration} onChangeText={setDuration} keyboardType="number-pad" testID="rs-duration" />
       <ChoiceField
         label={t('sanatorium.doctor')}
         value={doctorId}
@@ -53,9 +55,10 @@ function Form({ appt, onClose }: { appt: Appointment; onClose: () => void }) {
         options={(doctors.data ?? []).map((d) => ({ value: d.id, label: d.full_name, sub: d.specialty ?? undefined }))}
         onChange={setDoctorId}
         loading={doctors.isPending}
+        testID="rs-doctor"
       />
       <ErrorLine message={error} testID="rs-error" />
-      <Button testID="rs-save" label={t('common.save')} full loading={patch.isPending} onPress={() => void submit()} />
+      <Button testID="rs-save" label={t('common.save')} full loading={patch.isPending || flight.pending} onPress={() => void flight.run(submit)} />
       <DateTimePickerModal visible={pick} value={when} title={t('sanatorium.dateTime')} onConfirm={(iso) => setWhen(toLocalIso(iso))} onClose={() => setPick(false)} />
     </View>
   );

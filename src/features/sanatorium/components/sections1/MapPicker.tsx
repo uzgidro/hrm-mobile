@@ -1,84 +1,120 @@
-// Pick a point on OUR OWN map (the MapLibre viewer of the tile server, shown in a WebView as the
-// attendance screens do). The viewer keeps its position in the URL fragment `#zoom/lat/lng`; the
-// injected script reports it, and a fixed pin in the middle marks the chosen point — pan the map
-// until the pin sits on the place. No external map provider is used.
-import React, { useMemo, useState } from 'react';
+// Pick a point on OUR OWN map: tap puts the pin, the pin can be dragged. The page is ours (utils/mapPickerHtml)
+// and loads MapLibre from the tile server; no external map provider. Native shows it in a WebView, the web
+// build in a sandboxed iframe. Typed coordinates stay the fallback when the map cannot open.
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import { useTranslation } from 'react-i18next';
-import { Icon } from '@/components/Icon';
 import { guardWebViewNavigation } from '@/lib/trustedUrl';
-import { mapViewerUrl } from '@/utils/attendanceEvent';
 import { useTheme } from '@/theme/ThemeProvider';
 import { radii } from '@/theme/tokens';
 import { Button, Text } from '@/ui';
-import { parseMapHash } from '../../utils/sections1';
+import { mapPickerBaseUrl, mapPickerHtml, parseMapMessage, setPointScript } from '../../utils/mapPickerHtml';
 
-/** Where the map opens when no point is set yet: the middle of Uzbekistan. */
-const DEFAULT_VIEW = { lat: 41.3, lng: 64.6, zoom: 5 };
-const REPORT_JS = `(function(){var last='';setInterval(function(){var h=location.hash;if(h&&h!==last){last=h;window.ReactNativeWebView.postMessage(h);}},600);})();true;`;
-
-export function MapPicker({
-  lat,
-  lng,
-  zoom,
-  onPick,
-}: {
+type Props = {
   lat: number | null;
   lng: number | null;
   zoom: number;
+  readOnly?: boolean;
   onPick: (p: { lat: number; lng: number; zoom: number }) => void;
-}) {
+  onZoom?: (zoom: number) => void;
+};
+
+export function MapPicker({ lat, lng, zoom, readOnly = false, onPick, onZoom }: Props) {
   const { t } = useTranslation();
   const { colors: c } = useTheme();
-  // The viewer URL is fixed per «key»; panning must not reload the page, so it only changes on re-center.
-  const [seed, setSeed] = useState({ lat, lng, zoom, key: 0 });
-  const url = useMemo(() => {
-    const v = seed.lat != null && seed.lng != null ? { lat: seed.lat, lng: seed.lng, zoom: seed.zoom } : DEFAULT_VIEW;
-    return mapViewerUrl({ name: null, address: null, latitude: v.lat, longitude: v.lng }, v.zoom);
-  }, [seed]);
+  const [run, setRun] = useState(0);
+  const [state, setState] = useState<'loading' | 'ready' | 'failed'>('loading');
+  // The page is built once per run; later changes of the point are sent to it, so it never reloads under the finger.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const html = useMemo(() => mapPickerHtml({ lat, lng, zoom, readOnly, pin: c.danger }), [run, readOnly]);
+  const cb = useRef({ onPick, onZoom });
+  const shown = useRef({ lat, lng });
+  const sendRef = useRef<(lat: number | null, lng: number | null) => void>(() => {});
+  useEffect(() => {
+    cb.current = { onPick, onZoom };
+  });
+  useEffect(() => {
+    if (shown.current.lat === lat && shown.current.lng === lng) return;
+    shown.current = { lat, lng };
+    sendRef.current(lat, lng);
+  }, [lat, lng]);
+  useEffect(() => {
+    if (state !== 'loading') return;
+    const id = setTimeout(() => setState((s) => (s === 'loading' ? 'failed' : s)), 20_000);
+    return () => clearTimeout(id);
+  }, [state, run]);
 
-  if (Platform.OS === 'web' || !url) return <Text variant="caption" tone="muted">{t('san1.location.mapWebHint')}</Text>;
-
-  const onMessage = (e: WebViewMessageEvent) => {
-    const p = parseMapHash(e.nativeEvent.data);
-    if (p) onPick({ lat: Math.round(p.lat * 1e6) / 1e6, lng: Math.round(p.lng * 1e6) / 1e6, zoom: Math.round(p.zoom) });
+  const onRaw = (raw: unknown) => {
+    const m = parseMapMessage(raw);
+    if (!m) return;
+    if (m.type === 'ready') setState('ready');
+    else if (m.type === 'error') setState('failed');
+    else if (m.type === 'zoom') cb.current.onZoom?.(m.zoom);
+    else if (!readOnly) {
+      shown.current = { lat: m.lat, lng: m.lng };
+      cb.current.onPick({ lat: m.lat, lng: m.lng, zoom: m.zoom });
+    }
   };
+  const retry = () => {
+    setState('loading');
+    setRun((n) => n + 1);
+  };
+
   return (
     <View style={styles.wrap} testID="map-picker">
-      <View style={[styles.map, { borderColor: c.border }]}>
-        <WebView
-          key={seed.key}
-          source={{ uri: url }}
-          style={styles.web}
-          javaScriptEnabled
-          domStorageEnabled
-          originWhitelist={['https://*']}
-          injectedJavaScript={REPORT_JS}
-          onMessage={onMessage}
-          onShouldStartLoadWithRequest={guardWebViewNavigation}
-          nestedScrollEnabled
-        />
-        <View style={styles.pin} pointerEvents="none">
-          <Icon name="mapPin" size={32} color={c.danger} />
-        </View>
+      <View style={[styles.map, { borderColor: c.border, backgroundColor: c.surface2 }]}>
+        {Platform.OS === 'web' ? <WebFrame key={run} html={html} onRaw={onRaw} sendRef={sendRef} /> : <NativeFrame key={run} html={html} onRaw={onRaw} sendRef={sendRef} onFail={() => setState('failed')} />}
       </View>
-      <Text variant="caption" tone="muted">{t('san1.location.mapHint')}</Text>
-      <Button
-        testID="map-recenter"
-        label={t('san1.location.recenter')}
-        variant="soft"
-        size="sm"
-        onPress={() => setSeed((s) => ({ lat, lng, zoom, key: s.key + 1 }))}
-      />
+      <Text variant="caption" tone={state === 'failed' ? 'danger' : 'muted'} testID="map-state">
+        {t(state === 'failed' ? 'sanFlow.map.failed' : state === 'loading' ? 'sanFlow.map.loading' : 'sanFlow.map.hint')}
+      </Text>
+      {state === 'failed' && <Button testID="map-retry" label={t('sanFlow.map.retry')} variant="soft" size="sm" onPress={retry} />}
     </View>
   );
 }
 
+type FrameProps = { html: string; onRaw: (raw: unknown) => void; sendRef: React.MutableRefObject<(lat: number | null, lng: number | null) => void> };
+
+function NativeFrame({ html, onRaw, sendRef, onFail }: FrameProps & { onFail: () => void }) {
+  const ref = useRef<WebView>(null);
+  useEffect(() => {
+    sendRef.current = (lat, lng) => ref.current?.injectJavaScript(setPointScript(lat, lng));
+  }, [sendRef]);
+  return (
+    <WebView
+      ref={ref}
+      source={{ html, baseUrl: mapPickerBaseUrl() }}
+      style={styles.frame}
+      javaScriptEnabled
+      domStorageEnabled
+      originWhitelist={['https://*']}
+      onMessage={(e: WebViewMessageEvent) => onRaw(e.nativeEvent.data)}
+      onError={onFail}
+      onShouldStartLoadWithRequest={guardWebViewNavigation}
+      nestedScrollEnabled
+      setSupportMultipleWindows={false}
+    />
+  );
+}
+
+/** The same page in an iframe without any access to the app's origin (no allow-same-origin). */
+function WebFrame({ html, onRaw, sendRef }: FrameProps) {
+  const ref = useRef<{ contentWindow?: { postMessage: (m: string, o: string) => void } | null } | null>(null);
+  useEffect(() => {
+    const w = globalThis as unknown as Window;
+    const listen = (e: MessageEvent) => {
+      if (e.source && e.source === (ref.current?.contentWindow as unknown)) onRaw(e.data);
+    };
+    w.addEventListener('message', listen);
+    sendRef.current = (lat, lng) => ref.current?.contentWindow?.postMessage(JSON.stringify({ cmd: 'set', lat, lng }), '*');
+    return () => w.removeEventListener('message', listen);
+  });
+  return React.createElement('iframe', { ref, srcDoc: html, sandbox: 'allow-scripts', title: 'map', style: { border: 0, width: '100%', height: '100%' }, 'data-testid': 'map-frame' });
+}
+
 const styles = StyleSheet.create({
   wrap: { gap: 8 },
-  map: { height: 300, borderRadius: radii.md, overflow: 'hidden', borderWidth: 1 },
-  web: { flex: 1 },
-  // The pin's tip (not its middle) sits on the map centre, hence the half-height lift.
-  pin: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', paddingBottom: 32 },
+  map: { height: 320, borderRadius: radii.md, overflow: 'hidden', borderWidth: 1 },
+  frame: { flex: 1 },
 });

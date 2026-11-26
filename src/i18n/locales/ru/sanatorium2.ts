@@ -151,7 +151,7 @@ export default {
     orgName: "Название организации",
     organization: "Организация (плательщик)",
     tin: "ИНН",
-    tinInvalid: "ИНН должен состоять из 9 цифр",
+    tinInvalid: "ИНН должен состоять из 9 или 14 цифр",
     bankName: "Банк",
     bankAccount: "Расчётный счёт",
     bankMfo: "МФО",

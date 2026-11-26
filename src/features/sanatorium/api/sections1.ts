@@ -22,7 +22,7 @@ import type {
   InfoSection, JourneyBoard, JourneySettings, JourneyStage, JourneyStayInfo, Poi, SanLocation, Territory,
   TerritoryPlan, Transfer, TransferVehicle, TransfersPage, WaitlistItem, WaitlistPage,
 } from '../types1';
-import { waitlistParams } from '../utils/sections1';
+import { BOARD_POLL_MS, waitlistParams } from '../utils/sections1';
 import { SAN_FEATURES_KEY } from '../utils/features';
 import { sanKeys } from './queries';
 
@@ -89,7 +89,9 @@ export const fetchTransfers = (f: TransferFilter, page: number) =>
 export const fetchVehicles = () => apiClient.get(SANATORIUM_TRANSFER_VEHICLES).then((r) => unwrapList<TransferVehicle>(r.data));
 
 export const featuresQuery = (enabled = true) => queryOptions({ queryKey: s1Keys.features(), queryFn: fetchFeatures, enabled });
-export const journeyBoardQuery = (enabled = true) => queryOptions({ queryKey: s1Keys.board(), queryFn: fetchJourneyBoard, enabled });
+/** The board refreshes itself once a minute (guests move between stages all day). */
+export const journeyBoardQuery = (enabled = true) =>
+  queryOptions({ queryKey: s1Keys.board(), queryFn: fetchJourneyBoard, enabled, refetchInterval: BOARD_POLL_MS });
 export const stagesQuery = (enabled = true) => queryOptions({ queryKey: s1Keys.stages(), queryFn: fetchStages, enabled });
 export const journeySettingsQuery = (enabled = true) => queryOptions({ queryKey: s1Keys.journeySettings(), queryFn: fetchJourneySettings, enabled });
 export const journeyStayQuery = (id: number, enabled = true) =>
@@ -97,22 +99,26 @@ export const journeyStayQuery = (id: number, enabled = true) =>
 export const locationQuery = (enabled = true) => queryOptions({ queryKey: s1Keys.location(), queryFn: fetchLocation, enabled });
 export const territoryQuery = (enabled = true) => queryOptions({ queryKey: s1Keys.territory(), queryFn: fetchTerritory, enabled });
 export const infoSectionsQuery = (enabled = true) => queryOptions({ queryKey: s1Keys.info(), queryFn: fetchInfoSections, enabled });
-/** Polls every 5 s while a broadcast is still queued or sending. */
-export const broadcastsQuery = (enabled = true) =>
-  queryOptions({
-    queryKey: s1Keys.broadcasts(),
-    queryFn: () => fetchBroadcasts(),
-    enabled,
-    refetchInterval: (q) => (q.state.data?.items.some((b) => b.status !== 'done') ? 5000 : false),
-  });
 export const audiencesQuery = (enabled = true) => queryOptions({ queryKey: s1Keys.audiences(), queryFn: fetchAudiences, enabled });
-export const hkBoardQuery = (status: string, enabled = true) => queryOptions({ queryKey: s1Keys.hkBoard(status), queryFn: () => fetchHkBoard(status), enabled });
+/** Rooms board: refreshed once a minute, rooms change status all day. */
+export const hkBoardQuery = (status: string, enabled = true) =>
+  queryOptions({ queryKey: s1Keys.hkBoard(status), queryFn: () => fetchHkBoard(status), enabled, refetchInterval: BOARD_POLL_MS });
 export const hkMineQuery = (enabled = true) => queryOptions({ queryKey: s1Keys.hkMine(), queryFn: fetchHkMine, enabled });
 export const hkSettingsQuery = (enabled = true) => queryOptions({ queryKey: s1Keys.hkSettings(), queryFn: fetchHkSettings, enabled });
 export const vehiclesQuery = (enabled = true) => queryOptions({ queryKey: s1Keys.vehicles(), queryFn: fetchVehicles, enabled, staleTime: 5 * 60_000 });
 
 const nextPage = <T extends { items: unknown[]; total: number; page: number }>(last: T, all: T[]) =>
   all.reduce((n, p) => n + p.items.length, 0) < last.total && last.items.length > 0 ? last.page + 1 : undefined;
+/** Broadcast history, paged; polls every 3 s while a broadcast is still queued or sending. */
+export const broadcastsInfinite = (enabled = true) =>
+  infiniteQueryOptions({
+    queryKey: s1Keys.broadcasts(),
+    queryFn: ({ pageParam }) => fetchBroadcasts(pageParam).then((d) => ({ ...d, page: pageParam })),
+    initialPageParam: 1,
+    getNextPageParam: nextPage,
+    enabled,
+    refetchInterval: (q) => (q.state.data?.pages.some((p) => p.items.some((b) => b.status !== 'done')) ? 3000 : false),
+  });
 export const waitlistInfinite = (f: { status: string; q: string; from?: string | null; to?: string | null }, enabled = true) =>
   infiniteQueryOptions({
     queryKey: s1Keys.waitlist(JSON.stringify(f)),
@@ -177,6 +183,18 @@ export const uploadBroadcastPhoto = (file: UploadFile) =>
 export const sendBroadcast = (body: Json) => apiClient.post<Broadcast>(SANATORIUM_BROADCASTS, body).then((r) => r.data);
 export const fetchBroadcast = (id: number) => apiClient.get<Broadcast>(SANATORIUM_BROADCAST(id)).then((r) => r.data);
 
+/** One waitlist entry by id: the API has no single-entry route, so look it up in the offered / waiting lists (like the web). */
+export async function fetchWaitlistEntry(id: number): Promise<WaitlistItem | null> {
+  for (const status of ['offered', 'waiting']) {
+    const r = await apiClient.get<WaitlistPage>(SANATORIUM_WAITLIST, { params: { status, size: 100 } });
+    const hit = r.data.items.find((w) => w.id === id);
+    if (hit) return hit;
+  }
+  return null;
+}
+export const waitlistEntryQuery = (id: number | null) =>
+  queryOptions({ queryKey: [...sanKeys.all, 's1', 'waitlist-entry', id] as const, queryFn: () => fetchWaitlistEntry(id as number), enabled: id != null && id > 0 });
+
 export const createWaitlist = (body: Json) => apiClient.post<WaitlistItem>(SANATORIUM_WAITLIST, body).then((r) => r.data);
 export const patchWaitlist = ({ id, body }: { id: number; body: Json }) => apiClient.patch<WaitlistItem>(SANATORIUM_WAITLIST_ITEM(id), body).then((r) => r.data);
 export const convertWaitlist = ({ id, body }: { id: number; body: Json }) => apiClient.post(SANATORIUM_WAITLIST_CONVERT(id), body).then((r) => r.data);
@@ -194,6 +212,8 @@ export const saveHkSettings = (linen_change_days: number) => apiClient.patch(SAN
 
 export const createTransfer = (body: Json) => apiClient.post<Transfer>(SANATORIUM_TRANSFERS, body).then((r) => r.data);
 export const patchTransfer = ({ id, body }: { id: number; body: Json }) => apiClient.patch<Transfer>(SANATORIUM_TRANSFER(id), body).then((r) => r.data);
+/** Confirm a requested transfer (the short action used by the work queue). */
+export const confirmTransfer = (id: number) => patchTransfer({ id, body: { status: 'confirmed' } });
 
 const meta = { skipErrorToast: true };
 function useInvalidate() {
@@ -206,7 +226,7 @@ function useInvalidate() {
 const hook = <V, R>(fn: (v: V) => Promise<R>) =>
   function useSection1Mutation() {
     const onSuccess = useInvalidate();
-    return useMutation({ meta, mutationFn: fn, onSuccess });
+    return useMutation({ meta, networkMode: 'always', mutationFn: fn, onSuccess });
   };
 
 export const useSaveFeatures = hook(saveFeatures);
@@ -240,3 +260,4 @@ export const useDoneHkTask = hook(doneHkTask);
 export const useSaveHkSettings = hook(saveHkSettings);
 export const useCreateTransfer = hook(createTransfer);
 export const usePatchTransfer = hook(patchTransfer);
+export const useConfirmTransfer = hook(confirmTransfer);

@@ -14,6 +14,8 @@ import { ScheduleBoard, ScheduleProcedureSheet } from '../components/sections2/S
 import { useSanFeatures } from '../utils/features';
 import type { Appointment, Procedure } from '../types';
 import { apptTone, fmtDate, fmtDateTime, fmtTime, sanErrorMessage, todayIso } from '../utils/sanatorium';
+import { sortByTime } from '../utils/staffParity';
+import { useSingleFlight } from '../simple/useSingleFlight';
 
 export default function NurseScreen() {
   const { t } = useTranslation();
@@ -23,7 +25,8 @@ export default function NurseScreen() {
   const scheduleOn = features.on('procedure_schedule');
   const [day, setDay] = useState(todayIso());
   const appts = useQuery(appointmentsQuery(day, false, allowed && seg === 'appointments'));
-  const procs = useQuery(proceduresQuery(allowed && seg === 'procedures'));
+  // `mine`: only the procedures of this nurse's own guests.
+  const procs = useQuery(proceduresQuery(allowed && seg === 'procedures', true));
   if (!allowed) return <Denied />;
   const cur = seg === 'procedures' ? procs : appts;
   return (
@@ -50,7 +53,7 @@ export default function NurseScreen() {
                 items.length === 0 ? (
                   <EmptyState title={t('sanatorium.noAppointments')} />
                 ) : (
-                  <View style={styles.stack}>{items.map((a) => <NurseAppt key={a.id} a={a} />)}</View>
+                  <View style={styles.stack}>{sortByTime(items).map((a) => <NurseAppt key={a.id} a={a} />)}</View>
                 )
               }
             </QueryBlock>
@@ -74,6 +77,7 @@ export default function NurseScreen() {
 function NurseAppt({ a }: { a: Appointment }) {
   const { t } = useTranslation();
   const notified = useNurseNotified();
+  const flight = useSingleFlight();
   const done = !!a.nurse_notified_at;
   return (
     <Card testID={`nurse-appt-${a.id}`}>
@@ -90,7 +94,7 @@ function NurseAppt({ a }: { a: Appointment }) {
         <Badge label={t(`sanatorium.apptStatus.${a.status}`)} tone={apptTone(a.status)} />
       </View>
       <Text variant="caption" tone="muted">
-        {[a.specialty, a.room_number ? `${t('sanatorium.room')} ${a.room_number}` : null].filter(Boolean).join(' · ')}
+        {[a.specialty, a.doctor?.full_name, a.room_number ? `${t('sanatorium.room')} ${a.room_number}` : null].filter(Boolean).join(' · ')}
       </Text>
       <PhoneLink phone={a.guest?.phone} />
       <View style={styles.actions}>
@@ -103,8 +107,8 @@ function NurseAppt({ a }: { a: Appointment }) {
               label={t('sanatorium.notified')}
               icon="check"
               size="sm"
-              loading={notified.isPending}
-              onPress={() => notified.mutate(a.id, { onError: (e) => toast.error(sanErrorMessage(e, t('errors.generic'))) })}
+              loading={notified.isPending || flight.pending}
+              onPress={() => void flight.run(() => notified.mutateAsync(a.id).catch((e) => toast.error(sanErrorMessage(e, t('errors.generic')))))}
             />
           )
         )}
@@ -123,7 +127,7 @@ function ProcCard({ p }: { p: Procedure }) {
     const next = p.sessions_done + 1;
     update.mutate(
       { id: p.id, body: { sessions_done: next, ...(next >= p.sessions_total ? { status: 'done' } : {}) } },
-      { onError: (e) => toast.error(sanErrorMessage(e, t('errors.generic'))) },
+      { onSuccess: () => toast.success(t('sanStaff.nurse.sessionDone')), onError: (e) => toast.error(sanErrorMessage(e, t('errors.generic'))) },
     );
   };
   return (

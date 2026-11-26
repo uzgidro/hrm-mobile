@@ -8,7 +8,7 @@ import i18n from '@/i18n';
 import { SANATORIUM_STAFF } from '@/api/urls';
 import SettingsScreen from '../screens/SettingsScreen';
 
-jest.mock('expo-router', () => ({ router: { push: jest.fn(), back: jest.fn(), canGoBack: () => true } }));
+jest.mock('expo-router', () => ({ router: { push: jest.fn(), back: jest.fn(), canGoBack: () => true }, useLocalSearchParams: () => ({}) }));
 
 const setUser = (u: Record<string, unknown>) =>
   useAuthStore.setState({ user: u as never, isAuthenticated: true } as never);

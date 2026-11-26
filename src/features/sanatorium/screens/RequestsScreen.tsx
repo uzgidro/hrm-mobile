@@ -7,14 +7,18 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { FormInput } from '@/components/FormInput';
 import { toast } from '@/lib/toast';
-import { Badge, Button, Card, EmptyState, PageHeader, Screen, Segmented, Sheet, Text } from '@/ui';
+import { useDebouncedValue } from '@/lib/useDebouncedValue';
+import { Badge, Button, Card, EmptyState, PageHeader, Screen, SearchField, Segmented, Sheet, Text } from '@/ui';
 import { useRejectRequest } from '../api/mutations';
+import { useSimpleAvailable } from '../simple/useSimpleAvailable';
+import { useSingleFlight } from '../simple/useSingleFlight';
 import { requestsInfinite } from '../api/queries';
 import { AcceptSheet, type Accepted } from '../components/AcceptSheet';
 import { CredentialsSheet } from '../components/CredentialsSheet';
 import { WalkInSheet } from '../components/WalkInSheet';
 import { Denied, PagedBlock, PhoneLink, useSanAccess, useSanReadOnly } from '../components/common';
 import type { RequestStatus, SanRequest } from '../types';
+import { LIMITS, clip } from '../utils/guests';
 import { fmtDate, fmtDateTime, maskPassport, requestTone, sanErrorMessage } from '../utils/sanatorium';
 
 export default function RequestsScreen() {
@@ -22,22 +26,26 @@ export default function RequestsScreen() {
   const allowed = useSanAccess('registrar');
   const readOnly = useSanReadOnly();
   const [status, setStatus] = useState<RequestStatus>('new');
-  const q = useInfiniteQuery(requestsInfinite(status, allowed));
+  const [term, setTerm] = useState('');
+  const debounced = useDebouncedValue(term);
+  const q = useInfiniteQuery(requestsInfinite(status, allowed, debounced));
   const [accepting, setAccepting] = useState<SanRequest | null>(null);
   const [rejecting, setRejecting] = useState<SanRequest | null>(null);
   const [walkIn, setWalkIn] = useState(false);
   const [creds, setCreds] = useState<Accepted | null>(null);
+  const simple = useSimpleAvailable(allowed);
   if (!allowed) return <Denied />;
 
   return (
     <Screen refreshing={q.isRefetching} onRefresh={() => void q.refetch()} testID="sanatorium-requests-screen">
-      <PageHeader title={t('sanatorium.nav.requests')} right={readOnly ? undefined : <Button testID="walkin-add" label={t('sanatorium.walkIn')} icon="plus" size="sm" onPress={() => setWalkIn(true)} />} />
+      <PageHeader title={t('sanatorium.nav.requests')} right={readOnly ? undefined : <Button testID="walkin-add" label={t('sanatorium.walkIn')} icon="plus" size="sm" onPress={() => (simple ? router.push('/sanatorium-arrive') : setWalkIn(true))} />} />
       <Segmented
         testID="requests-seg"
         value={status}
         onChange={setStatus}
         options={(['new', 'accepted', 'rejected'] as const).map((s) => ({ value: s, label: t(`sanatorium.requestStatus.${s}`) }))}
       />
+      <SearchField testID="requests-search" value={term} onChangeText={setTerm} placeholder={t('sanGuests.requestSearch')} />
       <View style={styles.body}>
         <PagedBlock query={q}>
           {(items) =>
@@ -55,10 +63,10 @@ export default function RequestsScreen() {
                       {[r.birth_date ? fmtDate(r.birth_date) : null, r.passport ? maskPassport(r.passport) : null, r.organization_name].filter(Boolean).join(' · ')}
                     </Text>
                     <PhoneLink phone={r.phone} />
-                    {r.status === 'new' && r.existing_guest_matches === false && (
+                    {r.existing_guest_matches === false && (
                       <Badge label={t('sanatorium.warnMismatch')} tone="danger" testID="warn-mismatch" />
                     )}
-                    {r.status === 'new' && !!r.duplicate_passport && (
+                    {!!r.duplicate_passport && (
                       <Badge label={t('sanatorium.warnDuplicate')} tone="warning" testID="warn-duplicate" />
                     )}
                     {(r.referral_from || r.referral_to) && (
@@ -72,9 +80,12 @@ export default function RequestsScreen() {
                     {!!r.note && <Text variant="caption" tone="muted">{r.note}</Text>}
                     <Text variant="caption" tone="subtle">{t(`sanatorium.source.${r.source}`, { defaultValue: r.source })} · {fmtDateTime(r.created_at)}</Text>
                     {r.status === 'rejected' && !!r.reject_reason && <Text variant="caption" tone="danger">{r.reject_reason}</Text>}
+                    {r.status !== 'new' && !!r.handled_at && (
+                      <Text variant="caption" tone="subtle" testID={`request-handled-${r.id}`}>{t('sanGuests.handledAt')}: {fmtDateTime(r.handled_at)}</Text>
+                    )}
                     {r.status === 'new' && (
                       <View style={styles.actions}>
-                        {!readOnly && <Button testID="request-accept" label={t('sanatorium.accept')} icon="check" size="sm" onPress={() => setAccepting(r)} />}
+                        {!readOnly && <Button testID="request-accept" label={t('sanatorium.accept')} icon="check" size="sm" onPress={() => (simple ? router.push({ pathname: '/sanatorium-arrive', params: { request: String(r.id) } }) : setAccepting(r))} />}
                         {!readOnly && <Button testID="request-reject" label={t('sanatorium.reject')} variant="dangerGhost" size="sm" onPress={() => setRejecting(r)} />}
                         {!!r.existing_guest_id && (
                           <Button label={t('sanatorium.existingGuest')} variant="link" size="sm" onPress={() => router.push({ pathname: '/sanatorium-guest', params: { id: String(r.existing_guest_id) } })} />
@@ -109,6 +120,7 @@ export default function RequestsScreen() {
 function RejectSheet({ request, onClose }: { request: SanRequest | null; onClose: () => void }) {
   const { t } = useTranslation();
   const reject = useRejectRequest();
+  const flight = useSingleFlight();
   const [reason, setReason] = useState('');
   const [error, setError] = useState<string | null>(null);
   const submit = async () => {
@@ -128,9 +140,9 @@ function RejectSheet({ request, onClose }: { request: SanRequest | null; onClose
     <Sheet visible={!!request} onClose={onClose} title={t('sanatorium.reject')} scroll>
       <View style={styles.creds} testID="reject-sheet">
         <Text variant="body" weight="600">{request?.full_name}</Text>
-        <FormInput label={t('sanatorium.reason')} value={reason} onChangeText={(v) => { setReason(v); setError(null); }} multiline required testID="reject-reason" />
+        <FormInput label={t('sanatorium.reason')} value={reason} onChangeText={(v) => { setReason(clip(v, LIMITS.reason)); setError(null); }} multiline required testID="reject-reason" />
         {!!error && <Text variant="label" tone="danger">{error}</Text>}
-        <Button testID="reject-save" label={t('sanatorium.reject')} variant="danger" full loading={reject.isPending} onPress={() => void submit()} />
+        <Button testID="reject-save" label={t('sanatorium.reject')} variant="danger" full loading={reject.isPending || flight.pending} onPress={() => void flight.run(submit)} />
       </View>
     </Sheet>
   );

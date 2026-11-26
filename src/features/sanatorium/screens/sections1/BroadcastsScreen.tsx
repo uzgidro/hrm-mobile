@@ -3,42 +3,46 @@
 import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import type { UploadFile } from '@/api/formFile';
 import { confirm } from '@/lib/confirm';
 import { toast } from '@/lib/toast';
 import { radii } from '@/theme/tokens';
 import { Badge, Button, Card, EmptyState, PageHeader, ProgressBar, Screen, Sheet, Text } from '@/ui';
-import { audiencesQuery, broadcastsQuery, useSendBroadcast, useUploadBroadcastPhoto } from '../../api/sections1';
-import { QueryBlock, useSanReadOnly } from '../../components/common';
+import { useSingleFlight } from '../../simple/useSingleFlight';
+import { audiencesQuery, broadcastsInfinite, useSendBroadcast, useUploadBroadcastPhoto } from '../../api/sections1';
+import { PagedBlock, useSanReadOnly } from '../../components/common';
 import { ChoiceField, ErrorLine, optNull } from '../../components/forms';
 import { LangFields, SectionGate } from '../../components/sections1/shared';
 import { BROADCAST_AUDIENCES, type Broadcast, type BroadcastAudience } from '../../types1';
 import { pickImage } from '../../utils/pickImage';
-import { broadcastProgress } from '../../utils/sections1';
+import { broadcastProgress, canSendBroadcast } from '../../utils/sections1';
 import { fmtDateTime, sanErrorMessage } from '../../utils/sanatorium';
 
 const MAX_TEXT = 3500;
 
 export default function BroadcastsScreen() {
   const { t } = useTranslation();
-  const q = useQuery(broadcastsQuery());
+  const q = useInfiniteQuery(broadcastsInfinite());
   const readOnly = useSanReadOnly();
   const [compose, setCompose] = useState(false);
   return (
     <SectionGate feature="broadcasts" roles={['registrar']}>
       <Screen refreshing={q.isRefetching} onRefresh={() => void q.refetch()} testID="sanatorium-broadcasts-screen">
         <PageHeader title={t('san1.broadcast.title')} right={readOnly ? undefined : <Button testID="bc-new" label={t('san1.broadcast.new')} icon="plus" size="sm" onPress={() => setCompose(true)} />} />
-        <QueryBlock query={q}>
-          {(d) =>
-            d.items.length === 0 ? (
+        <PagedBlock query={q}>
+          {(items) =>
+            items.length === 0 ? (
               <EmptyState title={t('san1.broadcast.empty')} />
             ) : (
-              <View style={styles.stack}>{d.items.map((b) => <BroadcastCard key={b.id} b={b} />)}</View>
+              <View style={styles.stack}>
+                <Text variant="label" tone="muted">{t('sanPlaces.bc.history')}</Text>
+                {items.map((b) => <BroadcastCard key={b.id} b={b} />)}
+              </View>
             )
           }
-        </QueryBlock>
+        </PagedBlock>
         <Sheet visible={compose} onClose={() => setCompose(false)} title={t('san1.broadcast.new')} scroll>
           {compose && <ComposeForm onClose={() => setCompose(false)} />}
         </Sheet>
@@ -60,9 +64,16 @@ function BroadcastCard({ b }: { b: Broadcast }) {
       <Text variant="body" numberOfLines={4}>{b.text_uz}</Text>
       <Text variant="caption" tone="muted">{fmtDateTime(b.created_at)}</Text>
       {b.status !== 'queued' || b.queued_count > 0 ? <ProgressBar value={broadcastProgress(b)} /> : null}
-      <Text variant="caption" tone="muted">
-        {`${t('san1.broadcast.sent')}: ${b.sent_count} · ${t('san1.broadcast.failed')}: ${b.failed_count} · ${t('san1.broadcast.skipped')}: ${b.skipped_count} · ${t('san1.broadcast.total')}: ${b.total_count}`}
+      <Text variant="caption" tone="muted" testID={`bc-${b.id}-stats`}>
+        {[
+          t('sanPlaces.bc.sentOf', { n: b.sent_count, total: b.queued_count }),
+          b.failed_count > 0 ? t('sanPlaces.bc.failedN', { n: b.failed_count }) : null,
+          t('sanPlaces.bc.skippedN', { n: b.skipped_count }),
+          `${t('san1.broadcast.total')}: ${b.total_count}`,
+        ].filter(Boolean).join(' · ')}
       </Text>
+      {b.skipped_count > 0 && <Text variant="caption" tone="subtle">{t('sanPlaces.bc.skippedHint')}</Text>}
+      {!!b.created_by && <Text variant="caption" tone="muted" testID={`bc-${b.id}-by`}>{`${t('sanPlaces.bc.createdBy')}: ${b.created_by}`}</Text>}
     </Card>
   );
 }
@@ -77,6 +88,7 @@ function ComposeForm({ onClose }: { onClose: () => void }) {
   const [photo, setPhoto] = useState<UploadFile | null>(null);
   const [error, setError] = useState<string | null>(null);
   const c = counts.data?.[audience];
+  const flight = useSingleFlight();
 
   const choose = async () => {
     try {
@@ -134,7 +146,9 @@ function ComposeForm({ onClose }: { onClose: () => void }) {
           {`${t('san1.broadcast.reachable')}: ${c.reachable} · ${t('san1.broadcast.skipped')}: ${c.skipped} · ${t('san1.broadcast.total')}: ${c.total}`}
         </Text>
       )}
-      <LangFields label={t('san1.broadcast.text')} values={text} onChange={setText} multiline requiredUz testID="bc-text" />
+      {c && c.skipped > 0 && <Text variant="caption" tone="subtle">{t('sanPlaces.bc.skippedHint')}</Text>}
+      {c && !canSendBroadcast(c.reachable) && <Text variant="caption" tone="danger" testID="bc-no-reachable">{t('sanPlaces.bc.noReachable')}</Text>}
+      <LangFields label={t('san1.broadcast.text')} values={text} onChange={setText} multiline requiredUz maxLength={MAX_TEXT} testID="bc-text" />
       <Text variant="caption" tone="muted">{t('san1.broadcast.langHint')}</Text>
       {photo && <Image source={{ uri: photo.uri }} style={styles.preview} contentFit="cover" />}
       <View style={styles.row}>
@@ -142,7 +156,7 @@ function ComposeForm({ onClose }: { onClose: () => void }) {
         {photo && <Button label={t('sanatorium.remove')} variant="dangerGhost" size="sm" onPress={() => setPhoto(null)} />}
       </View>
       <ErrorLine message={error} testID="bc-error" />
-      <Button testID="bc-send" label={t('san1.broadcast.send')} full icon="mail" loading={send.isPending || uploadPhoto.isPending} onPress={() => void submit()} />
+      <Button testID="bc-send" label={t('san1.broadcast.send')} full icon="mail" disabled={!canSendBroadcast(c?.reachable)} loading={flight.pending || send.isPending || uploadPhoto.isPending} onPress={() => void flight.run(submit)} />
     </View>
   );
 }

@@ -1,7 +1,9 @@
 // Paid service orders: slot picker, create sheet, order cards with status actions, and a
 // list bound to a filter (used by the services screen and by the stay screen's services block).
 import React, { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { useTheme } from '@/theme/ThemeProvider';
+import { radii } from '@/theme/tokens';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { FormInput } from '@/components/FormInput';
@@ -11,36 +13,56 @@ import { Badge, Button, Card, EmptyState, ListRow, SearchField, Sheet, Text } fr
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import {
   ordersInfinite, servicesQuery, slotsQuery, useCreateServiceOrder, useDeleteServiceOrder, usePatchServiceOrder,
-  type OrderFilter, type SanService, type ServiceOrder,
+  type OrderFilter, type SanService, type ServiceOrder, type Slot,
 } from '../../api/sections2';
 import { staysInfinite } from '../../api/queries';
 import { PagedBlock, useSanReadOnly } from '../common';
 import { ChoiceField, DateField, ErrorLine } from '../forms';
-import { canDeleteOrder, nextOrderStatuses, pickText, type OrderStatus } from '../../utils/sections2';
+import { canDeleteOrder, canEditOrder, isPastDay, nextOrderStatuses, orderQuantity, pickText, slotCaption, type OrderStatus } from '../../utils/sections2';
 import { fmtDate, fmtDateTime, fmtMoney, fmtTime, sanErrorMessage, todayIso } from '../../utils/sanatorium';
 import { ChipWrap, FieldLabel, useContentLang } from './kit';
 import type { Tone } from '@/ui/Chip';
+import { useSingleFlight } from '../../simple/useSingleFlight';
 
 const TONE: Record<OrderStatus, Tone> = { requested: 'warning', confirmed: 'info', done: 'success', cancelled: 'danger' };
 
-/** Day field + free slot chips of a bookable service; `value` is the slot's `at` (naive local ISO). */
-export function SlotPicker({ serviceId, value, onChange }: { serviceId: number; value: string | null; onChange: (at: string | null) => void }) {
+/** One slot: time + free / capacity; a full slot is shown but cannot be picked. */
+function SlotChip({ slot, on, onPress }: { slot: Slot; on: boolean; onPress: () => void }) {
+  const { colors: c } = useTheme();
+  const full = !slot.available;
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={full}
+      accessibilityRole="button"
+      accessibilityState={{ selected: on, disabled: full }}
+      accessibilityLabel={`${fmtTime(slot.at)} ${slotCaption(slot)}`}
+      testID={`slot-${fmtTime(slot.at).replace(':', '')}`}
+      style={[styles.slot, { backgroundColor: on ? c.brand : c.surface, borderColor: on ? c.brand : c.borderStrong, opacity: full ? 0.45 : 1 }]}
+    >
+      <Text variant="label" style={[{ color: on ? c.fgOnBrand : c.fg }, full && styles.struck]}>{fmtTime(slot.at)}</Text>
+      <Text variant="caption" style={{ color: on ? c.fgOnBrand : c.fgMuted }}>{slotCaption(slot)}</Text>
+    </Pressable>
+  );
+}
+
+/** Day field + slot chips of a bookable service; `value` is the slot's `at` (naive local ISO). Past days are refused. */
+export function SlotPicker({ serviceId, value, onChange, initialDay }: { serviceId: number; value: string | null; onChange: (at: string | null) => void; initialDay?: string }) {
   const { t } = useTranslation();
-  const [day, setDay] = useState(todayIso());
-  const q = useQuery(slotsQuery(serviceId, day));
+  const today = todayIso();
+  const [day, setDay] = useState(initialDay && initialDay >= today ? initialDay : today);
+  const past = isPastDay(day, today);
+  const q = useQuery(slotsQuery(serviceId, day, !past));
   const slots = q.data ?? [];
   return (
     <View testID="slot-picker">
       <DateField label={t('sanatorium.s2.slotDay')} value={day} onChange={(v) => { setDay(v); onChange(null); }} testID="slot-day" />
-      {q.isPending ? <Text variant="caption" tone="muted">{t('sanatorium.loading')}</Text> : slots.length === 0 ? (
-        <Text variant="caption" tone="muted">{t('sanatorium.s2.noSlots')}</Text>
+      {past ? <ErrorLine message={t('sanCatalog.orders.dayPast')} testID="slot-past" /> : q.isPending ? <Text variant="caption" tone="muted">{t('sanatorium.loading')}</Text> : slots.length === 0 ? (
+        <Text variant="caption" tone="muted" testID="slot-none">{t('sanatorium.s2.noSlots')}</Text>
       ) : (
-        <ChipWrap
-          testID="slot-list"
-          options={slots.filter((s) => s.available).map((s) => ({ value: s.at, label: `${fmtTime(s.at)} (${s.free})` }))}
-          isOn={(v) => v === value}
-          onToggle={(v) => onChange(v === value ? null : v)}
-        />
+        <View style={styles.slots} testID="slot-list">
+          {slots.map((sl) => <SlotChip key={sl.at} slot={sl} on={sl.at === value} onPress={() => onChange(sl.at === value ? null : sl.at)} />)}
+        </View>
       )}
     </View>
   );
@@ -74,11 +96,12 @@ function OrderForm({ stayId, onClose }: { stayId?: number; onClose: () => void }
   const svc: SanService | undefined = (services.data ?? []).find((s) => s.id === svcId);
   const live = (stays.data?.pages.flatMap((p) => p.items) ?? []).filter((s) => s.status === 'booked' || s.status === 'checked_in');
 
-  const submit = async () => {
-    const n = Number.parseInt(qty, 10);
+  const flight = useSingleFlight();
+  const submit = () => flight.run(async () => {
+    const n = orderQuantity(qty);
     if (!stay) return setError(t('sanatorium.s2.pickStay'));
     if (!svc) return setError(t('sanatorium.s2.pickService'));
-    if (!Number.isFinite(n) || n < 1 || n > 50) return setError(t('sanatorium.s2.qtyRange'));
+    if (n == null) return setError(t('sanCatalog.orders.qtyRange'));
     if (svc.needs_booking && !slot) return setError(t('sanatorium.errors.schedule_required'));
     try {
       await create.mutateAsync({ stay_id: stay, service_id: svc.id, quantity: n, status, ...(svc.needs_booking && slot ? { scheduled_at: slot } : {}), ...(note.trim() ? { note: note.trim() } : {}) });
@@ -87,7 +110,7 @@ function OrderForm({ stayId, onClose }: { stayId?: number; onClose: () => void }
     } catch (e) {
       setError(sanErrorMessage(e, t('errors.generic')));
     }
-  };
+  });
   return (
     <View testID="order-form">
       {stayId == null && (
@@ -99,7 +122,7 @@ function OrderForm({ stayId, onClose }: { stayId?: number; onClose: () => void }
         </>
       )}
       <ChoiceField label={t('sanatorium.s2.service')} value={svcId} options={(services.data ?? []).map((s) => ({ value: s.id, label: pickText(s as never, 'name', lang), sub: s.price ? fmtMoney(s.price) : undefined }))} onChange={(v) => { setSvcId(v); setSlot(null); }} loading={services.isPending} testID="or-service" />
-      <FormInput label={t('sanatorium.s2.quantity')} value={qty} onChangeText={setQty} keyboardType="number-pad" testID="or-qty" />
+      <FormInput label={t('sanatorium.s2.quantity')} value={qty} onChangeText={setQty} keyboardType="number-pad" maxLength={4} testID="or-qty" />
       {svc?.needs_booking && <SlotPicker serviceId={svc.id} value={slot} onChange={setSlot} />}
       <ChoiceField label={t('sanatorium.statusLabel')} value={status} options={(['confirmed', 'requested', 'done'] as const).map((s) => ({ value: s, label: t(`sanatorium.s2.orderStatus.${s}`) }))} onChange={(v) => v && setStatus(v)} testID="or-status" />
       <FormInput label={t('sanatorium.notes')} value={note} onChangeText={setNote} multiline testID="or-note" />
@@ -142,7 +165,7 @@ export function OrderCard({ o, showGuest = true }: { o: ServiceOrder; showGuest?
         {nextOrderStatuses(o.status).map((s) => (
           <Button key={s} testID={`order-${o.id}-${s}`} label={t(`sanatorium.s2.orderAction.${s}`)} size="sm" variant={s === 'cancelled' ? 'dangerGhost' : 'soft'} loading={patch.isPending} onPress={() => act(s)} />
         ))}
-        {o.service.needs_booking && (o.status === 'requested' || o.status === 'confirmed') && <Button label={t('sanatorium.s2.reschedule')} size="sm" variant="soft" onPress={() => setResched(true)} />}
+        {o.service.needs_booking && canEditOrder(o.status) && <Button testID={`order-${o.id}-resched`} label={t('sanatorium.s2.reschedule')} size="sm" variant="soft" onPress={() => setResched(true)} />}
         {canDeleteOrder(o.status) && <Button testID={`order-${o.id}-del`} label={t('sanatorium.remove')} size="sm" variant="dangerGhost" onPress={() => void remove()} />}
       </View>}
       <Sheet visible={resched} onClose={() => setResched(false)} title={t('sanatorium.s2.reschedule')} scroll>
@@ -157,7 +180,8 @@ function RescheduleForm({ o, onClose }: { o: ServiceOrder; onClose: () => void }
   const patch = usePatchServiceOrder();
   const [slot, setSlot] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const submit = async () => {
+  const flight = useSingleFlight();
+  const submit = () => flight.run(async () => {
     if (!slot) return setError(t('sanatorium.errors.schedule_required'));
     try {
       await patch.mutateAsync({ id: o.id, body: { scheduled_at: slot } });
@@ -166,11 +190,12 @@ function RescheduleForm({ o, onClose }: { o: ServiceOrder; onClose: () => void }
     } catch (e) {
       setError(sanErrorMessage(e, t('errors.generic')));
     }
-  };
+  });
   return (
     <View>
-      <SlotPicker serviceId={o.service.id} value={slot} onChange={setSlot} />
-      <ErrorLine message={error} />
+      <Text variant="caption" tone="muted">{o.scheduled_at ? `${t('sanCatalog.orders.current')}: ${fmtDateTime(o.scheduled_at)}` : ''}</Text>
+      <SlotPicker serviceId={o.service.id} value={slot} onChange={setSlot} initialDay={o.scheduled_at?.slice(0, 10)} />
+      <ErrorLine message={error} testID="resched-error" />
       <Button testID="resched-save" label={t('common.save')} full loading={patch.isPending} onPress={() => void submit()} />
     </View>
   );
@@ -187,15 +212,26 @@ export function OrderList({ filter, showGuest = true, enabled = true }: { filter
   );
 }
 
-/** Filter bar (status chips + day) above an `OrderList`. */
-export function OrderFilters({ status, day, onStatus, onDay }: { status: OrderStatus | null; day: string | null; onStatus: (s: OrderStatus | null) => void; onDay: (d: string | null) => void }) {
+/** Filter bar (status chips, service, day) above an `OrderList`; every filter can be cleared. */
+export function OrderFilters({
+  status, day, onStatus, onDay, serviceId, onService,
+}: {
+  status: OrderStatus | null; day: string | null; onStatus: (s: OrderStatus | null) => void; onDay: (d: string | null) => void;
+  serviceId?: number | null; onService?: (id: number | null) => void;
+}) {
   const { t } = useTranslation();
+  const lang = useContentLang();
+  const services = useQuery(servicesQuery(true, !!onService));
+  const any = !!status || !!day || !!serviceId;
   return (
     <View>
       <FieldLabel>{t('sanatorium.statusLabel')}</FieldLabel>
       <ChipWrap testID="order-status-filter" options={(['requested', 'confirmed', 'done', 'cancelled'] as OrderStatus[]).map((s) => ({ value: s, label: t(`sanatorium.s2.orderStatus.${s}`) }))} isOn={(v) => v === status} onToggle={(v) => onStatus(v === status ? null : v)} />
+      {onService && (
+        <ChoiceField label={t('sanatorium.s2.service')} value={serviceId ?? null} noneLabel={t('sanCatalog.orders.anyService')} options={(services.data ?? []).map((x) => ({ value: x.id, label: pickText(x as never, 'name', lang) }))} onChange={onService} loading={services.isPending} testID="order-service-filter" />
+      )}
       <DateField label={t('sanatorium.s2.slotDay')} value={day} onChange={onDay} testID="order-day-filter" />
-      {day && <Button label={t('sanatorium.clearFilters')} size="sm" variant="ghost" onPress={() => onDay(null)} />}
+      {any && <Button testID="order-filters-clear" label={t('sanatorium.clearFilters')} size="sm" variant="ghost" onPress={() => { onStatus(null); onDay(null); onService?.(null); }} />}
     </View>
   );
 }
@@ -205,4 +241,7 @@ const styles = StyleSheet.create({
   stack: { gap: 10 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
+  slots: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 10 },
+  slot: { minWidth: 64, alignItems: 'center', paddingVertical: 6, paddingHorizontal: 10, borderRadius: radii.md, borderWidth: 1 },
+  struck: { textDecorationLine: 'line-through' },
 });

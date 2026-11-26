@@ -5,6 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { useSingleFlight } from '../../simple/useSingleFlight';
 import { FormInput } from '@/components/FormInput';
 import { toast } from '@/lib/toast';
 import { Button, Sheet, Text } from '@/ui';
@@ -15,21 +16,23 @@ import { sanErrorMessage } from '../../utils/sanatorium';
 import { ChoiceField, ErrorLine, opt, optNull, SwitchRow } from '../forms';
 import { askDelete, LangFields } from './shared';
 
-const RESPONSIBLE = ['registrar', 'room_keeper', 'doctor', 'nurse', 'kitchen', 'housekeeper'] as const;
+const RESPONSIBLE = ['registrar', 'doctor', 'nurse', 'room_keeper', 'kitchen', 'housekeeper'] as const;
 
 /** Manual move of a stay to any stage (any direction); a note is optional. */
-export function MoveStageSheet({ stayId, currentId, onClose }: { stayId: number | null; currentId?: number | null; onClose: () => void }) {
+/** `stages` (the board's active stages) saves a request; without it the catalog is loaded. */
+export function MoveStageSheet({ stayId, currentId, stages, onClose }: { stayId: number | null; currentId?: number | null; stages?: JourneyStage[]; onClose: () => void }) {
   const { t } = useTranslation();
   return (
     <Sheet visible={stayId != null} onClose={onClose} title={t('san1.journey.move')} scroll>
-      {stayId != null && <MoveForm stayId={stayId} currentId={currentId ?? null} onClose={onClose} />}
+      {stayId != null && <MoveForm stayId={stayId} currentId={currentId ?? null} given={stages} onClose={onClose} />}
     </Sheet>
   );
 }
 
-function MoveForm({ stayId, currentId, onClose }: { stayId: number; currentId: number | null; onClose: () => void }) {
+function MoveForm({ stayId, currentId, given, onClose }: { stayId: number; currentId: number | null; given?: JourneyStage[]; onClose: () => void }) {
   const { t, i18n } = useTranslation();
-  const stages = useQuery(stagesQuery());
+  const loaded = useQuery(stagesQuery(!given));
+  const stages = given ? { data: given, isPending: false } : loaded;
   const move = useMoveStay();
   const [stageId, setStageId] = useState<number | null>(null);
   const [note, setNote] = useState('');
@@ -37,6 +40,7 @@ function MoveForm({ stayId, currentId, onClose }: { stayId: number; currentId: n
   const options = (stages.data ?? [])
     .filter((s) => s.is_active)
     .map((s) => ({ value: s.id, label: pickLang(i18n.language, { uz: s.name_uz, ru: s.name_ru, en: s.name_en }) + (s.id === currentId ? ` · ${t('san1.journey.current')}` : '') }));
+  const flight = useSingleFlight();
   const submit = async () => {
     if (stageId == null) return setError(t('san1.journey.pickStage'));
     try {
@@ -50,10 +54,10 @@ function MoveForm({ stayId, currentId, onClose }: { stayId: number; currentId: n
   return (
     <View style={styles.form} testID="journey-move-sheet">
       <ChoiceField label={t('san1.journey.stage')} value={stageId} options={options} loading={stages.isPending} onChange={setStageId} testID="move-stage" />
-      <FormInput label={t('san1.journey.note')} value={note} onChangeText={setNote} multiline testID="move-note" />
+      <FormInput label={t('san1.journey.note')} value={note} onChangeText={setNote} multiline maxLength={500} testID="move-note" />
       <Text variant="caption" tone="muted">{t('san1.journey.moveHint')}</Text>
       <ErrorLine message={error} testID="move-error" />
-      <Button testID="move-save" label={t('san1.journey.move')} full loading={move.isPending} onPress={() => void submit()} />
+      <Button testID="move-save" label={t('san1.journey.move')} full loading={move.isPending} onPress={() => void flight.run(submit)} />
       <Button
         testID="move-open-stay"
         label={t('san1.journey.openStay')}
@@ -96,6 +100,7 @@ function StageForm({ stage, onClose }: { stage: JourneyStage | null; onClose: ()
     if (!stage && !keyTouched) setKey(slugKey(v.uz));
   };
 
+  const flight = useSingleFlight();
   const submit = async () => {
     if (name.uz.trim().length < 2) return setError(t('sanatorium.nameShort'));
     if (!stage && !isStageKey(key)) return setError(t('san1.journey.keyInvalid'));
@@ -136,8 +141,9 @@ function StageForm({ stage, onClose }: { stage: JourneyStage | null; onClose: ()
 
   return (
     <View style={styles.form} testID="stage-sheet">
-      <LangFields label={t('sanatorium.name')} values={name} onChange={setNames} requiredUz testID="stage-name" />
-      {!stage && <FormInput label={t('san1.journey.key')} value={key} onChangeText={(v) => { setKeyTouched(true); setKey(v); }} testID="stage-key" />}
+      <LangFields label={t('sanatorium.name')} values={name} onChange={setNames} requiredUz maxLength={150} testID="stage-name" />
+      {!stage && <FormInput label={t('san1.journey.key')} value={key} onChangeText={(v) => { setKeyTouched(true); setKey(v.toLowerCase()); }} maxLength={40} testID="stage-key" />}
+      {!stage && <Text variant="caption" tone="muted">{t('sanPlaces.journey.keyHint')}</Text>}
       <ChoiceField
         label={t('san1.journey.responsible')}
         value={role}
@@ -149,17 +155,18 @@ function StageForm({ stage, onClose }: { stage: JourneyStage | null; onClose: ()
       <ChoiceField
         label={t('san1.journey.trigger')}
         value={trigger}
-        noneLabel={t('sanatorium.none')}
+        noneLabel={t('sanPlaces.journey.manualOnly')}
         options={JOURNEY_TRIGGERS.map((x) => ({ value: x as JourneyTrigger, label: t(`san1.journey.triggers.${x}`) }))}
         onChange={(v) => setTrigger(v)}
         testID="stage-trigger"
       />
+      <Text variant="caption" tone="muted">{t('sanPlaces.journey.triggerHint')}</Text>
       <SwitchRow label={t('san1.journey.notifyGuest')} value={notify} onChange={setNotify} testID="stage-notify" />
-      {notify && <LangFields label={t('san1.journey.message')} values={msg} onChange={setMsg} multiline requiredUz testID="stage-msg" />}
+      {notify && <LangFields label={t('san1.journey.message')} values={msg} onChange={setMsg} multiline requiredUz maxLength={1000} testID="stage-msg" />}
       <SwitchRow label={t('sanatorium.active')} value={active} onChange={setActive} />
       <ErrorLine message={error} testID="stage-error" />
-      <Button testID="stage-save" label={t('common.save')} full loading={save.isPending} onPress={() => void submit()} />
-      {stage && <Button testID="stage-delete" label={t('sanatorium.remove')} variant="dangerGhost" full loading={del.isPending} onPress={() => void remove()} />}
+      <Button testID="stage-save" label={t('common.save')} full loading={save.isPending} onPress={() => void flight.run(submit)} />
+      {stage && <Button testID="stage-delete" label={t('sanatorium.remove')} variant="dangerGhost" full loading={del.isPending} onPress={() => void flight.run(remove)} />}
     </View>
   );
 }

@@ -2,13 +2,14 @@
 // (room keeper / registrar), «my tasks» for the housekeeper and the linen-change setting.
 import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { useSingleFlight } from '../../simple/useSingleFlight';
 import { FormInput } from '@/components/FormInput';
 import { toast } from '@/lib/toast';
 import { useAuthStore } from '@/store/authStore';
 import { Badge, Button, Card, EmptyState, ListRow, PageHeader, Screen, Segmented, Sheet, Text } from '@/ui';
-import { staffRoleQuery } from '../../api/queries';
+import { sanKeys, staffRoleQuery } from '../../api/queries';
 import {
   hkBoardQuery, hkMineQuery, hkSettingsQuery, hkTasksInfinite, useDeleteHkTask, useDoneHkTask, useSaveHkSettings,
   useSaveHkTask, useSetRoomHkStatus, useStartHkTask,
@@ -31,9 +32,20 @@ export default function HousekeepingScreen() {
   const readOnly = isSanReadOnly(user);
   const [tab, setTab] = useState<Tab>(housekeeper && !supervisor ? 'mine' : 'board');
   const [taskSheet, setTaskSheet] = useState<HkTask | 'new' | null>(null);
+  // One pull-to-refresh for every tab: reloads whatever list is on screen.
+  const qc = useQueryClient();
+  const [refreshing, setRefreshing] = useState(false);
+  const refresh = async () => {
+    setRefreshing(true);
+    try {
+      await qc.refetchQueries({ queryKey: [...sanKeys.all, 's1'], type: 'active' });
+    } finally {
+      setRefreshing(false);
+    }
+  };
   return (
     <SectionGate feature="housekeeping" roles={['registrar', 'room_keeper', 'housekeeper']}>
-      <Screen testID="sanatorium-housekeeping-screen">
+      <Screen refreshing={refreshing} onRefresh={() => void refresh()} testID="sanatorium-housekeeping-screen">
         <PageHeader
           title={t('san1.hk.title')}
           right={tab === 'tasks' && supervisor && !readOnly ? <Button testID="hk-task-add" label={t('sanatorium.add')} icon="plus" size="sm" onPress={() => setTaskSheet('new')} /> : undefined}
@@ -92,12 +104,17 @@ function Board({ supervisor, readOnly }: { supervisor: boolean; readOnly: boolea
                   testID={`hk-room-${r.id}`}
                   title={`${t('sanatorium.room')} ${r.number}`}
                   subtitle={[
-                    [r.building, r.floor != null ? `${r.floor}` : null].filter(Boolean).join(' / ') || null,
+                    [r.building, r.floor != null ? t('sanPlaces.hk.floorN', { n: r.floor }) : null].filter(Boolean).join(' · ') || null,
                     r.in_house ? t('san1.hk.inHouse') : null,
                     r.arriving_today ? t('san1.hk.arriving') : null,
-                    r.open_tasks.length ? `${t('san1.hk.openTasks')}: ${r.open_tasks.length}` : null,
+                    r.open_tasks.length ? t('sanPlaces.hk.openN', { n: r.open_tasks.length }) : null,
                   ].filter(Boolean).join(' · ') || undefined}
-                  right={<Badge label={t(`san1.hk.status.${r.hk_status}`)} tone={hkTone(r.hk_status)} />}
+                  right={
+                    <View style={styles.row}>
+                      {r.out_of_service && <Badge label={t('sanPlaces.hk.oos')} tone="neutral" testID={`hk-room-oos-${r.id}`} />}
+                      <Badge label={t(`san1.hk.status.${r.hk_status}`)} tone={hkTone(r.hk_status)} />
+                    </View>
+                  }
                   chevron={!readOnly}
                   onPress={readOnly ? undefined : () => setRoom(r)}
                 />
@@ -118,6 +135,7 @@ function RoomStatusForm({ room, supervisor, onClose }: { room: HkRoom; superviso
   const set = useSetRoomHkStatus();
   const [note, setNote] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const flight = useSingleFlight();
   const apply = async (status: HkStatus) => {
     try {
       await set.mutateAsync({ roomId: room.id, status, note: opt(note) });
@@ -133,18 +151,20 @@ function RoomStatusForm({ room, supervisor, onClose }: { room: HkRoom; superviso
         <Text variant="caption" tone="muted">{t('san1.hk.current')}:</Text>
         <Badge label={t(`san1.hk.status.${room.hk_status}`)} tone={hkTone(room.hk_status)} />
         {!room.ready && <Badge label={t('san1.hk.notReady')} tone="warning" />}
+        {room.out_of_service && <Badge label={t('sanPlaces.hk.oos')} tone="neutral" />}
       </View>
-      <FormInput label={t('sanatorium.notes')} value={note} onChangeText={setNote} testID="hk-room-note" />
+      <FormInput label={t('sanatorium.notes')} value={note} onChangeText={setNote} maxLength={300} testID="hk-room-note" />
       <ErrorLine message={error} testID="hk-room-error" />
       {hkAllowedStatuses(HK_STATUSES, supervisor).filter((s) => s !== room.hk_status).map((s) => (
-        <Button key={s} testID={`hk-set-${s}`} label={t(`san1.hk.status.${s}`)} variant="soft" full loading={set.isPending} onPress={() => void apply(s)} />
+        <Button key={s} testID={`hk-set-${s}`} label={t(`san1.hk.status.${s}`)} variant="soft" full loading={set.isPending} onPress={() => void flight.run(() => apply(s))} />
       ))}
     </View>
   );
 }
 
 // ── Tasks ──
-const taskTitle = (t: (k: string) => string, k: HkTask) => `${t('sanatorium.room')} ${k.room.number} · ${t(`san1.hk.kind.${k.kind}`)}`;
+const taskTitle = (t: (k: string) => string, k: HkTask) =>
+  `${t('sanatorium.room')} ${k.room.number}${k.room.building ? ` · ${k.room.building}` : ''} · ${t(`san1.hk.kind.${k.kind}`)}`;
 
 function TaskLine({ k, onPress, right }: { k: HkTask; onPress?: () => void; right?: React.ReactNode }) {
   const { t } = useTranslation();
@@ -153,7 +173,7 @@ function TaskLine({ k, onPress, right }: { k: HkTask; onPress?: () => void; righ
       pressable={!!onPress}
       testID={`hk-task-${k.id}`}
       title={taskTitle(t, k)}
-      subtitle={[k.due_date ? fmtDate(k.due_date) : null, k.assignee?.full_name, k.note].filter(Boolean).join(' · ') || undefined}
+      subtitle={[k.due_date ? fmtDate(k.due_date) : null, k.auto ? t('sanPlaces.hk.auto') : null, k.assignee?.full_name ?? t('san1.hk.unassigned'), k.note].filter(Boolean).join(' · ') || undefined}
       right={
         right ?? (
           <View style={styles.row}>
@@ -172,7 +192,11 @@ function Tasks({ onEdit }: { onEdit?: (t: HkTask) => void }) {
   const { t } = useTranslation();
   const [status, setStatus] = useState<'all' | HkTaskStatus>('open');
   const [kind, setKind] = useState<'all' | HkKind>('all');
-  const query = useInfiniteQuery(hkTasksInfinite({ ...(status !== 'all' ? { status } : {}), ...(kind !== 'all' ? { kind } : {}) }));
+  const [assignee, setAssignee] = useState<number | null>(null);
+  const housekeepers = useQuery(staffRoleQuery('housekeeper'));
+  const query = useInfiniteQuery(
+    hkTasksInfinite({ ...(status !== 'all' ? { status } : {}), ...(kind !== 'all' ? { kind } : {}), ...(assignee != null ? { assignee_staff_id: assignee } : {}) }),
+  );
   return (
     <View style={styles.stack}>
       <Segmented
@@ -189,6 +213,15 @@ function Tasks({ onEdit }: { onEdit?: (t: HkTask) => void }) {
         value={kind}
         onChange={setKind}
         options={[{ value: 'all' as const, label: t('common.all') }, ...HK_KINDS.map((k) => ({ value: k as 'all' | HkKind, label: t(`san1.hk.kind.${k}`) }))]}
+      />
+      <ChoiceField
+        label={t('san1.hk.assignee')}
+        value={assignee}
+        noneLabel={t('sanPlaces.hk.anyAssignee')}
+        options={(housekeepers.data ?? []).map((x) => ({ value: x.id, label: x.full_name }))}
+        onChange={setAssignee}
+        loading={housekeepers.isPending}
+        testID="hk-task-assignee-filter"
       />
       <PagedBlock query={query}>
         {(items) => (items.length === 0 ? <EmptyState title={t('san1.hk.noTasks')} /> : <View style={styles.stack}>{items.map((k) => <TaskLine key={k.id} k={k} onPress={onEdit ? () => onEdit(k) : undefined} />)}</View>)}
@@ -211,6 +244,7 @@ function TaskForm({ task, onClose }: { task: HkTask | null; onClose: () => void 
   const [note, setNote] = useState(task?.note ?? '');
   const [error, setError] = useState<string | null>(null);
 
+  const flight = useSingleFlight();
   const submit = async () => {
     if (roomId == null) return setError(t('san1.hk.pickRoom'));
     try {
@@ -260,18 +294,20 @@ function TaskForm({ task, onClose }: { task: HkTask | null; onClose: () => void 
         loading={housekeepers.isPending}
         testID="hk-task-assignee"
       />
+      <Text variant="caption" tone="muted">{t('sanPlaces.hk.assigneeHint')}</Text>
       {task && (
         <ChoiceField
           label={t('san1.hk.statusLabel')}
           value={status}
           options={(['open', 'in_progress', 'done'] as const).map((s) => ({ value: s as HkTaskStatus, label: t(`san1.hk.taskStatus.${s}`) }))}
           onChange={(v) => v && setStatus(v)}
+          testID="hk-task-statusfield"
         />
       )}
-      <FormInput label={t('sanatorium.notes')} value={note} onChangeText={setNote} multiline testID="hk-task-note" />
+      <FormInput label={t('sanatorium.notes')} value={note} onChangeText={setNote} multiline maxLength={500} testID="hk-task-note" />
       <ErrorLine message={error} testID="hk-task-error" />
-      <Button testID="hk-task-save" label={t('common.save')} full loading={save.isPending} onPress={() => void submit()} />
-      {task && <Button testID="hk-task-delete" label={t('sanatorium.remove')} variant="dangerGhost" full loading={del.isPending} onPress={() => void remove()} />}
+      <Button testID="hk-task-save" label={t('common.save')} full loading={save.isPending} onPress={() => void flight.run(submit)} />
+      {task && <Button testID="hk-task-delete" label={t('sanatorium.remove')} variant="dangerGhost" full loading={del.isPending} onPress={() => void flight.run(remove)} />}
     </View>
   );
 }
@@ -322,6 +358,7 @@ function LinenSettings() {
   const q = useQuery(hkSettingsQuery());
   const save = useSaveHkSettings();
   const editable = canSanWrite(user, 'registrar');
+  const flight = useSingleFlight();
   const [days, setDays] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   return (
@@ -345,7 +382,7 @@ function LinenSettings() {
             <FormInput label={t('san1.hk.linenDays')} value={value} onChangeText={editable ? setDays : () => {}} keyboardType="number-pad" testID="hk-linen" />
             <Text variant="caption" tone="muted">{t('san1.hk.linenHint')}</Text>
             <ErrorLine message={error} />
-            {editable && <Button testID="hk-linen-save" label={t('common.save')} full loading={save.isPending} onPress={() => void submit()} />}
+            {editable && <Button testID="hk-linen-save" label={t('common.save')} full loading={save.isPending} onPress={() => void flight.run(submit)} />}
           </Card>
         );
       }}

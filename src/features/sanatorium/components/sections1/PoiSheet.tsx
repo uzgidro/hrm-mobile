@@ -3,11 +3,13 @@
 import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useSingleFlight } from '../../simple/useSingleFlight';
 import { FormInput } from '@/components/FormInput';
 import { toast } from '@/lib/toast';
 import { Button, Sheet, Text } from '@/ui';
 import { useDeletePoi, useSavePoi } from '../../api/sections1';
 import { POI_KINDS, type Poi, type PoiKind, type TerritoryPlan } from '../../types1';
+import { parseFloor } from '../../utils/sections1';
 import { sanErrorMessage } from '../../utils/sanatorium';
 import { ChoiceField, ErrorLine, optNull, SwitchRow } from '../forms';
 import { PlanView } from './PlanView';
@@ -34,9 +36,13 @@ function PoiForm({ poi, plan, others, onClose }: { poi: Poi | null; plan: Territ
   const [active, setActive] = useState(poi?.is_active ?? true);
   const [error, setError] = useState<string | null>(null);
 
+  const flight = useSingleFlight();
   const submit = async () => {
     if (!name.uz.trim()) return setError(t('sanatorium.nameShort'));
     if (!pos) return setError(t('san1.territory.placeFirst'));
+    // The server stores the floor as an integer (-5..100) or null.
+    const fl = parseFloor(floor);
+    if (!fl.ok) return setError(t('sanPlaces.territory.floorInvalid'));
     try {
       await save.mutateAsync({
         id: poi?.id,
@@ -47,7 +53,7 @@ function PoiForm({ poi, plan, others, onClose }: { poi: Poi | null; plan: Territ
           kind,
           x_pct: pos.x_pct,
           y_pct: pos.y_pct,
-          floor: optNull(floor),
+          floor: fl.value,
           description_uz: optNull(desc.uz),
           description_ru: optNull(desc.ru),
           description_en: optNull(desc.en),
@@ -78,14 +84,14 @@ function PoiForm({ poi, plan, others, onClose }: { poi: Poi | null; plan: Territ
       ) : (
         <Text variant="caption" tone="muted">{t('san1.territory.noPlanForPin')}</Text>
       )}
-      <LangFields label={t('sanatorium.name')} values={name} onChange={setName} requiredUz testID="poi-name" />
+      <LangFields label={t('sanatorium.name')} values={name} onChange={setName} requiredUz maxLength={150} testID="poi-name" />
       <ChoiceField label={t('san1.poi.kindLabel')} value={kind} options={POI_KINDS.map((k) => ({ value: k as PoiKind, label: t(`san1.poi.kind.${k}`) }))} onChange={(v) => v && setKind(v)} testID="poi-kind" />
-      <FormInput label={t('san1.poi.floor')} value={floor} onChangeText={setFloor} testID="poi-floor" />
-      <LangFields label={t('sanatorium.description')} values={desc} onChange={setDesc} multiline testID="poi-desc" />
+      <FormInput label={t('san1.poi.floor')} value={floor} onChangeText={setFloor} keyboardType="numbers-and-punctuation" maxLength={4} testID="poi-floor" />
+      <LangFields label={t('sanatorium.description')} values={desc} onChange={setDesc} multiline maxLength={1000} testID="poi-desc" />
       <SwitchRow label={t('sanatorium.active')} value={active} onChange={setActive} />
       <ErrorLine message={error} testID="poi-error" />
-      <Button testID="poi-save" label={t('common.save')} full loading={save.isPending} onPress={() => void submit()} />
-      {poi && <Button testID="poi-delete" label={t('sanatorium.remove')} variant="dangerGhost" full loading={del.isPending} onPress={() => void remove()} />}
+      <Button testID="poi-save" label={t('common.save')} full loading={save.isPending} onPress={() => void flight.run(submit)} />
+      {poi && <Button testID="poi-delete" label={t('sanatorium.remove')} variant="dangerGhost" full loading={del.isPending} onPress={() => void flight.run(remove)} />}
     </View>
   );
 }

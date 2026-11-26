@@ -74,7 +74,8 @@ export function DateField({
   return (
     <>
       <SelectField label={label} value={value ? fmtDate(value) : undefined} placeholder="—" icon="calendar" onPress={() => setOpen(true)} testID={testID} />
-      <DatePickerModal visible={open} value={value} title={label} onConfirm={onChange} onClose={() => setOpen(false)} />
+      {/* Mounted per opening: the calendar always starts from the current value. */}
+      {open && <DatePickerModal visible value={value} title={label} onConfirm={onChange} onClose={() => setOpen(false)} />}
     </>
   );
 }
@@ -84,18 +85,20 @@ export function SwitchRow({
   value,
   onChange,
   testID,
+  disabled,
 }: {
   label: string;
   value: boolean;
   onChange: (v: boolean) => void;
   testID?: string;
+  disabled?: boolean;
 }) {
   return (
     <View style={styles.switchRow}>
       <Text variant="body" style={styles.flex}>
         {label}
       </Text>
-      <Toggle value={value} onValueChange={onChange} accessibilityLabel={label} testID={testID} />
+      <Toggle value={value} onValueChange={onChange} accessibilityLabel={label} testID={testID} disabled={disabled} />
     </View>
   );
 }

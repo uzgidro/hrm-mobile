@@ -1,5 +1,5 @@
 import { apiClient } from '@/api/client';
-import { applyDietToStays, deletePackage, markSession, quote, reorderPackages, savePackage, saveStayDiet } from '../sections2';
+import { applyDietToStays, boardQuery, confirmOrder, createFeedback, deletePackage, markSession, patchServiceOrder, quote, reorderPackages, savePackage, saveStayDiet } from '../sections2';
 
 jest.mock('@/api/client', () => ({ apiClient: { get: jest.fn(), post: jest.fn(), put: jest.fn(), patch: jest.fn(), delete: jest.fn(), request: jest.fn() } }));
 const api = apiClient as unknown as Record<'get' | 'post' | 'put' | 'patch' | 'delete', jest.Mock>;
@@ -40,5 +40,21 @@ describe('sections2 api', () => {
     expect(api.patch).toHaveBeenCalledTimes(2);
     api.patch.mockRejectedValue(new Error('boom'));
     expect(await applyDietToStays([1], 3)).toBeInstanceOf(Error);
+  });
+  it('posts a paper feedback form', async () => {
+    await createFeedback({ stay_id: 3, overall: 5, items: [] });
+    expect(api.post).toHaveBeenCalledWith('sanatorium/feedback', { stay_id: 3, overall: 5, items: [] });
+  });
+  it('confirms and reschedules an order through PATCH', async () => {
+    await confirmOrder(8);
+    expect(api.patch).toHaveBeenCalledWith('sanatorium/service-orders/8', { status: 'confirmed' });
+    await patchServiceOrder({ id: 8, body: { scheduled_at: '2026-12-01T10:00:00' } });
+    expect(api.patch).toHaveBeenCalledWith('sanatorium/service-orders/8', { scheduled_at: '2026-12-01T10:00:00' });
+  });
+  it('sends the room filter to the session board only when set', async () => {
+    await boardQuery('2026-12-01').queryFn!({} as never);
+    expect(api.get).toHaveBeenLastCalledWith('sanatorium/procedure-sessions/board', { params: { day: '2026-12-01' } });
+    await boardQuery('2026-12-01', true, 4).queryFn!({} as never);
+    expect(api.get).toHaveBeenLastCalledWith('sanatorium/procedure-sessions/board', { params: { day: '2026-12-01', room_id: 4 } });
   });
 });

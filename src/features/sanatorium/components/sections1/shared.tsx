@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { FormInput } from '@/components/FormInput';
 import { confirm } from '@/lib/confirm';
+import { isUzPhoneEmpty, UZ_PHONE_PREFIX, uzPhoneFromInput, uzPhoneInputValue } from '@/utils/phone';
 import { EmptyState, IconButton, Text } from '@/ui';
 import { useSanAccess, useSanReadOnly, Denied } from '../common';
 import { useSanFeatures, type SanFeatureKey } from '../../utils/features';
@@ -48,6 +49,7 @@ export function LangFields({
   onChange,
   multiline,
   requiredUz,
+  maxLength,
   testID,
 }: {
   label: string;
@@ -55,6 +57,8 @@ export function LangFields({
   onChange: (v: { uz: string; ru: string; en: string }) => void;
   multiline?: boolean;
   requiredUz?: boolean;
+  /** Per-language character limit (the server limits every language the same). */
+  maxLength?: number;
   testID?: string;
 }) {
   return (
@@ -68,10 +72,30 @@ export function LangFields({
           onChangeText={(v) => onChange({ ...values, [l]: v })}
           multiline={multiline}
           required={requiredUz && l === 'uz'}
+          maxLength={maxLength}
           testID={testID ? `${testID}-${l}` : undefined}
         />
       ))}
     </View>
+  );
+}
+
+/** Phone input with the fixed +998 prefix; the value is `+998` plus up to 9 digits. */
+export function PhoneField({ label, value, onChange, required, testID }: { label: string; value: string; onChange: (v: string) => void; required?: boolean; testID?: string }) {
+  return (
+    <FormInput
+      label={label}
+      // A half-typed value already carries the prefix; only a stored number in another shape is normalised.
+      value={value.startsWith(UZ_PHONE_PREFIX) ? value : uzPhoneInputValue(value)}
+      onChangeText={(v) => {
+        const next = uzPhoneFromInput(v);
+        onChange(isUzPhoneEmpty(next) ? '' : next);
+      }}
+      keyboardType="phone-pad"
+      required={required}
+      maxLength={13}
+      testID={testID}
+    />
   );
 }
 

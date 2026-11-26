@@ -9,12 +9,12 @@ export const UZ_BBOX = { latMin: 37.0, latMax: 45.7, lngMin: 55.9, lngMax: 73.2 
 export const inUzbekistan = (lat: number, lng: number): boolean =>
   lat >= UZ_BBOX.latMin && lat <= UZ_BBOX.latMax && lng >= UZ_BBOX.lngMin && lng <= UZ_BBOX.lngMax;
 
-/** Section switches grouped for the settings screen; unknown keys fall into «other». */
+/** Section switches grouped for the settings screen (same groups as the web); unknown keys fall into «other». */
 export const FEATURE_GROUPS: { id: string; keys: SanFeatureKey[] }[] = [
-  { id: 'guest', keys: ['telegram_bot', 'public_form', 'room_choice', 'guest_cabinet', 'feedback', 'info_sections', 'broadcasts'] },
-  { id: 'stay', keys: ['journey', 'location_map', 'territory_map', 'waitlist', 'transfer', 'documents'] },
-  { id: 'money', keys: ['packages', 'seasonal_pricing', 'paid_services'] },
-  { id: 'ops', keys: ['kitchen_menu', 'diet', 'procedure_schedule', 'housekeeping', 'analytics'] },
+  { id: 'existing', keys: ['telegram_bot', 'public_form', 'room_choice', 'kitchen_menu', 'guest_cabinet'] },
+  { id: 'content', keys: ['journey', 'location_map', 'territory_map', 'info_sections', 'broadcasts'] },
+  { id: 'catalog', keys: ['packages', 'seasonal_pricing', 'paid_services', 'documents'] },
+  { id: 'ops', keys: ['waitlist', 'procedure_schedule', 'housekeeping', 'transfer', 'diet', 'feedback', 'analytics'] },
 ];
 
 export function groupFeatures(rows: FeatureRow[]): { id: string; rows: FeatureRow[] }[] {
@@ -169,3 +169,42 @@ export function roomNotReady(res: unknown): CheckInWarning | null {
   const list = (res as { warnings?: CheckInWarning[] } | null | undefined)?.warnings;
   return Array.isArray(list) ? (list.find((w) => w?.code === 'room_not_ready') ?? null) : null;
 }
+
+/** `+998901234567`, `998901234567` or 9 national digits -> `+998XXXXXXXXX`; null when it is not a full UZ number. */
+export function normalizeUzPhone(raw: string | null | undefined): string | null {
+  const d = (raw ?? '').replace(/\D+/g, '');
+  if (d.length === 9) return `+998${d}`;
+  if (d.length === 12 && d.startsWith('998')) return `+${d}`;
+  return null;
+}
+
+/** Floor text of a point of interest: blank = no floor, otherwise a whole number within the server range. */
+export function parseFloor(text: string): { ok: true; value: number | null } | { ok: false } {
+  const s = text.trim();
+  if (!s) return { ok: true, value: null };
+  if (!/^-?\d{1,3}$/.test(s)) return { ok: false };
+  const n = Number(s);
+  return n >= -5 && n <= 100 ? { ok: true, value: n } : { ok: false };
+}
+
+/** `assigned` needs a vehicle or a driver name (the server answers driver_required otherwise). */
+export const transferNeedsCar = (status: TransferStatus, vehicleId: number | null, driverName: string): boolean =>
+  status === 'assigned' && vehicleId == null && !driverName.trim();
+
+/** People of a transfer: a whole number from 1 to 20 (the server limit). */
+export const validTransferPeople = (n: number): boolean => Number.isInteger(n) && n >= 1 && n <= 20;
+
+/** Photo of an info section: the small thumbnail when the server has one, otherwise the original. */
+export const photoThumb = (p: { url?: string | null; thumb_url?: string | null } | null | undefined): string | undefined =>
+  p ? (p.thumb_url || p.url || undefined) : undefined;
+
+/** A broadcast may be sent only when somebody can receive it. */
+export const canSendBroadcast = (reachable: number | undefined): boolean => (reachable ?? 0) > 0;
+
+/** The convert sheet starts from what the waitlist entry already holds. */
+export function convertDefaults(w: { birth_date?: string | null; passport?: string | null; organization_name?: string | null }): { birth: string | null; passport: string; org: string } {
+  return { birth: w.birth_date ?? null, passport: w.passport ?? '', org: w.organization_name ?? '' };
+}
+
+/** Poll interval of the housekeeping board and the journey board (ms). */
+export const BOARD_POLL_MS = 60_000;

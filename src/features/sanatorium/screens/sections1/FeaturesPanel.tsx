@@ -6,7 +6,7 @@ import { StyleSheet, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from '@/lib/toast';
-import { Badge, Card, Text, Toggle } from '@/ui';
+import { Card, Text, Toggle } from '@/ui';
 import { featuresQuery, useSaveFeatures } from '../../api/sections1';
 import { QueryBlock, useSanReadOnly } from '../../components/common';
 import { featureLabel, groupFeatures } from '../../utils/sections1';
@@ -35,15 +35,15 @@ export function FeaturesPanel() {
     <QueryBlock query={q} rows={6}>
       {(rows) => (
         <View style={styles.stack} testID="features-panel">
-          <Text variant="caption" tone="muted">{t('san1.featuresHint')}</Text>
+          <Text variant="caption" tone="muted" testID="features-lead">{t('sanPlaces.feat.lead')}</Text>
           {groupFeatures(rows).map((g) => (
-            <Card key={g.id} title={t(`san1.featureGroup.${g.id}`)}>
+            <Card key={g.id} title={t(`sanPlaces.feat.group.${g.id}`)} testID={`feature-group-${g.id}`}>
               {g.rows.map((r) => (
                 <View key={r.key} style={styles.row}>
                   <View style={styles.flex}>
                     <Text variant="body">{featureLabel(r, i18n.language)}</Text>
-                    {r.enabled !== r.default && <Badge label={t('san1.changedFromDefault')} tone="info" />}
                   </View>
+                  <Text variant="caption" tone="subtle" testID={`feature-${r.key}-state`}>{r.enabled ? t('sanPlaces.feat.on') : t('sanPlaces.feat.off')}</Text>
                   <Toggle
                     value={r.enabled}
                     disabled={readOnly || pending === r.key}

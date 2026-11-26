@@ -755,3 +755,20 @@ export const SANATORIUM_FEEDBACK_MINE = 'sanatorium/feedback/mine';
 export const SANATORIUM_ANALYTICS = 'sanatorium/analytics';
 export const SANATORIUM_ANALYTICS_EXPORT = 'sanatorium/analytics/export';
 export const SANATORIUM_ME = 'sanatorium/me';
+
+// ── Sanatorium simplification (2026-11-25): work queue, arrival wizard, route sheet, short actions ──
+export const SANATORIUM_TODAY = 'sanatorium/today';
+export const SANATORIUM_ARRIVAL_OPTIONS = 'sanatorium/arrivals/options';
+export const SANATORIUM_ARRIVALS = 'sanatorium/arrivals';
+export const SANATORIUM_STAY_EARLY_PREVIEW = (id: number) => `sanatorium/stays/${id}/early-leave/preview`;
+export const SANATORIUM_STAY_ROUTE_SHEET = (id: number) => `sanatorium/stays/${id}/route-sheet`;
+export const SANATORIUM_STAY_EXTEND = (id: number) => `sanatorium/stays/${id}/extend`;
+export const SANATORIUM_STAY_MOVE = (id: number) => `sanatorium/stays/${id}/move`;
+export const SANATORIUM_STAY_PAYMENTS = (id: number) => `sanatorium/stays/${id}/payments`;
+export const SANATORIUM_STAY_NO_SHOW = (id: number) => `sanatorium/stays/${id}/no-show`;
+export const SANATORIUM_STAYS_GROUP_CHECK_IN = 'sanatorium/stays/group-check-in';
+export const SANATORIUM_STAYS_GROUP_CHECK_OUT = 'sanatorium/stays/group-check-out';
+export const SANATORIUM_STAY_START_EXAM = (id: number) => `sanatorium/stays/${id}/start-exam`;
+export const SANATORIUM_SETUP_STATUS = 'sanatorium/setup-status';
+export const SANATORIUM_MY_GUESTS = 'sanatorium/my-guests';
+export const SANATORIUM_DOCTOR_SLOTS = (staffId: number) => `sanatorium/doctors/${staffId}/slots`;

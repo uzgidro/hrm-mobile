@@ -8,7 +8,7 @@ import { ff } from '../theme/typography';
 import { NO_WEB_OUTLINE } from '../theme/web';
 
 export function FormInput({
-  label, value, onChangeText, placeholder, required, multiline, keyboardType, error, testID, secureTextEntry, inputRef,
+  label, value, onChangeText, placeholder, required, multiline, keyboardType, error, testID, secureTextEntry, inputRef, maxLength,
 }: {
   label: string;
   value: string;
@@ -23,6 +23,8 @@ export function FormInput({
   secureTextEntry?: boolean;
   /** Ichki TextInput'ga ref — xato bo'lsa maydonga fokus berish uchun. */
   inputRef?: React.Ref<TextInput>;
+  /** Hard character limit of the field. */
+  maxLength?: number;
 }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -40,6 +42,7 @@ export function FormInput({
         placeholderTextColor={colors.textMuted}
         multiline={multiline}
         keyboardType={keyboardType}
+        maxLength={maxLength}
         autoCapitalize="none"
         secureTextEntry={secureTextEntry}
         autoComplete={secureTextEntry ? 'off' : undefined}

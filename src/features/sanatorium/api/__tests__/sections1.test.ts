@@ -1,6 +1,6 @@
 import { apiClient } from '@/api/client';
 import {
-  convertWaitlist, fetchHkBoard, fetchTransfers, fetchWaitlist, moveStay, saveFeatures, saveStage, setRoomHkStatus,
+  confirmTransfer, convertWaitlist, fetchHkBoard, fetchWaitlistEntry, fetchTransfers, fetchWaitlist, moveStay, saveFeatures, saveStage, setRoomHkStatus,
 } from '../sections1';
 
 jest.mock('@/api/client', () => ({ apiClient: { get: jest.fn(), post: jest.fn(), put: jest.fn(), patch: jest.fn(), delete: jest.fn() } }));
@@ -50,5 +50,16 @@ describe('sections1 api', () => {
     expect(api.patch).toHaveBeenCalledWith('sanatorium/rooms/3/hk-status', { status: 'clean' });
     await convertWaitlist({ id: 5, body: {} });
     expect(api.post).toHaveBeenCalledWith('sanatorium/waitlist/5/convert', {});
+  });
+  it('confirms a transfer with a status-only PATCH', async () => {
+    await confirmTransfer(5);
+    expect(api.patch).toHaveBeenCalledWith('sanatorium/transfers/5', { status: 'confirmed' });
+  });
+  it('finds a waitlist entry in the offered list, then in the waiting one', async () => {
+    api.get!.mockResolvedValueOnce({ data: { items: [{ id: 1 }] } }).mockResolvedValueOnce({ data: { items: [{ id: 7 }] } });
+    expect((await fetchWaitlistEntry(7))?.id).toBe(7);
+    expect(api.get).toHaveBeenCalledTimes(2);
+    api.get!.mockResolvedValue({ data: { items: [] } });
+    expect(await fetchWaitlistEntry(9)).toBeNull();
   });
 });

@@ -1,12 +1,14 @@
-// Doctor scans a guest's QR: resolve -> the guest's card. Native only (the camera).
+// Doctor scans a guest's QR: resolve -> the guest card (phone, age, room, stay) with profile / history.
+// Native only (the camera).
 import React, { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { CodeScanner } from '@/components/CodeScanner';
 import { PageHeader, Screen } from '@/ui';
 import { useResolveGuestQr } from '../api/mutations';
 import { Denied, useSanAccess } from '../components/common';
+import { HistorySheet, ResolvedGuestSheet } from '../components/DeskParts';
+import type { QrResolveResult } from '../types';
 import { sanErrorMessage } from '../utils/sanatorium';
 
 export default function ScanScreen() {
@@ -14,18 +16,27 @@ export default function ScanScreen() {
   const allowed = useSanAccess('doctor');
   const resolve = useResolveGuestQr();
   const [message, setMessage] = useState<string | null>(null);
+  const [resolved, setResolved] = useState<QrResolveResult | null>(null);
+  const [history, setHistory] = useState<{ id: number; name: string } | null>(null);
+  // The scanner locks after the first read; a new key unlocks it once the card is closed.
+  const [scanKey, setScanKey] = useState(0);
 
   const onCode = useCallback(
     async (raw: string) => {
       try {
-        const r = await resolve.mutateAsync(raw);
-        router.replace({ pathname: '/sanatorium-guest', params: { id: String(r.guest.id) } });
+        setResolved(await resolve.mutateAsync(raw));
       } catch (e) {
         setMessage(sanErrorMessage(e, t('sanatorium.scanFailed')));
       }
     },
     [resolve, t],
   );
+  const reset = () => {
+    setResolved(null);
+    setHistory(null);
+    setMessage(null);
+    setScanKey((k) => k + 1);
+  };
 
   if (!allowed) return <Denied />;
   return (
@@ -33,6 +44,7 @@ export default function ScanScreen() {
       <PageHeader title={t('sanatorium.scanQr')} subtitle={t('sanatorium.scanSubtitle')} />
       <View style={styles.flex}>
         <CodeScanner
+          key={scanKey}
           hint={t('sanatorium.scanHint')}
           busy={resolve.isPending}
           message={message}
@@ -40,6 +52,8 @@ export default function ScanScreen() {
           onRetry={() => setMessage(null)}
         />
       </View>
+      <ResolvedGuestSheet result={resolved} onClose={reset} onHistory={setHistory} />
+      <HistorySheet guest={history} onClose={reset} />
     </Screen>
   );
 }

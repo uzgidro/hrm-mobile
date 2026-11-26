@@ -75,7 +75,7 @@ export default {
   },
   guest: "Меҳмон",
   guestType: {
-    hotel: "Меҳмонхона",
+    hotel: "Оддий яшовчи",
     rest: "Дам олувчи",
     treatment: "Даволанувчи",
     contract: "Шартнома асосида",

@@ -13,6 +13,8 @@ import { useReferAppointment } from '../api/mutations';
 import { doctorsQuery, specialtiesQuery } from '../api/queries';
 import type { Appointment } from '../types';
 import { fmtDateTime, sanErrorMessage, toLocalIso } from '../utils/sanatorium';
+import { doctorsOfSpecialty, REFER_NOTE_MAX, referDuration, referError, referSpecialties } from '../utils/staffParity';
+import { useSingleFlight } from '../simple/useSingleFlight';
 
 export function ReferSheet({ appt, onClose }: { appt: Appointment | null; onClose: () => void }) {
   const { t } = useTranslation();
@@ -29,17 +31,20 @@ function ReferForm({ appt, onClose }: { appt: Appointment; onClose: () => void }
   const specialties = useQuery(specialtiesQuery());
   const doctors = useQuery(doctorsQuery());
   const refer = useReferAppointment();
+  const flight = useSingleFlight();
   const [specialtyId, setSpecialtyId] = useState<number | null>(null);
   const [doctorId, setDoctorId] = useState<number | null>(null);
   const [when, setWhen] = useState<string>(() => toLocalIso(dayjs().add(1, 'day').hour(10).minute(0).second(0)));
   const [note, setNote] = useState('');
+  const [duration, setDuration] = useState('20');
   const [pick, setPick] = useState<'specialty' | 'doctor' | 'when' | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // A procedure is prescribed with the «Procedure» button, so the list holds doctor / lab specialties only.
+  const specialtyList = useMemo(() => referSpecialties(specialties.data ?? []), [specialties.data]);
   const doctorOptions = useMemo(
     () =>
-      (doctors.data ?? [])
-        .filter((d) => !specialtyId || d.specialty_id === specialtyId)
+      doctorsOfSpecialty(doctors.data ?? [], specialtyId)
         .map((d) => ({ value: d.id, label: d.full_name ?? `#${d.id}`, subLabel: d.specialty ?? undefined })),
     [doctors.data, specialtyId],
   );
@@ -47,7 +52,8 @@ function ReferForm({ appt, onClose }: { appt: Appointment; onClose: () => void }
   const docName = doctors.data?.find((d) => d.id === doctorId)?.full_name;
 
   const submit = async () => {
-    if (!specialtyId && !doctorId) return setError(t('sanatorium.errors.doctor_or_specialty_required'));
+    const bad = referError({ specialtyId, doctorId, when, duration, note });
+    if (bad) return setError(t(bad === 'target' ? 'sanatorium.errors.doctor_or_specialty_required' : bad === 'duration' ? 'sanatorium.durationRange' : 'sanStaff.desk.tooLong', { max: REFER_NOTE_MAX }));
     try {
       await refer.mutateAsync({
         id: appt.id,
@@ -55,7 +61,7 @@ function ReferForm({ appt, onClose }: { appt: Appointment; onClose: () => void }
           ...(specialtyId ? { specialty_id: specialtyId } : {}),
           ...(doctorId ? { doctor_staff_id: doctorId } : {}),
           scheduled_at: when,
-          duration_min: 20,
+          duration_min: referDuration(duration),
           ...(note.trim() ? { referral_note: note.trim() } : {}),
         },
       });
@@ -72,14 +78,15 @@ function ReferForm({ appt, onClose }: { appt: Appointment; onClose: () => void }
         <SelectField label={t('sanatorium.specialty')} value={specName} placeholder={t('sanatorium.choose')} onPress={() => setPick('specialty')} testID="refer-specialty" />
         <SelectField label={t('sanatorium.doctor')} value={docName} placeholder={t('sanatorium.anyDoctor')} onPress={() => setPick('doctor')} testID="refer-doctor" />
         <SelectField label={t('sanatorium.dateTime')} value={fmtDateTime(when)} icon="calendar" onPress={() => setPick('when')} testID="refer-when" />
-        <FormInput label={t('sanatorium.referralNote')} value={note} onChangeText={setNote} multiline testID="refer-note" />
+        <FormInput label={t('sanatorium.duration')} value={duration} onChangeText={setDuration} keyboardType="number-pad" testID="refer-duration" />
+        <FormInput label={t('sanatorium.referralNote')} value={note} onChangeText={setNote} multiline maxLength={REFER_NOTE_MAX} testID="refer-note" />
         {!!error && <Text variant="label" tone="danger" testID="refer-error">{error}</Text>}
-        <Button testID="refer-save" label={t('sanatorium.refer')} full loading={refer.isPending} onPress={() => void submit()} />
+        <Button testID="refer-save" label={t('sanatorium.refer')} full loading={refer.isPending || flight.pending} onPress={() => void flight.run(submit)} />
       </View>
       <PickerModal
         visible={pick === 'specialty'}
         title={t('sanatorium.specialty')}
-        options={(specialties.data ?? []).map((s) => ({ value: s.id, label: s.name }))}
+        options={specialtyList.map((s) => ({ value: s.id, label: s.name }))}
         loading={specialties.isPending}
         selected={specialtyId}
         avatars={false}

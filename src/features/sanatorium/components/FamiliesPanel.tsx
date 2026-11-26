@@ -11,13 +11,17 @@ import { Button, Card, EmptyState, ListRow, SearchField, Sheet, Text } from '@/u
 import { useAddFamilyMember, useRemoveFamilyMember, useSaveFamily } from '../api/mutations';
 import { familiesQuery, guestsQuery } from '../api/queries';
 import { RELATIONS, type Family } from '../types';
+import { LIMITS, clip } from '../utils/guests';
 import { sanErrorMessage } from '../utils/sanatorium';
 import { QueryBlock, useSanReadOnly } from './common';
 import { ChoiceField, ErrorLine, optNull } from './forms';
+import { useSingleFlight } from '../simple/useSingleFlight';
 
 export function FamiliesPanel() {
   const { t } = useTranslation();
-  const q = useQuery(familiesQuery(''));
+  const [term, setTerm] = useState('');
+  const debounced = useDebouncedValue(term);
+  const q = useQuery(familiesQuery(debounced));
   const [edit, setEdit] = useState<Family | 'new' | null>(null);
   const [adding, setAdding] = useState<Family | null>(null);
   const remove = useRemoveFamilyMember();
@@ -29,6 +33,7 @@ export function FamiliesPanel() {
   };
   return (
     <View style={styles.stack}>
+      <SearchField testID="family-search" value={term} onChangeText={setTerm} placeholder={t('sanGuests.familySearch')} />
       {!readOnly && <Button testID="family-add" label={t('sanatorium.newFamily')} icon="plus" variant="soft" full onPress={() => setEdit('new')} />}
       <QueryBlock query={q}>
         {(items) =>
@@ -40,18 +45,20 @@ export function FamiliesPanel() {
                 <Card key={f.id} testID={`family-${f.id}`}>
                   <View style={styles.row}>
                     <Text variant="heading" style={styles.flex}>{f.name}</Text>
-                    {!readOnly && <Button label={t('sanatorium.edit')} variant="soft" size="sm" icon="edit" onPress={() => setEdit(f)} />}
+                    {!readOnly && <Button testID={`family-edit-${f.id}`} label={t('sanatorium.edit')} variant="soft" size="sm" icon="edit" onPress={() => setEdit(f)} />}
                   </View>
                   {!!f.note && <Text variant="caption" tone="muted">{f.note}</Text>}
+                  {f.members.length === 0 && <Text variant="caption" tone="subtle">{t('sanGuests.noMembers')}</Text>}
                   {f.members.map((m) => (
                     <ListRow
                       key={m.id}
+                      testID={`family-member-${f.id}-${m.id}`}
                       title={m.full_name}
                       subtitle={[m.relation ? t(`sanatorium.relation.${m.relation}`) : null, m.age != null ? `${m.age} ${t('sanatorium.yearsOld')}` : null].filter(Boolean).join(' · ')}
-                      right={readOnly ? undefined : <Button label={t('sanatorium.remove')} variant="dangerGhost" size="sm" onPress={() => void drop(f, m.id, m.full_name)} />}
+                      right={readOnly ? undefined : <Button testID={`family-remove-${f.id}-${m.id}`} label={t('sanatorium.remove')} variant="dangerGhost" size="sm" onPress={() => void drop(f, m.id, m.full_name)} />}
                     />
                   ))}
-                  {!readOnly && <Button testID="family-add-member" label={t('sanatorium.addMember')} variant="link" size="sm" onPress={() => setAdding(f)} />}
+                  {!readOnly && <Button testID={`family-add-member-${f.id}`} label={t('sanatorium.addMember')} variant="link" size="sm" onPress={() => setAdding(f)} />}
                 </Card>
               ))}
             </>
@@ -71,6 +78,7 @@ export function FamiliesPanel() {
 function FamilyForm({ family, onClose }: { family: Family | null; onClose: () => void }) {
   const { t } = useTranslation();
   const save = useSaveFamily();
+  const flight = useSingleFlight();
   const [name, setName] = useState(family?.name ?? '');
   const [note, setNote] = useState(family?.note ?? '');
   const [error, setError] = useState<string | null>(null);
@@ -86,10 +94,10 @@ function FamilyForm({ family, onClose }: { family: Family | null; onClose: () =>
   };
   return (
     <View style={styles.form} testID="family-sheet">
-      <FormInput label={t('sanatorium.name')} value={name} onChangeText={setName} required testID="family-name" />
-      <FormInput label={t('sanatorium.notes')} value={note} onChangeText={setNote} multiline />
+      <FormInput label={t('sanatorium.name')} value={name} onChangeText={(v) => setName(clip(v, LIMITS.family))} required testID="family-name" />
+      <FormInput label={t('sanatorium.notes')} value={note} onChangeText={(v) => setNote(clip(v, LIMITS.note))} multiline testID="family-note" />
       <ErrorLine message={error} />
-      <Button testID="family-save" label={t('common.save')} full loading={save.isPending} onPress={() => void submit()} />
+      <Button testID="family-save" label={t('common.save')} full loading={save.isPending || flight.pending} onPress={() => void flight.run(submit)} />
     </View>
   );
 }
@@ -102,7 +110,7 @@ function MemberForm({ family, onClose }: { family: Family; onClose: () => void }
   const guests = useQuery({ ...guestsQuery(debounced), enabled: debounced.trim().length >= 2 });
   const [relation, setRelation] = useState<string | null>('other');
   const [error, setError] = useState<string | null>(null);
-  const taken = new Set(family.members.map((m) => m.id));
+  const inFamily = new Map(family.members.map((m) => [m.id, m.relation] as const));
   const pick = async (id: number) => {
     try {
       await add.mutateAsync({ id: family.id, guest_id: id, relation: relation ?? 'other' });
@@ -114,10 +122,10 @@ function MemberForm({ family, onClose }: { family: Family; onClose: () => void }
   };
   return (
     <View style={styles.form} testID="member-sheet">
-      <ChoiceField label={t('sanatorium.relationLabel')} value={relation} options={RELATIONS.map((r) => ({ value: r as string, label: t(`sanatorium.relation.${r}`) }))} onChange={setRelation} />
+      <ChoiceField label={t('sanatorium.relationLabel')} value={relation} options={RELATIONS.map((r) => ({ value: r as string, label: t(`sanatorium.relation.${r}`) }))} onChange={setRelation} testID="member-relation" />
       <SearchField testID="member-search" value={term} onChangeText={setTerm} placeholder={t('sanatorium.guestSearch')} />
-      {(guests.data ?? []).filter((g) => !taken.has(g.id)).map((g) => (
-        <ListRow key={g.id} testID={`member-${g.id}`} title={g.full_name} subtitle={g.phone ?? undefined} chevron onPress={() => void pick(g.id)} />
+      {(guests.data ?? []).map((g) => (
+        <ListRow key={g.id} testID={`member-${g.id}`} title={g.full_name} subtitle={[g.phone, inFamily.has(g.id) && inFamily.get(g.id) ? t(`sanatorium.relation.${inFamily.get(g.id)}`) : null].filter(Boolean).join(' · ') || undefined} chevron onPress={() => void pick(g.id)} />
       ))}
       <ErrorLine message={error} />
     </View>

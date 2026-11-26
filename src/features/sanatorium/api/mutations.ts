@@ -75,12 +75,13 @@ export type MenuItemBody = { menu_date: string; meal: Meal; dishes: string; diet
 
 export const checkIn = (id: number) => apiClient.post<Stay>(SANATORIUM_STAY_CHECK_IN(id)).then((r) => r.data);
 export const checkOut = (id: number) => apiClient.post<Stay>(SANATORIUM_STAY_CHECK_OUT(id)).then((r) => r.data);
-export const earlyLeave = ({ id, leave_date, reason }: { id: number; leave_date: string; reason: string }) =>
-  apiClient.post<Stay>(SANATORIUM_STAY_EARLY_LEAVE(id), { leave_date, reason }).then((r) => r.data);
+/** `whole_group` = every in-house member who would stay longer than `leave_date` leaves too (answer carries `stays`). */
+export const earlyLeave = ({ id, leave_date, reason, whole_group }: { id: number; leave_date: string; reason: string; whole_group?: boolean }) =>
+  apiClient.post<Stay & { stays?: Stay[] }>(SANATORIUM_STAY_EARLY_LEAVE(id), { leave_date, reason, ...(whole_group ? { whole_group: true } : {}) }).then((r) => r.data);
 /** POST so the (secret) code stays out of URLs and access logs. */
 export const resolveGuestQr = (code: string) =>
   apiClient.post<QrResolveResult>(SANATORIUM_QR_RESOLVE, { code: code.trim() }).then((r) => r.data);
-export const finishAppointment = ({ id, ...body }: { id: number; complaint: string; diagnosis: string; recommendation: string }) =>
+export const finishAppointment = ({ id, ...body }: { id: number; complaint: string | null; diagnosis: string | null; recommendation: string | null }) =>
   apiClient.post(SANATORIUM_APPOINTMENT_FINISH(id), body).then((r) => r.data);
 export const referAppointment = ({ id, body }: { id: number; body: ReferBody }) =>
   apiClient.post(SANATORIUM_APPOINTMENT_REFER(id), body).then((r) => r.data);
@@ -121,7 +122,7 @@ export const updateStay = ({ id, body }: { id: number; body: Json }) => apiClien
 export const updatePayment = ({ id, body }: { id: number; body: Json }) =>
   apiClient.patch<Stay>(SANATORIUM_STAY_PAYMENT(id), body).then((r) => r.data);
 export const cancelStay = ({ id, reason }: { id: number; reason: string }) =>
-  apiClient.post(SANATORIUM_STAY_CANCEL(id), { reason }).then((r) => r.data);
+  apiClient.post<Stay & { warnings?: unknown[] }>(SANATORIUM_STAY_CANCEL(id), { reason }).then((r) => r.data);
 export const createAppointment = (body: Json) => apiClient.post(SANATORIUM_APPOINTMENTS, body).then((r) => r.data);
 /** Only while `scheduled`; never send `status: "done"` (the server answers `use_finish`). */
 export const patchAppointment = ({ id, body }: { id: number; body: Json }) =>
@@ -150,7 +151,7 @@ function useInvalidate() {
 const hook = <V, R>(fn: (v: V) => Promise<R>) =>
   function useSanMutation() {
     const onSuccess = useInvalidate();
-    return useMutation({ meta, mutationFn: fn, onSuccess });
+    return useMutation({ meta, networkMode: 'always', mutationFn: fn, onSuccess });
   };
 
 export const useCheckIn = hook(checkIn);
@@ -165,7 +166,7 @@ export const usePutMenu = hook(putMenu);
 export const useAcceptRequest = hook(acceptRequest);
 export const useRejectRequest = hook(rejectRequest);
 export function useResolveGuestQr() {
-  return useMutation({ meta, mutationFn: resolveGuestQr });
+  return useMutation({ meta, networkMode: 'always', mutationFn: resolveGuestQr });
 }
 
 export const useSaveSettings = hook(saveSettings);

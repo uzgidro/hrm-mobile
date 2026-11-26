@@ -6,7 +6,7 @@ import dayjs from 'dayjs';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { FormInput } from '@/components/FormInput';
-import { Button, Card, ListRow, Text } from '@/ui';
+import { Badge, Button, Card, ListRow, Text } from '@/ui';
 import { packagesQuery, servicesQuery, useQuote, type QuoteResult } from '../../api/sections2';
 import { roomsQuery } from '../../api/queries';
 import { ChoiceField, DateField, ErrorLine } from '../../components/forms';
@@ -16,6 +16,7 @@ import { GUEST_TYPES } from '../../types';
 import { parseAges, pickText, quoteBody, type QuoteDraft } from '../../utils/sections2';
 import { useSanFeatures } from '../../utils/features';
 import { fmtDate, fmtMoney, sanErrorMessage, todayIso } from '../../utils/sanatorium';
+import { useSingleFlight } from '../../simple/useSingleFlight';
 
 export default function QuoteScreen() {
   const { t } = useTranslation();
@@ -31,9 +32,14 @@ export default function QuoteScreen() {
   const [ages, setAges] = useState('');
   const [result, setResult] = useState<QuoteResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const set = (p: Partial<QuoteDraft>) => setD((x) => ({ ...x, ...p }));
+  // A sum of other dates or people must not stay on screen as if it belonged to the new ones.
+  const set = (p: Partial<QuoteDraft>) => {
+    setResult(null);
+    setD((x) => ({ ...x, ...p }));
+  };
 
-  const submit = async () => {
+  const flight = useSingleFlight();
+  const submit = () => flight.run(async () => {
     const draft = { ...d, children: parseAges(ages) };
     const r = quoteBody(draft);
     if (!r.ok) return setError(t(r.error));
@@ -44,7 +50,7 @@ export default function QuoteScreen() {
       setResult(null);
       setError(sanErrorMessage(e, t('errors.generic')));
     }
-  };
+  });
   const toggleService = (id: number) =>
     set({ services: d.services.some((s) => s.serviceId === id) ? d.services.filter((s) => s.serviceId !== id) : [...d.services, { serviceId: id, quantity: 1 }] });
   const setQty = (id: number, delta: number) => set({ services: d.services.map((s) => (s.serviceId === id ? { ...s, quantity: Math.max(1, Math.min(1000, s.quantity + delta)) } : s)) });
@@ -55,7 +61,7 @@ export default function QuoteScreen() {
         <DateField label={t('sanatorium.dateFrom')} value={d.start} onChange={(v) => set({ start: v })} testID="qt-start" />
         <DateField label={t('sanatorium.dateTo')} value={d.end} onChange={(v) => set({ end: v })} testID="qt-end" />
         <FormInput label={t('sanatorium.adults')} value={d.adults} onChangeText={(v) => set({ adults: v })} keyboardType="number-pad" testID="qt-adults" />
-        <FormInput label={t('sanatorium.s2.childrenAges')} value={ages} onChangeText={setAges} placeholder="3, 7" keyboardType="numbers-and-punctuation" testID="qt-ages" />
+        <FormInput label={t('sanatorium.s2.childrenAges')} value={ages} onChangeText={(v) => { setResult(null); setAges(v); }} placeholder="3, 7" keyboardType="numbers-and-punctuation" testID="qt-ages" />
         <ChoiceField label={t('sanatorium.room')} value={d.roomId} noneLabel={t('sanatorium.noRoom')} options={(rooms.data ?? []).filter((r) => r.is_active).map((r) => ({ value: r.id, label: [r.number, r.building].filter(Boolean).join(' · ') }))} onChange={(v) => set({ roomId: v })} loading={rooms.isPending} testID="qt-room" />
         {f.on('packages') && (
           <ChoiceField label={t('sanatorium.s2.package')} value={d.packageId} noneLabel={t('sanatorium.none')} options={(packages.data ?? []).map((p) => ({ value: p.id, label: pickText(p as never, 'name', lang), sub: `${p.nights} ${t('sanatorium.s2.nightsShort')}` }))} onChange={(v) => set({ packageId: v })} loading={packages.isPending} testID="qt-package" />
@@ -64,13 +70,13 @@ export default function QuoteScreen() {
         {f.on('paid_services') && (services.data ?? []).length > 0 && (
           <>
             <FieldLabel>{t('sanatorium.s2.services')}</FieldLabel>
-            <ChipWrap options={(services.data ?? []).map((s) => ({ value: s.id, label: pickText(s as never, 'name', lang) }))} isOn={(v) => d.services.some((s) => s.serviceId === v)} onToggle={toggleService} testID="qt-services" />
+            <ChipWrap options={(services.data ?? []).map((s) => ({ value: s.id, label: `${pickText(s as never, 'name', lang)} · ${fmtMoney(s.price)} / ${t(`sanatorium.s2.unit.${s.unit}`)}` }))} isOn={(v) => d.services.some((s) => s.serviceId === v)} onToggle={toggleService} testID="qt-services" />
             {d.services.map((s) => (
               <View key={s.serviceId} style={styles.qty}>
                 <Text variant="body" style={styles.flex} numberOfLines={1}>{pickText((services.data ?? []).find((x) => x.id === s.serviceId) as never, 'name', lang)}</Text>
-                <Button label="−" size="sm" variant="soft" onPress={() => setQty(s.serviceId, -1)} />
-                <Text variant="heading">{s.quantity}</Text>
-                <Button label="+" size="sm" variant="soft" onPress={() => setQty(s.serviceId, 1)} />
+                <Button testID={`qt-svc-${s.serviceId}-minus`} label="−" size="sm" variant="soft" onPress={() => setQty(s.serviceId, -1)} />
+                <Text variant="heading" testID={`qt-svc-${s.serviceId}-qty`}>{s.quantity}</Text>
+                <Button testID={`qt-svc-${s.serviceId}-plus`} label="+" size="sm" variant="soft" onPress={() => setQty(s.serviceId, 1)} />
               </View>
             ))}
           </>
@@ -89,21 +95,22 @@ function QuoteResultView({ r }: { r: QuoteResult }) {
   return (
     <Card title={t('sanatorium.s2.quoteResult')} icon="wallet" tint="green" testID="quote-result">
       <Text variant="caption" tone="muted">{fmtDate(r.start)} → {fmtDate(r.end)} · {r.nights} {t('sanatorium.s2.nightsShort')} · {r.adults} + {r.children}</Text>
-      {r.package && <ListRow title={`${t('sanatorium.s2.package')}: ${pickText(r.package as never, 'name', lang)}`} subtitle={`${r.package.nights} ${t('sanatorium.s2.nightsShort')}`} right={<Text variant="heading">{fmtMoney(r.package.amount)}</Text>} />}
+      {r.room && <View style={styles.badges}><Badge label={`${t('sanatorium.room')} ${r.room.number}`} tone="info" testID="quote-room" /></View>}
+      {r.package && <ListRow testID="quote-package" title={`${t('sanatorium.s2.package')}: ${pickText(r.package as never, 'name', lang)}`} subtitle={`${r.package.nights} ${t('sanatorium.s2.nightsShort')}`} right={<Text variant="heading">{fmtMoney(r.package.amount)}</Text>} />}
       {r.night_lines.map((l) => (
-        <ListRow key={l.date} title={fmtDate(l.date)} subtitle={`${fmtMoney(l.unit_price)} × ${l.persons_charged}${l.season ? ` · ${typeof l.season === 'string' ? l.season : l.season.name}` : ''}`} right={<Text variant="body">{fmtMoney(l.amount)}</Text>} />
+        <ListRow testID={`quote-night-${l.date}`} key={l.date} title={fmtDate(l.date)} subtitle={`${fmtMoney(l.unit_price)} × ${l.persons_charged}${l.season ? ` · ${typeof l.season === 'string' ? l.season : l.season.name}` : ''}`} right={<Text variant="body">{fmtMoney(l.amount)}</Text>} />
       ))}
       {Number(r.child_discount?.amount) !== 0 && r.child_discount && (
-        <ListRow title={`${t('sanatorium.childDiscount')} (${r.child_discount.percent}%)`} right={<Text variant="body">{fmtMoney(r.child_discount.amount)}</Text>} />
+        <ListRow testID="quote-child-discount" title={`${t('sanatorium.childDiscount')} (${r.child_discount.percent}%${r.children_discounted != null ? ` · ${t('sanCatalog.quote.children', { n: r.children_discounted })}` : ''})`} right={<Text variant="body">{fmtMoney(r.child_discount.amount)}</Text>} />
       )}
       {r.services.map((s) => (
-        <ListRow key={s.service_id} title={pickText(s as never, 'name', lang)} subtitle={`${s.quantity} × ${fmtMoney(s.unit_price)}`} right={<Text variant="body">{fmtMoney(s.amount)}</Text>} />
+        <ListRow testID={`quote-svc-${s.service_id}`} key={s.service_id} title={pickText(s as never, 'name', lang)} subtitle={`${s.quantity} × ${fmtMoney(s.unit_price)} / ${t(`sanatorium.s2.unit.${s.unit}`, { defaultValue: s.unit })}`} right={<Text variant="body">{fmtMoney(s.amount)}</Text>} />
       ))}
-      <ListRow title={t('sanatorium.s2.accommodationTotal')} right={<Text variant="body">{fmtMoney(r.accommodation_total)}</Text>} />
-      <ListRow title={t('sanatorium.s2.servicesTotal')} right={<Text variant="body">{fmtMoney(r.services_total)}</Text>} />
+      <ListRow title={t('sanatorium.s2.accommodationTotal')} right={<Text variant="body" testID="quote-accommodation">{fmtMoney(r.accommodation_total)}</Text>} />
+      <ListRow title={t('sanatorium.s2.servicesTotal')} right={<Text variant="body" testID="quote-services-total">{fmtMoney(r.services_total)}</Text>} />
       <ListRow title={t('sanatorium.total')} right={<Text variant="title" testID="quote-total">{fmtMoney(r.total)}</Text>} />
     </Card>
   );
 }
 
-const styles = StyleSheet.create({ flex: { flex: 1 }, qty: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 } });
+const styles = StyleSheet.create({ badges: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 }, flex: { flex: 1 }, qty: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 } });

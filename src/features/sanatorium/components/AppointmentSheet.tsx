@@ -10,27 +10,34 @@ import { toast } from '@/lib/toast';
 import { Button, SelectField, Sheet } from '@/ui';
 import { useCreateAppointment } from '../api/mutations';
 import { specialtiesQuery, staffRoleQuery } from '../api/queries';
-import { fmtDateTime, sanErrorMessage, toLocalIso } from '../utils/sanatorium';
+import { fmtDate, fmtDateTime, sanErrorMessage, toLocalIso } from '../utils/sanatorium';
+import { SlotChips } from '../simple/components/SlotChips';
 import { ChoiceField, ErrorLine, opt } from './forms';
 
 /** `stayId` null = closed. */
-export function AppointmentSheet({ stayId, onClose }: { stayId: number | null; onClose: () => void }) {
+export function AppointmentSheet({ stayId, from, to, onClose }: { stayId: number | null; from?: string; to?: string; onClose: () => void }) {
   const { t } = useTranslation();
   return (
     <Sheet visible={stayId != null} onClose={onClose} title={t('sanatorium.newAppointment')} scroll>
-      {stayId != null && <AppointmentForm key={stayId} stayId={stayId} onClose={onClose} />}
+      {stayId != null && <AppointmentForm key={stayId} stayId={stayId} from={from} to={to} onClose={onClose} />}
     </Sheet>
   );
 }
 
-function AppointmentForm({ stayId, onClose }: { stayId: number; onClose: () => void }) {
+function AppointmentForm({ stayId, from, to, onClose }: { stayId: number; from?: string; to?: string; onClose: () => void }) {
   const { t } = useTranslation();
   const create = useCreateAppointment();
   const specialties = useQuery(specialtiesQuery());
   const doctors = useQuery(staffRoleQuery('doctor'));
   const [specialtyId, setSpecialtyId] = useState<number | null>(null);
   const [doctorId, setDoctorId] = useState<number | null>(null);
-  const [when, setWhen] = useState(() => toLocalIso(dayjs().add(1, 'day').hour(10).minute(0).second(0)));
+  // The first suggestion is tomorrow, but never outside the stay.
+  const [when, setWhen] = useState(() => {
+    const tomorrow = dayjs().add(1, 'day');
+    const last = to ? dayjs(to).subtract(1, 'day') : null;
+    const start = from && dayjs(from).isAfter(tomorrow, 'day') ? dayjs(from) : last && tomorrow.isAfter(last, 'day') ? (last.isBefore(dayjs(), 'day') ? dayjs() : last) : tomorrow;
+    return toLocalIso(start.hour(10).minute(0).second(0));
+  });
   const [pickWhen, setPickWhen] = useState(false);
   const [duration, setDuration] = useState('20');
   const [note, setNote] = useState('');
@@ -40,6 +47,8 @@ function AppointmentForm({ stayId, onClose }: { stayId: number; onClose: () => v
     const d = Number.parseInt(duration, 10);
     if (!specialtyId && !doctorId) return setError(t('sanatorium.errors.doctor_or_specialty_required'));
     if (!Number.isFinite(d) || d < 5 || d > 240) return setError(t('sanatorium.durationRange'));
+    const day = dayjs(when).format('YYYY-MM-DD');
+    if (from && to && (day < from || day > to)) return setError(t('sanFlow.appt.dayOutside', { from: fmtDate(from), to: fmtDate(to) }));
     try {
       await create.mutateAsync({
         stay_id: stayId,
@@ -76,6 +85,7 @@ function AppointmentForm({ stayId, onClose }: { stayId: number; onClose: () => v
         testID="ac-doctor"
       />
       <SelectField label={t('sanatorium.dateTime')} value={fmtDateTime(when)} icon="calendar" onPress={() => setPickWhen(true)} testID="ac-when" />
+      <SlotChips staffId={doctorId} day={dayjs(when).format('YYYY-MM-DD')} minutes={Number.parseInt(duration, 10) || 20} value={when} onPick={(iso) => setWhen(toLocalIso(iso))} />
       <FormInput label={t('sanatorium.duration')} value={duration} onChangeText={setDuration} keyboardType="number-pad" testID="ac-duration" />
       <FormInput label={t('sanatorium.referralNote')} value={note} onChangeText={setNote} multiline testID="ac-note" />
       <ErrorLine message={error} testID="ac-error" />

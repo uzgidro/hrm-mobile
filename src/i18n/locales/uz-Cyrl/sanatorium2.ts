@@ -151,7 +151,7 @@ export default {
     orgName: "Ташкилот номи",
     organization: "Ташкилот (тўловчи)",
     tin: "СТИР",
-    tinInvalid: "СТИР 9 та рақамдан иборат бўлиши керак",
+    tinInvalid: "СТИР 9 ёки 14 та рақамдан иборат бўлиши керак",
     bankName: "Банк",
     bankAccount: "Ҳисоб рақами",
     bankMfo: "МФЎ",

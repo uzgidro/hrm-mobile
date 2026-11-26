@@ -9,7 +9,6 @@ import { toast } from '@/lib/toast';
 import { useAuthStore } from '@/store/authStore';
 import { Badge, Button, Card, PageHeader, Screen, Text } from '@/ui';
 import { useCheckIn, useCheckOut } from '../api/mutations';
-import { roomNotReady } from '../utils/sections1';
 import { stayQuery } from '../api/queries';
 import { AppointmentSheet } from '../components/AppointmentSheet';
 import { Denied, PhoneLink, QueryBlock, useSanAccess } from '../components/common';
@@ -17,6 +16,11 @@ import { EarlyLeaveSheet } from '../components/EarlyLeaveSheet';
 import { JourneyCard } from '../components/sections1/JourneyCard';
 import { StayDietSheet } from '../components/sections2/DietParts';
 import { StayDocumentsCard, StayServicesCard } from '../components/sections2/StayDocuments';
+import { StayNext } from '../simple/components/StayNext';
+import { useSingleFlight } from '../simple/useSingleFlight';
+import { RefundSheet } from '../simple/components/StayActions';
+import { refundOf } from '../simple/utils';
+import { toastWarnings } from '../simple/warnings';
 import { useSanFeatures } from '../utils/features';
 import { StaySheets, type StaySheetKind } from '../components/StaySheets';
 import type { StayFull } from '../types';
@@ -58,23 +62,33 @@ function Detail({ stay }: { stay: StayFull }) {
   const [early, setEarly] = useState(false);
   const [appt, setAppt] = useState(false);
   const [dietOpen, setDietOpen] = useState(false);
+  const [refund, setRefund] = useState(0);
+  const leaveCard = () => (router.canGoBack() ? router.back() : router.replace('/sanatorium-stays'));
+  const [more, setMore] = useState(false);
   const features = useSanFeatures();
   const live = stay.status === 'booked' || stay.status === 'checked_in';
 
-  const run = async (kind: 'in' | 'out') => {
+  const flight = useSingleFlight();
+  const run = (kind: 'in' | 'out') => flight.run(async () => {
     try {
       const res = await (kind === 'in' ? checkIn : checkOut).mutateAsync(stay.id);
       toast.success(t(kind === 'in' ? 'sanatorium.checkedIn' : 'sanatorium.checkedOut'));
-      const warn = roomNotReady(res);
-      if (kind === 'in' && warn) toast.info(t('san1.hk.roomNotReady', { room: warn.room_number ?? '', status: t(`san1.hk.status.${warn.hk_status ?? 'dirty'}`) }), 8000);
+      toastWarnings(res, ['refund']);
+      // Money to give back is shown until it is read (the registrar only gets it).
+      const back = refundOf(res);
+      if (kind === 'out' && back > 0) return setRefund(back);
+      // Who has left is out of the room keeper's sight: the card would only answer 404.
+      if (kind === 'out' && !registrar) leaveCard();
     } catch (e) {
       if (kind === 'out' && sanErrorInfo(e).code === 'use_early_leave') setEarly(true);
       else toast.error(sanErrorMessage(e, t('errors.generic')));
     }
-  };
+  });
+
 
   return (
     <View style={styles.stack}>
+      {registrar && <StayNext stay={stay} readOnly={!canWrite} />}
       <Card testID="stay-detail">
         <View style={styles.row}>
           <Text
@@ -91,6 +105,7 @@ function Detail({ stay }: { stay: StayFull }) {
         <Row label={t('sanatorium.room')} value={stay.room ? [stay.room.number, stay.room.building].filter(Boolean).join(' · ') : t('sanatorium.noRoom')} />
         <Row label={t('sanatorium.period')} value={`${fmtDate(stay.planned_from)} → ${fmtDate(stay.planned_to)} (${stay.nights})`} />
         {stay.left_early && <Row label={t('sanatorium.leftEarly')} value={`${fmtDate(stay.early_leave_date)}${stay.early_leave_reason ? ` · ${stay.early_leave_reason}` : ''}`} />}
+        {stay.days_left != null && live && <Row label={t('sanFlow.stay.daysLeft')} value={String(stay.days_left)} />}
         <Row label={t('sanatorium.meals')} value={stay.with_meals ? t('sanatorium.yes') : t('sanatorium.no')} />
         <Row label={t('sanatorium.dietNote')} value={stay.diet_note} />
         <Row label={t('sanatorium.doctor')} value={stay.doctor?.full_name} />
@@ -116,23 +131,25 @@ function Detail({ stay }: { stay: StayFull }) {
       <StayServicesCard stay={stay} />
       <StayDocumentsCard stay={stay} />
 
-      <View style={styles.actions}>
-        {canWrite && live && registrar && features.on('diet') && <Button testID="stay-diet" label={t('sanatorium.s2.dietAndAllergies')} variant="soft" onPress={() => setDietOpen(true)} />}
-        {canWrite && stay.status === 'booked' && <Button testID="stay-checkin" label={t('sanatorium.checkIn')} icon="check" loading={checkIn.isPending} onPress={() => void run('in')} />}
-        {canWrite && stay.status === 'checked_in' && (
+      {registrar && canWrite && <Button testID="stay-more" label={more ? t('sanSimple.next.lessDetails') : t('sanSimple.next.details')} variant="soft" full onPress={() => setMore((v) => !v)} />}
+      {canWrite && (!registrar || more) && <View style={styles.actions}>
+        {live && registrar && features.on('diet') && <Button testID="stay-diet" label={t('sanatorium.s2.dietAndAllergies')} variant="soft" onPress={() => setDietOpen(true)} />}
+        {stay.status === 'booked' && <Button testID="stay-checkin" label={t('sanatorium.checkIn')} icon="check" loading={checkIn.isPending} onPress={() => void run('in')} />}
+        {stay.status === 'checked_in' && (
           <>
             <Button testID="stay-checkout" label={t('sanatorium.checkOut')} icon="logout" loading={checkOut.isPending} onPress={() => void run('out')} />
             <Button testID="stay-early" label={t('sanatorium.earlyLeave')} variant="soft" onPress={() => setEarly(true)} />
           </>
         )}
-        {canWrite && live && registrar && <Button testID="stay-edit" label={t('sanatorium.edit')} variant="soft" icon="edit" onPress={() => setSheet('edit')} />}
-        {canWrite && live && <Button testID="stay-appt" label={t('sanatorium.newAppointment')} variant="soft" icon="plus" onPress={() => setAppt(true)} />}
-        {canWrite && stay.status === 'booked' && registrar && <Button testID="stay-cancel" label={t('sanatorium.cancelStay')} variant="dangerGhost" onPress={() => setSheet('cancel')} />}
-      </View>
+        {live && registrar && <Button testID="stay-edit" label={t('sanatorium.edit')} variant="soft" icon="edit" onPress={() => setSheet('edit')} />}
+        {live && registrar && <Button testID="stay-appt" label={t('sanatorium.newAppointment')} variant="soft" icon="plus" onPress={() => setAppt(true)} />}
+        {stay.status === 'booked' && registrar && <Button testID="stay-cancel" label={t('sanatorium.cancelStay')} variant="dangerGhost" onPress={() => setSheet('cancel')} />}
+      </View>}
 
       <StaySheets stay={stay} kind={sheet} onClose={() => setSheet(null)} />
-      <EarlyLeaveSheet stay={early ? stay : null} onClose={() => setEarly(false)} />
-      <AppointmentSheet stayId={appt ? stay.id : null} onClose={() => setAppt(false)} />
+      <EarlyLeaveSheet stay={early ? stay : null} onDone={registrar ? undefined : leaveCard} onClose={() => setEarly(false)} />
+      {refund > 0 && <RefundSheet name={stay.guest?.full_name ?? ''} amount={refund} kind="refund" onClose={() => setRefund(0)} />}
+      <AppointmentSheet stayId={appt ? stay.id : null} from={stay.planned_from} to={stay.planned_to} onClose={() => setAppt(false)} />
       <StayDietSheet stay={dietOpen ? stay : null} onClose={() => setDietOpen(false)} />
     </View>
   );

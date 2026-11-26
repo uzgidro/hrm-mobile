@@ -50,8 +50,32 @@ export function sanErrorInfo(e: unknown): { code: string | null; params: Record<
 
 /** `sanatorium.errors.<code>` first (translated, with params), then the generic API text. */
 export function sanErrorMessage(e: unknown, fallback?: string): string {
-  const { code, params } = sanErrorInfo(e);
+  const err = e as { response?: { data?: { detail?: unknown } }; isAxiosError?: boolean; code?: string } | undefined;
+  // No answer at all: it is the connection, not the data.
+  if (err && !err.response && (err.isAxiosError === true || err.code === 'ERR_NETWORK')) return i18n.t('sanFlow.err.noNet');
+  // The server's own validation sentences are English and name body keys: the fields are named in words instead.
+  if (Array.isArray(err?.response?.data?.detail)) {
+    const names = (err!.response!.data!.detail as { loc?: unknown[] }[]).flatMap((d) => {
+      const key = [...(d?.loc ?? [])].reverse().find((x): x is string => typeof x === 'string' && x !== 'body');
+      return key && i18n.exists(`sanFlow.fields.${key}`) ? [i18n.t(`sanFlow.fields.${key}`)] : [];
+    });
+    return names.length ? i18n.t('sanFlow.err.fields', { fields: [...new Set(names)].join(', ') }) : i18n.t('sanFlow.err.form');
+  }
+  const info = sanErrorInfo(e);
+  const code = info.code;
+  // ISO dates in the params read as DD.MM.YYYY in the message.
+  const params: Record<string, unknown> = { ...info.params };
+  for (const k of ['date', 'planned_to', 'planned_from']) {
+    if (typeof params[k] === 'string' && /^\d{4}-\d{2}-\d{2}/.test(params[k] as string)) params[k] = fmtDate(params[k] as string);
+  }
   if (code) {
+    // A variant that names the guest wins when the server sends `params.name` (guest_has_stay).
+    const named = `sanSimple.errors.${code}_named`;
+    if (params.name != null && i18n.exists(named)) return i18n.t(named, params as Record<string, string>);
+    // room_full names the room and who is still in it (`guests` is a list of names).
+    const detail = `sanSimple.errors.${code}_detail`;
+    const who = Array.isArray(params.guests) ? params.guests.join(', ') : '';
+    if (who && params.room_number != null && i18n.exists(detail)) return i18n.t(detail, { ...params, guests: who } as Record<string, string>);
     const key = `sanatorium.errors.${code}`;
     const text = i18n.t(key, params as Record<string, string>);
     if (text && text !== key) return text;
@@ -59,6 +83,10 @@ export function sanErrorMessage(e: unknown, fallback?: string): string {
     const key1 = `san1.errors.${code}`;
     const text1 = i18n.t(key1, params as Record<string, string>);
     if (text1 && text1 !== key1) return text1;
+    // Simplification round (work queue, arrival wizard, short actions).
+    const key2 = `sanSimple.errors.${code}`;
+    const text2 = i18n.t(key2, params as Record<string, string>);
+    if (text2 && text2 !== key2) return text2;
   }
   return getApiErrorMessage(e, fallback);
 }

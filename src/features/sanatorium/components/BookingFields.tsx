@@ -10,6 +10,7 @@ import { FormInput } from '@/components/FormInput';
 import { Text } from '@/ui';
 import { availabilityQuery, staffRoleQuery } from '../api/queries';
 import { GUEST_TYPES, type GuestType } from '../types';
+import { roomHasFree } from '../utils/guests';
 import { minFreeBeds, todayIso } from '../utils/sanatorium';
 import { ChoiceField, DateField, SwitchRow } from './forms';
 import { RoomPickerField, type RoomOption } from './RoomPickerField';
@@ -54,12 +55,15 @@ export function BookingFields({
   onChange,
   showDiet = true,
   keepRoom,
+  need = 1,
 }: {
   draft: BookingDraft;
   onChange: (patch: Partial<BookingDraft>) => void;
   showDiet?: boolean;
   /** Editing a stay: its own room must stay selectable even though its own bed counts as taken. */
   keepRoom?: { id: number; label: string } | null;
+  /** People to seat: only rooms with at least this many free beds on every night are offered. */
+  need?: number;
 }) {
   const { t } = useTranslation();
   const valid = dayjs(draft.to).isAfter(dayjs(draft.from));
@@ -71,7 +75,7 @@ export function BookingFields({
     const list: RoomOption[] = (avail.data?.rooms ?? [])
       .filter((r) => !r.out_of_service)
       .map((r) => ({ r, free: minFreeBeds(r.capacity, r.occupancy) }))
-      .filter((x) => x.free > 0 || x.r.id === keepRoom?.id)
+      .filter((x) => roomHasFree(x.r.capacity, x.r.occupancy, need, x.r.id === keepRoom?.id))
       .map(({ r, free }) => ({
         id: r.id,
         title: [r.number, r.building].filter(Boolean).join(' · '),
@@ -80,7 +84,7 @@ export function BookingFields({
       }));
     if (keepRoom && !list.some((x) => x.id === keepRoom.id)) list.unshift({ id: keepRoom.id, title: keepRoom.label });
     return list;
-  }, [avail.data, keepRoom, t]);
+  }, [avail.data, keepRoom, need, t]);
 
   return (
     <View testID="booking-fields">
@@ -104,7 +108,7 @@ export function BookingFields({
         testID="bk-room"
       />
       <SwitchRow label={t('sanatorium.withMeals')} value={draft.meals} onChange={(v) => onChange({ meals: v })} testID="bk-meals" />
-      {showDiet && draft.meals && <FormInput label={t('sanatorium.dietNote')} value={draft.diet} onChangeText={(v) => onChange({ diet: v })} testID="bk-diet" />}
+      {showDiet && draft.meals && <FormInput label={t('sanatorium.dietNote')} value={draft.diet} onChangeText={(v) => onChange({ diet: v.slice(0, 300) })} testID="bk-diet" />}
       <ChoiceField
         label={t('sanatorium.doctor')}
         value={draft.doctorId}
@@ -124,8 +128,10 @@ export function BookingFields({
         testID="bk-nurse"
       />
       <BookingSectionFields draft={draft} onChange={onChange} />
-      <FormInput label={t('sanatorium.contractNote')} value={draft.contract} onChangeText={(v) => onChange({ contract: v })} testID="bk-contract" />
-      <FormInput label={t('sanatorium.notes')} value={draft.note} onChangeText={(v) => onChange({ note: v })} multiline testID="bk-note" />
+      {draft.type === 'contract' && (
+        <FormInput label={t('sanatorium.contractNote')} value={draft.contract} onChangeText={(v) => onChange({ contract: v.slice(0, 300) })} testID="bk-contract" />
+      )}
+      <FormInput label={t('sanatorium.notes')} value={draft.note} onChangeText={(v) => onChange({ note: v.slice(0, 500) })} multiline testID="bk-note" />
     </View>
   );
 }

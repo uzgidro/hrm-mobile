@@ -8,7 +8,9 @@ import { Button, Sheet } from '@/ui';
 import { useUpdateProcedure } from '../api/mutations';
 import type { ProcStatus, Procedure } from '../types';
 import { sanErrorMessage } from '../utils/sanatorium';
+import { endBeforeStart } from '../utils/staffParity';
 import { ChoiceField, DateField, ErrorLine, optNull } from './forms';
+import { useSingleFlight } from '../simple/useSingleFlight';
 
 export function ProcedureEditSheet({ proc, onClose }: { proc: Procedure | null; onClose: () => void }) {
   const { t } = useTranslation();
@@ -22,6 +24,7 @@ export function ProcedureEditSheet({ proc, onClose }: { proc: Procedure | null; 
 function ProcForm({ proc, onClose }: { proc: Procedure; onClose: () => void }) {
   const { t } = useTranslation();
   const save = useUpdateProcedure();
+  const flight = useSingleFlight();
   const [name, setName] = useState(proc.name);
   const [total, setTotal] = useState(String(proc.sessions_total));
   const [done, setDone] = useState(String(proc.sessions_done));
@@ -38,6 +41,7 @@ function ProcForm({ proc, onClose }: { proc: Procedure; onClose: () => void }) {
     if (name.trim().length < 2) return setError(t('sanatorium.nameShort'));
     if (!Number.isFinite(tt) || tt < 1 || tt > 100) return setError(t('sanatorium.sessionsRange'));
     if (!Number.isFinite(dd) || dd < 0 || dd > tt) return setError(t('sanatorium.errors.sessions_exceed'));
+    if (endBeforeStart(start, end)) return setError(t('sanStaff.desk.endBeforeStart'));
     try {
       await save.mutateAsync({
         id: proc.id,
@@ -51,17 +55,17 @@ function ProcForm({ proc, onClose }: { proc: Procedure; onClose: () => void }) {
   };
   return (
     <View style={styles.form} testID="proc-edit-sheet">
-      <FormInput label={t('sanatorium.procedureName')} value={name} onChangeText={setName} required testID="pe-name" />
+      <FormInput label={t('sanatorium.procedureName')} value={name} onChangeText={setName} required maxLength={255} testID="pe-name" />
       <FormInput label={t('sanatorium.sessionsTotal')} value={total} onChangeText={setTotal} keyboardType="number-pad" />
       <FormInput label={t('sanatorium.sessionsDone')} value={done} onChangeText={setDone} keyboardType="number-pad" testID="pe-done" />
       <DateField label={t('sanatorium.startDate')} value={start} onChange={setStart} />
       <DateField label={t('sanatorium.endDate')} value={end} onChange={setEnd} />
-      <FormInput label={t('sanatorium.timeText')} value={timeText} onChangeText={setTimeText} />
-      <FormInput label={t('sanatorium.place')} value={place} onChangeText={setPlace} />
-      <FormInput label={t('sanatorium.notes')} value={notes} onChangeText={setNotes} multiline />
+      <FormInput label={t('sanatorium.timeText')} value={timeText} onChangeText={setTimeText} maxLength={50} />
+      <FormInput label={t('sanatorium.place')} value={place} onChangeText={setPlace} maxLength={100} />
+      <FormInput label={t('sanatorium.notes')} value={notes} onChangeText={setNotes} multiline maxLength={2000} />
       <ChoiceField label={t('sanatorium.statusLabel')} value={status} options={(['active', 'done', 'cancelled'] as ProcStatus[]).map((s) => ({ value: s, label: t(`sanatorium.procStatus.${s}`) }))} onChange={(v) => v && setStatus(v)} />
       <ErrorLine message={error} testID="pe-error" />
-      <Button testID="pe-save" label={t('common.save')} full loading={save.isPending} onPress={() => void submit()} />
+      <Button testID="pe-save" label={t('common.save')} full loading={save.isPending || flight.pending} onPress={() => void flight.run(submit)} />
     </View>
   );
 }
